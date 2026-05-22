@@ -22,7 +22,12 @@ import OrderInfoSidebar from "../OrderInfoSidebar/OrderInfoSidebar.jsx";
 import DriverItem from "../DriverItem/DriverItem.jsx";
 import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
 import { statusLabels } from "../../../roles.js";
-import { canAccessMenu } from "../../../utils/access";
+import {
+  canAccessMenu,
+  hasAccessMenu,
+  isAirlineRole,
+} from "../../../utils/access";
+import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 
 const isFinishedOrCanceled = (status) => {
   const s = String(status || "").toUpperCase();
@@ -115,7 +120,7 @@ function RouteHint({ ymaps, map, points }) {
     if (routeRef.current) {
       try {
         map.geoObjects.remove(routeRef.current);
-      } catch (_) { }
+      } catch (_) {}
       routeRef.current = null;
     }
 
@@ -131,7 +136,7 @@ function RouteHint({ ymaps, map, points }) {
         wayPointVisible: false,
         viaPointVisible: false,
         pinVisible: false,
-      }
+      },
     );
 
     routeRef.current = mr;
@@ -141,7 +146,7 @@ function RouteHint({ ymaps, map, points }) {
       if (routeRef.current) {
         try {
           map.geoObjects.remove(routeRef.current);
-        } catch (_) { }
+        } catch (_) {}
         routeRef.current = null;
       }
     };
@@ -187,7 +192,11 @@ function TransferOrder({ user, token, accessMenu }) {
   const [mapInstance, setMapInstance] = useState(null);
 
   // --- 1) заявка ---
-  const { data, loading: requestLoading, refetch } = useQuery(GET_TRANSFER_REQUEST, {
+  const {
+    data,
+    loading: requestLoading,
+    refetch,
+  } = useQuery(GET_TRANSFER_REQUEST, {
     variables: { transferId: orderId },
     context: {
       headers: { Authorization: authToken ? `Bearer ${authToken}` : "" },
@@ -201,7 +210,11 @@ function TransferOrder({ user, token, accessMenu }) {
   const canUpdate = accessMenu
     ? canAccessMenu(accessMenu, "transferUpdate", user)
     : true;
+  const canChat = accessMenu ? hasAccessMenu(accessMenu, "transferChat") : true;
   const canEditTransfer = canEditByStatus && canUpdate;
+  // const canEditTransfer = true;
+
+  const canAssignDriver = !isAirlineRole(user);
 
   // если статус стал неразрешённым — выходим из редактирования
   useEffect(() => {
@@ -237,13 +250,16 @@ function TransferOrder({ user, token, accessMenu }) {
   // --- 2) водители ---
   const [driversSearch, setDriversSearch] = useState("");
 
-  const { data: driversData, loading: driversLoading } = useQuery(DRIVERS_QUERY, {
-    variables: { pagination: { all: true } },
-    context: {
-      headers: { Authorization: authToken ? `Bearer ${authToken}` : "" },
+  const { data: driversData, loading: driversLoading } = useQuery(
+    DRIVERS_QUERY,
+    {
+      variables: { pagination: { all: true } },
+      context: {
+        headers: { Authorization: authToken ? `Bearer ${authToken}` : "" },
+      },
+      fetchPolicy: "cache-and-network",
     },
-    fetchPolicy: "cache-and-network",
-  });
+  );
 
   // --- 2.5) авиакомпании и сотрудники для выбора пассажиров ---
   const { data: airlinesData } = useQuery(GET_AIRLINES_RELAY, {
@@ -256,7 +272,7 @@ function TransferOrder({ user, token, accessMenu }) {
   const selectedAirline = useMemo(() => {
     if (!airlinesData?.airlines?.airlines || !transfer?.airlineId) return null;
     return airlinesData.airlines.airlines.find(
-      (airline) => airline.id === transfer.airlineId
+      (airline) => airline.id === transfer.airlineId,
     );
   }, [airlinesData, transfer?.airlineId]);
 
@@ -264,7 +280,8 @@ function TransferOrder({ user, token, accessMenu }) {
     if (!selectedAirline?.staff) return [];
     return selectedAirline.staff.map((person) => ({
       id: person.id,
-      label: `${person.name} ${person.position?.name || ""} ${person.gender || ""}`.trim(),
+      label:
+        `${person.name} ${person.position?.name || ""} ${person.gender || ""}`.trim(),
     }));
   }, [selectedAirline]);
 
@@ -275,7 +292,7 @@ function TransferOrder({ user, token, accessMenu }) {
 
     const prepared = raw.map((d) => {
       const activeCount = (d.transfers || []).filter(
-        (t) => !isFinishedOrCanceled(t.status)
+        (t) => !isFinishedOrCanceled(t.status),
       ).length;
       return { ...d, activeTransfersCount: activeCount };
     });
@@ -286,24 +303,27 @@ function TransferOrder({ user, token, accessMenu }) {
     const filtered = !q
       ? onlineOnly
       : onlineOnly.filter((d) =>
-        [
-          d.name,
-          d.vehicleNumber,
-          d.car,
-          d.organization?.name,
-          String(d.number || ""),
-        ]
-          .filter(Boolean)
-          .some((x) => String(x).toLowerCase().includes(q))
-      );
+          [
+            d.name,
+            d.vehicleNumber,
+            d.car,
+            d.organization?.name,
+            String(d.number || ""),
+          ]
+            .filter(Boolean)
+            .some((x) => String(x).toLowerCase().includes(q)),
+        );
 
     filtered.sort((a, b) => a.activeTransfersCount - b.activeTransfersCount);
     return filtered;
   }, [driversData, driversSearch]);
 
   const driverPoints = useMemo(
-    () => drivers.filter((d) => d?.location?.lat != null && d?.location?.lng != null),
-    [drivers]
+    () =>
+      drivers.filter(
+        (d) => d?.location?.lat != null && d?.location?.lng != null,
+      ),
+    [drivers],
   );
 
   const assignedDriverId = transfer?.driver?.id || null;
@@ -315,7 +335,9 @@ function TransferOrder({ user, token, accessMenu }) {
   }, [transfer]);
 
   // --- 3) geocode from/to (берём из formData когда isEditing=true, иначе из transfer) ---
-  const currentFromAddress = isEditing ? formData.fromAddress : transfer?.fromAddress;
+  const currentFromAddress = isEditing
+    ? formData.fromAddress
+    : transfer?.fromAddress;
   const currentToAddress = isEditing ? formData.toAddress : transfer?.toAddress;
 
   const [fromCoords, setFromCoords] = useState(null);
@@ -421,13 +443,16 @@ function TransferOrder({ user, token, accessMenu }) {
     }
 
     // 3) Только когда COMPLETED — показываем from -> to
-    if ((status === "COMPLETED" || status === "CANCELLED") && fromCoords && toCoords) {
+    if (
+      (status === "COMPLETED" || status === "CANCELLED") &&
+      fromCoords &&
+      toCoords
+    ) {
       return [fromCoords, toCoords];
     }
 
     return null;
   }, [status, driverCoords, fromCoords, toCoords]);
-
 
   // --- 6) мутации ---
   const [updateTransfer, { loading: assigning }] = useMutation(
@@ -436,11 +461,11 @@ function TransferOrder({ user, token, accessMenu }) {
       context: {
         headers: { Authorization: authToken ? `Bearer ${authToken}` : "" },
       },
-    }
+    },
   );
 
   const handleAssignDriver = async (driverId) => {
-    if (!canUpdate) return;
+    if (!canAssignDriver || !canUpdate) return;
     if (!orderId || !driverId || assigning) return;
 
     await updateTransfer({
@@ -448,7 +473,9 @@ function TransferOrder({ user, token, accessMenu }) {
         updateTransferId: orderId,
         input: { driverId, status: "ASSIGNED", dispatcherId: user?.userId },
       },
-      refetchQueries: [{ query: GET_TRANSFER_REQUEST, variables: { transferId: orderId } }],
+      refetchQueries: [
+        { query: GET_TRANSFER_REQUEST, variables: { transferId: orderId } },
+      ],
       awaitRefetchQueries: true,
     });
   };
@@ -470,7 +497,10 @@ function TransferOrder({ user, token, accessMenu }) {
     try {
       const scheduledPickupAt =
         formData.scheduledPickupAt && formData.scheduledPickupAtTime
-          ? buildScheduledISO(formData.scheduledPickupAt, formData.scheduledPickupAtTime)
+          ? buildScheduledISO(
+              formData.scheduledPickupAt,
+              formData.scheduledPickupAtTime,
+            )
           : null;
 
       await updateTransfer({
@@ -485,7 +515,9 @@ function TransferOrder({ user, token, accessMenu }) {
             personsId: formData.personsId || [],
           },
         },
-        refetchQueries: [{ query: GET_TRANSFER_REQUEST, variables: { transferId: orderId } }],
+        refetchQueries: [
+          { query: GET_TRANSFER_REQUEST, variables: { transferId: orderId } },
+        ],
         awaitRefetchQueries: true,
       });
 
@@ -524,7 +556,7 @@ function TransferOrder({ user, token, accessMenu }) {
   const [confirm, setConfirm] = useState({ open: false, driver: null });
 
   const openConfirm = (driver) => {
-    if (!canUpdate) return;
+    if (!canAssignDriver || !canUpdate) return;
     if (!driver?.id) return;
     if (driver.id === assignedDriverId) return;
     setConfirm({ open: true, driver });
@@ -548,8 +580,8 @@ function TransferOrder({ user, token, accessMenu }) {
   const sidebarData = useMemo(() => {
     const dt = transfer?.scheduledPickupAt || transfer?.createdAt || null;
     return {
-      name:
-        transfer?.persons?.map((p) => p.name).filter(Boolean).join(", ") || "",
+      id: transfer?.id || "",
+      persons: transfer?.persons || [],
       fromAddress: transfer?.fromAddress || "",
       toAddress: transfer?.toAddress || "",
       orderDate: dt ? convertToDate(dt) : "",
@@ -565,8 +597,40 @@ function TransferOrder({ user, token, accessMenu }) {
       onData: () => {
         refetch();
       },
-    }
+    },
   );
+
+  const [showDelete, setShowDelete] = useState(false);
+  const [requestId, setRequestId] = useState();
+
+  const setChooseRequestId = (id) => {
+    setRequestId(id);
+  };
+
+  const handleCancelRequest = async (id) => {
+    // if (!canUpdateTransfer) return;
+    try {
+      await updateTransfer({
+        variables: {
+          updateTransferId: id,
+          input: {
+            status: "CANCELLED",
+          },
+        },
+      });
+      await refetch();
+    } catch (error) {
+      console.error("Ошибка при отмене заявки:", JSON.stringify(error));
+    }
+  };
+
+  const openDeleteComponent = () => {
+    setShowDelete(true);
+  };
+
+  const closeDeleteComponent = () => {
+    setShowDelete(false);
+  };
 
   return (
     <div className={classes.page}>
@@ -585,12 +649,24 @@ function TransferOrder({ user, token, accessMenu }) {
 
       <section className={classes.layout}>
         <div className={classes.mapAndList}>
-          <div className={classes.mapWrapper} style={(status !== "PENDING" && status !== "ASSIGNED" && status !== "ACCEPTED") ? { height: "100%" } : {}}>
-            <YMaps query={{
-              apikey: YMAPS_KEY,
-              lang: "ru_RU",
-              // load: "package.full"
-            }}>
+          <div
+            className={classes.mapWrapper}
+            style={
+              !canAssignDriver ||
+              (status !== "PENDING" &&
+                status !== "ASSIGNED" &&
+                status !== "ACCEPTED")
+                ? { height: "100%" }
+                : {}
+            }
+          >
+            <YMaps
+              query={{
+                apikey: YMAPS_KEY,
+                lang: "ru_RU",
+                // load: "package.full"
+              }}
+            >
               <Map
                 state={{ center: mapCenter, zoom: 13 }}
                 width="100%"
@@ -634,16 +710,23 @@ function TransferOrder({ user, token, accessMenu }) {
                     properties={{
                       balloonContent: `${d.name} • активных: ${d.activeTransfersCount}`,
                     }}
-                    onClick={() => openConfirm(d)}
+                    onClick={canAssignDriver ? () => openConfirm(d) : undefined}
                   />
                 ))}
 
-                <RouteHint ymaps={ymapsApi} map={mapInstance} points={routePoints} />
+                <RouteHint
+                  ymaps={ymapsApi}
+                  map={mapInstance}
+                  points={routePoints}
+                />
               </Map>
             </YMaps>
           </div>
 
-          {status === "PENDING" || status === "ASSIGNED" || status === "ACCEPTED" ? (
+          {canAssignDriver &&
+          (status === "PENDING" ||
+            status === "ASSIGNED" ||
+            status === "ACCEPTED") ? (
             <>
               <div className={classes.nearestHeader}>
                 <span>Ближайшие машины ({drivers.length})</span>
@@ -663,8 +746,12 @@ function TransferOrder({ user, token, accessMenu }) {
                     {...driver}
                     activeTransfersCount={driver.activeTransfersCount}
                     handleObject={() => openConfirm(driver)}
-                    btnTitle={driver.id === assignedDriverId ? "Назначен" : "Назначить"}
-                    disabled={assigning || driver.id === assignedDriverId || !canUpdate}
+                    btnTitle={
+                      driver.id === assignedDriverId ? "Назначен" : "Назначить"
+                    }
+                    disabled={
+                      assigning || driver.id === assignedDriverId || !canUpdate
+                    }
                   />
                 ))}
               </div>
@@ -676,7 +763,6 @@ function TransferOrder({ user, token, accessMenu }) {
           <OrderInfoSidebar
             data={sidebarData}
             loading={requestLoading || driversLoading}
-            // edit props
             canEditByStatus={canEditTransfer}
             isEditing={isEditing}
             isSaving={isSaving}
@@ -686,6 +772,12 @@ function TransferOrder({ user, token, accessMenu }) {
             onToggleEditOrSave={toggleEditOrSave}
             onCancelEditing={cancelEditing}
             airlineStaffOptions={airlineStaffOptions}
+            transferId={orderId}
+            token={authToken}
+            user={user}
+            canChat={canChat}
+            openDeleteComponent={openDeleteComponent}
+            setRequestId={setChooseRequestId}
           />
         </div>
       </section>
@@ -697,12 +789,25 @@ function TransferOrder({ user, token, accessMenu }) {
         onClose={closeConfirm}
         onConfirm={confirmAssign}
       />
+
+      {showDelete && (
+        <DeleteComponent
+          remove={() => {
+            handleCancelRequest(requestId);
+            closeDeleteComponent();
+            // setShowRequestSidebar(false);
+          }}
+          index={requestId}
+          close={closeDeleteComponent}
+          title={`Вы действительно хотите отменить заявку? `}
+          isCancel={true}
+        />
+      )}
     </div>
   );
 }
 
 export default TransferOrder;
-
 
 // import React, { useMemo, useState, useEffect, useRef } from "react";
 // import { useParams, useNavigate } from "react-router-dom";

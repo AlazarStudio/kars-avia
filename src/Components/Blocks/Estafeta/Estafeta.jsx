@@ -21,18 +21,12 @@ import ReactPaginate from "react-paginate";
 import { Box, CircularProgress, TextField } from "@mui/material";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
-import {
-  fullNotifyTime,
-  menuAccess,
-  notifyTime,
-  statusMapping,
-} from "../../../roles.js";
+import { menuAccess, statusMapping } from "../../../roles.js";
 import {
   canCreateRequest as canCreateRequestAccess,
   getDispatcherAccess,
 } from "../../../utils/access";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
-import Notification from "../../Notification/Notification.jsx";
 import { useDebounce } from "../../../hooks/useDebounce.jsx";
 import Button from "../../Standart/Button/Button.jsx";
 
@@ -43,11 +37,15 @@ function Estafeta({ user, accessMenu }) {
   const navigate = useNavigate();
 
   // console.log(accessMenu);
-  const dispatcherCanChat = getDispatcherAccess(accessMenu, "requestChat", user);
+  const dispatcherCanChat = getDispatcherAccess(
+    accessMenu,
+    "requestChat",
+    user,
+  );
   const dispatcherCanUpdate = getDispatcherAccess(
     accessMenu,
     "requestUpdate",
-    user
+    user,
   );
   const canCreateRequest = canCreateRequestAccess(user, accessMenu);
 
@@ -118,7 +116,7 @@ function Estafeta({ user, accessMenu }) {
       onData: () => {
         refetch();
       },
-    }
+    },
   );
   const { data: subscriptionUpdateData } = useSubscription(
     REQUEST_UPDATED_SUBSCRIPTION,
@@ -126,7 +124,7 @@ function Estafeta({ user, accessMenu }) {
       onData: () => {
         refetch();
       },
-    }
+    },
   );
 
   // console.log(subscriptionData);
@@ -215,6 +213,8 @@ function Estafeta({ user, accessMenu }) {
   const [chooseObject, setChooseObject] = useState([]);
   const [chooseRequestID, setChooseRequestID] = useState();
   const [chooseCityRequest, setChooseCityRequest] = useState();
+  const [chooseDefaultTimesUsed, setChooseDefaultTimesUsed] = useState(false);
+  const [openExistRequestInEditMode, setOpenExistRequestInEditMode] = useState(false);
 
   // Функции для переключения видимости боковых панелей
   const toggleCreateSidebar = () => setShowCreateSidebar(!showCreateSidebar);
@@ -229,17 +229,6 @@ function Estafeta({ user, accessMenu }) {
 
   const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
   const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
-
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
 
   const handleChange = (e) =>
     setFilterData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
@@ -462,8 +451,7 @@ function Estafeta({ user, accessMenu }) {
       return (
         // matchesAirline &&
         // matchesAirport &&
-        matchesSelect &&
-        matchesDate
+        matchesSelect && matchesDate
         // && searchFields?.some((field) =>
         //   String(field)?.toLowerCase().includes(matchesSearch)
         // )
@@ -490,7 +478,7 @@ function Estafeta({ user, accessMenu }) {
   // Синхронизируем внутренний стейт пагинации со значением из URL
   useEffect(() => {
     setPageInfo((prev) =>
-      prev.skip === urlPage ? prev : { ...prev, skip: urlPage }
+      prev.skip === urlPage ? prev : { ...prev, skip: urlPage },
     );
   }, [urlPage]);
 
@@ -594,12 +582,16 @@ function Estafeta({ user, accessMenu }) {
         onClose={toggleCreateSidebar}
         onMatchFound={handleOpenExistRequest}
         user={user}
-        addNotification={addNotification}
       />
       <ExistRequest
         setChooseCityRequest={setChooseCityRequest}
+        setChooseDefaultTimesUsed={setChooseDefaultTimesUsed}
+        openInEditMode={openExistRequestInEditMode}
         show={showRequestSidebar}
-        onClose={toggleRequestSidebar}
+        onClose={() => {
+          setOpenExistRequestInEditMode(false);
+          toggleRequestSidebar();
+        }}
         setChooseRequestID={setChooseRequestID}
         setShowChooseHotel={setShowChooseHotel}
         chooseRequestID={chooseRequestID ? chooseRequestID : existRequestData}
@@ -618,6 +610,12 @@ function Estafeta({ user, accessMenu }) {
         chooseObject={chooseObject}
         chooseRequestID={chooseRequestID}
         id={"relay"}
+        defaultTimesUsed={chooseDefaultTimesUsed}
+        onBackToRequest={() => {
+          setShowChooseHotel(false);
+          setOpenExistRequestInEditMode(true);
+          setShowRequestSidebar(true);
+        }}
       />
 
       {showDelete && (
@@ -633,21 +631,6 @@ function Estafeta({ user, accessMenu }) {
           isCancel={true}
         />
       )}
-
-      {notifications.map((n, index) => (
-        <Notification
-          key={n.id}
-          text={n.text}
-          status={n.status}
-          index={index}
-          time={notifyTime}
-          onClose={() => {
-            setNotifications((prev) =>
-              prev.filter((notif) => notif.id !== n.id)
-            );
-          }}
-        />
-      ))}
     </div>
   );
 }

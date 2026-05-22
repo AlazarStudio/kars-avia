@@ -16,6 +16,8 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function EditRequestAirlineTarifCategory({
   show,
@@ -29,10 +31,12 @@ function EditRequestAirlineTarifCategory({
   setAddTarif,
   user,
   type,
-  addNotification,
   onDelete,
+  initialEditMode = false,
 }) {
   const token = getCookie("token");
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
   const infoAirports = useQuery(GET_AIRPORTS_RELAY, {
     context: {
       headers: {
@@ -52,6 +56,13 @@ function EditRequestAirlineTarifCategory({
     return {
       name: tarif?.name || "",
       airportIds,
+      geography: {
+        country: tarif?.geography?.country || "",
+        region: tarif?.geography?.region || "",
+        republic: tarif?.geography?.republic || "",
+        district: tarif?.geography?.district || "",
+        city: tarif?.geography?.city || "",
+      },
       priceOneCategory: tarif?.prices?.priceOneCategory ?? 0,
       priceTwoCategory: tarif?.prices?.priceTwoCategory ?? 0,
       priceThreeCategory: tarif?.prices?.priceThreeCategory ?? 0,
@@ -72,6 +83,13 @@ function EditRequestAirlineTarifCategory({
   const [formData, setFormData] = useState(() => ({
     name: "",
     airportIds: [],
+    geography: {
+      country: "",
+      region: "",
+      republic: "",
+      district: "",
+      city: "",
+    },
     priceOneCategory: 0,
     priceTwoCategory: 0,
     priceThreeCategory: 0,
@@ -128,6 +146,7 @@ function EditRequestAirlineTarifCategory({
     if (show && tarif) {
       setFormData(getInitialFormData());
       setIsEdited(false);
+      setIsEditing(initialEditMode);
     }
   }, [show, tarif?.id, getInitialFormData]);
 
@@ -136,19 +155,24 @@ function EditRequestAirlineTarifCategory({
     setIsEdited(false);
   }, [getInitialFormData]);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     setAnchorEl(null);
     if (!isEdited) {
       onClose();
       setIsEditing(false);
       return;
     }
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
       setIsEditing(false);
     }
-  }, [isEdited, onClose, resetForm]);
+  }, [isEdited, onClose, resetForm, confirm, isDialogOpen]);
 
   const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -177,10 +201,22 @@ function EditRequestAirlineTarifCategory({
     }));
   };
 
+  const handleGeographyChange = (e) => {
+    const { name, value } = e.target;
+    setIsEdited(true);
+    setFormData((prevState) => ({
+      ...prevState,
+      geography: {
+        ...prevState.geography,
+        [name]: value,
+      },
+    }));
+  };
+
   const handleFileChange = (e) => {
     const files = e.target.files;
-    if (files.length > 8) {
-      alert("Вы можете загрузить не более 8 изображений.");
+    if (files && files.length > 8) {
+      showAlert("Вы можете загрузить не более 8 изображений.");
       e.target.value = null;
       return;
     }
@@ -212,6 +248,13 @@ function EditRequestAirlineTarifCategory({
                   id: tarif?.id,
                   name: formData.name,
                   airportIds: formData.airportIds,
+                  geography: {
+                    country: formData.geography.country || null,
+                    region: formData.geography.region || null,
+                    republic: formData.geography.republic || null,
+                    district: formData.geography.district || null,
+                    city: formData.geography.city || null,
+                  },
                   prices: {
                     priceOneCategory: parseFloat(formData.priceOneCategory),
                     priceTwoCategory: parseFloat(formData.priceTwoCategory),
@@ -248,10 +291,10 @@ function EditRequestAirlineTarifCategory({
         onClose();
         setIsLoading(false);
         setIsEditing(false);
-        addNotification("Изменение соглашения прошло успешно.", "success");
+        success("Изменение соглашения прошло успешно.");
       } catch (error) {
         setIsLoading(false);
-        alert("Произошло ошибка при изменении соглашения.");
+        notifyError("Произошла ошибка при изменении соглашения.");
         console.error("Произошла ошибка при выполнении запроса:", error);
       }
     }
@@ -259,15 +302,20 @@ function EditRequestAirlineTarifCategory({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+
       if (anchorEl && menuRef.current?.contains(event.target)) return;
       if (sidebarRef.current?.contains(event.target)) return;
       closeButton();
     };
     if (show) {
       document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton, anchorEl]);
+  }, [show, closeButton, anchorEl, isDialogOpen]);
 
   // useEffect(() => {
   //   const names = addTarif.map((tarif) => ({
@@ -424,6 +472,41 @@ function EditRequestAirlineTarifCategory({
                   </div>
                 )}
               </div>
+
+              {/* <div className={classes.requestDataInfo_block}>
+                <div className={classes.requestDataInfo_title}>
+                  Географическая привязка
+                </div>
+                <div style={{ fontSize: 12, opacity: 0.55, margin: "4px 0 8px" }}>
+                  Тариф применяется к отелям, чей адрес совпадает с заданными
+                  уровнями. Заполняйте только нужные: страна / регион /
+                  республика / район / город.
+                </div>
+                {[
+                  { key: "country", title: "Страна" },
+                  { key: "region", title: "Регион" },
+                  { key: "republic", title: "Республика" },
+                  { key: "district", title: "Район" },
+                  { key: "city", title: "Город" },
+                ].map(({ key, title }) => (
+                  <div key={key} className={classes.requestDataInfo}>
+                    <div className={classes.requestDataInfo_title}>{title}</div>
+                    {isEditing ? (
+                      <input
+                        type="text"
+                        name={key}
+                        value={formData.geography?.[key] || ""}
+                        onChange={handleGeographyChange}
+                        placeholder={`Введите ${title.toLowerCase()}`}
+                      />
+                    ) : (
+                      <div className={classes.requestDataInfo_desc}>
+                        {formData.geography?.[key] || "—"}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div> */}
 
               {[
                 { key: "priceOneCategory", title: "Стоимость одноместного" },

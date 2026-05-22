@@ -24,6 +24,7 @@ function ExistRequestTransfer({
   accessMenu,
   setChooseRequestID,
   canChat = true,
+  canUpdate = true,
   openDeleteComponent,
   setRequestId,
 }) {
@@ -104,7 +105,7 @@ function ExistRequestTransfer({
             onClose={handleMenuClose}
             menuRef={menuRef}
             onEdit={handleGoToMap}
-            onDelete={handleCancelRequestFromMenu}
+            onDelete={canUpdate ? handleCancelRequestFromMenu : undefined}
             editLabel="Перейти на карту"
             deleteLabel="Отменить заявку"
             showEditIcon={false}

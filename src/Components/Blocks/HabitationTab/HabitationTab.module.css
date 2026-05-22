@@ -57,6 +57,24 @@
 
 .linkCol {
   flex-direction: column;
+  gap: 4px;
+}
+
+.deleteBtn {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.deleteBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
 .linkGroup {

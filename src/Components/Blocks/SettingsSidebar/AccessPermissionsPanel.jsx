@@ -9,8 +9,8 @@ export default function AccessPermissionsPanel({
   isEditing,
   type = "dispatcher",
   positionOptions = [],
-  positionIds = [],
-  setPositionIds,
+  positionAccessMenusByPosId = {},
+  setPositionAccessMenusByPosId,
 }) {
   const b = (v) => !!v;
 
@@ -68,7 +68,7 @@ export default function AccessPermissionsPanel({
         acceptDrivers: b(accessMenu?.organizationAcceptDrivers),
       },
     }),
-    [accessMenu]
+    [accessMenu],
   );
 
   const [state, setState] = useState(initial);
@@ -79,57 +79,132 @@ export default function AccessPermissionsPanel({
     if (stateRef) stateRef.current = state;
   }, [state, stateRef]);
 
-  const set = (section, key, value) =>
-    setState((s) => ({ ...s, [section]: { ...s[section], [key]: value } }));
+  const setAccess = (section, value) =>
+    setState((s) => ({
+      ...s,
+      [section]: Object.fromEntries(
+        Object.keys(s[section]).map((k) => [
+          k,
+          k === "access" ? value : value ? s[section][k] : false,
+        ]),
+      ),
+    }));
+
+  const setInteraction = (section, value) =>
+    setState((s) => ({
+      ...s,
+      [section]: {
+        ...s[section],
+        ...Object.fromEntries(
+          Object.keys(s[section])
+            .filter((k) => k !== "access")
+            .map((k) => [k, value]),
+        ),
+      },
+    }));
+
+  const interactChecked = (section) =>
+    Object.entries(state[section])
+      .filter(([k]) => k !== "access")
+      .every(([, v]) => !!v);
+
+  const allEnabled = Object.values(state).every((section) =>
+    Object.values(section).every((v) => v)
+  );
+
+  const enableAll = () =>
+    setState((s) =>
+      Object.fromEntries(
+        Object.keys(s).map((section) => [
+          section,
+          Object.fromEntries(Object.keys(s[section]).map((k) => [k, true])),
+        ])
+      )
+    );
+
+  const disableAll = () =>
+    setState((s) =>
+      Object.fromEntries(
+        Object.keys(s).map((section) => [
+          section,
+          Object.fromEntries(Object.keys(s[section]).map((k) => [k, false])),
+        ])
+      )
+    );
+
+  const positionsForSection = (field) =>
+    positionOptions.filter(
+      (opt) => !!positionAccessMenusByPosId[opt.value]?.[field],
+    );
+
+  const handleSectionPositionChange = (field, newValue) => {
+    const newIds = newValue.map((o) => o.value);
+    setPositionAccessMenusByPosId((prev) => {
+      const next = { ...prev };
+      Object.keys(next).forEach((id) => {
+        if (!newIds.includes(id)) {
+          const updated = { ...next[id], [field]: false };
+          if (
+            !updated.requestMenu &&
+            !updated.transferMenu &&
+            !updated.personalMenu
+          ) {
+            delete next[id];
+          } else {
+            next[id] = updated;
+          }
+        }
+      });
+      newIds.forEach((id) => {
+        next[id] = {
+          requestMenu: false,
+          transferMenu: false,
+          personalMenu: false,
+          ...next[id],
+          [field]: true,
+        };
+      });
+      return next;
+    });
+  };
 
   return (
     <div className={classes.accessPanel}>
-      {/* Должности - только для авиакомпаний */}
-      {type === "airline" && (
-        <SectionCard title="Должности">
-          <MultiSelectAutocomplete
-            isDisabled={!isEditing}
-            isMultiple={true}
-            dropdownWidth={"100%"}
-            label={"Выберите должности"}
-            options={positionOptions}
-            value={positionOptions.filter((option) =>
-              positionIds?.includes(option.value)
-            )}
-            onChange={(event, newValue) => {
-              setPositionIds(newValue.map((option) => option.value));
-            }}
-          />
-        </SectionCard>
+      {isEditing && (
+        <button className={classes.enableAllBtn} onClick={allEnabled ? disableAll : enableAll}>
+          {allEnabled ? "Выключить всё" : "Включить всё"}
+        </button>
       )}
-
       <div className={classes.accessGrid}>
         {/* Эскадрилья */}
         <SectionCard title="Эскадрилья">
           <RowSwitch
             label="Доступ к разделу"
             checked={state.squadron.access}
-            onChange={(v) => set("squadron", "access", v)}
+            onChange={(v) => setAccess("squadron", v)}
             disabled={!isEditing}
           />
           <RowSwitch
-            label="Создание заявки"
-            checked={state.squadron.create}
-            onChange={(v) => set("squadron", "create", v)}
+            label="Взаимодействие с разделом"
+            checked={interactChecked("squadron")}
+            onChange={(v) => setInteraction("squadron", v)}
             disabled={!isEditing || !state.squadron.access}
           />
-          <RowSwitch
-            label="Сообщение в чате заявки"
-            checked={state.squadron.chat}
-            onChange={(v) => set("squadron", "chat", v)}
-            disabled={!isEditing || !state.squadron.access}
-          />
-          <RowSwitch
-            label="Редактирование заявки"
-            checked={state.squadron.edit}
-            onChange={(v) => set("squadron", "edit", v)}
-            disabled={!isEditing || !state.squadron.access}
-          />
+          {type === "airline" && positionOptions.length > 0 && (
+            <div className={classes.sectionPositionSelect}>
+              <MultiSelectAutocomplete
+                isDisabled={!isEditing}
+                isMultiple={true}
+                dropdownWidth={"100%"}
+                label="Должности"
+                options={positionOptions}
+                value={positionsForSection("requestMenu")}
+                onChange={(e, newValue) =>
+                  handleSectionPositionChange("requestMenu", newValue)
+                }
+              />
+            </div>
+          )}
         </SectionCard>
 
         {/* Пассажиры */}
@@ -137,19 +212,13 @@ export default function AccessPermissionsPanel({
           <RowSwitch
             label="Доступ к разделу"
             checked={state.passengers.access}
-            onChange={(v) => set("passengers", "access", v)}
+            onChange={(v) => setAccess("passengers", v)}
             disabled={!isEditing}
           />
           <RowSwitch
-            label="Создание заявки"
-            checked={state.passengers.create}
-            onChange={(v) => set("passengers", "create", v)}
-            disabled={!isEditing || !state.passengers.access}
-          />
-          <RowSwitch
-            label="Редактирование заявки"
-            checked={state.passengers.edit}
-            onChange={(v) => set("passengers", "edit", v)}
+            label="Взаимодействие с разделом"
+            checked={interactChecked("passengers")}
+            onChange={(v) => setInteraction("passengers", v)}
             disabled={!isEditing || !state.passengers.access}
           />
         </SectionCard>
@@ -159,27 +228,30 @@ export default function AccessPermissionsPanel({
           <RowSwitch
             label="Доступ к разделу"
             checked={state.transfer.access}
-            onChange={(v) => set("transfer", "access", v)}
+            onChange={(v) => setAccess("transfer", v)}
             disabled={!isEditing}
           />
           <RowSwitch
-            label="Создание заявки"
-            checked={state.transfer.create}
-            onChange={(v) => set("transfer", "create", v)}
+            label="Взаимодействие с разделом"
+            checked={interactChecked("transfer")}
+            onChange={(v) => setInteraction("transfer", v)}
             disabled={!isEditing || !state.transfer.access}
           />
-          <RowSwitch
-            label="Сообщение в чате заявки"
-            checked={state.transfer.chat}
-            onChange={(v) => set("transfer", "chat", v)}
-            disabled={!isEditing || !state.transfer.access}
-          />
-          <RowSwitch
-            label="Редактирование заявки"
-            checked={state.transfer.edit}
-            onChange={(v) => set("transfer", "edit", v)}
-            disabled={!isEditing || !state.transfer.access}
-          />
+          {type === "airline" && positionOptions.length > 0 && (
+            <div className={classes.sectionPositionSelect}>
+              <MultiSelectAutocomplete
+                isDisabled={!isEditing}
+                isMultiple={true}
+                dropdownWidth={"100%"}
+                label="Должности"
+                options={positionOptions}
+                value={positionsForSection("transferMenu")}
+                onChange={(e, newValue) =>
+                  handleSectionPositionChange("transferMenu", newValue)
+                }
+              />
+            </div>
+          )}
         </SectionCard>
 
         {/* Автопарк - только для диспетчеров */}
@@ -188,31 +260,13 @@ export default function AccessPermissionsPanel({
             <RowSwitch
               label="Доступ к разделу"
               checked={state.organization.access}
-              onChange={(v) => set("organization", "access", v)}
+              onChange={(v) => setAccess("organization", v)}
               disabled={!isEditing}
             />
             <RowSwitch
-              label="Создание организаций"
-              checked={state.organization.create}
-              onChange={(v) => set("organization", "create", v)}
-              disabled={!isEditing || !state.organization.access}
-            />
-            <RowSwitch
-              label="Редактирование организаций"
-              checked={state.organization.edit}
-              onChange={(v) => set("organization", "edit", v)}
-              disabled={!isEditing || !state.organization.access}
-            />
-            <RowSwitch
-              label="Добавление водителей"
-              checked={state.organization.addDrivers}
-              onChange={(v) => set("organization", "addDrivers", v)}
-              disabled={!isEditing || !state.organization.access}
-            />
-            <RowSwitch
-              label="Приём водителей"
-              checked={state.organization.acceptDrivers}
-              onChange={(v) => set("organization", "acceptDrivers", v)}
+              label="Взаимодействие с разделом"
+              checked={interactChecked("organization")}
+              onChange={(v) => setInteraction("organization", v)}
               disabled={!isEditing || !state.organization.access}
             />
           </SectionCard>
@@ -223,19 +277,13 @@ export default function AccessPermissionsPanel({
           <RowSwitch
             label="Доступ к разделу"
             checked={state.users.access}
-            onChange={(v) => set("users", "access", v)}
+            onChange={(v) => setAccess("users", v)}
             disabled={!isEditing}
           />
           <RowSwitch
-            label="Добавление пользователей"
-            checked={state.users.add}
-            onChange={(v) => set("users", "add", v)}
-            disabled={!isEditing || !state.users.access}
-          />
-          <RowSwitch
-            label="Редактирование"
-            checked={state.users.edit}
-            onChange={(v) => set("users", "edit", v)}
+            label="Взаимодействие с разделом"
+            checked={interactChecked("users")}
+            onChange={(v) => setInteraction("users", v)}
             disabled={!isEditing || !state.users.access}
           />
         </SectionCard>
@@ -245,64 +293,64 @@ export default function AccessPermissionsPanel({
           <RowSwitch
             label="Доступ к разделу"
             checked={state.employees.access}
-            onChange={(v) => set("employees", "access", v)}
+            onChange={(v) => setAccess("employees", v)}
             disabled={!isEditing}
           />
           <RowSwitch
-            label="Добавление сотрудников"
-            checked={state.employees.add}
-            onChange={(v) => set("employees", "add", v)}
+            label="Взаимодействие с разделом"
+            checked={interactChecked("employees")}
+            onChange={(v) => setInteraction("employees", v)}
             disabled={!isEditing || !state.employees.access}
           />
-          <RowSwitch
-            label="Редактирование"
-            checked={state.employees.edit}
-            onChange={(v) => set("employees", "edit", v)}
-            disabled={!isEditing || !state.employees.access}
-          />
+          {type === "airline" && positionOptions.length > 0 && (
+            <div className={classes.sectionPositionSelect}>
+              <MultiSelectAutocomplete
+                isDisabled={!isEditing}
+                isMultiple={true}
+                dropdownWidth={"100%"}
+                label="Должности"
+                options={positionOptions}
+                value={positionsForSection("personalMenu")}
+                onChange={(e, newValue) =>
+                  handleSectionPositionChange("personalMenu", newValue)
+                }
+              />
+            </div>
+          )}
         </SectionCard>
 
         {/* Реестр договоров */}
-        <SectionCard title="Реестр договоров">
-          <RowSwitch
-            label="Доступ к разделу"
-            checked={state.contracts.access}
-            onChange={(v) => set("contracts", "access", v)}
-            disabled={!isEditing}
-          />
-          {type === "dispatcher" &&
-            <>
-              <RowSwitch
-                label="Создание договоров"
-                checked={state.contracts.create}
-                onChange={(v) => set("contracts", "create", v)}
-                disabled={!isEditing || !state.contracts.access}
-              />
-              <RowSwitch
-                label="Редактирование"
-                checked={state.contracts.edit}
-                onChange={(v) => set("contracts", "edit", v)}
-                disabled={!isEditing || !state.contracts.access}
-              />
-            </>}
-        </SectionCard>
+        {type === "dispatcher" && (
+          <SectionCard title="Реестр договоров">
+            <RowSwitch
+              label="Доступ к разделу"
+              checked={state.contracts.access}
+              onChange={(v) => setAccess("contracts", v)}
+              disabled={!isEditing}
+            />
+            <RowSwitch
+              label="Взаимодействие с разделом"
+              checked={interactChecked("contracts")}
+              onChange={(v) => setInteraction("contracts", v)}
+              disabled={!isEditing || !state.contracts.access}
+            />
+          </SectionCard>
+        )}
 
         {/* Аналитика */}
         <SectionCard title="Аналитика">
           <RowSwitch
             label="Доступ к разделу"
             checked={state.analytics.access}
-            onChange={(v) => set("analytics", "access", v)}
+            onChange={(v) => setAccess("analytics", v)}
             disabled={!isEditing}
           />
-          {/* {type === "airline" && (
-            <RowSwitch
-              label="Выгрузка аналитики"
-              checked={state.analytics.export}
-              onChange={(v) => set("analytics", "export", v)}
-              disabled={!isEditing || !state.analytics.access}
-            />
-          )} */}
+          {/* <RowSwitch
+            label="Взаимодействие с разделом"
+            checked={interactChecked("analytics")}
+            onChange={(v) => setInteraction("analytics", v)}
+            disabled={!isEditing || !state.analytics.access}
+          /> */}
         </SectionCard>
 
         {/* Об авиакомпании */}
@@ -310,13 +358,13 @@ export default function AccessPermissionsPanel({
           <RowSwitch
             label="Доступ к разделу"
             checked={state.aboutAirlines.access}
-            onChange={(v) => set("aboutAirlines", "access", v)}
+            onChange={(v) => setAccess("aboutAirlines", v)}
             disabled={!isEditing}
           />
           <RowSwitch
-            label="Редактирование"
-            checked={state.aboutAirlines.edit}
-            onChange={(v) => set("aboutAirlines", "edit", v)}
+            label="Взаимодействие с разделом"
+            checked={interactChecked("aboutAirlines")}
+            onChange={(v) => setInteraction("aboutAirlines", v)}
             disabled={!isEditing || !state.aboutAirlines.access}
           />
         </SectionCard>
@@ -326,13 +374,13 @@ export default function AccessPermissionsPanel({
           <RowSwitch
             label="Доступ к разделу"
             checked={state.reports.access}
-            onChange={(v) => set("reports", "access", v)}
+            onChange={(v) => setAccess("reports", v)}
             disabled={!isEditing}
           />
           <RowSwitch
-            label="Создание"
-            checked={state.reports.create}
-            onChange={(v) => set("reports", "create", v)}
+            label="Взаимодействие с разделом"
+            checked={interactChecked("reports")}
+            onChange={(v) => setInteraction("reports", v)}
             disabled={!isEditing || !state.reports.access}
           />
         </SectionCard>

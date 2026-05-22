@@ -24,6 +24,7 @@ export default function WaterSupplyTab({
   onStatusChanged,
   addNotification,
   token,
+  readOnly = false,
 }) {
   const people = useMemo(() => request?.waterService?.people ?? [], [request]);
   const ws = request?.waterService;
@@ -130,12 +131,12 @@ export default function WaterSupplyTab({
 
       <ServiceFooter
         statusText={statusText}
-        ctaLabel={!requestCancelled && canMarkDelivered ? "Вода доставлена" : undefined}
-        onCta={!requestCancelled && canMarkDelivered ? () => mutate() : undefined}
+        ctaLabel={!readOnly && !requestCancelled && canMarkDelivered ? "Вода доставлена" : undefined}
+        onCta={!readOnly && !requestCancelled && canMarkDelivered ? () => mutate() : undefined}
         disabled={loading || !canMarkDelivered}
-        earlyCompleteLabel={canEarlyComplete ? "Завершить" : undefined}
+        earlyCompleteLabel={!readOnly && canEarlyComplete ? "Завершить" : undefined}
         onEarlyCompleteClick={
-          canEarlyComplete ? () => setShowEarlyCompleteModal(true) : undefined
+          !readOnly && canEarlyComplete ? () => setShowEarlyCompleteModal(true) : undefined
         }
         earlyCompleteDisabled={completingEarly}
         history={[

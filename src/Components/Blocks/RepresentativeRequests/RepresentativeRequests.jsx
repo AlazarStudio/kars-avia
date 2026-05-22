@@ -2,15 +2,11 @@ import React, { useEffect, useMemo, useState } from "react";
 import classes from "./RepresentativeRequests.module.css";
 import Filter from "../Filter/Filter";
 import CreateRepresentativeRequest from "../CreateRepresentativeRequest/CreateRepresentativeRequest";
-import { requestsReserve } from "../../../requests";
 import Header from "../Header/Header";
-import InfoTableDataReserve from "../InfoTableDataReserve/InfoTableDataReserve";
 import {
   GET_AIRLINE,
   GET_HOTEL_CITY,
-  GET_HOTEL_TARIFS,
   GET_PASSENGER_REQUESTS,
-  GET_RESERVE_REQUESTS,
   getCookie,
   PASSENGER_REQUEST_CREATED_SUBSCRIPTION,
   PASSENGER_REQUEST_UPDATED_SUBSCRIPTION,
@@ -20,11 +16,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 import ReactPaginate from "react-paginate";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
-import { fullNotifyTime, notifyTime, statusMapping } from "../../../roles";
-import Notification from "../../Notification/Notification";
+import { statusMapping } from "../../../roles";
 import { useDebounce } from "../../../hooks/useDebounce";
 import Button from "../../Standart/Button/Button";
 import InfoTableRepresentativeData from "../InfoTableRepresentativeData/InfoTableRepresentativeData";
+import { canAccessMenu } from "../../../utils/access";
 
 // Основной компонент страницы, отображающий список заявок с возможностью фильтрации, поиска и пагинации
 function RepresentativeRequests({
@@ -48,8 +44,8 @@ function RepresentativeRequests({
   let currentPageReserve = localPage
     ? parseInt(localPage) - 1
     : pageNumberReserve
-    ? parseInt(pageNumberReserve) - 1
-    : 0;
+      ? parseInt(pageNumberReserve) - 1
+      : 0;
 
   // Состояние для фильтрации по статусу
   const [statusFilter, setStatusFilter] = useState(() => {
@@ -114,17 +110,6 @@ function RepresentativeRequests({
   const [newRequests, setNewRequests] = useState([]);
   const [requests, setRequests] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
-
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
 
   // Сохранение текущей страницы в localStorage
   useEffect(() => {
@@ -310,6 +295,7 @@ function RepresentativeRequests({
 
   const validCurrentPage =
     currentPageReserve < totalPages ? currentPageReserve : 0;
+
   return (
     <>
       <div className={classes.section}>
@@ -339,9 +325,9 @@ function RepresentativeRequests({
             value={searchQuery}
             onChange={handleSearch}
           />
-          {!user?.airlineId || accessMenu.requestCreate ? (
+          {canAccessMenu(accessMenu, "reserveCreate", user) && (
             <Button onClick={toggleCreateSidebar}>Создать заявку</Button>
-          ) : null}
+          )}
         </div>
 
         {loading && <MUILoader fullHeight={"75vh"} />}
@@ -380,23 +366,7 @@ function RepresentativeRequests({
           show={showCreateSidebar}
           onClose={toggleCreateSidebar}
           user={user}
-          addNotification={addNotification}
         />
-
-        {notifications.map((n, index) => (
-          <Notification
-            key={n.id}
-            text={n.text}
-            status={n.status}
-            index={index}
-            time={notifyTime}
-            onClose={() => {
-              setNotifications((prev) =>
-                prev.filter((notif) => notif.id !== n.id)
-              );
-            }}
-          />
-        ))}
       </div>
     </>
   );

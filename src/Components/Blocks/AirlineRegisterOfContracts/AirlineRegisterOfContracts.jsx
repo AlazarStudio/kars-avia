@@ -12,6 +12,8 @@ import {
   GET_ALL_COMPANIES,
   GET_HOTELS_RELAY,
   GET_CITIES,
+  ARCHIVE_AIRLINE_CONTRACT,
+  RESTORE_AIRLINE_CONTRACT,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 
@@ -46,6 +48,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
   const [searchTarif, setSearchTarif] = useState("");
   const debouncedSearch = useDebounce(searchTarif, 500);
   const [activeTab, setActiveTab] = useState("airlines"); // "contracts" | "registers"
+  const [archived, setArchived] = useState(false); // false — активные, true — архив
 
   const [pageInfo, setPageInfo] = useState({
     skip: currentPageRelay,
@@ -81,6 +84,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
       },
       filter: {
         companyId: selectedCompany?.id,
+        ...(archived ? { archived: true } : {}),
         dateFrom: dateRange.startDate?.toISOString(),
         dateTo: dateRange.endDate?.toISOString(),
         applicationType: selectedType,
@@ -156,6 +160,13 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
       },
     },
   });
+
+  const [archiveAirlineContract] = useMutation(ARCHIVE_AIRLINE_CONTRACT, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const [restoreAirlineContract] = useMutation(RESTORE_AIRLINE_CONTRACT, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
   // const [deleteHotelContract] = useMutation(DELETE_HOTEL_CONTRACT, {
   //   context: {
   //     headers: {
@@ -205,8 +216,17 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
     setShowAddTarifCategory(!showAddTarifCategory);
   };
 
+  const [contractEditMode, setContractEditMode] = useState(false);
+
+  const toggleViewTarifs = (tarif) => {
+    setSelectedTarif(tarif);
+    setContractEditMode(false);
+    setEditShowAddTarif(true);
+  };
+
   const toggleEditTarifs = (tarif) => {
     setSelectedTarif(tarif);
+    setContractEditMode(true);
     setEditShowAddTarif(true);
   };
 
@@ -224,7 +244,9 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
   useEffect(() => {
     // сбрасываем на первую страницу
     setPageInfo((prev) => ({ ...prev, skip: 0 }));
-    navigate("?page=1");
+    // replace, чтобы не засорять history (иначе кнопка «назад» с карточки
+    // авиакомпании требует двух нажатий).
+    navigate("?page=1", { replace: true });
 
     refetch({
       pagination: {
@@ -233,6 +255,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
       },
       filter: {
         companyId: selectedCompany?.id,
+        ...(archived ? { archived: true } : {}),
         dateFrom: dateRange.startDate?.toISOString(),
         dateTo: dateRange.endDate?.toISOString(),
         applicationType: selectedType,
@@ -240,7 +263,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
         search: debouncedSearch,
       },
     }).catch(console.error);
-  }, [debouncedSearch, dateRange, selectedCompany]);
+  }, [debouncedSearch, dateRange, selectedCompany, archived]);
 
   const openDeleteComponent = (index, tarifID) => {
     setShowDelete(true);
@@ -296,6 +319,32 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
     // setEditShowAddTarif(true);
   };
 
+  // Архивирование договора (только для истёкших)
+  const archiveContract = async (contract) => {
+    try {
+      await archiveAirlineContract({ variables: { id: contract.id } });
+      setAddTarif((prev) => prev.filter((x) => x.id !== contract.id));
+      await refetch();
+      addNotification?.("Договор перенесён в архив.", "success");
+    } catch (e) {
+      console.error(e);
+      addNotification?.("Не удалось архивировать договор.", "error");
+    }
+  };
+
+  // Восстановление договора из архива
+  const restoreContract = async (contract) => {
+    try {
+      await restoreAirlineContract({ variables: { id: contract.id } });
+      setAddTarif((prev) => prev.filter((x) => x.id !== contract.id));
+      await refetch();
+      addNotification?.("Договор восстановлен из архива.", "success");
+    } catch (e) {
+      console.error(e);
+      addNotification?.("Не удалось восстановить договор.", "error");
+    }
+  };
+
   const openDeleteComponentCategory = (category, tarif) => {
     setShowDelete(true);
     setDeleteIndex({
@@ -323,7 +372,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
   const handlePageClick = (event) => {
     const selectedPage = event.selected;
     setPageInfo((prev) => ({ ...prev, skip: selectedPage * 50 }));
-    navigate(`?page=${selectedPage + 1}`);
+    navigate(`?page=${selectedPage + 1}`, { replace: true });
   };
 
   const validCurrentPage = urlPage < totalPages ? urlPage : 0;
@@ -331,9 +380,19 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
   return (
     <div className={classes.tariffsWrapper}>
       <div className={classes.section_searchAndFilter}>
+        <MUIAutocomplete
+          dropdownWidth={"140px"}
+          label={"Статус"}
+          hideLabelOnFocus={false}
+          options={["Активные", "Архив"]}
+          value={archived ? "Архив" : "Активные"}
+          onChange={(event, newValue) => {
+            setArchived(newValue === "Архив");
+          }}
+        />
 
         <DateRangeModalSelector
-          width={"170px"}
+          width={"140px"}
           initialRange={dateRange}
           onChange={(start, end) =>
             setDateRange({ startDate: start, endDate: end })
@@ -341,7 +400,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
         />
 
         <MUIAutocomplete
-          dropdownWidth={"170px"}
+          dropdownWidth={"140px"}
           hideLabelOnFocus={false}
           label={"Вид приложения"}
           options={["Все", ...action]}
@@ -355,7 +414,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
         />
 
         <MUIAutocomplete
-          dropdownWidth={"170px"}
+          dropdownWidth={"140px"}
           hideLabelOnFocus={false}
           label={"ГК Карс"}
           options={["Все компании", ...companies?.map((item) => item.name)]}
@@ -378,7 +437,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
           onChange={handleSearchTarif}
         />
 
-        {canCreate && (
+        {canCreate && !archived && (
           <Filter
             toggleSidebar={toggleTarifsCategory}
             handleChange={""}
@@ -396,14 +455,18 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
             id={id}
             user={user}
             pageInfo={pageInfo}
-            activeTab={activeTab}
-            toggleRequestSidebar={toggleEditTarifs}
+            activeTab={"airlines"}
+            toggleRequestSidebar={toggleViewTarifs}
+            onEditRow={toggleEditTarifs}
             toggleEditTarifsCategory={toggleEditTarifsCategory}
             requests={addTarif}
             openDeleteComponent={openDeleteComponent}
             openDeleteComponentCategory={openDeleteComponentCategory}
             openDeleteContract={openDeleteContract}
             canEdit={canEdit}
+            archived={archived}
+            onArchiveContract={archiveContract}
+            onRestoreContract={restoreContract}
           />
 
           {totalPages > 0 && (
@@ -426,43 +489,42 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
         </>
       )}
 
-      {activeTab === "airlines" ? (
-        <>
-          {canCreate && (
-            <CreateRequestContract
-              user={user}
-              id={id}
-              airlinesData={airlinesData}
-              companiesData={companiesData}
-              show={showAddTarifCategory}
-              onClose={toggleTarifsCategory}
-              addTarif={addTarif}
-              setAddTarif={setAddTarif}
-              addNotification={addNotification}
-            />
-          )}
-          <EditRequestAirlineContract
-            user={user}
-            id={id}
-            canEdit={canEdit}
-            activeFilterTab={"airlines"}
-            setAddTarif={setAddTarif}
-            show={showEditAddTarif}
-            onClose={() => setEditShowAddTarif(false)}
-            addTarif={addTarif}
-            tarif={selectedTarif}
-            addNotification={addNotification}
-            onRequestDelete={
-              canEdit
-                ? () => {
-                    const contract = addTarif.find((x) => x.id === selectedTarif);
-                    if (contract) openDeleteContractFromMenu(contract);
-                  }
-                : undefined
+
+      {canCreate && (
+        <CreateRequestContract
+          user={user}
+          id={id}
+          airlinesData={airlinesData}
+          companiesData={companiesData}
+          show={showAddTarifCategory}
+          onClose={toggleTarifsCategory}
+          addTarif={addTarif}
+          setAddTarif={setAddTarif}
+          addNotification={addNotification}
+        />
+      )}
+      <EditRequestAirlineContract
+        user={user}
+        id={id}
+        canEdit={canEdit}
+        activeFilterTab={"airlines"}
+        setAddTarif={setAddTarif}
+        show={showEditAddTarif}
+        onClose={() => setEditShowAddTarif(false)}
+        addTarif={addTarif}
+        tarif={selectedTarif}
+        addNotification={addNotification}
+        initialEditMode={contractEditMode}
+        onRequestDelete={
+          canEdit
+            ? () => {
+              const contract = addTarif.find((x) => x.id === selectedTarif);
+              if (contract) openDeleteContractFromMenu(contract);
             }
-          />
-        </>
-      ) : null}
+            : undefined
+        }
+      />
+
 
       {showDelete && (
         <DeleteComponent
@@ -471,10 +533,10 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
           }}
           close={closeDeleteComponent}
           title={`Вы действительно хотите удалить ${deleteIndex.type === "deleteTarif"
-              ? "тариф"
-              : deleteIndex.type === "deleteCategory"
-                ? "категорию"
-                : "договор"
+            ? "тариф"
+            : deleteIndex.type === "deleteCategory"
+              ? "категорию"
+              : "договор"
             }?`}
         />
       )}

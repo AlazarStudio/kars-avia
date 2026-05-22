@@ -20,15 +20,18 @@ import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import { useNavigate } from "react-router-dom";
 import ExistRequestProfile from "../ExistRequestProfile/ExistRequestProfile";
 import Support from "../Support/Support";
-import { fullNotifyTime, notifyTime, roles } from "../../../roles";
+import { roles } from "../../../roles";
 import ExistRequest from "../ExistRequest/ExistRequest";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
-import Notification from "../../Notification/Notification";
 import MUILoader from "../MUILoader/MUILoader";
 import NotificationsSidebar from "../NotificationsSidebar/NotificationsSidebar";
 import ProfileSidebar from "../ProfileSidebar/ProfileSidebar";
 import NotifyIcon from "../../../shared/icons/NotifyIcon";
 import { authService } from "../../../services/authService";
+import { useScriptRunner } from "../../../contexts/ScriptRunnerContext";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
+import { useBrowserNotifications } from "../../../hooks/useBrowserNotifications";
 
 function Header({ children, isExternalUser = false }) {
   const token = authService.getAccessToken();
@@ -49,6 +52,11 @@ function Header({ children, isExternalUser = false }) {
   const [showChooseHotel, setShowChooseHotel] = useState(false);
   const [showProfileSidebar, setShowProfileSidebar] = useState(false);
   const [profileEditMode, setProfileEditMode] = useState(null);
+  const { isAvailable: isScriptRunnerAvailable, openScriptRunner } =
+    useScriptRunner();
+  const { confirm } = useDialog();
+  const { success, error: notifyError } = useToast();
+  const { notify: browserNotify } = useBrowserNotifications();
 
   const toggleRequestSidebar = () => {
     setShowRequestSidebar(!showRequestSidebar);
@@ -147,7 +155,12 @@ function Header({ children, isExternalUser = false }) {
 
   const { data: notifySubscriptionData } = useSubscription(
     NOTIFICATIONS_SUBSCRIPTION,
-    { skip: isExternalUser },
+    {
+      skip: isExternalUser,
+      onData: ({ data }) => {
+        browserNotify(data?.data?.notification);
+      },
+    },
   );
 
   const { data: tsChatData } = useQuery(GET_USER_SUPPORT_CHAT, {
@@ -160,7 +173,7 @@ function Header({ children, isExternalUser = false }) {
       userId: user?.userId,
     },
     skip:
-      isExternalUser || (userData?.role !== roles.superAdmin ? false : true),
+      isExternalUser || userData?.dispatcher === true,
   });
 
   const { data: unreadMessagesCount, refetch: unreadRefetch } = useQuery(
@@ -196,22 +209,27 @@ function Header({ children, isExternalUser = false }) {
   );
 
   const logout = async () => {
-    const result = confirm("Вы уверены что хотите выйти?");
-    if (!result) return; // ← если отмена — просто выходим, НИЧЕГО не шлём на бэк
-  
-    const { data } = await logoutMutation({
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
+    const isConfirmed = await confirm("Вы уверены что хотите выйти?");
+    if (!isConfirmed) return;
+
+    try {
+      const { data } = await logoutMutation({
+        context: {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
         },
-      },
-    });
-  
-    if (data) {
-      authService.clear();
-      localStorage.removeItem("isAirline");
-      navigate("/");
-      window.location.reload();
+      });
+
+      if (data) {
+        authService.clear();
+        localStorage.removeItem("isAirline");
+        navigate("/");
+        window.location.reload();
+      }
+    } catch (err) {
+      console.error(err);
+      notifyError("Не удалось выйти из аккаунта.");
     }
   };
 
@@ -265,17 +283,6 @@ function Header({ children, isExternalUser = false }) {
     setIsNotificationsFullyVisible(false);
   };
 
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
-
   const handleUpdateUser = (updatedUser) => {
     setUserData(updatedUser); // Обновляем данные пользователя в родительском компоненте
   };
@@ -291,15 +298,15 @@ function Header({ children, isExternalUser = false }) {
 
   const handleCancelRequest = async (id) => {
     try {
-      // Отправка запроса с правильным ID заявки
-      const response = await cancelRequestMutation({
+      await cancelRequestMutation({
         variables: {
           cancelRequestId: id,
         },
       });
-      // console.log("Заявка успешно отменена", response);
+      success("Заявка отменена.");
     } catch (error) {
       console.error("Ошибка при отмене заявки:", JSON.stringify(error));
+      notifyError("Не удалось отменить заявку.");
     }
   };
 
@@ -334,7 +341,7 @@ function Header({ children, isExternalUser = false }) {
 
         {!loading && !error && !isExternalUser && (
           <div className={classes.section_top_elems}>
-            {userData?.role !== roles.superAdmin ? (
+            {userData?.dispatcher !== true ? (
               <div
                 className={classes.section_top_elems_support}
                 onClick={toggleSupportSidebar}
@@ -360,6 +367,19 @@ function Header({ children, isExternalUser = false }) {
                 </svg>
               </div>
             ) : null}
+            {isScriptRunnerAvailable && (
+              <div
+                className={classes.section_top_elems_notify}
+                onClick={openScriptRunner}
+                title="Script Runner"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#545873" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="16 18 22 12 16 6" />
+                  <polyline points="8 6 2 12 8 18" />
+                </svg>
+              </div>
+            )}
+
             <div
               className={classes.section_top_elems_notify}
               onClick={toggleNotifications}
@@ -418,21 +438,6 @@ function Header({ children, isExternalUser = false }) {
         )}
       </div>
 
-      {notifications.map((n, index) => (
-        <Notification
-          key={n.id}
-          text={n.text}
-          status={n.status}
-          index={index}
-          time={notifyTime}
-          onClose={() => {
-            setNotifications((prev) =>
-              prev.filter((notif) => notif.id !== n.id),
-            );
-          }}
-        />
-      ))}
-
       {/* {isNotificationsFullyVisible && (
         <div
           className={`${classes.notify_dropdown} ${
@@ -485,11 +490,10 @@ function Header({ children, isExternalUser = false }) {
         updateUser={handleUpdateUser}
         openDeleteComponent={null}
         deleteComponentRef={null}
-        addNotification={addNotification}
         mode={profileEditMode}
       />
 
-      {data?.user?.role !== roles.superAdmin && showSupportSidebar ? (
+      {data?.user?.dispatcher !== true && showSupportSidebar ? (
         <Support
           show={showSupportSidebar}
           onClose={toggleSupportSidebar}

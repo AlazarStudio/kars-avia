@@ -11,6 +11,7 @@ import UpdatesList from "../../Blocks/UpdatesList/UpdatesList";
 import RegisterOfContracts from "../../Blocks/RegisterOfContracts/RegisterOfContracts";
 import Analytics from "../../Pages/AnalyticsForAvia/Analytics/Analytics";
 import RepresentativeRequests from "../../Blocks/RepresentativeRequests/RepresentativeRequests";
+import FapV2 from "../../Pages/FapV2/FapV2";
 
 const RepresentativeAdminContent = ({ user }) => {
   const { id, hotelID, airlineID } = useParams();
@@ -20,6 +21,7 @@ const RepresentativeAdminContent = ({ user }) => {
       {(id === "representativeRequests" || (!id && !hotelID && !airlineID)) && (
         <RepresentativeRequests user={user} />
       )}
+      {id === "fapv2" && <FapV2 user={user} />}
       {id === "representativeCompany" && <RepresentativeAirlineCompany_tabComponent user={user} id={user?.airlineId} />}
       {id === "airlines" && <AirlinesList user={user} representative={true}/>}
       {id === "reports" && <Reports user={user} />}

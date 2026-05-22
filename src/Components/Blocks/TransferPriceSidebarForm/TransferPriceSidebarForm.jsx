@@ -6,6 +6,7 @@ import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu.jsx";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import Button from "../../Standart/Button/Button.jsx";
 import { createEmptyTransferPriceInput, DEFAULT_TRANSFER_PRICES } from "../../../utils/transferPrices.js";
+import { useDialog } from "../../../contexts/DialogContext";
 
 function TransferPriceSidebarForm({
   show,
@@ -16,7 +17,9 @@ function TransferPriceSidebarForm({
   cities = [],
   onSubmit,
   onDelete,
+  initialEditMode = false,
 }) {
+  const { confirm, showAlert, isDialogOpen } = useDialog();
   const sidebarRef = useRef(null);
   const menuRef = useRef(null);
   const [formData, setFormData] = useState(createEmptyTransferPriceInput());
@@ -44,9 +47,9 @@ function TransferPriceSidebarForm({
   useEffect(() => {
     if (show) {
       setFormData(getInitialFormData());
+      setIsEdited(false);
       if (isEditMode) {
-        setIsEditing(false);
-        setIsEdited(false);
+        setIsEditing(initialEditMode);
       }
     }
   }, [show, isEditMode, getInitialFormData]);
@@ -56,15 +59,25 @@ function TransferPriceSidebarForm({
     setIsEdited(false);
   }, [getInitialFormData]);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     setAnchorEl(null);
-    if (isEditMode && isEdited) {
-      if (!window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) return;
-      resetForm();
+    if (!isEdited) {
+      onClose();
+      if (isEditMode) setIsEditing(false);
+      return;
     }
-    onClose();
-    if (isEditMode) setIsEditing(false);
-  }, [isEditMode, isEdited, onClose, resetForm]);
+
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
+      resetForm();
+      onClose();
+      if (isEditMode) setIsEditing(false);
+    }
+  }, [confirm, isDialogOpen, isEdited, isEditMode, onClose, resetForm]);
 
   const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -86,16 +99,22 @@ function TransferPriceSidebarForm({
 
   useEffect(() => {
     const handleClickOutside = (e) => {
+      if (isDialogOpen) return;
+      if (e.target.closest(".MuiSnackbar-root")) return;
       if (anchorEl && menuRef.current?.contains(e.target)) return;
       if (sidebarRef.current?.contains(e.target)) return;
       closeButton();
     };
-    if (show) document.addEventListener("mousedown", handleClickOutside);
+    if (show) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton, anchorEl]);
+  }, [show, closeButton, anchorEl, isDialogOpen]);
 
   const updatePrice = (seatKey, routeKey, value) => {
-    if (isEditMode) setIsEdited(true);
+    setIsEdited(true);
     setFormData((prev) => ({
       ...prev,
       prices: {
@@ -121,12 +140,17 @@ function TransferPriceSidebarForm({
 
   const handleSubmit = (e) => {
     e?.preventDefault?.();
+    if (isEditMode && !isEditing) return;
+
+    if (!formData.name?.trim()) {
+      showAlert("Пожалуйста, укажите название договора.");
+      return;
+    }
+
     if (isEditMode) {
-      if (isEditing) {
-        onSubmit(formData);
-        onClose();
-        setIsEditing(false);
-      }
+      onSubmit(formData);
+      onClose();
+      setIsEditing(false);
     } else {
       onSubmit(formData);
       onClose();
@@ -177,7 +201,7 @@ function TransferPriceSidebarForm({
                   type="text"
                   value={formData.name ?? ''}
                   onChange={(e) => {
-                    if (isEditMode) setIsEdited(true);
+                    setIsEdited(true);
                     setFormData((prev) => ({ ...prev, name: e.target.value }));
                   }}
                   placeholder="Введите название договора"
@@ -222,7 +246,7 @@ function TransferPriceSidebarForm({
                       options={airportOptions}
                       value={selectedAirports}
                       onChange={(_, newValue) => {
-                        if (isEditMode) setIsEdited(true);
+                        setIsEdited(true);
                         setFormData((prev) => ({
                           ...prev,
                           airportIds: (newValue || []).map((o) => o.id),
@@ -259,7 +283,7 @@ function TransferPriceSidebarForm({
                       options={cityOptions}
                       value={selectedCities}
                       onChange={(_, newValue) => {
-                        if (isEditMode) setIsEdited(true);
+                        setIsEdited(true);
                         setFormData((prev) => ({
                           ...prev,
                           cityIds: (newValue || []).map((o) => o.id),

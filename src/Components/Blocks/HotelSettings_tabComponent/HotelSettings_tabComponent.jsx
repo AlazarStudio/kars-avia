@@ -16,13 +16,14 @@ import {
   GET_AIRPORTS_RELAY,
   REORDER_GALLERY,
 } from "../../../../graphQL_requests.js";
-import { fullNotifyTime, notifyTime, roles } from "../../../roles.js";
+import { roles } from "../../../roles.js";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import { useNavigate } from "react-router-dom";
 import Logs from "../LogsHistory/Logs.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
-import Notification from "../../Notification/Notification.jsx";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 import TextEditor from "../TextEditor/TextEditor.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import { useWindowSize } from "../../../hooks/useWindowSize.jsx";
@@ -38,6 +39,8 @@ function HotelSettings_tabComponent({ id }) {
   // const [userRole, setUserRole] = useState();
   const token = getCookie("token");
   const user = decodeJWT(token);
+  const { showAlert } = useDialog();
+  const { success, error: notifyError } = useToast();
 
   const navigate = useNavigate();
 
@@ -171,22 +174,12 @@ function HotelSettings_tabComponent({ id }) {
   // console.log(dataSubscriptionUpd)
 
   const [isLoading, setIsLoading] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
 
   const handleEditClick = async () => {
     if (isEditing) {
       setIsLoading(true);
       try {
-        const response = await updateHotel({
+        await updateHotel({
           variables: {
             updateHotelId: hotel.id,
             input: {
@@ -216,6 +209,15 @@ function HotelSettings_tabComponent({ id }) {
                 ogrn: hotel.information?.ogrn,
                 rs: hotel.information?.rs,
               },
+              // location: {
+              //   country: hotel.location?.country || null,
+              //   region: hotel.location?.region || null,
+              //   republic: hotel.location?.republic || null,
+              //   district: hotel.location?.district || null,
+              //   city: hotel.location?.city || null,
+              //   address: hotel.location?.address || null,
+              // },
+              breakfastIncluded: !!hotel.breakfastIncluded,
               breakfast: {
                 start: hotel.breakfast.start,
                 end: hotel.breakfast.end,
@@ -234,16 +236,13 @@ function HotelSettings_tabComponent({ id }) {
           },
         });
 
-        addNotification("Редактирование гостиницы прошло успешно.", "success");
-        refetch()
-        // console.log(response);
-
-        // alert('Данные успешно сохранены');
+        success("Редактирование гостиницы прошло успешно.");
+        refetch();
       } catch (err) {
         console.error("Произошла ошибка при сохранении данных", err);
+        notifyError("Произошла ошибка при сохранении данных");
       } finally {
         setIsLoading(false);
-        // addNotification("Редактирование гостиницы прошло успешно.", "success");
       }
     }
     setIsEditing(!isEditing);
@@ -252,10 +251,11 @@ function HotelSettings_tabComponent({ id }) {
   const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
+    if (!file) return;
     const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
     if (file.size > maxSizeInBytes) {
-      alert("Размер файла не должен превышать 8 МБ!");
+      showAlert("Размер файла не должен превышать 8 МБ!");
       setHotel((prevState) => ({
         ...prevState,
         images: [`${data.hotel.images[0]}`],
@@ -266,14 +266,12 @@ function HotelSettings_tabComponent({ id }) {
       return;
     }
 
-    if (file) {
-      setNewImage(file); // Сохраняем объект файла
-      const imageUrl = URL.createObjectURL(file); // Создаем URL для отображения
-      setHotel((prevState) => ({
-        ...prevState,
-        images: [imageUrl], // Обновляем URL изображения для отображения
-      }));
-    }
+    setNewImage(file); // Сохраняем объект файла
+    const imageUrl = URL.createObjectURL(file); // Создаем URL для отображения
+    setHotel((prevState) => ({
+      ...prevState,
+      images: [imageUrl], // Обновляем URL изображения для отображения
+    }));
   };
 
   const fileInputRefGallery = useRef(null);
@@ -309,10 +307,10 @@ function HotelSettings_tabComponent({ id }) {
       setHotel((prev) => ({ ...prev, gallery: keepArray }));
       setImagesToDelete([]);
       setShowDeleteGallery(false);
-      addNotification("Изображения удалены.", "success");
+      success("Изображения удалены.");
     } catch (err) {
       console.error("Ошибка при удалении изображений галереи", err);
-      addNotification("Не удалось удалить изображения.", "error");
+      notifyError("Не удалось удалить изображения.");
     }
   };
 
@@ -363,6 +361,17 @@ function HotelSettings_tabComponent({ id }) {
         };
       }
     });
+  };
+
+  const handleLocationChange = (e) => {
+    const { name, value } = e.target;
+    setHotel((prevHotel) => ({
+      ...prevHotel,
+      location: {
+        ...(prevHotel.location || {}),
+        [name]: value,
+      },
+    }));
   };
 
   const openDeleteComponent = () => {
@@ -992,6 +1001,18 @@ function HotelSettings_tabComponent({ id }) {
                   disabled={!isEditing}
                 />
                 <MUISwitch
+                  label="Завтрак включён в стоимость"
+                  checked={!!hotel.breakfastIncluded}
+                  onChange={(e) => {
+                    setHotel((prevHotel) => ({
+                      ...prevHotel,
+                      breakfastIncluded: e.target.checked,
+                    }));
+                  }}
+                  width={"350px"}
+                  disabled={!isEditing}
+                />
+                <MUISwitch
                   label="Самостоятельное размещение"
                   checked={hotel.access}
                   onChange={(e) => {
@@ -1100,10 +1121,19 @@ function HotelSettings_tabComponent({ id }) {
                     ? classes.hotelAbout_info__contacts___airline
                     : classes.hotelAbout_info__contacts
                 }
-                style={
-                  menuOpen && width <= 1650 ? { flexDirection: "column" } : {}
-                }
+                style={{ flexDirection: "column", gap: 40 }}
               >
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    gap: 80,
+                    width: "100%",
+                    ...(menuOpen && width <= 1650
+                      ? { flexDirection: "column" }
+                      : {}),
+                  }}
+                >
                 <div
                   className={classes.hotelAbout_info_block}
                   style={menuOpen ? { width: "70%" } : {}}
@@ -1245,6 +1275,69 @@ function HotelSettings_tabComponent({ id }) {
                     />
                   </div> */}
                 </div>
+                </div>
+                {/* <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 14,
+                    width: "100%",
+                  }}
+                >
+                  <div className={classes.hotelAbout_info_label}>
+                    Географическая привязка
+                  </div>
+                  <div style={{ fontSize: 13, opacity: 0.55, maxWidth: 620 }}>
+                    Используется для подбора тарифов авиакомпаний по адресу
+                    отеля. Заполняйте только нужные уровни: страна / регион /
+                    республика / район / город.
+                  </div>
+                  <div
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns:
+                        "repeat(auto-fill, minmax(260px, 1fr))",
+                      gap: "16px 40px",
+                      maxWidth: 960,
+                    }}
+                  >
+                    {[
+                      { key: "country", title: "Страна" },
+                      { key: "region", title: "Регион / Край" },
+                      { key: "republic", title: "Республика" },
+                      { key: "district", title: "Район" },
+                      { key: "city", title: "Город" },
+                      { key: "address", title: "Улица" },
+                    ].map(({ key, title }) => (
+                      <div
+                        key={key}
+                        style={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 6,
+                        }}
+                      >
+                        <label
+                          style={{
+                            fontFamily: "Nunito Sans",
+                            fontSize: 14,
+                            color: "#545873",
+                          }}
+                        >
+                          {title}
+                        </label>
+                        <input
+                          type="text"
+                          name={key}
+                          value={hotel.location?.[key] || ""}
+                          onChange={handleLocationChange}
+                          disabled={!isEditing}
+                          style={{ width: "100%", boxSizing: "border-box" }}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div> */}
               </div>
             )}
           </div>
@@ -1257,20 +1350,6 @@ function HotelSettings_tabComponent({ id }) {
             onClose={toggleLogsSidebar}
             name={hotel?.name}
           />
-          {notifications.map((n, index) => (
-            <Notification
-              key={n.id}
-              text={n.text}
-              status={n.status}
-              index={index}
-              time={notifyTime}
-              onClose={() => {
-                setNotifications((prev) =>
-                  prev.filter((notif) => notif.id !== n.id)
-                );
-              }}
-            />
-          ))}
           {showDelete && (
             <DeleteComponent
               remove={handleDeleteHotel}

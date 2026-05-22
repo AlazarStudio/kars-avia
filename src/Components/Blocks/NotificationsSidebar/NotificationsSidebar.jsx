@@ -116,7 +116,7 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
     },
   });
 
-  // Синхронизация с кэшем Apollo (первая страница, refetch, merge после fetchMore)
+  // Синхронизация с кэшем Apollo — только когда меняются данные
   useEffect(() => {
     const arr = data?.getAllNotifications?.notifications || [];
     setItems(arr);
@@ -124,7 +124,7 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
     setTotalPages(tp);
 
     if (typeof tp === "number") {
-      setHasMore(currentPage + 1 < tp);
+      setHasMore(1 < tp);
     } else {
       const tc = data?.getAllNotifications?.totalCount;
       if (typeof tc === "number") {
@@ -134,29 +134,13 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
       }
     }
     lastLenRef.current = arr.length;
-  }, [data, currentPage]);
+  }, [data]);
 
-  // При раскрытии панели — обновить список с начала
-  useEffect(() => {
-    if (show) {
-      setCurrentPage(0);
-      setHasMore(true);
-      refetch({
-        pagination: {
-          skip: 0,
-          take: TAKE,
-          ...(selectedType ? { type: selectedType } : {}),
-        },
-      });
-    }
-  }, [show, refetch, selectedType]);
-
-  // Переключение вкладок фильтрует на бэкенде
+  // Открытие панели или смена фильтра — перезапрашиваем с нуля
   useEffect(() => {
     if (!show) return;
     setCurrentPage(0);
     setHasMore(true);
-    setItems([]);
     refetch({
       pagination: {
         skip: 0,
@@ -164,7 +148,7 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
         ...(selectedType ? { type: selectedType } : {}),
       },
     });
-  }, [selectedType, refetch, show]);
+  }, [show, selectedType]);
 
   // Данные уже отфильтрованы бэкендом
   const filtered = items;

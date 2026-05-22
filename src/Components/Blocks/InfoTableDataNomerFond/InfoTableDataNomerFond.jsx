@@ -4,7 +4,7 @@ import InfoTable from "../InfoTable/InfoTable";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import DeleteIcon from "../../../shared/icons/DeleteIcon";
 
-function InfoTableDataNomerFond({ children, user, type, toggleRequestSidebar, requests, openDeleteComponent, toggleRequestEditNumber, openDeleteNomerComponent, filter, ...props }) {
+function InfoTableDataNomerFond({ children, user, type, toggleRequestSidebar, requests, openDeleteComponent, toggleRequestEditNumber, onViewNomer, openDeleteNomerComponent, filter, ...props }) {
     const buildFilteredRequests = (reserveFilter) => {
         const result = [];
         requests.forEach((item) => {
@@ -47,8 +47,12 @@ function InfoTableDataNomerFond({ children, user, type, toggleRequestSidebar, re
                                 <div className={`${classes.InfoTable_BottomInfo__item}`}>
                                     {item.rooms.map((elem, index) => (
                                         <div className={`${classes.InfoTable_BottomInfo__item___elem}`} key={index}>
+                                            <span
+                                            style={onViewNomer ? { cursor: "pointer" } : undefined}
+                                            onClick={onViewNomer ? () => onViewNomer(elem, item) : undefined}
+                                        >
                                             {elem.type !== 'apartment' ? "№" : ""} {elem.name} {!elem.active && '(не работает)'} {elem?.roomKind?.name}
-                                            {/* {console.log(elem)} */}
+                                        </span>
                                             <div className={classes.infoTable_buttons}>
                                                 <EditPencilIcon
                                                     cursor="pointer"

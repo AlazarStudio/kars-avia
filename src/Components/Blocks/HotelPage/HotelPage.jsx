@@ -1,8 +1,8 @@
 import { useQuery } from "@apollo/client";
 import React, { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 
-import { GET_HOTEL_NAME, getCookie } from "../../../../graphQL_requests.js";
+import { GET_HOTEL_NAME, GET_HOTEL_USERS, getCookie } from "../../../../graphQL_requests.js";
 import { roles } from "../../../roles.js";
 import {
   isAirlineAdmin,
@@ -18,21 +18,26 @@ import classes from "./HotelPage.module.css";
 import SuperAdminHotelContent from "../../RoleContent/SuperAdminContent/SuperAdminHotelContent/SuperAdminHotelContent.jsx";
 import DisAdminHotelContent from "../../RoleContent/DispatcherAdminContent/DisAdminHotelContent/DisAdminHotelContent.jsx";
 import AirlineAdminHotelContent from "../../RoleContent/AirlineAdminContent/AirlineAdminHotelContent/AirlineAdminHotelContent.jsx";
+import HotelReadinessIndicator from "../HotelReadinessIndicator/HotelReadinessIndicator";
 
 function HotelPage({ children, id, user, accessMenu = {}, ...props }) {
   const params = useParams();
+  const location = useLocation();
+  const navigate = useNavigate();
   const token = getCookie("token");
 
   const [selectedTab, setSelectedTab] = useState(0);
 
   const { loading, error, data } = useQuery(GET_HOTEL_NAME, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
+    context: { headers: { Authorization: `Bearer ${token}` } },
     variables: { hotelId: id },
     skip: !id,
+  });
+
+  const { data: usersData } = useQuery(GET_HOTEL_USERS, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    variables: { hotelId: id },
+    skip: !id || (!isSuperAdmin(user) && !isDispatcherAdmin(user)),
   });
 
   useEffect(() => {
@@ -73,9 +78,21 @@ function HotelPage({ children, id, user, accessMenu = {}, ...props }) {
     }
   };
 
+  const handleBack = (e) => {
+    if (params.requestId) return; // обычный Link на /relay со state
+    e.preventDefault();
+    // Если в этой сессии есть история навигации внутри SPA — идём назад,
+    // чтобы сохранились URL-параметры фильтра из списка гостиниц.
+    if (location.key !== "default") {
+      navigate(-1);
+    } else {
+      navigate("/hotels");
+    }
+  };
+
   const backProps = params.requestId
-    ? { to: "/relay", state: { requestId: params.requestId } } // передаём state
-    : { to: -1 };
+    ? { to: "/relay", state: { requestId: params.requestId } }
+    : { to: "/hotels", onClick: handleBack };
 
   return (
     <>
@@ -94,6 +111,9 @@ function HotelPage({ children, id, user, accessMenu = {}, ...props }) {
               </Link>
             )}
             {getTitle()}
+            {data?.hotel && (isSuperAdmin(user) || isDispatcherAdmin(user)) && (
+              <HotelReadinessIndicator hotel={{ ...data.hotel, _users: usersData?.hotelUsers?.users }} />
+            )}
           </div>
         </Header>
 

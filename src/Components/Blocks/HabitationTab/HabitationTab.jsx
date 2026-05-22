@@ -2,14 +2,16 @@ import React, { useState } from "react";
 import classes from "./HabitationTab.module.css";
 import ServiceFooter from "../ServiceFooter/ServiceFooter";
 import CopyIcon from "../../../shared/icons/CopyIcon";
+import DeleteIcon from "../../../shared/icons/DeleteIcon.jsx";
 import PeopleCountIcon from "../../../shared/icons/PeopleCountIcon";
-import { convertToDate, COMPLETE_PASSENGER_REQUEST_LIVING_EARLY, getCookie } from "../../../../graphQL_requests";
+import { convertToDate, COMPLETE_PASSENGER_REQUEST_LIVING_EARLY, REMOVE_PASSENGER_REQUEST_HOTEL, getCookie } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import Button from "../../Standart/Button/Button";
+import DeleteComponent from "../DeleteComponent/DeleteComponent";
 
 const statusToLabel = { NEW: "Принята", ACCEPTED: "Принята", IN_PROGRESS: "Выполняется", COMPLETED: "Поставка завершена", CANCELLED: "Отменена" };
 
-export default function HabitationTab({ id, request, searchQuery = "", addNotification, onHotelSelect, onStatusChanged }) {
+export default function HabitationTab({ id, request, searchQuery = "", addNotification, onHotelSelect, onStatusChanged, readOnly = false }) {
   const token = getCookie("token");
   const ls = request?.livingService;
   const statusText = statusToLabel[ls?.status] ?? "Принята";
@@ -22,6 +24,22 @@ export default function HabitationTab({ id, request, searchQuery = "", addNotifi
 
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [completeReason, setCompleteReason] = useState("");
+  const [removeHotelIndex, setRemoveHotelIndex] = useState(null);
+
+  const [removeHotel] = useMutation(REMOVE_PASSENGER_REQUEST_HOTEL, {
+    context: token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
+  });
+
+  const handleRemoveHotel = async (idx) => {
+    try {
+      await removeHotel({ variables: { requestId: request?.id, hotelIndex: idx } });
+      setRemoveHotelIndex(null);
+      // onStatusChanged?.();
+      addNotification?.("Отель удален", "success");
+    } catch (e) {
+      addNotification?.(e?.graphQLErrors?.[0]?.message ?? "Ошибка при удалении отеля", "error");
+    }
+  };
 
   const [completeEarly, { loading: completingEarly }] = useMutation(
     COMPLETE_PASSENGER_REQUEST_LIVING_EARLY,
@@ -84,7 +102,7 @@ export default function HabitationTab({ id, request, searchQuery = "", addNotifi
             Количество мест
           </div>
           <div className={`${classes.w20} ${classes.jcCenter}`}>Адрес</div>
-          <div className={`${classes.w20} ${classes.jcEnd}`}>Ссылка</div>
+          {!readOnly && <div className={`${classes.w20} ${classes.jcEnd}`}>Ссылка</div>}
           {!!request?.livingService?.plan?.peopleCount && (
             <span className={classes.countChip}>
               <PeopleCountIcon /> {request.livingService.plan.peopleCount}
@@ -111,51 +129,63 @@ export default function HabitationTab({ id, request, searchQuery = "", addNotifi
               >
                 {h.address ?? "—"}
               </div>
-              <div className={`${classes.w20} ${classes.jcEnd} ${classes.linkCol}`}>
-                {(h.linkCRM || h.linkPWA) ? (
-                  <div className={classes.linkGroup}>
-                    {h.linkCRM && (
-                      <button
-                        type="button"
-                        className={classes.link}
-                        onClick={(e) => { e.stopPropagation(); copyLink(h.linkCRM); }}
-                        title="Скопировать CRM-ссылку"
-                      >
-                        CRM <CopyIcon />
-                      </button>
-                    )}
-                    {h.linkPWA && (
-                      <button
-                        type="button"
-                        className={classes.link}
-                        onClick={(e) => { e.stopPropagation(); copyLink(h.linkPWA); }}
-                        title="Скопировать PWA-ссылку"
-                      >
-                        PWA <CopyIcon />
-                      </button>
-                    )}
-                  </div>
-                ) : h.link ? (
-                  <button
-                    type="button"
-                    className={classes.link}
-                    onClick={(e) => { e.stopPropagation(); copyLink(h.link); }}
-                    title="Скопировать ссылку"
-                  >
-                    Ссылка <CopyIcon />
-                  </button>
-                ) : (
-                  <span className={classes.link}>—</span>
-                )}
-              </div>
+              {!readOnly && (
+                <div className={`${classes.w20} ${classes.jcEnd} ${classes.linkCol}`}>
+                  {(h.linkCRM || h.linkPWA) ? (
+                    <div className={classes.linkGroup}>
+                      {h.linkCRM && (
+                        <button
+                          type="button"
+                          className={classes.link}
+                          onClick={(e) => { e.stopPropagation(); copyLink(h.linkCRM); }}
+                          title="Скопировать ссылку на сайт для гостиниц"
+                        >
+                          Сайт <CopyIcon />
+                        </button>
+                      )}
+                      {h.linkPWA && (
+                        <button
+                          type="button"
+                          className={classes.link}
+                          onClick={(e) => { e.stopPropagation(); copyLink(h.linkPWA); }}
+                          title="Скопировать ссылку на сканер для гостиниц"
+                        >
+                          Сканер <CopyIcon />
+                        </button>
+                      )}
+                    </div>
+                  ) : h.link ? (
+                    <button
+                      type="button"
+                      className={classes.link}
+                      onClick={(e) => { e.stopPropagation(); copyLink(h.link); }}
+                      title="Скопировать ссылку"
+                    >
+                      Ссылка <CopyIcon />
+                    </button>
+                  ) : (
+                    <span className={classes.link}>—</span>
+                  )}
+                </div>
+              )}
+              {!readOnly && (
+                <button
+                  type="button"
+                  className={classes.deleteBtn}
+                  onClick={(e) => { e.stopPropagation(); setRemoveHotelIndex(originalIndex); }}
+                  title="Удалить отель"
+                >
+                  <DeleteIcon cursor="pointer" />
+                </button>
+              )}
             </div>
           ))}
         </div>
       </div>
       <ServiceFooter
         statusText={statusText}
-        earlyCompleteLabel={canEarlyComplete ? "Завершить" : undefined}
-        onEarlyCompleteClick={canEarlyComplete ? () => setShowCompleteModal(true) : undefined}
+        earlyCompleteLabel={!readOnly && canEarlyComplete ? "Завершить" : undefined}
+        onEarlyCompleteClick={!readOnly && canEarlyComplete ? () => setShowCompleteModal(true) : undefined}
         earlyCompleteDisabled={completingEarly}
         history={[
           {
@@ -175,6 +205,15 @@ export default function HabitationTab({ id, request, searchQuery = "", addNotifi
           },
         ]}
       />
+
+      {removeHotelIndex !== null && (
+        <DeleteComponent
+          title="Вы действительно хотите удалить отель?"
+          remove={handleRemoveHotel}
+          index={removeHotelIndex}
+          close={() => setRemoveHotelIndex(null)}
+        />
+      )}
 
       {showCompleteModal && (
         <div

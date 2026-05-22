@@ -18,6 +18,7 @@ import {
 import { useMutation, useQuery } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
+import MUISwitch from "../MUISwitch/MUISwitch.jsx";
 import { action } from "../../../roles.js";
 import FixIcon from "../../../shared/icons/FixIcon.jsx";
 import EditAdditionalAgreement from "../EditAdditionalAgreement/EditAdditionalAgreement.jsx";
@@ -28,6 +29,8 @@ import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import EditContractAdditionalMenu from "../EditContractAdditionalMenu/EditContractAdditionalMenu.jsx";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon.jsx";
 import DeleteIcon from "../../../shared/icons/DeleteIcon.jsx";
+import { useDialog } from "../../../contexts/DialogContext.jsx";
+import { useToast } from "../../../contexts/ToastContext.jsx";
 
 /**
  * Компонент редактирования договора авиакомпании.
@@ -43,11 +46,13 @@ function EditRequestAirlineContract({
   activeFilterTab,
   id,
   tarif, // тут приходит airlineContractId
-  addNotification,
   canEdit = false, // Флаг для разрешения редактирования
   onRequestDelete, // колбэк: закрыть сайдбар и открыть модал удаления договора
+  initialEditMode = false,
 }) {
   const token = getCookie("token");
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
 
   // Тянем справочник аэропортов, если он тебе нужен далее (оставляю как в исходнике)
   const infoAirports = useQuery(GET_AIRPORTS_RELAY, {
@@ -102,6 +107,10 @@ function EditRequestAirlineContract({
 
   // Управление режимом редактирования (как в исходнике)
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (show) setIsEditing(initialEditMode);
+  }, [show]);
   const [activeTab, setActiveTab] = useState("Общая");
   const [anchorEl, setAnchorEl] = useState(null);
   const menuRef = useRef(null);
@@ -116,6 +125,8 @@ function EditRequestAirlineContract({
     // контракт
     contractNumber: "",
     date: "",
+    contractEndDate: "",
+    isProlongationEnabled: false,
     companyId: "",
     airlineId: "",
     region: "",
@@ -135,6 +146,8 @@ function EditRequestAirlineContract({
     setFormData({
       contractNumber: c.contractNumber || "",
       date: c.date || "",
+      contractEndDate: c.contractEndDate || "",
+      isProlongationEnabled: !!c.isProlongationEnabled,
       companyId: c.companyId || "",
       airlineId: c.airlineId || "",
       region: c.region || "",
@@ -171,16 +184,20 @@ function EditRequestAirlineContract({
   //   }
   // };
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (isEditing) {
-      const ok = confirm("Вы уверены, все несохраненные данные будут удалены?");
+      const ok = await confirm(
+        "Вы уверены, все несохраненные данные будут удалены?",
+      );
       if (!ok) return;
     }
     onClose?.();
     setIsEditing(false);
     setIsEdited(false);
     setActiveTab("Общая");
-  }, [isEditing, onClose]);
+  }, [isEditing, onClose, isDialogOpen, confirm]);
   // console.log(isEdited);
 
   useEffect(() => {
@@ -303,37 +320,40 @@ function EditRequestAirlineContract({
   };
   const [isLoading, setIsLoading] = useState(false);
 
-  const deleteAgreement = useCallback(async (ag, index) => {
-    // console.log(ag);
+  const deleteAgreement = useCallback(
+    async (ag, index) => {
+      // console.log(ag);
 
-    // Предупреждение перед удалением
-    if (!confirm("Удалить дополнительное соглашение?")) return;
+      // Предупреждение перед удалением
+      const isConfirmed = await confirm("Удалить дополнительное соглашение?");
+      if (!isConfirmed) return;
 
-    try {
-      setIsLoading(true);
-      // Отправляем мутацию удаления соглашения
-      await deleteAirlineContractAA({
-        variables: {
-          deleteAdditionalAgreementId: ag?.id,
-        },
-      });
+      try {
+        setIsLoading(true);
+        // Отправляем мутацию удаления соглашения
+        await deleteAirlineContractAA({
+          variables: {
+            deleteAdditionalAgreementId: ag?.id,
+          },
+        });
 
-      // Удаляем соглашение из списка только после успешного удаления на сервере
-      setFormData((prev) => {
-        const list = [...prev.additionalAgreements];
-        list.splice(index, 1); // Удаляем элемент по индексу
-        return { ...prev, additionalAgreements: list };
-      });
-      setIsLoading(false);
+        // Удаляем соглашение из списка только после успешного удаления на сервере
+        setFormData((prev) => {
+          const list = [...prev.additionalAgreements];
+          list.splice(index, 1); // Удаляем элемент по индексу
+          return { ...prev, additionalAgreements: list };
+        });
+        setIsLoading(false);
 
-      // Уведомление об успешном удалении
-      // addNotification("Дополнительное соглашение успешно удалено", "success");
-    } catch (err) {
-      // console.error("Ошибка при удалении:", err);
-      // alert("Произошла ошибка при удалении соглашения.");
-    }
-    refetch();
-  }, []);
+        // Уведомление об успешном удалении
+        success("Дополнительное соглашение успешно удалено.");
+      } catch (err) {
+        notifyError("Произошла ошибка при удалении соглашения.");
+      }
+      refetch();
+    },
+    [confirm, refetch, success, notifyError],
+  );
 
   const addNewAgreement = () => {
     setFormData((p) => ({
@@ -368,6 +388,10 @@ function EditRequestAirlineContract({
       const payload = {
         contractNumber: formData.contractNumber,
         date: formData.date ? new Date(formData.date).toISOString() : null,
+        contractEndDate: formData.contractEndDate
+          ? new Date(formData.contractEndDate).toISOString()
+          : null,
+        isProlongationEnabled: !!formData.isProlongationEnabled,
         notes: formData.notes,
         applicationType: formData.applicationType,
         region: formData.region,
@@ -387,12 +411,12 @@ function EditRequestAirlineContract({
         },
       });
 
-      addNotification?.("Изменения сохранены.", "success");
+      success("Изменения сохранены.");
       onClose();
       setIsEditing(false);
     } catch (err) {
       console.error(err);
-      alert("Произошла ошибка при сохранении договора.");
+      showAlert("Произошла ошибка при сохранении договора.");
     } finally {
       setIsLoading(false);
       setFileName([]);
@@ -409,6 +433,9 @@ function EditRequestAirlineContract({
     if (!show) return;
 
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+
       const clickedOutsideMain =
         sidebarRef.current && !sidebarRef.current.contains(event.target);
       const clickedOutsideAgreement = !agreementSidebarRef.current?.contains(
@@ -423,7 +450,7 @@ function EditRequestAirlineContract({
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton]); // ← важно
+  }, [show, closeButton, isDialogOpen]); // ← важно
 
   return (
     <>
@@ -552,6 +579,105 @@ function EditRequestAirlineContract({
                         </div>
                         <div className={classes.requestDataInfo_desc}>
                           {formData.date ? convertToDate(formData.date) : "—"}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div
+                    className={
+                      isEditing
+                        ? classes.requestDataItem
+                        : classes.requestDataInfo
+                    }
+                  >
+                    {isEditing ? (
+                      <>
+                        <label>Дата окончания срока действия</label>
+                        <input
+                          type="date"
+                          name="contractEndDate"
+                          value={
+                            formData.contractEndDate
+                              ? formData.contractEndDate.slice(0, 10)
+                              : ""
+                          }
+                          onChange={handleChange}
+                          placeholder="Дата"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>
+                          Дата окончания
+                        </div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {formData.contractEndDate
+                            ? convertToDate(formData.contractEndDate)
+                            : "—"}
+                          {(() => {
+                            const c = data?.airlineContract;
+                            if (!c?.contractEndDate) return null;
+                            if (c.isExpired)
+                              return (
+                                <span
+                                  style={{ color: "var(--red)", marginLeft: 6 }}
+                                >
+                                  · Истёк
+                                </span>
+                              );
+                            if (c.isExpiringSoon)
+                              return (
+                                <span
+                                  style={{ color: "#E8A33D", marginLeft: 6 }}
+                                >
+                                  · Истекает
+                                  {typeof c.daysUntilEnd === "number"
+                                    ? ` (${c.daysUntilEnd} дн.)`
+                                    : ""}
+                                </span>
+                              );
+                            return null;
+                          })()}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className={classes.requestDataInfo}>
+                    {isEditing ? (
+                      <>
+                        {/* <label>Пролонгация</label> */}
+                        <div
+                          style={{
+                            width: "100%",
+                            display: "flex",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <MUISwitch
+                            width={"100%"}
+                            label={"Пролонгация"}
+                            checked={formData.isProlongationEnabled}
+                            onChange={(e) => {
+                              setFormData((prev) => ({
+                                ...prev,
+                                isProlongationEnabled: e.target.checked,
+                              }));
+                              setIsEdited(true);
+                            }}
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>
+                          Пролонгация
+                        </div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {formData.isProlongationEnabled
+                            ? "Включена"
+                            : "Отключена"}
                         </div>
                       </>
                     )}

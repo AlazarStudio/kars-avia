@@ -8,6 +8,7 @@ import HotelsList from '../../Blocks/HotelsList/HotelsList'
 import Reports from '../../Blocks/Reports/Reports'
 import Reserve from '../../Blocks/Reserve/Reserve'
 import RepresentativeRequests from "../../Blocks/RepresentativeRequests/RepresentativeRequests";
+import FapV2 from "../../Pages/FapV2/FapV2";
 import Company from '../../Blocks/Сompany/Сompany'
 import SupportPage from '../../Blocks/SupportPage/SupportPage'
 import PatchNotesList from '../../Blocks/PatchNotesList/PatchNotesList'
@@ -40,6 +41,7 @@ const SuperAdminContent = ({ user }) => {
         <Estafeta user={user} />
       )}
       {id === 'representativeRequests' && <RepresentativeRequests user={user} />}
+      {id === 'fapv2' && <FapV2 user={user} />}
       {/* {id === 'reserve' && <Reserve user={user} />} */}
       {id === 'company' && <Company user={user} />}
       {id === 'hotels' && <HotelsList user={user} />}

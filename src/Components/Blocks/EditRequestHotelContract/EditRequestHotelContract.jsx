@@ -18,6 +18,7 @@ import {
 import { useMutation, useQuery } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
+import MUISwitch from "../MUISwitch/MUISwitch.jsx";
 import { action } from "../../../roles.js";
 import FixIcon from "../../../shared/icons/FixIcon.jsx";
 import EditAdditionalAgreement from "../EditAdditionalAgreement/EditAdditionalAgreement.jsx";
@@ -29,6 +30,8 @@ import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import EditContractAdditionalMenu from "../EditContractAdditionalMenu/EditContractAdditionalMenu.jsx";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon.jsx";
 import DeleteIcon from "../../../shared/icons/DeleteIcon.jsx";
+import { useDialog } from "../../../contexts/DialogContext.jsx";
+import { useToast } from "../../../contexts/ToastContext.jsx";
 
 function EditRequestHotelContract({
   show,
@@ -40,11 +43,12 @@ function EditRequestHotelContract({
   citiesData,
   onClose,
   tarif, // тут приходит airlineContractId
-  addNotification,
   canEdit = false, // Флаг для разрешения редактирования
   onRequestDelete, // колбэк: закрыть сайдбар и открыть модал удаления договора
 }) {
   const token = getCookie("token");
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
 
   const query =
     activeFilterTab === "hotels"
@@ -141,6 +145,8 @@ function EditRequestHotelContract({
   const [formData, setFormData] = useState({
     contractNumber: "",
     date: "",
+    contractEndDate: "",
+    isProlongationEnabled: false,
     companyId: "",
     hotelId: "",
     cityId: "",
@@ -166,6 +172,8 @@ function EditRequestHotelContract({
       setFormData({
         contractNumber: c.contractNumber || "",
         date: c.date || "",
+        contractEndDate: c.contractEndDate || "",
+        isProlongationEnabled: !!c.isProlongationEnabled,
         companyId: c.companyId || "",
         signatureMark: c.signatureMark || "",
         normativeAct: c.normativeAct || "",
@@ -195,6 +203,8 @@ function EditRequestHotelContract({
       setFormData({
         contractNumber: c.contractNumber || "",
         date: c.date || "",
+        contractEndDate: c.contractEndDate || "",
+        isProlongationEnabled: !!c.isProlongationEnabled,
         companyId: c.companyId || "",
         cityId: c.cityId || "",
         hotelId: c.organizationId || "",
@@ -220,15 +230,17 @@ function EditRequestHotelContract({
   const sidebarRef = useRef();
   const agreementSidebarRef = useRef(); // New ref for the EditAdditionalAgreement sidebar
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (isEditing) {
-      const ok = confirm("Вы уверены, все несохраненные данные будут удалены?");
+      const ok = await confirm("Вы уверены, все несохраненные данные будут удалены?");
       if (!ok) return;
     }
     onClose?.();
     setIsEditing(false);
     setActiveTab("Общая");
-  }, [isEditing, onClose]);
+  }, [isEditing, onClose, isDialogOpen, confirm]);
 
   useEffect(() => {
     if (citiesData) {
@@ -369,7 +381,8 @@ function EditRequestHotelContract({
     // console.log(ag);
 
     // Предупреждение перед удалением
-    if (!confirm("Удалить дополнительное соглашение?")) return;
+    const isConfirmed = await confirm("Удалить дополнительное соглашение?");
+    if (!isConfirmed) return;
 
     try {
       setIsLoading(true);
@@ -389,13 +402,12 @@ function EditRequestHotelContract({
       setIsLoading(false);
 
       // Уведомление об успешном удалении
-      // addNotification("Дополнительное соглашение успешно удалено", "success");
+      success("Дополнительное соглашение успешно удалено.");
     } catch (err) {
-      // console.error("Ошибка при удалении:", err);
-      // alert("Произошла ошибка при удалении соглашения.");
+      notifyError("Произошла ошибка при удалении соглашения.");
     }
     refetch();
-  }, []);
+  }, [confirm, refetch, success, notifyError]);
 
   // Сабмит (оставляю локально; сюда можно подставить твои UPDATE_* мутации)
   const handleSubmit = async (e) => {
@@ -412,6 +424,10 @@ function EditRequestHotelContract({
       const hotelPayload = {
         contractNumber: formData.contractNumber,
         date: formData.date ? new Date(formData.date).toISOString() : null,
+        contractEndDate: formData.contractEndDate
+          ? new Date(formData.contractEndDate).toISOString()
+          : null,
+        isProlongationEnabled: !!formData.isProlongationEnabled,
         notes: formData.notes,
         applicationType: formData.applicationType,
         cityId: formData.cityId,
@@ -428,6 +444,10 @@ function EditRequestHotelContract({
       const transferPayload = {
         contractNumber: formData.contractNumber,
         date: formData.date ? new Date(formData.date).toISOString() : null,
+        contractEndDate: formData.contractEndDate
+          ? new Date(formData.contractEndDate).toISOString()
+          : null,
+        isProlongationEnabled: !!formData.isProlongationEnabled,
         notes: formData.notes,
         applicationType: formData.applicationType,
         cityId: formData.cityId,
@@ -456,12 +476,12 @@ function EditRequestHotelContract({
         });
       }
 
-      addNotification?.("Изменения сохранены.", "success");
+      success("Изменения сохранены.");
       onClose();
       setIsEditing(false);
     } catch (err) {
       console.error(err);
-      alert("Произошла ошибка при сохранении договора.");
+      showAlert("Произошла ошибка при сохранении договора.");
     } finally {
       setIsLoading(false);
       setFileName([]);
@@ -477,6 +497,9 @@ function EditRequestHotelContract({
     if (!show) return;
 
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+
       const clickedOutsideMain =
         sidebarRef.current && !sidebarRef.current.contains(event.target);
       const clickedOutsideAgreement = !agreementSidebarRef.current?.contains(
@@ -491,7 +514,7 @@ function EditRequestHotelContract({
 
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton]); // ← важно
+  }, [show, closeButton, isDialogOpen]); // ← важно
 
   return (
     <>
@@ -590,6 +613,91 @@ function EditRequestHotelContract({
                       <>
                         <div className={classes.requestDataInfo_title}>Дата заключения</div>
                         <div className={classes.requestDataInfo_desc}>{formData.date ? convertToDate(formData.date) : "—"}</div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
+                    {isEditing ? (
+                      <>
+                        <label>Дата окончания срока действия</label>
+                        <input
+                          type="date"
+                          name="contractEndDate"
+                          value={
+                            formData.contractEndDate
+                              ? formData.contractEndDate.slice(0, 10)
+                              : ""
+                          }
+                          onChange={handleChange}
+                          placeholder="Дата"
+                        />
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>Дата окончания</div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {formData.contractEndDate
+                            ? convertToDate(formData.contractEndDate)
+                            : "—"}
+                          {(() => {
+                            const c =
+                              data?.hotelContract || data?.organizationContract;
+                            if (!c?.contractEndDate) return null;
+                            if (c.isExpired)
+                              return (
+                                <span style={{ color: "var(--red)", marginLeft: 6 }}>
+                                  · Истёк
+                                </span>
+                              );
+                            if (c.isExpiringSoon)
+                              return (
+                                <span style={{ color: "#E8A33D", marginLeft: 6 }}>
+                                  · Истекает
+                                  {typeof c.daysUntilEnd === "number"
+                                    ? ` (${c.daysUntilEnd} дн.)`
+                                    : ""}
+                                </span>
+                              );
+                            return null;
+                          })()}
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div className={classes.requestDataInfo}>
+                    {isEditing ? (
+                      <>
+                        {/* <label>Пролонгация</label> */}
+                        <div
+                          style={{
+                            width: "100%",
+                            display: "flex",
+                            justifyContent: "space-between",
+                          }}
+                        >
+                          <MUISwitch
+                            width={"100%"}
+                            label={"Пролонгация"}
+                            checked={formData.isProlongationEnabled}
+                            onChange={(e) =>
+                              setFormData((prev) => ({
+                                ...prev,
+                                isProlongationEnabled: e.target.checked,
+                              }))
+                            }
+                          />
+                        </div>
+                      </>
+                    ) : (
+                      <>
+                        <div className={classes.requestDataInfo_title}>Пролонгация</div>
+                        <div className={classes.requestDataInfo_desc}>
+                          {formData.isProlongationEnabled
+                            ? "Включена"
+                            : "Отключена"}
+                        </div>
                       </>
                     )}
                   </div>

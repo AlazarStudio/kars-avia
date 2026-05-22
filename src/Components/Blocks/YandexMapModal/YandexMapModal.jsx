@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import classes from "./YandexMapModal.module.css";
 import Button from "../../Standart/Button/Button.jsx";
-import { DEFAULT_CENTER, reverseGeocodeByCoordsWithYmaps, YMAPS_KEY } from "../../../../graphQL_requests.js";
+import { DEFAULT_CENTER, reverseGeocodeByCoordsWithYmaps, YMAPS_KEY, geocodeByTextRU, geocodeAddressToCoords } from "../../../../graphQL_requests.js";
 import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
 
 export const YandexMapModal = ({ open, onClose, onSelect, initialCenter }) => {
@@ -13,16 +14,30 @@ export const YandexMapModal = ({ open, onClose, onSelect, initialCenter }) => {
   const [coords, setCoords] = useState(effectiveCenter);
   const [address, setAddress] = useState("");
   const [loading, setLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchSuggestions, setSearchSuggestions] = useState([]);
 
   const ymapsRef = useRef(null);
+  const mapInstanceRef = useRef(null);
   const pendingCoordsRef = useRef(null);
+  const modalRootRef = useRef(null);
+
+  useEffect(() => {
+    const el = modalRootRef.current;
+    if (!el) return;
+    const stop = (e) => e.stopPropagation();
+    el.addEventListener("mousedown", stop);
+    return () => el.removeEventListener("mousedown", stop);
+  }, [open]);
 
   useEffect(() => {
     if (open) {
       setCoords(effectiveCenter);
       setAddress("");
       setLoading(false);
-      pendingCoordsRef.current = effectiveCenter; // чтобы после загрузки ymaps сразу подставить адрес
+      setSearchQuery("");
+      setSearchSuggestions([]);
+      pendingCoordsRef.current = effectiveCenter;
     }
   }, [effectiveCenter, open]);
 
@@ -62,6 +77,34 @@ export const YandexMapModal = ({ open, onClose, onSelect, initialCenter }) => {
     updateByCoords(newCoords);
   };
 
+  const handleSearchChange = async (e) => {
+    const val = e.target.value;
+    setSearchQuery(val);
+    if (val.length < 3) { setSearchSuggestions([]); return; }
+    try {
+      const list = await geocodeByTextRU(val, { center: coords, initialRadiusKm: 20, maxRadiusKm: 80, stepKm: 20 });
+      setSearchSuggestions(list);
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const handleSearchSelect = async (addr) => {
+    setSearchQuery(addr);
+    setSearchSuggestions([]);
+    try {
+      const newCoords = await geocodeAddressToCoords(addr);
+      if (newCoords) {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.setCenter(newCoords, 16, { duration: 300 });
+        }
+        updateByCoords(newCoords);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const handleApply = () => {
     if (!address || loading) return;
     onSelect(address);
@@ -71,31 +114,45 @@ export const YandexMapModal = ({ open, onClose, onSelect, initialCenter }) => {
     if (e.target === e.currentTarget) onClose();
   };
 
-  return (
-    <div className={classes.mapModal} onClick={handleOverlayClick}>
+  return createPortal(
+    <div ref={modalRootRef} className={classes.mapModal} onClick={handleOverlayClick}>
       <div className={classes.mapModalContent} onClick={(e) => e.stopPropagation()}>
         <div className={classes.mapModalHeader}>
           <span>Выбор адреса на карте</span>
           <button type="button" onClick={onClose} className={classes.mapModalClose}>✕</button>
         </div>
 
+        <div className={classes.mapSearch}>
+          <input
+            className={classes.mapSearchInput}
+            value={searchQuery}
+            onChange={handleSearchChange}
+            placeholder="Поиск адреса..."
+          />
+          {!!searchSuggestions.length && (
+            <ul className={classes.mapSearchSuggestions}>
+              {searchSuggestions.map((s) => (
+                <li key={s} className={classes.mapSearchItem} onClick={() => handleSearchSelect(s)}>{s}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+
         <YMaps
           query={{
             apikey: YMAPS_KEY,
             lang: "ru_RU",
-            // load: "package.full", // чтобы geocode точно был доступен :contentReference[oaicite:2]{index=2}
           }}
         >
           <Map
             defaultState={{ center: coords, zoom: 15 }}
             width="100%"
             height="320px"
+            instanceRef={mapInstanceRef}
             onClick={handleMapClick}
             onLoad={(ymaps) => {
-              // ВАЖНО: onLoad ставим на Map → получаем API instance :contentReference[oaicite:3]{index=3}
               ymapsRef.current = ymaps;
 
-              // если у нас уже есть отложенные координаты — геокодим их
               if (pendingCoordsRef.current) {
                 const c = pendingCoordsRef.current;
                 pendingCoordsRef.current = null;
@@ -104,9 +161,9 @@ export const YandexMapModal = ({ open, onClose, onSelect, initialCenter }) => {
             }}
             options={{
               suppressMapOpenBlock: true,
-              yandexMapDisablePoiInteractivity: true, // клики по POI не перехватываются :contentReference[oaicite:4]{index=4}
+              yandexMapDisablePoiInteractivity: true,
             }}
-            modules={["geocode"]} // можно так, но package.full уже гарантирует :contentReference[oaicite:5]{index=5}
+            modules={["geocode"]}
           >
             {coords && (
               <Placemark
@@ -127,6 +184,7 @@ export const YandexMapModal = ({ open, onClose, onSelect, initialCenter }) => {
           <Button onClick={handleApply} disabled={!address || loading}>Выбрать адрес</Button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 };

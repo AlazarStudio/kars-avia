@@ -88,7 +88,12 @@ function Login() {
       navigate("/");
       window.location.reload();
     } catch (err) {
-      setError("Ошибка авторизации. Проверьте логин или пароль.");
+      const msg = err?.graphQLErrors?.[0]?.message || "";
+      if (msg.toLowerCase().includes("подтвердите email") || msg.toLowerCase().includes("email")) {
+        setError("Подтвердите email перед входом. Проверьте вашу почту.");
+      } else {
+        setError("Ошибка авторизации. Проверьте логин или пароль.");
+      }
     }
   };
 
@@ -100,13 +105,15 @@ function Login() {
         height: "100vh",
         minWidth: "100vw",
         display: "flex",
+        gap: "20px",
+        flexDirection: "column",
         alignItems: "center",
         justifyContent: "center",
         backgroundColor: "var(--menu-bg)",
       }}
     >
       <img
-        src="/KARSAVIA_withoutLogo.png"
+        src="/kars_avia_logo_02.png"
         alt=""
         style={{ userSelect: "none", height:"90px" }}
       />
@@ -126,8 +133,8 @@ function Login() {
           variant="h5"
           sx={{ fontWeight: "bold", color: "var(--main-gray)" }}
         >
-          Вход в CRM Kars Avia
-          {/* Вход в демо-версию CRM Kars Avia */}
+          Вход в Kars Avia
+          {/* Вход в демо-версию Kars Avia */}
         </Typography>
         {error && (
           <Alert severity="error" sx={{ mt: 2 }}>

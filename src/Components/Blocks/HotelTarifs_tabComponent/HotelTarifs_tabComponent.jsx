@@ -22,13 +22,13 @@ import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import EditRequestTarifCategory from "../EditRequestTarifCategory/EditRequestTarifCategory";
 import EditRequestMealTarif from "../EditRequestMealTarif/EditRequestMealTarif.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
-import Notification from "../../Notification/Notification.jsx";
-import { fullNotifyTime, notifyTime } from "../../../roles.js";
+import { useToast } from "../../../contexts/ToastContext";
 import CreateRequestAdditionalServices from "../CreateRequestAdditionalServices/CreateRequestAdditionalServices.jsx";
 import EditRequestTarifAdditionalServices from "../EditRequestTarifAdditionalServices/EditRequestTarifAdditionalServices.jsx";
 
 function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
   const token = getCookie("token");
+  const { success, error: notifyError } = useToast();
   // console.log(id);
   const [showAddTarifCategory, setShowAddTarifCategory] = useState(false);
 
@@ -95,17 +95,6 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
   const [showDelete, setShowDelete] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState(null);
   const [searchTarif, setSearchTarif] = useState("");
-
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
 
   const [deleteHotelCategory] = useMutation(DELETE_HOTEL_CATEGORY, {
     context: {
@@ -264,21 +253,22 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
   };
 
   const deleteTarif = async (index, tarifID) => {
-    // console.log(index, tarifID);
+    try {
+      const response_update_tarif = await deleteHotelTarif({
+        variables: {
+          deleteRoomKindId: tarifID,
+        },
+      });
 
-    const response_update_tarif = await deleteHotelTarif({
-      variables: {
-        deleteRoomKindId: tarifID,
-      },
-    });
-
-    // console.log(response_update_tarif);
-
-    if (response_update_tarif) {
-      // setAddTarif(addTarif.filter((_, i) => i !== index));
-      setShowDelete(false);
-      setEditShowAddTarif(false);
-      refetch();
+      if (response_update_tarif) {
+        setShowDelete(false);
+        setEditShowAddTarif(false);
+        refetch();
+        success("Тариф удалён.");
+      }
+    } catch (err) {
+      console.error(err);
+      notifyError("Не удалось удалить тариф.");
     }
   };
 
@@ -427,14 +417,12 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
         show={showAddTarifCategory}
         refetch={refetch}
         onClose={toggleTarifsCategory}
-        addNotification={addNotification}
       />
       <CreateRequestAdditionalServices
         user={user}
         id={id}
         show={showAddAS}
         onClose={toggleAS}
-        addNotification={addNotification}
       />
 
       {/* 
@@ -458,7 +446,6 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
         onClose={toggleEditMealPrices}
         onSubmit={handleEditMealPrices}
         isHotel={true}
-        addNotification={addNotification}
       />
       <EditRequestTarifCategory
         user={user}
@@ -468,7 +455,6 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
         onClose={() => setEditShowAddTarifCategory(false)}
         tarif={selectedTarif}
         onSubmit={handleEditTarifCategory}
-        addNotification={addNotification}
         openDeleteComponent={openDeleteComponent}
       />
 
@@ -479,7 +465,6 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
         show={showAdditionalServices}
         onClose={() => setShowAdditionalServices(false)}
         tarif={selectedAS}
-        addNotification={addNotification}
       />
 
       {showDelete && (
@@ -501,20 +486,6 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
           }?`}
         />
       )}
-      {notifications.map((n, index) => (
-        <Notification
-          key={n.id}
-          text={n.text}
-          status={n.status}
-          index={index}
-          time={notifyTime}
-          onClose={() => {
-            setNotifications((prev) =>
-              prev.filter((notif) => notif.id !== n.id)
-            );
-          }}
-        />
-      ))}
     </>
   );
 }

@@ -2,11 +2,12 @@ import React, { useState, useRef, useEffect, useCallback, useMemo } from "react"
 import classes from "./ExistRequest.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
-import { useMutation, useQuery, useSubscription } from "@apollo/client";
+import { useMutation, useQuery, useSubscription, useLazyQuery } from "@apollo/client";
 import {
   CANCEL_REQUEST,
   CHANGE_TO_ARCHIVE,
   convertToDate,
+  convertToDateNew,
   EXTEND_REQUEST_NOTIFICATION_SUBSCRIPTION,
   GET_AIRLINE,
   GET_AIRLINE_POSITIONS,
@@ -14,6 +15,8 @@ import {
   GET_REQUEST,
   GET_HOTELS_RELAY,
   GET_HOTEL_ROOMS,
+  GET_HOTELS_WITH_PRICES,
+  GET_AIRLINE_TARIFS,
   getCookie,
   REQUEST_UPDATED_SUBSCRIPTION,
   SAVE_HANDLE_EXTEND_MUTATION,
@@ -25,6 +28,7 @@ import Message from "../Message/Message";
 import {
   hasAccessMenu,
   isAirlineAdmin,
+  isAirlineRole,
   isDispatcherAdmin,
   isSuperAdmin,
 } from "../../../utils/access";
@@ -35,10 +39,13 @@ import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
+import TlCancelDialog from "../TlCancelDialog/TlCancelDialog";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import ExistRequestAdditionalMenu from "./ExistRequestAdditionalMenu";
 import ExistRequestEditForm from "./ExistRequestEditForm";
 import { roles, roleLabels } from "../../../roles";
+import { useDialog } from "../../../contexts/DialogContext";
+import { calculateEffectiveCostDays } from "../../../utils/effectiveCostDays";
 
 function ExistRequest({
   show,
@@ -53,10 +60,13 @@ function ExistRequest({
   setChooseRequestID,
   totalMeals,
   setChooseCityRequest,
+  setChooseDefaultTimesUsed,
+  openInEditMode,
   // openDeleteComponent,
   setRequestId,
 }) {
   const token = getCookie("token");
+  const { showAlert, isDialogOpen } = useDialog();
   const [totalPages, setTotalPages] = useState(1);
   const currentPageRelay = 0;
 
@@ -65,6 +75,16 @@ function ExistRequest({
     skip: currentPageRelay,
     take: 50,
   });
+
+  const [loadHotelsWithPrices, { data: hotelsWithPricesData, loading: hotelsWithPricesLoading }] =
+    useLazyQuery(GET_HOTELS_WITH_PRICES, {
+      context: { headers: { Authorization: `Bearer ${token}` } },
+    });
+
+  const [loadAirlineTariffs, { data: airlineTariffsData, loading: airlineTariffsLoading }] =
+    useLazyQuery(GET_AIRLINE_TARIFS, {
+      context: { headers: { Authorization: `Bearer ${token}` } },
+    });
 
   // Запросы данных о заявке и логе
   const { data, error, refetch } = useQuery(GET_REQUEST, {
@@ -109,8 +129,34 @@ function ExistRequest({
       time: dateObj.toISOString().split("T")[1].slice(0, 5), // HH:MM
     };
   };
+  const categoryMap = {
+    luxe: "Люкс", apartment: "Апартаменты", studio: "Студия",
+    comfort: "Комфорт", improvedComfort: "Улучшенный комфорт",
+    onePlace: "Одноместный", twoPlace: "Двухместный", threePlace: "Трёхместный",
+    fourPlace: "Четырёхместный", fivePlace: "Пятиместный", sixPlace: "Шестиместный",
+    sevenPlace: "Семиместный", eightPlace: "Восьмиместный", ninePlace: "Девятиместный",
+    tenPlace: "Десятиместный",
+  };
+
+  const airlinePriceFields = [
+    { key: "priceApartment", label: "Апартаменты" },
+    { key: "priceStudio", label: "Студия" },
+    { key: "priceLuxe", label: "Люкс" },
+    { key: "priceOneCategory", label: "Одноместный" },
+    { key: "priceTwoCategory", label: "Двухместный" },
+    { key: "priceThreeCategory", label: "Трёхместный" },
+    { key: "priceFourCategory", label: "Четырёхместный" },
+    { key: "priceFiveCategory", label: "Пятиместный" },
+    { key: "priceSixCategory", label: "Шестиместный" },
+    { key: "priceSevenCategory", label: "Семиместный" },
+    { key: "priceEightCategory", label: "Восьмиместный" },
+  ];
+
   const [activeTab, setActiveTab] = useState("Общая");
   const [formData, setFormData] = useState(null);
+  const effectiveDays = formData
+    ? calculateEffectiveCostDays(formData.arrival, formData.departure)
+    : 0;
   const [logsData, setLogsData] = useState(null);
   const [formDataExtend, setFormDataExtend] = useState({
     departureName: "",
@@ -118,8 +164,16 @@ function ExistRequest({
     departureTime: "",
     arrivalDate: "",
     arrivalTime: "",
+    actualCheckInDate: "",
+    actualCheckInTime: "",
   });
   const [isEditing, setIsEditing] = useState(false);
+
+  useEffect(() => {
+    if (show && openInEditMode) {
+      setIsEditing(true);
+    }
+  }, [show, openInEditMode]);
 
   // Состояние для изменения гостиницы и номера
   const [hotels, setHotels] = useState([]);
@@ -221,12 +275,29 @@ function ExistRequest({
         arrivalTime: formData.arrival
           ? parseDateTime(formData.arrival).time
           : "",
+        actualCheckInDate: formData.actualCheckInAt
+          ? parseDateTime(formData.actualCheckInAt).date
+          : "",
+        actualCheckInTime: formData.actualCheckInAt
+          ? parseDateTime(formData.actualCheckInAt).time
+          : "",
       });
     }
   }, [formData, show]); // Следим за изменением formData
 
+  useEffect(() => {
+    if (activeTab === "Цены" && formData?.airport?.id) {
+      loadAirlineTariffs({ variables: { airlineId: formData.airline?.id } });
+      if (!isAirlineRole(user)) {
+        loadHotelsWithPrices();
+      }
+    }
+  }, [activeTab, formData?.airport?.id]);
+
   // Функция закрытия формы
   const closeButton = useCallback(() => {
+    if (isDialogOpen) return;
+
     setAnchorEl(null);
     resetForm();
     onClose();
@@ -238,6 +309,8 @@ function ExistRequest({
       departureTime: "",
       arrivalDate: "",
       arrivalTime: "",
+      actualCheckInDate: "",
+      actualCheckInTime: "",
     }));
     setSelectedEmployee(null);
     setNewStaffId(null);
@@ -248,7 +321,7 @@ function ExistRequest({
     setSelectedPlace(null);
     setSelectedAirportId(null);
     setSelectedReserve(null);
-  }, [onClose, setChooseRequestID]);
+  }, [onClose, setChooseRequestID, isDialogOpen]);
 
   const resetForm = useCallback(() => setActiveTab("Общая"), []);
 
@@ -401,6 +474,22 @@ function ExistRequest({
               : newStatus,
         };
 
+        if (noteEdit !== (formData.note ?? "")) {
+          requestInput.note = noteEdit;
+        }
+
+        // Фактическое заселение — отправляем только при изменении
+        const originalCheckIn = formData.actualCheckInAt
+          ? parseDateTime(formData.actualCheckInAt)
+          : { date: "", time: "" };
+        if (
+          formDataExtend.actualCheckInDate !== originalCheckIn.date ||
+          formDataExtend.actualCheckInTime !== originalCheckIn.time
+        ) {
+          requestInput.actualCheckInAt = formDataExtend.actualCheckInDate
+            ? `${formDataExtend.actualCheckInDate}T${formDataExtend.actualCheckInTime || "00:00"}:00+00:00`
+            : null;
+        }
         if (reserveChanged) {
           requestInput.reserve = selectedReserve;
         }
@@ -419,7 +508,9 @@ function ExistRequest({
         // Добавляем изменения гостиницы/номера/места только при валидном выборе
         if (hotelRoomChangeAllowed && (hotelIdChanged || roomOrPlaceChanged)) {
           if (!canChangeHotel) {
-            alert("Невозможно сохранить изменения: дата заезда уже наступила.");
+            showAlert(
+              "Невозможно сохранить изменения: дата заезда уже наступила."
+            );
             setIsLoading(false);
             return;
           }
@@ -449,10 +540,11 @@ function ExistRequest({
           },
         });
 
-        alert(
+        showAlert(
           user?.airlineId && formData.status !== "created"
             ? "Запрос отправлен, можете посмотреть в комментариях."
-            : "Изменения сохранены"
+            : "Изменения сохранены",
+          "success"
         );
         setFormDataExtend((prev) => ({
           ...prev,
@@ -481,7 +573,7 @@ function ExistRequest({
             "ApolloError: Невозможно разместить заявку: пересечение с заявкой"
           )
         ) {
-          alert("Невозможно разместить заявку: пересечение с другой заявкой");
+          showAlert("Невозможно разместить заявку: пересечение с другой заявкой");
           setFormDataExtend((prev) => ({
             departureDate: formData.departure
               ? parseDateTime(formData.departure).date
@@ -501,7 +593,13 @@ function ExistRequest({
             "ApolloError: Error: Невозможно разместить заявку: свободных мест нет"
           )
         ) {
-          alert("Свободных мест в этом номере нет");
+          showAlert("Свободных мест в этом номере нет");
+        } else if (
+          String(error).includes(
+            "Фактическое заселение не может быть позже даты выезда"
+          )
+        ) {
+          showAlert("Фактическое заселение не может быть позже даты выезда");
         }
       } finally {
         setIsLoading(false);
@@ -555,7 +653,10 @@ function ExistRequest({
   // Клик вне боковой панели закрывает её
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+
       if (showDelete) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
       // Клик по меню или его backdrop — закрываем только меню, не сайдбар
       if (anchorEl && menuRef.current?.contains(event.target)) {
         setAnchorEl(null);
@@ -570,7 +671,7 @@ function ExistRequest({
     else document.removeEventListener("mousedown", handleClickOutside);
 
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton, showDelete, anchorEl]);
+  }, [show, closeButton, showDelete, anchorEl, isDialogOpen]);
 
   // Вспомогательные функции для преобразования данных
   // const getJsonParce = (data) => JSON.parse(data);
@@ -667,11 +768,11 @@ function ExistRequest({
         });
         await refetch();
         if (!suppressAlert) {
-          alert("Изменения сохранены");
+          showAlert("Изменения сохранены", "success");
         }
       } catch (error) {
         console.error("Ошибка при сохранении:", error);
-        alert("Ошибка при сохранении");
+        showAlert("Ошибка при сохранении");
       } finally {
         setIsLoading(false);
       }
@@ -696,12 +797,12 @@ function ExistRequest({
           archivingRequstId: chooseRequestID,
         },
       });
-      alert("Изменения сохранены");
+      showAlert("Изменения сохранены", "success");
       await refetch();
       onClose();
     } catch (error) {
       console.error("Ошибка при сохранении:", error);
-      alert("Ошибка при сохранении");
+      showAlert("Ошибка при сохранении");
     } finally {
       setIsLoading(false);
     }
@@ -714,6 +815,7 @@ function ExistRequest({
   const [mealPlanBreakfastEnabled, setMealPlanBreakfastEnabled] = useState(true);
   const [mealPlanLunchEnabled, setMealPlanLunchEnabled] = useState(true);
   const [mealPlanDinnerEnabled, setMealPlanDinnerEnabled] = useState(true);
+  const [noteEdit, setNoteEdit] = useState("");
 
   const mealOptions = [
     { title: "Включено", value: true },
@@ -831,16 +933,10 @@ function ExistRequest({
   // Инициализация значений гостиницы, номера и аэропорта при загрузке заявки
   useEffect(() => {
     if (formData && show) {
-      if (formData.hotel?.id) {
-        setSelectedHotelId(formData.hotel.id);
-      }
-      if (formData.hotelChess?.room?.id) {
-        setSelectedRoomId(formData.hotelChess.room.id);
-        setSelectedPlace(formData.hotelChess.place || null);
-      }
-      if (formData.airport?.id) {
-        setSelectedAirportId(formData.airport.id);
-      }
+      setSelectedHotelId(formData.hotel?.id || null);
+      setSelectedRoomId(formData.hotelChess?.room?.id || null);
+      setSelectedPlace(formData.hotelChess?.place || null);
+      setSelectedAirportId(formData.airport?.id || null);
       if (formData.reserve !== undefined && formData.reserve !== null) {
         setSelectedReserve(formData.reserve);
       }
@@ -856,6 +952,7 @@ function ExistRequest({
       if (formData?.mealPlan?.dinnerEnabled !== undefined) {
         setMealPlanDinnerEnabled(formData.mealPlan.dinnerEnabled);
       }
+      setNoteEdit(formData.note ?? "");
     }
   }, [formData, show]);
 
@@ -881,7 +978,7 @@ function ExistRequest({
 
     const personToSave = selectedEmployee ?? formData?.person;
     if (!chooseRequestID || !personToSave) {
-      alert("Пожалуйста, выберите сотрудника.");
+      showAlert("Пожалуйста, выберите сотрудника.");
       setIsLoading(false);
       return;
     }
@@ -897,7 +994,7 @@ function ExistRequest({
     })
       .then((res) => {
         // console.log("Request updated:", res);
-        alert("Изменения сохранены");
+        showAlert("Изменения сохранены", "success");
         setSelectedEmployee(null);
         setNewStaffId(null);
         // При необходимости можно выполнить refetch() или обновить локальные данные
@@ -908,7 +1005,7 @@ function ExistRequest({
         console.error("Ошибка обновления заявки:", err);
         // console.log(selectedEmployee);
 
-        alert("Ошибка обновления заявки");
+        showAlert("Ошибка обновления заявки");
         setSelectedEmployee(null);
         setNewStaffId(null);
         setIsLoading(false);
@@ -930,13 +1027,14 @@ function ExistRequest({
       selectedEmployee.id !== formData?.person?.id;
 
     if (hasPendingEmployeeSelection) {
-      alert("Подтвердите выбор сотрудника.");
+      showAlert("Подтвердите выбор сотрудника.", "warning");
       return;
     }
 
     onClose();
     setShowChooseHotel(true);
     setChooseCityRequest(formData?.airport?.city);
+    setChooseDefaultTimesUsed?.(formData?.defaultTimesUsed ?? false);
     localStorage.setItem("selectedTab", 0);
   };
 
@@ -1001,7 +1099,7 @@ function ExistRequest({
                 )} */}
             </div>
             <div className={classes.requestTitle_close}>
-              {formData.status !== 'canceled' && formData.status !== "archived" && formData.status !== "created" && formData.status !== "opened" && (
+              {formData.status !== 'canceled' && formData.status !== "archived" && (
                 <ExistRequestAdditionalMenu
                   anchorEl={anchorEl}
                   onOpen={handleMenuOpen}
@@ -1014,6 +1112,12 @@ function ExistRequest({
                   onEdit={handleUpdateRequest}
                   onCancelRequest={openDeleteComponent}
                   onCloseSidebar={closeButton}
+                  onPlace={handlePlaceClick}
+                  showPlace={
+                    (isSuperAdmin(user) || isDispatcherAdmin(user)) &&
+                    !formData.hotelId &&
+                    (formData.status === "created" || formData.status === "opened")
+                  }
                 />
               )}
               <div onClick={closeButton} className={classes.closeIconWrapper}>
@@ -1045,23 +1149,38 @@ function ExistRequest({
                       Питание
                     </div>
                   )}
+                {(formData.status === "created" || formData.status === "opened") && !isEditing && (
+                  <div
+                    className={`${classes.tab} ${activeTab === "Цены" ? classes.activeTab : ""}`}
+                    onClick={() => handleTabChange("Цены")}
+                  >
+                    Цены
+                  </div>
+                )}
                 {!isEditing && canChatTab && (
                   <div
-                    className={`${classes.tab} ${activeTab === "Комментарии" ? classes.activeTab : ""
+                    className={`${classes.tab} ${activeTab === "Чат" ? classes.activeTab : ""
                       }`}
                     style={{ position: "relative" }}
-                    onClick={() => handleTabChange("Комментарии")}
+                    onClick={() => handleTabChange("Чат")}
                   >
-                    Комментарии
-                    {formData?.chat?.some(
-                      (chat) =>
-                        chat.unreadMessagesCount > 0 &&
-                        ((user.hotelId && chat.hotelId === user.hotelId) ||
-                          (user.airlineId &&
-                            chat.airlineId === user.airlineId) ||
-                          (!user.hotelId && !user.airlineId))
-                    ) && <div className={classes.unreadMessages}></div>}
-                    {/* {console.log(formData?.chat)} */}
+                    Чат
+                    {(() => {
+                      const totalUnread = (formData?.chat || []).reduce((acc, chat) => {
+                        if (
+                          chat.unreadMessagesCount > 0 &&
+                          ((user.hotelId && chat.hotelId === user.hotelId) ||
+                            (user.airlineId && chat.airlineId === user.airlineId) ||
+                            (!user.hotelId && !user.airlineId))
+                        ) {
+                          return acc + chat.unreadMessagesCount;
+                        }
+                        return acc;
+                      }, 0);
+                      return totalUnread > 0 ? (
+                        <div className={classes.unreadMessages}>{totalUnread > 99 ? '99+' : totalUnread}</div>
+                      ) : null;
+                    })()}
                   </div>
                 )}
                 {!isEditing && (
@@ -1079,7 +1198,7 @@ function ExistRequest({
                 className={classes.requestMiddle}
                 style={{
                   height: (isEditing) ? "calc(100vh - 198px)" : "calc(100vh - 120px)"
-                  // (activeTab !== "Комментарии" &&
+                  // (activeTab !== "Чат" &&
                   //   activeTab !== "История" &&
                   //   formData.status !== "created" &&
                   //   formData.status !== "canceled" &&
@@ -1090,7 +1209,7 @@ function ExistRequest({
                   //     : true))
                   //   ? "calc(100vh - 120px)"
                   //   :
-                  //   (activeTab !== "Комментарии" &&
+                  //   (activeTab !== "Чат" &&
                   //     activeTab !== "История" &&
                   //     formData.status !== "created" &&
                   //     formData.status !== "canceled" &&
@@ -1359,6 +1478,92 @@ function ExistRequest({
                         </>
                       )}
 
+                    {/* Блок цен (размещённые заявки) */}
+                    {formData.status !== "created" &&
+                      formData.status !== "opened" &&
+                      !isEditing &&
+                      (formData.requestAirlinePrice || formData.requestHotelPrice) && (
+                      <>
+                        <div className={classes.requestDataTitle}>Цены</div>
+                        {[
+                          { label: "Цена авиакомпании", price: formData.requestAirlinePrice },
+                          ...(!isAirlineRole(user) ? [{ label: "Цена гостиницы", price: formData.requestHotelPrice }] : []),
+                        ].map(({ label, price }) =>
+                          price ? (
+                            <div key={label} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                              {!isAirlineRole(user) && (
+                                <div className={classes.requestDataInfo}>
+                                  <div className={classes.requestDataInfo_title} style={{ fontWeight: 600 }}>
+                                    {label}
+                                  </div>
+                                </div>
+                              )}
+                              {price.livingCost != null && (
+                                <div className={classes.requestDataInfo}>
+                                  <div className={classes.requestDataInfo_title}>Проживание</div>
+                                  <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                    <span style={{ whiteSpace: "nowrap" }}>{price.livingCost.toLocaleString()} ₽</span>
+                                    {effectiveDays > 0 && (
+                                      <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>
+                                        {`${Math.round(price.livingCost / effectiveDays).toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                              {price.breakfast != null && (
+                                <div className={classes.requestDataInfo}>
+                                  <div className={classes.requestDataInfo_title}>Завтрак</div>
+                                  <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                    {price.breakfastIncluded ? (
+                                      <span style={{ whiteSpace: "nowrap", opacity: 0.7 }}>Включён в стоимость</span>
+                                    ) : effectiveDays > 0 ? (
+                                      <>
+                                        <span style={{ whiteSpace: "nowrap",  }}>{(price.breakfast * effectiveDays).toLocaleString()} ₽</span>
+                                        <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${price.breakfast.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                      </>
+                                    ) : (
+                                      <span style={{ whiteSpace: "nowrap" }}>{price.breakfast.toLocaleString()} ₽ / сут.</span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                              {price.lunch != null && (
+                                <div className={classes.requestDataInfo}>
+                                  <div className={classes.requestDataInfo_title}>Обед</div>
+                                  <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                    {effectiveDays > 0 ? (
+                                      <>
+                                        <span style={{ whiteSpace: "nowrap",  }}>{(price.lunch * effectiveDays).toLocaleString()} ₽</span>
+                                        <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${price.lunch.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                      </>
+                                    ) : (
+                                      <span style={{ whiteSpace: "nowrap" }}>{price.lunch.toLocaleString()} ₽ / сут.</span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                              {price.dinner != null && (
+                                <div className={classes.requestDataInfo}>
+                                  <div className={classes.requestDataInfo_title}>Ужин</div>
+                                  <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                    {effectiveDays > 0 ? (
+                                      <>
+                                        <span style={{ whiteSpace: "nowrap",  }}>{(price.dinner * effectiveDays).toLocaleString()} ₽</span>
+                                        <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${price.dinner.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                      </>
+                                    ) : (
+                                      <span style={{ whiteSpace: "nowrap" }}>{price.dinner.toLocaleString()} ₽ / сут.</span>
+                                    )}
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          ) : null
+                        )}
+                      </>
+                    )}
+
                     {/* Информация о заявке */}
                     {formData.status !== "created" &&
                       formData.status !== "opened" && (
@@ -1381,92 +1586,85 @@ function ExistRequest({
                         />
                       )}
 
-                    {/* Продление / Изменение даты — только для created и opened */}
+                    {/* Даты — только для created и opened */}
                     {(formData.status === "created" ||
                       formData.status === "opened") && (
-                        // !user?.hotelId &&
-                        // formData.status !== "archiving" &&
                         <>
-                          <div className={classes.requestDataTitle}>
-                            {user?.airlineId &&
-                              (formData.status !== "created" ||
-                                formData.status === "opened")
-                              ? "Запрос на изменение даты"
-                              : "Изменение даты"}
-                          </div>
-                          <label>Заезд</label>
-                          <div className={classes.reis_info}>
-                            <input
-                              type="date"
-                              name="arrivalDate"
-                              value={formDataExtend.arrivalDate}
-                              onChange={handleExtendChange}
-                              placeholder="Дата"
-                              disabled={
-                                formData.status === "created" ||
-                                  formData.status === "opened"
-                                  ? false
-                                  : !isEditing
-                              }
-                            />
-                            <input
-                              type="time"
-                              name="arrivalTime"
-                              value={formDataExtend.arrivalTime}
-                              onChange={handleExtendChange}
-                              placeholder="Время"
-                              disabled={
-                                formData.status === "created" ||
-                                  formData.status === "opened"
-                                  ? false
-                                  : !isEditing
-                              }
-                            />
-                          </div>
-                          <label>Выезд</label>
-                          <div className={classes.reis_info}>
-                            {/* <input
-                          type="text"
-                          name="departureName"
-                          value={formDataExtend.departureName}
-                          onChange={handleExtendChange}
-                          placeholder="Номер рейса"
-                        /> */}
-                            <input
-                              type="date"
-                              name="departureDate"
-                              value={formDataExtend.departureDate}
-                              onChange={handleExtendChange}
-                              placeholder="Дата"
-                              disabled={
-                                formData.status === "created" ||
-                                  formData.status === "opened"
-                                  ? false
-                                  : !isEditing
-                              }
-                            />
-                            <input
-                              type="time"
-                              name="departureTime"
-                              value={formDataExtend.departureTime}
-                              onChange={handleExtendChange}
-                              placeholder="Время"
-                              disabled={
-                                formData.status === "created" ||
-                                  formData.status === "opened"
-                                  ? false
-                                  : !isEditing
-                              }
-                            />
-                          </div>
-                          {(formData.status === "created" ||
-                            formData.status === "opened") && (
-                              <Button onClick={handleExtendChangeRequest}>
-                                Изменить даты
-                              </Button>
+                          <div className={classes.requestDataTitle}>Информация о заявке</div>
+                          <div className={classes.requestDataInfo}>
+                            <div className={classes.requestDataInfo_title}>Заезд</div>
+                            {isEditing ? (
+                              <div className={classes.reis_info} style={{ width: "60%" }}>
+                                <input
+                                  type="date"
+                                  name="arrivalDate"
+                                  value={formDataExtend.arrivalDate}
+                                  onChange={handleExtendChange}
+                                  placeholder="Дата"
+                                />
+                                <input
+                                  type="time"
+                                  name="arrivalTime"
+                                  value={formDataExtend.arrivalTime}
+                                  onChange={handleExtendChange}
+                                  placeholder="Время"
+                                />
+                              </div>
+                            ) : (
+                              <div className={classes.requestDataInfo_desc}>
+                                {convertToDateNew(formData.arrival)} –{" "}
+                                {convertToDateNew(formData.arrival, true)}
+                              </div>
                             )}
+                          </div>
+                          <div className={classes.requestDataInfo}>
+                            <div className={classes.requestDataInfo_title}>Выезд</div>
+                            {isEditing ? (
+                              <div className={classes.reis_info} style={{ width: "60%" }}>
+                                <input
+                                  type="date"
+                                  name="departureDate"
+                                  value={formDataExtend.departureDate}
+                                  onChange={handleExtendChange}
+                                  placeholder="Дата"
+                                />
+                                <input
+                                  type="time"
+                                  name="departureTime"
+                                  value={formDataExtend.departureTime}
+                                  onChange={handleExtendChange}
+                                  placeholder="Время"
+                                />
+                              </div>
+                            ) : (
+                              <div className={classes.requestDataInfo_desc}>
+                                {convertToDateNew(formData.departure)} –{" "}
+                                {convertToDateNew(formData.departure, true)}
+                              </div>
+                            )}
+                          </div>
                         </>
                       )}
+
+                    {/* Примечание */}
+                    {(isEditing || formData.note) && (
+                      <>
+                        <div className={classes.requestDataTitle}>Примечание</div>
+                        {isEditing ? (
+                          <textarea
+                            value={noteEdit}
+                            onChange={(e) => setNoteEdit(e.target.value)}
+                            placeholder="Доп. информация по заявке"
+                            rows={3}
+                            style={{ resize: "vertical", padding: "8px 10px", outline: "none", fontFamily: "Nunito Sans", fontSize: "14px", width: "100%", boxSizing: "border-box" }}
+                          />
+                        ) : (
+                          <div className={classes.requestDataInfo_desc} style={{ width: "100%", whiteSpace: "pre-wrap" }}>
+                            {formData.note}
+                          </div>
+                        )}
+                      </>
+                    )}
 
                     {/* Продление */}
                     {formData.status == "archiving" &&
@@ -1478,6 +1676,285 @@ function ExistRequest({
                       )}
                   </div>
                 )}
+                {/* Вкладка "Цены" */}
+                {activeTab === "Цены" &&
+                  (formData.status === "created" || formData.status === "opened") && (
+                  <div className={classes.requestData}>
+                    {isAirlineRole(user) ? (
+                      airlineTariffsLoading ? (
+                        <MUILoader loadSize="30px" fullHeight="200px" />
+                      ) : (() => {
+                        const matchingPrices = (airlineTariffsData?.airline?.prices ?? [])
+                          .filter(ap => ap.airports?.some(a => a.airport?.id === formData.airport?.id));
+                        if (matchingPrices.length === 0) {
+                          return (
+                            <div style={{ padding: "20px 0", color: "var(--text)", opacity: 0.5, fontSize: 14 }}>
+                              Нет тарифов по данному аэропорту
+                            </div>
+                          );
+                        }
+                        return matchingPrices.map((ap, idx) => (
+                          <div key={ap.id ?? idx} style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                            {airlinePriceFields.map(({ key, label }) => {
+                              const p = ap.prices?.[key];
+                              if (!p) return null;
+                              return (
+                                <div key={key} className={classes.requestDataInfo}>
+                                  <div className={classes.requestDataInfo_title}>{label}</div>
+                                  <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                    {effectiveDays > 0 ? (
+                                      <>
+                                        <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(p * effectiveDays).toLocaleString()} ₽</span>
+                                        <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${p.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                      </>
+                                    ) : (
+                                      <span style={{ whiteSpace: "nowrap" }}>{p.toLocaleString()} ₽ / сут.</span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                            {ap.mealPrice && (
+                              <>
+                                {ap.mealPrice.breakfast != null && (
+                                  <div className={classes.requestDataInfo}>
+                                    <div className={classes.requestDataInfo_title}>Завтрак</div>
+                                    <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                      {effectiveDays > 0 ? (
+                                        <>
+                                          <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(ap.mealPrice.breakfast * effectiveDays).toLocaleString()} ₽</span>
+                                          <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${ap.mealPrice.breakfast.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                        </>
+                                      ) : (
+                                        <span style={{ whiteSpace: "nowrap" }}>{ap.mealPrice.breakfast.toLocaleString()} ₽ / сут.</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                                {ap.mealPrice.lunch != null && (
+                                  <div className={classes.requestDataInfo}>
+                                    <div className={classes.requestDataInfo_title}>Обед</div>
+                                    <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                      {effectiveDays > 0 ? (
+                                        <>
+                                          <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(ap.mealPrice.lunch * effectiveDays).toLocaleString()} ₽</span>
+                                          <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${ap.mealPrice.lunch.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                        </>
+                                      ) : (
+                                        <span style={{ whiteSpace: "nowrap" }}>{ap.mealPrice.lunch.toLocaleString()} ₽ / сут.</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                                {ap.mealPrice.dinner != null && (
+                                  <div className={classes.requestDataInfo}>
+                                    <div className={classes.requestDataInfo_title}>Ужин</div>
+                                    <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                      {effectiveDays > 0 ? (
+                                        <>
+                                          <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(ap.mealPrice.dinner * effectiveDays).toLocaleString()} ₽</span>
+                                          <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${ap.mealPrice.dinner.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                        </>
+                                      ) : (
+                                        <span style={{ whiteSpace: "nowrap" }}>{ap.mealPrice.dinner.toLocaleString()} ₽ / сут.</span>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            )}
+                          </div>
+                        ));
+                      })()
+                    ) : (
+                      (airlineTariffsLoading || hotelsWithPricesLoading) ? (
+                        <MUILoader loadSize="30px" fullHeight="200px" />
+                      ) : (
+                        <>
+                          {/* Цена авиакомпании */}
+                          <div className={classes.requestDataTitle}>Цена авиакомпании</div>
+                          {(() => {
+                            const matchingPrices = (airlineTariffsData?.airline?.prices ?? [])
+                              .filter(ap => ap.airports?.some(a => a.airport?.id === formData.airport?.id));
+                            if (matchingPrices.length === 0) {
+                              return (
+                                <div style={{ padding: "4px 0 16px", color: "var(--text)", opacity: 0.5, fontSize: 14 }}>
+                                  Нет тарифов по данному аэропорту
+                                </div>
+                              );
+                            }
+                            return matchingPrices.map((ap, idx) => (
+                              <div key={ap.id ?? idx} style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+                                {airlinePriceFields.map(({ key, label }) => {
+                                  const p = ap.prices?.[key];
+                                  if (!p) return null;
+                                  return (
+                                    <div key={key} className={classes.requestDataInfo}>
+                                      <div className={classes.requestDataInfo_title}>{label}</div>
+                                      <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                        {effectiveDays > 0 ? (
+                                          <>
+                                            <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(p * effectiveDays).toLocaleString()} ₽</span>
+                                            <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${p.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                          </>
+                                        ) : (
+                                          <span style={{ whiteSpace: "nowrap" }}>{p.toLocaleString()} ₽ / сут.</span>
+                                        )}
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                                {ap.mealPrice && (
+                                  <>
+                                    {ap.mealPrice.breakfast != null && (
+                                      <div className={classes.requestDataInfo}>
+                                        <div className={classes.requestDataInfo_title}>Завтрак</div>
+                                        <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                          {effectiveDays > 0 ? (
+                                            <>
+                                              <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(ap.mealPrice.breakfast * effectiveDays).toLocaleString()} ₽</span>
+                                              <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${ap.mealPrice.breakfast.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                            </>
+                                          ) : (
+                                            <span style={{ whiteSpace: "nowrap" }}>{ap.mealPrice.breakfast.toLocaleString()} ₽ / сут.</span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {ap.mealPrice.lunch != null && (
+                                      <div className={classes.requestDataInfo}>
+                                        <div className={classes.requestDataInfo_title}>Обед</div>
+                                        <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                          {effectiveDays > 0 ? (
+                                            <>
+                                              <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(ap.mealPrice.lunch * effectiveDays).toLocaleString()} ₽</span>
+                                              <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${ap.mealPrice.lunch.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                            </>
+                                          ) : (
+                                            <span style={{ whiteSpace: "nowrap" }}>{ap.mealPrice.lunch.toLocaleString()} ₽ / сут.</span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+                                    {ap.mealPrice.dinner != null && (
+                                      <div className={classes.requestDataInfo}>
+                                        <div className={classes.requestDataInfo_title}>Ужин</div>
+                                        <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                          {effectiveDays > 0 ? (
+                                            <>
+                                              <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(ap.mealPrice.dinner * effectiveDays).toLocaleString()} ₽</span>
+                                              <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${ap.mealPrice.dinner.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                            </>
+                                          ) : (
+                                            <span style={{ whiteSpace: "nowrap" }}>{ap.mealPrice.dinner.toLocaleString()} ₽ / сут.</span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            ));
+                          })()}
+
+                          {/* Цены гостиниц */}
+                          <div className={classes.requestDataTitle}>Цены гостиниц</div>
+                          {(hotelsWithPricesData?.hotels?.hotels ?? [])
+                            .filter(h => h.airport?.id === formData.airport?.id)
+                            .length === 0 ? (
+                              <div style={{ padding: "4px 0", color: "var(--text)", opacity: 0.5, fontSize: 14 }}>
+                                Нет данных о гостиницах
+                              </div>
+                            ) : (
+                              (hotelsWithPricesData?.hotels?.hotels ?? [])
+                                .filter(h => h.airport?.id === formData.airport?.id)
+                                .map(hotel => {
+                                  const mp = hotel.mealPriceForAir ?? hotel.mealPrice;
+                                  return (
+                                    <div key={hotel.id} style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 16 }}>
+                                      <div className={classes.requestDataTitle} style={{ fontSize: 14 }}>{hotel.name}</div>
+                                      {hotel.roomKind?.map((rk, rkIdx) => {
+                                        const basePrice = rk.priceForAirline ?? rk.price;
+                                        return (
+                                          <div key={rkIdx} className={classes.requestDataInfo}>
+                                            <div className={classes.requestDataInfo_title} style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                                              <span>{rk.name}</span>
+                                              {categoryMap[rk.category] && (
+                                                <span style={{ fontSize: 12, opacity: 0.55 }}>{categoryMap[rk.category]}</span>
+                                              )}
+                                            </div>
+                                            <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                              {basePrice != null && effectiveDays > 0 ? (
+                                                <>
+                                                  <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{`${(basePrice * effectiveDays).toLocaleString()} ₽`}</span>
+                                                  <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${basePrice.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                                </>
+                                              ) : (
+                                                <span style={{ whiteSpace: "nowrap" }}>{basePrice != null ? `${basePrice.toLocaleString()} ₽ / сут.` : "—"}</span>
+                                              )}
+                                            </div>
+                                          </div>
+                                        );
+                                      })}
+                                      {mp && (
+                                        <>
+                                          {mp.breakfast != null && (
+                                            <div className={classes.requestDataInfo}>
+                                              <div className={classes.requestDataInfo_title}>Завтрак</div>
+                                              <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                                {effectiveDays > 0 ? (
+                                                  <>
+                                                    <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(mp.breakfast * effectiveDays).toLocaleString()} ₽</span>
+                                                    <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${mp.breakfast.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                                  </>
+                                                ) : (
+                                                  <span style={{ whiteSpace: "nowrap" }}>{mp.breakfast.toLocaleString()} ₽ / сут.</span>
+                                                )}
+                                              </div>
+                                            </div>
+                                          )}
+                                          {mp.lunch != null && (
+                                            <div className={classes.requestDataInfo}>
+                                              <div className={classes.requestDataInfo_title}>Обед</div>
+                                              <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                                {effectiveDays > 0 ? (
+                                                  <>
+                                                    <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(mp.lunch * effectiveDays).toLocaleString()} ₽</span>
+                                                    <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${mp.lunch.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                                  </>
+                                                ) : (
+                                                  <span style={{ whiteSpace: "nowrap" }}>{mp.lunch.toLocaleString()} ₽ / сут.</span>
+                                                )}
+                                              </div>
+                                            </div>
+                                          )}
+                                          {mp.dinner != null && (
+                                            <div className={classes.requestDataInfo}>
+                                              <div className={classes.requestDataInfo_title}>Ужин</div>
+                                              <div className={classes.requestDataInfo_desc} style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                                                {effectiveDays > 0 ? (
+                                                  <>
+                                                    <span style={{ whiteSpace: "nowrap", fontWeight: 600 }}>{(mp.dinner * effectiveDays).toLocaleString()} ₽</span>
+                                                    <span style={{ fontSize: 12, opacity: 0.55, whiteSpace: "nowrap" }}>{`${mp.dinner.toLocaleString()} ₽ / сут. × ${effectiveDays} сут.`}</span>
+                                                  </>
+                                                ) : (
+                                                  <span style={{ whiteSpace: "nowrap" }}>{mp.dinner.toLocaleString()} ₽ / сут.</span>
+                                                )}
+                                              </div>
+                                            </div>
+                                          )}
+                                        </>
+                                      )}
+                                    </div>
+                                  );
+                                })
+                            )}
+                        </>
+                      )
+                    )}
+                  </div>
+                )}
+
                 {/* Вкладка "Питание" */}
                 {activeTab === "Питание" &&
                   formData.status !== "created" &&
@@ -1664,8 +2141,8 @@ function ExistRequest({
                     //     )}
                     // </div>
                   )}
-                {/* Вкладка "Комментарии" */}
-                {activeTab === "Комментарии" && (
+                {/* Вкладка "Чат" */}
+                {activeTab === "Чат" && (
                   <>
                     {!isSuperAdmin(user) && !isDispatcherAdmin(user) ? null : (
                       <div className={classes.separatorWrapper}>
@@ -1739,7 +2216,7 @@ function ExistRequest({
                           {dayLogs.map((log, idx) => (
                             <div className={classes.logText}>
                               <div className={classes.logInfo}>
-                                <span className='historyLogTime'>{convertToDate(
+                                <span className='historyLogTime'>{convertToDateNew(
                                   log.createdAt,
                                   true
                                 )}</span>
@@ -1789,48 +2266,9 @@ function ExistRequest({
                 )}
               </div>
 
-              {/* Кнопки для неразмещённой заявки: отмена и размещение */}
-              {(formData.status === "created" ||
-                formData.status === "opened") &&
-                activeTab === "Общая" &&
-                canUpdateActions && (
-                  <div className={classes.requestButton}>
-                    <button
-                      onClick={() => {
-                        // onClose();
-                        // handleCancelRequest(chooseRequestID);
-                        openDeleteComponent();
-                      }}
-                    >
-                      {user?.airlineId && formData.status === "opened"
-                        ? "Запрос на отмену"
-                        : "Отменить"}
-                      {/* <img src="/user-check.png" alt="" /> */}
-                    </button>
-                    {((isSuperAdmin(user) || isDispatcherAdmin(user)) &&
-                      !formData.hotelId) && (
-                        <Button
-                          onClick={handlePlaceClick}
-                        >
-                          {/* {console.log(formData)} */}
-                          Разместить
-                          <img
-                            style={{
-                              width: "fit-content",
-                              height: "fit-content",
-                            }}
-                            src="/user-check.png"
-                            alt=""
-                          />
-                        </Button>
-                      )}
-                  </div>
-                )}
-              {formData.status !== "created" &&
-                formData.status !== "opened" &&
-                formData.status !== "canceled" &&
+              {formData.status !== "canceled" &&
                 formData.status !== "archived" &&
-                activeTab !== "Комментарии" &&
+                activeTab !== "Чат" &&
                 activeTab !== "История" &&
                 canUpdateActions &&
                 isEditing && (
@@ -1865,17 +2303,28 @@ function ExistRequest({
         </Sidebar>
       )}
       {showDelete && (
-        <DeleteComponent
-          remove={() => {
-            handleCancelRequest();
-            closeDeleteComponent();
-            // setShowRequestSidebar(false);
-          }}
-          index={chooseRequestID}
-          close={closeDeleteComponent}
-          title={`Вы действительно хотите отменить заявку? `}
-          isCancel={true}
-        />
+        formData?.externalSource === "travelline" ? (
+          <TlCancelDialog
+            bookingId={formData?.externalBookingNumber}
+            onConfirm={async () => {
+              await handleCancelRequest();
+              closeDeleteComponent();
+            }}
+            onClose={closeDeleteComponent}
+          />
+        ) : (
+          <DeleteComponent
+            remove={() => {
+              handleCancelRequest();
+              closeDeleteComponent();
+              // setShowRequestSidebar(false);
+            }}
+            index={chooseRequestID}
+            close={closeDeleteComponent}
+            title={`Вы действительно хотите отменить заявку? `}
+            isCancel={true}
+          />
+        )
       )}
     </>
   );
@@ -2742,12 +3191,12 @@ export default ExistRequest;
 //                   )}
 //                 {canChatTab && (
 //                   <div
-//                     className={`${classes.tab} ${activeTab === "Комментарии" ? classes.activeTab : ""
+//                     className={`${classes.tab} ${activeTab === "Чат" ? classes.activeTab : ""
 //                       }`}
 //                     style={{ position: "relative" }}
-//                     onClick={() => handleTabChange("Комментарии")}
+//                     onClick={() => handleTabChange("Чат")}
 //                   >
-//                     Комментарии
+//                     Чат
 //                     {formData?.chat?.some(
 //                       (chat) =>
 //                         chat.unreadMessagesCount > 0 &&
@@ -2792,7 +3241,7 @@ export default ExistRequest;
 //                 className={classes.requestMiddle}
 //                 style={{
 //                   height:
-//                     (activeTab !== "Комментарии" &&
+//                     (activeTab !== "Чат" &&
 //                       activeTab !== "История" &&
 //                       formData.status !== "created" &&
 //                       formData.status !== "canceled" &&
@@ -2804,7 +3253,7 @@ export default ExistRequest;
 //                         : true))
 //                       ? "calc(100vh - 227px)"
 //                       :
-//                       (activeTab !== "Комментарии" &&
+//                       (activeTab !== "Чат" &&
 //                         activeTab !== "История" &&
 //                         formData.status !== "created" &&
 //                         formData.status !== "canceled" &&
@@ -3445,8 +3894,8 @@ export default ExistRequest;
 //                     //     )}
 //                     // </div>
 //                   )}
-//                 {/* Вкладка "Комментарии" */}
-//                 {activeTab === "Комментарии" && (
+//                 {/* Вкладка "Чат" */}
+//                 {activeTab === "Чат" && (
 //                   <>
 //                     {!isSuperAdmin(user) && !isDispatcherAdmin(user) ? null : (
 //                       <div className={classes.separatorWrapper}>
@@ -3609,7 +4058,7 @@ export default ExistRequest;
 //                 formData.status !== "canceled" &&
 //                 // formData.status !== "archiving" &&
 //                 formData.status !== "archived" &&
-//                 activeTab !== "Комментарии" &&
+//                 activeTab !== "Чат" &&
 //                 activeTab !== "История" &&
 //                 canUpdateActions && (
 //                   <div className={classes.requestButton}>

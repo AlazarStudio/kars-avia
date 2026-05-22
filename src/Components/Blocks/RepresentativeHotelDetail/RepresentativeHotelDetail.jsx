@@ -30,9 +30,14 @@ export function HotelDetailToolbar({
   onIssueLink,
   className,
   showAddBookingButton = true,
+  readOnly = false,
 }) {
   return (
-    <div className={className ? `${className} ${classes.headerRow}` : classes.headerRow}>
+    <div
+      className={
+        className ? `${className} ${classes.headerRow}` : classes.headerRow
+      }
+    >
       <MUITextField
         className={classes.searchField}
         label="Поиск"
@@ -45,8 +50,8 @@ export function HotelDetailToolbar({
             Выдать ссылку для гостиницы
           </Button>
         )}
-        <Button onClick={onGenerateReport}>Сформировать отчет</Button>
-        {showAddBookingButton && (
+        <Button onClick={onGenerateReport}>Отчет</Button>
+        {!readOnly && showAddBookingButton && (
           <Button onClick={onAddBooking}>Добавить бронь</Button>
         )}
       </div>
@@ -69,6 +74,7 @@ export default function RepresentativeHotelDetail({
   searchQuery,
   onSearchChange,
   isExternalUser = false,
+  readOnly = false,
 }) {
   const [internalSearch, setInternalSearch] = useState("");
   const [internalShowAddBooking, setInternalShowAddBooking] = useState(false);
@@ -83,19 +89,23 @@ export default function RepresentativeHotelDetail({
   const search = searchQuery !== undefined ? searchQuery : internalSearch;
   const setSearch = onSearchChange || setInternalSearch;
   const isModalControlled = onCloseAddBooking != null;
-  const modalOpenForAdd = isModalControlled ? showAddBooking : internalShowAddBooking;
+  const modalOpenForAdd = isModalControlled
+    ? showAddBooking
+    : internalShowAddBooking;
   const modalOpen = modalOpenForAdd || editingPersonIndex !== null;
   const modalOnClose = () => {
     if (editingPersonIndex !== null) setEditingPersonIndex(null);
     if (isModalControlled) onCloseAddBooking?.();
     else setInternalShowAddBooking(false);
   };
-  const onAddBookingClick = isModalControlled ? undefined : () => setInternalShowAddBooking(true);
+  const onAddBookingClick = isModalControlled
+    ? undefined
+    : () => setInternalShowAddBooking(true);
 
   const bookings = request?.livingService?.hotels?.[hotelIndex]?.people ?? [];
   const hotelCapacity = hotel?.peopleCount ?? null;
   const canAddBooking =
-    hotelCapacity == null || (bookings.length < hotelCapacity);
+    hotelCapacity == null || bookings.length < hotelCapacity;
   const token = getCookie("token");
 
   const [removeHotelPerson, { loading: removing }] = useMutation(
@@ -109,7 +119,7 @@ export default function RepresentativeHotelDetail({
         },
       ],
       awaitRefetchQueries: true,
-    }
+    },
   );
 
   const [relocatePerson, { loading: relocating }] = useMutation(
@@ -123,7 +133,7 @@ export default function RepresentativeHotelDetail({
         },
       ],
       awaitRefetchQueries: true,
-    }
+    },
   );
 
   const [evictPerson, { loading: evicting }] = useMutation(
@@ -137,7 +147,7 @@ export default function RepresentativeHotelDetail({
         },
       ],
       awaitRefetchQueries: true,
-    }
+    },
   );
 
   const plan = request?.livingService?.plan;
@@ -158,7 +168,7 @@ export default function RepresentativeHotelDetail({
       (request?.livingService?.hotels ?? [])
         .map((h, idx) => ({ hotel: h, originalIndex: idx }))
         .filter(({ originalIndex }) => originalIndex !== hotelIndex),
-    [request?.livingService?.hotels, hotelIndex]
+    [request?.livingService?.hotels, hotelIndex],
   );
 
   const hotelAutocompleteOptions = useMemo(
@@ -168,12 +178,14 @@ export default function RepresentativeHotelDetail({
         originalIndex,
         hotel,
       })),
-    [otherHotelsWithIndex]
+    [otherHotelsWithIndex],
   );
 
   const toggleSelectedIndex = (index) => {
     setSelectedPersonIndices((prev) =>
-      prev.includes(index) ? prev.filter((i) => i !== index) : [...prev, index].sort((a, b) => a - b)
+      prev.includes(index)
+        ? prev.filter((i) => i !== index)
+        : [...prev, index].sort((a, b) => a - b),
     );
   };
 
@@ -197,8 +209,10 @@ export default function RepresentativeHotelDetail({
         });
       }
       addNotification?.(
-        personIndices.length === 1 ? "Пассажир переселён." : `Переселено пассажиров: ${personIndices.length}.`,
-        "success"
+        personIndices.length === 1
+          ? "Пассажир переселён."
+          : `Переселено пассажиров: ${personIndices.length}.`,
+        "success",
       );
       onRefetch?.();
       setRelocateModal(null);
@@ -206,8 +220,10 @@ export default function RepresentativeHotelDetail({
       setSelectedPersonIndices([]);
     } catch (err) {
       addNotification?.(
-        err?.graphQLErrors?.[0]?.message || err?.message || "Ошибка при переселении.",
-        "error"
+        err?.graphQLErrors?.[0]?.message ||
+          err?.message ||
+          "Ошибка при переселении.",
+        "error",
       );
     }
   };
@@ -231,8 +247,10 @@ export default function RepresentativeHotelDetail({
         });
       }
       addNotification?.(
-        personIndices.length === 1 ? "Пассажир выселен." : `Выселено пассажиров: ${personIndices.length}.`,
-        "success"
+        personIndices.length === 1
+          ? "Пассажир выселен."
+          : `Выселено пассажиров: ${personIndices.length}.`,
+        "success",
       );
       onRefetch?.();
       setEvictModal(null);
@@ -240,8 +258,10 @@ export default function RepresentativeHotelDetail({
       setSelectedPersonIndices([]);
     } catch (err) {
       addNotification?.(
-        err?.graphQLErrors?.[0]?.message || err?.message || "Ошибка при выселении.",
-        "error"
+        err?.graphQLErrors?.[0]?.message ||
+          err?.message ||
+          "Ошибка при выселении.",
+        "error",
       );
     }
   };
@@ -261,8 +281,10 @@ export default function RepresentativeHotelDetail({
     } catch (err) {
       console.error(err);
       addNotification?.(
-        err?.graphQLErrors?.[0]?.message || err?.message || "Ошибка при удалении.",
-        "error"
+        err?.graphQLErrors?.[0]?.message ||
+          err?.message ||
+          "Ошибка при удалении.",
+        "error",
       );
       setDeleteConfirmIndex(null);
     }
@@ -274,10 +296,17 @@ export default function RepresentativeHotelDetail({
         <div className={classes.headerRow}>
           {!hidePageTitle && (
             <>
-              <button type="button" className={classes.backButton} onClick={onBack} aria-label="Назад">
+              <button
+                type="button"
+                className={classes.backButton}
+                onClick={onBack}
+                aria-label="Назад"
+              >
                 <img src="/arrow.png" alt="" />
               </button>
-              <h1 className={classes.title}>Заявка {request?.flightNumber ?? ""}</h1>
+              <h1 className={classes.title}>
+                Заявка {request?.flightNumber ?? ""}
+              </h1>
             </>
           )}
           <MUITextField
@@ -290,8 +319,20 @@ export default function RepresentativeHotelDetail({
             {/* <button type="button" className={classes.headerBtn}>
               <EditIcon /> Редактировать
             </button> */}
-            <button type="button" className={classes.headerBtn} onClick={onGenerateReport}>
-              <img src="/plus.png" alt="" style={{ width: "15px", objectFit: "contain", filter: "invert(100%)" }} />
+            <button
+              type="button"
+              className={classes.headerBtn}
+              onClick={onGenerateReport}
+            >
+              <img
+                src="/plus.png"
+                alt=""
+                style={{
+                  width: "15px",
+                  objectFit: "contain",
+                  filter: "invert(100%)",
+                }}
+              />
               Сформировать отчет
             </button>
             {canAddBooking && (
@@ -306,8 +347,12 @@ export default function RepresentativeHotelDetail({
         onClose={modalOnClose}
         requestId={request?.id}
         hotelIndex={hotelIndex}
-        initialPerson={editingPersonIndex !== null ? bookings[editingPersonIndex] : undefined}
-        personIndex={editingPersonIndex !== null ? editingPersonIndex : undefined}
+        initialPerson={
+          editingPersonIndex !== null ? bookings[editingPersonIndex] : undefined
+        }
+        personIndex={
+          editingPersonIndex !== null ? editingPersonIndex : undefined
+        }
         onSuccess={() => {
           onRefetch?.();
           setEditingPersonIndex(null);
@@ -324,7 +369,7 @@ export default function RepresentativeHotelDetail({
         />
       )}
 
-      {selectedPersonIndices.length > 0 && (
+      {!readOnly && selectedPersonIndices.length > 0 && (
         <div className={classes.selectionBar}>
           <span className={classes.selectionBarLabel}>
             Выбрано броней: {selectedPersonIndices.length} —
@@ -335,7 +380,7 @@ export default function RepresentativeHotelDetail({
                 if (otherHotelsWithIndex.length === 0) {
                   addNotification?.(
                     "Переселение недоступно: в заявке только одна гостиница. Добавьте ещё одну гостиницу, чтобы переселять пассажиров.",
-                    "warning"
+                    "warning",
                   );
                   return;
                 }
@@ -350,7 +395,9 @@ export default function RepresentativeHotelDetail({
             </Button>
           )}
           <Button
-            onClick={() => setEvictModal({ personIndices: [...selectedPersonIndices] })}
+            onClick={() =>
+              setEvictModal({ personIndices: [...selectedPersonIndices] })
+            }
             disabled={evicting}
           >
             Выселить
@@ -379,38 +426,42 @@ export default function RepresentativeHotelDetail({
           {bookings.map((row, index) => (
             <div key={index} className={classes.tableRow}>
               <div className={classes.colCheckbox}>
-                <input
-                  type="checkbox"
-                  checked={selectedPersonIndices.includes(index)}
-                  onChange={() => toggleSelectedIndex(index)}
-                  aria-label="Выбрать для переселения или выселения"
-                />
+                {!readOnly && (
+                  <input
+                    type="checkbox"
+                    checked={selectedPersonIndices.includes(index)}
+                    onChange={() => toggleSelectedIndex(index)}
+                    aria-label="Выбрать для переселения или выселения"
+                  />
+                )}
               </div>
               <div>{index + 1}</div>
               <div>{checkInStr}</div>
               <div>{checkOutStr}</div>
               <div style={{ textAlign: "center" }}>{row.roomNumber ?? "—"}</div>
               <div style={{ textAlign: "center" }}>{row.fullName ?? "—"}</div>
-              <div className={classes.cellActions}>
-                <button
-                  type="button"
-                  onClick={() => setEditingPersonIndex(index)}
-                  className={classes.editBtn}
-                  aria-label="Редактировать бронь"
-                  title="Редактировать бронь"
-                >
-                  <EditPencilIcon cursor="pointer" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDeleteConfirmIndex(index)}
-                  disabled={removing}
-                  className={classes.deleteBtn}
-                  aria-label="Удалить бронь"
-                >
-                  <DeleteIcon cursor="pointer" />
-                </button>
-              </div>
+              {!readOnly && (
+                <div className={classes.cellActions}>
+                  <button
+                    type="button"
+                    onClick={() => setEditingPersonIndex(index)}
+                    className={classes.editBtn}
+                    aria-label="Редактировать бронь"
+                    title="Редактировать бронь"
+                  >
+                    <EditPencilIcon cursor="pointer" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDeleteConfirmIndex(index)}
+                    disabled={removing}
+                    className={classes.deleteBtn}
+                    aria-label="Удалить бронь"
+                  >
+                    <DeleteIcon cursor="pointer" />
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -419,7 +470,12 @@ export default function RepresentativeHotelDetail({
       {relocateModal !== null && (
         <Dialog
           open
-          onClose={() => !relocating && (setRelocateModal(null), setRelocateReason(""), setSelectedPersonIndices([])) }
+          onClose={() =>
+            !relocating &&
+            (setRelocateModal(null),
+            setRelocateReason(""),
+            setSelectedPersonIndices([]))
+          }
           PaperProps={{ sx: { borderRadius: "15px" } }}
         >
           <DialogTitle>
@@ -432,14 +488,20 @@ export default function RepresentativeHotelDetail({
             <MUIAutocompleteColor
               label="Отель"
               options={hotelAutocompleteOptions}
-              value={hotelAutocompleteOptions.find((o) => o.originalIndex === relocateModal.toHotelIndex) ?? null}
+              value={
+                hotelAutocompleteOptions.find(
+                  (o) => o.originalIndex === relocateModal.toHotelIndex,
+                ) ?? null
+              }
               onChange={(e, newValue) =>
                 setRelocateModal((prev) => ({
                   ...prev,
                   toHotelIndex: newValue?.originalIndex,
                 }))
               }
-              getOptionLabel={(option) => (option?.label != null ? option.label : "—")}
+              getOptionLabel={(option) =>
+                option?.label != null ? option.label : "—"
+              }
               dropdownWidth="100%"
               style={{ marginBottom: 12 }}
             />
@@ -453,16 +515,28 @@ export default function RepresentativeHotelDetail({
           </DialogContent>
           <DialogActions>
             <Button
-              onClick={() => { setRelocateModal(null); setRelocateReason(""); setSelectedPersonIndices([]); }}
+              onClick={() => {
+                setRelocateModal(null);
+                setRelocateReason("");
+                setSelectedPersonIndices([]);
+              }}
               disabled={relocating}
             >
               Отмена
             </Button>
             <Button
               onClick={handleRelocate}
-              disabled={relocating || !relocateReason.trim() || relocateModal.toHotelIndex === undefined}
+              disabled={
+                relocating ||
+                !relocateReason.trim() ||
+                relocateModal.toHotelIndex === undefined
+              }
             >
-              {relocating ? "Сохранение…" : relocateModal.personIndices?.length > 1 ? "Переселить всех" : "Переселить"}
+              {relocating
+                ? "Сохранение…"
+                : relocateModal.personIndices?.length > 1
+                  ? "Переселить всех"
+                  : "Переселить"}
             </Button>
           </DialogActions>
         </Dialog>
@@ -471,7 +545,12 @@ export default function RepresentativeHotelDetail({
       {evictModal !== null && (
         <Dialog
           open
-          onClose={() => !evicting && (setEvictModal(null), setEvictReason(""), setSelectedPersonIndices([]))}
+          onClose={() =>
+            !evicting &&
+            (setEvictModal(null),
+            setEvictReason(""),
+            setSelectedPersonIndices([]))
+          }
           PaperProps={{ sx: { borderRadius: "15px" } }}
         >
           <DialogTitle>
@@ -480,7 +559,9 @@ export default function RepresentativeHotelDetail({
               : "Выселить пассажира"}
           </DialogTitle>
           <DialogContent>
-            <p style={{ marginBottom: 8 }}>Укажите причину выселения (обязательно):</p>
+            <p style={{ marginBottom: 8 }}>
+              Укажите причину выселения (обязательно):
+            </p>
             <textarea
               className={classes.reasonTextarea}
               placeholder="Причина"
@@ -491,7 +572,11 @@ export default function RepresentativeHotelDetail({
           </DialogContent>
           <DialogActions>
             <Button
-              onClick={() => { setEvictModal(null); setEvictReason(""); setSelectedPersonIndices([]); }}
+              onClick={() => {
+                setEvictModal(null);
+                setEvictReason("");
+                setSelectedPersonIndices([]);
+              }}
               disabled={evicting}
             >
               Отмена
@@ -500,14 +585,20 @@ export default function RepresentativeHotelDetail({
               onClick={handleEvict}
               disabled={evicting || !evictReason.trim()}
             >
-              {evicting ? "Сохранение…" : evictModal.personIndices?.length > 1 ? "Выселить всех" : "Выселить"}
+              {evicting
+                ? "Сохранение…"
+                : evictModal.personIndices?.length > 1
+                  ? "Выселить всех"
+                  : "Выселить"}
             </Button>
           </DialogActions>
         </Dialog>
       )}
 
       <div className={classes.footerRow}>
-        <span className={classes.passengerCount}>{bookings.length} пассажира</span>
+        <span className={classes.passengerCount}>
+          {bookings.length} пассажира
+        </span>
       </div>
     </section>
   );

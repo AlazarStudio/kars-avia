@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./CreateRequestAdditionalServices.module.css";
 import Button from "../../Standart/Button/Button.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
@@ -9,14 +9,21 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import TextEditor from "../TextEditor/TextEditor.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
+
+const REQUIRED_FIELDS_MESSAGE =
+  "Пожалуйста, заполните все обязательные поля.";
+
 function CreateRequestAdditionalServices({
   show,
   id,
   onClose,
   user,
-  addNotification,
 }) {
   const token = getCookie("token");
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -34,27 +41,37 @@ function CreateRequestAdditionalServices({
   });
 
   const sidebarRef = useRef();
+  const [isEdited, setIsEdited] = useState(false);
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setFormData({
       name: "",
       price: "",
       priceForAirline: "",
     });
-  };
+    setIsEdited(false);
+  }, []);
 
-  const closeButton = () => {
-    let success = confirm(
-      "Вы уверены, все несохраненные данные будут удалены?"
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
+    if (!isEdited) {
+      onClose();
+      return;
+    }
+
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
     );
-    if (success) {
+    if (isConfirmed) {
       resetForm();
       onClose();
     }
-  };
+  }, [confirm, isDialogOpen, isEdited, onClose, resetForm]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setIsEdited(true);
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
@@ -64,8 +81,45 @@ function CreateRequestAdditionalServices({
 
   const [isLoading, setIsLoading] = useState(false);
 
+  const isFormValid = () => {
+    const nameTrim = String(formData.name ?? "").trim();
+    if (!nameTrim) return false;
+
+    const priceNum = parseFloat(formData.price);
+    if (
+      formData.price === "" ||
+      formData.price === null ||
+      Number.isNaN(priceNum)
+    ) {
+      return false;
+    }
+
+    if (!user?.hotelId) {
+      const airlineNum = parseFloat(formData.priceForAirline);
+      if (
+        formData.priceForAirline === "" ||
+        formData.priceForAirline === null ||
+        Number.isNaN(airlineNum)
+      ) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!isFormValid()) {
+      showAlert(REQUIRED_FIELDS_MESSAGE);
+      return;
+    }
+
+    const nameTrim = String(formData.name ?? "").trim();
+    const priceNum = parseFloat(formData.price);
+    const priceForAirlineNum = parseFloat(formData.priceForAirline);
+
     setIsLoading(true);
 
     try {
@@ -75,9 +129,9 @@ function CreateRequestAdditionalServices({
           input: {
             additionalServices: [
               {
-                name: formData.name,
-                price: parseFloat(formData.price),
-                priceForAirline: parseFloat(formData.priceForAirline),
+                name: nameTrim,
+                price: priceNum,
+                priceForAirline: priceForAirlineNum,
               },
             ],
           },
@@ -86,10 +140,10 @@ function CreateRequestAdditionalServices({
       resetForm();
       onClose();
       setIsLoading(false);
-      addNotification("Добавление доп услуги прошло успешно.", "success");
+      success("Добавление доп услуги прошло успешно.");
     } catch (error) {
       setIsLoading(false);
-      alert("Произошло ошибка при добавлении доп услуги.");
+      notifyError("Произошла ошибка при добавлении доп услуги.");
       console.error("Произошла ошибка при выполнении запроса:", error);
     }
   };
@@ -97,18 +151,29 @@ function CreateRequestAdditionalServices({
   useEffect(() => {
     if (show) {
       resetForm();
-      const handleClickOutside = (event) => {
-        if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-          closeButton();
-        }
-      };
-      document.addEventListener("mousedown", handleClickOutside);
-
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
     }
-  }, [show]);
+  }, [show, resetForm]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+      if (sidebarRef.current?.contains(event.target)) {
+        return;
+      }
+      closeButton();
+    };
+
+    if (show) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [show, closeButton, isDialogOpen]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>

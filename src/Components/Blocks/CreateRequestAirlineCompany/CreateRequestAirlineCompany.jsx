@@ -2,10 +2,12 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./CreateRequestAirlineCompany.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import { InputMask } from "@react-input/mask";
 import {
   decodeJWT,
   getCookie,
   CREATE_AIRLINE_USER,
+  CREATE_POSITION,
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList";
@@ -14,20 +16,28 @@ import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { rolesObject } from "../../../roles";
 import CloseIcon from "../../../shared/icons/CloseIcon";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function CreateRequestAirlineCompany({
   show,
   onClose,
   onCreated,
+  onPositionCreated,
   representative,
   id,
   addTarif,
   setAddTarif,
-  addNotification,
   positions,
 }) {
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
+
   const [userRole, setUserRole] = useState();
-  const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
+  const [isEdited, setIsEdited] = useState(false);
+  const [isCreatingPosition, setIsCreatingPosition] = useState(false);
+  const [newPositionName, setNewPositionName] = useState("");
+  const [localPositions, setLocalPositions] = useState(positions || []);
   const token = getCookie("token");
 
   useEffect(() => {
@@ -38,6 +48,7 @@ function CreateRequestAirlineCompany({
     images: null,
     name: "",
     email: "",
+    number: "",
     role: "AIRLINEADMIN",
     position: "",
     login: "",
@@ -46,6 +57,10 @@ function CreateRequestAirlineCompany({
   });
 
   const sidebarRef = useRef();
+
+  useEffect(() => {
+    setLocalPositions(positions || []);
+  }, [positions]);
 
   const resetForm = useCallback(() => {
     setFormData({
@@ -58,21 +73,28 @@ function CreateRequestAirlineCompany({
       password: "",
       department: "",
     });
-    setIsEdited(false); // Сброс флага изменений
+    setIsEdited(false);
+    setIsCreatingPosition(false);
+    setNewPositionName("");
   }, []);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (!isEdited) {
       resetForm();
       onClose();
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
     }
-  }, [isEdited, resetForm, onClose]);
+  }, [isEdited, resetForm, onClose, confirm, isDialogOpen]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -88,8 +110,8 @@ function CreateRequestAirlineCompany({
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
-    if (file.size > maxSizeInBytes) {
-      alert("Размер файла не должен превышать 8 МБ!");
+    if (file && file.size > maxSizeInBytes) {
+      showAlert("Размер файла не должен превышать 8 МБ!");
       setFormData((prevState) => ({
         ...prevState,
         images: "",
@@ -117,6 +139,60 @@ function CreateRequestAirlineCompany({
     },
   });
 
+  const [createPosition] = useMutation(CREATE_POSITION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const handleCreatePosition = useCallback(async () => {
+    const trimmedName = newPositionName.trim();
+    if (!trimmedName) {
+      showAlert("Введите название должности.");
+      return;
+    }
+
+    const isDuplicate = (localPositions || []).some(
+      (p) => String(p?.name || "").trim().toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (isDuplicate) {
+      showAlert("Такая должность уже существует.");
+      return;
+    }
+
+    try {
+      const response = await createPosition({
+        variables: {
+          input: {
+            name: trimmedName,
+            separator: "airlineUser",
+            airlineId: id,
+          },
+        },
+      });
+
+      const createdPosition = response?.data?.createPosition;
+      if (!createdPosition) throw new Error("Пустой ответ createPosition");
+
+      setLocalPositions((prev) =>
+        [...(prev || []), createdPosition].sort((a, b) =>
+          String(a?.name || "").localeCompare(String(b?.name || ""))
+        )
+      );
+      setFormData((prevData) => ({ ...prevData, position: createdPosition.name }));
+      setIsEdited(true);
+      setNewPositionName("");
+      setIsCreatingPosition(false);
+      onPositionCreated?.(createdPosition);
+      success("Должность добавлена успешно.");
+    } catch (err) {
+      console.error("Ошибка при создании должности:", err);
+      notifyError("Не удалось создать должность.");
+    }
+  }, [newPositionName, localPositions, createPosition, id, onPositionCreated, showAlert, success, notifyError]);
+
   const isFormValid = () => {
     return (
       formData.name &&
@@ -135,20 +211,20 @@ function CreateRequestAirlineCompany({
     setIsLoading(true);
 
     if (!isFormValid()) {
-      alert("Пожалуйста, заполните все обязательные поля.");
+      showAlert("Пожалуйста, заполните все обязательные поля.");
       setIsLoading(false);
       return;
     }
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
-      alert("Введите корректный email.");
+      showAlert("Введите корректный email.");
       setIsLoading(false);
       return;
     }
 
     if (formData.password.length < 8) {
-      alert("Пароль должен содержать минимум 8 символов.");
+      showAlert("Пароль должен содержать минимум 8 символов.");
       setIsLoading(false);
       return;
     }
@@ -182,7 +258,7 @@ function CreateRequestAirlineCompany({
         (dept) => dept.name === formData.department
       );
 
-      const selectedPosition = positions.find(
+      const selectedPosition = localPositions.find(
         (position) => position.name === formData.position
       );
       if (representative) {
@@ -196,6 +272,7 @@ function CreateRequestAirlineCompany({
               positionId: selectedPosition?.id,
               airlineId: id,
               email: formData.email,
+              number: formData.number,
               hotelId: null,
               login: formData.login,
               password: formData.password,
@@ -235,7 +312,7 @@ function CreateRequestAirlineCompany({
           resetForm();
           onClose();
           setIsLoading(false);
-          addNotification("Создание аккаунта прошло успешно.", "success");
+          success("Создание аккаунта прошло успешно.");
         }
       }
     } catch (e) {
@@ -246,31 +323,32 @@ function CreateRequestAirlineCompany({
           "ApolloError: Пользователь с таким логином уже существует"
         )
       ) {
-        alert("Пользователь с таким логином уже существует");
+        showAlert("Пользователь с таким логином уже существует");
       } else if (
         String(e).startsWith(
           "ApolloError: Пользователь с таким email уже существует"
         )
       ) {
-        alert("Пользователь с такой почтой уже существует");
+        showAlert("Пользователь с такой почтой уже существует");
       } else if (
         String(e).startsWith(
           "ApolloError: Пользователь с таким email и логином уже существует"
         )
       ) {
-        alert("Пользователь с такой почтой и логином уже существует");
+        showAlert("Пользователь с такой почтой и логином уже существует");
       } else {
-        alert("Ошибка при создании аккаунта");
+        notifyError("Ошибка при создании аккаунта");
       }
     }
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current?.contains(event.target) // Клик в боковой панели
-      ) {
-        return; // Если клик внутри, ничего не делаем
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+
+      if (sidebarRef.current?.contains(event.target)) {
+        return;
       }
 
       closeButton();
@@ -285,7 +363,7 @@ function CreateRequestAirlineCompany({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   // const positions = ["Директор", "Заместитель директора", "Сотрудник"];
 
@@ -311,6 +389,18 @@ function CreateRequestAirlineCompany({
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Введите ФИО"
+                autoComplete="new-password"
+              />
+
+              <label>Телефон</label>
+              <InputMask
+                type="text"
+                mask="+7 (___) ___-__-__"
+                replacement={{ _: /\d/ }}
+                name="number"
+                value={formData.number}
+                onChange={handleChange}
+                placeholder="+7 (___) ___-__-__"
                 autoComplete="new-password"
               />
 
@@ -347,11 +437,20 @@ function CreateRequestAirlineCompany({
                 </>
               )}
 
-              <label>Должность</label>
+              <div className={classes.fieldHeader}>
+                <label>Должность</label>
+                <div
+                  className={classes.addPosition}
+                  onClick={() => setIsCreatingPosition((prev) => !prev)}
+                  title="Добавить должность"
+                >
+                  <img src="/plus.png" alt="Добавить должность" />
+                </div>
+              </div>
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите должность"}
-                options={positions?.map((position) => position.name)}
+                options={localPositions.map((position) => position.name)}
                 value={formData.position}
                 onChange={(event, newValue) => {
                   setIsEdited(true);
@@ -361,6 +460,23 @@ function CreateRequestAirlineCompany({
                   }));
                 }}
               />
+              {isCreatingPosition && (
+                <div className={classes.inlineCreateRow}>
+                  <input
+                    type="text"
+                    value={newPositionName}
+                    placeholder="Введите должность"
+                    onChange={(e) => setNewPositionName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        handleCreatePosition();
+                      }
+                    }}
+                  />
+                  <Button type="button" onClick={handleCreatePosition}>+</Button>
+                </div>
+              )}
 
               <label>Логин</label>
               <input

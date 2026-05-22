@@ -14,6 +14,11 @@ import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
+
+const REQUIRED_FIELDS_MESSAGE =
+  "Пожалуйста, заполните все обязательные поля.";
 
 function CreateRequestNomerFond({
   type,
@@ -25,9 +30,10 @@ function CreateRequestNomerFond({
   uniqueCategories,
   tarifs,
   filter,
-  addNotification,
 }) {
   const token = getCookie("token");
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
   const [isEdited, setIsEdited] = useState(false);
   const [isMultipleRooms, setIsMultipleRooms] = useState(false); // Флаг для выбора множества комнат
 
@@ -106,7 +112,7 @@ function CreateRequestNomerFond({
     setIsEdited(false); // Сброс флага изменений
     setSelectedRoomKind(null);
     setCoverImage(null);
-  }, []);
+  }, [type]);
 
   useEffect(() => {
     if (show) {
@@ -123,18 +129,23 @@ function CreateRequestNomerFond({
     }
   }, [data, show]);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (!isEdited) {
       resetForm();
       onClose();
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
     }
-  }, [isEdited, resetForm, onClose]);
+  }, [confirm, isDialogOpen, isEdited, resetForm, onClose]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -146,17 +157,21 @@ function CreateRequestNomerFond({
   }, []);
 
   const handleCoverImageChange = (image) => {
+    setIsEdited(true);
     setCoverImage(image);
   };
 
   const handleFileChange = (e) => {
     const files = e.target.files;
+    if (!files?.length) return;
+
     if (files.length > 8) {
-      alert("Вы можете загрузить не более 8 изображений.");
+      showAlert("Вы можете загрузить не более 8 изображений.");
       e.target.value = null;
       return;
     }
 
+    setIsEdited(true);
     const fileArray = Array.from(files);
 
     setFormData((prevState) => ({
@@ -171,20 +186,23 @@ function CreateRequestNomerFond({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  // console.log(selectedRoomKind)
+  const isFormValid = () => {
+    const raw = formData.nomerName;
+    const nameStr = typeof raw === "number" ? String(raw) : String(raw ?? "");
+    if (!nameStr.trim()) return false;
+    if (!selectedRoomKind && type !== "apartment") return false;
+    return true;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    if (
-      !formData.nomerName.trim() ||
-      (!selectedRoomKind && type !== "apartment")
-    ) {
-      alert("Пожалуйста, заполните все поля формы перед отправкой.");
-      setIsLoading(false);
+    if (!isFormValid()) {
+      showAlert(REQUIRED_FIELDS_MESSAGE);
       return;
     }
+
+    setIsLoading(true);
 
     try {
       const reserveBoolean = formData.reserve === "true";
@@ -301,9 +319,10 @@ function CreateRequestNomerFond({
       resetForm();
       onClose();
       setIsLoading(false);
-      addNotification("Создание номера прошло успешно.", "success");
+      success("Создание номера прошло успешно.");
     } catch (error) {
       console.error("Ошибка при обновлении номеров:", error);
+      notifyError("Не удалось создать номер.");
     } finally {
       setIsLoading(false);
     }
@@ -311,13 +330,12 @@ function CreateRequestNomerFond({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current?.contains(event.target) // Клик в боковой панели
-      ) {
-        return; // Если клик внутри, ничего не делаем
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+      if (sidebarRef.current?.contains(event.target)) {
+        return;
       }
 
-      // Если клик был вне боковой панели, то закрываем её
       closeButton();
     };
 
@@ -328,7 +346,7 @@ function CreateRequestNomerFond({
     }
 
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   const categories = [
     {
@@ -433,7 +451,10 @@ function CreateRequestNomerFond({
                 <input
                   type="checkbox"
                   checked={isMultipleRooms}
-                  onChange={(e) => setIsMultipleRooms(e.target.checked)}
+                  onChange={(e) => {
+                    setIsEdited(true);
+                    setIsMultipleRooms(e.target.checked);
+                  }}
                 />
                 Создать несколько номеров
               </label>
@@ -467,6 +488,7 @@ function CreateRequestNomerFond({
                       )?.name
                     }
                     onChange={(event, newValue) => {
+                      setIsEdited(true);
                       const tariff = hotelTariff.find(
                         (tariff) => tariff && tariff.name === newValue
                       );

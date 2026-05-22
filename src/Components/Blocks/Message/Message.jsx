@@ -15,9 +15,10 @@ import {
     getMediaUrl,
     convertToDateNew,
 } from "../../../../graphQL_requests";
-import { roles } from "../../../roles";
+import { roles, roleLabels } from "../../../roles";
 import MUILoader from "../MUILoader/MUILoader";
 import SmileIcon from "../../../shared/icons/SmileIcon";
+import { getSeparatorStyle, getSeparatorStyleTransparent } from "../../../utils/messageStyles";
 
 function Message({
     children,
@@ -156,7 +157,7 @@ function Message({
                 setMessages(fapChat);
                 setNewMessagesCount(fapChat.unreadMessagesCount || 0);
             }
-            setIsHaveTwoChats(false);
+            setIsHaveTwoChats?.(false);
             return;
         }
 
@@ -390,48 +391,55 @@ function Message({
     );
 
     const handleSubmitMessage = async () => {
-        if (messageText.text.trim()) {
-            try {
-                const vars = {
-                    chatId: messageText.chatId,
-                    text: messageText.text
-                };
-                if (messageText.senderId) {
-                    vars.senderId = messageText.senderId;
-                }
-                let request = await createRequest({
-                    variables: vars
-                });
-                if (request) {
-                    if (!isExternal) {
-                        markAllMessagesAsReadMutation({
-                            variables: { chatId: messages.id, userId: userID }
-                        })
-                        .then(() => {
-                            refetch();
-                            scrollToBottom();
-                        })
-                    }
-                    setMessageText({
-                        text: '',
-                        chatId: '',
-                        senderId: ''
-                    });
-                    setShowEmojiPicker(false);
-                    // setIsUserMessage(true);
-                    // Даем время на перерисовку компонента
-                    setTimeout(() => {
-                        scrollToBottom();
-                    }, 50);
-                    setShowScrollButton(false);
-                    setNewMessagesCount(0);
-                }
-            } catch (err) {
-                alert('Произошла ошибка при сохранении данных', err);
-                console.error(err);
-            } finally {
-                    scrollToBottom();
+        const text = messageText.text.trim();
+        if (!text) return;
+
+        const chatId = messageText.chatId;
+        const senderId = messageText.senderId;
+
+        const optimisticId = `optimistic-${Date.now()}`;
+        const optimisticMsg = {
+            id: optimisticId,
+            text,
+            createdAt: new Date().toISOString(),
+            sender: isExternal ? null : {
+                id: userID,
+                name: user?.name || '',
+                role: user?.role || '',
+                images: user?.images || [],
+                position: user?.position || null,
+            },
+            senderExternalUserId: isExternal ? userID : undefined,
+            isRead: true,
+            readBy: [{ user: { id: userID, name: user?.name || '' } }],
+        };
+
+        setMessages((prev) => ({
+            ...prev,
+            messages: [...(prev.messages || []), optimisticMsg],
+        }));
+        setMessageText({ text: '', chatId: '', senderId: '' });
+        setShowEmojiPicker(false);
+        setShowScrollButton(false);
+        setNewMessagesCount(0);
+        setTimeout(() => scrollToBottom(), 0);
+
+        try {
+            const vars = { chatId, text };
+            if (senderId) vars.senderId = senderId;
+            await createRequest({ variables: vars });
+            if (!isExternal) {
+                markAllMessagesAsReadMutation({
+                    variables: { chatId: messages.id, userId: userID }
+                }).then(() => refetch());
             }
+        } catch (err) {
+            setMessages((prev) => ({
+                ...prev,
+                messages: (prev.messages || []).filter((m) => m.id !== optimisticId),
+            }));
+            alert('Произошла ошибка при сохранении данных');
+            console.error(err);
         }
     };
 
@@ -510,7 +518,24 @@ function Message({
                                 messageRefs.current[message.id] = React.createRef();
                             }
                             const isOwn = isOwnMessage(message);
-                            const roleText = message.sender?.position?.name || message.sender?.role || '';
+                            const senderRole = message.sender?.role;
+                            const isSenderSupportAgent = senderRole === roles.superAdmin;
+                            const isSenderDispatcher =
+                                senderRole === roles.dispatcerAdmin ||
+                                senderRole === roles.dispatcherModerator;
+                            const senderOrgName = isSenderSupportAgent
+                                ? null
+                                : message.sender?.airlineDepartment?.name ||
+                                  message.sender?.airline?.name ||
+                                  message.sender?.dispatcherDepartment?.name ||
+                                  null;
+                            const roleText = isSenderSupportAgent
+                                ? "Техническая поддержка"
+                                : message.sender?.position?.name ||
+                                  roleLabels[senderRole] ||
+                                  senderRole ||
+                                  '';
+                            const roleHasAccent = isSenderSupportAgent || isSenderDispatcher;
 
                             return (
                                 <div
@@ -527,11 +552,7 @@ function Message({
                                                 {isFirstInSenderGroup ? (
                                                     <div
                                                         className={classes.requestData_message_firstGroup}
-                                                        style={
-                                                            message?.separator
-                                                                ? { backgroundColor: '#3CBC6726', color: '#3B6C54' }
-                                                                : {}
-                                                        }
+                                                        style={getSeparatorStyle(message)}
                                                     >
                                                         <div className={classes.requestData_message_firstRow}>
                                                             <div className={classes.requestData_message_avatar}>
@@ -553,8 +574,13 @@ function Message({
                                                                 <span className={classes.requestData_message_name}>
                                                                     {getDisplayName(message)}
                                                                 </span>
+                                                                {senderOrgName && (
+                                                                    <span className={classes.requestData_message_org}>
+                                                                        {senderOrgName}
+                                                                    </span>
+                                                                )}
                                                                 {roleText && (
-                                                                    <span className={classes.requestData_message_post}>
+                                                                    <span className={`${classes.requestData_message_role} ${roleHasAccent ? classes.requestData_message_role_agent : ''}`}>
                                                                         {roleText}
                                                                     </span>
                                                                 )}
@@ -562,11 +588,7 @@ function Message({
                                                         </div>
                                                         <div
                                                             className={`${classes.requestData_message__message} ${classes.bubbleIncoming} ${classes.bubbleIncomingFirstRow} ${!message?.separator ? classes.bubbleIncomingFirst : ''} ${message?.separator ? classes.bubbleSeparator : ''}`}
-                                                            style={
-                                                                message?.separator
-                                                                    ? { backgroundColor: 'transparent', color: '#3B6C54' }
-                                                                    : {}
-                                                            }
+                                                            style={getSeparatorStyleTransparent(message)}
                                                         >
                                                             <span className={classes.requestData_message_body}>{message.text}</span>
                                                         </div>
@@ -578,11 +600,7 @@ function Message({
                                                     <div className={classes.requestData_message_continued}>
                                                         <div
                                                             className={`${classes.requestData_message__message} ${classes.bubbleIncoming}`}
-                                                            style={
-                                                                message?.separator
-                                                                    ? { backgroundColor: '#3CBC6726', color: '#3B6C54' }
-                                                                    : {}
-                                                            }
+                                                            style={getSeparatorStyle(message)}
                                                         >
                                                             <span className={classes.requestData_message_body}>{message.text}</span>
                                                             <span className={classes.requestData_message_time}>
@@ -596,11 +614,7 @@ function Message({
                                         {isOwn && (
                                             <div
                                                 className={`${classes.requestData_message__message} ${classes.bubbleOutgoing} ${classes.myMesBorderRadius}`}
-                                                style={
-                                                    message?.separator
-                                                        ? { backgroundColor: '#3CBC6726', color: '#3B6C54' }
-                                                        : {}
-                                                }
+                                                style={getSeparatorStyle(message)}
                                             >
                                                 <span className={classes.requestData_message_body}>{message.text}</span>
                                                 <span className={classes.requestData_message_time}>
@@ -676,7 +690,7 @@ export default Message;
 //     REQUEST_MESSAGES_SUBSCRIPTION, 
 //     UPDATE_MESSAGE_BRON,
 // } from "../../../../graphQL_requests";
-// import { roles } from "../../../roles";
+// import { roles, roleLabels } from "../../../roles";
 // import MUILoader from "../MUILoader/MUILoader";
 // import SmileIcon from "../../../shared/icons/SmileIcon";
 

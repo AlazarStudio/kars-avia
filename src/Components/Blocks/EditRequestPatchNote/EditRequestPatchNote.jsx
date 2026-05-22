@@ -1,10 +1,11 @@
-import React, { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./EditRequestPatchNote.module.css";
 import Button from "../../Standart/Button/Button.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
 
 import {
   GET_PATCH_NOTE,
+  convertToDate,
   getCookie,
   UPDATE_PATCH_NOTE,
 } from "../../../../graphQL_requests.js";
@@ -12,6 +13,9 @@ import { useMutation, useQuery } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import TextEditor from "../TextEditor/TextEditor.jsx";
 import { roles } from "../../../roles.js";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
 function EditRequestPatchNote({
   show,
@@ -19,9 +23,11 @@ function EditRequestPatchNote({
   user,
   patchNoteId,
   refetchPatchNotes,
-  addNotification,
 }) {
   const token = getCookie("token");
+  const { confirm: confirmDialog } = useDialog();
+  const { success, error: notifyError } = useToast();
+  const canEdit = user.role === roles.superAdmin;
 
   const [formData, setFormData] = useState();
 
@@ -34,6 +40,7 @@ function EditRequestPatchNote({
       },
     },
     variables: { getPatchNoteId: patchNoteId },
+    skip: !patchNoteId,
   });
 
   const [updatePatchNote] = useMutation(UPDATE_PATCH_NOTE, {
@@ -45,24 +52,37 @@ function EditRequestPatchNote({
     },
   });
 
+  const [isEdited, setIsEdited] = useState(false);
+
   useEffect(() => {
     if (show && data) {
       setFormData(data?.getPatchNote);
+      setIsEdited(false);
     }
   }, [show, data]);
 
   const [isEditing, setIsEditing] = useState(false);
 
-  const closeButton = () => {
-    let success = confirm("Вы уверены, все несохраненные данные будут удалены");
-    if (success) {
+  const closeButton = useCallback(async () => {
+    if (!isEdited) {
       onClose();
       setIsEditing(false);
+      return;
     }
-  };
+
+    const ok = await confirmDialog(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (ok) {
+      onClose();
+      setIsEditing(false);
+      setIsEdited(false);
+    }
+  }, [isEdited, confirmDialog, onClose]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (isEditing) setIsEdited(true);
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
@@ -78,7 +98,7 @@ function EditRequestPatchNote({
 
       try {
         const isoDate = new Date(formData.date).toISOString();
-        let response_update_tarif = await updatePatchNote({
+        await updatePatchNote({
           variables: {
             updatePatchNoteId: patchNoteId,
             data: {
@@ -89,13 +109,14 @@ function EditRequestPatchNote({
           },
         });
         refetchPatchNotes();
+        setIsEdited(false);
         onClose();
         setIsLoading(false);
-        addNotification("Редактирование патча прошло успешно.", "success");
+        success("Редактирование патча прошло успешно.");
       } catch (error) {
         setIsLoading(false);
         console.error("Произошла ошибка при выполнении запроса:", error);
-        alert("Произошло ошибка при редактировании патча.");
+        notifyError("Произошла ошибка при редактировании патча.");
       }
     }
     setIsEditing(!isEditing);
@@ -114,7 +135,7 @@ function EditRequestPatchNote({
         document.removeEventListener("mousedown", handleClickOutside);
       };
     }
-  }, [show]);
+  }, [show, closeButton]);
 
   const patchDate = formData?.date?.split("T")[0];
 
@@ -123,63 +144,110 @@ function EditRequestPatchNote({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Редактировать патч</div>
         <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="close" />
+          <CloseIcon />
         </div>
       </div>
 
       {isLoading || loading ? (
         <MUILoader loadSize={"50px"} fullHeight={"90vh"} />
+      ) : error ? (
+        <div className={classes.requestMiddle}>
+          <div className={classes.requestData}>
+            <div className={classes.formHint}>
+              Не удалось загрузить патч. Попробуйте открыть запись ещё раз.
+            </div>
+          </div>
+        </div>
       ) : (
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>Название</label>
-              <input
-                type="text"
-                name="name"
-                value={formData?.name || ""}
-                onChange={handleChange}
-                placeholder=""
-                disabled={!isEditing}
-              />
+              {canEdit && isEditing && (
+                <div className={classes.formHint}>
+                  После сохранения изменения сразу появятся в ленте Patch Notes.
+                </div>
+              )}
 
-              <label>Дата</label>
-              <input
-                type="date"
-                name="date"
-                value={patchDate || ""}
-                onChange={handleChange}
-                disabled={!isEditing}
-                placeholder="Дата"
-              />
+              {isEditing ? (
+                <>
+                  <div className={classes.fieldGroup}>
+                    <label>Название</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData?.name || ""}
+                      onChange={handleChange}
+                      placeholder=""
+                      disabled={!isEditing}
+                    />
+                  </div>
 
-              <label>Описание</label>
-              {/* <textarea
-                id="description"
-                name="description"
-                value={formData?.description || ""}
-                onChange={handleChange}
-                disabled={!isEditing}
-              ></textarea> */}
-              <TextEditor
-                anotherDescription={formData?.description || ""}
-                isEditing={isEditing}
-                onChange={(newDescription) => {
-                  setFormData((prev) => ({
-                    ...prev,
-                    description: newDescription,
-                  }));
-                }}
-              />
+                  <div className={classes.fieldGroup}>
+                    <label>Дата</label>
+                    <input
+                      type="date"
+                      name="date"
+                      value={patchDate || ""}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      placeholder="Дата"
+                    />
+                  </div>
+
+                  <div className={classes.fieldGroup}>
+                    <label>Описание</label>
+                    <TextEditor
+                      anotherDescription={formData?.description || ""}
+                      isEditing={isEditing}
+                      onChange={(newDescription) => {
+                        if (isEditing) setIsEdited(true);
+                        setFormData((prev) => ({
+                          ...prev,
+                          description: newDescription,
+                        }));
+                      }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className={classes.previewMetaGrid}>
+                    <div className={classes.previewMetaCard}>
+                      <div className={classes.previewMetaLabel}>Версия</div>
+                      <div className={classes.previewMetaValue}>
+                        {formData?.name || "Без названия"}
+                      </div>
+                    </div>
+                    <div className={classes.previewMetaCard}>
+                      <div className={classes.previewMetaLabel}>Дата</div>
+                      <div className={classes.previewMetaValue}>
+                        {formData?.date
+                          ? convertToDate(formData.date, false)
+                          : "Дата не указана"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className={classes.previewArticle}>
+                    <div className={classes.previewArticleLabel}>Описание</div>
+                    <div
+                      className={classes.previewArticleContent}
+                      dangerouslySetInnerHTML={{
+                        __html: formData?.description || "<p>Описание отсутствует.</p>",
+                      }}
+                    />
+                  </div>
+                </>
+              )}
             </div>
           </div>
-          {user.role !== roles.superAdmin ? null : (
+          {canEdit ? (
             <div className={classes.requestButton}>
               <Button
                 type="submit"
                 onClick={handleSubmit}
-                backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-                color={!isEditing ? "#3B6C54" : "#fff"}
+                backgroundcolor="#0057C3"
+                color="#fff"
               >
                 {isEditing ? (
                   <>
@@ -192,7 +260,7 @@ function EditRequestPatchNote({
                 )}
               </Button>
             </div>
-          )}
+          ) : null}
         </>
       )}
     </Sidebar>

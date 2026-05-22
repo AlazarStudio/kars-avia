@@ -17,6 +17,37 @@
     width: 500px;
 }
 
+.exportXlsxButton {
+    flex-shrink: 0;
+    height: 40px;
+    padding: 0 30px;
+    background-color: #1d6f42;
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 5px;
+    font-size: 15px;
+    font-weight: 400;
+    white-space: nowrap;
+    opacity: 0.8;
+    transition: all 0.3s ease-in-out;
+}
+
+.exportXlsxButton:hover {
+    opacity: 1;
+}
+
+@media (min-width: 0px) and (max-width: 1499px) {
+    .exportXlsxButton {
+        font-size: 14px;
+        padding: 0 15px;
+    }
+}
+
 @media (min-width: 0px) and (max-width: 1299px) {
     .mainSearch {
         width: 400px;

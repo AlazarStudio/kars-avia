@@ -31,6 +31,7 @@ import { createAuthErrorLink } from "./services/authErrorLink";
 import Login from "./Components/Pages/Login/Login";
 import Email from "./Components/Pages/Email/Email";
 import ResetPassword from "./Components/Pages/ResetPassword/ResetPassword";
+import VerifyEmail from "./Components/Pages/VerifyEmail/VerifyEmail";
 import { TokenRefresher } from "./TokenRefresher";
 import { UserActivityTracker } from "./UserActivityTracker";
 import ReservePlacementRepresentative from "./Components/Pages/ReservePlacementRepresentative/ReservePlacementRepresentative";
@@ -38,9 +39,17 @@ import RepresentativeHotelDetailPage from "./Components/Pages/RepresentativeHote
 import RepresentativeHotelReportPage from "./Components/Pages/RepresentativeHotelReportPage/RepresentativeHotelReportPage";
 import RepresentativeDriverDetailPage from "./Components/Pages/RepresentativeDriverDetailPage/RepresentativeDriverDetailPage";
 import ExternalLogin from "./Components/Pages/ExternalLogin/ExternalLogin";
+import FapDetailPage from "./Components/Pages/FapV2/FapDetailPage";
+import FapReportPage from "./Components/Pages/FapV2/FapReportPage";
+import FapServicePage from "./Components/Pages/FapV2/FapServicePage";
+import HotelPMS from "./Components/HotelPMS/HotelPMS";
 
 const TransferOrder = lazy(() =>
   import("./Components/Blocks/TransferOrder/TransferOrder")
+);
+
+const TravellinePage = lazy(() =>
+  import("./Components/Blocks/TravellinePage/TravellinePage")
 );
 
 function App() {
@@ -74,8 +83,8 @@ function App() {
 
   const wsLink = new GraphQLWsLink(
     createClient({
-      // url: `wss://${path}/graphql`,
-      url: `ws://${path}/graphql`,
+      url: `wss://${path}/graphql`,
+      // url: `ws://${path}/graphql`,
       connectionParams: () => {
         const t = authService.getAccessToken();
         return t ? { Authorization: `Bearer ${t}` } : {};
@@ -152,7 +161,18 @@ function App() {
               path="/:id/representativeRequestsPlacement/:idRequest/driver/:driverIndex"
               element={<RepresentativeDriverDetailPage user={user} />}
             />
-
+            <Route
+              path="/fapv2/:requestId"
+              element={<FapDetailPage user={user} />}
+            />
+            <Route
+              path="/fapv2/:requestId/report/:hotelIndex"
+              element={<FapReportPage user={user} />}
+            />
+            <Route
+              path="/fapv2/:requestId/service/:serviceKey"
+              element={<FapServicePage user={user} />}
+            />
             {/* Шахматка */}
             {/* <Route
               path="/:id/placement/:idHotel"
@@ -170,6 +190,15 @@ function App() {
 
             <Route path="/newPlacement/:idHotel" element={<NewPlacement />} />
             <Route path="/newPlacementV2/:idHotel" element={<NewPlacementV2 />} />
+            <Route path="/hotel-pms" element={<HotelPMS />} />
+            <Route
+              path="/travelline"
+              element={
+                <Suspense fallback={<div style={{ padding: 24 }}>Загрузка…</div>}>
+                  <TravellinePage />
+                </Suspense>
+              }
+            />
 
             <Route path="*" element={<Non_Found_Page />} />
           </Route>
@@ -178,6 +207,7 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/reset-to-email" element={<Email />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="*" element={<Login />} />
           </>
         )}

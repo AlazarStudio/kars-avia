@@ -1,9 +1,8 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./CreateRequestPatchNote.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 import {
-  CREATE_HOTEL,
   CREATE_PATCH_NOTE,
   getCookie,
 } from "../../../../graphQL_requests";
@@ -11,14 +10,13 @@ import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
 import TextEditor from "../TextEditor/TextEditor";
 import CloseIcon from "../../../shared/icons/CloseIcon";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
-function CreateRequestPatchNote({
-  show,
-  onClose,
-  refetchPatchNotes,
-  addNotification,
-}) {
+function CreateRequestPatchNote({ show, onClose, refetchPatchNotes }) {
   const token = getCookie("token");
+  const { showAlert, confirm: confirmDialog } = useDialog();
+  const { success, error: notifyError } = useToast();
 
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [formData, setFormData] = useState({
@@ -38,18 +36,21 @@ function CreateRequestPatchNote({
     setIsEdited(false); // Сброс флага изменений
   }, []);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
     if (!isEdited) {
       resetForm();
       onClose();
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const ok = await confirmDialog(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (ok) {
       resetForm();
       onClose();
     }
-  }, [isEdited, resetForm, onClose]);
+  }, [isEdited, resetForm, onClose, confirmDialog]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -106,14 +107,14 @@ function CreateRequestPatchNote({
       !formData.description.trim() ||
       !formData.date
     ) {
-      alert("Пожалуйста, заполните все поля!");
+      showAlert("Пожалуйста, заполните все поля!");
       setIsLoading(false);
       return;
     }
 
     try {
       const isoDate = new Date(formData.date).toISOString();
-      let response_create_hotel = await uploadFile({
+      const response_create_hotel = await uploadFile({
         variables: {
           data: {
             name: formData.name,
@@ -124,20 +125,16 @@ function CreateRequestPatchNote({
       });
 
       if (response_create_hotel) {
-        // addHotel(response_create_hotel.data.createHotel);
         refetchPatchNotes();
         resetForm();
         onClose();
-        addNotification("Патч создана успешно.", "success");
+        success("Патч успешно создан.");
       }
     } catch (e) {
       console.error("Ошибка при загрузке файла:", e);
+      notifyError("Не удалось создать патч.");
     } finally {
-      // resetForm();
-      // onClose();
       setIsLoading(false);
-      onClose();
-      // addNotification("Гостиница создана успешно.", "success");
     }
   };
 
@@ -194,34 +191,46 @@ function CreateRequestPatchNote({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>Название</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name}
-                placeholder=""
-                onChange={handleChange}
-              />
-              <label>Дата</label>
-              <input
-                type="date"
-                name="date"
-                value={formData.date}
-                onChange={handleChange}
-                placeholder="Дата"
-              />
-              <label>Описание</label>
-              <TextEditor
-                anotherDescription={formData.description}
-                isEditing={true}
-                onChange={(newDescription) => {
-                  setIsEdited(true);
-                  setFormData((prev) => ({
-                    ...prev,
-                    description: newDescription,
-                  }));
-                }}
-              />
+              <div className={classes.formHint}>
+                Запись появится в общем списке патчей сразу после сохранения.
+              </div>
+
+              <div className={classes.fieldGroup}>
+                <label>Название</label>
+                <input
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  placeholder="Например: Улучшили поиск по заявкам"
+                  onChange={handleChange}
+                />
+              </div>
+
+              <div className={classes.fieldGroup}>
+                <label>Дата</label>
+                <input
+                  type="date"
+                  name="date"
+                  value={formData.date}
+                  onChange={handleChange}
+                  placeholder="Дата"
+                />
+              </div>
+
+              <div className={classes.fieldGroup}>
+                <label>Описание</label>
+                <TextEditor
+                  anotherDescription={formData.description}
+                  isEditing={true}
+                  onChange={(newDescription) => {
+                    setIsEdited(true);
+                    setFormData((prev) => ({
+                      ...prev,
+                      description: newDescription,
+                    }));
+                  }}
+                />
+              </div>
             </div>
           </div>
 

@@ -1,3 +1,43 @@
+.tabs {
+    display: flex;
+    gap: 20px;
+}
+
+.tab {
+    cursor: pointer;
+    font-family: Nunito Sans;
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 21.82px;
+    padding-bottom: 6px;
+    border-bottom: 3px solid transparent;
+    color: var(--no-active);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+}
+
+.tab:hover {
+    color: var(--text);
+}
+
+.activeTab {
+    color: var(--text);
+    border-bottom: 3px solid var(--menu-bg);
+}
+
+.tabBadge {
+    background-color: red;
+    color: #fff;
+    font-size: 11px;
+    font-weight: 600;
+    border-radius: 50%;
+    height: 20px;
+    width: 20px;
+    text-align: center;
+}
+
 .section {
     /* width: calc(100% - var(--menu-width)); */
     width: 100%;

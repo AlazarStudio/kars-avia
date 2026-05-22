@@ -186,16 +186,16 @@ export const usePlacementData = ({
   useEffect(() => {
     if (
       dataBrons?.requests?.requests &&
-      hotelInfo?.information?.city
+      hotelInfo?.airport?.id
     ) {
       const filteredRequests = dataBrons.requests.requests.filter(
-        (request) => request.airport.city === hotelInfo.information?.city
+        (request) => request.airport?.id === hotelInfo.airport?.id
       );
 
       const transformedRequests = filteredRequests.map(mapRequestToPlacement);
       setNewRequests(transformedRequests);
     }
-  }, [dataBrons, hotelInfo?.information?.city, refetchBrons]);
+  }, [dataBrons, hotelInfo?.airport?.id, refetchBrons]);
 
   const { data: subscriptionDataPerson } = useSubscription(
     GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS_PLACEMENT,
@@ -266,7 +266,7 @@ export const usePlacementData = ({
   useEffect(() => {
     if (dataReserves?.reserves?.reserves) {
       const sortedRequests = dataReserves.reserves.reserves.filter(
-        (reserve) => reserve.airport?.city === hotelInfo?.information?.city
+        (reserve) => reserve.airport?.id === hotelInfo?.airport?.id
       );
       setRequestsReserves(sortedRequests);
     }
@@ -282,7 +282,7 @@ export const usePlacementData = ({
     dataReserves,
     dataReserveOne,
     dataHotelReserveOne,
-    hotelInfo?.information?.city,
+    hotelInfo?.airport?.id,
     openReserveId,
   ]);
 

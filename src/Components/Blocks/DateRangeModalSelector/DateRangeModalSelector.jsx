@@ -3,7 +3,7 @@ import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, TextField, Box } from "@mui/material";
 import { DateRangePicker } from "react-date-range";
 import { ru } from "date-fns/locale";
-import format from "date-fns/format";
+import { format } from "date-fns";
 
 import "react-date-range/dist/styles.css";
 import "react-date-range/dist/theme/default.css";

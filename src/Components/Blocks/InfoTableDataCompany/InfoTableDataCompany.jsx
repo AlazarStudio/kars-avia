@@ -26,13 +26,18 @@ function InfoTableDataCompany({ children, user, toggleRequestSidebar, requests, 
                     <div
                         className={classes.InfoTable_data}
                         onClick={() => handleObject(item, index)}
-                        key={index}
+                        key={item.id}
                     >
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`}>{item.order || index + 1}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w35}`}>
                             <div className={classes.InfoTable_data_elem_userInfo}>
-                                <div className={classes.InfoTable_data_elem_avatar}>
-                                    <img src={getMediaUrl(item.images[0]) ?? '/no-avatar.png'} alt="" style={{ userSelect: "none" }} />
+                                <div style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+                                    <div className={classes.InfoTable_data_elem_avatar}>
+                                        <img src={getMediaUrl(item.images[0]) ?? '/no-avatar.png'} alt="" style={{ userSelect: "none" }} />
+                                    </div>
+                                    {user?.role === roles.superAdmin && (
+                                        <span className={classes.onlineDot} style={{ background: item.online ? '#22c55e' : '#ef4444' }} />
+                                    )}
                                 </div>
                                 <div className={classes.InfoTable_data_elem_title}>
                                     {item.name}

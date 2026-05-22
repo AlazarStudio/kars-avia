@@ -3,11 +3,14 @@ import { Link } from "react-router-dom";
 import classes from "./SuperAdminMenu.module.css";
 import { useState } from "react";
 import DelayedText from "../../../Blocks/DelayedText/DelayedText";
+import FAPIcon from "../../../../shared/icons/FAPIcon";
+import MenuSection from "../../../Blocks/MenuSection/MenuSection";
 
 const SuperAdminMenu = ({
   id,
   allCreatedReserves,
   allCreatedRequests,
+  activeSupportCount,
   menuOpen,
 }) => {
   const [hovered, setHovered] = useState(false);
@@ -17,9 +20,22 @@ const SuperAdminMenu = ({
     hovered || id == "updates"
       ? "var(--white)" /* цвет hover */
       : "var(--menu-gray)";
+
+  const requestsIds = ["relay", "representativeRequests", "fapv2", "orders", undefined, "", null];
+  const manageIds = ["airlines", "airlineAccess", "airlineNotifications", "hotels", "driversCompany", "driversList", "company", "dispatcherAccess", "dispatcherNotifications", "myCompany"];
+  const toolsIds = ["hotel-pms", "travelline", "registerOfContracts", "reports", "analytics"];
+  const serviceIds = ["support", "documentation"];
+
   return (
     <div className={classes.menuContainer}>
       <div className={classes.menuMain}>
+        <MenuSection
+          title="Заявки"
+          storageKey="superAdmin:requests"
+          defaultOpen={true}
+          hasActive={requestsIds.includes(id)}
+          menuOpen={menuOpen}
+        >
         <Link
           to={"/relay?page=1"}
           className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
@@ -95,6 +111,17 @@ const SuperAdminMenu = ({
           {!menuOpen && <span className={classes.tooltip}>ФАП</span>}
         </Link>
         <Link
+          to={"/fapv2"}
+          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+            } ${id == "fapv2" && classes.menu_items__activeElem}`}
+        >
+          <div className={classes.svgWrapper}>
+            <FAPIcon />
+          </div>
+          <DelayedText show={menuOpen} delay={200}>ФАП v2</DelayedText>
+          {!menuOpen && <span className={classes.tooltip}>ФАП v2</span>}
+        </Link>
+        <Link
           to={"/orders"}
           className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
             } ${id == "orders" && classes.menu_items__activeElem}`}
@@ -116,6 +143,14 @@ const SuperAdminMenu = ({
           </DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Трансфер</span>}
         </Link>
+        </MenuSection>
+        <MenuSection
+          title="Управление"
+          storageKey="superAdmin:manage"
+          defaultOpen={true}
+          hasActive={manageIds.includes(id)}
+          menuOpen={menuOpen}
+        >
         <Link
           to={"/airlines"}
           className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
@@ -255,6 +290,46 @@ const SuperAdminMenu = ({
           <DelayedText show={menuOpen} delay={200} >ГК Карс</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>ГК Карс</span>}
         </Link>
+        </MenuSection>
+        <MenuSection
+          title="Инструменты"
+          storageKey="superAdmin:tools"
+          defaultOpen={true}
+          hasActive={toolsIds.includes(id)}
+          menuOpen={menuOpen}
+        >
+        <Link
+          to={"/hotel-pms"}
+          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+            } ${id == "hotel-pms" && classes.menu_items__activeElem}`}
+        >
+          <div className={classes.svgWrapper}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--menu-gray)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="18" rx="2" />
+              <line x1="2" y1="9" x2="22" y2="9" />
+              <line x1="2" y1="15" x2="22" y2="15" />
+              <line x1="8" y1="3" x2="8" y2="21" />
+            </svg>
+          </div>
+          <DelayedText show={menuOpen} delay={200}>Шахматка 2.0</DelayedText>
+          {!menuOpen && <span className={classes.tooltip}>Шахматка 2.0</span>}
+        </Link>
+        <Link
+          to={"/travelline"}
+          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+            } ${id == "travelline" && classes.menu_items__activeElem}`}
+        >
+          <div className={classes.svgWrapper}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--menu-gray)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 2v6" />
+              <path d="M15 2v6" />
+              <rect x="6" y="8" width="12" height="13" rx="2" />
+              <path d="M6 13h12" />
+            </svg>
+          </div>
+          <DelayedText show={menuOpen} delay={200}>TravelLine</DelayedText>
+          {!menuOpen && <span className={classes.tooltip}>TravelLine</span>}
+        </Link>
         <Link
           to={"/registerOfContracts"}
           className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
@@ -327,29 +402,6 @@ const SuperAdminMenu = ({
           {!menuOpen && <span className={classes.tooltip}>Отчеты</span>}
         </Link>
         <Link
-          to={"/support"}
-          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-            } ${id == "support" && classes.menu_items__activeElem}`}
-        >
-          <div className={classes.svgWrapper}>
-            <svg
-              width="20"
-              height="19"
-              viewBox="0 0 18 17"
-              fill="none"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                d="M9.44434 0.5C11.4355 0.5 13.6625 1.46488 15.0254 2.69531C17.8252 5.22309 18.2838 9.2651 16.2236 12.3584C14.4309 15.0498 11.0561 16.3032 7.57227 15.8555C6.92629 15.7724 6.52188 15.6626 6.23535 15.5635C6.10262 15.5176 5.98188 15.4683 5.91797 15.4443C5.84227 15.416 5.81954 15.4113 5.81055 15.4102C5.80819 15.4099 5.80594 15.4098 5.80176 15.4102C5.79661 15.4106 5.78437 15.4124 5.7627 15.418C5.71482 15.4304 5.63742 15.4578 5.50586 15.5186C5.23853 15.6419 4.84022 15.8564 4.15332 16.2188C3.86701 16.3698 3.43156 16.5396 3.01953 16.4922C2.79392 16.4662 2.54655 16.3704 2.36426 16.1455C2.18775 15.9277 2.12402 15.6517 2.12402 15.3682V15.3096L2.1377 15.252L2.58398 13.3867C2.51631 13.3218 2.45075 13.2542 2.39062 13.1865C2.23851 13.0153 2.08453 12.8154 1.94141 12.6152C1.65601 12.216 1.39368 11.7862 1.25098 11.5186C0.499586 10.1094 0.5 9.07304 0.5 7.68555C0.500069 5.45757 2.11065 3.0551 4.10547 1.84961C5.01282 1.30129 5.79445 0.957983 6.63965 0.755859C7.47906 0.555145 8.35707 0.500001 9.44434 0.5ZM4.84668 7.37305C4.80327 7.38048 4.74983 7.39127 4.69336 7.4043C4.63712 7.41728 4.5815 7.4314 4.53516 7.44434C4.51224 7.45074 4.49297 7.45706 4.47754 7.46191C4.46988 7.46433 4.46355 7.46621 4.45898 7.46777C4.45448 7.46932 4.45215 7.46973 4.45215 7.46973C4.06782 7.61842 3.89729 7.99809 3.96582 8.38184C4.03047 8.74322 4.30384 9.06234 4.83203 9.0625C5.25191 9.0625 5.51226 8.93144 5.66406 8.7832C5.81932 8.63152 5.89737 8.4272 5.89648 8.21582C5.89472 7.81219 5.6005 7.36429 4.89746 7.36426C4.9109 7.36426 4.89837 7.3642 4.84668 7.37305ZM9.72852 7.64453C9.37851 7.35538 8.93185 7.30953 8.57715 7.44434C8.23251 7.57537 7.99609 7.8638 7.99609 8.27246C7.99621 8.42869 8.08125 8.62456 8.26758 8.79395C8.45164 8.96116 8.69246 9.0625 8.9248 9.0625C9.53545 9.06247 9.82211 8.77093 9.92578 8.49023C10.0426 8.17359 9.95325 7.83018 9.72852 7.64453ZM13.0166 7.36426C12.4114 7.36443 12.0945 7.79288 12.0859 8.22363C12.0817 8.43812 12.1562 8.63829 12.3047 8.78516C12.4501 8.92896 12.7083 9.06242 13.1465 9.0625C13.7421 9.0625 14.0323 8.65102 14.0293 8.2168C14.0277 7.99679 13.9472 7.78885 13.7979 7.6377C13.6537 7.49187 13.4109 7.36426 13.0166 7.36426Z"
-                stroke="var(--menu-gray)"
-              />
-            </svg>
-          </div>
-          {/* {menuOpen ? "Поддержка" : ""} */}
-          <DelayedText show={menuOpen} delay={200} >Поддержка</DelayedText>
-          {!menuOpen && <span className={classes.tooltip}>Поддержка</span>}
-        </Link>
-        <Link
           to={"/analytics"}
           className={`${classes.menu_items__elem___fill} ${!menuOpen ? classes.jcc : ""
             } ${id == "analytics" && classes.menu_items__activeElem___fill}`}
@@ -406,7 +458,41 @@ const SuperAdminMenu = ({
           <DelayedText show={menuOpen} delay={200} >Аналитика</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Аналитика</span>}
         </Link>
-        <div style={{ margin: "10px 0", height: "1px", width: "100%", backgroundColor: "var(--menu-gray)" }} />
+        </MenuSection>
+        <MenuSection
+          title="Сервис"
+          storageKey="superAdmin:service"
+          defaultOpen={true}
+          hasActive={serviceIds.includes(id)}
+          menuOpen={menuOpen}
+        >
+        <Link
+          to={"/support"}
+          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+            } ${id == "support" && classes.menu_items__activeElem}`}
+        >
+          <div className={classes.svgWrapper}>
+            <svg
+              width="20"
+              height="19"
+              viewBox="0 0 18 17"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M9.44434 0.5C11.4355 0.5 13.6625 1.46488 15.0254 2.69531C17.8252 5.22309 18.2838 9.2651 16.2236 12.3584C14.4309 15.0498 11.0561 16.3032 7.57227 15.8555C6.92629 15.7724 6.52188 15.6626 6.23535 15.5635C6.10262 15.5176 5.98188 15.4683 5.91797 15.4443C5.84227 15.416 5.81954 15.4113 5.81055 15.4102C5.80819 15.4099 5.80594 15.4098 5.80176 15.4102C5.79661 15.4106 5.78437 15.4124 5.7627 15.418C5.71482 15.4304 5.63742 15.4578 5.50586 15.5186C5.23853 15.6419 4.84022 15.8564 4.15332 16.2188C3.86701 16.3698 3.43156 16.5396 3.01953 16.4922C2.79392 16.4662 2.54655 16.3704 2.36426 16.1455C2.18775 15.9277 2.12402 15.6517 2.12402 15.3682V15.3096L2.1377 15.252L2.58398 13.3867C2.51631 13.3218 2.45075 13.2542 2.39062 13.1865C2.23851 13.0153 2.08453 12.8154 1.94141 12.6152C1.65601 12.216 1.39368 11.7862 1.25098 11.5186C0.499586 10.1094 0.5 9.07304 0.5 7.68555C0.500069 5.45757 2.11065 3.0551 4.10547 1.84961C5.01282 1.30129 5.79445 0.957983 6.63965 0.755859C7.47906 0.555145 8.35707 0.500001 9.44434 0.5ZM4.84668 7.37305C4.80327 7.38048 4.74983 7.39127 4.69336 7.4043C4.63712 7.41728 4.5815 7.4314 4.53516 7.44434C4.51224 7.45074 4.49297 7.45706 4.47754 7.46191C4.46988 7.46433 4.46355 7.46621 4.45898 7.46777C4.45448 7.46932 4.45215 7.46973 4.45215 7.46973C4.06782 7.61842 3.89729 7.99809 3.96582 8.38184C4.03047 8.74322 4.30384 9.06234 4.83203 9.0625C5.25191 9.0625 5.51226 8.93144 5.66406 8.7832C5.81932 8.63152 5.89737 8.4272 5.89648 8.21582C5.89472 7.81219 5.6005 7.36429 4.89746 7.36426C4.9109 7.36426 4.89837 7.3642 4.84668 7.37305ZM9.72852 7.64453C9.37851 7.35538 8.93185 7.30953 8.57715 7.44434C8.23251 7.57537 7.99609 7.8638 7.99609 8.27246C7.99621 8.42869 8.08125 8.62456 8.26758 8.79395C8.45164 8.96116 8.69246 9.0625 8.9248 9.0625C9.53545 9.06247 9.82211 8.77093 9.92578 8.49023C10.0426 8.17359 9.95325 7.83018 9.72852 7.64453ZM13.0166 7.36426C12.4114 7.36443 12.0945 7.79288 12.0859 8.22363C12.0817 8.43812 12.1562 8.63829 12.3047 8.78516C12.4501 8.92896 12.7083 9.06242 13.1465 9.0625C13.7421 9.0625 14.0323 8.65102 14.0293 8.2168C14.0277 7.99679 13.9472 7.78885 13.7979 7.6377C13.6537 7.49187 13.4109 7.36426 13.0166 7.36426Z"
+                stroke="var(--menu-gray)"
+              />
+            </svg>
+          </div>
+          <DelayedText show={menuOpen} delay={200} >Поддержка</DelayedText>
+          {activeSupportCount > 0 && (
+            <div className={`${classes.countRequests} ${!menuOpen ? classes.countRequestsMini : ""}`}>
+              {activeSupportCount}
+            </div>
+          )}
+          {!menuOpen && <span className={classes.tooltip}>Поддержка</span>}
+        </Link>
         <Link
           to={"/documentation"}
           className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
@@ -420,7 +506,8 @@ const SuperAdminMenu = ({
           <DelayedText show={menuOpen} delay={200}>Помощь</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Помощь</span>}
         </Link>
-        <Link
+        </MenuSection>
+        {/* <Link
           to={"/updates"}
           className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
             } ${id == "updates" && classes.menu_items__activeElem}`}
@@ -454,7 +541,7 @@ const SuperAdminMenu = ({
           </div>
           <DelayedText show={menuOpen} delay={200} >Обновления</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Обновления</span>}
-        </Link>
+        </Link> */}
       </div>
 
       <div
@@ -472,8 +559,8 @@ const SuperAdminMenu = ({
         <div className={classes.alazar} style={menuOpen ? {} : { display: "none", padding: 0, flexWrap: 'wrap', fontSize: "12px" }}>
           Powered by {" "}
           <a
-            href="https://alazarstudio.ru/"
-            target="_blank"
+            // href="https://alazarstudio.ru/"
+            // target="_blank"
             className={`${classes.menuLink}`}
           >
             Alazar studio

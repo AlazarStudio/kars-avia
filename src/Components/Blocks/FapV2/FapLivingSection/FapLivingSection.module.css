@@ -1,0 +1,216 @@
+.guestSummary {
+  font-size: 13px;
+  font-weight: 600;
+  color: #10B981;
+  background: #ECFDF5;
+  padding: 3px 10px;
+  border-radius: 10px;
+}
+
+.hotelCard {
+  border: 1px solid #E4E4EF;
+  border-radius: 10px;
+  margin-top: 10px;
+  overflow: hidden;
+}
+
+.hotelHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  cursor: pointer;
+  background: #fff;
+  user-select: none;
+  gap: 12px;
+}
+
+.hotelHeader:hover {
+  background: var(--gray);
+}
+
+.hotelHeaderLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+}
+
+.hotelColorBar {
+  width: 4px;
+  height: 34px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.hotelInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.hotelName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hotelAddress {
+  font-size: 13px;
+  color: var(--main-gray);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hotelHeaderRight {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.hotelDates {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--main-gray);
+}
+
+.dateSep {
+  color: #C0C3D6;
+  font-size: 12px;
+}
+
+.occupancyChip {
+  font-size: 13px;
+  font-weight: 600;
+  padding: 3px 10px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+
+.progressBar {
+  height: 3px;
+  background: #E4E4EF;
+}
+
+.progressFill {
+  height: 3px;
+  border-radius: 0 2px 2px 0;
+  transition: width 0.3s ease;
+}
+
+.hotelBody {
+  padding: 12px 16px;
+  border-top: 1px solid #E4E4EF;
+}
+
+.emptyGuests {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px;
+  color: var(--main-gray);
+  font-size: 14px;
+}
+
+.emptyGuestsIcon {
+  font-size: 24px;
+}
+
+.roomBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #EFF6FF;
+  color: #3B82F6;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.categoryBadge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #F5F3FF;
+  color: #8B5CF6;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.reportBtn {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--main-gray);
+  background: var(--hover-gray);
+  border: none;
+  border-radius: 10px;
+  padding: 5px 12px;
+  min-height: 30px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.reportBtn:hover {
+  background: #DDE1EE;
+}
+
+.mgmtBtn {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--dark-blue);
+  background: #EFF6FF;
+  border: none;
+  border-radius: 10px;
+  padding: 5px 12px;
+  min-height: 30px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.mgmtBtn:hover {
+  background: #DBEAFE;
+}
+
+.linkBtn {
+  font-size: 13px;
+  font-weight: 500;
+  color: #8B5CF6;
+  background: #F5F3FF;
+  border: none;
+  border-radius: 10px;
+  padding: 5px 12px;
+  min-height: 30px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.linkBtn:hover {
+  background: #EDE9FE;
+}
+
+.deleteBtn {
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.deleteBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}

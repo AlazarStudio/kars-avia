@@ -11,7 +11,7 @@ import {
 import { useMutation, useQuery } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import Notification from "../../Notification/Notification.jsx";
-import { fullNotifyTime, notifyTime } from "../../../roles.js";
+import { fullNotifyTime, notifyTime, roles } from "../../../roles.js";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import Filter from "../Filter/Filter.jsx";
 import InfoTableOrganizationTransferPrices from "../InfoTableOrganizationTransferPrices/InfoTableOrganizationTransferPrices.jsx";
@@ -74,6 +74,7 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
   const [showAddSidebar, setShowAddSidebar] = useState(false);
   const [showEditSidebar, setShowEditSidebar] = useState(false);
   const [editIndex, setEditIndex] = useState(null);
+  const [editInitialMode, setEditInitialMode] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [deleteConfirmItem, setDeleteConfirmItem] = useState(null);
@@ -139,6 +140,13 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
 
   const handleEdit = (item, index) => {
     setEditIndex(index);
+    setEditInitialMode(true);
+    setShowEditSidebar(true);
+  };
+
+  const handleView = (item, index) => {
+    setEditIndex(index);
+    setEditInitialMode(false);
     setShowEditSidebar(true);
   };
 
@@ -204,6 +212,9 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
   if (error) return <p>Ошибка: {error.message}</p>;
   if (!data?.organization) return null;
 
+  console.log(accessMenu, "\n", user);
+  
+
   return (
     <div className={classes.tariffsWrapper}>
       <div className={classes.section_searchAndFilter}>
@@ -213,6 +224,7 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
+        {user.role !== roles.superAdmin && accessMenu?.organizationUpdate ? (
         <div className={classes.section_searchAndFilter_filter}>
           <Filter
             user={user}
@@ -221,6 +233,7 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
             buttonTitle="Добавить договор"
           />
         </div>
+        ) : null}
       </div>
 
       <InfoTableOrganizationTransferPrices
@@ -229,6 +242,7 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
         cities={cities}
         onEdit={handleEdit}
         onDelete={handleDeleteClick}
+        onRowClick={handleView}
       />
 
       <TransferPriceSidebarForm
@@ -251,6 +265,7 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
         airports={airports}
         cities={cities}
         onSubmit={handleSidebarSubmit}
+        initialEditMode={editInitialMode}
         onDelete={(item) => {
           setShowEditSidebar(false);
           setEditIndex(null);

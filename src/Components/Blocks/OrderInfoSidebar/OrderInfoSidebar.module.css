@@ -3,19 +3,29 @@
 }
 
 .card {
-  /* height: calc(100vh - 210px); */
   height: calc(100vh - 152px);
   background-color: #ffffff;
   border-radius: 16px;
-  /* box-shadow: 0 0 0 1px #e4e4ef; */
-  padding: 20px 30px;
+  padding: 20px;
   font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
     sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  min-height: 44px;
 }
 
 .cardContent {
-  padding: 0 0 20px 0;
-  height: calc(100vh - 234px);
+  padding: 0px 0 20px 0;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: auto;
@@ -56,12 +66,17 @@
   color: #9ca3af;
 }
 
+.personsSection {
+  display: flex;
+  align-items: center;
+}
+
 /* маршрут */
 
 .routeCard {
-  padding: 14px 16px;
-  border-radius: 16px;
-  border: 1px solid #e4e4ef;
+  padding: 14px 0;
+  /* border-radius: 16px; */
+  /* border: 1px solid #e4e4ef; */
   background-color: #ffffff;
   display: flex;
   /* flex-direction: column; */
@@ -188,6 +203,91 @@
   opacity: 1;
 }
 
+
+.requestDataInfo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.requestDataInfo_title {
+  font-family: Nunito Sans;
+  font-size: 14px;
+  font-weight: 400;
+  width: 40%;
+  color: var(--main-gray);
+}
+
+.requestDataInfo_desc {
+  background-color: #9CA4D91A;
+  font-family: Nunito Sans;
+  font-size: 14px;
+  font-weight: 400;
+  width: 60%;
+  padding: 10px 15px;
+  border-radius: 10px;
+  min-height: 37px;
+  display: flex;
+  align-items: center;
+  word-break: break-word;
+}
+
+.tabs {
+  width: 100%;
+  position: relative;
+  display: flex;
+  gap: 20px;
+  margin-bottom: 4px;
+  flex-shrink: 0;
+}
+
+.tabs::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: var(--no-active);
+  z-index: 1;
+}
+
+.tab {
+  position: relative;
+  font-size: 16px;
+  padding: 10px;
+  cursor: pointer;
+  background-color: transparent;
+  color: var(--no-active);
+  transition: color 0.2s ease;
+  border: none;
+  outline: none;
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.activeTab {
+  color: var(--text) !important;
+}
+
+.activeTab::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: var(--dark-blue);
+  z-index: 2;
+}
+
+.additionalMenu {
+  flex: 1;
+  display: flex;
+  justify-content: flex-end;
+}
 
 @media (max-width: 1499px) {
   .routeText {

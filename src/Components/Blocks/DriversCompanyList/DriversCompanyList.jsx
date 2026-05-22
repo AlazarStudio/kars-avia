@@ -2,31 +2,27 @@ import React, { useState, useEffect, useMemo } from "react";
 import classes from "./DriversCompanyList.module.css";
 import Filter from "../Filter/Filter";
 import {
-  GET_AIRLINES,
-  GET_AIRLINES_SUBSCRIPTION,
-  GET_AIRLINES_UPDATE_SUBSCRIPTION,
-  GET_AIRPORTS_RELAY,
-  GET_CITIES,
   GET_ORGANIZATIONS,
   getCookie,
   ORGANIZATION_CREATED_SUBSCRIPTION,
 } from "../../../../graphQL_requests";
 import { useQuery, useSubscription } from "@apollo/client";
 import Header from "../Header/Header";
-import InfoTableDataAirlines from "../InfoTableDataAirlines/InfoTableDataAirlines";
-import CreateRequestAirline from "../CreateRequestAirline/CreateRequestAirline";
 import ReactPaginate from "react-paginate";
 import { useLocation, useNavigate } from "react-router-dom";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
-import Notification from "../../Notification/Notification";
-import { fullNotifyTime, notifyTime } from "../../../roles";
-import InfoTableDataRepresentativeAirlines from "../InfoTableDataRepresentativeAirlines/InfoTableDataRepresentativeAirlines";
 import CreateRequestDriversCompany from "../CreateRequestDriversCompany/CreateRequestDriversCompany";
 import InfoTableDataDriversCompanies from "../InfoTableDataDriversCompanies/InfoTableDataDriversCompanies";
 import { hasAccessMenu } from "../../../utils/access";
 
-function DriversCompanyList({ children, representative, disAdmin, accessMenu, ...props }) {
+function DriversCompanyList({
+  children,
+  representative,
+  disAdmin,
+  accessMenu,
+  ...props
+}) {
   const token = getCookie("token");
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
@@ -66,7 +62,7 @@ function DriversCompanyList({ children, representative, disAdmin, accessMenu, ..
       onError: (error) => {
         console.error("Ошибка подписки на создание:", error);
       },
-    }
+    },
   );
 
   // console.log(subscriptionData);
@@ -76,8 +72,8 @@ function DriversCompanyList({ children, representative, disAdmin, accessMenu, ..
 
   useEffect(() => {
     if (data && data.organizations) {
-      const sortedAirlines = [...data.organizations.organizations].sort((a, b) =>
-        a.name.localeCompare(b.name)
+      const sortedAirlines = [...data.organizations.organizations].sort(
+        (a, b) => a.name.localeCompare(b.name),
       );
       setCompanyData(sortedAirlines);
     }
@@ -97,7 +93,7 @@ function DriversCompanyList({ children, representative, disAdmin, accessMenu, ..
 
   const addAirline = (airline) => {
     setCompanyData(
-      [...companyData, airline].sort((a, b) => a.name.localeCompare(b.name))
+      [...companyData, airline].sort((a, b) => a.name.localeCompare(b.name)),
     );
   };
 
@@ -107,17 +103,6 @@ function DriversCompanyList({ children, representative, disAdmin, accessMenu, ..
 
   const toggleRequestSidebar = () => {
     setShowRequestSidebar(!showRequestSidebar);
-  };
-
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
   };
 
   const handleChange = (e) => {
@@ -160,7 +145,7 @@ function DriversCompanyList({ children, representative, disAdmin, accessMenu, ..
   const filteredRequests = useMemo(() => {
     const dataSource = isSearching ? allFilteredData : companyData; // Используем данные из поиска или стандартные
     return dataSource.filter((request) =>
-      request.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      request.name?.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [isSearching, allFilteredData, companyData, searchQuery]);
 
@@ -185,7 +170,10 @@ function DriversCompanyList({ children, representative, disAdmin, accessMenu, ..
 
   return (
     <>
-      <div className={classes.section} style={disAdmin ? { padding: "0", overflow: "visible" } : {}}>
+      <div
+        className={classes.section}
+        style={disAdmin ? { padding: "0", overflow: "visible" } : {}}
+      >
         {!disAdmin && <Header>Организации</Header>}
 
         <div className={classes.section_searchAndFilter}>
@@ -248,23 +236,7 @@ function DriversCompanyList({ children, representative, disAdmin, accessMenu, ..
           cities={cities}
           onClose={toggleCreateSidebar}
           addHotel={addAirline}
-          addNotification={addNotification}
         />
-
-        {notifications.map((n, index) => (
-          <Notification
-            key={n.id}
-            text={n.text}
-            status={n.status}
-            index={index}
-            time={notifyTime}
-            onClose={() => {
-              setNotifications((prev) =>
-                prev.filter((notif) => notif.id !== n.id)
-              );
-            }}
-          />
-        ))}
       </div>
     </>
   );

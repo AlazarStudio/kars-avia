@@ -1,11 +1,13 @@
 import React, { useMemo, useState } from "react";
 import classes from "./TransferAccommodationTab.module.css";
 import ServiceFooter from "../ServiceFooter/ServiceFooter";
-import { convertToDate, COMPLETE_PASSENGER_REQUEST_TRANSFER_EARLY, getCookie } from "../../../../graphQL_requests";
+import { convertToDate, COMPLETE_PASSENGER_REQUEST_TRANSFER_EARLY, REMOVE_PASSENGER_REQUEST_DRIVER, getCookie } from "../../../../graphQL_requests";
 import CopyIcon from "../../../shared/icons/CopyIcon";
+import DeleteIcon from "../../../shared/icons/DeleteIcon.jsx";
 import PeopleCountIcon from "../../../shared/icons/PeopleCountIcon";
 import { useMutation } from "@apollo/client";
 import Button from "../../Standart/Button/Button";
+import DeleteComponent from "../DeleteComponent/DeleteComponent";
 
 export default function TransferAccommodationTab({
   id,
@@ -13,6 +15,7 @@ export default function TransferAccommodationTab({
   onStatusChanged,
   addNotification,
   onDriverSelect,
+  readOnly = false,
 }) {
   const token = getCookie("token");
   const drivers = useMemo(() => request?.transferService?.drivers ?? [], [request]);
@@ -28,6 +31,21 @@ export default function TransferAccommodationTab({
 
   const [showCompleteModal, setShowCompleteModal] = useState(false);
   const [completeReason, setCompleteReason] = useState("");
+  const [removeDriverIndex, setRemoveDriverIndex] = useState(null);
+
+  const [removeDriver] = useMutation(REMOVE_PASSENGER_REQUEST_DRIVER, {
+    context: token ? { headers: { Authorization: `Bearer ${token}` } } : undefined,
+  });
+
+  const handleRemoveDriver = async (idx) => {
+    try {
+      await removeDriver({ variables: { requestId: request?.id, driverIndex: idx } });
+      setRemoveDriverIndex(null);
+      addNotification?.("Водитель удалён", "success");
+    } catch (e) {
+      addNotification?.(e?.graphQLErrors?.[0]?.message ?? "Ошибка при удалении", "error");
+    }
+  };
 
   const [completeEarly, { loading: completingEarly }] = useMutation(
     COMPLETE_PASSENGER_REQUEST_TRANSFER_EARLY,
@@ -86,7 +104,7 @@ export default function TransferAccommodationTab({
           <div className={`${classes.w20} ${classes.jcCenter}`}>
             Кол-во пассажиров
           </div>
-          <div className={`${classes.w10} ${classes.jcEnd}`}>Ссылка</div>
+          {!readOnly && <div className={`${classes.w10} ${classes.jcEnd}`}>Ссылка</div>}
           {!!request?.transferService?.plan?.peopleCount && (
             <span className={classes.countChip}>
               <PeopleCountIcon /> {request.transferService.plan.peopleCount}
@@ -124,42 +142,54 @@ export default function TransferAccommodationTab({
               <div className={`${classes.w20} ${classes.jcCenter}`}>
                 {d.peopleCount ?? "—"}
               </div>
-              <div className={`${classes.w10} ${classes.jcEnd}`}>
-                {d.linkPWA ? (
-                  <button
-                    type="button"
-                    className={classes.link}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      copyLink(d.linkPWA);
-                    }}
-                    title="Скопировать PWA-ссылку"
-                  >
-                    PWA <CopyIcon />
-                  </button>
-                ) : d.link ? (
-                  <button
-                    type="button"
-                    className={classes.link}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      copyLink(d.link);
-                    }}
-                    title="Скопировать ссылку"
-                  >
-                    Ссылка <CopyIcon />
-                  </button>
-                ) : (
-                  <span className={classes.link}>—</span>
-                )}
-              </div>
+              {!readOnly && (
+                <div className={`${classes.w10} ${classes.jcEnd}`}>
+                  {d.linkPWA ? (
+                    <button
+                      type="button"
+                      className={classes.link}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyLink(d.linkPWA);
+                      }}
+                      title="Скопировать ссылку на сканер для водителя"
+                    >
+                      Сканер <CopyIcon />
+                    </button>
+                  ) : d.link ? (
+                    <button
+                      type="button"
+                      className={classes.link}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        copyLink(d.link);
+                      }}
+                      title="Скопировать ссылку"
+                    >
+                      Ссылка <CopyIcon />
+                    </button>
+                  ) : (
+                    <span className={classes.link}>—</span>
+                  )}
+                </div>
+              )}
+              {!readOnly && (
+                <button
+                  type="button"
+                  className={classes.deleteBtn}
+                  onClick={(e) => { e.stopPropagation(); setRemoveDriverIndex(idx); }}
+                  title="Удалить водителя"
+                >
+                  <DeleteIcon cursor="pointer" />
+                </button>
+              )}
             </div>
           ))}
         </div>
         <ServiceFooter
           statusText={statusDrivers}
-          earlyCompleteLabel={canEarlyComplete ? "Завершить" : undefined}
-          onEarlyCompleteClick={canEarlyComplete ? () => setShowCompleteModal(true) : undefined}
+          earlyCompleteLabel={!readOnly && canEarlyComplete ? "Завершить" : undefined}
+          onEarlyCompleteClick={!readOnly && canEarlyComplete ? () => setShowCompleteModal(true) : undefined}
           earlyCompleteDisabled={completingEarly}
           history={[
             {
@@ -180,6 +210,15 @@ export default function TransferAccommodationTab({
           ]}
         />
       </div>
+
+      {removeDriverIndex !== null && (
+        <DeleteComponent
+          title="Вы действительно хотите удалить водителя?"
+          remove={handleRemoveDriver}
+          index={removeDriverIndex}
+          close={() => setRemoveDriverIndex(null)}
+        />
+      )}
 
       {showCompleteModal && (
         <div

@@ -13,8 +13,6 @@ import {
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
 import Notification from "../../Notification/Notification";
-import CreateRequestPatchNote from "../CreateRequestPatchNote/CreateRequestPatchNote";
-import EditRequestPatchNote from "../EditRequestPatchNote/EditRequestPatchNote";
 import InfoTableDataDocumentation from "../InfoTableDataDocumentation/InfoTableDataDocumentation";
 import CreateRequestDocumentation from "../CreateRequestDocumentation/CreateRequestDocumentation";
 import EditRequestDocumentation from "../EditRequestDocumentation/EditRequestDocumentation";

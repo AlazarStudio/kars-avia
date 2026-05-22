@@ -15,8 +15,7 @@ import {
 } from "../../../../graphQL_requests";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
-import Notification from "../../Notification/Notification";
-import { fullNotifyTime, notifyTime } from "../../../roles";
+import { useToast } from "../../../contexts/ToastContext";
 import { canAccessMenu } from "../../../utils/access";
 import { useNavigate } from "react-router-dom";
 import InfoTableDataDispatcherCompany from "../InfoTableDataDispatcherCompany/InfoTableDataDispatcherCompany";
@@ -30,6 +29,7 @@ import SettingsSidebar from "../SettingsSidebar/SettingsSidebar";
 function Company({ user, accessMenu }) {
   const token = getCookie("token");
   const navigate = useNavigate();
+  const { success, error: notifyError } = useToast();
   const canCreate = canAccessMenu(accessMenu, "userCreate", user);
   const canEdit = canAccessMenu(accessMenu, "userUpdate", user);
 
@@ -73,7 +73,7 @@ function Company({ user, accessMenu }) {
           Authorization: `Bearer ${token}`,
         },
       },
-    }
+    },
   );
 
   const {
@@ -89,17 +89,6 @@ function Company({ user, accessMenu }) {
     },
   });
 
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now();
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
-
   const [departments, setDepartments] = useState([]);
   const [dispatchers, setDispatchers] = useState([]);
   const [positions, setPositions] = useState([]);
@@ -109,9 +98,7 @@ function Company({ user, accessMenu }) {
     const users = dispatchersData.dispatcherUsers.users;
     setDispatchers((prev) => {
       const copied = users.map((d) => {
-        const positionFromData = d.position
-          ? { ...d.position }
-          : d.position;
+        const positionFromData = d.position ? { ...d.position } : d.position;
         const prevDispatcher = prev.find((p) => p.id === d.id);
         const position =
           positionFromData ??
@@ -155,7 +142,8 @@ function Company({ user, accessMenu }) {
   const [selectedDepartment, setSelectedDepartment] = useState(null);
 
   const [showSettingsSidebar, setShowSettingsSidebar] = useState(false);
-  const [selectedDepartmentForSettings, setSelectedDepartmentForSettings] = useState(null);
+  const [selectedDepartmentForSettings, setSelectedDepartmentForSettings] =
+    useState(null);
   const settingsSidebarRef = useRef(null);
 
   const [showDelete, setShowDelete] = useState(false);
@@ -176,24 +164,45 @@ function Company({ user, accessMenu }) {
     },
   });
 
-  const [deleteDispatcherDepartment] = useMutation(DELETE_DISPATCHER_DEPARTMENT, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
+  const [deleteDispatcherDepartment] = useMutation(
+    DELETE_DISPATCHER_DEPARTMENT,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       },
     },
-  });
+  );
+
+  const [dispatcherEditMode, setDispatcherEditMode] = useState(false);
+  const [departmentEditMode, setDepartmentEditMode] = useState(false);
+
+  const openViewDepartment = (department) => {
+    setSelectedDepartment(department);
+    setDepartmentEditMode(false);
+    setShowEditDepartment(true);
+  };
 
   const openEditDepartment = (department) => {
     if (!canEdit) return;
     setSelectedDepartment(department);
+    setDepartmentEditMode(true);
     setShowEditDepartment(true);
+  };
+
+  const openViewDispatcher = (dispatcher) => {
+    const index = dispatchers.findIndex((item) => item.id === dispatcher.id);
+    setSelectedDispatcher({ ...dispatcher, index });
+    setDispatcherEditMode(false);
+    setShowEditDispatcher(true);
   };
 
   const openEditDispatcher = (dispatcher) => {
     if (!canEdit) return;
     const index = dispatchers.findIndex((item) => item.id === dispatcher.id);
     setSelectedDispatcher({ ...dispatcher, index });
+    setDispatcherEditMode(true);
     setShowEditDispatcher(true);
   };
 
@@ -231,7 +240,7 @@ function Company({ user, accessMenu }) {
             deleteDispatcherDepartmentId: deleteTarget.department.id,
           },
         });
-        addNotification("Удаление отдела прошло успешно.", "success");
+        success("Удаление отдела прошло успешно.");
         refetchDepartments();
       }
 
@@ -241,13 +250,13 @@ function Company({ user, accessMenu }) {
             deleteUserId: deleteTarget.dispatcher.id,
           },
         });
-        addNotification("Удаление диспетчера прошло успешно.", "success");
+        success("Удаление диспетчера прошло успешно.");
         refetchDispatchers();
         refetchDepartments();
       }
     } catch (error) {
       console.error("Ошибка при удалении", error);
-      addNotification("Ошибка при удалении.", "error");
+      notifyError("Ошибка при удалении.");
     } finally {
       setShowDelete(false);
     }
@@ -280,7 +289,7 @@ function Company({ user, accessMenu }) {
     }));
 
     const departmentMap = new Map(
-      groupsList.map((department) => [department.id, department])
+      groupsList.map((department) => [department.id, department]),
     );
 
     const noDepartment = {
@@ -302,7 +311,7 @@ function Company({ user, accessMenu }) {
     const sorted = [...departmentMap.values()].map((department) => ({
       ...department,
       dispatchers: [...department.dispatchers].sort((a, b) =>
-        a.name.localeCompare(b.name)
+        a.name.localeCompare(b.name),
       ),
     }));
 
@@ -310,7 +319,7 @@ function Company({ user, accessMenu }) {
       sorted.push({
         ...noDepartment,
         dispatchers: [...noDepartment.dispatchers].sort((a, b) =>
-          a.name.localeCompare(b.name)
+          a.name.localeCompare(b.name),
         ),
       });
     }
@@ -318,7 +327,8 @@ function Company({ user, accessMenu }) {
     return sorted;
   }, [departments, filteredDispatchers]);
 
-  const isLoading = dispatchersLoading || departmentsLoading || positionsLoading;
+  const isLoading =
+    dispatchersLoading || departmentsLoading || positionsLoading;
   const hasError = dispatchersError || departmentsError || positionsError;
 
   return (
@@ -357,9 +367,11 @@ function Company({ user, accessMenu }) {
             user={user}
             groups={groups}
             onEditDepartment={openEditDepartment}
+            onViewDepartment={openViewDepartment}
             onDeleteDepartment={openDeleteDepartment}
             onOpenAccess={openAccessDepartment}
             onEditDispatcher={openEditDispatcher}
+            onViewDispatcher={openViewDispatcher}
             onDeleteDispatcher={openDeleteDispatcher}
             accessMenu={accessMenu}
           />
@@ -376,40 +388,45 @@ function Company({ user, accessMenu }) {
             onPositionCreated={(newPosition) => {
               setPositions((prev) =>
                 [...(prev || []), newPosition].sort((a, b) =>
-                  String(a?.name || "").localeCompare(String(b?.name || ""))
-                )
+                  String(a?.name || "").localeCompare(String(b?.name || "")),
+                ),
               );
               refetchPositions();
             }}
             positions={positions}
             departments={departments}
-            addNotification={addNotification}
           />
         )}
 
-        {canEdit && (
-          <ExistRequestCompany
-            show={showEditDispatcher}
-            onClose={() => setShowEditDispatcher(false)}
-            chooseObject={selectedDispatcher}
-            updateDispatcher={() => {}}
-            openDeleteComponent={openDeleteDispatcherFromSidebar}
-            positions={positions}
-            departments={departments}
-            addNotification={addNotification}
-            onUpdated={() => {
-              refetchDispatchers();
-              refetchDepartments();
-            }}
-          />
-        )}
+        <ExistRequestCompany
+          show={showEditDispatcher}
+          accessMenu={accessMenu}
+          onClose={() => setShowEditDispatcher(false)}
+          chooseObject={selectedDispatcher}
+          updateDispatcher={() => {}}
+          openDeleteComponent={openDeleteDispatcherFromSidebar}
+          positions={positions}
+          departments={departments}
+          initialEditMode={dispatcherEditMode}
+          onUpdated={() => {
+            refetchDispatchers();
+            refetchDepartments();
+          }}
+          onPositionCreated={(newPosition) => {
+            setPositions((prev) =>
+              [...(prev || []), newPosition].sort((a, b) =>
+                String(a?.name || "").localeCompare(String(b?.name || "")),
+              ),
+            );
+            refetchPositions();
+          }}
+        />
 
         {canCreate && (
           <CreateRequestDispatcherDepartment
             show={showCreateDepartment}
             onClose={() => setShowCreateDepartment(false)}
             onCreated={() => refetchDepartments()}
-            addNotification={addNotification}
           />
         )}
 
@@ -419,8 +436,8 @@ function Company({ user, accessMenu }) {
             onClose={() => setShowEditDepartment(false)}
             department={selectedDepartment}
             refetchDepartments={refetchDepartments}
+            initialEditMode={departmentEditMode}
             onUpdated={() => refetchDepartments()}
-            addNotification={addNotification}
           />
         )}
 
@@ -447,21 +464,6 @@ function Company({ user, accessMenu }) {
           departmentItem={selectedDepartmentForSettings}
           type="dispatcher"
         />
-
-        {notifications.map((n, index) => (
-          <Notification
-            key={n.id}
-            text={n.text}
-            status={n.status}
-            index={index}
-            time={notifyTime}
-            onClose={() => {
-              setNotifications((prev) =>
-                prev.filter((notif) => notif.id !== n.id)
-              );
-            }}
-          />
-        ))}
       </div>
     </>
   );

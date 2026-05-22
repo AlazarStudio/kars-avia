@@ -1,9 +1,13 @@
-import React from "react";
+import React, { useMemo } from "react";
 import classes from "./MultiSelectAutocomplete.module.css";
 import { Autocomplete, TextField, Checkbox } from "@mui/material";
 import { createFilterOptions } from "@mui/material/Autocomplete";
 import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import CheckBoxIcon from "@mui/icons-material/CheckBox";
+import {
+  buildAutocompleteRunnerIds,
+  SCRIPT_RUNNER_ID_ATTR,
+} from "../../../utils/scriptRunnerSelectors";
 
 const SELECT_ALL_OPTION = {
   id: "__select_all__",
@@ -26,10 +30,25 @@ function MultiSelectAutocomplete({
   limitTags,
   children,
   showSelectAll = false,
+  scriptRunnerId,
   ...props
 }) {
   const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
   const checkedIcon = <CheckBoxIcon fontSize="small" />;
+  const fieldName = props.name || props.id;
+  const placeholder = props.placeholder;
+  const fieldLabel = label;
+  const runnerIds = useMemo(
+    () =>
+      buildAutocompleteRunnerIds({
+        explicitId: scriptRunnerId,
+        label: fieldLabel,
+        fieldName,
+        placeholder,
+        autocompleteType: "multi",
+      }),
+    [scriptRunnerId, fieldLabel, fieldName, placeholder]
+  );
 
   const baseOptions = options ?? [];
   const hasObjectOptions =
@@ -79,6 +98,8 @@ function MultiSelectAutocomplete({
 
   return (
     <Autocomplete
+      {...props}
+      {...{ [SCRIPT_RUNNER_ID_ATTR]: runnerIds.rootId }}
       multiple={isMultiple || false}
       options={baseOptions}
       filterOptions={filterOptions}
@@ -91,14 +112,18 @@ function MultiSelectAutocomplete({
       openText="Открыть"
       closeText="Закрыть"
       slotProps={{
+        ...(props.slotProps || {}),
         chip: {
+          ...(props.slotProps?.chip || {}),
           size: "small",
           sx: {
+            ...(props.slotProps?.chip?.sx || {}),
             margin: "2px",
             borderRadius: "8px",
           },
         },
         popper: {
+          ...(props.slotProps?.popper || {}),
           modifiers: [
             {
               name: "preventOverflow",
@@ -106,18 +131,29 @@ function MultiSelectAutocomplete({
                 boundary: "window",
               },
             },
+            ...((props.slotProps?.popper?.modifiers) || []),
           ],
         },
         listbox: {
+          ...(props.slotProps?.listbox || {}),
+          [SCRIPT_RUNNER_ID_ATTR]: runnerIds.listboxId,
           sx: {
-            fontSize: "14px", // Уменьшаем размер шрифта списка
+            ...(props.slotProps?.listbox?.sx || {}),
+            fontSize: "14px",
             padding: "0",
             borderRadius: "10px !important",
+            "& .MuiAutocomplete-option": {
+              padding: "4px 8px",
+              minHeight: "unset",
+            },
             ...(listboxHeight && { maxHeight: listboxHeight }),
           },
         },
         paper: {
+          ...(props.slotProps?.paper || {}),
+          [SCRIPT_RUNNER_ID_ATTR]: runnerIds.paperId,
           sx: {
+            ...(props.slotProps?.paper?.sx || {}),
             borderRadius: "10px !important",
             "& .MuiAutocomplete-noOptions": {
               fontSize: "14px", // Уменьшаем шрифт текста "Нет вариантов"
@@ -134,6 +170,10 @@ function MultiSelectAutocomplete({
       renderInput={(params) => (
         <TextField
           {...params}
+          inputProps={{
+            ...params.inputProps,
+            [SCRIPT_RUNNER_ID_ATTR]: runnerIds.inputId,
+          }}
           label={label}
           variant="outlined"
           sx={{
@@ -153,7 +193,7 @@ function MultiSelectAutocomplete({
               borderRadius: "10px !important",
             },
             "& .MuiOutlinedInput-root": {
-              padding: "0 px",
+              padding: "0 8px",
               borderRadius: "10px !important",
             },
             "& .MuiInputLabel-shrink": {
@@ -191,11 +231,7 @@ function MultiSelectAutocomplete({
         "& .MuiSvgIcon-root": {
           fontSize: "18px",
         },
-        "& .MuiAutocomplete-listbox": {
-          fontSize: "10px",
-        },
       }}
-      {...props}
       renderOption={
         isMultiple
           ? (optionProps, option, { selected }) => {
@@ -207,18 +243,62 @@ function MultiSelectAutocomplete({
               const label =
                 typeof option === "string" ? option : option?.label ?? "";
               return (
-                <li {...optionProps} key={option?.id ?? option?.value ?? option?.label ?? label}>
+                <li
+                  {...optionProps}
+                  {...{
+                    [SCRIPT_RUNNER_ID_ATTR]: buildAutocompleteRunnerIds({
+                      explicitId: scriptRunnerId,
+                      label: fieldLabel,
+                      fieldName,
+                      placeholder,
+                      autocompleteType: "multi",
+                      option,
+                    }).optionId,
+                  }}
+                  key={option?.id ?? option?.value ?? option?.label ?? label}
+                >
                   <Checkbox
                     icon={icon}
                     checkedIcon={checkedIcon}
-                    style={{ marginRight: 8 }}
+                    size="small"
+                    sx={{ p: 0.25, mr: 0.5 }}
                     checked={checked}
                   />
                   {label}
                 </li>
               );
             }
-          : undefined
+          : (optionProps, option, state, ownerState) => {
+              const mergedOptionProps = {
+                ...optionProps,
+                [SCRIPT_RUNNER_ID_ATTR]: buildAutocompleteRunnerIds({
+                  explicitId: scriptRunnerId,
+                  label: fieldLabel,
+                  fieldName,
+                  placeholder,
+                  autocompleteType: "multi",
+                  option,
+                }).optionId,
+              };
+
+              if (props.renderOption) {
+                return props.renderOption(mergedOptionProps, option, state, ownerState);
+              }
+
+              const optionLabel =
+                typeof option === "string"
+                  ? option
+                  : option?.label ?? option?.name ?? "";
+
+              return (
+                <li
+                  {...mergedOptionProps}
+                  key={option?.id ?? option?.value ?? option?.label ?? optionLabel}
+                >
+                  {optionLabel}
+                </li>
+              );
+            }
       }
     />
   );

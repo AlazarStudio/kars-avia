@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import classes from './InfoTableData.module.css';
 import InfoTable from "../InfoTable/InfoTable";
-import { convertToDate, getMediaUrl } from "../../../../graphQL_requests";
+import { convertToDate, convertToDateNew, getMediaUrl } from "../../../../graphQL_requests";
 
 // Основная таблица с данными о заявках
 function InfoTableData({ user, toggleRequestSidebar, scrollToId, requests, setChooseObject, chooseRequestID, setChooseRequestID, pageInfo }) {
@@ -82,19 +82,27 @@ function InfoTableData({ user, toggleRequestSidebar, scrollToId, requests, setCh
                         className={`${classes.InfoTable_data} ${chooseRequestID === item.id && classes.InfoTable_data_active}`}
                         style={{ opacity: (item.status !== 'archiving' && item.status !== 'canceled' ) ? 1 : 0.5 }}
                         onClick={() => handleObject(item.id, item.arrival, item.departure, item.person, item.requestNumber)}
-                        key={index}
+                        key={item.id}
                         // data-id={item.id}
                     >
                         {/* {item.status === 'created' && <div className={classes.newRequest}></div>} */}
                         <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>{item.requestNumber}</div>
                         {/* <div className={`${classes.InfoTable_data_elem} ${classes.w10}`} style={{justifyContent:'center', padding:'0'}}>{item.requestNumber?.slice(0, 4)}</div> */}
-                        {item?.chat?.some(chat => 
-                            chat.unreadMessagesCount > 0 && (
-                                (user.hotelId && chat.hotelId === user.hotelId) ||
-                                (user.airlineId && chat.airlineId === user.airlineId) ||
-                                (!user.hotelId && !user.airlineId)
-                            )
-                            ) && <div className={classes.newRequest}></div>}
+                        {(() => {
+                            const totalUnread = (item?.chat || []).reduce((acc, chat) => {
+                                if (chat.unreadMessagesCount > 0 && (
+                                    (user.hotelId && chat.hotelId === user.hotelId) ||
+                                    (user.airlineId && chat.airlineId === user.airlineId) ||
+                                    (!user.hotelId && !user.airlineId)
+                                )) {
+                                    return acc + chat.unreadMessagesCount;
+                                }
+                                return acc;
+                            }, 0);
+                            return totalUnread > 0 ? (
+                                <div className={classes.newRequest}>{totalUnread > 99 ? '99+' : totalUnread}</div>
+                            ) : null;
+                        })()}
                         <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
                             <div className={classes.InfoTable_data_elem_information}>
                                 {item.person ?
@@ -121,8 +129,8 @@ function InfoTableData({ user, toggleRequestSidebar, scrollToId, requests, setCh
                             <div className={classes.InfoTable_data_elem_information}>
                                 {/* <div className={classes.InfoTable_data_elem_title}>{item.arrival.flight}</div> */}
                                 <div className={classes.InfoTable_data_elem_moreInfo}>
-                                    <span><img src="/calendar.png" alt="" /> {convertToDate(item.arrival)}</span>
-                                    <span><img src="/time.png" alt="" /> {convertToDate(item.arrival, true)}</span>
+                                    <span><img src="/calendar.png" alt="" /> {convertToDateNew(item.arrival)}</span>
+                                    <span><img src="/time.png" alt="" /> {convertToDateNew(item.arrival, true)}</span>
                                 </div>
                             </div>
                         </div>
@@ -130,8 +138,8 @@ function InfoTableData({ user, toggleRequestSidebar, scrollToId, requests, setCh
                             <div className={classes.InfoTable_data_elem_information}>
                                 {/* <div className={classes.InfoTable_data_elem_title}>{item.departure.flight}</div> */}
                                 <div className={classes.InfoTable_data_elem_moreInfo}>
-                                    <span><img src="/calendar.png" alt="" /> {convertToDate(item.departure)}</span>
-                                    <span><img src="/time.png" alt="" /> {convertToDate(item.departure, true)}</span>
+                                    <span><img src="/calendar.png" alt="" /> {convertToDateNew(item.departure)}</span>
+                                    <span><img src="/time.png" alt="" /> {convertToDateNew(item.departure, true)}</span>
                                 </div>
                             </div>
                         </div>

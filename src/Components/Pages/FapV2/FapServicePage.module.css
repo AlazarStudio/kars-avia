@@ -1,0 +1,179 @@
+.page {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  box-sizing: border-box;
+  background: #F1F4FB;
+  padding: 30px;
+  gap: 15px;
+  overflow: hidden;
+  align-self: stretch;
+}
+
+.headerNav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.backBtn {
+  width: 35px;
+  height: 35px;
+  border: 1px dotted #545873;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 6px;
+  cursor: pointer;
+  background: none;
+  flex-shrink: 0;
+}
+
+.backBtn img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.headerNavTitle {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.chatBtn {
+  padding: 6px 14px;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: Inter, sans-serif;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.logoutBtn {
+  padding: 6px 14px;
+  border: 1px solid #EF4444;
+  border-radius: 8px;
+  font-size: 13px;
+  font-family: Inter, sans-serif;
+  font-weight: 500;
+  color: #EF4444;
+  background: transparent;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0;
+}
+
+.logoutBtn:hover {
+  background: #FEF2F2;
+}
+
+.representativeLinkBtn {
+  border: none;
+  background: transparent;
+  color: var(--dark-blue);
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.contentRow {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 16px;
+  overflow: hidden;
+}
+
+/* Контентная область — flex-колонка чтобы дочерняя секция могла растягиваться */
+.content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Белый блок услуги (div.section из FapDetail.module.css) растягивается на всю высоту */
+.content > div {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/* Тело секции: убираем max-height аккордеона, даём flex:1 и скролл */
+.content > div > div:last-child {
+  max-height: none;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+}
+
+.chatPane {
+  width: 380px;
+  flex-shrink: 0;
+  border: 1px solid #E4E4EF;
+  border-radius: 16px;
+  background: #fff;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.chatPaneHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid #E4E4EF;
+  flex-shrink: 0;
+}
+
+.chatPaneTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.chatPaneClose {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #94A3B8;
+  font-size: 18px;
+  line-height: 1;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.chatPaneClose:hover {
+  color: var(--text);
+  background: var(--hover-gray);
+}
+
+.chatPaneBody {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+}

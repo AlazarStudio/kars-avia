@@ -19,16 +19,19 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function ExistRequestMyCompany({
   show,
   onClose,
   chooseObject,
   updateDispatcher,
-  addNotification,
 }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success } = useToast();
 
   const { data: companyData, refetch } = useQuery(GET_COMPANY, {
     context: {
@@ -141,7 +144,9 @@ function ExistRequestMyCompany({
     setIsEditing(false);
   };
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     setAnchorEl(null);
     if (!isEdited) {
       resetForm();
@@ -150,12 +155,15 @@ function ExistRequestMyCompany({
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
       setIsEditing(false);
     }
-  }, [isEdited, isEditing, onClose, resetForm]);
+  }, [isEdited, onClose, resetForm, isDialogOpen, confirm]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -200,7 +208,7 @@ function ExistRequestMyCompany({
     );
 
     if (emptyFields.length > 0) {
-      alert("Пожалуйста, заполните все обязательные поля.");
+      showAlert("Пожалуйста, заполните все обязательные поля.");
       setIsLoading(false);
       return;
     }
@@ -230,7 +238,9 @@ function ExistRequestMyCompany({
       if (response_update_user) {
         updateDispatcher();
         setIsEditing(false);
-        addNotification("Редактирование компании прошло успешно.", "success");
+        success("Редактирование компании прошло успешно.");
+        onClose();
+        resetForm();
       }
     } catch (error) {
       console.error("Ошибка обновления пользователя:", error);
@@ -241,6 +251,9 @@ function ExistRequestMyCompany({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+
       if (anchorEl && menuRef.current?.contains(event.target)) {
         setAnchorEl(null);
         return;
@@ -260,7 +273,7 @@ function ExistRequestMyCompany({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton, anchorEl]);
+  }, [show, closeButton, anchorEl, isDialogOpen]);
 
   // console.log(user);
 

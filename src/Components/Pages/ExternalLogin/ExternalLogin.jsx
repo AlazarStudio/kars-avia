@@ -92,8 +92,7 @@ function ExternalLogin() {
               req?.livingService?.hotels?.some((h) => h?.hotelId === extUser.hotelId)
             );
             if (requestWithHotel?.id) {
-              const hotelIdEnc = encodeURIComponent(extUser.hotelId);
-              window.location.href = `/${ID_REPRESENTATIVE_REQUESTS}/representativeRequestsPlacement/${requestWithHotel.id}/hotel/${hotelIdEnc}`;
+              window.location.href = `/fapv2/${requestWithHotel.id}/service/living`;
               return;
             }
           } catch (_) {

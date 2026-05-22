@@ -3,6 +3,7 @@ import classes from './InfoTableDataAirlines.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import { Link } from "react-router-dom";
 import { getMediaUrl } from "../../../../graphQL_requests";
+import AirlineReadinessIndicator from "../AirlineReadinessIndicator/AirlineReadinessIndicator";
 
 function InfoTableDataAirlines({ children, toggleRequestSidebar, requests, pageInfo, ...props }) {
     const handleObject = (item, index) => {
@@ -27,7 +28,8 @@ function InfoTableDataAirlines({ children, toggleRequestSidebar, requests, pageI
             <div className={classes.InfoTable_title}>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w5}`} style={{justifyContent:'center'}}>ID</div>
                 <div className={`${classes.InfoTable_title_elem} ${classes.w20}`} style={{paddingLeft:"90px"}}>Название</div>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w30}`}>Наименование</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w25}`}>Наименование</div>
+                <div className={`${classes.InfoTable_title_elem} ${classes.w8}`} style={{justifyContent:'center'}}>Статус</div>
             </div>
 
             <div className={classes.bottom} ref={listContainerRef}>
@@ -35,7 +37,7 @@ function InfoTableDataAirlines({ children, toggleRequestSidebar, requests, pageI
                     <Link to={`/airlines/${item.id}`}
                         className={classes.InfoTable_data}
                         onClick={() => handleObject(item, index)}
-                        key={index}
+                        key={item.id}
                     >
                         <div className={`${classes.InfoTable_data_elem} ${classes.w5}`} style={{justifyContent:'center'}}>{item.order}</div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
@@ -46,7 +48,10 @@ function InfoTableDataAirlines({ children, toggleRequestSidebar, requests, pageI
                                 <div className={classes.InfoTable_data_elem_title}>{item.name}</div>
                             </div>
                         </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>{item?.nameFull}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w25}`}>{item?.nameFull}</div>
+                        <div className={`${classes.InfoTable_data_elem} ${classes.w8}`} style={{justifyContent:'center'}}>
+                            <AirlineReadinessIndicator airline={item} />
+                        </div>
                     </Link>
                 ))}
             </div>

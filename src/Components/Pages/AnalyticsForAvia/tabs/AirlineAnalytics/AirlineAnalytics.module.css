@@ -1,12 +1,806 @@
+.pageWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
+  flex: 1;
+}
+
+/* ─── Модалка фильтров ─── */
+.filterModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 900;
+  padding: 16px;
+  box-sizing: border-box;
+}
+
+.filterModalCard {
+  position: relative;
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.16);
+  display: flex;
+  flex-direction: column;
+  /* overflow:visible чтобы portalless дропдауны не обрезались */
+  overflow: visible;
+}
+
+.filterModalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 24px;
+  border-bottom: 1px solid #edf0ff;
+  flex-shrink: 0;
+  border-radius: 16px 16px 0 0;
+  background: #fff;
+}
+
+.filterModalTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #2e355d;
+}
+
+.filterModalCloseBtn {
+  background: none;
+  border: none;
+  font-size: 18px;
+  color: #9ca4d9;
+  cursor: pointer;
+  line-height: 1;
+  padding: 5px 7px;
+  border-radius: 8px;
+  transition: color 0.15s, background 0.15s;
+}
+
+.filterModalCloseBtn:hover {
+  color: #2e355d;
+  background: #f1f4fb;
+}
+
+.filterModalBody {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  overflow-y: auto;
+  /* overflow-x visible чтобы дропдауны могли выйти за края */
+  overflow-x: visible;
+}
+
+/* Карточка периода */
+.filterModalPeriodCard {
+  background: #f8f9fd;
+  border: 1px solid #edf0ff;
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filterModalPeriodCard[data-period="2"] {
+  border-color: #dce3f8;
+  background: #f4f7fe;
+}
+
+.filterModalPeriodLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9ca4d9;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
+
+.periodButtonModal {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: #fff;
+  color: #2e355d;
+  border: 1px solid #d0d5f0;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: left;
+  transition: border-color 0.15s, color 0.15s;
+  box-sizing: border-box;
+}
+
+.periodButtonModal:hover {
+  border-color: #0057c3;
+  color: #0057c3;
+}
+
+.filterModalRow2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+/* Строка с услугой (общая для периодов) */
+.filterModalServiceRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.filterModalServiceLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #545873;
+}
+
+.filterModalServiceHint {
+  font-size: 11px;
+  font-weight: 400;
+  color: #9ca4d9;
+  background: #f1f4fb;
+  border-radius: 4px;
+  padding: 2px 7px;
+}
+
+.filterModalDivider {
+  height: 1px;
+  background: #edf0ff;
+  margin: 2px 0;
+}
+
+.compareCheckboxModal {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #2e355d;
+  cursor: pointer;
+  user-select: none;
+}
+
+.compareCheckboxModal input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--dark-blue, #0057c3);
+  flex-shrink: 0;
+}
+
+.addCompareBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  align-self: flex-start;
+  margin-top: 4px;
+  background: none;
+  border: 1px dashed #c0c8e8;
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0057c3;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+  line-height: 1;
+}
+
+.addCompareBtn:hover {
+  background: #eef2fd;
+  border-color: #0057c3;
+}
+
+.addCompareBtnActive {
+  color: #b03020;
+  border-color: #e8c4be;
+}
+
+.addCompareBtnActive:hover {
+  background: #fdf0ee;
+  border-color: #b03020;
+}
+
+.filterModalFooter {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid #edf0ff;
+  flex-shrink: 0;
+  border-radius: 0 0 16px 16px;
+  background: #fff;
+}
+
+.filterModalCancelBtn {
+  background: none;
+  border: 1px solid #d0d5f0;
+  color: #545873;
+  border-radius: 10px;
+  padding: 0 20px;
+  height: 40px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.filterModalCancelBtn:hover {
+  border-color: #9ca4d9;
+  color: #2e355d;
+}
+
+/* ─── Подтверждение сброса ─── */
+.discardOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  z-index: 10;
+}
+
+.discardCard {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 36px 40px;
+  text-align: center;
+  max-width: 380px;
+}
+
+.discardText {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 500;
+  color: #2e355d;
+  line-height: 1.55;
+}
+
+.discardActions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.discardContinueBtn {
+  background: none;
+  border: 1px solid #d0d5f0;
+  color: #545873;
+  border-radius: 10px;
+  padding: 0 20px;
+  height: 40px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.discardContinueBtn:hover {
+  border-color: #0057c3;
+  color: #0057c3;
+}
+
+.discardCloseBtn {
+  background: #c03b28;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 0 20px;
+  height: 40px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.discardCloseBtn:hover {
+  background: #a33020;
+}
+
+.filtersStrip {
+  width: 100%;
+  background: #fff;
+  border-radius: 10px;
+  padding: 16px 20px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filtersRowCompare {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.compareApplyGroup {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.compareCheckbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  font-size: 14px;
+  color: #2e355d;
+  cursor: pointer;
+  user-select: none;
+}
+
+.compareCheckbox input {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: var(--dark-blue, #0057c3);
+}
+
+.periodSummaryInline {
+  font-size: 13px;
+  color: #545873;
+  line-height: 1.35;
+  max-width: min(100%, 420px);
+}
+
+.comparePeriodsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.compareLabel {
+  font-size: 13px;
+  color: #545873;
+  margin-right: 4px;
+}
+
+.compareChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.removeCompareBtn {
+  border: none;
+  background: #f1f4fb;
+  color: #545873;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.removeCompareBtn:hover {
+  background: #e4e8f5;
+  color: #c00;
+}
+
+.groupByWrap {
+  min-width: 200px;
+}
+
+.periodHint {
+  margin: 0;
+  font-size: 13px;
+  color: #b45309;
+}
+
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 12px;
+}
+
+.emptyStateIcon {
+  margin-bottom: 8px;
+}
+
+.emptyStateTitle {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 700;
+  color: #2e355d;
+}
+
+.emptyStateSubtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #9ca4d9;
+  line-height: 1.6;
+}
+
+.emptyStateSteps {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+  text-align: left;
+}
+
+.emptyStateStep {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  color: #545873;
+}
+
+.emptyStateStepNum {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background: #eef2fd;
+  border-radius: 50%;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0057c3;
+  flex-shrink: 0;
+}
+
+.analyticsEmptyState {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: min(50vh, 400px);
+  padding: 48px 24px;
+  box-sizing: border-box;
+}
+
+.analyticsEmptyMessage {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111;
+  text-align: center;
+}
+
+.kpiGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+}
+
+.kpiCard {
+  background: #f8f9fd;
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.kpiLabel {
+  font-size: 12px;
+  color: #545873;
+}
+
+.kpiValue {
+  font-size: 18px;
+  font-weight: 600;
+  color: #2e355d;
+}
+
+.chartsStackPeriod {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 100%;
+}
+
+.pieChartsRow {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  align-items: stretch;
+}
+
+/* Круг + столбцы: периоды друг под другом, строка периода на всю ширину */
+.pieChartsRowStacked {
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pieChartsRowStacked > .pieBarPair,
+.pieChartsRowStacked > .pieBarPair1 {
+  width: 100%;
+  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Только круговая диаграмма: на широком экране 1–2 карточки по ~50% в ряд */
+.pieChartsRowInline {
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.pieChartsRowInline > .pieBarPair,
+.pieChartsRowInline > .pieBarPair1 {
+  flex: 1 1 calc(50% - 8px);
+  max-width: calc(50% - 8px);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 900px) {
+  .pieChartsRowInline {
+    flex-direction: column;
+  }
+
+  .pieChartsRowInline > .pieBarPair,
+  .pieChartsRowInline > .pieBarPair1 {
+    max-width: 100%;
+    width: 100%;
+    flex: 0 0 auto;
+  }
+}
+
+.pieBarPair {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 16px;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  align-items: stretch;
+}
+
+/* Перебиваем width: 49% / 70% у AnalyticsChart — два графика делят строку поровну */
+.pieBarPair > div {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.pieBarPair1 {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 16px;
+  flex: 1 1 0;
+  min-width: 0;
+  min-height: 0;
+  align-items: stretch;
+}
+
+.pieBarPair1 > div {
+  flex: 1 1 0;
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Один groupedBar «Бюджет по должностям» под двумя pie при сравнении периодов */
+.pieChartsGroupedBudgetWrap {
+  width: 100%;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+/* Два круговых в один ряд, под ними общий столбчатый график */
+.pieChartsComparePiesRow {
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+  min-width: 0;
+}
+
+.pieChartsComparePiesRow > .pieBarPair1 {
+  flex: 1 1 calc(50% - 8px);
+  max-width: calc(50% - 8px);
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 720px) {
+  .pieChartsComparePiesRow {
+    flex-direction: column;
+  }
+
+  .pieChartsComparePiesRow > .pieBarPair1 {
+    max-width: 100%;
+    width: 100%;
+    flex: 0 0 auto;
+  }
+}
+
+.barBlock {
+  flex: 1;
+  min-width: 0;
+}
+
+.serviceSection > .breakdownTableSection + .barBlock {
+  margin-top: 36px;
+}
+
+.serviceSection > .pieChartsRow + .barBlock {
+  margin-top: 28px;
+}
+
+.barBlockBelowPies {
+  flex: none;
+  width: 100%;
+}
+
+.barHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.barTitle {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2e355d;
+}
+
+.airportBarsStack {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.airportBarsRow {
+  margin-bottom: 20px;
+}
+
+.airportBarsGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.barHeaderFull {
+  grid-column: 1 / -1;
+  margin-bottom: 8px;
+}
+
+.airportBarChartItem {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.airportBarChartSubtitle {
+  margin: 0 0 16px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #545873;
+  line-height: 1.35;
+}
+
+/* Подзаголовок второго периода — отступ от предыдущей таблицы */
+.breakdownTableSection .tableScroll + .airportBarChartSubtitle {
+  margin-top: 28px;
+}
+
+.chartsColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  width: 100%;
+  min-width: 0;
+  flex: 1;
+}
+
+.pieChartSection {
+  width: 100%;
+  min-width: 0;
+}
+
+.breakdownTableSection {
+  margin-top: 22px;
+  width: 100%;
+}
+
+.breakdownTableTitle {
+  margin: 0 0 24px;
+  font-size: 15px;
+  font-weight: 600;
+  color: #2e355d;
+  line-height: 1.35;
+}
+
+.serviceSection > .pieChartsRow + .breakdownTableSection {
+  margin-top: 28px;
+}
+
+.serviceSection {
+  margin-top: 24px;
+  padding-top: 20px;
+  border-top: 1px solid #edf0ff;
+}
+
+.serviceSection:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.serviceSectionTitle {
+  margin: 0 0 20px;
+  font-size: 18px;
+  font-weight: 600;
+  color: #2e355d;
+  line-height: 1.35;
+}
+
+.segmentsSection {
+  margin-top: 16px;
+}
+
+.segmentsTitle {
+  margin: 0 0 22px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #2e355d;
+  line-height: 1.35;
+}
+
+.tableScroll {
+  overflow-x: auto;
+  width: 100%;
+}
+
 .container {
   display: flex;
   gap: 24px;
-  height: calc(100vh - 200px);
+  min-height: 0;
+  flex: 1;
   overflow: hidden;
 }
 
 .sidebarContainer {
-  width: 300px;
+  width: 250px;
   padding: 6px 16px 16px 16px;
   display: flex;
   flex-direction: column;
@@ -51,6 +845,8 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  flex: 1;
+  min-width: 0;
 }
 
 
@@ -68,8 +864,8 @@
 }
 
 .circle {
-  width: 40px;
-  height: 40px;
+  width: 35px;
+  height: 35px;
   border-radius: 50%;
   overflow: hidden;
   background-color: #ececec;
@@ -97,11 +893,11 @@
   color: #545873;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
 }
 
 .listItem p {
-  width: calc(100% - 35px);
+  width: calc(100% - 45px);
 }
 
 .listItem:hover {
@@ -123,10 +919,14 @@
 .contentWrapper {
   overflow: hidden;
   overflow-y: auto;
-  height: 600px;
+  flex: 1;
+  min-height: 280px;
+  /* max-height: min(620px, calc(100vh - 380px)); */
   display: flex;
   flex-direction: column;
   gap: 20px;
+  /* для центрирования emptyState по высоте */
+  min-height: 0;
 }
 
 .graphs {
@@ -134,6 +934,146 @@
   display: flex;
   flex-direction: column;
   gap: 20px;
+}
+
+.graphsPdfRoot {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  flex: 1;
+  min-height: 0;
+}
+
+.headerRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  flex-shrink: 0;
+}
+
+.serviceFilterWrap {
+  position: relative;
+  width: 180px;
+  flex-shrink: 0;
+}
+
+.serviceSelectBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+}
+
+.serviceSelectBtn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
+  background: #f1f4fb;
+  border: 1px solid #e4e8f5;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: #2e355d;
+  transition: border-color 0.15s, background 0.15s;
+  white-space: nowrap;
+}
+
+.serviceSelectBtn:hover {
+  border-color: #9ca4d9;
+  background: #eaedfa;
+}
+
+.serviceSelectList {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #fff;
+  border: 1px solid #e4e8f5;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  padding: 4px;
+  margin: 0;
+  list-style: none;
+  z-index: 101;
+  overflow: hidden;
+}
+
+.serviceSelectOption {
+  padding: 9px 12px;
+  border-radius: 7px;
+  font-size: 13px;
+  color: #2e355d;
+  cursor: pointer;
+  transition: background 0.12s;
+}
+
+.serviceSelectOption:hover {
+  background: #f1f4fb;
+}
+
+.serviceSelectOptionActive {
+  background: #eaedfa;
+  font-weight: 600;
+  color: #0057c3;
+}
+
+.exportButtons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.exportPdfButton {
+  flex-shrink: 0;
+  background: #0057c3;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.exportPdfButton:hover:not(:disabled) {
+  background: #0047a3;
+}
+
+.exportPdfButton:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.exportXlsxButton {
+  flex-shrink: 0;
+  background: #1d6f42;
+  color: #fff;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.exportXlsxButton:hover {
+  background: #155233;
+}
+
+/* Разрыв страницы PDF не должен резать блок посередине (html2pdf + CSS) */
+.pdfAvoidSplit {
+  break-inside: avoid;
+  page-break-inside: avoid;
+  -webkit-column-break-inside: avoid;
 }
 
 .row {
@@ -209,7 +1149,10 @@
 
 .filtersRow {
   display: flex;
+  flex-wrap: wrap;
+  align-items: center;
   gap: 12px;
+  width: 100%;
 }
 
 .positionsWrap {
@@ -241,7 +1184,7 @@
 .analyticsTable th,
 .analyticsTable td {
   border: 1px solid #edf0ff;
-  padding: 10px;
+  padding: 10px 12px;
   text-align: left;
   vertical-align: top;
 }
@@ -249,6 +1192,39 @@
 .analyticsTable th {
   background: #f8f9fd;
   color: #2e355d;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.sortableTh {
+  cursor: pointer;
+  user-select: none;
+}
+
+.sortableTh:hover {
+  background: #eef1fb;
+}
+
+.sortableThActive {
+  background: #e8ecfb;
+}
+
+.sortableThInner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sortIndicator {
+  font-size: 11px;
+  color: #c62828;
+  opacity: 0.4;
+  min-width: 1em;
+  font-weight: 600;
+}
+
+.sortableThActive .sortIndicator {
+  opacity: 1;
 }
 
 
@@ -285,7 +1261,77 @@
     flex-direction: column;
     gap: 4px;
   }
+
   /* .contentWrapper {
     height: 500px;
   } */
+}
+
+/* Узкий экран: по одному графику в ряд внутри периода */
+@media (max-width: 720px) {
+  .pieBarPair1,
+  .pieBarPair {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+/* ─── PDF progress overlay ─── */
+.pdfOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(0, 0, 0, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pdfOverlayCard {
+  background: #fff;
+  border-radius: 16px;
+  padding: 32px 40px;
+  min-width: 340px;
+  max-width: 420px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.22);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.pdfOverlayTitle {
+  font-size: 16px;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.pdfOverlayBarTrack {
+  width: 100%;
+  height: 10px;
+  border-radius: 5px;
+  background: #e8edf2;
+  overflow: hidden;
+}
+
+.pdfOverlayBarFill {
+  height: 100%;
+  border-radius: 5px;
+  background: linear-gradient(90deg, #0057c3, #3b82f6);
+  transition: width 0.3s ease;
+}
+
+.pdfOverlayPercent {
+  font-size: 28px;
+  font-weight: 700;
+  color: #0057c3;
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.pdfOverlayHint {
+  font-size: 13px;
+  color: #7a7a8c;
+  margin: 0;
 }

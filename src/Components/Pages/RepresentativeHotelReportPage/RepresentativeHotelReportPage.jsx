@@ -20,12 +20,12 @@ import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import MUITextField from "../../Blocks/MUITextField/MUITextField";
 import MUIAutocompleteColor from "../../Blocks/MUIAutocompleteColor/MUIAutocompleteColor";
 import Button from "../../Standart/Button/Button";
-import Notification from "../../Notification/Notification";
 import {
   isAirlineRole as isAirlineRoleCheck,
   isDispatcherRole as isDispatcherRoleCheck,
   isExternalPassengerRequestUser,
 } from "../../../utils/access";
+import { useToast } from "../../../contexts/ToastContext";
 
 function toNum(v) {
   const n = Number(v);
@@ -66,6 +66,7 @@ const newGroup = () => ({
 
 function RepresentativeHotelReportPage({ user }) {
   const token = getCookie("token");
+  const { success, error: notifyError } = useToast();
   const { id, idRequest, hotelId } = useParams();
   const navigate = useNavigate();
   const { cookiesAccepted, acceptCookies, isInitialized } = useCookies();
@@ -161,15 +162,6 @@ function RepresentativeHotelReportPage({ user }) {
   const [daysOverrides, setDaysOverrides] = useState({});
   const [searchQuery, setSearchQuery] = useState("");
   const [activeTab, setActiveTab] = useState("groups");
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = useCallback((text, status) => {
-    const notifyId = Date.now() + Math.random();
-    setNotifications((prev) => [...prev, { id: notifyId, text, status }]);
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== notifyId));
-    }, 4000);
-  }, []);
 
   const assignedPersonIndices = useMemo(
     () => new Set(groups.flatMap((g) => g.personIndices)),
@@ -294,10 +286,10 @@ function RepresentativeHotelReportPage({ user }) {
           })),
         },
       });
-      addNotification("Отчет сформирован", "success");
+      success("Отчет сформирован");
     } catch (err) {
       console.error(err);
-      // addNotification("Не удалось сформировать отчет", "error");
+      notifyError("Не удалось сформировать отчет");
     }
   };
 
@@ -515,9 +507,11 @@ function RepresentativeHotelReportPage({ user }) {
             <div className={reportClasses.groupsSection}>
               <div className={reportClasses.groupsHeader}>
                 <h3 className={reportClasses.groupsTitle}>Группы (категория и вид номера)</h3>
-                <Button type="button" onClick={addGroup}>
-                  Добавить группу
-                </Button>
+                {!isAirlineRole && (
+                  <Button type="button" onClick={addGroup}>
+                    Добавить группу
+                  </Button>
+                )}
               </div>
               {groups.length === 0 ? (
                 <p className={reportClasses.emptyMessage}>
@@ -536,6 +530,7 @@ function RepresentativeHotelReportPage({ user }) {
                             value={g.roomCategory}
                             onChange={(e) => updateGroup(g.id, "roomCategory", e.target.value)}
                             placeholder="Напр. 2-местный"
+                            readOnly={isAirlineRole}
                           />
                         </div>
                         <div>
@@ -546,6 +541,7 @@ function RepresentativeHotelReportPage({ user }) {
                             value={g.roomKind}
                             onChange={(e) => updateGroup(g.id, "roomKind", e.target.value)}
                             placeholder="Напр. Стандарт"
+                            readOnly={isAirlineRole}
                           />
                         </div>
                         <div>
@@ -556,6 +552,7 @@ function RepresentativeHotelReportPage({ user }) {
                             className={`${reportClasses.reportInput} ${reportClasses.reportInputNum}`}
                             value={g.breakfast === 0 ? 0 : g.breakfast}
                             onChange={(e) => updateGroup(g.id, "breakfast", e.target.value)}
+                            readOnly={isAirlineRole}
                           />
                         </div>
                         <div>
@@ -566,6 +563,7 @@ function RepresentativeHotelReportPage({ user }) {
                             className={`${reportClasses.reportInput} ${reportClasses.reportInputNum}`}
                             value={g.lunch === 0 ? 0 : g.lunch}
                             onChange={(e) => updateGroup(g.id, "lunch", e.target.value)}
+                            readOnly={isAirlineRole}
                           />
                         </div>
                         <div>
@@ -576,6 +574,7 @@ function RepresentativeHotelReportPage({ user }) {
                             className={`${reportClasses.reportInput} ${reportClasses.reportInputNum}`}
                             value={g.dinner === 0 ? 0 : g.dinner}
                             onChange={(e) => updateGroup(g.id, "dinner", e.target.value)}
+                            readOnly={isAirlineRole}
                           />
                         </div>
                         <div>
@@ -586,6 +585,7 @@ function RepresentativeHotelReportPage({ user }) {
                             className={`${reportClasses.reportInput} ${reportClasses.reportInputNum}`}
                             value={g.foodCost === 0 ? 0 : g.foodCost}
                             onChange={(e) => updateGroup(g.id, "foodCost", e.target.value)}
+                            readOnly={isAirlineRole}
                           />
                         </div>
                         <div>
@@ -596,6 +596,7 @@ function RepresentativeHotelReportPage({ user }) {
                             className={`${reportClasses.reportInput} ${reportClasses.reportInputNum}`}
                             value={g.accommodationCost === 0 ? 0 : g.accommodationCost}
                             onChange={(e) => updateGroup(g.id, "accommodationCost", e.target.value)}
+                            readOnly={isAirlineRole}
                           />
                         </div>
                       </div>
@@ -745,18 +746,6 @@ function RepresentativeHotelReportPage({ user }) {
           </section>
         </div>
       </div>
-      {notifications.map((n, index) => (
-        <Notification
-          key={n.id}
-          text={n.text}
-          status={n.status}
-          index={index}
-          time={4000}
-          onClose={() =>
-            setNotifications((prev) => prev.filter((x) => x.id !== n.id))
-          }
-        />
-      ))}
     </div>
   );
 }

@@ -2,10 +2,12 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./EditRequestAirlineCompany.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
+import { InputMask } from "@react-input/mask";
 import {
   getCookie,
   getMediaUrl,
   UPDATE_AIRLINE_USER,
+  CREATE_POSITION,
 } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList";
@@ -14,6 +16,8 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { roles, rolesObject } from "../../../roles";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function EditRequestAirlineCompany({
   show,
@@ -26,11 +30,22 @@ function EditRequestAirlineCompany({
   onSubmit,
   addTarif,
   id,
-  addNotification,
   positions,
+  onPositionCreated,
   openDeleteComponent,
+  initialEditMode = false,
 }) {
   const token = getCookie("token");
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
+
+  const [isCreatingPosition, setIsCreatingPosition] = useState(false);
+  const [newPositionName, setNewPositionName] = useState("");
+  const [localPositions, setLocalPositions] = useState(positions || []);
+
+  useEffect(() => {
+    setLocalPositions(positions || []);
+  }, [positions]);
 
   const [uploadFile, { data, loading, error }] = useMutation(
     UPDATE_AIRLINE_USER,
@@ -44,11 +59,65 @@ function EditRequestAirlineCompany({
     }
   );
 
-  const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
+  const [createPosition] = useMutation(CREATE_POSITION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const handleCreatePosition = useCallback(async () => {
+    const trimmedName = newPositionName.trim();
+    if (!trimmedName) {
+      showAlert("Введите название должности.");
+      return;
+    }
+
+    const isDuplicate = (localPositions || []).some(
+      (p) => String(p?.name || "").trim().toLowerCase() === trimmedName.toLowerCase()
+    );
+    if (isDuplicate) {
+      showAlert("Такая должность уже существует.");
+      return;
+    }
+
+    try {
+      const response = await createPosition({
+        variables: {
+          input: {
+            name: trimmedName,
+            separator: "airlineUser",
+            airlineId: id,
+          },
+        },
+      });
+
+      const createdPosition = response?.data?.createPosition;
+      if (!createdPosition) throw new Error("Пустой ответ createPosition");
+
+      setLocalPositions((prev) =>
+        [...(prev || []), createdPosition].sort((a, b) =>
+          String(a?.name || "").localeCompare(String(b?.name || ""))
+        )
+      );
+      setFormData((prevData) => ({ ...prevData, position: createdPosition.name }));
+      setNewPositionName("");
+      setIsCreatingPosition(false);
+      onPositionCreated?.(createdPosition);
+      success("Должность добавлена успешно.");
+    } catch (err) {
+      console.error("Ошибка при создании должности:", err);
+      notifyError("Не удалось создать должность.");
+    }
+  }, [newPositionName, localPositions, createPosition, id, onPositionCreated, showAlert, success, notifyError]);
+
+  const [isEdited, setIsEdited] = useState(false);
   const [formData, setFormData] = useState({
     images: null,
     name: selectedUser?.name || "",
     email: selectedUser?.email || "",
+    number: selectedUser?.number || "",
     role: selectedUser?.role || "",
     position: selectedUser?.position?.name || "",
     login: selectedUser?.login || "",
@@ -69,6 +138,7 @@ function EditRequestAirlineCompany({
         images: null,
         name: selectedUser?.name || "",
         email: selectedUser?.email || "",
+        number: selectedUser?.number || "",
         role: selectedUser?.role || "",
         position: selectedUser?.position?.name || "",
         login: selectedUser?.login || "",
@@ -77,6 +147,7 @@ function EditRequestAirlineCompany({
         department: department || "",
       });
       setShowIMG(selectedUser.images);
+      setIsEditing(initialEditMode);
     }
   }, [show, department, selectedUser]);
 
@@ -85,6 +156,7 @@ function EditRequestAirlineCompany({
       images: null,
       name: selectedUser?.name || "",
       email: selectedUser?.email || "",
+      number: selectedUser?.number || "",
       role: selectedUser?.role || "",
       position: selectedUser?.position?.name || "",
       login: selectedUser?.login || "",
@@ -92,9 +164,11 @@ function EditRequestAirlineCompany({
       password: "",
       department: department || "",
     });
-    setIsEdited(false); // Сброс флага изменений
+    setIsEdited(false);
     setShowOldPassword(false);
     setShowNewPassword(false);
+    setIsCreatingPosition(false);
+    setNewPositionName("");
     if (selectedUser?.images) setShowIMG(selectedUser.images);
   }, [selectedUser, department]);
 
@@ -103,7 +177,9 @@ function EditRequestAirlineCompany({
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     setAnchorEl(null);
     if (!isEdited) {
       resetForm();
@@ -112,12 +188,15 @@ function EditRequestAirlineCompany({
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
       setIsEditing(false);
     }
-  }, [isEdited, isEditing, onClose, resetForm]);
+  }, [isEdited, onClose, resetForm, confirm, isDialogOpen]);
 
   const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -151,8 +230,8 @@ function EditRequestAirlineCompany({
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
-    if (file.size > maxSizeInBytes) {
-      alert("Размер файла не должен превышать 8 МБ!");
+    if (file && file.size > maxSizeInBytes) {
+      showAlert("Размер файла не должен превышать 8 МБ!");
       setFormData((prevState) => ({
         ...prevState,
         images: null,
@@ -186,20 +265,20 @@ function EditRequestAirlineCompany({
     e.preventDefault();
     if (isEditing) {
       if (!isFormValid()) {
-        alert("Пожалуйста, заполните все обязательные поля.");
+        showAlert("Пожалуйста, заполните все обязательные поля.");
         setIsLoading(false);
         return;
       }
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        alert("Введите корректный email.");
+        showAlert("Введите корректный email.");
         setIsLoading(false);
         return;
       }
 
       setIsLoading(true);
       if (formData.password !== "" && formData.password.length < 8) {
-        alert("Новый пароль должен содержать минимум 8 символов.");
+        showAlert("Новый пароль должен содержать минимум 8 символов.");
         setIsLoading(false);
         return;
       }
@@ -208,7 +287,7 @@ function EditRequestAirlineCompany({
           (dept) => dept.name === formData.department
         );
 
-        const selectedPosition = positions.find(
+        const selectedPosition = localPositions.find(
           (position) => position.name === formData.position
         );
         let response_update_user = await uploadFile({
@@ -217,6 +296,7 @@ function EditRequestAirlineCompany({
               id: selectedUser.id,
               name: formData.name,
               email: formData.email,
+              number: formData.number,
               role: formData.role,
               positionId: selectedPosition?.id,
               login: formData.login,
@@ -274,21 +354,21 @@ function EditRequestAirlineCompany({
           resetForm();
           onClose();
           setIsLoading(false);
-          addNotification("Редактирование аккаунта прошло успешно.", "success");
+          success("Редактирование аккаунта прошло успешно.");
         }
       } catch (err) {
         setIsLoading(false);
         console.error("Ошибка обновления пользователя:", err);
         if (String(err).startsWith("ApolloError: Указан неверный пароль.")) {
-          alert("Указан неверный старый пароль.");
+          showAlert("Указан неверный старый пароль.");
         } else if (
           String(err).startsWith(
             "ApolloError: Для обновления пароля необходимо указать предыдущий пароль."
           )
         ) {
-          alert("Для обновления пароля необходимо указать предыдущий пароль.");
+          showAlert("Для обновления пароля необходимо указать предыдущий пароль.");
         } else {
-          alert("Ошибка обновления пользователя.");
+          showAlert("Ошибка обновления пользователя.");
         }
       }
     }
@@ -297,6 +377,9 @@ function EditRequestAirlineCompany({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+
       if (anchorEl && menuRef.current?.contains(event.target)) {
         setAnchorEl(null);
         return;
@@ -316,7 +399,7 @@ function EditRequestAirlineCompany({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton, anchorEl]);
+  }, [show, closeButton, anchorEl, isDialogOpen]);
 
   // const positions = ["Директор", "Заместитель директора", "Сотрудник"];
 
@@ -325,6 +408,7 @@ function EditRequestAirlineCompany({
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>Редактировать</div>
         <div className={classes.requestTitle_close}>
+        {(!user?.airlineId || accessMenu.userUpdate) && (
           <AdditionalMenu
             anchorEl={anchorEl}
             onOpen={handleMenuOpen}
@@ -332,7 +416,7 @@ function EditRequestAirlineCompany({
             menuRef={menuRef}
             onEdit={handleEditFromMenu}
             onDelete={openDeleteComponent ? handleDeleteFromMenu : undefined}
-          />
+          />)}
           <div className={classes.closeIconWrapper} onClick={closeButton}>
             <CloseIcon />
           </div>
@@ -430,28 +514,80 @@ function EditRequestAirlineCompany({
               )}
 
               <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>Должность</div>
+                <div className={classes.requestDataInfo_title}>Телефон</div>
                 {isEditing ? (
-                  <div className={classes.dropdown}>
-                    <MUIAutocomplete
-                      dropdownWidth={"100%"}
-                      isDisabled={false}
-                      label={"Выберите должность"}
-                      options={positions.map((position) => position.name)}
-                      value={formData.position}
-                      onChange={(event, newValue) => {
-                        setFormData((prevFormData) => ({
-                          ...prevFormData,
-                          position: newValue,
-                        }));
-                        setIsEdited(true);
-                      }}
-                    />
-                  </div>
+                  <InputMask
+                    type="text"
+                    mask="+7 (___) ___-__-__"
+                    replacement={{ _: /\d/ }}
+                    name="number"
+                    value={formData.number}
+                    onChange={handleChange}
+                    placeholder="+7 (___) ___-__-__"
+                  />
                 ) : (
                   <div className={classes.requestDataInfo_desc}>
-                    {formData.position || "—"}
+                    {formData.number || "—"}
                   </div>
+                )}
+              </div>
+
+              <div className={classes.requestDataInfo}>
+                {isEditing ? (
+                  <>
+                    <div className={`${classes.fieldHeader} ${classes.positionTitleArea}`}>
+                      <div className={classes.requestDataInfo_title}>Должность</div>
+                      <div
+                        className={classes.addPosition}
+                        onClick={() => setIsCreatingPosition((prev) => !prev)}
+                        title="Добавить должность"
+                      >
+                        <img src="/plus.png" alt="Добавить должность" />
+                      </div>
+                    </div>
+                    <div className={classes.positionEditArea}>
+                      <div className={classes.dropdown}>
+                        <MUIAutocomplete
+                          dropdownWidth={"100%"}
+                          isDisabled={false}
+                          label={"Выберите должность"}
+                          options={localPositions.map((position) => position.name)}
+                          value={formData.position}
+                          onChange={(event, newValue) => {
+                            setFormData((prevFormData) => ({
+                              ...prevFormData,
+                              position: newValue,
+                            }));
+                            setIsEdited(true);
+                          }}
+                        />
+                      </div>
+                      {isCreatingPosition && (
+                        <div className={classes.inlineCreateRow}>
+                          <input
+                            type="text"
+                            value={newPositionName}
+                            placeholder="Введите должность"
+                            onChange={(e) => setNewPositionName(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                e.preventDefault();
+                                handleCreatePosition();
+                              }
+                            }}
+                          />
+                          <Button type="button" onClick={handleCreatePosition}>+</Button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className={classes.requestDataInfo_title}>Должность</div>
+                    <div className={classes.requestDataInfo_desc}>
+                      {formData.position || "—"}
+                    </div>
+                  </>
                 )}
               </div>
 

@@ -3,6 +3,7 @@ import classes from './InfoTableRepresentativeData.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import { Link } from "react-router-dom";
 import { convertToDateNew, getMediaUrl } from "../../../../graphQL_requests";
+import { REQUEST_STATUS_CONFIG } from "../FapV2/fapConstants";
 
 function InfoTableRepresentativeData({ children, requests, user, paginationHeight, pageInfo, ...props }) {
     // Ref для контейнера списка
@@ -81,12 +82,15 @@ function InfoTableRepresentativeData({ children, requests, user, paginationHeigh
                         </div>
                         <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
                             <div className={classes.InfoTable_data_elem_position}>
-                                <div className={item.status?.toLowerCase()}></div>
-                                {/* {console.log(item.status)} */}
-                                {item.status?.toLowerCase() == 'created' && 'Создан'}
-                                {item.status?.toLowerCase() == 'opened' && 'В обработке'}
-                                {item.status?.toLowerCase() == 'cancelled' && 'Отменен'}
-                                {item.status == 'COMPLETED' && 'Размещен'}
+                                <span
+                                    className={classes.statusBadge}
+                                    style={{
+                                        color: REQUEST_STATUS_CONFIG[item.status]?.color,
+                                        background: REQUEST_STATUS_CONFIG[item.status]?.bg,
+                                    }}
+                                >
+                                    {REQUEST_STATUS_CONFIG[item.status]?.label || item.status}
+                                </span>
                             </div>
                         </div>
                     </Link>

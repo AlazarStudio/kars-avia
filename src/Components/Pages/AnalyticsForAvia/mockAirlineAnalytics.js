@@ -194,3 +194,94 @@ export function getDispatcherAnalyticsMock({
 //     }
 //   }
 // }
+
+/**
+ * Пример ответа `airlineAnalytics` (nested: period → services → details).
+ * Для ручных тестов / MSW: data.airlineAnalytics = NESTED_AIRLINE_ANALYTICS_MOCK
+ */
+export const NESTED_AIRLINE_ANALYTICS_MOCK = {
+  period1: {
+    dateFrom: "2025-01-01",
+    dateTo: "2025-01-31",
+    services: [
+      {
+        service: "LIVING",
+        totalRequests: 12,
+        uniquePeopleCount: 10,
+        totalBudget: 120000,
+        usedRoomsCount: 8,
+        airports: [
+          {
+            airportId: "a1",
+            airportName: "Пулково",
+            airportCode: "LED",
+            requestsCount: 8,
+            uniquePeopleCount: 7,
+            budget: 80000,
+            usedRoomsCount: 5,
+          },
+        ],
+        positions: [
+          {
+            positionId: "p1",
+            positionName: "Пилот",
+            count: 6,
+            percent: 50,
+            budget: 60000,
+          },
+        ],
+        requests: [
+          {
+            requestId: "r1",
+            requestNumber: "АЗ-10042",
+            personId: "u1",
+            personName: "Иванов",
+            positionId: "p1",
+            positionName: "Пилот",
+            airportId: "a1",
+            airportName: "Пулково",
+            airportCode: "LED",
+            budget: 10000,
+            livingBudget: 9000,
+            mealBudget: 500,
+            transferBudget: 500,
+          },
+        ],
+        transfers: [],
+      },
+      {
+        service: "MEAL",
+        totalRequests: 5,
+        uniquePeopleCount: 5,
+        totalBudget: 15000,
+        usedRoomsCount: null,
+        airports: [],
+        positions: [],
+        requests: [],
+        transfers: [],
+      },
+      {
+        service: "TRANSFER",
+        totalRequests: 3,
+        uniquePeopleCount: 3,
+        totalBudget: 9000,
+        usedRoomsCount: null,
+        airports: [],
+        positions: [],
+        requests: [],
+        transfers: [
+          {
+            transferId: "t1",
+            requestNumber: "REQ-1",
+            fromAddress: "А",
+            toAddress: "Б",
+            passengersCount: 2,
+            uniquePeopleCount: 2,
+            budget: 3000,
+          },
+        ],
+      },
+    ],
+  },
+  period2: null,
+};

@@ -27,10 +27,14 @@ import { Box, CircularProgress } from "@mui/material";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import { useToast } from "../../../contexts/ToastContext.jsx";
+import { useDialog } from "../../../contexts/DialogContext.jsx";
 
 // Компонент для создания новой заявки
-function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
+function CreateRequest({ show, onClose, onMatchFound, user }) {
   const token = getCookie("token");
+  const { success } = useToast();
+  const { showAlert, confirm, isDialogOpen } = useDialog();
   const [userID, setUserID] = useState();
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [airlines, setAirlines] = useState([]); // Список авиакомпаний
@@ -38,6 +42,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
   const [newStaffId, setNewStaffId] = useState(null);
   const sidebarRef = useRef();
   const [disableAutocomplete, setDisableAutocomplete] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Запрос данных авиакомпаний и аэропортов
   const { data, refetch } = useQuery(GET_AIRLINES_RELAY, {
@@ -81,6 +86,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
     },
     city: "",
     reserve: false,
+    note: "",
   });
 
   const { data: dataSubscription } = useSubscription(
@@ -259,6 +265,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       },
       city: "",
       reserve: false,
+      note: "",
     });
     setIsEdited(false); // Сбрасываем флаг, что форма не изменена
     setWarningMessage("");
@@ -266,7 +273,11 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
   }, [userID]);
 
   // Закрытие формы с проверкой на несохраненные изменения
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) {
+      return;
+    }
+
     if (!isEdited) {
       resetForm();
       setMatchingRequest(null);
@@ -275,13 +286,16 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       setMatchingRequest(null);
       onClose();
       setNewStaffId(null);
     }
-  }, [isEdited, resetForm, setMatchingRequest, onClose]);
+  }, [isEdited, resetForm, setMatchingRequest, onClose, isDialogOpen, confirm]);
   const today = new Date().toISOString().split("T")[0];
 
   // Рассчитываем минимальную дату прибытия как дату, начиная с месяца назад
@@ -440,14 +454,12 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       formData.airlineId &&
       // formData.arrivalRoute &&
       formData.arrivalDate &&
-      formData.arrivalTime &&
+      // formData.arrivalTime &&
       // formData.departureRoute &&
-      formData.departureDate &&
-      formData.departureTime
+      formData.departureDate
+      // formData.departureTime
     );
   };
-
-  const [isLoading, setIsLoading] = useState(false);
 
   // console.log(formData);
 
@@ -456,7 +468,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
     setIsLoading(true);
 
     if (!isFormValid()) {
-      alert("Пожалуйста, заполните все обязательные поля.");
+      showAlert("Пожалуйста, заполните все обязательные поля.");
       setIsLoading(false);
       return;
     }
@@ -472,7 +484,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
     // }
 
     if (formData.arrivalDate < minArrivalDate) {
-      alert("Дата прибытия не может быть больше месяца назад.");
+      showAlert("Дата прибытия не может быть больше месяца назад.");
       setFormData((prevFormData) => ({
         ...prevFormData,
         arrivalDate: "", // Очищаем дату прибытия
@@ -483,7 +495,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
 
     // Проверка на дату отъезда: она не может быть раньше даты прибытия
     if (formData.departureDate < formData.arrivalDate) {
-      alert("Дата отъезда не может быть раньше даты прибытия.");
+      showAlert("Дата отъезда не может быть раньше даты прибытия.");
       setFormData((prevFormData) => ({
         ...prevFormData,
         departureDate: "", // Очищаем дату отъезда
@@ -492,12 +504,15 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       return;
     }
 
+    const effectiveArrivalTime = formData.arrivalTime || "14:00";
+    const effectiveDepartureTime = formData.departureTime || "12:00";
+    const defaultTimesUsed = !formData.arrivalTime || !formData.departureTime;
+
     if (
       formData.departureDate === formData.arrivalDate &&
-      formData.departureTime <= formData.arrivalTime
+      effectiveDepartureTime <= effectiveArrivalTime
     ) {
-      alert("Время отъезда должно быть позже времени прибытия.");
-      // Очищаем значения для времени прибытия и отъезда
+      showAlert("Время отъезда должно быть позже времени прибытия.");
       setFormData((prevFormData) => ({
         ...prevFormData,
         departureTime: "",
@@ -509,8 +524,9 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
     const input = {
       personId: formData.personId,
       airportId: formData.airportId,
-      arrival: `${formData.arrivalDate}T${formData.arrivalTime}:00+00:00`,
-      departure: `${formData.departureDate}T${formData.departureTime}:00+00:00`,
+      arrival: `${formData.arrivalDate}T${effectiveArrivalTime}:00+00:00`,
+      departure: `${formData.departureDate}T${effectiveDepartureTime}:00+00:00`,
+      defaultTimesUsed,
       mealPlan: {
         included: formData.mealPlan.included,
         breakfastEnabled: formData.mealPlan.breakfastEnabled,
@@ -520,18 +536,14 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
       senderId: formData.senderId,
       airlineId: formData.airlineId,
       reserve: formData.reserve,
+      ...(formData.note ? { note: formData.note } : {}),
     };
 
     try {
       const response = await createRequest({ variables: { input } });
       resetForm();
       onClose();
-      addNotification
-        ? addNotification(
-          "Создание заявки для экипажа прошло успешно.",
-          "success"
-        )
-        : null;
+      success("Создание заявки для экипажа прошло успешно.");
       // console.log(response);
     } catch (error) {
       console.error(error);
@@ -544,7 +556,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
           setMatchingRequest(requestId);
         }
       } else {
-        alert("Ошибка при создании заявки");
+        showAlert("Ошибка при создании заявки");
         setIsLoading(false);
       }
     } finally {
@@ -614,6 +626,20 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
   // Клик вне боковой панели закрывает её
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (event.target.closest?.("[data-script-runner-control]")) {
+        return;
+      }
+      if (document.body.dataset.scriptRunnerPickMode === "true") {
+        return;
+      }
+      if (isDialogOpen) {
+        return;
+      }
+
+      if (event.target.closest(".MuiSnackbar-root")) {
+        return;
+      }
+
       if (
         sidebarRef.current?.contains(event.target) // Клик в боковой панели
       ) {
@@ -632,7 +658,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
 
     // Очистка эффекта при демонтировании компонента
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   const meal = [
     {
@@ -1045,6 +1071,16 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
                   />
                   Резерв
                 </label> */}
+
+                  <label>Примечание</label>
+                  <textarea
+                    name="note"
+                    value={formData.note}
+                    onChange={handleChange}
+                    placeholder="Доп. информация по заявке"
+                    rows={3}
+                    style={{ resize: "vertical", padding: "8px 10px", outline: "none", fontFamily: "Nunito Sans", fontSize: "14px" }}
+                  />
                 </div>
               )}
 
@@ -1055,7 +1091,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, addNotification }) {
             </div>
 
             <div className={classes.requestButton}>
-              <Button onClick={handleSubmit}>Создать заявку</Button>
+              <Button onClick={handleSubmit} disabled={isLoading}>Создать заявку</Button>
             </div>
           </>
         )}

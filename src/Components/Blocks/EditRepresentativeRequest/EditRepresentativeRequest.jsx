@@ -6,6 +6,8 @@ import { GET_PASSENGER_REQUEST, getCookie, UPDATE_PASSENGER_REQUEST } from "../.
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import Button from "../../Standart/Button/Button.jsx";
+import { useDialog } from "../../../contexts/DialogContext.jsx";
+import { useToast } from "../../../contexts/ToastContext.jsx";
 
 function isoToTimeString(iso) {
   if (!iso) return "";
@@ -65,8 +67,10 @@ const initialFormState = {
   baggagePlannedAt: "",
 };
 
-function EditRepresentativeRequest({ show, onClose, request, addNotification, onOpenCancelConfirm, cancellingRequest = false }) {
+function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm, cancellingRequest = false }) {
   const token = getCookie("token");
+  const { confirm, isDialogOpen, showAlert } = useDialog();
+  const { success, error: notifyError } = useToast();
   const [formData, setFormData] = useState(initialFormState);
   const [isEdited, setIsEdited] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -118,15 +122,20 @@ function EditRepresentativeRequest({ show, onClose, request, addNotification, on
     awaitRefetchQueries: true,
   });
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (!isEdited) {
       onClose();
       return;
     }
-    if (window.confirm("Вы уверены? Несохранённые данные будут потеряны.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Несохранённые данные будут потеряны."
+    );
+    if (isConfirmed) {
       onClose();
     }
-  }, [isEdited, onClose]);
+  }, [isEdited, onClose, isDialogOpen, confirm]);
 
   const handleChange = useCallback((e) => {
     const { name, type, checked, value } = e.target;
@@ -186,16 +195,11 @@ function EditRepresentativeRequest({ show, onClose, request, addNotification, on
         variables: { updatePassengerRequestId: request.id, input },
       });
       onClose();
-      if (addNotification) {
-        addNotification("Заявка обновлена.", "success");
-      }
+      success("Заявка обновлена.");
     } catch (error) {
       console.error(error);
-      if (addNotification) {
-        addNotification("Ошибка при сохранении заявки.", "error");
-      } else {
-        alert("Ошибка при сохранении заявки.");
-      }
+      notifyError("Ошибка при сохранении заявки.");
+      // showAlert("Ошибка при сохранении заявки.");
     } finally {
       setIsLoading(false);
     }
@@ -203,6 +207,8 @@ function EditRepresentativeRequest({ show, onClose, request, addNotification, on
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
       if (sidebarRef.current?.contains(event.target)) return;
       closeButton();
     };
@@ -210,7 +216,7 @@ function EditRepresentativeRequest({ show, onClose, request, addNotification, on
       document.addEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>

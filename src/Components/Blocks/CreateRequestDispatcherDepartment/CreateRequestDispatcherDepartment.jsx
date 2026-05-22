@@ -9,14 +9,44 @@ import {
 import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
 import CloseIcon from "../../../shared/icons/CloseIcon";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
+
+const ALL_ACCESS_ENABLED = {
+  requestMenu: true, requestCreate: true, requestUpdate: true, requestChat: true,
+  transferMenu: true, transferCreate: true, transferUpdate: true, transferChat: true,
+  personalMenu: true, personalCreate: true, personalUpdate: true,
+  reserveMenu: true, reserveCreate: true, reserveUpdate: true,
+  analyticsMenu: true, analyticsUpload: true,
+  reportMenu: true, reportCreate: true,
+  userMenu: true, userCreate: true, userUpdate: true,
+  airlineMenu: true, airlineUpdate: true,
+  contracts: true, contractCreate: true, contractUpdate: true,
+  organizationMenu: true, organizationCreate: true, organizationUpdate: true,
+  organizationAddDrivers: true, organizationAcceptDrivers: true,
+};
+
+const ALL_NOTIFICATIONS_ENABLED = {
+  requestCreate: true, emailRequestCreate: true, sitePushRequestCreate: true,
+  requestDatesChange: true, emailRequestDatesChange: true, sitePushRequestDatesChange: true,
+  requestPlacementChange: true, emailRequestPlacementChange: true, sitePushRequestPlacementChange: true,
+  requestCancel: true, emailRequestCancel: true, sitePushRequestCancel: true,
+  passengerRequestCreate: true, emailPassengerRequestCreate: true, sitePushPassengerRequestCreate: true,
+  passengerRequestDatesChange: true, emailPassengerRequestDatesChange: true, sitePushPassengerRequestDatesChange: true,
+  passengerRequestUpdate: true, emailPassengerRequestUpdate: true, sitePushPassengerRequestUpdate: true,
+  passengerRequestPlacementChange: true, emailPassengerRequestPlacementChange: true, sitePushPassengerRequestPlacementChange: true,
+  passengerRequestCancel: true, emailPassengerRequestCancel: true, sitePushPassengerRequestCancel: true,
+  newMessage: true, emailNewMessage: true, sitePushNewMessage: true,
+};
 
 function CreateRequestDispatcherDepartment({
   show,
   onClose,
   onCreated,
-  addNotification,
 }) {
   const token = getCookie("token");
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
   const [isEdited, setIsEdited] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
@@ -30,18 +60,23 @@ function CreateRequestDispatcherDepartment({
     setIsEdited(false);
   }, []);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (!isEdited) {
       resetForm();
       onClose();
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
     }
-  }, [isEdited, resetForm, onClose]);
+  }, [isEdited, resetForm, onClose, confirm, isDialogOpen]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -70,7 +105,7 @@ function CreateRequestDispatcherDepartment({
     setIsLoading(true);
 
     if (!formData.name.trim()) {
-      alert("Пожалуйста, введите название отдела.");
+      showAlert("Пожалуйста, введите название отдела.");
       setIsLoading(false);
       return;
     }
@@ -78,7 +113,7 @@ function CreateRequestDispatcherDepartment({
     if (formData.email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
       if (!emailRegex.test(formData.email)) {
-        alert("Введите корректный email.");
+        showAlert("Введите корректный email.");
         setIsLoading(false);
         return;
       }
@@ -90,6 +125,8 @@ function CreateRequestDispatcherDepartment({
           input: {
             name: formData.name,
             email: formData.email || null,
+            accessMenu: ALL_ACCESS_ENABLED,
+            notificationMenu: ALL_NOTIFICATIONS_ENABLED,
           },
         },
       });
@@ -98,11 +135,11 @@ function CreateRequestDispatcherDepartment({
         onCreated?.(response.data.createDispatcherDepartment);
         resetForm();
         onClose();
-        addNotification?.("Добавление отдела прошло успешно.", "success");
+        success("Добавление отдела прошло успешно.");
       }
     } catch (err) {
       setIsLoading(false);
-      alert("Произошла ошибка при сохранении данных");
+      notifyError("Произошла ошибка при сохранении данных");
       console.error("catch error:", err);
     } finally {
       setIsLoading(false);
@@ -111,6 +148,9 @@ function CreateRequestDispatcherDepartment({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+
       if (sidebarRef.current?.contains(event.target)) {
         return;
       }
@@ -127,7 +167,7 @@ function CreateRequestDispatcherDepartment({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>

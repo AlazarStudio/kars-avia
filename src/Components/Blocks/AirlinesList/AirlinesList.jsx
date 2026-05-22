@@ -17,8 +17,6 @@ import ReactPaginate from "react-paginate";
 import { useLocation, useNavigate } from "react-router-dom";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
-import Notification from "../../Notification/Notification";
-import { fullNotifyTime, notifyTime } from "../../../roles";
 import InfoTableDataRepresentativeAirlines from "../InfoTableDataRepresentativeAirlines/InfoTableDataRepresentativeAirlines";
 
 function AirlinesList({ children, representative, ...props }) {
@@ -27,37 +25,51 @@ function AirlinesList({ children, representative, ...props }) {
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [companyData, setCompanyData] = useState([]);
   const [filterData, setFilterData] = useState({ filterSelect: "" });
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
   const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
   const [airports, setAirports] = useState([]); // Список аэропортов
   const [cities, setCities] = useState([]); // Список аэропортов
 
-  const { data: dataSubscription } = useSubscription(GET_AIRLINES_SUBSCRIPTION, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
-  const { data: dataSubscriptionUpd } = useSubscription(
-    GET_AIRLINES_UPDATE_SUBSCRIPTION, {
+  const { data: dataSubscription } = useSubscription(
+    GET_AIRLINES_SUBSCRIPTION,
+    {
       context: {
         headers: {
           Authorization: `Bearer ${token}`,
         },
       },
-    }
+    },
+  );
+  const { data: dataSubscriptionUpd } = useSubscription(
+    GET_AIRLINES_UPDATE_SUBSCRIPTION,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    },
   );
 
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Получение текущей страницы из URL
-  const pageNumber = new URLSearchParams(location.search).get("page");
+  // В URL храним только номер страницы (поиск намеренно не сохраняем).
+  const urlParams = useMemo(
+    () => new URLSearchParams(location.search),
+    [location.search],
+  );
+  const pageNumber = urlParams.get("page");
   const currentPage = pageNumber ? parseInt(pageNumber) - 1 : 0;
 
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
   const [pageInfo, setPageInfo] = useState({ skip: currentPage, take: 20 });
+
+  useEffect(() => {
+    setPageInfo((prev) =>
+      prev.skip === currentPage ? prev : { ...prev, skip: currentPage },
+    );
+  }, [currentPage]);
 
   const { loading, error, data, refetch } = useQuery(GET_AIRLINES, {
     context: {
@@ -98,20 +110,13 @@ function AirlinesList({ children, representative, ...props }) {
 
   useEffect(() => {
     if (data && data.airlines) {
-      const sortedAirlines = [...data.airlines.airlines].sort((a, b) =>
-        a.name.localeCompare(b.name)
-      );
-      setCompanyData(sortedAirlines);
+      setCompanyData([...data.airlines.airlines].sort((a, b) => a.name.localeCompare(b.name)));
     }
 
     if (dataSubscription && dataSubscription.hotelCreated) {
-      setCompanyData((prevCompanyData) => {
-        const updatedData = [
-          ...prevCompanyData,
-          dataSubscription.airlineCreated,
-        ];
-        return updatedData.sort((a, b) => a.name.localeCompare(b.name));
-      });
+      setCompanyData((prevCompanyData) =>
+        [...prevCompanyData, dataSubscription.airlineCreated].sort((a, b) => a.name.localeCompare(b.name)),
+      );
     }
 
     refetch();
@@ -119,7 +124,7 @@ function AirlinesList({ children, representative, ...props }) {
 
   const addAirline = (airline) => {
     setCompanyData(
-      [...companyData, airline].sort((a, b) => a.name.localeCompare(b.name))
+      [...companyData, airline].sort((a, b) => a.name.localeCompare(b.name)),
     );
   };
 
@@ -131,17 +136,6 @@ function AirlinesList({ children, representative, ...props }) {
     setShowRequestSidebar(!showRequestSidebar);
   };
 
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
-
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFilterData((prevState) => ({
@@ -150,39 +144,41 @@ function AirlinesList({ children, representative, ...props }) {
     }));
   };
 
-  const handleSearch = async (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-
-    if (query.trim() == "") {
-      // Если строка поиска пуста, возвращаемся к стандартному режиму
+  const runSearch = async (query) => {
+    if (query.trim() === "") {
       setIsSearching(false);
       refetch({
-        pagination: { skip: currentPage, take: 20 }, // Загрузить большое количество данных для поиска
-      }); // Запускаем повторный запрос с пагинацией
+        pagination: { skip: currentPage, take: 20 },
+      });
       return;
     }
 
-    setIsSearching(true); // Активируем режим поиска
+    setIsSearching(true);
 
     try {
       const { data } = await refetch({
-        pagination: { all: true }, // Загрузить большое количество данных для поиска
+        pagination: { all: true },
       });
 
       if (data && data.airlines?.airlines) {
-        setAllFilteredData(data.airlines.airlines); // Сохраняем все данные для локального поиска
+        setAllFilteredData(data.airlines.airlines);
       }
     } catch (err) {
       console.error("Ошибка при поиске:", err);
     }
   };
 
+  const handleSearch = async (e) => {
+    const query = e.target.value;
+    setSearchQuery(query);
+    await runSearch(query);
+  };
+
   // Фильтрация запросов по имени авиакомпании
   const filteredRequests = useMemo(() => {
     const dataSource = isSearching ? allFilteredData : companyData; // Используем данные из поиска или стандартные
     return dataSource.filter((request) =>
-      request.name?.toLowerCase().includes(searchQuery.toLowerCase())
+      request.name?.toLowerCase().includes(searchQuery.toLowerCase()),
     );
   }, [isSearching, allFilteredData, companyData, searchQuery]);
 
@@ -279,22 +275,7 @@ function AirlinesList({ children, representative, ...props }) {
           representative={representative}
           onClose={toggleCreateSidebar}
           addHotel={addAirline}
-          addNotification={addNotification}
         />
-        {notifications.map((n, index) => (
-          <Notification
-            key={n.id}
-            text={n.text}
-            status={n.status}
-            index={index}
-            time={notifyTime}
-            onClose={() => {
-              setNotifications((prev) =>
-                prev.filter((notif) => notif.id !== n.id)
-              );
-            }}
-          />
-        ))}
       </div>
     </>
   );

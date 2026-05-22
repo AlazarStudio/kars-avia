@@ -311,18 +311,47 @@ select {
 }
 
 .requestData_message_name {
-    /* font-family: Nunito Sans; */
+    font-family: Nunito Sans;
     font-size: 14px;
-    /* font-weight: 600; */
+    font-weight: 500;
+    line-height: 18px;
     color: var(--text);
 }
 
 .requestData_message_post {
-    /* font-family: Nunito Sans; */
+    font-family: Nunito Sans;
     font-size: 12px;
     font-weight: 500;
     line-height: 16.37px;
     color: var(--no-active);
+}
+
+.requestData_message_org {
+    font-family: Nunito Sans;
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 16px;
+    color: var(--dark-blue);
+    margin-top: 1px;
+}
+
+.requestData_message_role {
+    font-family: Nunito Sans;
+    font-size: 11px;
+    font-weight: 500;
+    line-height: 14px;
+    letter-spacing: 0.2px;
+    color: var(--main-gray);
+    margin-top: 1px;
+}
+
+.requestData_message_role_agent {
+    font-size: 12.5px;
+    font-weight: 500;
+    line-height: 16px;
+    letter-spacing: 0;
+    color: var(--dark-blue);
+    text-transform: none;
 }
 
 .requestData_message_text {
@@ -462,7 +491,7 @@ select {
 .myMes {
     display: flex;
     justify-content: flex-end;
-    padding-right: 10px;
+    /* padding-right: 10px; */
 }
 
 .myMes .requestData_message {

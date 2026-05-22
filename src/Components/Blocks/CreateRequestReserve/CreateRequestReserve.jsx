@@ -131,6 +131,12 @@ function CreateRequestReserve({ show, onClose, user, addNotification }) {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
+      if (event.target.closest?.("[data-script-runner-control]")) {
+        return;
+      }
+      if (document.body.dataset.scriptRunnerPickMode === "true") {
+        return;
+      }
       if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
         closeButton();
       }

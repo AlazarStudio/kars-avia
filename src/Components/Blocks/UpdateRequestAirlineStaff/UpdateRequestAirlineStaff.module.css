@@ -23,6 +23,9 @@
 }
 
 .requestTitle_close {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     cursor: pointer;
 }
 
@@ -123,6 +126,45 @@ select {
     font-size: 16px;
     font-weight: 400;
     line-height: 19.36px;
+}
+
+.requestDataInfo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.requestDataInfo_title {
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    width: 40%;
+}
+
+.requestDataInfo_desc {
+    background-color: #9CA4D91A;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    width: 60%;
+    padding: 10px 15px;
+    border-radius: 10px;
+    min-height: 37px;
+}
+
+.requestDataInfo input {
+    width: 60%;
+}
+
+.requestDataInfo .dropdown {
+    width: 60%;
+    height: 40px;
+    outline: none;
+    cursor: pointer;
+}
+
+.requestDataInfo .dropdown input {
+    width: 100%;
 }
 
 @media (min-width: 0px) and (max-width: 1299px) {}

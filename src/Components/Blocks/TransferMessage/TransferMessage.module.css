@@ -21,7 +21,8 @@
   display: flex;
   justify-content: space-between;
   padding: 10px;
-  border-bottom: 1px solid #CBDEFB;
+  border-bottom: 1px solid var(--no-active);
+  /* border-bottom: 1px solid #CBDEFB; */
 }
 
 .chatTypeButton {
@@ -157,6 +158,8 @@
 .requestData_message_name {
   font-family: Nunito Sans;
   font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
   color: var(--text);
 }
 
@@ -166,6 +169,25 @@
   font-weight: 500;
   line-height: 16.37px;
   color: var(--no-active);
+}
+
+.requestData_message_role {
+  font-family: Nunito Sans;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 14px;
+  letter-spacing: 0.2px;
+  color: var(--main-gray);
+  margin-top: 1px;
+}
+
+.requestData_message_role_accent {
+  font-size: 12.5px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0;
+  color: var(--dark-blue);
+  text-transform: none;
 }
 
 .requestData_message_text__name {
@@ -273,7 +295,7 @@
 }
 
 .sendBlock {
-  margin: 0 20px 20px 20px;
+  /* margin: 0 20px 20px 20px; */
   padding: 5px 10px;
   display: flex;
   align-items: center;

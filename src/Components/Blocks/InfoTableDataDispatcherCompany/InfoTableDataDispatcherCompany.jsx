@@ -6,6 +6,9 @@ import SettingsIcon from "../../../shared/icons/SettingsIcon";
 import DeleteIcon from "../../../shared/icons/DeleteIcon";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import { canAccessMenu, isDispatcherAdmin } from "../../../utils/access";
+import { roles } from "../../../roles";
+import ReadinessIndicator from "../ReadinessIndicator/ReadinessIndicator";
+import { computeDepartmentReadiness } from "../../../utils/dispatcherDepartmentReadiness";
 
 function InfoTableDataDispatcherCompany({
   user,
@@ -15,6 +18,8 @@ function InfoTableDataDispatcherCompany({
   onOpenAccess,
   onEditDispatcher,
   onDeleteDispatcher,
+  onViewDepartment,
+  onViewDispatcher,
   accessMenu,
 }) {
   const canEdit = canAccessMenu(accessMenu, "userUpdate", user);
@@ -26,12 +31,20 @@ function InfoTableDataDispatcherCompany({
           <div key={group.id || `no-department-${index}`}>
             <div className={classes.InfoTable_data}>
               <div className={`${classes.InfoTable_data_elem}`}>
-                <div className={classes.InfoTable_data_elem_title}>
+                <div
+                  className={classes.InfoTable_data_elem_title}
+                  style={onViewDepartment && !group.isNoDepartment ? { cursor: "pointer" } : undefined}
+                  onClick={onViewDepartment && !group.isNoDepartment ? () => onViewDepartment(group) : undefined}
+                >
                   {group.name}
                 </div>
               </div>
 
               <div className={classes.infoTable_buttons}>
+                {!group.isNoDepartment && (() => {
+                  const { done, total, groups: rGroups } = computeDepartmentReadiness(group);
+                  return <ReadinessIndicator done={done} total={total} groups={rGroups} />;
+                })()}
                 {!group.isNoDepartment && canEdit && (
                   <>
                     <EditPencilIcon
@@ -39,7 +52,7 @@ function InfoTableDataDispatcherCompany({
                       onClick={() => onEditDepartment?.(group)}
                     />
                     <SettingsIcon
-                      cursor={"pointer"}
+                      cursor="pointer"
                       onClick={() => onOpenAccess?.(group)}
                     />
                     <DeleteIcon
@@ -60,33 +73,45 @@ function InfoTableDataDispatcherCompany({
                   className={classes.InfoTable_BottomInfo__item}
                   key={dispatcher.id || dispatcherIndex}
                 >
-                  <div className={classes.InfoTable_BottomInfo__item___elem}>
-                    <div className={classes.employeeImg}>
-                      <img
-                        src={
-                          dispatcher.images?.[0]
-                            ? getMediaUrl(dispatcher.images[0])
-                            : "/no-avatar.png"
-                        }
-                        alt="avatar"
-                        className={classes.employeeAvatar}
-                      />
+                  <div
+                    className={classes.InfoTable_BottomInfo__item___elem}
+                    style={onViewDispatcher ? { cursor: "pointer" } : undefined}
+                    onClick={onViewDispatcher ? () => onViewDispatcher(dispatcher) : undefined}
+                  >
+                    <div style={{ position: 'relative', display: 'inline-flex', flexShrink: 0 }}>
+                      <div className={classes.employeeImg}>
+                        <img
+                          src={
+                            dispatcher.images?.[0]
+                              ? getMediaUrl(dispatcher.images[0])
+                              : "/no-avatar.png"
+                          }
+                          alt="avatar"
+                          className={classes.employeeAvatar}
+                        />
+                      </div>
+                      {user?.role === roles.superAdmin && (
+                        <span className={classes.onlineDot} style={{ background: dispatcher.online ? '#22c55e' : '#ef4444' }} />
+                      )}
                     </div>
                     <div className={classes.employeeInfo}>
                       <div className={classes.employeeName}>
                         {dispatcher.name}
                       </div>
-                      <div className={classes.employeePost}>
+                      {/* <div className={classes.employeePost}>
                         {isDispatcherAdmin(dispatcher)
                           ? "Администратор"
                           : "Модератор"}
-                      </div>
+                      </div> */}
                       <div className={classes.employeePost}>
                         {dispatcher?.position?.name}
                       </div>
                     </div>
                     {canEdit && (
-                      <div className={classes.infoTable_buttons}>
+                      <div
+                        className={classes.infoTable_buttons}
+                        onClick={(e) => e.stopPropagation()}
+                      >
                         <EditPencilIcon
                           cursor="pointer"
                           onClick={() => onEditDispatcher?.(dispatcher)}

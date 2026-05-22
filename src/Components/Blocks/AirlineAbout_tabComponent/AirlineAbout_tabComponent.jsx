@@ -13,26 +13,26 @@ import {
   UPDATE_AIRLINE,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
-import {
-  fullNotifyTime,
-  menuAccess,
-  notifyTime,
-  roles,
-} from "../../../roles.js";
+import { roles } from "../../../roles.js";
 import Logs from "../LogsHistory/Logs.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
-import Notification from "../../Notification/Notification.jsx";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 import { InputMask } from "@react-input/mask";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import RequisitesIcon from "../../../shared/icons/RequisitesIcon.jsx";
 import { useLocalStorage } from "../../../hooks/useLocalStorage.jsx";
 import { useWindowSize } from "../../../hooks/useWindowSize.jsx";
 import HomeIcon from "../../../shared/icons/HomeIcon.jsx";
+import { is } from "date-fns/locale";
+import AirlineReadinessIndicator from "../AirlineReadinessIndicator/AirlineReadinessIndicator";
 
 function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
+  const { showAlert } = useDialog();
+  const { success, error: notifyError } = useToast();
 
   const [displayInfo, setDisplayInfo] = useState("generalInfo");
   const [showLogsSidebar, setShowLogsSidebar] = useState(false);
@@ -172,16 +172,6 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
   // console.log(data);
 
   const [isLoading, setIsLoading] = useState(false);
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
 
   const handleEditClick = async () => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -189,14 +179,13 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
       !emailRegex.test(airline.information?.email) &&
       airline.information?.email
     ) {
-      alert("Введите корректный email.");
-      setIsLoading(false);
+      showAlert("Введите корректный email.");
       return;
     }
     if (isEditing) {
       setIsLoading(true);
       try {
-        let response = await updateAirline({
+        await updateAirline({
           variables: {
             updateAirlineId: airline.id,
             input: {
@@ -219,23 +208,12 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
             images: newImage ? [newImage] : null,
           },
         });
-        // console.log(response);
-        addNotification(
-          "Редактирование авиакомпании прошло успешно.",
-          "success"
-        );
-
-        // alert('Данные успешно сохранены');
+        success("Редактирование авиакомпании прошло успешно.");
       } catch (err) {
         console.error("Произошла ошибка при сохранении данных", err);
-        alert("Произошла ошибка при сохранении данных");
-        // addNotification("Произошла ошибка при сохранении данных", "error")
+        notifyError("Произошла ошибка при сохранении данных");
       } finally {
         setIsLoading(false);
-        // addNotification(
-        //   "Редактирование авиакомпании прошло успешно.",
-        //   "success"
-        // );
       }
     }
     setIsEditing(!isEditing);
@@ -244,10 +222,11 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
   const fileInputRef = useRef(null);
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files?.[0];
+    if (!file) return;
     const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
     if (file.size > maxSizeInBytes) {
-      alert("Размер файла не должен превышать 8 МБ!");
+      showAlert("Размер файла не должен превышать 8 МБ!");
       setAirline((prevState) => ({
         ...prevState,
         images: [`${data.airline.images[0]}`],
@@ -259,14 +238,12 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
       return;
     }
 
-    if (file) {
-      setNewImage(file); // Сохраняем объект файла
-      const imageUrl = URL.createObjectURL(file); // Создаем URL для отображения
-      setAirline((prevState) => ({
-        ...prevState,
-        images: [imageUrl], // Обновляем URL изображения для отображения
-      }));
-    }
+    setNewImage(file); // Сохраняем объект файла
+    const imageUrl = URL.createObjectURL(file); // Создаем URL для отображения
+    setAirline((prevState) => ({
+      ...prevState,
+      images: [imageUrl], // Обновляем URL изображения для отображения
+    }));
   };
 
   const INFO_FIELDS = new Set([
@@ -347,8 +324,9 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
                   />
                 </div>
                 <div className={classes.airlineAbout_top_title}>
-                  <div className={classes.airlineAbout_top_title_name}>
+                  <div className={classes.airlineAbout_top_title_name} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     {airline.name}
+                    {user?.role === roles.airlineAdmin && <AirlineReadinessIndicator airline={airline} />}
                   </div>
                   <div className={classes.airlineAbout_top_title_desc}>
                     <img src="/map.png" alt="" />
@@ -450,6 +428,7 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
                         />
                       </div>
 
+                      {isEditing ? (
                       <div className={classes.airlineAbout_info_item}>
                         <label>Изображение</label>
                         <input
@@ -461,6 +440,7 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
                           className={classes.airlineAbout_info_input}
                         />
                       </div>
+                      ) : null}
                     </>
                   )
                 }
@@ -739,20 +719,6 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
             onClose={toggleLogsSidebar}
             name={airline?.name}
           />
-          {notifications.map((n, index) => (
-            <Notification
-              key={n.id}
-              text={n.text}
-              status={n.status}
-              index={index}
-              time={notifyTime}
-              onClose={() => {
-                setNotifications((prev) =>
-                  prev.filter((notif) => notif.id !== n.id)
-                );
-              }}
-            />
-          ))}
         </div>
       )}
     </>

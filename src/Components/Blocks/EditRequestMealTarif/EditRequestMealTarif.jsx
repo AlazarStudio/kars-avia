@@ -10,6 +10,8 @@ import {
 import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function EditRequestMealTarif({
   show,
@@ -20,9 +22,10 @@ function EditRequestMealTarif({
   onSubmit,
   id,
   isHotel,
-  addNotification,
 }) {
   const token = getCookie("token");
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
 
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
   const [formData, setFormData] = useState({
@@ -43,8 +46,8 @@ function EditRequestMealTarif({
       lunchForAirline: mealPricesAirline?.lunch || "",
       dinnerForAirline: mealPricesAirline?.dinner || "",
     });
-    setIsEdited(false); // Сброс флага изменений
-  }, []);
+    setIsEdited(false);
+  }, [mealPrices, mealPricesAirline]);
 
   const [updateHotelMealTarif] = useMutation(
     isHotel ? UPDATE_HOTEL_MEAL_TARIF : UPDATE_AIRLINE_MEAL_TARIF,
@@ -75,7 +78,9 @@ function EditRequestMealTarif({
 
   const [isEditing, setIsEditing] = useState(false);
 
-  const closeButton = useCallback(() => {
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
     if (!isEdited) {
       resetForm();
       onClose();
@@ -83,12 +88,15 @@ function EditRequestMealTarif({
       return;
     }
 
-    if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
       resetForm();
       onClose();
       setIsEditing(false);
     }
-  }, [isEdited, onClose]);
+  }, [confirm, isDialogOpen, isEdited, onClose, resetForm]);
 
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
@@ -106,18 +114,18 @@ function EditRequestMealTarif({
       e.preventDefault();
       setIsLoading(true);
 
-      if (
-        !String(formData.breakfast).trim() ||
-        !String(formData.lunch).trim() ||
-        !String(formData.dinner).trim() ||
-        !String(formData.breakfastForAirline).trim() ||
-        !String(formData.lunchForAirline).trim() ||
-        !String(formData.dinnerForAirline).trim()
-      ) {
-        alert("Пожалуйста, заполните все поля!");
-        setIsLoading(false);
-        return;
-      }
+      // if (
+      //   !String(formData.breakfast).trim() ||
+      //   !String(formData.lunch).trim() ||
+      //   !String(formData.dinner).trim() ||
+      //   !String(formData.breakfastForAirline).trim() ||
+      //   !String(formData.lunchForAirline).trim() ||
+      //   !String(formData.dinnerForAirline).trim()
+      // ) {
+      //   showAlert("Пожалуйста, заполните все поля!");
+      //   setIsLoading(false);
+      //   return;
+      // }
 
       try {
         const dataSend = {
@@ -151,11 +159,12 @@ function EditRequestMealTarif({
           resetForm();
           onClose();
           setIsLoading(false);
-          addNotification("Редактирование прошло успешно.", "success");
+          success("Редактирование прошло успешно.");
         }
       } catch (error) {
         console.error("Catch: ", error);
         setIsLoading(false);
+        notifyError("Не удалось сохранить цены на питание.");
       }
     }
     setIsEditing(!isEditing);
@@ -163,10 +172,10 @@ function EditRequestMealTarif({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current?.contains(event.target) // Клик в боковой панели
-      ) {
-        return; // Если клик внутри, ничего не делаем
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+      if (sidebarRef.current?.contains(event.target)) {
+        return;
       }
 
       closeButton();
@@ -181,7 +190,7 @@ function EditRequestMealTarif({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>

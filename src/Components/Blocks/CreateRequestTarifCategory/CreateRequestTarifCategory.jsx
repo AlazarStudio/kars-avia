@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./CreateRequestTarifCategory.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
@@ -9,6 +9,12 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import TextEditor from "../TextEditor/TextEditor.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
+
+const REQUIRED_FIELDS_MESSAGE =
+  "Пожалуйста, заполните все обязательные поля.";
+
 function CreateRequestTarifCategory({
   show,
   id,
@@ -16,9 +22,10 @@ function CreateRequestTarifCategory({
   refetch,
   user,
   type,
-  addNotification,
 }) {
   const token = getCookie("token");
+  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
 
   const [formData, setFormData] = useState({
     name: "",
@@ -43,8 +50,9 @@ function CreateRequestTarifCategory({
 
   // const [tarifNames, setTarifNames] = useState([]);
   const sidebarRef = useRef();
+  const [isEdited, setIsEdited] = useState(false);
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setFormData({
       name: "",
       category: "",
@@ -56,26 +64,36 @@ function CreateRequestTarifCategory({
       images: null,
     });
     setCoverImage(null);
-  };
+    setIsEdited(false);
+  }, []);
 
-  const closeButton = () => {
-    let success = confirm(
-      "Вы уверены, все несохраненные данные будут удалены?"
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
+
+    if (!isEdited) {
+      onClose();
+      return;
+    }
+
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
     );
-    if (success) {
+    if (isConfirmed) {
       resetForm();
       onClose();
     }
-  };
+  }, [confirm, isDialogOpen, isEdited, onClose, resetForm]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    setIsEdited(true);
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
     }));
   };
   const handleCoverImageChange = (image) => {
+    setIsEdited(true);
     setCoverImage(image);
   };
 
@@ -97,12 +115,15 @@ function CreateRequestTarifCategory({
   // };
   const handleFileChange = (e) => {
     const files = e.target.files;
+    if (!files?.length) return;
+
     if (files.length > 8) {
-      alert("Вы можете загрузить не более 8 изображений.");
+      showAlert("Вы можете загрузить не более 8 изображений.");
       e.target.value = null;
       return;
     }
 
+    setIsEdited(true);
     const fileArray = Array.from(files);
 
     // Если есть выбранное изображение, ставим его первым в массиве
@@ -119,8 +140,45 @@ function CreateRequestTarifCategory({
 
   const [isLoading, setIsLoading] = useState(false);
 
+  const isFormValid = () => {
+    const nameTrim = String(formData.name ?? "").trim();
+    if (!formData.category || !nameTrim) return false;
+
+    const priceNum = parseFloat(formData.price);
+    if (
+      formData.price === "" ||
+      formData.price === null ||
+      Number.isNaN(priceNum)
+    ) {
+      return false;
+    }
+
+    const needsAirlinePrice = !user?.hotelId && !formData.priceForAirReq;
+    if (needsAirlinePrice) {
+      const airlineNum = parseFloat(formData.priceForAirline);
+      if (
+        formData.priceForAirline === "" ||
+        formData.priceForAirline === null ||
+        Number.isNaN(airlineNum)
+      ) {
+        return false;
+      }
+    }
+
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!isFormValid()) {
+      showAlert(REQUIRED_FIELDS_MESSAGE);
+      return;
+    }
+
+    const nameTrim = String(formData.name ?? "").trim();
+    const priceNum = parseFloat(formData.price);
+
     setIsLoading(true);
 
     try {
@@ -131,8 +189,8 @@ function CreateRequestTarifCategory({
             roomKind: [
               {
                 category: formData.category,
-                name: formData.name,
-                price: parseFloat(formData.price),
+                name: nameTrim,
+                price: priceNum,
                 priceForAirline: parseFloat(formData.priceForAirline),
                 priceForAirReq: formData.priceForAirReq,
                 description: formData.description,
@@ -146,11 +204,11 @@ function CreateRequestTarifCategory({
       resetForm();
       onClose();
       setIsLoading(false);
-      addNotification("Добавление тарифа прошло успешно.", "success");
+      success("Добавление тарифа прошло успешно.");
       refetch();
     } catch (error) {
       setIsLoading(false);
-      alert("Произошло ошибка при добавлении тарифа.");
+      notifyError("Произошла ошибка при добавлении тарифа.");
       console.error("Произошла ошибка при выполнении запроса:", error);
     }
   };
@@ -158,18 +216,29 @@ function CreateRequestTarifCategory({
   useEffect(() => {
     if (show) {
       resetForm();
-      const handleClickOutside = (event) => {
-        if (sidebarRef.current && !sidebarRef.current.contains(event.target)) {
-          closeButton();
-        }
-      };
-      document.addEventListener("mousedown", handleClickOutside);
-
-      return () => {
-        document.removeEventListener("mousedown", handleClickOutside);
-      };
     }
-  }, [show]);
+  }, [show, resetForm]);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+      if (sidebarRef.current?.contains(event.target)) {
+        return;
+      }
+      closeButton();
+    };
+
+    if (show) {
+      document.addEventListener("mousedown", handleClickOutside);
+    } else {
+      document.removeEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [show, closeButton, isDialogOpen]);
 
   // useEffect(() => {
   //   const names = addTarif?.map((tarif) => ({
@@ -260,11 +329,11 @@ function CreateRequestTarifCategory({
                   const selectedCategory = useCategories.find(
                     (category) => category.label === newValue
                   ) || "";
+                  setIsEdited(true);
                   setFormData((prevFormData) => ({
                     ...prevFormData,
                     category: selectedCategory.value,
                   }));
-                  //   setIsEdited(true);
                 }}
               />
 
@@ -299,12 +368,13 @@ function CreateRequestTarifCategory({
                     <input
                       type="checkbox"
                       checked={Boolean(formData.priceForAirReq)}
-                      onChange={(e) =>
+                      onChange={(e) => {
+                        setIsEdited(true);
                         setFormData((prev) => ({
                           ...prev,
                           priceForAirReq: e.target.checked,
-                        }))
-                      }
+                        }));
+                      }}
                     />
                     <span style={{ marginLeft: 8 }}>Стоимость по запросу</span>
                   </label>
@@ -325,12 +395,13 @@ function CreateRequestTarifCategory({
                 hotel={null}
                 anotherDescription={formData.description || ""}
                 isEditing={true}
-                onChange={(newDescription) =>
+                onChange={(newDescription) => {
+                  setIsEdited(true);
                   setFormData((prev) => ({
                     ...prev,
                     description: newDescription,
-                  }))
-                }
+                  }));
+                }}
               />
               {/* <textarea
                 id="description"

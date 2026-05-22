@@ -6,6 +6,8 @@ import Sidebar from "../Sidebar/Sidebar.jsx";
 import { getCookie, UPDATE_HOTEL_TARIF } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
+import { useDialog } from "../../../contexts/DialogContext";
+import { useToast } from "../../../contexts/ToastContext";
 
 function EditRequestTarifAdditionalServices({
   show,
@@ -14,9 +16,10 @@ function EditRequestTarifAdditionalServices({
   id,
   user,
   type,
-  addNotification,
 }) {
   const token = getCookie("token");
+  const { confirm, isDialogOpen } = useDialog();
+  const { success, error: notifyError } = useToast();
 
   const [formData, setFormData] = useState({
     images: null,
@@ -33,38 +36,47 @@ function EditRequestTarifAdditionalServices({
     },
   });
 
+  const [isEditing, setIsEditing] = useState(false);
+  const [isEdited, setIsEdited] = useState(false);
+
   useEffect(() => {
     if (show && tarif) {
       setFormData({ ...tarif, images: null });
+      setIsEdited(false);
+      setIsEditing(false);
     }
   }, [show, tarif]);
 
-  const [isEditing, setIsEditing] = useState(false);
+  const resetForm = useCallback(() => {
+    if (tarif) {
+      setFormData({ ...tarif, images: null });
+    }
+    setIsEdited(false);
+  }, [tarif]);
 
-  //   console.log(formData);
+  const closeButton = useCallback(async () => {
+    if (isDialogOpen) return;
 
-  const closeButton = () => {
-    let success = confirm("Вы уверены, все несохраненные данные будут удалены");
-    if (success) {
+    if (!isEdited) {
+      onClose();
+      setIsEditing(false);
+      return;
+    }
+
+    const isConfirmed = await confirm(
+      "Вы уверены? Все несохраненные данные будут удалены."
+    );
+    if (isConfirmed) {
+      resetForm();
       onClose();
       setIsEditing(false);
     }
-  };
-    // const closeButton = useCallback(() => {
-    //   if (!isEdited) {
-    //     onClose();
-    //     setIsEditing(false);
-    //     return;
-    //   }
-  
-    //   if (window.confirm("Вы уверены? Все несохраненные данные будут удалены.")) {
-    //     onClose();
-    //     setIsEditing(false);
-    //   }
-    // }, [isEdited, onClose]);
+  }, [confirm, isDialogOpen, isEdited, onClose, resetForm]);
 
   const handleChange = (e) => {
+    if (!isEditing) return;
     const { name, value } = e.target;
+    setIsEdited(true);
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
@@ -100,11 +112,11 @@ function EditRequestTarifAdditionalServices({
         // refetch();
         setIsLoading(false);
         setFormData((prev) => ({ ...prev, images: null }));
-        addNotification("Редактирование тарифа прошло успешно.", "success");
+        success("Редактирование доп. услуги прошло успешно.");
       } catch (error) {
         setIsLoading(false);
         console.error("Ошибка при обновлении тарифа:", error);
-        addNotification("Не удалось обновить тариф.", "error");
+        notifyError("Не удалось обновить доп. услугу.");
       }
     }
     setIsEditing(!isEditing);
@@ -112,10 +124,10 @@ function EditRequestTarifAdditionalServices({
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        sidebarRef.current?.contains(event.target) // Клик в боковой панели
-      ) {
-        return; // Если клик внутри, ничего не делаем
+      if (isDialogOpen) return;
+      if (event.target.closest(".MuiSnackbar-root")) return;
+      if (sidebarRef.current?.contains(event.target)) {
+        return;
       }
 
       closeButton();
@@ -130,7 +142,7 @@ function EditRequestTarifAdditionalServices({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton]);
+  }, [show, closeButton, isDialogOpen]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>

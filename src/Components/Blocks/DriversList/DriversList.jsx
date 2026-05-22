@@ -54,7 +54,7 @@ function DriversList({ children, user, disAdmin, accessMenu, ...props }) {
       onError: (error) => {
         console.error("Ошибка подписки на обновление водителя:", error);
       },
-    }
+    },
   );
 
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
@@ -65,7 +65,7 @@ function DriversList({ children, user, disAdmin, accessMenu, ...props }) {
   useEffect(() => {
     if (data && data.drivers) {
       const sortedDrivers = [...data.drivers.drivers].sort((a, b) =>
-        a.name.localeCompare(b.name)
+        a.name.localeCompare(b.name),
       );
       setCompanyData(sortedDrivers);
     }
@@ -81,7 +81,6 @@ function DriversList({ children, user, disAdmin, accessMenu, ...props }) {
   const toggleRequestSidebar = () => {
     setShowRequestSidebar(!showRequestSidebar);
   };
-
 
   const [notifications, setNotifications] = useState([]);
 
@@ -125,11 +124,16 @@ function DriversList({ children, user, disAdmin, accessMenu, ...props }) {
   // Фильтрация запросов по имени водителя, машине, номеру прав
   const filteredRequests = useMemo(() => {
     const dataSource = isSearching ? allFilteredData : companyData; // Используем данные из поиска или стандартные
-    return dataSource.filter((request) =>
-      request.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.car?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.driverLicenseNumber?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      request.organization?.name?.toLowerCase().includes(searchQuery.toLowerCase())
+    return dataSource.filter(
+      (request) =>
+        request.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request.car?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        request.driverLicenseNumber
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        request.organization?.name
+          ?.toLowerCase()
+          .includes(searchQuery.toLowerCase()),
     );
   }, [isSearching, allFilteredData, companyData, searchQuery]);
 
@@ -148,7 +152,10 @@ function DriversList({ children, user, disAdmin, accessMenu, ...props }) {
 
   return (
     <>
-      <div className={classes.section} style={disAdmin ? { padding: "0", overflow: "visible" } : {}}>
+      <div
+        className={classes.section}
+        style={disAdmin ? { padding: "0", overflow: "visible" } : {}}
+      >
         {!disAdmin && <Header>Водители</Header>}
 
         <div className={classes.section_searchAndFilter}>
@@ -175,7 +182,10 @@ function DriversList({ children, user, disAdmin, accessMenu, ...props }) {
               setChooseObject={setChooseObject}
               choosePersonId={chooseObject?.id}
               disAdmin={disAdmin}
-              canAcceptDrivers={!disAdmin || hasAccessMenu(accessMenu, "organizationAcceptDrivers")}
+              canAcceptDrivers={
+                !disAdmin ||
+                hasAccessMenu(accessMenu, "organizationAcceptDrivers")
+              }
             />
 
             {totalPages > 0 && (
@@ -202,7 +212,9 @@ function DriversList({ children, user, disAdmin, accessMenu, ...props }) {
           show={showRequestSidebar}
           confirm={true}
           disAdmin={disAdmin}
-          canAccept={!disAdmin || hasAccessMenu(accessMenu, "organizationAcceptDrivers")}
+          canAccept={
+            !disAdmin || hasAccessMenu(accessMenu, "organizationAcceptDrivers")
+          }
           onClose={toggleRequestSidebar}
           chooseObject={chooseObject}
           updateDriver={updateDriver}
@@ -217,7 +229,7 @@ function DriversList({ children, user, disAdmin, accessMenu, ...props }) {
             time={notifyTime}
             onClose={() => {
               setNotifications((prev) =>
-                prev.filter((notif) => notif.id !== n.id)
+                prev.filter((notif) => notif.id !== n.id),
               );
             }}
           />

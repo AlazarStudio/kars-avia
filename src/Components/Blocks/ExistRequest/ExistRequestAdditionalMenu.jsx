@@ -7,6 +7,7 @@ import EditIcon from "../../../shared/icons/EditIcon";
 import CancelIcon from "../../../shared/icons/CancelIcon";
 import { isAirlineAdmin } from "../../../utils/access";
 import classes from "./ExistRequestAdditionalMenu.module.css";
+import UserCheckIcon from "../../../shared/icons/UserCheckIcon";
 
 function ExistRequestAdditionalMenu({
   anchorEl,
@@ -20,6 +21,8 @@ function ExistRequestAdditionalMenu({
   onEdit,
   onCancelRequest,
   onCloseSidebar,
+  onPlace,
+  showPlace,
 }) {
   const showShahmatka =
     !isAirlineAdmin(user) &&
@@ -29,23 +32,18 @@ function ExistRequestAdditionalMenu({
 
   const showEdit =
     canUpdateActions &&
-    formData.status !== "created" &&
-    formData.status !== "opened" &&
-    formData.status !== "canceled";
+    formData.status !== "canceled" &&
+    formData.status !== "archived";
 
   const showCancel =
     canUpdateActions &&
-    formData.status !== "created" &&
-    formData.status !== "opened" &&
     formData.status !== "canceled" &&
     formData.status !== "archived" &&
     activeTab !== "Комментарии" &&
     activeTab !== "История";
 
   const cancelLabel =
-    user?.airlineId &&
-    formData.status !== "archived" &&
-    formData.status !== "archiving"
+    user?.airlineId && formData.status === "opened"
       ? "Запрос на отмену"
       : "Отменить заявку";
 
@@ -68,12 +66,10 @@ function ExistRequestAdditionalMenu({
         disableAutoFocusItem
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
+        sx={{ zIndex: 10050 }}
         PaperProps={{
           className: classes.paper,
         }}
-        // MenuListProps={{
-        //   disablePadding: true,
-        // }}
       >
         {showShahmatka && (
           <MenuItem
@@ -96,6 +92,18 @@ function ExistRequestAdditionalMenu({
           >
             <EditIcon />
             Редактировать
+          </MenuItem>
+        )}
+        {showPlace && (
+          <MenuItem
+            className={classes.item}
+            onClick={() => {
+              onClose();
+              onPlace();
+            }}
+          >
+            <UserCheckIcon />
+            Разместить
           </MenuItem>
         )}
         {showCancel && (

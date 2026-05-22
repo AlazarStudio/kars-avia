@@ -28,6 +28,14 @@ export const getMediaUrl = (path) => {
   return `${server}${path}?token=${token}`;
 };
 
+// Универсальная обёртка для картинок: абсолютный URL — как есть,
+// локальный путь — через getMediaUrl с токеном.
+export const mediaSrc = (src) => {
+  if (!src) return null;
+  if (/^https?:\/\//i.test(src)) return src;
+  return getMediaUrl(src);
+};
+
 export const decodeJWT = (token) => {
   const tokenParts = token.split('.');
 
@@ -916,6 +924,14 @@ export const GET_ORGANIZATION_CONTRACTS = gql`
         notes
         applicationType
         files
+        contractEndDate
+        isProlongationEnabled
+        isArchived
+        archivedAt
+        daysUntilEnd
+        isExpiringSoon
+        isExpired
+        expirationPriority
       }
     }
   }
@@ -946,6 +962,13 @@ export const GET_ORGANIZATION_CONTRACT = gql`
       notes
       applicationType
       files
+      contractEndDate
+      isProlongationEnabled
+      isArchived
+      archivedAt
+      daysUntilEnd
+      isExpiringSoon
+      isExpired
       additionalAgreements {
         id
         itemAgreement
@@ -978,6 +1001,63 @@ export const UPDATE_ORGANIZATION_CONTRACT = gql`
 export const DELETE_ORGANIZATION_CONTRACT = gql`
   mutation DeleteOrganizationContract($deleteOrganizationContractId: ID!) {
     deleteOrganizationContract(id: $deleteOrganizationContractId)
+  }
+`;
+
+export const ARCHIVE_AIRLINE_CONTRACT = gql`
+  mutation ArchiveAirlineContract($id: ID!) {
+    archiveAirlineContract(id: $id) {
+      id
+      isArchived
+      archivedAt
+    }
+  }
+`;
+
+export const RESTORE_AIRLINE_CONTRACT = gql`
+  mutation RestoreAirlineContract($id: ID!) {
+    restoreAirlineContract(id: $id) {
+      id
+      isArchived
+    }
+  }
+`;
+
+export const ARCHIVE_HOTEL_CONTRACT = gql`
+  mutation ArchiveHotelContract($id: ID!) {
+    archiveHotelContract(id: $id) {
+      id
+      isArchived
+      archivedAt
+    }
+  }
+`;
+
+export const RESTORE_HOTEL_CONTRACT = gql`
+  mutation RestoreHotelContract($id: ID!) {
+    restoreHotelContract(id: $id) {
+      id
+      isArchived
+    }
+  }
+`;
+
+export const ARCHIVE_ORGANIZATION_CONTRACT = gql`
+  mutation ArchiveOrganizationContract($id: ID!) {
+    archiveOrganizationContract(id: $id) {
+      id
+      isArchived
+      archivedAt
+    }
+  }
+`;
+
+export const RESTORE_ORGANIZATION_CONTRACT = gql`
+  mutation RestoreOrganizationContract($id: ID!) {
+    restoreOrganizationContract(id: $id) {
+      id
+      isArchived
+    }
   }
 `;
 
@@ -1081,6 +1161,12 @@ export const RESET_PASSWORD = gql`
   }
 `;
 
+export const VERIFY_EMAIL = gql`
+  mutation VerifyEmail($token: String!) {
+    verifyEmail(token: $token)
+  }
+`;
+
 // Запросы на сброс пароля
 
 // ----------------------------------------------------------------
@@ -1096,8 +1182,8 @@ export const GET_ALL_POSITIONS = gql`
 `;
 
 export const GET_AIRLINE_USERS_POSITIONS = gql`
-  query GetAirlineUserPositions {
-    getAirlineUserPositions {
+  query GetAirlineUserPositions($airlineId: ID!) {
+    getAirlineUserPositions(airlineId: $airlineId) {
       id
       name
       separator
@@ -1138,7 +1224,7 @@ export const GET_DISPATCHER_POSITIONS = gql`
 `;
 
 export const CREATE_POSITION = gql`
-  mutation CreatePosition($input: PositionInput) {
+  mutation CreatePosition($input: PositionInput!) {
     createPosition(input: $input) {
       id
       name
@@ -1159,6 +1245,8 @@ export const GET_REQUESTS = gql`
       requests {
         id
         airportId
+        externalBookingNumber
+        externalSource
         airport {
           id
           name
@@ -1543,6 +1631,8 @@ export const CREATE_REQUEST_MUTATION = gql`
             images
           }
           reserve
+          defaultTimesUsed
+          note
         }
     }
 `;
@@ -1608,6 +1698,7 @@ export const GET_HOTELS_RELAY = gql`
         images
         information {
           city
+          address
         }
         airport {
           id
@@ -1620,11 +1711,43 @@ export const GET_HOTELS_RELAY = gql`
   }
 `;
 
+export const GET_HOTELS_WITH_PRICES = gql`
+  query HotelsWithPrices {
+    hotels(pagination: {all: true}) {
+      hotels {
+        id
+        name
+        airport {
+          id
+        }
+        roomKind {
+          name
+          category
+          price
+          priceForAirline
+        }
+        mealPriceForAir {
+          breakfast
+          lunch
+          dinner
+        }
+        mealPrice {
+          breakfast
+          lunch
+          dinner
+        }
+      }
+    }
+  }
+`;
+
 export const GET_REQUEST = gql`
   query Query($pagination: LogPaginationInput, $requestId: ID) {
     request(id: $requestId) {
       id
       airportId
+      externalBookingNumber
+      externalSource
       airport {
         id
         name
@@ -1633,6 +1756,7 @@ export const GET_REQUEST = gql`
       }
       arrival
       departure
+      actualCheckInAt
       roomCategory
       mealPlan {
         included
@@ -1690,6 +1814,22 @@ export const GET_REQUEST = gql`
       }
       requestNumber
       reserve
+      defaultTimesUsed
+      note
+      requestAirlinePrice {
+        livingCost
+        breakfast
+        lunch
+        dinner
+        breakfastIncluded
+      }
+      requestHotelPrice {
+        livingCost
+        breakfast
+        lunch
+        dinner
+        breakfastIncluded
+      }
       hotel {
         id
         name
@@ -1787,6 +1927,14 @@ export const CANCEL_PASSENGER_REQUEST = gql`
   }
 `;
 
+export const ADD_PASSENGER_REQUEST_PERSON = gql`
+  mutation AddPassengerRequestPerson($requestId: ID!, $service: PassengerServiceKind!, $person: PassengerServicePersonInput!) {
+    addPassengerRequestPerson(requestId: $requestId, service: $service, person: $person) {
+      id
+    }
+  }
+`;
+
 export const SET_PASSENGER_SERVICE_STATUS = gql`
   mutation SetPassengerServiceStatus($id: ID!, $service: PassengerServiceKind!, $status: PassengerServiceStatus!) {
     setPassengerRequestServiceStatus(id: $id, service: $service, status: $status) {
@@ -1803,9 +1951,25 @@ export const ADD_PASSENGER_REQUEST_HOTEL = gql`
   }
 `;
 
+export const REMOVE_PASSENGER_REQUEST_HOTEL = gql`
+  mutation RemovePassengerRequestHotel($requestId: ID!, $hotelIndex: Int!) {
+    removePassengerRequestHotel(requestId: $requestId, hotelIndex: $hotelIndex) {
+      id
+    }
+  }
+`;
+
 export const ADD_PASSENGER_REQUEST_DRIVER = gql`
   mutation AddPassengerRequestDriver($requestId: ID!, $driver: PassengerServiceDriverInput!) {
     addPassengerRequestDriver(requestId: $requestId, driver: $driver) {
+      id
+    }
+  }
+`;
+
+export const REMOVE_PASSENGER_REQUEST_DRIVER = gql`
+  mutation RemovePassengerRequestDriver($requestId: ID!, $driverIndex: Int!) {
+    removePassengerRequestDriver(requestId: $requestId, driverIndex: $driverIndex) {
       id
     }
   }
@@ -2038,6 +2202,14 @@ export const ADD_PASSENGER_REQUEST_BAGGAGE_DRIVER = gql`
   }
 `;
 
+export const REMOVE_PASSENGER_REQUEST_BAGGAGE_DRIVER = gql`
+  mutation RemovePassengerRequestBaggageDriver($requestId: ID!, $driverIndex: Int!) {
+    removePassengerRequestBaggageDriver(requestId: $requestId, driverIndex: $driverIndex) {
+      id
+    }
+  }
+`;
+
 export const UPDATE_PASSENGER_REQUEST_HOTEL_PERSON = gql`
   mutation UpdatePassengerRequestHotelPerson(
     $requestId: ID!
@@ -2187,6 +2359,18 @@ export const GET_MESSAGES_HOTEL = gql`
             name
           }
           images
+          airline {
+            id
+            name
+          }
+          airlineDepartment {
+            id
+            name
+          }
+          dispatcherDepartment {
+            id
+            name
+          }
         }
         readBy {
           user {
@@ -2220,6 +2404,18 @@ export const GET_PASSENGER_REQUEST_CHATS = gql`
             name
           }
           images
+          airline {
+            id
+            name
+          }
+          airlineDepartment {
+            id
+            name
+          }
+          dispatcherDepartment {
+            id
+            name
+          }
         }
         readBy {
           user {
@@ -2340,6 +2536,7 @@ export const GET_TRANSFER_MESSAGES = gql`
       senderUser {
         id
         name
+        role
         images
       }
       senderDriver {
@@ -2424,6 +2621,7 @@ export const SEND_TRANSFER_MESSAGE = gql`
       senderUser {
         id
         name
+        role
       }
       senderDriver {
         id
@@ -2494,6 +2692,7 @@ export const TRANSFER_MESSAGE_SENT_SUBSCRIPTION = gql`
       senderUser {
         id
         name
+        role
         images
       }
       senderDriver {
@@ -3522,13 +3721,40 @@ export const GET_HOTELS = gql`
         information {
           city
           address
+          email
+          number
+          inn
+          ogrn
         }
         quote
         provision
         images
         stars
         usStars
-        airportDistance    
+        airportDistance
+        externalSource
+        roomKind {
+          id
+          price
+          priceForAirline
+        }
+        rooms {
+          id
+        }
+        hotelContract {
+          id
+        }
+        meal
+        mealPrice {
+          breakfast
+          lunch
+          dinner
+        }
+        mealPriceForAir {
+          breakfast
+          lunch
+          dinner
+        }
       }
     }
   }
@@ -3609,6 +3835,14 @@ export const GET_HOTEL = gql`
         link
         description
       }
+      location {
+        country
+        region
+        republic
+        district
+        city
+        address
+      }
       images
       gallery
       roomKind {
@@ -3636,6 +3870,7 @@ export const GET_HOTEL = gql`
         images
         priceForAirline
       }
+      breakfastIncluded
       breakfast {
         start
         end
@@ -3790,6 +4025,35 @@ export const GET_HOTEL_NAME = gql`
     hotel(id: $hotelId) {
       name
       type
+      images
+      information {
+        email
+        number
+        inn
+        ogrn
+      }
+      roomKind {
+        id
+        price
+        priceForAirline
+      }
+      rooms {
+        id
+      }
+      hotelContract {
+        id
+      }
+      meal
+      mealPrice {
+        breakfast
+        lunch
+        dinner
+      }
+      mealPriceForAir {
+        breakfast
+        lunch
+        dinner
+      }
     }
   }
 `;
@@ -3973,6 +4237,8 @@ export const GET_HOTEL_USERS = gql`
       }
       login
       images
+      online
+      number
     }
     }
   }
@@ -3991,6 +4257,7 @@ export const CREATE_HOTEL_USER = gql`
       }
       login
       images
+      number
     }
   }
 `;
@@ -4008,6 +4275,7 @@ export const UPDATE_HOTEL_USER = gql`
       }
       login
       images
+      number
     }
   }
 `;
@@ -4041,6 +4309,97 @@ export const GET_AIRLINES = gql`
         images
         name
         nameFull
+        information {
+          email
+          number
+          inn
+          ogrn
+        }
+        users {
+          id
+          role
+        }
+        department {
+          id
+          email
+          accessMenu {
+            requestMenu
+            requestCreate
+            requestUpdate
+            requestChat
+            transferMenu
+            transferCreate
+            transferUpdate
+            transferChat
+            personalMenu
+            personalCreate
+            personalUpdate
+            reserveMenu
+            reserveCreate
+            reserveUpdate
+            analyticsMenu
+            analyticsUpload
+            reportMenu
+            reportCreate
+            userMenu
+            userCreate
+            userUpdate
+            airlineMenu
+            airlineUpdate
+            contracts
+            contractCreate
+            contractUpdate
+            organizationMenu
+            organizationCreate
+            organizationUpdate
+            organizationAddDrivers
+            organizationAcceptDrivers
+          }
+          notificationMenu {
+            requestCreate
+            requestDatesChange
+            requestPlacementChange
+            requestCancel
+            passengerRequestCreate
+            passengerRequestDatesChange
+            passengerRequestUpdate
+            passengerRequestPlacementChange
+            passengerRequestCancel
+            newMessage
+            emailRequestCreate
+            emailRequestDatesChange
+            emailRequestPlacementChange
+            emailRequestCancel
+            emailPassengerRequestCreate
+            emailPassengerRequestDatesChange
+            emailPassengerRequestUpdate
+            emailPassengerRequestPlacementChange
+            emailPassengerRequestCancel
+            emailNewMessage
+            sitePushRequestCreate
+            sitePushRequestDatesChange
+            sitePushRequestPlacementChange
+            sitePushRequestCancel
+            sitePushPassengerRequestCreate
+            sitePushPassengerRequestDatesChange
+            sitePushPassengerRequestUpdate
+            sitePushPassengerRequestPlacementChange
+            sitePushPassengerRequestCancel
+            sitePushNewMessage
+          }
+        }
+        prices {
+          id
+        }
+        transferPrices {
+          id
+        }
+        staff {
+          id
+        }
+        airlineContract {
+          id
+        }
       }
     }
   }
@@ -4140,6 +4499,88 @@ export const GET_AIRLINE = gql`
           name
         }
       }
+      users {
+        id
+        role
+      }
+      department {
+        id
+        email
+        accessMenu {
+          requestMenu
+          requestCreate
+          requestUpdate
+          requestChat
+          transferMenu
+          transferCreate
+          transferUpdate
+          transferChat
+          personalMenu
+          personalCreate
+          personalUpdate
+          reserveMenu
+          reserveCreate
+          reserveUpdate
+          analyticsMenu
+          analyticsUpload
+          reportMenu
+          reportCreate
+          userMenu
+          userCreate
+          userUpdate
+          airlineMenu
+          airlineUpdate
+          contracts
+          contractCreate
+          contractUpdate
+          organizationMenu
+          organizationCreate
+          organizationUpdate
+          organizationAddDrivers
+          organizationAcceptDrivers
+        }
+        notificationMenu {
+          requestCreate
+          requestDatesChange
+          requestPlacementChange
+          requestCancel
+          passengerRequestCreate
+          passengerRequestDatesChange
+          passengerRequestUpdate
+          passengerRequestPlacementChange
+          passengerRequestCancel
+          newMessage
+          emailRequestCreate
+          emailRequestDatesChange
+          emailRequestPlacementChange
+          emailRequestCancel
+          emailPassengerRequestCreate
+          emailPassengerRequestDatesChange
+          emailPassengerRequestUpdate
+          emailPassengerRequestPlacementChange
+          emailPassengerRequestCancel
+          emailNewMessage
+          sitePushRequestCreate
+          sitePushRequestDatesChange
+          sitePushRequestPlacementChange
+          sitePushRequestCancel
+          sitePushPassengerRequestCreate
+          sitePushPassengerRequestDatesChange
+          sitePushPassengerRequestUpdate
+          sitePushPassengerRequestPlacementChange
+          sitePushPassengerRequestCancel
+          sitePushNewMessage
+        }
+      }
+      prices {
+        id
+      }
+      transferPrices {
+        id
+      }
+      airlineContract {
+        id
+      }
     }
   }
 `;
@@ -4200,6 +4641,13 @@ export const GET_AIRLINE_TARIFS = gql`
             code
             city
           }
+        }
+        geography {
+          country
+          region
+          republic
+          district
+          city
         }
         id
         name
@@ -4331,6 +4779,8 @@ export const GET_AIRLINE_COMPANY = gql`
         images
         email
         login
+        online
+        number
       }
       department {
         id
@@ -4347,10 +4797,24 @@ export const GET_AIRLINE_COMPANY = gql`
           images
           email
           login
+          online
+          number
         }
         position {
           id
           name
+        }
+        positionAccessMenus {
+          positionId
+          position {
+            id
+            name
+          }
+          accessMenu {
+            requestMenu
+            transferMenu
+            personalMenu
+          }
         }
         accessMenu {
           requestMenu
@@ -4436,6 +4900,7 @@ export const CREATE_AIRLINE_USER = gql`
       login
       password
       email
+      number
     }
   }
 `;
@@ -4453,10 +4918,96 @@ export const CREATE_AIRLINE_DEPARTMERT = gql`
           id
           name
           role
+          position {
+            id
+            name
+          }
           images
           email
           login
-          password
+          online
+          number
+        }
+        position {
+          id
+          name
+        }
+        positionAccessMenus {
+          positionId
+          position {
+            id
+            name
+          }
+          accessMenu {
+            requestMenu
+            transferMenu
+            personalMenu
+          }
+        }
+        accessMenu {
+          requestMenu
+          requestCreate
+          requestUpdate
+          requestChat
+          transferMenu
+          transferCreate
+          transferUpdate
+          transferChat
+          personalMenu
+          personalCreate
+          personalUpdate
+          reserveMenu
+          reserveCreate
+          reserveUpdate
+          analyticsMenu
+          analyticsUpload
+          reportMenu
+          reportCreate
+          userMenu
+          userCreate
+          userUpdate
+          airlineMenu
+          airlineUpdate
+          contracts
+          contractCreate
+          contractUpdate
+          organizationMenu
+          organizationCreate
+          organizationUpdate
+          organizationAddDrivers
+          organizationAcceptDrivers
+        }
+        notificationMenu {
+          requestCreate
+          requestDatesChange
+          requestPlacementChange
+          requestCancel
+          passengerRequestCreate
+          passengerRequestDatesChange
+          passengerRequestUpdate
+          passengerRequestPlacementChange
+          passengerRequestCancel
+          newMessage
+          emailRequestCreate
+          emailRequestDatesChange
+          emailRequestPlacementChange
+          emailRequestCancel
+          emailPassengerRequestCreate
+          emailPassengerRequestDatesChange
+          emailPassengerRequestUpdate
+          emailPassengerRequestPlacementChange
+          emailPassengerRequestCancel
+          emailNewMessage
+          sitePushRequestCreate
+          sitePushRequestDatesChange
+          sitePushRequestPlacementChange
+          sitePushRequestCancel
+          sitePushPassengerRequestCreate
+          sitePushPassengerRequestDatesChange
+          sitePushPassengerRequestUpdate
+          sitePushPassengerRequestPlacementChange
+          sitePushPassengerRequestCancel
+          sitePushNewMessage
         }
       }
     }
@@ -4493,6 +5044,7 @@ export const UPDATE_AIRLINE_USER = gql`
         }
         login
         images
+        number
     }
   }
 `;
@@ -4677,6 +5229,8 @@ export const GET_ALL_DISPATCHERS = gql`
         }
         email
         login
+        online
+        number
       }
     }
   }
@@ -4769,6 +5323,8 @@ export const GET_DISPATCHER_DEPARTMENTS = gql`
           }
           email
           login
+          online
+          number
         }
       }
     }
@@ -4859,6 +5415,7 @@ export const CREATE_DISPATCHER_USER = gql`
       }
       login
       images
+      number
     }
   }
 `;
@@ -4876,6 +5433,7 @@ export const UPDATE_DISPATCHER_USER = gql`
       }
       login
       images
+      number
     }
   }
 `;
@@ -5023,9 +5581,27 @@ export const GET_USER_SUPPORT_CHATS = gql`
         id
         name
         images
+        role
+        position {
+          id
+          name
+        }
+        airline {
+          id
+          name
+        }
+        airlineDepartment {
+          id
+          name
+        }
+        dispatcherDepartment {
+          id
+          name
+        }
       }
       messages {
         id
+        createdAt
         sender {
           id
           name
@@ -5080,6 +5656,18 @@ export const GET_USER_SUPPORT_CHAT = gql`
           role
           images
           position {
+            id
+            name
+          }
+          airline {
+            id
+            name
+          }
+          airlineDepartment {
+            id
+            name
+          }
+          dispatcherDepartment {
             id
             name
           }
@@ -5495,6 +6083,14 @@ export const GET_AIRLINE_CONTRACTS = gql`
         applicationType
         notes
         files
+        contractEndDate
+        isProlongationEnabled
+        isArchived
+        archivedAt
+        daysUntilEnd
+        isExpiringSoon
+        isExpired
+        expirationPriority
         additionalAgreements {
           id
           notes
@@ -5523,6 +6119,13 @@ export const GET_AIRLINE_CONTRACT = gql`
       applicationType
       notes
       files
+      contractEndDate
+      isProlongationEnabled
+      isArchived
+      archivedAt
+      daysUntilEnd
+      isExpiringSoon
+      isExpired
       additionalAgreements {
         id
         contractNumber
@@ -5623,6 +6226,14 @@ export const GET_HOTEL_CONTRACTS = gql`
         applicationType
         executor
         files
+        contractEndDate
+        isProlongationEnabled
+        isArchived
+        archivedAt
+        daysUntilEnd
+        isExpiringSoon
+        isExpired
+        expirationPriority
       }
     }
   }
@@ -5656,6 +6267,13 @@ export const GET_HOTEL_CONTRACT = gql`
       applicationType
       executor
       files
+      contractEndDate
+      isProlongationEnabled
+      isArchived
+      archivedAt
+      daysUntilEnd
+      isExpiringSoon
+      isExpired
       additionalAgreements {
         id
         contractNumber
@@ -5871,6 +6489,115 @@ export const GET_CITY_REGIONS = gql`
   }
 `;
 
+export const GET_AIRLINE_ANALYTICS = gql`
+  query AirlineAnalytics($input: AirlineAnalyticsInput!) {
+    airlineAnalytics(input: $input) {
+      period1 {
+        dateFrom
+        dateTo
+        services {
+          service
+          totalRequests
+          uniquePeopleCount
+          totalBudget
+          usedRoomsCount
+          airports {
+            airportId
+            airportName
+            airportCode
+            requestsCount
+            uniquePeopleCount
+            budget
+            usedRoomsCount
+          }
+          positions {
+            positionId
+            positionName
+            count
+            percent
+            budget
+          }
+          requests {
+            requestId
+            requestNumber
+            personId
+            personName
+            positionId
+            positionName
+            airportId
+            airportName
+            airportCode
+            budget
+            livingBudget
+            mealBudget
+            transferBudget
+          }
+          transfers {
+            transferId
+            requestNumber
+            fromAddress
+            toAddress
+            passengersCount
+            uniquePeopleCount
+            budget
+          }
+        }
+      }
+      period2 {
+        dateFrom
+        dateTo
+        services {
+          service
+          totalRequests
+          uniquePeopleCount
+          totalBudget
+          usedRoomsCount
+          airports {
+            airportId
+            airportName
+            airportCode
+            requestsCount
+            uniquePeopleCount
+            budget
+            usedRoomsCount
+          }
+          positions {
+            positionId
+            positionName
+            count
+            percent
+            budget
+          }
+          requests {
+            requestId
+            requestNumber
+            personId
+            personName
+            positionId
+            positionName
+            airportId
+            airportName
+            airportCode
+            budget
+            livingBudget
+            mealBudget
+            transferBudget
+          }
+          transfers {
+            transferId
+            requestNumber
+            fromAddress
+            toAddress
+            passengersCount
+            uniquePeopleCount
+            budget
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const GET_ANALYTICS_AIRLINE_SERVICE_COMPARISON = gql`
   query AirlineComparison($input: AnalyticsAirlineServiceComparisonInput!) {
     analyticsAirlineServiceComparison(input: $input) {
@@ -5974,6 +6701,496 @@ export const GET_EXTERNAL_USERS = gql`
         active
         sessionExpiresAt
       }
+    }
+  }
+`;
+
+// ─── TravelLine Integration ───────────────────────────────────────────────
+
+export const GET_TL_CONFIG = gql`
+  query TlConfig {
+    tlConfig {
+      clientId
+      baseUrl
+      isConfigured
+    }
+  }
+`;
+
+export const SET_TL_CONFIG = gql`
+  mutation TlSetConfig($input: TlSetConfigInput!) {
+    tlSetConfig(input: $input)
+  }
+`;
+
+export const GET_TL_CITIES = gql`
+  query TlCities($countryCode: String) {
+    tlCities(countryCode: $countryCode) {
+      id
+      name
+      regionId
+      countryCode
+    }
+  }
+`;
+
+export const GET_TL_PROPERTIES_BY_CITY = gql`
+  query TlPropertiesByCity($input: TlSearchPropertiesByCityInput!) {
+    tlPropertiesByCity(input: $input) {
+      items {
+        id
+        name
+        description
+        address {
+          country
+          city
+          street
+        }
+        latitude
+        longitude
+        photos
+        stars
+        raw
+      }
+      total
+      page
+      pageSize
+    }
+  }
+`;
+
+export const SEARCH_TL_PROPERTIES = gql`
+  query TlSearchProperties($filter: TlSearchPropertiesInput) {
+    tlSearchProperties(filter: $filter) {
+      items {
+        id
+        name
+        description
+        phone
+        email
+        address {
+          country
+          city
+          street
+          zip
+        }
+        latitude
+        longitude
+        photos
+        stars
+        raw
+      }
+      total
+      page
+      pageSize
+    }
+  }
+`;
+
+export const GET_TL_PROPERTY = gql`
+  query TlProperty($id: ID!) {
+    tlProperty(id: $id) {
+      id
+      name
+      description
+      phone
+      email
+      address {
+        country
+        city
+        street
+        zip
+      }
+      latitude
+      longitude
+      photos
+      stars
+      raw
+    }
+  }
+`;
+
+export const GET_TL_ROOM_TYPES = gql`
+  query TlRoomTypes($propertyId: ID!) {
+    tlRoomTypes(propertyId: $propertyId) {
+      id
+      name
+      description
+      maxOccupancy
+      photos
+      raw
+    }
+  }
+`;
+
+export const GET_TL_RATE_PLANS = gql`
+  query TlRatePlans($propertyId: ID!) {
+    tlRatePlans(propertyId: $propertyId) {
+      id
+      name
+      description
+      includesBreakfast
+      raw
+    }
+  }
+`;
+
+export const TL_AVAILABILITY = gql`
+  query TlAvailability($input: TlAvailabilityInput!) {
+    tlAvailability(input: $input) {
+      propertyId
+      nights
+      rates {
+        roomTypeId
+        roomTypeName
+        maxOccupancy
+        ratePlanId
+        ratePlanName
+        priceBeforeTax
+        totalPrice
+        tax
+        currency
+        availableRooms
+        mealType
+        checkInTime
+        checkOutTime
+        timezone
+        cancellationPolicies {
+          amount
+          deadline
+          timezone
+        }
+        checksum
+        roomTypePlacements
+        placements {
+          code
+          name
+          type
+          capacity
+        }
+        earlyCheckInOptions { periodFrom periodTo price currency }
+        lateCheckOutOptions { periodFrom periodTo price currency }
+        corporateIds
+        raw
+      }
+      raw
+    }
+  }
+`;
+
+export const TL_PROPERTY_CALENDAR = gql`
+  query TlPropertyCalendar($input: TlCalendarInput!) {
+    tlPropertyCalendar(input: $input) {
+      date
+      roomTypeId
+      roomTypeName
+      available
+      minPrice
+      currency
+    }
+  }
+`;
+
+export const TL_PROPERTIES_AVAILABILITY = gql`
+  query TlPropertiesAvailability($input: TlSearchDatesInput!) {
+    tlPropertiesAvailability(input: $input) {
+      propertyId
+      propertyName
+      hasAvailability
+      minPricePerNight
+      minTotalPrice
+      currency
+      nights
+      hasAnyRate
+      mealFilterApplied
+      reason
+    }
+  }
+`;
+
+export const GET_TL_RESERVATIONS = gql`
+  query TlReservations {
+    tlReservations {
+      id
+      propertyId
+      propertyName
+      roomTypeId
+      ratePlanId
+      arrival
+      departure
+      adults
+      children
+      totalPrice
+      currency
+      status
+      guest {
+        firstName
+        lastName
+        email
+        phone
+      }
+      comment
+      roomTypeName
+      ratePlanName
+      cancellationPoliciesJson
+      earlyCheckInDateTime
+      lateCheckOutDateTime
+      corporateId
+      createdAt
+      raw
+    }
+  }
+`;
+
+export const GET_TL_RESERVATION = gql`
+  query TlReservation($id: ID!) {
+    tlReservation(id: $id) {
+      id
+      propertyId
+      propertyName
+      roomTypeId
+      ratePlanId
+      arrival
+      departure
+      adults
+      children
+      totalPrice
+      currency
+      status
+      guest {
+        firstName
+        lastName
+        email
+        phone
+      }
+      comment
+      roomTypeName
+      ratePlanName
+      cancellationPoliciesJson
+      createdAt
+      raw
+    }
+  }
+`;
+
+export const CREATE_TL_RESERVATION = gql`
+  mutation TlCreateReservation($input: TlCreateReservationInput!) {
+    tlCreateReservation(input: $input) {
+      id
+      propertyId
+      propertyName
+      roomTypeId
+      ratePlanId
+      arrival
+      departure
+      adults
+      children
+      totalPrice
+      currency
+      status
+      guest {
+        firstName
+        lastName
+        email
+        phone
+      }
+      comment
+      roomTypeName
+      ratePlanName
+      cancellationPoliciesJson
+      createdAt
+      raw
+    }
+  }
+`;
+
+export const CANCEL_TL_RESERVATION = gql`
+  mutation TlCancelReservation($id: ID!) {
+    tlCancelReservation(id: $id)
+  }
+`;
+
+export const AMEND_TL_RESERVATION = gql`
+  mutation TlAmendReservation($input: TlAmendReservationInput!) {
+    tlAmendReservation(input: $input) {
+      ok
+      conditionChange
+      newArrival
+      newDeparture
+      newTotalPrice
+      newChecksum
+      message
+    }
+  }
+`;
+
+export const TL_EXTRA_STAYS_FOR_AMEND = gql`
+  query TlExtraStaysForAmend($propertyId: String!, $input: TlExtraStaysInput!) {
+    tlExtraStays(propertyId: $propertyId, input: $input) {
+      earlyCheckIn { dateTimeLocal price currency }
+      lateCheckOut { dateTimeLocal price currency }
+    }
+  }
+`;
+
+export const TL_VERIFY_BOOKING = gql`
+  mutation TlVerifyBooking($input: TlVerifyInput!) {
+    tlVerifyBooking(input: $input) {
+      ok
+      conditionChange
+      newChecksum
+      newPriceBeforeTax
+      newTotalPrice
+      newTax
+      message
+    }
+  }
+`;
+
+export const TL_CANCELLATION_PENALTY = gql`
+  query TlCancellationPenalty($bookingId: String!) {
+    tlCancellationPenalty(bookingId: $bookingId) {
+      penalty
+      currency
+      penaltyType
+      description
+    }
+  }
+`;
+
+export const TL_RAW_REQUEST = gql`
+  mutation TlRawRequest($input: TlRawRequestInput!) {
+    tlRawRequest(input: $input) {
+      status
+      body
+      ok
+    }
+  }
+`;
+
+export const TL_CREATE_CORPORATE = gql`
+  mutation TlCreateCorporate($input: TlCreateCorporateInput!) {
+    tlCreateCorporate(input: $input) {
+      id
+      legalName
+      inn
+      kpp
+      raw
+    }
+  }
+`;
+
+export const TL_GET_CORPORATE = gql`
+  query TlCorporate($id: ID!) {
+    tlCorporate(id: $id) {
+      id
+      legalName
+      inn
+      kpp
+      raw
+    }
+  }
+`;
+
+export const TL_CORPORATES = gql`
+  query TlCorporates {
+    tlCorporates {
+      id
+      legalName
+      inn
+      kpp
+    }
+  }
+`;
+
+export const TL_EXTRA_STAYS = gql`
+  query TlExtraStays($propertyId: String!, $input: TlExtraStaysInput!) {
+    tlExtraStays(propertyId: $propertyId, input: $input) {
+      earlyCheckIn { dateTimeLocal price currency }
+      lateCheckOut { dateTimeLocal price currency }
+    }
+  }
+`;
+
+export const TL_SYNC_STATUS = gql`
+  query TlSyncStatus {
+    tlSyncStatus {
+      running
+      total
+      done
+      currentName
+      startedAt
+      finishedAt
+      error
+      lastSyncAt
+      autoSyncHours
+    }
+  }
+`;
+
+export const TL_SYNC_CATALOG = gql`
+  mutation TlSyncCatalog($countryCode: String) {
+    tlSyncCatalog(countryCode: $countryCode) {
+      running
+      total
+      done
+      currentName
+      startedAt
+      finishedAt
+      error
+      lastSyncAt
+      autoSyncHours
+    }
+  }
+`;
+
+export const TL_SET_AUTO_SYNC_HOURS = gql`
+  mutation TlSetAutoSyncHours($hours: Int!) {
+    tlSetAutoSyncHours(hours: $hours)
+  }
+`;
+
+export const TL_LOCAL_PROPERTIES = gql`
+  query TlLocalProperties($filter: TlSearchPropertiesInput) {
+    tlLocalProperties(filter: $filter) {
+      items {
+        id
+        name
+        description
+        phone
+        email
+        address {
+          country
+          city
+          street
+          zip
+        }
+        latitude
+        longitude
+        photos
+        stars
+        raw
+      }
+      total
+      page
+      pageSize
+    }
+  }
+`;
+
+export const GET_HOTEL_OPTIONS_FOR_PLACEMENT = gql`
+  query HotelOptionsForPlacement($city: String!) {
+    hotelOptionsForPlacement(city: $city) {
+      source
+      id
+      name
+      photo
+      city
+      address
+      stars
+      description
+      access
+      hasRooms
     }
   }
 `;

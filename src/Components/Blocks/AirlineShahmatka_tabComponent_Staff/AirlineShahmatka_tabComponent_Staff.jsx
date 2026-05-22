@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import * as XLSX from "xlsx";
 import classes from "./AirlineShahmatka_tabComponent_Staff.module.css";
 import Filter from "../Filter/Filter.jsx";
 
@@ -19,21 +20,19 @@ import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateReques
 import UpdateRequestAirlineStaff from "../UpdateRequestAirlineStaff/UpdateRequestAirlineStaff.jsx";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import {
-  fullNotifyTime,
-  menuAccess,
-  notifyTime,
   // positions,
   roles,
 } from "../../../roles.js";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUITextField from "../MUITextField/MUITextField.jsx";
-import Notification from "../../Notification/Notification.jsx";
+import { useToast } from "../../../contexts/ToastContext";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import StatusLegend from "../StatusLegend/StatusLegend.jsx";
 
 function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...props }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
+  const { success, error: notifyError } = useToast();
 
   const [currentMonth, setCurrentMonth] = useState(new Date().getMonth());
   const [currentYear, setCurrentYear] = useState(new Date().getFullYear());
@@ -172,17 +171,6 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...prop
 
   // console.log(dataSubscriptionUpd);
 
-  const [notifications, setNotifications] = useState([]);
-
-  const addNotification = (text, status) => {
-    const id = Date.now(); // Уникальный ID
-    setNotifications((prev) => [...prev, { id, text, status }]);
-
-    setTimeout(() => {
-      setNotifications((prev) => prev.filter((n) => n.id !== id));
-    }, fullNotifyTime);
-  };
-
   const [showAddCategory, setshowAddCategory] = useState(false);
   const [showUpdateCategory, setshowUpdateCategory] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState();
@@ -314,10 +302,40 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...prop
         setStaff(staff.filter((staffMember) => staffMember.id !== user.id));
         setShowDelete(false);
         setshowUpdateCategory(false);
+        success("Сотрудник удалён.");
       }
     } catch (err) {
       console.error(err);
+      notifyError("Не удалось удалить сотрудника.");
     }
+  };
+  
+  // console.log(accessMenu);
+
+  const exportToExcel = () => {
+    if (!filteredRequests.length) {
+      notifyError("Нет сотрудников для выгрузки.");
+      return;
+    }
+
+    const aoa = [
+      ["ФИО", "Номер телефона", "Должность", "Пол"],
+      ...filteredRequests.map((person) => [
+        person.name || "",
+        person.number || "",
+        person.position?.name || "",
+        person.gender || "",
+      ]),
+    ];
+
+    const ws = XLSX.utils.aoa_to_sheet(aoa);
+    ws["!cols"] = [{ wch: 30 }, { wch: 20 }, { wch: 25 }, { wch: 12 }];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Сотрудники");
+    XLSX.writeFile(
+      wb,
+      `sotrudniki-${new Date().toISOString().slice(0, 10)}.xlsx`
+    );
   };
 
   // if (loading || bronLoading) return <MUILoader fullHeight={"70vh"} />;
@@ -325,7 +343,7 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...prop
   // return <p>Error: {error ? error.message : bronError.message}</p>;
   if (loading)
     return <MUILoader fullHeight={user?.airlineId ? "85vh" : "70vh"} />;
-  if (error) return <p>Error: {error ? error.message : bronError.message}</p>;
+  if (error) return <p>Error: {error.message}</p>;
 
   return (
     <>
@@ -347,7 +365,14 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...prop
         </div>
         <div className={classes.section_searchAndFilter_filter}>
           <StatusLegend />
-          {(!user?.airlineId || accessMenu?.personalCreate) && (
+          <button
+            type="button"
+            className={classes.exportXlsxButton}
+            onClick={exportToExcel}
+          >
+            Выгрузить xlsx
+          </button>
+          {(user?.role !== roles.superAdmin && accessMenu?.personalCreate) && (
             <Filter
               toggleSidebar={toggleCategory}
               handleChange={handleChange}
@@ -408,14 +433,13 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...prop
       />
       {/* )} */}
 
-      {(!user?.airlineId || accessMenu?.personalCreate) && (
+      {(user?.role !== roles.superAdmin && accessMenu?.personalCreate) && (
         <CreateRequestAirlineStaff
           id={id}
           show={showAddCategory}
           onClose={toggleCategory}
           addTarif={staff}
           setAddTarif={setStaff}
-          addNotification={addNotification}
           positions={positions}
         />
       )}
@@ -423,13 +447,13 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...prop
         id={id}
         user={user}
         accessMenu={accessMenu}
+        refetch={refetch}
         setDeleteIndex={setDeleteIndex}
         show={showUpdateCategory}
         setShowDelete={setShowDelete}
         onClose={toggleCategoryUpdate}
         selectedStaff={selectedStaff}
         setAddTarif={setStaff}
-        addNotification={addNotification}
         positions={positions}
       />
 
@@ -441,21 +465,6 @@ function AirlineShahmatka_tabComponent_Staff({ children, id, accessMenu, ...prop
           title={`Вы действительно хотите удалить сотрудника?`}
         />
       )}
-
-      {notifications.map((n, index) => (
-        <Notification
-          key={n.id}
-          text={n.text}
-          status={n.status}
-          index={index}
-          time={notifyTime}
-          onClose={() => {
-            setNotifications((prev) =>
-              prev.filter((notif) => notif.id !== n.id)
-            );
-          }}
-        />
-      ))}
     </>
   );
 }
