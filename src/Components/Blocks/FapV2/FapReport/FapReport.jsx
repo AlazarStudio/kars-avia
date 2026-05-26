@@ -1,5 +1,4 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
-import Message from "../../Message/Message";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@apollo/client";
 import * as XLSX from "xlsx";
@@ -12,6 +11,10 @@ import { authService } from "../../../../services/authService";
 import { calculateEffectiveCostDays } from "../../../../utils/effectiveCostDays";
 import Button from "../../../Standart/Button/Button";
 import { useToast } from "../../../../contexts/ToastContext";
+import { PERSON_TYPE_CONFIG } from "../fapConstants";
+import PersonBadge from "../PersonBadge/PersonBadge";
+import DownloadIcon from "../../../../shared/icons/DownloadIcon";
+import FapChat from "../FapChat/FapChat";
 
 function toNum(v) {
   const n = Number(v);
@@ -73,7 +76,6 @@ export default function FapReport({ request, hotelIndex, hotelName, canEdit = tr
   const [activeTab, setActiveTab] = useState("tariffs");
   const [search, setSearch] = useState("");
   const [saving, setSaving] = useState(false);
-  const [showChat, setShowChat] = useState(false);
 
   // Инициализация
   useEffect(() => {
@@ -213,6 +215,7 @@ export default function FapReport({ request, hotelIndex, hotelName, canEdit = tr
       return {
         personIndex: i,
         fullName: person.fullName ?? "",
+        personType: person.personType === "CREW" ? "CREW" : "PASSENGER",
         roomNumber: pd.roomNumber,
         roomCategory: tariff?.name ?? "",
         roomKind: "",
@@ -277,11 +280,13 @@ export default function FapReport({ request, hotelIndex, hotelName, canEdit = tr
 
   const handleExport = () => {
     const headers = [
-      "ID", "ФИО", "Номер", "Тариф", "Суток",
+      "ID", "ФИО", "Тип", "Номер", "Тариф", "Суток",
       "Завтрак", "Обед", "Ужин", "Ст-ть питания", "Ст-ть проживания", "Итого",
     ];
     const dataRows = reportRows.map((row, i) => [
-      i + 1, row.fullName, row.roomNumber, row.roomCategory, toNum(row.daysCount),
+      i + 1, row.fullName,
+      PERSON_TYPE_CONFIG[row.personType === "CREW" ? "CREW" : "PASSENGER"].label,
+      row.roomNumber, row.roomCategory, toNum(row.daysCount),
       toNum(row.breakfast), toNum(row.lunch), toNum(row.dinner),
       toNum(row.foodCost), toNum(row.accommodationCost), rowTotal(row),
     ]);
@@ -298,8 +303,8 @@ export default function FapReport({ request, hotelIndex, hotelName, canEdit = tr
       {/* Header */}
       <div className={classes.header}>
         <div className={classes.headerLeft}>
-          <button className={classes.backBtn} onClick={() => navigate(`/fapv2/${request?.id}`)}>
-            ←
+          <button className={classes.backBtn} onClick={() => navigate(`/fapv2/${request?.id}`)} aria-label="Назад">
+            <img src="/arrow.png" alt="" />
           </button>
           <div className={classes.title}>Отчёт — {hotelName}</div>
           {people.length > 0 && (
@@ -307,15 +312,8 @@ export default function FapReport({ request, hotelIndex, hotelName, canEdit = tr
           )}
         </div>
         <div className={classes.headerRight}>
-          <Button
-            backgroundcolor={showChat ? "var(--dark-blue)" : "#F6F7FB"}
-            color={showChat ? "#fff" : "#545873"}
-            onClick={() => setShowChat((v) => !v)}
-          >
-            Чат
-          </Button>
           <Button backgroundcolor="#F6F7FB" color="#545873" onClick={handleExport} disabled={people.length === 0}>
-            ⬇ Excel
+            <DownloadIcon /> Excel
           </Button>
           {user?.subjectType === "EXTERNAL_USER" && (
             <button
@@ -473,7 +471,10 @@ export default function FapReport({ request, hotelIndex, hotelName, canEdit = tr
                         return (
                           <tr key={i}>
                             <td>{displayIndex + 1}</td>
-                            <td className={classes.nameCell}>{person.fullName || "—"}</td>
+                            <td className={classes.nameCell}>
+                              {person.fullName || "—"}
+                              <PersonBadge type={person.personType} />
+                            </td>
                             <td>
                               <input
                                 type="text"
@@ -562,26 +563,9 @@ export default function FapReport({ request, hotelIndex, hotelName, canEdit = tr
           </div>
         )}
       </div>
-
-        {showChat && (
-          <div className={classes.chatPane}>
-            <div className={classes.chatPaneHeader}>
-              <span className={classes.chatPaneTitle}>Чат</span>
-              <button className={classes.chatPaneClose} onClick={() => setShowChat(false)}>✕</button>
-            </div>
-            <div className={classes.chatPaneBody}>
-              <Message
-                activeTab="Комментарий"
-                passengerRequestId={request?.id}
-                token={token}
-                user={user}
-                chatPadding="0"
-                chatHeight="calc(100vh - 200px)"
-              />
-            </div>
-          </div>
-        )}
       </div>
+
+      <FapChat passengerRequestId={request?.id} token={token} user={user} />
 
       {/* Actions */}
       {canEdit && (

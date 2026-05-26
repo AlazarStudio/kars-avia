@@ -21,11 +21,20 @@ export const SERVICE_CONFIG = {
     serviceKind: "LIVING",
   },
   transfer: {
-    label: "Трансфер",
+    label: "Трансфер (в гостиницу)",
     color: "#8B5CF6",
     bg: "#F5F3FF",
     key: "transferService",
     serviceKind: "TRANSFER",
+    direction: "ARRIVAL",
+  },
+  transferDeparture: {
+    label: "Трансфер (в аэропорт)",
+    color: "#7C3AED",
+    bg: "#F5F3FF",
+    key: "departureTransferService",
+    serviceKind: "DEPARTURE_TRANSFER",
+    direction: "DEPARTURE",
   },
   baggage: {
     label: "Доставка багажа",
@@ -34,6 +43,11 @@ export const SERVICE_CONFIG = {
     key: "baggageDeliveryService",
     serviceKind: "BAGGAGE_DELIVERY",
   },
+};
+
+export const PERSON_TYPE_CONFIG = {
+  PASSENGER: { label: "Пассажир", color: "#3B82F6", bg: "#EFF6FF" },
+  CREW: { label: "Экипаж", color: "#8B5CF6", bg: "#F5F3FF" },
 };
 
 export const REQUEST_STATUS_CONFIG = {

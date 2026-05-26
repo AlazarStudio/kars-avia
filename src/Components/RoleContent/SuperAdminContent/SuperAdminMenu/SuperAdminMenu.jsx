@@ -24,7 +24,7 @@ const SuperAdminMenu = ({
   const requestsIds = ["relay", "representativeRequests", "fapv2", "orders", undefined, "", null];
   const manageIds = ["airlines", "airlineAccess", "airlineNotifications", "hotels", "driversCompany", "driversList", "company", "dispatcherAccess", "dispatcherNotifications", "myCompany"];
   const toolsIds = ["hotel-pms", "travelline", "registerOfContracts", "reports", "analytics"];
-  const serviceIds = ["support", "documentation"];
+  const serviceIds = ["support", "documentation", "maintenanceBanner"];
 
   return (
     <div className={classes.menuContainer}>
@@ -505,6 +505,19 @@ const SuperAdminMenu = ({
           </div>
           <DelayedText show={menuOpen} delay={200}>Помощь</DelayedText>
           {!menuOpen && <span className={classes.tooltip}>Помощь</span>}
+        </Link>
+        <Link
+          to={"/maintenanceBanner"}
+          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
+            } ${id == "maintenanceBanner" && classes.menu_items__activeElem}`}
+        >
+          <div className={classes.svgWrapper}>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M12 9V13M12 17H12.01M10.29 3.86L1.82 18C1.64537 18.3024 1.55296 18.6453 1.55199 18.9945C1.55101 19.3437 1.6415 19.6871 1.81442 19.9905C1.98734 20.2939 2.23672 20.5467 2.53773 20.7239C2.83875 20.901 3.18058 20.9962 3.53 21H20.47C20.8194 20.9962 21.1613 20.901 21.4623 20.7239C21.7633 20.5467 22.0127 20.2939 22.1856 19.9905C22.3585 19.6871 22.449 19.3437 22.448 18.9945C22.447 18.6453 22.3546 18.3024 22.18 18L13.71 3.86C13.5318 3.56611 13.2807 3.32312 12.9812 3.15448C12.6817 2.98585 12.3438 2.89725 12 2.89725C11.6562 2.89725 11.3183 2.98585 11.0188 3.15448C10.7193 3.32312 10.4682 3.56611 10.29 3.86Z" stroke="var(--menu-gray)" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+          <DelayedText show={menuOpen} delay={200}>Плашка техработ</DelayedText>
+          {!menuOpen && <span className={classes.tooltip}>Плашка техработ</span>}
         </Link>
         </MenuSection>
         {/* <Link

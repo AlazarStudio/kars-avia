@@ -8,6 +8,7 @@ import {
   getCookie,
 } from "../../../../../graphQL_requests";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
+import ChevronIcon from "../../../../shared/icons/ChevronIcon";
 import { SERVICE_STATUS_CONFIG, formatTime } from "../fapConstants";
 import Button from "../../../Standart/Button/Button";
 import AddRepresentativeBaggageDriver from "../../AddRepresentativeBaggageDriver/AddRepresentativeBaggageDriver";
@@ -120,7 +121,7 @@ export default function FapBaggageSection({ service, color, request, onRefetch, 
           <span style={{ fontSize: 13, color: "#545873" }}>
             {drivers.length} водит.
           </span>
-          {!isPage && <span className={`${classes.chevron} ${isOpen ? classes.chevronOpen : ""}`}>▾</span>}
+          {!isPage && <ChevronIcon className={`${classes.chevron} ${isOpen ? classes.chevronOpen : ""}`} />}
         </div>
       </div>
 

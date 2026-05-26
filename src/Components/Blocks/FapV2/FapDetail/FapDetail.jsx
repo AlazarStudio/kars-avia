@@ -24,10 +24,14 @@ import Header from "../../Header/Header";
 import { useToast } from "../../../../contexts/ToastContext";
 import AddRepresentativeService from "../../AddRepresentativeService/AddRepresentativeService";
 import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
-import Message from "../../Message/Message";
 import CopyIcon from "../../../../shared/icons/CopyIcon";
+import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
+import CancelIcon from "../../../../shared/icons/CancelIcon";
+import ChevronIcon from "../../../../shared/icons/ChevronIcon";
+import FapChat from "../FapChat/FapChat";
 import { isExternalUser } from "../../../../utils/access";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
+import FapCrewModal from "./FapCrewModal";
 
 const STATUS_TRANSITIONS = {
   CREATED: ["ACCEPTED"],
@@ -56,16 +60,17 @@ const STATUS_CONFIRM_CONFIG = {
   },
 };
 
-const SERVICE_KEYS = ["water", "meal", "living", "transfer", "baggage"];
+const SERVICE_KEYS = ["water", "meal", "living", "transfer", "transferDeparture", "baggage"];
 
 function getServiceData(serviceKey, request) {
   switch (serviceKey) {
-    case "water":    return request.waterService;
-    case "meal":     return request.mealService;
-    case "living":   return request.livingService;
-    case "transfer": return request.transferService;
-    case "baggage":  return request.baggageDeliveryService;
-    default:         return null;
+    case "water":             return request.waterService;
+    case "meal":              return request.mealService;
+    case "living":            return request.livingService;
+    case "transfer":          return request.transferService;
+    case "transferDeparture": return request.departureTransferService;
+    case "baggage":           return request.baggageDeliveryService;
+    default:                  return null;
   }
 }
 
@@ -86,11 +91,15 @@ function getServiceSummary(serviceKey, request) {
       return totalCap > 0 ? `${totalPeople} / ${totalCap} гостей` : `${hotels.length} отелей`;
     }
     case "transfer": {
-      const drivers = request.transferService?.plan?.drivers ?? [];
+      const drivers = request.transferService?.drivers ?? [];
+      return `${drivers.length} водителей`;
+    }
+    case "transferDeparture": {
+      const drivers = request.departureTransferService?.drivers ?? [];
       return `${drivers.length} водителей`;
     }
     case "baggage": {
-      const drivers = request.baggageDeliveryService?.plan?.drivers ?? [];
+      const drivers = request.baggageDeliveryService?.drivers ?? [];
       return `${drivers.length} водителей`;
     }
     default:
@@ -108,7 +117,7 @@ export default function FapDetail({ user, canEdit = true }) {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
-  const [showChat, setShowChat] = useState(false);
+  const [showCrew, setShowCrew] = useState(false);
   const [pendingStatus, setPendingStatus] = useState(null);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
 
@@ -168,9 +177,7 @@ export default function FapDetail({ user, canEdit = true }) {
   if (!request) {
     return (
       <div className={classes.page}>
-        <div style={{ padding: 40, color: "#94A3B8", fontFamily: "Inter" }}>
-          Заявка не найдена
-        </div>
+        <div className={classes.emptyState}>Заявка не найдена</div>
       </div>
     );
   }
@@ -225,7 +232,11 @@ export default function FapDetail({ user, canEdit = true }) {
     <div className={classes.page}>
       <Header>
         <div className={classes.headerNav}>
-          <button className={classes.backBtn} onClick={() => navigate("/fapv2")}>
+          <button
+            className={classes.backBtn}
+            onClick={() => navigate("/fapv2")}
+            aria-label="Назад"
+          >
             <img src="/arrow.png" alt="" />
           </button>
           <span className={classes.headerNavTitle}>Заявка {request.flightNumber}</span>
@@ -277,6 +288,15 @@ export default function FapDetail({ user, canEdit = true }) {
                     + Услуга
                   </Button>
                 )}
+                {request.includesCrew && (
+                  <Button
+                    backgroundcolor="#F6F7FB"
+                    color="#545873"
+                    onClick={() => setShowCrew(true)}
+                  >
+                    Экипаж ({request.crewMembers?.length ?? 0})
+                  </Button>
+                )}
               </>
             )}
             <Button
@@ -284,14 +304,8 @@ export default function FapDetail({ user, canEdit = true }) {
               color={showLogs ? "#fff" : "#545873"}
               onClick={() => setShowLogs((v) => !v)}
             >
+              <ScheduleIcon color="currentColor" />
               История
-            </Button>
-            <Button
-              backgroundcolor={showChat ? "var(--dark-blue)" : "#F6F7FB"}
-              color={showChat ? "#fff" : "#545873"}
-              onClick={() => setShowChat((v) => !v)}
-            >
-              Чат
             </Button>
             {canEdit && !isFinal && (
               <Button
@@ -299,6 +313,7 @@ export default function FapDetail({ user, canEdit = true }) {
                 color="#EF4444"
                 onClick={() => setShowCancelModal(true)}
               >
+                <CancelIcon />
                 Отменить заявку
               </Button>
             )}
@@ -318,8 +333,7 @@ export default function FapDetail({ user, canEdit = true }) {
             return (
               <div
                 key={key}
-                className={classes.section}
-                style={{ cursor: "pointer" }}
+                className={`${classes.section} ${classes.navCard}`}
                 onClick={() => navigate(`/fapv2/${request.id}/service/${key}`)}
               >
                 <div className={classes.sectionHeader}>
@@ -334,10 +348,8 @@ export default function FapDetail({ user, canEdit = true }) {
                     </span>
                   </div>
                   <div className={classes.sectionHeaderRight}>
-                    {summary && (
-                      <span style={{ fontSize: 14, color: "var(--main-gray)" }}>{summary}</span>
-                    )}
-                    <span style={{ fontSize: 18, color: "var(--main-gray)", lineHeight: 1 }}>›</span>
+                    {summary && <span className={classes.sectionSummary}>{summary}</span>}
+                    <ChevronIcon className={classes.navChevron} />
                   </div>
                 </div>
               </div>
@@ -345,27 +357,9 @@ export default function FapDetail({ user, canEdit = true }) {
           })}
         </div>
 
-        {showChat && (
-          <div className={classes.chatPane}>
-            <div className={classes.chatPaneHeader}>
-              <span className={classes.chatPaneTitle}>Чат</span>
-              <button className={classes.chatPaneClose} onClick={() => setShowChat(false)}>
-                ✕
-              </button>
-            </div>
-            <div className={classes.chatPaneBody}>
-              <Message
-                activeTab="Комментарий"
-                passengerRequestId={request.id}
-                token={token}
-                user={user}
-                chatPadding="0"
-                chatHeight="calc(100vh - 313px)"
-              />
-            </div>
-          </div>
-        )}
       </div>
+
+      <FapChat passengerRequestId={request.id} token={token} user={user} />
 
       {canEdit && showAddService && (
         <AddRepresentativeService
@@ -383,6 +377,16 @@ export default function FapDetail({ user, canEdit = true }) {
         onClose={() => setShowLogs(false)}
         passengerRequestId={request.id}
       />
+
+      {canEdit && (
+        <FapCrewModal
+          open={showCrew}
+          onClose={() => setShowCrew(false)}
+          request={request}
+          token={token}
+          onSaved={refetch}
+        />
+      )}
 
       {/* Status change confirmation dialog */}
       <Dialog

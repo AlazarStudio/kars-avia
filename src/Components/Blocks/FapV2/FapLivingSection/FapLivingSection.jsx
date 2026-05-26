@@ -15,7 +15,11 @@ import AddRepresentativeHotel from "../../AddRepresentativeHotel/AddRepresentati
 import HotelGuestsModal from "./HotelGuestsModal";
 import { useToast } from "../../../../contexts/ToastContext";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon.jsx";
+import ChevronIcon from "../../../../shared/icons/ChevronIcon.jsx";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
+import PersonTypeToggle from "../PersonTypeToggle/PersonTypeToggle";
+import PersonBadge from "../PersonBadge/PersonBadge";
+import HomeIcon from "../../../../shared/icons/HomeIcon.jsx";
 
 export default function FapLivingSection({ service, color, request, onRefetch, isOpen, onToggle, isPage, canEdit = true, showLinks = true, user }) {
   const navigate = useNavigate();
@@ -33,8 +37,10 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
 
   const [hotelMgmtIndex, setHotelMgmtIndex] = useState(null);
   const [removeHotelIndex, setRemoveHotelIndex] = useState(null);
+  const [personMode, setPersonMode] = useState("PASSENGER"); // PASSENGER | CREW
 
   const statusCfg = SERVICE_STATUS_CONFIG[service?.status] || {};
+  const matchesMode = (p) => (p?.personType === "CREW" ? "CREW" : "PASSENGER") === personMode;
 
   const [completeLivingEarly] = useMutation(COMPLETE_PASSENGER_REQUEST_LIVING_EARLY, {
     context: { headers: { Authorization: `Bearer ${token}` } },
@@ -112,7 +118,7 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
             {hotels.length}{" "}
             {hotels.length === 1 ? "отель" : hotels.length < 5 ? "отеля" : "отелей"}
           </span>
-          {!isPage && <span className={`${classes.chevron} ${isOpen ? classes.chevronOpen : ""}`}>▾</span>}
+          {!isPage && <ChevronIcon className={`${classes.chevron} ${isOpen ? classes.chevronOpen : ""}`} />}
         </div>
       </div>
 
@@ -159,8 +165,15 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
             )}
           </div>
 
+          {request?.includesCrew && (
+            <div style={{ padding: "0 0 12px" }}>
+              <PersonTypeToggle value={personMode} onChange={setPersonMode} />
+            </div>
+          )}
+
           {displayHotels.map(({ hotel, origIdx }) => {
             const people = hotel.people || [];
+            const displayPeople = people.filter(matchesMode);
             const capacity = hotel.peopleCount || 0;
             const fillPct = capacity > 0 ? Math.min(100, Math.round((people.length / capacity) * 100)) : 0;
             const isFull = capacity > 0 && people.length >= capacity;
@@ -256,7 +269,7 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
                         <DeleteIcon cursor="pointer" />
                       </button>
                     )}
-                    <span className={`${classes.chevron} ${isExpanded ? classes.chevronOpen : ""}`}>▾</span>
+                    <ChevronIcon className={`${classes.chevron} ${isExpanded ? classes.chevronOpen : ""}`} />
                   </div>
                 </div>
 
@@ -271,17 +284,17 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
 
                 {isExpanded && (
                   <div className={lClasses.hotelBody}>
-                    {people.length === 0 ? (
+                    {displayPeople.length === 0 ? (
                       <div className={lClasses.emptyGuests}>
-                        <span className={lClasses.emptyGuestsIcon}>🛏</span>
-                        <span>Гости ещё не добавлены</span>
+                        <span className={lClasses.emptyGuestsIcon}><HomeIcon /></span>
+                        <span>{personMode === "CREW" ? "Экипаж ещё не добавлен" : "Гости ещё не добавлены"}</span>
                         {(canEdit || isExtHotel) && !isCompleted && (
                           <Button
                             backgroundcolor="var(--dark-blue)"
                             color="#fff"
                             onClick={(e) => { e.stopPropagation(); setHotelMgmtIndex(origIdx); }}
                           >
-                            + Добавить гостя
+                            {personMode === "CREW" ? "+ Добавить из экипажа" : "+ Добавить гостя"}
                           </Button>
                         )}
                       </div>
@@ -296,22 +309,27 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
                           </tr>
                         </thead>
                         <tbody>
-                          {people.map((p, pi) => (
-                            <tr key={pi}>
-                              <td>{p.fullName || "—"}</td>
-                              <td>{p.phone || "—"}</td>
-                              <td>
-                                {p.roomNumber ? (
-                                  <span className={lClasses.roomBadge}>{p.roomNumber}</span>
-                                ) : "—"}
-                              </td>
-                              <td>
-                                {p.roomCategory ? (
-                                  <span className={lClasses.categoryBadge}>{p.roomCategory}</span>
-                                ) : "—"}
-                              </td>
-                            </tr>
-                          ))}
+                          {displayPeople.map((p, pi) => {
+                            return (
+                              <tr key={pi}>
+                                <td>
+                                  {p.fullName || "—"}
+                                  <PersonBadge type={p.personType} />
+                                </td>
+                                <td>{p.phone || "—"}</td>
+                                <td>
+                                  {p.roomNumber ? (
+                                    <span className={lClasses.roomBadge}>{p.roomNumber}</span>
+                                  ) : "—"}
+                                </td>
+                                <td>
+                                  {p.roomCategory ? (
+                                    <span className={lClasses.categoryBadge}>{p.roomCategory}</span>
+                                  ) : "—"}
+                                </td>
+                              </tr>
+                            );
+                          })}
                         </tbody>
                       </table>
                     )}
@@ -341,6 +359,7 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
         hotelIndex={hotelMgmtIndex ?? 0}
         onRefetch={onRefetch}
         canEdit={canEdit || isExtHotel}
+        personMode={personMode}
         onGenerateReport={
           hotelMgmtIndex != null
             ? () => {

@@ -11,6 +11,7 @@ import {
   SERVICE_STATUS_CONFIG,
   formatTime,
 } from "../fapConstants";
+import ChevronIcon from "../../../../shared/icons/ChevronIcon";
 import Button from "../../../Standart/Button/Button";
 import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
@@ -106,7 +107,7 @@ export default function FapWaterMealSection({
               ? `${people.length} / ${service.plan.peopleCount} чел.`
               : `${people.length} чел.`}
           </span>
-          {!isPage && <span className={`${classes.chevron} ${isOpen ? classes.chevronOpen : ""}`}>▾</span>}
+          {!isPage && <ChevronIcon className={`${classes.chevron} ${isOpen ? classes.chevronOpen : ""}`} />}
         </div>
       </div>
 

@@ -1,0 +1,86 @@
+.section {
+    width: 100%;
+    min-width: 1000px;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    padding: 30px;
+    overflow: auto;
+    position: relative;
+}
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+    max-width: 640px;
+}
+
+.field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.label {
+    font-size: 14px;
+    color: var(--main-gray);
+    font-weight: 600;
+}
+
+.textarea {
+    width: 100%;
+    min-height: 80px;
+    font-size: 14px;
+}
+
+.dateRow {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.dateInput {
+    width: 260px;
+}
+
+.previewBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.previewBanner {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background-color: #C03B28;
+    color: var(--white);
+    padding: 8px 16px;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.previewMessage {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.previewTimer {
+    flex: 0 0 auto;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    padding-left: 8px;
+    border-left: 1px solid rgba(255, 255, 255, 0.4);
+}
+
+.previewEmpty {
+    font-size: 13px;
+    color: var(--text-gray);
+}
+
+.actions {
+    display: flex;
+    gap: 12px;
+}

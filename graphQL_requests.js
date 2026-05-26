@@ -1960,16 +1960,16 @@ export const REMOVE_PASSENGER_REQUEST_HOTEL = gql`
 `;
 
 export const ADD_PASSENGER_REQUEST_DRIVER = gql`
-  mutation AddPassengerRequestDriver($requestId: ID!, $driver: PassengerServiceDriverInput!) {
-    addPassengerRequestDriver(requestId: $requestId, driver: $driver) {
+  mutation AddPassengerRequestDriver($requestId: ID!, $driver: PassengerServiceDriverInput!, $direction: TransferDirection) {
+    addPassengerRequestDriver(requestId: $requestId, driver: $driver, direction: $direction) {
       id
     }
   }
 `;
 
 export const REMOVE_PASSENGER_REQUEST_DRIVER = gql`
-  mutation RemovePassengerRequestDriver($requestId: ID!, $driverIndex: Int!) {
-    removePassengerRequestDriver(requestId: $requestId, driverIndex: $driverIndex) {
+  mutation RemovePassengerRequestDriver($requestId: ID!, $driverIndex: Int!, $direction: TransferDirection) {
+    removePassengerRequestDriver(requestId: $requestId, driverIndex: $driverIndex, direction: $direction) {
       id
     }
   }
@@ -1980,11 +1980,13 @@ export const ADD_PASSENGER_REQUEST_DRIVER_PERSON = gql`
     $requestId: ID!
     $driverIndex: Int!
     $person: PassengerServiceDriverPersonInput!
+    $direction: TransferDirection
   ) {
     addPassengerRequestDriverPerson(
       requestId: $requestId
       driverIndex: $driverIndex
       person: $person
+      direction: $direction
     ) {
       id
     }
@@ -1997,12 +1999,14 @@ export const UPDATE_PASSENGER_REQUEST_DRIVER_PERSON = gql`
     $driverIndex: Int!
     $personIndex: Int!
     $person: PassengerServiceDriverPersonInput!
+    $direction: TransferDirection
   ) {
     updatePassengerRequestDriverPerson(
       requestId: $requestId
       driverIndex: $driverIndex
       personIndex: $personIndex
       person: $person
+      direction: $direction
     ) {
       id
     }
@@ -2014,11 +2018,13 @@ export const REMOVE_PASSENGER_REQUEST_DRIVER_PERSON = gql`
     $requestId: ID!
     $driverIndex: Int!
     $personIndex: Int!
+    $direction: TransferDirection
   ) {
     removePassengerRequestDriverPerson(
       requestId: $requestId
       driverIndex: $driverIndex
       personIndex: $personIndex
+      direction: $direction
     ) {
       id
     }
@@ -2093,8 +2099,16 @@ export const COMPLETE_PASSENGER_REQUEST_BAGGAGE_EARLY = gql`
 `;
 
 export const COMPLETE_PASSENGER_REQUEST_TRANSFER_EARLY = gql`
-  mutation CompletePassengerRequestTransferEarly($requestId: ID!, $reason: String!) {
-    completePassengerRequestTransferEarly(requestId: $requestId, reason: $reason) {
+  mutation CompletePassengerRequestTransferEarly($requestId: ID!, $reason: String!, $direction: TransferDirection) {
+    completePassengerRequestTransferEarly(requestId: $requestId, reason: $reason, direction: $direction) {
+      id
+    }
+  }
+`;
+
+export const UPDATE_PASSENGER_REQUEST_CREW = gql`
+  mutation UpdatePassengerRequestCrew($requestId: ID!, $crewMembers: [PassengerRequestCrewMemberInput!]!) {
+    updatePassengerRequestCrew(requestId: $requestId, crewMembers: $crewMembers) {
       id
     }
   }
@@ -3086,6 +3100,14 @@ export const GET_PASSENGER_REQUESTS = gql`
           plannedAt
         }
       }
+      departureTransferService {
+        status
+        plan {
+          enabled
+          peopleCount
+          plannedAt
+        }
+      }
       baggageDeliveryService {
         status
         plan {
@@ -3248,6 +3270,15 @@ export const GET_PASSENGER_REQUEST = gql`
       id
       flightNumber
       flightDate
+      includesCrew
+      includesPassengers
+      crewMembers {
+        airlinePersonalId
+        fullName
+        position
+        gender
+        phone
+      }
       createdBy {
         id
         name
@@ -3294,6 +3325,8 @@ export const GET_PASSENGER_REQUEST = gql`
             roomNumber
             roomCategory
             roomKind
+            personType
+            airlinePersonalId
             accommodationChesses {
               hotelIndex
               hotelName
@@ -3336,6 +3369,38 @@ export const GET_PASSENGER_REQUEST = gql`
           people {
             fullName
             phone
+            personType
+            airlinePersonalId
+          }
+        }
+      }
+      departureTransferService {
+        plan {
+          enabled
+          peopleCount
+          plannedAt
+        }
+        status
+        times {
+          acceptedAt
+          inProgressAt
+          finishedAt
+          cancelledAt
+        }
+        drivers {
+          fullName
+          phone
+          peopleCount
+          pickupAt
+          link
+          linkPWA
+          addressFrom
+          addressTo
+          people {
+            fullName
+            phone
+            personType
+            airlinePersonalId
           }
         }
       }
@@ -5785,6 +5850,47 @@ export const UPDATE_PATCH_NOTE = gql`
 `;
 
 // Patch Notes
+
+
+// Плашка техработ (Maintenance Banner)
+
+// Публичный запрос — работает без авторизации (страница входа и т.д.)
+export const MAINTENANCE_BANNER = gql`
+  query MaintenanceBanner {
+    maintenanceBanner {
+      isVisible
+      message
+      endsAt
+      enabled
+    }
+  }
+`;
+
+// Редактирование — только SUPERADMIN (защищено на бэке)
+export const UPDATE_MAINTENANCE_BANNER = gql`
+  mutation UpdateMaintenanceBanner($input: UpdateMaintenanceBannerInput!) {
+    updateMaintenanceBanner(input: $input) {
+      isVisible
+      enabled
+      message
+      endsAt
+    }
+  }
+`;
+
+// Подписка — прилетает при каждом изменении плашки (real-time)
+export const MAINTENANCE_BANNER_UPDATED = gql`
+  subscription MaintenanceBannerUpdated {
+    maintenanceBannerUpdated {
+      isVisible
+      message
+      endsAt
+      enabled
+    }
+  }
+`;
+
+// Maintenance Banner
 
 
 // Документация

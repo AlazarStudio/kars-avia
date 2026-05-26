@@ -13,21 +13,25 @@ import {
   REMOVE_PASSENGER_REQUEST_DRIVER,
   getCookie,
 } from "../../../../../graphQL_requests";
-import { SERVICE_STATUS_CONFIG, formatTime, formatDateTime } from "../fapConstants";
+import { SERVICE_STATUS_CONFIG, PERSON_TYPE_CONFIG, formatTime, formatDateTime } from "../fapConstants";
 import Button from "../../../Standart/Button/Button";
 import AddRepresentativeDriver from "../../AddRepresentativeDriver/AddRepresentativeDriver";
 import { useToast } from "../../../../contexts/ToastContext";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
+import ChevronIcon from "../../../../shared/icons/ChevronIcon";
+import PersonTypeToggle from "../PersonTypeToggle/PersonTypeToggle";
+import PersonBadge from "../PersonBadge/PersonBadge";
 
 const emptyPerson = { fullName: "", phone: "" };
 
-export default function FapTransferSection({ service, color, request, onRefetch, isOpen, onToggle, isPage, canEdit = true, showLinks = true }) {
+export default function FapTransferSection({ service, color, request, onRefetch, isOpen, onToggle, isPage, canEdit = true, showLinks = true, direction = "ARRIVAL" }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
   const [showAddDriver, setShowAddDriver] = useState(false);
   const [expandedDrivers, setExpandedDrivers] = useState({});
+  const [personMode, setPersonMode] = useState("PASSENGER"); // PASSENGER | CREW
 
   // Early complete
   const [showEarlyModal, setShowEarlyModal] = useState(false);
@@ -73,10 +77,21 @@ export default function FapTransferSection({ service, color, request, onRefetch,
 
   const totalPassengers = drivers.reduce((sum, d) => sum + (d.people?.length || 0), 0);
 
+  const matchesMode = (p) => (p?.personType === "CREW" ? "CREW" : "PASSENGER") === personMode;
+
+  // Ростер экипажа и уже назначенные в этом направлении
+  const crewRoster = request?.crewMembers || [];
+  const assignedCrewIds = new Set(
+    drivers.flatMap((d) => (d.people || []))
+      .filter((p) => p?.personType === "CREW" && p?.airlinePersonalId)
+      .map((p) => p.airlinePersonalId)
+  );
+  const availableCrew = crewRoster.filter((m) => !assignedCrewIds.has(m.airlinePersonalId));
+
   const handleCompleteEarly = async (reason) => {
     try {
       setSaving(true);
-      await completeTransferEarly({ variables: { requestId: request.id, reason } });
+      await completeTransferEarly({ variables: { requestId: request.id, reason, direction } });
       setShowEarlyModal(false);
       onRefetch();
       success("Услуга завершена досрочно");
@@ -89,20 +104,39 @@ export default function FapTransferSection({ service, color, request, onRefetch,
 
   const handlePersonSave = async () => {
     if (!personModal) return;
-    const { driverIndex, personIndex, form } = personModal;
-    if (!form.fullName.trim()) {
-      notifyError("Укажите ФИО пассажира");
-      return;
+    const { driverIndex, personIndex, form, mode } = personModal;
+    let person;
+    if (mode === "CREW") {
+      const member = crewRoster.find((m) => m.airlinePersonalId === form.airlinePersonalId);
+      if (!member) {
+        notifyError("Выберите сотрудника экипажа");
+        return;
+      }
+      person = {
+        fullName: member.fullName,
+        phone: member.phone || undefined,
+        personType: "CREW",
+        airlinePersonalId: member.airlinePersonalId,
+      };
+    } else {
+      if (!form.fullName.trim()) {
+        notifyError("Укажите ФИО пассажира");
+        return;
+      }
+      person = {
+        fullName: form.fullName.trim(),
+        phone: form.phone.trim() || undefined,
+        personType: "PASSENGER",
+      };
     }
-    const person = { fullName: form.fullName.trim(), phone: form.phone.trim() || undefined };
     try {
       setSaving(true);
       if (personIndex != null) {
-        await updateDriverPerson({ variables: { requestId: request.id, driverIndex, personIndex, person } });
+        await updateDriverPerson({ variables: { requestId: request.id, driverIndex, personIndex, person, direction } });
         success("Пассажир обновлён");
       } else {
-        await addDriverPerson({ variables: { requestId: request.id, driverIndex, person } });
-        success("Пассажир добавлен");
+        await addDriverPerson({ variables: { requestId: request.id, driverIndex, person, direction } });
+        success(mode === "CREW" ? "Член экипажа добавлен" : "Пассажир добавлен");
       }
       onRefetch();
       setPersonModal(null);
@@ -117,7 +151,7 @@ export default function FapTransferSection({ service, color, request, onRefetch,
     if (deleteDriverConfirm == null) return;
     try {
       setSaving(true);
-      await removeDriver({ variables: { requestId: request.id, driverIndex: deleteDriverConfirm } });
+      await removeDriver({ variables: { requestId: request.id, driverIndex: deleteDriverConfirm, direction } });
       onRefetch();
       success("Водитель удалён");
     } catch {
@@ -133,7 +167,7 @@ export default function FapTransferSection({ service, color, request, onRefetch,
     const { driverIndex, personIndex } = deleteConfirm;
     try {
       setSaving(true);
-      await removeDriverPerson({ variables: { requestId: request.id, driverIndex, personIndex } });
+      await removeDriverPerson({ variables: { requestId: request.id, driverIndex, personIndex, direction } });
       onRefetch();
       success("Пассажир удалён");
     } catch {
@@ -149,7 +183,9 @@ export default function FapTransferSection({ service, color, request, onRefetch,
       <div className={classes.sectionHeader} onClick={onToggle}>
         <div className={classes.sectionHeaderLeft}>
           <div className={classes.sectionDot} style={{ background: color }} />
-          <span className={classes.sectionName}>Трансфер</span>
+          <span className={classes.sectionName}>
+            {direction === "DEPARTURE" ? "Трансфер (в аэропорт)" : "Трансфер (в гостиницу)"}
+          </span>
           <span className={classes.svcStatusBadge} style={{ color: statusCfg.color, background: statusCfg.bg }}>
             {statusCfg.label || service.status}
           </span>
@@ -159,7 +195,7 @@ export default function FapTransferSection({ service, color, request, onRefetch,
             {drivers.length} водит. · {totalPassengers}
             {service.plan?.peopleCount ? `/${service.plan.peopleCount}` : ""} пасс.
           </span>
-          {!isPage && <span className={`${classes.chevron} ${isOpen ? classes.chevronOpen : ""}`}>▾</span>}
+          {!isPage && <ChevronIcon className={`${classes.chevron} ${isOpen ? classes.chevronOpen : ""}`} />}
         </div>
       </div>
 
@@ -208,10 +244,17 @@ export default function FapTransferSection({ service, color, request, onRefetch,
             )}
           </div>
 
+          {request?.includesCrew && (
+            <div style={{ padding: "0 0 12px" }}>
+              <PersonTypeToggle value={personMode} onChange={setPersonMode} />
+            </div>
+          )}
+
           {drivers.map((driver, idx) => {
-            const people = driver.people || [];
+            const allPeople = driver.people || [];
+            const people = allPeople.filter(matchesMode);
             const isExpanded = expandedDrivers[idx];
-            const remaining = driver.peopleCount ? driver.peopleCount - people.length : null;
+            const remaining = driver.peopleCount ? driver.peopleCount - allPeople.length : null;
             return (
               <div key={idx} className={classes.subCard}>
                 <div className={classes.subCardHeader} onClick={() => toggleDriver(idx)}>
@@ -221,7 +264,7 @@ export default function FapTransferSection({ service, color, request, onRefetch,
                       {driver.phone && <span>{driver.phone}</span>}
                       {driver.pickupAt && <span> · {formatDateTime(driver.pickupAt)}</span>}
                       {driver.addressFrom && <span> · {driver.addressFrom}</span>}
-                      <span> · {people.length}{driver.peopleCount ? `/${driver.peopleCount}` : ""} пасс.</span>
+                      <span> · {allPeople.length}{driver.peopleCount ? `/${driver.peopleCount}` : ""} пасс.</span>
                     </div>
                   </div>
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -254,14 +297,16 @@ export default function FapTransferSection({ service, color, request, onRefetch,
                         <DeleteIcon cursor="pointer" />
                       </button>
                     )}
-                    <span className={`${classes.chevron} ${isExpanded ? classes.chevronOpen : ""}`}>▾</span>
+                    <ChevronIcon className={`${classes.chevron} ${isExpanded ? classes.chevronOpen : ""}`} />
                   </div>
                 </div>
 
                 {isExpanded && (
                   <div className={classes.subCardBody}>
                     {people.length === 0 ? (
-                      <div className={classes.tableEmpty} style={{ padding: "12px 0" }}>Пассажиры не добавлены</div>
+                      <div className={classes.tableEmpty} style={{ padding: "12px 0" }}>
+                        {personMode === "CREW" ? "Экипаж не добавлен" : "Пассажиры не добавлены"}
+                      </div>
                     ) : (
                       <table className={classes.table}>
                         <thead>
@@ -275,19 +320,24 @@ export default function FapTransferSection({ service, color, request, onRefetch,
                         <tbody>
                           {people.map((p, pi) => (
                             <tr key={pi}>
-                              <td style={{ color: "#94A3B8", width: 28 }}>{pi + 1}</td>
-                              <td>{p.fullName}</td>
+                              <td style={{ color: "var(--text-gray)", width: 28 }}>{pi + 1}</td>
+                              <td>
+                                {p.fullName}
+                                {p.personType === "CREW" && <PersonBadge type="CREW" />}
+                              </td>
                               <td>{p.phone || "—"}</td>
                               {canEdit && !isCompleted && (
                                 <td style={{ display: "flex", gap: 6, justifyContent: "flex-end" }}>
-                                  <button
-                                    type="button"
-                                    style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}
-                                    onClick={() => setPersonModal({ driverIndex: idx, personIndex: pi, form: { fullName: p.fullName || "", phone: p.phone || "" } })}
-                                    title="Редактировать"
-                                  >
-                                    <EditPencilIcon cursor="pointer" />
-                                  </button>
+                                  {p.personType !== "CREW" && (
+                                    <button
+                                      type="button"
+                                      style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}
+                                      onClick={() => setPersonModal({ driverIndex: idx, personIndex: pi, mode: "PASSENGER", form: { fullName: p.fullName || "", phone: p.phone || "" } })}
+                                      title="Редактировать"
+                                    >
+                                      <EditPencilIcon cursor="pointer" />
+                                    </button>
+                                  )}
                                   <button
                                     type="button"
                                     style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}
@@ -306,13 +356,25 @@ export default function FapTransferSection({ service, color, request, onRefetch,
 
                     {canEdit && !isCompleted && (remaining == null || remaining > 0) && (
                       <div style={{ paddingTop: 10 }}>
-                        <Button
-                          backgroundcolor="var(--dark-blue)"
-                          color="#fff"
-                          onClick={() => setPersonModal({ driverIndex: idx, personIndex: null, form: { ...emptyPerson } })}
-                        >
-                          + Добавить пассажира
-                        </Button>
+                        {personMode === "CREW" ? (
+                          <Button
+                            backgroundcolor="var(--dark-blue)"
+                            color="#fff"
+                            cursor={availableCrew.length === 0 ? "not-allowed" : "pointer"}
+                            disabled={availableCrew.length === 0}
+                            onClick={() => availableCrew.length > 0 && setPersonModal({ driverIndex: idx, personIndex: null, mode: "CREW", form: { airlinePersonalId: "" } })}
+                          >
+                            + Добавить из экипажа
+                          </Button>
+                        ) : (
+                          <Button
+                            backgroundcolor="var(--dark-blue)"
+                            color="#fff"
+                            onClick={() => setPersonModal({ driverIndex: idx, personIndex: null, mode: "PASSENGER", form: { ...emptyPerson } })}
+                          >
+                            + Добавить пассажира
+                          </Button>
+                        )}
                       </div>
                     )}
                   </div>
@@ -330,36 +392,62 @@ export default function FapTransferSection({ service, color, request, onRefetch,
           show={showAddDriver}
           onClose={() => { setShowAddDriver(false); onRefetch(); }}
           request={request}
+          direction={direction}
         />
       )}
 
-      {/* Passenger add/edit dialog */}
+      {/* Passenger / crew add/edit dialog */}
       {personModal && (
         <Dialog open onClose={() => setPersonModal(null)} PaperProps={{ sx: { borderRadius: "15px" } }}>
           <DialogTitle>
-            {personModal.personIndex != null ? "Редактировать пассажира" : "Добавить пассажира"}
+            {personModal.mode === "CREW"
+              ? "Добавить из экипажа"
+              : personModal.personIndex != null
+              ? "Редактировать пассажира"
+              : "Добавить пассажира"}
           </DialogTitle>
           <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "12px !important", minWidth: 320 }}>
-            <div>
-              <label className={classes.addFormLabel}>ФИО *</label>
-              <input
-                className={classes.addFormInput}
-                style={{ width: "100%", marginTop: 4 }}
-                value={personModal.form.fullName}
-                onChange={(e) => setPersonModal((m) => ({ ...m, form: { ...m.form, fullName: e.target.value } }))}
-                placeholder="Иванов Иван Иванович"
-              />
-            </div>
-            <div>
-              <label className={classes.addFormLabel}>Телефон</label>
-              <input
-                className={classes.addFormInput}
-                style={{ width: "100%", marginTop: 4 }}
-                value={personModal.form.phone}
-                onChange={(e) => setPersonModal((m) => ({ ...m, form: { ...m.form, phone: e.target.value } }))}
-                placeholder="+7 999 000 00 00"
-              />
-            </div>
+            {personModal.mode === "CREW" ? (
+              <div>
+                <label className={classes.addFormLabel}>Сотрудник экипажа *</label>
+                <select
+                  className={classes.addFormInput}
+                  style={{ width: "100%", marginTop: 4 }}
+                  value={personModal.form.airlinePersonalId}
+                  onChange={(e) => setPersonModal((m) => ({ ...m, form: { ...m.form, airlinePersonalId: e.target.value } }))}
+                >
+                  <option value="">Выберите сотрудника</option>
+                  {availableCrew.map((m) => (
+                    <option key={m.airlinePersonalId} value={m.airlinePersonalId}>
+                      {[m.fullName, m.position].filter(Boolean).join(", ")}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <>
+                <div>
+                  <label className={classes.addFormLabel}>ФИО *</label>
+                  <input
+                    className={classes.addFormInput}
+                    style={{ width: "100%", marginTop: 4 }}
+                    value={personModal.form.fullName}
+                    onChange={(e) => setPersonModal((m) => ({ ...m, form: { ...m.form, fullName: e.target.value } }))}
+                    placeholder="Иванов Иван Иванович"
+                  />
+                </div>
+                <div>
+                  <label className={classes.addFormLabel}>Телефон</label>
+                  <input
+                    className={classes.addFormInput}
+                    style={{ width: "100%", marginTop: 4 }}
+                    value={personModal.form.phone}
+                    onChange={(e) => setPersonModal((m) => ({ ...m, form: { ...m.form, phone: e.target.value } }))}
+                    placeholder="+7 999 000 00 00"
+                  />
+                </div>
+              </>
+            )}
           </DialogContent>
           <DialogActions sx={{ padding: "8px 16px 16px" }}>
             <Button backgroundcolor="var(--hover-gray)" color="#000" onClick={() => setPersonModal(null)}>

@@ -123,7 +123,13 @@
 }
 
 .emptyGuestsIcon {
-  font-size: 24px;
+  display: inline-flex;
+  opacity: 0.5;
+}
+
+.emptyGuestsIcon svg {
+  width: 28px;
+  height: 28px;
 }
 
 .roomBadge {

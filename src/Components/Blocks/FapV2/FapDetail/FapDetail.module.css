@@ -12,6 +12,7 @@
 } */
 
 .page {
+  position: relative;
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -97,9 +98,9 @@
 }
 
 .statusBadge {
-  padding: 5px 14px;
+  padding: 5px 12px;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 600;
 }
 
@@ -306,6 +307,34 @@
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.sectionSummary {
+  font-size: 14px;
+  color: var(--main-gray);
+}
+
+/* Навигационная карточка услуги (детальная заявки) */
+.navCard {
+  cursor: pointer;
+}
+
+.navChevron {
+  color: var(--main-gray);
+  flex-shrink: 0;
+  transform: rotate(-90deg);
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.navCard:hover .navChevron {
+  transform: translateX(3px) rotate(-90deg);
+  color: var(--dark-blue);
+}
+
+.emptyState {
+  padding: 40px;
+  color: var(--main-gray);
+  font-size: 14px;
 }
 
 .chevron {

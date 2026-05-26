@@ -18,8 +18,9 @@ import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
+import CloseIcon from "../../../../shared/icons/CloseIcon";
 
-const emptyForm = { fullName: "", phone: "", roomNumber: "" };
+const emptyForm = { fullName: "", phone: "", roomNumber: "", personType: "PASSENGER", airlinePersonalId: "" };
 
 function pluralGuests(n) {
   if (n % 10 === 1 && n % 100 !== 11) return `${n} гость`;
@@ -44,6 +45,7 @@ export default function HotelGuestsModal({
   onRefetch,
   onGenerateReport,
   canEdit = true,
+  personMode = "PASSENGER",
 }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
@@ -109,21 +111,40 @@ export default function HotelGuestsModal({
   );
 
   const filteredBookings = useMemo(() => {
-    if (!search.trim()) return indexedBookings;
+    const byMode = indexedBookings.filter(
+      (b) => (b.personType === "CREW" ? "CREW" : "PASSENGER") === personMode
+    );
+    if (!search.trim()) return byMode;
     const q = search.toLowerCase();
-    return indexedBookings.filter(
+    return byMode.filter(
       (b) =>
         (b.fullName ?? "").toLowerCase().includes(q) ||
         (b.phone ?? "").toLowerCase().includes(q) ||
         (b.roomNumber ?? "").toLowerCase().includes(q)
     );
-  }, [indexedBookings, search]);
+  }, [indexedBookings, search, personMode]);
+
+  // Ростер экипажа и уже назначенные (по всем отелям проживания)
+  const crewRoster = request?.crewMembers || [];
+  const assignedCrewIds = useMemo(
+    () =>
+      new Set(
+        (request?.livingService?.hotels ?? [])
+          .flatMap((h) => h?.people || [])
+          .filter((p) => p?.personType === "CREW" && p?.airlinePersonalId)
+          .map((p) => p.airlinePersonalId)
+      ),
+    [request?.livingService?.hotels]
+  );
+  const availableCrew = crewRoster.filter((m) => !assignedCrewIds.has(m.airlinePersonalId));
 
   const hotelCapacity = hotel?.peopleCount ?? null;
-  const canAdd = hotelCapacity == null || bookings.length < hotelCapacity;
+  const canAdd =
+    (hotelCapacity == null || bookings.length < hotelCapacity) &&
+    (personMode !== "CREW" || availableCrew.length > 0);
 
   const openAddForm = () => {
-    setFormData(emptyForm);
+    setFormData({ ...emptyForm, personType: personMode, airlinePersonalId: "" });
     setEditingIndex(null);
     setView("form");
   };
@@ -134,6 +155,8 @@ export default function HotelGuestsModal({
       fullName: b?.fullName ?? "",
       phone: b?.phone ?? "",
       roomNumber: b?.roomNumber ?? "",
+      personType: b?.personType === "CREW" ? "CREW" : "PASSENGER",
+      airlinePersonalId: b?.airlinePersonalId ?? "",
     });
     setEditingIndex(idx);
     setView("form");
@@ -146,6 +169,10 @@ export default function HotelGuestsModal({
   };
 
   const handleFormSubmit = async () => {
+    if (formData.personType === "CREW" && editingIndex == null && !formData.airlinePersonalId) {
+      notifyError("Выберите сотрудника экипажа");
+      return;
+    }
     if (!formData.fullName.trim()) {
       notifyError("Укажите ФИО пассажира");
       return;
@@ -154,6 +181,9 @@ export default function HotelGuestsModal({
       fullName: formData.fullName.trim(),
       phone: formData.phone.trim() || null,
       roomNumber: formData.roomNumber.trim() || null,
+      personType: formData.personType === "CREW" ? "CREW" : "PASSENGER",
+      airlinePersonalId:
+        formData.personType === "CREW" ? formData.airlinePersonalId || null : null,
     };
     try {
       setSaving(true);
@@ -259,7 +289,12 @@ export default function HotelGuestsModal({
 
   const titleMap = {
     list: hotel?.name || "Гости",
-    form: editingIndex != null ? "Редактировать бронь" : "Добавить бронь",
+    form:
+      editingIndex != null
+        ? "Редактировать бронь"
+        : personMode === "CREW"
+        ? "Добавить из экипажа"
+        : "Добавить бронь",
     relocate: `Переселить (${selectedIndices.length})`,
     evict: `Выселить (${selectedIndices.length})`,
   };
@@ -297,8 +332,8 @@ export default function HotelGuestsModal({
             <span className={classes.modalSubtitle}>{hotel.address}</span>
           )}
         </div>
-        <button className={classes.closeBtn} onClick={onClose} type="button">
-          ✕
+        <button className={classes.closeBtn} onClick={onClose} type="button" aria-label="Закрыть">
+          <CloseIcon />
         </button>
       </div>
 
@@ -322,7 +357,7 @@ export default function HotelGuestsModal({
                 )}
                 {canEdit && canAdd && (
                   <Button backgroundcolor="var(--dark-blue)" color="#fff" onClick={openAddForm}>
-                    + Добавить бронь
+                    {personMode === "CREW" ? "+ Добавить из экипажа" : "+ Добавить бронь"}
                   </Button>
                 )}
               </div>
@@ -414,15 +449,44 @@ export default function HotelGuestsModal({
 
         {view === "form" && (
           <div className={classes.formContent}>
-            <div className={classes.formField}>
-              <label className={classes.formLabel}>ФИО пассажира *</label>
-              <input
-                className={classes.formInput}
-                value={formData.fullName}
-                onChange={(e) => setFormData((f) => ({ ...f, fullName: e.target.value }))}
-                placeholder="Иванов Иван Иванович"
-              />
-            </div>
+            {formData.personType === "CREW" && editingIndex == null ? (
+              <div className={classes.formField}>
+                <label className={classes.formLabel}>Сотрудник экипажа *</label>
+                <select
+                  className={classes.formInput}
+                  value={formData.airlinePersonalId}
+                  onChange={(e) => {
+                    const member = crewRoster.find(
+                      (m) => m.airlinePersonalId === e.target.value
+                    );
+                    setFormData((f) => ({
+                      ...f,
+                      airlinePersonalId: e.target.value,
+                      fullName: member?.fullName ?? "",
+                      phone: member?.phone ?? "",
+                    }));
+                  }}
+                >
+                  <option value="">Выберите сотрудника</option>
+                  {availableCrew.map((m) => (
+                    <option key={m.airlinePersonalId} value={m.airlinePersonalId}>
+                      {[m.fullName, m.position].filter(Boolean).join(", ")}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            ) : (
+              <div className={classes.formField}>
+                <label className={classes.formLabel}>ФИО пассажира *</label>
+                <input
+                  className={classes.formInput}
+                  value={formData.fullName}
+                  onChange={(e) => setFormData((f) => ({ ...f, fullName: e.target.value }))}
+                  placeholder="Иванов Иван Иванович"
+                  disabled={formData.personType === "CREW"}
+                />
+              </div>
+            )}
             <div className={classes.formField}>
               <label className={classes.formLabel}>Телефон</label>
               <input

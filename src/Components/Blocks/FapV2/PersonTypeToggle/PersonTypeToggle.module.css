@@ -1,0 +1,25 @@
+.toggle {
+  display: inline-flex;
+  background: #F6F7FB;
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.option {
+  border: none;
+  cursor: pointer;
+  border-radius: 8px;
+  padding: 5px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  font-family: inherit;
+  background: transparent;
+  color: var(--main-gray);
+  transition: all 0.15s;
+}
+
+.optionActive {
+  background: var(--dark-blue);
+  color: #fff;
+}

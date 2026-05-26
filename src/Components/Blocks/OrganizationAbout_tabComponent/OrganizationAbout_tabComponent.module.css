@@ -190,6 +190,10 @@
 
 @media (min-width: 0px) and (max-width: 1399px) {
 
+    .airlineAbout_top_title_name {
+        font-size: 28px;
+    }
+
     .airlineAbout_info_item {
         font-size: 14px;
     }
@@ -248,6 +252,35 @@
 @media (min-height: 0px) and (max-height: 850px) {
     .airlineAbout_info {
         height: 360px;
+    }
+
+    .airlineAbout_info__arline {
+        height: 590px;
+    }
+
+    .airlineAbout_rooms_block__airline {
+        height: 560px;
+    }
+}
+
+
+@media (min-height: 0px) and (max-height: 800px) {
+    .airlineAbout_info {
+        height: 300px;
+    }
+
+    .airlineAbout_info__arline {
+        height: 590px;
+    }
+
+    .airlineAbout_rooms_block__airline {
+        height: 560px;
+    }
+}
+
+@media (min-height: 0px) and (max-height: 750px) {
+    .airlineAbout_info {
+        height: 220px;
     }
 
     .airlineAbout_info__arline {

@@ -28,7 +28,8 @@ function AddRepresentativeService({
   const hasWaterService = request?.waterService?.plan?.enabled;
   const hasMealService = request?.mealService?.plan?.enabled;
   const hasLivingService = request?.livingService?.plan?.enabled;
-  const hasTransferService = request?.transferService?.plan?.enabled;
+  const hasArrivalTransferService = request?.transferService?.plan?.enabled;
+  const hasDepartureTransferService = request?.departureTransferService?.plan?.enabled;
   const hasBaggageDeliveryService = request?.baggageDeliveryService?.plan?.enabled;
 
   // Инициализируем форму только для услуг, которых еще нет
@@ -45,9 +46,12 @@ function AddRepresentativeService({
     habitationPlannedFromTime: "",
     habitationPlannedToDate: "",
     habitationPlannedToTime: "",
-    transferHabitation: false,
-    transferHabitationPeopleCount: "",
-    transferHabitationPlannedAt: "",
+    transferArrival: false,
+    transferArrivalPeopleCount: "",
+    transferArrivalPlannedAt: "",
+    transferDeparture: false,
+    transferDeparturePeopleCount: "",
+    transferDeparturePlannedAt: "",
     baggageDelivery: false,
     baggageDeliveryPlannedAt: "",
   });
@@ -116,16 +120,21 @@ function AddRepresentativeService({
           };
         }
 
-        if (name === "transferHabitation") {
+        if (name === "transferArrival") {
           return {
             ...prev,
-            transferHabitation: checked,
-            transferHabitationPeopleCount: checked
-              ? prev.transferHabitationPeopleCount
-              : "",
-            transferHabitationPlannedAt: checked
-              ? prev.transferHabitationPlannedAt
-              : "",
+            transferArrival: checked,
+            transferArrivalPeopleCount: checked ? prev.transferArrivalPeopleCount : "",
+            transferArrivalPlannedAt: checked ? prev.transferArrivalPlannedAt : "",
+          };
+        }
+
+        if (name === "transferDeparture") {
+          return {
+            ...prev,
+            transferDeparture: checked,
+            transferDeparturePeopleCount: checked ? prev.transferDeparturePeopleCount : "",
+            transferDeparturePlannedAt: checked ? prev.transferDeparturePlannedAt : "",
           };
         }
 
@@ -251,12 +260,22 @@ function AddRepresentativeService({
       };
     }
 
-    if (!hasTransferService && formData.transferHabitation) {
+    if (!hasArrivalTransferService && formData.transferArrival) {
       input.transferService = {
         plan: {
           enabled: true,
-          peopleCount: Number(formData.transferHabitationPeopleCount),
-          plannedAt: buildPlannedAt(formData.transferHabitationPlannedAt),
+          peopleCount: Number(formData.transferArrivalPeopleCount),
+          plannedAt: buildPlannedAt(formData.transferArrivalPlannedAt),
+        },
+      };
+    }
+
+    if (!hasDepartureTransferService && formData.transferDeparture) {
+      input.departureTransferService = {
+        plan: {
+          enabled: true,
+          peopleCount: Number(formData.transferDeparturePeopleCount),
+          plannedAt: buildPlannedAt(formData.transferDeparturePlannedAt),
         },
       };
     }
@@ -354,7 +373,7 @@ function AddRepresentativeService({
                           onChange={handleChange}
                         />
 
-                        <label>Введите время</label>
+                        <label>Введите время подачи в аэропорт</label>
                         <input
                           type="time"
                           name="waterPlannedAt"
@@ -389,7 +408,7 @@ function AddRepresentativeService({
                           onChange={handleChange}
                         />
 
-                        <label>Введите время</label>
+                        <label>Введите время подачи в аэропорт</label>
                         <input
                           type="time"
                           name="foodPlannedAt"
@@ -456,33 +475,68 @@ function AddRepresentativeService({
                   </>
                 )}
 
-                {!hasTransferService && (
+                {!hasArrivalTransferService && (
                   <>
                     <label className={classes.checkBoxWrapper}>
                       <input
                         type="checkbox"
-                        name="transferHabitation"
-                        checked={formData.transferHabitation}
+                        name="transferArrival"
+                        checked={formData.transferArrival}
                         onChange={handleChange}
                       />
-                      Трансфер
+                      Трансфер с аэропорта до гостиницы
                     </label>
 
-                    {formData.transferHabitation && (
+                    {formData.transferArrival && (
                       <>
                         <label>Введите количество человек</label>
                         <input
                           type="number"
-                          name="transferHabitationPeopleCount"
-                          value={formData.transferHabitationPeopleCount}
+                          name="transferArrivalPeopleCount"
+                          value={formData.transferArrivalPeopleCount}
                           onChange={handleChange}
                         />
 
-                        <label>Введите время</label>
+                        <label>Введите время подачи в аэропорт</label>
                         <input
                           type="time"
-                          name="transferHabitationPlannedAt"
-                          value={formData.transferHabitationPlannedAt}
+                          name="transferArrivalPlannedAt"
+                          value={formData.transferArrivalPlannedAt}
+                          onChange={handleChange}
+                          placeholder="Время"
+                        />
+                      </>
+                    )}
+                  </>
+                )}
+
+                {!hasDepartureTransferService && (
+                  <>
+                    <label className={classes.checkBoxWrapper}>
+                      <input
+                        type="checkbox"
+                        name="transferDeparture"
+                        checked={formData.transferDeparture}
+                        onChange={handleChange}
+                      />
+                      Трансфер с гостиницы до аэропорта
+                    </label>
+
+                    {formData.transferDeparture && (
+                      <>
+                        <label>Введите количество человек</label>
+                        <input
+                          type="number"
+                          name="transferDeparturePeopleCount"
+                          value={formData.transferDeparturePeopleCount}
+                          onChange={handleChange}
+                        />
+
+                        <label>Введите время подачи к гостинице</label>
+                        <input
+                          type="time"
+                          name="transferDeparturePlannedAt"
+                          value={formData.transferDeparturePlannedAt}
                           onChange={handleChange}
                           placeholder="Время"
                         />
@@ -518,7 +572,7 @@ function AddRepresentativeService({
                   </>
                 )}
 
-                {hasWaterService && hasMealService && hasLivingService && hasTransferService && hasBaggageDeliveryService && (
+                {hasWaterService && hasMealService && hasLivingService && hasArrivalTransferService && hasDepartureTransferService && hasBaggageDeliveryService && (
                   <div className={classes.noServicesMessage}>
                     Все доступные услуги уже добавлены в заявку.
                   </div>

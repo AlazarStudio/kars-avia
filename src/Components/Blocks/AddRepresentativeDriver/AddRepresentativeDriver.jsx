@@ -17,7 +17,7 @@ import { AddressField } from "../AddressField/AddressField.jsx";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
 
-function AddRepresentativeDriver({ show, onClose, request }) {
+function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL" }) {
   const token = getCookie("token");
   const { confirm, isDialogOpen, showAlert } = useDialog();
   const { success, error: notifyError } = useToast();
@@ -41,9 +41,13 @@ function AddRepresentativeDriver({ show, onClose, request }) {
     link: "",
   });
 
-  const totalServicePeople = request?.transferService?.plan?.peopleCount ?? null;
+  const transferServiceObj =
+    direction === "DEPARTURE"
+      ? request?.departureTransferService
+      : request?.transferService;
+  const totalServicePeople = transferServiceObj?.plan?.peopleCount ?? null;
   const usedServicePeople =
-    request?.transferService?.drivers?.reduce(
+    transferServiceObj?.drivers?.reduce(
       (sum, d) => sum + (Number(d.peopleCount) || 0),
       0
     ) ?? 0;
@@ -245,6 +249,7 @@ function AddRepresentativeDriver({ show, onClose, request }) {
         variables: {
           requestId: request?.id,
           driver,
+          direction,
         },
       });
       resetForm();

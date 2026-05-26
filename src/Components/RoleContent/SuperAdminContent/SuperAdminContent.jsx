@@ -23,6 +23,7 @@ import DisAdminAutoparkContent from '../DispatcherAdminContent/DisAdminAutoparkC
 import DispatcherAccessSettings from '../../Blocks/DispatcherAccessSettings/DispatcherAccessSettings'
 import NotificationsSettings from '../../Blocks/NotificationsSettings/NotificationsSettings'
 import DispatcherNotificationsSettings from '../../Blocks/DispatcherNotificationsSettings/DispatcherNotificationsSettings'
+import MaintenanceBannerSettings from '../../Blocks/MaintenanceBanner/MaintenanceBannerSettings'
 
 const SuperAdminContent = ({ user }) => {
   const { id, hotelID, airlineID, orderId, driversCompanyID } = useParams()
@@ -58,6 +59,7 @@ const SuperAdminContent = ({ user }) => {
       {id === 'dispatcherNotifications' && <DispatcherNotificationsSettings user={user} />}
       {id === 'myCompany' && <MyCompany user={user} />}
       {id === 'patchNotes' && <PatchNotesList user={user} />}
+      {id === 'maintenanceBanner' && <MaintenanceBannerSettings user={user} />}
       {!id && hotelID && <HotelPage id={hotelID} user={user} />}
       {!id && airlineID && <AirlinePage id={airlineID} user={user} />}
       {isTransfer && <DisAdminTransferContent user={user} />}

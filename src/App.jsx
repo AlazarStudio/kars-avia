@@ -39,10 +39,12 @@ import RepresentativeHotelDetailPage from "./Components/Pages/RepresentativeHote
 import RepresentativeHotelReportPage from "./Components/Pages/RepresentativeHotelReportPage/RepresentativeHotelReportPage";
 import RepresentativeDriverDetailPage from "./Components/Pages/RepresentativeDriverDetailPage/RepresentativeDriverDetailPage";
 import ExternalLogin from "./Components/Pages/ExternalLogin/ExternalLogin";
+import FapLayout from "./Components/Pages/FapV2/FapLayout";
 import FapDetailPage from "./Components/Pages/FapV2/FapDetailPage";
 import FapReportPage from "./Components/Pages/FapV2/FapReportPage";
 import FapServicePage from "./Components/Pages/FapV2/FapServicePage";
 import HotelPMS from "./Components/HotelPMS/HotelPMS";
+import MaintenanceBannerBar from "./Components/Blocks/MaintenanceBanner/MaintenanceBannerBar";
 
 const TransferOrder = lazy(() =>
   import("./Components/Blocks/TransferOrder/TransferOrder")
@@ -113,6 +115,7 @@ function App() {
     <ApolloProvider client={client}>
       <TokenRefresher />
       {user && <UserActivityTracker />}
+      <MaintenanceBannerBar />
       <Routes>
         <Route path="/external-login" element={<ExternalLogin />} />
         {user ? (
@@ -161,18 +164,17 @@ function App() {
               path="/:id/representativeRequestsPlacement/:idRequest/driver/:driverIndex"
               element={<RepresentativeDriverDetailPage user={user} />}
             />
-            <Route
-              path="/fapv2/:requestId"
-              element={<FapDetailPage user={user} />}
-            />
-            <Route
-              path="/fapv2/:requestId/report/:hotelIndex"
-              element={<FapReportPage user={user} />}
-            />
-            <Route
-              path="/fapv2/:requestId/service/:serviceKey"
-              element={<FapServicePage user={user} />}
-            />
+            <Route path="/fapv2/:requestId" element={<FapLayout user={user} />}>
+              <Route index element={<FapDetailPage user={user} />} />
+              <Route
+                path="report/:hotelIndex"
+                element={<FapReportPage user={user} />}
+              />
+              <Route
+                path="service/:serviceKey"
+                element={<FapServicePage user={user} />}
+              />
+            </Route>
             {/* Шахматка */}
             {/* <Route
               path="/:id/placement/:idHotel"
