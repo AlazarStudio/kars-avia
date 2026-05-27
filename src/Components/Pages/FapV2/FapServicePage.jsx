@@ -220,7 +220,12 @@ export default function FapServicePage({ user }) {
         </div>
       )}
 
-      <FapChat passengerRequestId={requestId} token={token} user={user} />
+      <FapChat
+        passengerRequestId={requestId}
+        token={token}
+        user={user}
+        subtitle={request?.flightNumber ? `Рейс ${request.flightNumber}` : undefined}
+      />
     </div>
   );
 }

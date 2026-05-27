@@ -12,6 +12,7 @@ import {
   CANCEL_PASSENGER_REQUEST,
   PASSENGER_REQUEST_UPDATED_SUBSCRIPTION,
   getCookie,
+  getMediaUrl,
 } from "../../../../../graphQL_requests";
 import {
   SERVICE_CONFIG,
@@ -28,10 +29,11 @@ import CopyIcon from "../../../../shared/icons/CopyIcon";
 import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
 import CancelIcon from "../../../../shared/icons/CancelIcon";
 import ChevronIcon from "../../../../shared/icons/ChevronIcon";
+import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
+import FapActionButton from "../FapActionButton/FapActionButton";
 import FapChat from "../FapChat/FapChat";
 import { isExternalUser } from "../../../../utils/access";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
-import FapCrewModal from "./FapCrewModal";
 
 const STATUS_TRANSITIONS = {
   CREATED: ["ACCEPTED"],
@@ -117,7 +119,6 @@ export default function FapDetail({ user, canEdit = true }) {
   const [showCancelModal, setShowCancelModal] = useState(false);
   const [saving, setSaving] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
-  const [showCrew, setShowCrew] = useState(false);
   const [pendingStatus, setPendingStatus] = useState(null);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
 
@@ -186,13 +187,6 @@ export default function FapDetail({ user, canEdit = true }) {
   const nextStatuses = STATUS_TRANSITIONS[request.status] || [];
   const isFinal = request.status === "COMPLETED" || request.status === "CANCELLED";
 
-  const allServicesAdded =
-    !!request.waterService?.plan?.enabled &&
-    !!request.mealService?.plan?.enabled &&
-    !!request.livingService?.plan?.enabled &&
-    !!request.transferService?.plan?.enabled &&
-    !!request.baggageDeliveryService?.plan?.enabled;
-
   const handleConfirmStatus = async () => {
     if (!pendingStatus) return;
     try {
@@ -257,6 +251,21 @@ export default function FapDetail({ user, canEdit = true }) {
       <div className={classes.stickyHeader}>
         <div className={classes.headerRow}>
           <div className={classes.headerLeft}>
+            {request.airline?.name && (
+              <>
+                <span className={classes.airlineTag}>
+                  {request.airline.images?.[0] ? (
+                    <img src={getMediaUrl(request.airline.images[0])} alt="" />
+                  ) : (
+                    <span className={classes.airlineLogoFallback}>
+                      {request.airline.name.trim().charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  {request.airline.name}
+                </span>
+                <span className={classes.headerDivider} />
+              </>
+            )}
             <span
               className={classes.statusBadge}
               style={{ color: statusCfg.color, background: statusCfg.bg }}
@@ -269,55 +278,101 @@ export default function FapDetail({ user, canEdit = true }) {
             {canEdit && !isFinal && (
               <>
                 {nextStatuses.map((s) => (
-                  <Button
+                  <FapActionButton
                     key={s}
-                    backgroundcolor="var(--dark-blue)"
-                    color="#fff"
+                    variant="primary"
                     onClick={() => { setPendingStatus(s); setShowStatusDialog(true); }}
                     disabled={saving}
                   >
                     {STATUS_ACTION_LABELS[s] || REQUEST_STATUS_CONFIG[s]?.label}
-                  </Button>
+                  </FapActionButton>
                 ))}
-                {!allServicesAdded && (
-                  <Button
-                    backgroundcolor="#F6F7FB"
-                    color="#545873"
-                    onClick={() => setShowAddService(true)}
-                  >
-                    + Услуга
-                  </Button>
-                )}
-                {request.includesCrew && (
-                  <Button
-                    backgroundcolor="#F6F7FB"
-                    color="#545873"
-                    onClick={() => setShowCrew(true)}
-                  >
-                    Экипаж ({request.crewMembers?.length ?? 0})
-                  </Button>
-                )}
+                <FapActionButton variant="secondary" onClick={() => setShowAddService(true)}>
+                  <EditPencilIcon />
+                  Редактировать
+                </FapActionButton>
               </>
             )}
-            <Button
-              backgroundcolor={showLogs ? "var(--dark-blue)" : "#F6F7FB"}
-              color={showLogs ? "#fff" : "#545873"}
+            <FapActionButton
+              variant="secondary"
+              active={showLogs}
               onClick={() => setShowLogs((v) => !v)}
             >
-              <ScheduleIcon color="currentColor" />
+              <ScheduleIcon color={showLogs ? "#fff" : "#545873"} />
               История
-            </Button>
+            </FapActionButton>
             {canEdit && !isFinal && (
-              <Button
-                backgroundcolor="#FEF2F2"
-                color="#EF4444"
-                onClick={() => setShowCancelModal(true)}
-              >
-                <CancelIcon />
-                Отменить заявку
-              </Button>
+              <>
+                <span className={classes.headerDivider} />
+                <FapActionButton variant="danger" onClick={() => setShowCancelModal(true)}>
+                  <CancelIcon />
+                  Отменить заявку
+                </FapActionButton>
+              </>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Смелый вариант шапки (превью под основной) */}
+      <div className={classes.boldHeader}>
+        <div className={classes.boldLeft}>
+          <div className={classes.boldLogo}>
+            {request.airline?.images?.[0] ? (
+              <img src={getMediaUrl(request.airline.images[0])} alt="" />
+            ) : (
+              <span className={classes.boldLogoFallback}>
+                {(request.airline?.name || "?").trim().charAt(0).toUpperCase()}
+              </span>
+            )}
+          </div>
+          <div className={classes.boldInfo}>
+            <div className={classes.boldAirline}>{request.airline?.name || "Авиакомпания"}</div>
+            <div className={classes.boldSub}>
+              <span className={classes.boldFlight}>Рейс {request.flightNumber}</span>
+              <span className={classes.boldStatusPill}>{statusCfg.label || request.status}</span>
+            </div>
+          </div>
+        </div>
+
+        <div className={classes.boldRight}>
+          {canEdit && !isFinal && (
+            <>
+              {nextStatuses.map((s) => (
+                <FapActionButton
+                  key={`bold-${s}`}
+                  variant="primary"
+                  onDark
+                  onClick={() => { setPendingStatus(s); setShowStatusDialog(true); }}
+                  disabled={saving}
+                >
+                  {STATUS_ACTION_LABELS[s] || REQUEST_STATUS_CONFIG[s]?.label}
+                </FapActionButton>
+              ))}
+              <FapActionButton variant="secondary" onDark onClick={() => setShowAddService(true)}>
+                <EditPencilIcon color="#fff" />
+                Редактировать
+              </FapActionButton>
+            </>
+          )}
+          <FapActionButton
+            variant="secondary"
+            onDark
+            active={showLogs}
+            onClick={() => setShowLogs((v) => !v)}
+          >
+            <ScheduleIcon color={showLogs ? "var(--dark-blue)" : "#fff"} />
+            История
+          </FapActionButton>
+          {canEdit && !isFinal && (
+            <>
+              <span className={classes.boldDivider} />
+              <FapActionButton variant="danger" onDark onClick={() => setShowCancelModal(true)}>
+                <CancelIcon color="#FFB4B4" />
+                Отменить заявку
+              </FapActionButton>
+            </>
+          )}
         </div>
       </div>
 
@@ -359,7 +414,12 @@ export default function FapDetail({ user, canEdit = true }) {
 
       </div>
 
-      <FapChat passengerRequestId={request.id} token={token} user={user} />
+      <FapChat
+        passengerRequestId={request.id}
+        token={token}
+        user={user}
+        subtitle={request.flightNumber ? `Рейс ${request.flightNumber}` : undefined}
+      />
 
       {canEdit && showAddService && (
         <AddRepresentativeService
@@ -377,16 +437,6 @@ export default function FapDetail({ user, canEdit = true }) {
         onClose={() => setShowLogs(false)}
         passengerRequestId={request.id}
       />
-
-      {canEdit && (
-        <FapCrewModal
-          open={showCrew}
-          onClose={() => setShowCrew(false)}
-          request={request}
-          token={token}
-          onSaved={refetch}
-        />
-      )}
 
       {/* Status change confirmation dialog */}
       <Dialog

@@ -1,0 +1,118 @@
+.btn {
+  height: 40px;
+  padding: 0 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  font-family: Inter, sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease,
+    box-shadow 0.15s ease, transform 0.08s ease;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(0, 87, 195, 0.35);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn svg {
+  flex-shrink: 0;
+}
+
+/* ── Светлый контекст ── */
+.primary {
+  background: var(--dark-blue);
+  color: #fff;
+  font-weight: 600;
+}
+.primary:hover {
+  background: #00489f;
+  box-shadow: 0 4px 14px rgba(0, 87, 195, 0.3);
+}
+
+.secondary {
+  background: #fff;
+  color: var(--main-gray);
+  border-color: #E4E4EF;
+}
+.secondary:hover {
+  background: var(--gray);
+  border-color: #CBD2E4;
+}
+.secondary.active {
+  background: var(--dark-blue);
+  color: #fff;
+  border-color: transparent;
+}
+.secondary.active:hover {
+  background: #00489f;
+}
+
+.danger {
+  background: #fff;
+  color: var(--red);
+  border-color: #F1C4BD;
+}
+.danger:hover {
+  background: #FEF2F2;
+  border-color: var(--red);
+}
+
+/* ── Тёмный баннер (onDark) ── */
+.onDark:focus-visible {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.45);
+}
+
+.onDark.primary {
+  background: #fff;
+  color: var(--dark-blue);
+  font-weight: 700;
+}
+.onDark.primary:hover {
+  background: #EAF1FB;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.2);
+}
+
+.onDark.secondary {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.38);
+}
+.onDark.secondary:hover {
+  background: rgba(255, 255, 255, 0.24);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+.onDark.secondary.active {
+  background: #fff;
+  color: var(--dark-blue);
+  border-color: transparent;
+}
+.onDark.secondary.active:hover {
+  background: #EAF1FB;
+}
+
+.onDark.danger {
+  background: rgba(255, 99, 99, 0.18);
+  color: #fff;
+  border-color: rgba(255, 150, 150, 0.65);
+}
+.onDark.danger:hover {
+  background: rgba(255, 99, 99, 0.32);
+  border-color: rgba(255, 180, 180, 0.85);
+}

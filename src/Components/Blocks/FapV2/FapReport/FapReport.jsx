@@ -565,7 +565,12 @@ export default function FapReport({ request, hotelIndex, hotelName, canEdit = tr
       </div>
       </div>
 
-      <FapChat passengerRequestId={request?.id} token={token} user={user} />
+      <FapChat
+        passengerRequestId={request?.id}
+        token={token}
+        user={user}
+        subtitle={request?.flightNumber ? `Рейс ${request.flightNumber}` : undefined}
+      />
 
       {/* Actions */}
       {canEdit && (

@@ -22,9 +22,11 @@ export default function FapCrewModal({ open, onClose, request, token, onSaved })
     skip: !open,
   });
 
+  const airlineId = request?.airline?.id ?? request?.airlineId;
+
   const crewOptions = useMemo(() => {
     const airlines = data?.airlines?.airlines || [];
-    const airline = airlines.find((a) => a.id === request?.airlineId);
+    const airline = airlines.find((a) => a.id === airlineId);
     return (airline?.staff || []).map((s) => ({
       id: s.id,
       name: s.name || "",
@@ -33,7 +35,7 @@ export default function FapCrewModal({ open, onClose, request, token, onSaved })
       number: s.number || "",
       label: [s.name, s.position?.name, s.gender].filter(Boolean).join(", "),
     }));
-  }, [data, request?.airlineId]);
+  }, [data, airlineId]);
 
   useEffect(() => {
     if (!open) return;
@@ -48,7 +50,7 @@ export default function FapCrewModal({ open, onClose, request, token, onSaved })
           positionName: m.position || "",
           gender: m.gender || "",
           number: m.phone || "",
-          label: [m.fullName, m.position, m.gender].filter(Boolean).join(" · "),
+          label: [m.fullName, m.position, m.gender].filter(Boolean).join(", "),
         }
       );
     });
@@ -98,8 +100,16 @@ export default function FapCrewModal({ open, onClose, request, token, onSaved })
       >
         Экипаж заявки
       </DialogTitle>
-      <DialogContent sx={{ pt: "16px !important", pb: 1 }}>
-        <p style={{ fontFamily: "Inter, sans-serif", fontSize: 14, color: "#545873", marginTop: 0 }}>
+      <DialogContent
+        sx={{
+          pt: "20px !important",
+          pb: 2,
+          display: "flex",
+          flexDirection: "column",
+          gap: "14px",
+        }}
+      >
+        <p style={{ fontFamily: "Inter, sans-serif", fontSize: 14, color: "#545873", margin: 0 }}>
           Выберите сотрудников, которые входят в экипаж этой заявки.
         </p>
         <MultiSelectAutocomplete
@@ -107,6 +117,7 @@ export default function FapCrewModal({ open, onClose, request, token, onSaved })
           label="Сотрудники экипажа"
           isMultiple
           showSelectAll
+          listboxHeight="220px"
           options={crewOptions}
           value={selected}
           onChange={(event, newValue) => setSelected(newValue || [])}

@@ -1,16 +1,18 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { useMutation } from "@apollo/client";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useMutation, useQuery } from "@apollo/client";
 import classes from "./AddRepresentativeService.module.css";
 import Button from "../../Standart/Button/Button.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
 import {
   CREATE_PASSENGER_REQUEST,
+  GET_AIRLINES_RELAY,
   GET_PASSENGER_REQUEST,
   GET_PASSENGER_REQUESTS,
   getCookie,
   UPDATE_PASSENGER_REQUEST,
 } from "../../../../graphQL_requests.js";
 import MUILoader from "../MUILoader/MUILoader.jsx";
+import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
 function AddRepresentativeService({
@@ -23,6 +25,48 @@ function AddRepresentativeService({
   const token = getCookie("token");
   const [isEdited, setIsEdited] = useState(false);
   const sidebarRef = useRef();
+
+  // Экипаж заявки
+  const airlineId = request?.airline?.id ?? request?.airlineId;
+  const [selectedCrew, setSelectedCrew] = useState([]);
+
+  const { data: airlinesData } = useQuery(GET_AIRLINES_RELAY, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    skip: !show,
+  });
+
+  const crewOptions = useMemo(() => {
+    const airlines = airlinesData?.airlines?.airlines || [];
+    const airline = airlines.find((a) => a.id === airlineId);
+    return (airline?.staff || []).map((s) => ({
+      id: s.id,
+      name: s.name || "",
+      positionName: s.position?.name || "",
+      gender: s.gender || "",
+      number: s.number || "",
+      label: [s.name, s.position?.name, s.gender].filter(Boolean).join(", "),
+    }));
+  }, [airlinesData, airlineId]);
+
+  // Инициализация выбранного экипажа из ростера заявки
+  useEffect(() => {
+    if (!show) return;
+    const existing = request?.crewMembers || [];
+    const mapped = existing.map((m) => {
+      const opt = crewOptions.find((o) => o.id === m.airlinePersonalId);
+      return (
+        opt || {
+          id: m.airlinePersonalId || m.fullName,
+          name: m.fullName || "",
+          positionName: m.position || "",
+          gender: m.gender || "",
+          number: m.phone || "",
+          label: [m.fullName, m.position, m.gender].filter(Boolean).join(", "),
+        }
+      );
+    });
+    setSelectedCrew(mapped);
+  }, [show, request?.crewMembers, crewOptions]);
 
   // Определяем, какие услуги уже есть в заявке
   const hasWaterService = request?.waterService?.plan?.enabled;
@@ -80,9 +124,12 @@ function AddRepresentativeService({
       habitationPlannedFromTime: "",
       habitationPlannedToDate: "",
       habitationPlannedToTime: "",
-      transferHabitation: false,
-      transferHabitationPeopleCount: "",
-      transferHabitationPlannedAt: "",
+      transferArrival: false,
+      transferArrivalPeopleCount: "",
+      transferArrivalPlannedAt: "",
+      transferDeparture: false,
+      transferDeparturePeopleCount: "",
+      transferDeparturePlannedAt: "",
       baggageDelivery: false,
       baggageDeliveryPlannedAt: "",
     });
@@ -289,27 +336,41 @@ function AddRepresentativeService({
       };
     }
 
-    // Если нет новых услуг для добавления
+    // Экипаж: ростер + флаг включения
+    const crewMembers = selectedCrew.map((c) => ({
+      airlinePersonalId: c.id,
+      fullName: c.name,
+      position: c.positionName || null,
+      gender: c.gender || null,
+      phone: c.number || null,
+    }));
+    const crewChanged =
+      JSON.stringify((request?.crewMembers || []).map((m) => m.airlinePersonalId)) !==
+      JSON.stringify(crewMembers.map((m) => m.airlinePersonalId));
+    if (crewChanged) {
+      input.crewMembers = crewMembers;
+      input.includesCrew = crewMembers.length > 0;
+    }
+
+    // Если нет изменений
     if (Object.keys(input).length === 0) {
-      alert("Нет новых услуг для добавления.");
+      alert("Нет изменений для сохранения.");
       setIsLoading(false);
       return;
     }
 
-    // console.log(input);
-
     try {
-      const response = await updatePassengerRequest({
+      await updatePassengerRequest({
         variables: { updatePassengerRequestId: request?.id, input },
       });
       resetForm();
       onClose();
       if (addNotification) {
-        addNotification("Добавление услуги прошло успешно.", "success");
+        addNotification("Заявка обновлена.", "success");
       }
     } catch (error) {
       console.error(error);
-      alert("Ошибка при добавлении услуги");
+      alert("Ошибка при сохранении заявки");
     } finally {
       setIsLoading(false);
     }
@@ -336,7 +397,7 @@ function AddRepresentativeService({
     <>
       <Sidebar show={show} sidebarRef={sidebarRef}>
         <div className={classes.requestTitle}>
-          <div className={classes.requestTitle_name}>Добавить услугу</div>
+          <div className={classes.requestTitle_name}>Редактировать заявку</div>
           <div className={classes.requestTitle_close} onClick={closeButton}>
             <CloseIcon />
           </div>
@@ -348,6 +409,22 @@ function AddRepresentativeService({
           <>
             <div className={classes.requestMiddle}>
               <div className={classes.requestData}>
+                <div className={classes.typeServices}>Экипаж</div>
+                <label>Сотрудники экипажа</label>
+                <MultiSelectAutocomplete
+                  dropdownWidth="100%"
+                  label="Выберите сотрудников"
+                  isMultiple
+                  showSelectAll
+                  listboxHeight="220px"
+                  options={crewOptions}
+                  value={selectedCrew}
+                  onChange={(event, newValue) => {
+                    setSelectedCrew(newValue || []);
+                    setIsEdited(true);
+                  }}
+                />
+
                 <div className={classes.typeServices}>Вид услуг</div>
 
                 {/* Показываем только если услуги еще нет в заявке */}
@@ -581,7 +658,7 @@ function AddRepresentativeService({
             </div>
 
             <div className={classes.requestButton}>
-              <Button onClick={handleSubmit}>Добавить услугу</Button>
+              <Button onClick={handleSubmit}>Сохранить</Button>
             </div>
           </>
         )}

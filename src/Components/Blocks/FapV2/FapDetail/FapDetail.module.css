@@ -104,6 +104,162 @@
   font-weight: 600;
 }
 
+.airlineTag {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.airlineTag img {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  object-fit: contain;
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  flex-shrink: 0;
+}
+
+.airlineLogoFallback {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: var(--gray);
+  color: var(--main-gray);
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.headerDivider {
+  width: 1px;
+  align-self: stretch;
+  min-height: 24px;
+  background: #E4E4EF;
+  flex-shrink: 0;
+}
+
+/* ── Смелый вариант шапки ── */
+.boldHeader {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  padding: 18px 22px;
+  border-radius: 16px;
+  background: linear-gradient(120deg, #003E8F 0%, #0057C3 45%, #2D7BF0 100%);
+  box-shadow: 0 12px 30px rgba(0, 87, 195, 0.28);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.boldHeader::after {
+  content: "";
+  position: absolute;
+  right: -40px;
+  top: -70px;
+  width: 220px;
+  height: 220px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.boldLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.boldLogo {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.18);
+}
+
+.boldLogo img {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+}
+
+.boldLogoFallback {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--dark-blue);
+}
+
+.boldInfo {
+  min-width: 0;
+}
+
+.boldAirline {
+  font-size: 20px;
+  font-weight: 700;
+  color: #fff;
+  line-height: 1.15;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.boldSub {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.boldFlight {
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.82);
+}
+
+.boldStatusPill {
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.boldRight {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  position: relative;
+  z-index: 1;
+}
+
+.boldDivider {
+  width: 1px;
+  align-self: stretch;
+  min-height: 24px;
+  background: rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+}
+
 .headerRight {
   display: flex;
   align-items: center;
