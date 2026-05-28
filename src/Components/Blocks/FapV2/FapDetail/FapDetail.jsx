@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import Dialog from "@mui/material/Dialog";
@@ -18,6 +18,7 @@ import {
   SERVICE_CONFIG,
   SERVICE_STATUS_CONFIG,
   REQUEST_STATUS_CONFIG,
+  formatDateTime,
 } from "../fapConstants";
 import MUILoader from "../../MUILoader/MUILoader";
 import Button from "../../../Standart/Button/Button";
@@ -30,6 +31,12 @@ import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
 import CancelIcon from "../../../../shared/icons/CancelIcon";
 import ChevronIcon from "../../../../shared/icons/ChevronIcon";
 import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
+import WaterIcon from "../../../../shared/icons/WaterIcon";
+import MealIcon from "../../../../shared/icons/MealIcon";
+import HotelBedIcon from "../../../../shared/icons/HotelBedIcon";
+import BusIcon from "../../../../shared/icons/BusIcon";
+import BusDownIcon from "../../../../shared/icons/BusDownIcon";
+import BaggageIcon from "../../../../shared/icons/BaggageIcon";
 import FapActionButton from "../FapActionButton/FapActionButton";
 import FapChat from "../FapChat/FapChat";
 import { isExternalUser } from "../../../../utils/access";
@@ -63,6 +70,65 @@ const STATUS_CONFIRM_CONFIG = {
 };
 
 const SERVICE_KEYS = ["water", "meal", "living", "transfer", "transferDeparture", "baggage"];
+
+const SERVICE_ICON = {
+  water: WaterIcon,
+  meal: MealIcon,
+  living: HotelBedIcon,
+  transfer: BusIcon,
+  transferDeparture: BusDownIcon,
+  baggage: BaggageIcon,
+};
+
+const STATUS_PROGRESS = {
+  NEW: 0,
+  ACCEPTED: 25,
+  IN_PROGRESS: 60,
+  COMPLETED: 100,
+  CANCELLED: 0,
+};
+
+const STATUS_VERB = {
+  NEW: "Не начато",
+  ACCEPTED: "Принято",
+  IN_PROGRESS: "В работе",
+  COMPLETED: "Готово",
+  CANCELLED: "Отменено",
+};
+
+const STATUS_DOT_COLOR = {
+  NEW: "#CBD2E4",
+  ACCEPTED: "#3B82F6",
+  IN_PROGRESS: "#F59E0B",
+  COMPLETED: "#10B981",
+  CANCELLED: "#EF4444",
+};
+
+// Парсит summary вида "6 / 9 чел." → { num: "6/9", unit: "чел.", pct: 67 }
+// или "2 водителей" → { num: "2", unit: "водителей", pct: by status }
+function parseServiceSummary(summary, status) {
+  if (!summary) return { num: "—", unit: "", pct: 0 };
+  const ratio = summary.match(/^(\d+)\s*\/\s*(\d+)\s*(.*)$/);
+  if (ratio) {
+    const cur = +ratio[1];
+    const tot = +ratio[2];
+    return {
+      num: `${cur}/${tot}`,
+      unit: ratio[3] || "",
+      pct: tot ? Math.round((cur / tot) * 100) : 0,
+    };
+  }
+  const single = summary.match(/^(\d+)\s+(.*)$/);
+  if (single) {
+    const n = +single[1];
+    return {
+      num: single[1],
+      unit: single[2] || "",
+      pct: status === "COMPLETED" ? 100 : n > 0 ? 60 : 0,
+    };
+  }
+  return { num: "—", unit: summary, pct: 0 };
+}
 
 function getServiceData(serviceKey, request) {
   switch (serviceKey) {
@@ -122,6 +188,10 @@ export default function FapDetail({ user, canEdit = true }) {
   const [pendingStatus, setPendingStatus] = useState(null);
   const [showStatusDialog, setShowStatusDialog] = useState(false);
 
+  // 4A — статус-поповер. Какой именно якорь раскрыт: 'light' | 'bold' | null.
+  const [statusAnchor, setStatusAnchor] = useState(null);
+  const popoverRef = useRef(null);
+
   const { loading, data, refetch } = useQuery(GET_PASSENGER_REQUEST, {
     context: { headers: { Authorization: `Bearer ${token}` } },
     variables: { passengerRequestId: requestId },
@@ -140,6 +210,26 @@ export default function FapDetail({ user, canEdit = true }) {
   });
 
   const request = data?.passengerRequest;
+
+  const enabledKeys = useMemo(() => {
+    if (!request) return [];
+    return SERVICE_KEYS.filter((k) => getServiceData(k, request)?.plan?.enabled);
+  }, [request]);
+
+  // Закрытие поповера по клику вне.
+  useEffect(() => {
+    if (!statusAnchor) return undefined;
+    const onDown = (e) => {
+      if (popoverRef.current && popoverRef.current.contains(e.target)) return;
+      const wraps = document.querySelectorAll("[data-statuspill]");
+      for (const w of wraps) {
+        if (w.contains(e.target)) return;
+      }
+      setStatusAnchor(null);
+    };
+    document.addEventListener("mousedown", onDown);
+    return () => document.removeEventListener("mousedown", onDown);
+  }, [statusAnchor]);
 
   const representativePwaLink = useMemo(() => {
     const links = request?.representativeLinks || [];
@@ -186,6 +276,7 @@ export default function FapDetail({ user, canEdit = true }) {
   const statusCfg = REQUEST_STATUS_CONFIG[request.status] || {};
   const nextStatuses = STATUS_TRANSITIONS[request.status] || [];
   const isFinal = request.status === "COMPLETED" || request.status === "CANCELLED";
+  const popoverEnabled = canEdit && !isFinal;
 
   const handleConfirmStatus = async () => {
     if (!pendingStatus) return;
@@ -222,6 +313,298 @@ export default function FapDetail({ user, canEdit = true }) {
     }
   };
 
+  // ── Поповер переходов статуса (4A) ──
+  const renderStatusPopover = () => (
+    <div className={classes.statusPopover} ref={popoverRef} role="menu">
+      <div className={classes.statusPopoverHead}>Перевести в статус</div>
+      <div className={classes.statusPopoverBody}>
+        {nextStatuses.map((s) => {
+          const cfg = REQUEST_STATUS_CONFIG[s] || {};
+          return (
+            <button
+              key={s}
+              type="button"
+              className={classes.statusPopoverItem}
+              onClick={() => {
+                setStatusAnchor(null);
+                setPendingStatus(s);
+                setShowStatusDialog(true);
+              }}
+            >
+              <span
+                className={classes.statusPopoverIcon}
+                style={{ background: cfg.bg, color: cfg.color }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                  <path d="M5 12l5 5L20 7" stroke={cfg.color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </span>
+              <span className={classes.statusPopoverText}>
+                <div className={classes.statusPopoverLabel}>
+                  {STATUS_ACTION_LABELS[s] || cfg.label || s}
+                </div>
+                <div className={classes.statusPopoverHint}>Подтвердить переход</div>
+              </span>
+            </button>
+          );
+        })}
+        {nextStatuses.length > 0 && <div className={classes.statusPopoverDivider} />}
+        <button
+          type="button"
+          className={classes.statusPopoverItem}
+          onClick={() => {
+            setStatusAnchor(null);
+            setShowCancelModal(true);
+          }}
+        >
+          <span
+            className={classes.statusPopoverIcon}
+            style={{ background: "#FEF2F2", color: "#EF4444" }}
+          >
+            <CancelIcon color="#EF4444" />
+          </span>
+          <span className={classes.statusPopoverText}>
+            <div className={classes.statusPopoverLabel}>Отменить заявку</div>
+            <div className={classes.statusPopoverHint}>Действие необратимо</div>
+          </span>
+        </button>
+      </div>
+      <div className={classes.statusPopoverFoot}>
+        Текущий статус: {statusCfg.label || request.status}
+      </div>
+    </div>
+  );
+
+  // Пилл-статус для светлой шапки.
+  const renderLightStatusPill = () => {
+    if (!popoverEnabled) {
+      return (
+        <span
+          className={classes.statusBadge}
+          style={{ color: statusCfg.color, background: statusCfg.bg }}
+        >
+          {statusCfg.label || request.status}
+        </span>
+      );
+    }
+    const open = statusAnchor === "light";
+    return (
+      <span className={classes.statusPillWrap} data-statuspill>
+        <button
+          type="button"
+          className={classes.statusPillBtn}
+          style={{
+            color: statusCfg.color,
+            background: statusCfg.bg,
+            borderColor: statusCfg.color,
+          }}
+          onClick={() => setStatusAnchor(open ? null : "light")}
+          aria-haspopup="menu"
+          aria-expanded={open}
+        >
+          {statusCfg.label || request.status}
+          <ChevronIcon
+            width="14"
+            height="14"
+            className={`${classes.statusPillChevron} ${open ? classes.statusPillChevronOpen : ""}`}
+          />
+        </button>
+        {open && renderStatusPopover()}
+      </span>
+    );
+  };
+
+  // Пилл-статус для смелой шапки.
+  const renderBoldStatusPill = () => {
+    if (!popoverEnabled) {
+      return <span className={classes.boldStatusPill}>{statusCfg.label || request.status}</span>;
+    }
+    const open = statusAnchor === "bold";
+    return (
+      <span className={classes.statusPillWrap} data-statuspill>
+        <button
+          type="button"
+          className={classes.boldStatusPillBtn}
+          onClick={() => setStatusAnchor(open ? null : "bold")}
+          aria-haspopup="menu"
+          aria-expanded={open}
+        >
+          {statusCfg.label || request.status}
+          <ChevronIcon
+            width="14"
+            height="14"
+            className={`${classes.statusPillChevron} ${open ? classes.statusPillChevronOpen : ""}`}
+          />
+        </button>
+        {open && renderStatusPopover()}
+      </span>
+    );
+  };
+
+  // ── 3C: KPI-плитки 3×2 ──
+  const renderGrid = () => {
+    if (enabledKeys.length === 0) {
+      return <div className={classes.emptyState}>Услуги не подключены</div>;
+    }
+    return (
+      <div className={classes.servicesGrid}>
+        {enabledKeys.map((key) => {
+          const cfg = SERVICE_CONFIG[key];
+          const svc = getServiceData(key, request);
+          const Icon = SERVICE_ICON[key];
+          const status = svc?.status || "NEW";
+          const summary = getServiceSummary(key, request);
+          const m = parseServiceSummary(summary, status);
+          const isCanc = status === "CANCELLED";
+          const isDone = status === "COMPLETED";
+          const isNew = status === "NEW";
+          const muted = isNew || isCanc;
+          const dotColor = STATUS_DOT_COLOR[status] || STATUS_DOT_COLOR.NEW;
+          const deadline = svc?.plan?.plannedAt
+            ? formatDateTime(svc.plan.plannedAt)
+            : "—";
+
+          return (
+            <div
+              key={key}
+              className={classes.kpiTile}
+              style={{
+                "--svc-color": cfg.color,
+                "--svc-shadow": `${cfg.color}22`,
+              }}
+              onClick={() => navigate(`/fapv2/${request.id}/service/${key}`)}
+              role="button"
+              tabIndex={0}
+            >
+              {/* Top emblem strip */}
+              <div
+                className={classes.kpiTileEmblem}
+                style={{
+                  background: cfg.bg,
+                  borderBottomColor: `${cfg.color}22`,
+                }}
+              >
+                <div className={classes.kpiTileEmblemLeft}>
+                  <div
+                    className={classes.kpiTileIcon}
+                    style={{
+                      color: cfg.color,
+                      boxShadow: `inset 0 0 0 1px ${cfg.color}33, 0 1px 2px ${cfg.color}26`,
+                    }}
+                  >
+                    {Icon ? <Icon size={24} strokeWidth={2} /> : null}
+                  </div>
+                  <div className={classes.kpiTileEmblemText}>
+                    <div className={classes.kpiTileTitle}>{cfg.label}</div>
+                    <div
+                      className={classes.kpiTileVerb}
+                      style={{ color: cfg.color }}
+                    >
+                      {STATUS_VERB[status] || status}
+                    </div>
+                  </div>
+                </div>
+                <div
+                  className={classes.kpiTileDot}
+                  style={{ background: dotColor }}
+                />
+              </div>
+
+              {/* KPI body */}
+              <div
+                className={classes.kpiTileBody}
+                style={{ opacity: muted ? 0.6 : 1 }}
+              >
+                <div className={classes.kpiTileMetric}>
+                  <div
+                    className={classes.kpiTileNumber}
+                    style={{ color: isCanc ? "var(--main-gray)" : "var(--text)" }}
+                  >
+                    {m.num}
+                  </div>
+                  <div className={classes.kpiTileUnit}>{m.unit}</div>
+                </div>
+
+                {!isCanc ? (
+                  <div className={classes.kpiTileFooter}>
+                    <div className={classes.kpiTileProgress}>
+                      <div
+                        className={classes.kpiTileProgressFill}
+                        style={{
+                          width: `${m.pct}%`,
+                          background: isDone
+                            ? "linear-gradient(90deg, #10B981, #34D399)"
+                            : cfg.color,
+                        }}
+                      />
+                    </div>
+                    <div className={classes.kpiTileFooterRow}>
+                      <span
+                        className={classes.kpiTilePct}
+                        style={{ color: isDone ? "#10B981" : cfg.color }}
+                      >
+                        {m.pct}%
+                      </span>
+                      <span className={classes.kpiTileMeta}>
+                        {isDone ? (
+                          <>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+                              <path
+                                d="M4 12l5 5L20 6"
+                                stroke="#10B981"
+                                strokeWidth="3"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                            закрыто
+                          </>
+                        ) : (
+                          <>
+                            <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+                              <circle
+                                cx="12"
+                                cy="12"
+                                r="9"
+                                stroke="var(--main-gray)"
+                                strokeWidth="1.8"
+                              />
+                              <path
+                                d="M12 7v5l3 2"
+                                stroke="var(--main-gray)"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                            до&nbsp;{deadline}
+                          </>
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className={classes.kpiTileCancelled}>
+                    <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
+                      <path
+                        d="M6 6l12 12M6 18L18 6"
+                        stroke="#EF4444"
+                        strokeWidth="2.4"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                    услуга отменена
+                  </div>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div className={classes.page}>
       <Header>
@@ -247,7 +630,7 @@ export default function FapDetail({ user, canEdit = true }) {
         </div>
       </Header>
 
-      {/* Sticky action bar */}
+      {/* Светлая шапка */}
       <div className={classes.stickyHeader}>
         <div className={classes.headerRow}>
           <div className={classes.headerLeft}>
@@ -266,32 +649,15 @@ export default function FapDetail({ user, canEdit = true }) {
                 <span className={classes.headerDivider} />
               </>
             )}
-            <span
-              className={classes.statusBadge}
-              style={{ color: statusCfg.color, background: statusCfg.bg }}
-            >
-              {statusCfg.label || request.status}
-            </span>
+            {renderLightStatusPill()}
           </div>
 
           <div className={classes.headerRight}>
             {canEdit && !isFinal && (
-              <>
-                {nextStatuses.map((s) => (
-                  <FapActionButton
-                    key={s}
-                    variant="primary"
-                    onClick={() => { setPendingStatus(s); setShowStatusDialog(true); }}
-                    disabled={saving}
-                  >
-                    {STATUS_ACTION_LABELS[s] || REQUEST_STATUS_CONFIG[s]?.label}
-                  </FapActionButton>
-                ))}
-                <FapActionButton variant="secondary" onClick={() => setShowAddService(true)}>
-                  <EditPencilIcon />
-                  Редактировать
-                </FapActionButton>
-              </>
+              <FapActionButton variant="secondary" onClick={() => setShowAddService(true)}>
+                <EditPencilIcon />
+                Редактировать
+              </FapActionButton>
             )}
             <FapActionButton
               variant="secondary"
@@ -301,20 +667,11 @@ export default function FapDetail({ user, canEdit = true }) {
               <ScheduleIcon color={showLogs ? "#fff" : "#545873"} />
               История
             </FapActionButton>
-            {canEdit && !isFinal && (
-              <>
-                <span className={classes.headerDivider} />
-                <FapActionButton variant="danger" onClick={() => setShowCancelModal(true)}>
-                  <CancelIcon />
-                  Отменить заявку
-                </FapActionButton>
-              </>
-            )}
           </div>
         </div>
       </div>
 
-      {/* Смелый вариант шапки (превью под основной) */}
+      {/* Смелый вариант шапки — скрыт. Раскомментировать для сравнения.
       <div className={classes.boldHeader}>
         <div className={classes.boldLeft}>
           <div className={classes.boldLogo}>
@@ -330,30 +687,17 @@ export default function FapDetail({ user, canEdit = true }) {
             <div className={classes.boldAirline}>{request.airline?.name || "Авиакомпания"}</div>
             <div className={classes.boldSub}>
               <span className={classes.boldFlight}>Рейс {request.flightNumber}</span>
-              <span className={classes.boldStatusPill}>{statusCfg.label || request.status}</span>
+              {renderBoldStatusPill()}
             </div>
           </div>
         </div>
 
         <div className={classes.boldRight}>
           {canEdit && !isFinal && (
-            <>
-              {nextStatuses.map((s) => (
-                <FapActionButton
-                  key={`bold-${s}`}
-                  variant="primary"
-                  onDark
-                  onClick={() => { setPendingStatus(s); setShowStatusDialog(true); }}
-                  disabled={saving}
-                >
-                  {STATUS_ACTION_LABELS[s] || REQUEST_STATUS_CONFIG[s]?.label}
-                </FapActionButton>
-              ))}
-              <FapActionButton variant="secondary" onDark onClick={() => setShowAddService(true)}>
-                <EditPencilIcon color="#fff" />
-                Редактировать
-              </FapActionButton>
-            </>
+            <FapActionButton variant="secondary" onDark onClick={() => setShowAddService(true)}>
+              <EditPencilIcon color="#fff" />
+              Редактировать
+            </FapActionButton>
           )}
           <FapActionButton
             variant="secondary"
@@ -364,61 +708,22 @@ export default function FapDetail({ user, canEdit = true }) {
             <ScheduleIcon color={showLogs ? "var(--dark-blue)" : "#fff"} />
             История
           </FapActionButton>
-          {canEdit && !isFinal && (
-            <>
-              <span className={classes.boldDivider} />
-              <FapActionButton variant="danger" onDark onClick={() => setShowCancelModal(true)}>
-                <CancelIcon color="#FFB4B4" />
-                Отменить заявку
-              </FapActionButton>
-            </>
-          )}
         </div>
       </div>
+      */}
 
-      {/* Content row: service nav cards + optional chat panel */}
+      {/* Контентный ряд */}
       <div className={classes.contentRow}>
-        <div className={classes.sectionsPane}>
-          {SERVICE_KEYS.map((key) => {
-            const cfg = SERVICE_CONFIG[key];
-            const service = getServiceData(key, request);
-            if (!service?.plan?.enabled) return null;
-            const svcStatus = SERVICE_STATUS_CONFIG[service.status] || {};
-            const summary = getServiceSummary(key, request);
-            return (
-              <div
-                key={key}
-                className={`${classes.section} ${classes.navCard}`}
-                onClick={() => navigate(`/fapv2/${request.id}/service/${key}`)}
-              >
-                <div className={classes.sectionHeader}>
-                  <div className={classes.sectionHeaderLeft}>
-                    <div className={classes.sectionDot} style={{ background: cfg.color }} />
-                    <span className={classes.sectionName}>{cfg.label}</span>
-                    <span
-                      className={classes.svcStatusBadge}
-                      style={{ color: svcStatus.color, background: svcStatus.bg }}
-                    >
-                      {svcStatus.label || service.status}
-                    </span>
-                  </div>
-                  <div className={classes.sectionHeaderRight}>
-                    {summary && <span className={classes.sectionSummary}>{summary}</span>}
-                    <ChevronIcon className={classes.navChevron} />
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+        <div className={classes.contentMain}>
+          {renderGrid()}
         </div>
-
       </div>
 
       <FapChat
         passengerRequestId={request.id}
         token={token}
         user={user}
-        subtitle={request.flightNumber ? `Рейс ${request.flightNumber}` : undefined}
+        flightNumber={request.flightNumber}
       />
 
       {canEdit && showAddService && (
@@ -438,7 +743,6 @@ export default function FapDetail({ user, canEdit = true }) {
         passengerRequestId={request.id}
       />
 
-      {/* Status change confirmation dialog */}
       <Dialog
         open={showStatusDialog}
         onClose={() => { setShowStatusDialog(false); setPendingStatus(null); }}

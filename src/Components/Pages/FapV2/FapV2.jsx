@@ -24,8 +24,23 @@ import Button from "../../Standart/Button/Button";
 import CreateRepresentativeRequest from "../../Blocks/CreateRepresentativeRequest/CreateRepresentativeRequest";
 import { useDebounce } from "../../../hooks/useDebounce";
 import Header from "../../Blocks/Header/Header";
+import ServiceProgressDot from "../../Blocks/FapV2/ServiceProgressDot/ServiceProgressDot";
 import { roles } from "../../../roles";
 import { canAccessMenu } from "../../../utils/access";
+
+const SERVICE_ORDER = ["water", "meal", "living", "transfer", "transferDeparture", "baggage"];
+
+function getServiceForKey(req, key) {
+  switch (key) {
+    case "water": return req.waterService;
+    case "meal": return req.mealService;
+    case "living": return req.livingService;
+    case "transfer": return req.transferService;
+    case "transferDeparture": return req.departureTransferService;
+    case "baggage": return req.baggageDeliveryService;
+    default: return null;
+  }
+}
 
 const STATUS_OPTIONS = [
   { value: null, label: "Все статусы" },
@@ -96,8 +111,12 @@ export default function FapV2({ user, accessMenu }) {
 
   const requests = data?.passengerRequests || [];
 
-  const enabledServices = (req) =>
-    Object.values(SERVICE_CONFIG).filter((s) => req[s.key]?.plan?.enabled);
+  const serviceDots = (req) =>
+    SERVICE_ORDER.map((key) => {
+      const svc = getServiceForKey(req, key);
+      const enabled = !!svc?.plan?.enabled;
+      return { key, enabled, status: svc?.status };
+    });
 
   const handleStatusChange = (val) => {
     const option = val || STATUS_OPTIONS[0];
@@ -196,7 +215,7 @@ export default function FapV2({ user, accessMenu }) {
         ) : (
           requests.map((req) => {
             const statusCfg = REQUEST_STATUS_CONFIG[req.status] || {};
-            const services = enabledServices(req);
+            const dots = serviceDots(req);
             return (
               <div
                 key={req.id}
@@ -237,19 +256,17 @@ export default function FapV2({ user, accessMenu }) {
                   </span>
                 </div>
 
-                {services.length > 0 && (
-                  <div className={classes.cardServices}>
-                    {services.map((s) => (
-                      <span
-                        key={s.key}
-                        className={classes.serviceChip}
-                        style={{ color: s.color, background: s.bg }}
-                      >
-                        {s.label}
-                      </span>
-                    ))}
-                  </div>
-                )}
+                <div className={classes.serviceDots}>
+                  {dots.map((d) => (
+                    <ServiceProgressDot
+                      key={d.key}
+                      serviceKey={d.key}
+                      status={d.status}
+                      disabled={!d.enabled}
+                      size={44}
+                    />
+                  ))}
+                </div>
 
                 <div className={classes.cardBottom}>
                   <span className={classes.cardDate}>

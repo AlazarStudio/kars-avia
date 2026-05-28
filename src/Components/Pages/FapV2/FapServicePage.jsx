@@ -224,7 +224,7 @@ export default function FapServicePage({ user }) {
         passengerRequestId={requestId}
         token={token}
         user={user}
-        subtitle={request?.flightNumber ? `Рейс ${request.flightNumber}` : undefined}
+        flightNumber={request?.flightNumber}
       />
     </div>
   );

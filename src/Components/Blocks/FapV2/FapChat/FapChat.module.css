@@ -1,165 +1,250 @@
-/* Плавающая кнопка чата */
-.fab {
+/* ── Плавающее окно чата (mini / large) ── */
+.window {
   position: absolute;
-  bottom: 28px;
-  right: 28px;
-  z-index: 20;
-  display: inline-flex;
+  right: 20px;
+  bottom: 20px;
+  z-index: 50;
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  border-radius: 14px;
+  box-shadow:
+    0 20px 48px rgba(20, 30, 60, 0.22),
+    0 4px 12px rgba(20, 30, 60, 0.08);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.windowMini {
+  width: 340px;
+  height: 460px;
+}
+
+.windowLarge {
+  width: 480px;
+  height: 640px;
+  box-shadow:
+    0 24px 56px rgba(20, 30, 60, 0.26),
+    0 6px 14px rgba(20, 30, 60, 0.1);
+}
+
+/* ── Title bar ── */
+.titleBar {
+  background: var(--dark-blue, #0057C3);
+  color: #fff;
+  padding: 8px 12px;
+  display: flex;
   align-items: center;
   gap: 8px;
-  height: 48px;
-  padding: 0 20px;
-  border: none;
-  border-radius: 999px;
-  background: var(--dark-blue);
-  color: #fff;
-  font-size: 15px;
-  font-weight: 500;
-  font-family: Inter, sans-serif;
-  cursor: pointer;
-  box-shadow: 0 6px 20px rgba(0, 87, 195, 0.35);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  flex-shrink: 0;
+  cursor: grab;
+  user-select: none;
 }
 
-.fab:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 10px 26px rgba(0, 87, 195, 0.45);
+.titleBar:active {
+  cursor: grabbing;
 }
 
-/* Бейдж непрочитанных */
-.badge {
-  position: absolute;
-  top: -6px;
-  right: -6px;
-  min-width: 22px;
-  height: 22px;
-  padding: 0 6px;
-  border-radius: 999px;
-  background: var(--red);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 600;
-  font-family: Inter, sans-serif;
-  line-height: 18px;
-  text-align: center;
-  box-shadow: 0 2px 6px rgba(192, 59, 40, 0.4);
-  border: 2px solid #fff;
-}
-
-/* Подложка */
-.backdrop {
-  position: absolute;
-  inset: 0;
-  z-index: 30;
-  background: rgba(15, 23, 42, 0.18);
-  opacity: 0;
-  transition: opacity 0.25s ease;
-}
-
-.backdropOpen {
-  opacity: 1;
-}
-
-/* Выезжающая панель */
-.drawer {
-  position: absolute;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  z-index: 31;
-  width: 380px;
-  max-width: 100%;
-  background: #fff;
-  border-radius: 16px 0 0 16px;
-  box-shadow: -8px 0 28px rgba(0, 0, 0, 0.12);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  transform: translateX(100%);
-  transition: transform 0.25s ease;
-  will-change: transform;
-}
-
-.drawerOpen {
-  transform: translateX(0);
-}
-
-/* Градиентная шапка */
-.header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  background: linear-gradient(120deg, #0057C3 0%, #2D7BF0 100%);
+.dragGrip {
+  display: grid;
+  grid-template-columns: repeat(2, 2px);
+  grid-template-rows: repeat(3, 2px);
+  gap: 2px;
+  margin-right: 2px;
   flex-shrink: 0;
 }
 
-.headerAvatar {
-  width: 38px;
-  height: 38px;
+.gripDot {
+  width: 2px;
+  height: 2px;
   border-radius: 50%;
-  background: #fff;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--dark-blue);
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.titleIcon {
+  width: 14px;
+  height: 14px;
   flex-shrink: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.16);
 }
 
-.headerAvatar svg {
-  width: 18px;
-  height: 18px;
-}
-
-.headerText {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
+.titleText {
   flex: 1;
-}
-
-.title {
-  font-size: 15px;
-  font-weight: 600;
-  color: #fff;
-  line-height: 1.2;
-}
-
-.subtitle {
+  min-width: 0;
   font-size: 12px;
-  color: rgba(255, 255, 255, 0.82);
-  margin-top: 2px;
-  white-space: nowrap;
+  font-weight: 700;
+  color: #fff;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.close {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.16);
+.titleBadge {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #fff;
+  color: #B91C1C;
+  font-size: 10px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.titleBtn {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
   border: none;
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  padding: 0;
   transition: background 0.15s ease;
 }
 
-.close:hover {
+.titleBtn:hover {
   background: rgba(255, 255, 255, 0.28);
 }
 
-/* Область сообщений */
+.titleBtn svg {
+  width: 12px;
+  height: 12px;
+}
+
+.iconUp {
+  transform: rotate(180deg);
+  transition: transform 0.15s ease;
+}
+
+.iconDown {
+  transform: rotate(0deg);
+  transition: transform 0.15s ease;
+}
+
+/* ── Sub-bar (рейс) ── */
+.subBar {
+  padding: 6px 12px;
+  background: var(--dark-blue-soft, #EAF1FB);
+  border-bottom: 1px solid #E4E4EF;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--main-gray, #545873);
+  font-weight: 600;
+}
+
+.subDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--dark-blue, #0057C3);
+  flex-shrink: 0;
+}
+
+/* ── Body — встроенный Message ── */
 .body {
   flex: 1;
   min-height: 0;
-  overflow: hidden;
   display: flex;
   flex-direction: column;
-  /* background: #F1F4FB; */
-  padding: 8px 16px 12px;
+  overflow: hidden;
+  padding: 0 10px;
+  background: #fff;
+}
+
+.body > :global(div) {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+
+.body :global([class*="requestData_messages"]) {
+  flex: 1;
+  min-height: 0;
+  height: auto !important;
+}
+
+/* ── Свёрнутое состояние — tab ── */
+.tab {
+  position: absolute;
+  right: 20px;
+  bottom: 20px;
+  z-index: 50;
+  width: 240px;
+  height: 44px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 12px;
+  background: var(--dark-blue, #0057C3);
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  cursor: grab;
+  user-select: none;
+  font-family: inherit;
+  box-shadow:
+    0 12px 28px rgba(20, 30, 60, 0.22),
+    0 0 0 4px rgba(0, 87, 195, 0.16);
+  transition: box-shadow 0.15s ease;
+}
+
+.tab:hover {
+  box-shadow:
+    0 14px 32px rgba(20, 30, 60, 0.28),
+    0 0 0 4px rgba(0, 87, 195, 0.22);
+}
+
+.tab:active {
+  cursor: grabbing;
+}
+
+.tab svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+.tabLabel {
+  flex: 1;
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tabBadge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #fff;
+  color: #B91C1C;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.tabChevron {
+  width: 13px;
+  height: 13px;
+  transform: rotate(180deg);
+  flex-shrink: 0;
 }

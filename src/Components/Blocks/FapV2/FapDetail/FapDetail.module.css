@@ -303,94 +303,12 @@
   flex-shrink: 0;
 }
 
-/* Layout with optional chat panel */
-/* .contentRow {
-  flex: 1;
-  display: flex;
-  gap: 20px;
-  overflow: hidden;
-  min-height: 0;
-}
-
-.sectionsPane {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  min-width: 0;
-  min-height: 0;
-} */
-
 .contentRow {
   flex: 1;
   min-height: 0;
   display: flex;
   gap: 20px;
   overflow: hidden;
-}
-
-.sectionsPane {
-  flex: 1;
-  min-height: 0;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  overflow-y: auto;
-  padding-right: 4px;
-}
-
-.chatPane {
-  width: 380px;
-  flex-shrink: 0;
-  border: 1px solid #E4E4EF;
-  border-radius: 10px 10px 25px 25px;
-  background: #fff;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.chatPaneHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 20px;
-  border-bottom: 1px solid #E4E4EF;
-  flex-shrink: 0;
-}
-
-.chatPaneTitle {
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.chatPaneClose {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--main-gray);
-  font-size: 16px;
-  padding: 4px 6px;
-  border-radius: 6px;
-  line-height: 1;
-  transition: color 0.15s, background 0.15s;
-}
-
-.chatPaneClose:hover {
-  color: var(--text);
-  background: var(--hover-gray);
-}
-
-.chatPaneBody {
-  flex: 1;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  padding: 0 20px;
 }
 
 .loader {
@@ -453,10 +371,11 @@
 }
 
 .svcStatusBadge {
-  padding: 3px 10px;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .sectionHeaderRight {
@@ -468,23 +387,6 @@
 .sectionSummary {
   font-size: 14px;
   color: var(--main-gray);
-}
-
-/* Навигационная карточка услуги (детальная заявки) */
-.navCard {
-  cursor: pointer;
-}
-
-.navChevron {
-  color: var(--main-gray);
-  flex-shrink: 0;
-  transform: rotate(-90deg);
-  transition: transform 0.15s ease, color 0.15s ease;
-}
-
-.navCard:hover .navChevron {
-  transform: translateX(3px) rotate(-90deg);
-  color: var(--dark-blue);
 }
 
 .emptyState {
@@ -788,4 +690,345 @@
   height: 3px;
   border-radius: 0 2px 2px 0;
   transition: width 0.3s ease;
+}
+
+/* ── Interactive status pill (4A) ── */
+.statusPillWrap {
+  position: relative;
+  display: inline-block;
+}
+
+.statusPillBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  border: 2px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  transition: filter 0.15s ease, transform 0.15s ease;
+}
+
+.statusPillBtn:hover {
+  filter: brightness(0.96);
+}
+
+.statusPillBtn:disabled {
+  cursor: default;
+}
+
+.statusPillChevron {
+  width: 14px;
+  height: 14px;
+  transition: transform 0.2s ease;
+}
+
+.statusPillChevronOpen {
+  transform: rotate(180deg);
+}
+
+.boldStatusPillBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s ease;
+}
+
+.boldStatusPillBtn:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.boldStatusPillBtn:disabled {
+  cursor: default;
+}
+
+.statusPopover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 320px;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(20, 30, 60, 0.16);
+  border: 1px solid #E4E4EF;
+  overflow: hidden;
+  z-index: 50;
+  animation: popoverIn 0.16s ease-out;
+}
+
+@keyframes popoverIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.statusPopoverHead {
+  padding: 10px 14px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--main-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: #F1F4FB;
+  border-bottom: 1px solid #E4E4EF;
+}
+
+.statusPopoverBody {
+  padding: 6px;
+}
+
+.statusPopoverItem {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition: background 0.12s ease;
+}
+
+.statusPopoverItem:hover {
+  background: #EAF1FB;
+}
+
+.statusPopoverIcon {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.statusPopoverText {
+  flex: 1;
+  min-width: 0;
+}
+
+.statusPopoverLabel {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.2;
+}
+
+.statusPopoverHint {
+  font-size: 11px;
+  color: var(--main-gray);
+  margin-top: 2px;
+}
+
+.statusPopoverDivider {
+  height: 1px;
+  background: #E4E4EF;
+  margin: 4px 8px;
+}
+
+.statusPopoverFoot {
+  padding: 8px 14px;
+  font-size: 11px;
+  color: var(--main-gray);
+  background: #F1F4FB;
+  border-top: 1px solid #E4E4EF;
+}
+
+/* ── Grid — KPI-тайлы 3×2 (NEW из дизайн-пакета) ── */
+.servicesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+  align-content: start;
+  overflow-y: auto;
+  padding: 6px 6px 4px;
+  margin: -6px -6px 0;
+}
+
+.kpiTile {
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+  min-height: 196px;
+  box-shadow: 0 1px 0 rgba(20, 30, 60, 0.02);
+  transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+}
+
+.kpiTile:hover {
+  border-color: var(--svc-color, var(--dark-blue));
+  box-shadow: 0 4px 14px var(--svc-shadow, rgba(0, 87, 195, 0.13));
+}
+
+.kpiTile:focus-visible {
+  outline: 2px solid var(--svc-color, var(--dark-blue));
+  outline-offset: 2px;
+}
+
+/* Эмблема — цветная шапка тайла */
+.kpiTileEmblem {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border-bottom: 1px solid transparent;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.kpiTileEmblemLeft {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+/* Иконка услуги — белый квадрат с цветным контуром-тенью */
+.kpiTileIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.kpiTileEmblemText {
+  min-width: 0;
+}
+
+.kpiTileTitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.2;
+}
+
+.kpiTileVerb {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-top: 1px;
+  line-height: 1.2;
+}
+
+/* Точка-статус в правом верхнем углу */
+.kpiTileDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  box-shadow: 0 0 0 3px #fff;
+  flex-shrink: 0;
+}
+
+/* Тело — KPI-метрика + прогресс/футер */
+.kpiTileBody {
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+}
+
+.kpiTileMetric {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.kpiTileNumber {
+  font-size: 30px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.8px;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiTileUnit {
+  font-size: 12px;
+  color: var(--main-gray);
+  font-weight: 500;
+}
+
+.kpiTileFooter {
+  margin-top: auto;
+}
+
+.kpiTileProgress {
+  height: 6px;
+  border-radius: 999px;
+  background: #F1F4FB;
+  border: 1px solid #E4E4EF;
+  overflow: hidden;
+}
+
+.kpiTileProgressFill {
+  height: 100%;
+  border-radius: 999px;
+  transition: width 0.3s ease;
+}
+
+.kpiTileFooterRow {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 11px;
+  color: var(--main-gray);
+}
+
+.kpiTilePct {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiTileMeta {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.kpiTileCancelled {
+  margin-top: auto;
+  font-size: 11px;
+  color: var(--main-gray);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.contentMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  overflow: hidden;
 }
