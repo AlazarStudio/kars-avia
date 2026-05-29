@@ -14,6 +14,7 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import Button from "../../Standart/Button/Button.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
+import CityRegionPicker from "../CityRegionPicker/CityRegionPicker.jsx";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
 
@@ -25,7 +26,15 @@ function AddRepresentativeHotel({ show, onClose, request }) {
   const sidebarRef = useRef();
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [showQuickCreate, setShowQuickCreate] = useState(false);
-  const [quickCreate, setQuickCreate] = useState({ name: "", city: "" });
+  const [quickCreate, setQuickCreate] = useState({
+    name: "",
+    city: "",
+    // Новый блок справочника: пишется в location.cityId
+    locationCityId: null,
+    locationRegion: null,
+    locationAddress: "",
+    locationCountry: "",
+  });
 
   const [formData, setFormData] = useState({
     name: "",
@@ -95,7 +104,14 @@ function AddRepresentativeHotel({ show, onClose, request }) {
       hotelId: "",
     });
     setShowQuickCreate(false);
-    setQuickCreate({ name: "", city: "" });
+    setQuickCreate({
+      name: "",
+      city: "",
+      locationCityId: null,
+      locationRegion: null,
+      locationAddress: "",
+      locationCountry: "",
+    });
     setIsEdited(false);
   }, []);
 
@@ -181,6 +197,15 @@ function AddRepresentativeHotel({ show, onClose, request }) {
             information: {
               city: quickCreate.city?.trim() || undefined,
             },
+            ...(quickCreate.locationCityId
+              ? {
+                  location: {
+                    cityId: quickCreate.locationCityId,
+                    address: quickCreate.locationAddress?.trim() || null,
+                    country: quickCreate.locationCountry?.trim() || null,
+                  },
+                }
+              : {}),
           },
           images: [],
         },
@@ -199,7 +224,14 @@ function AddRepresentativeHotel({ show, onClose, request }) {
           name: created.name,
         }));
         setShowQuickCreate(false);
-        setQuickCreate({ name: "", city: "" });
+        setQuickCreate({
+          name: "",
+          city: "",
+          locationCityId: null,
+          locationRegion: null,
+          locationAddress: "",
+          locationCountry: "",
+        });
         await refetchHotels();
         success("Гостиница создана.");
       }
@@ -359,6 +391,38 @@ function AddRepresentativeHotel({ show, onClose, request }) {
                       onChange={(e, newValue) =>
                         setQuickCreate((p) => ({ ...p, city: newValue?.city ?? "" }))
                       }
+                    />
+                    <label className={classes.quickCreateLabel}>
+                      Адрес (справочник)
+                    </label>
+                    <CityRegionPicker
+                      mode="cityOnly"
+                      allowEmpty={false}
+                      value={{
+                        cityId: quickCreate.locationCityId,
+                        region: quickCreate.locationRegion,
+                      }}
+                      onChange={({ cityId, region }) => {
+                        setIsEdited(true);
+                        setQuickCreate((prev) => ({
+                          ...prev,
+                          locationCityId: cityId || null,
+                          locationRegion: region || null,
+                        }));
+                      }}
+                    />
+                    <input
+                      type="text"
+                      placeholder="Улица"
+                      value={quickCreate.locationAddress}
+                      className={classes.quickCreateInput}
+                      onChange={(e) => {
+                        setIsEdited(true);
+                        setQuickCreate((prev) => ({
+                          ...prev,
+                          locationAddress: e.target.value,
+                        }));
+                      }}
                     />
                     <Button onClick={handleQuickCreate} disabled={creatingHotel}>
                       {creatingHotel ? "Создание…" : "Создать и выбрать"}

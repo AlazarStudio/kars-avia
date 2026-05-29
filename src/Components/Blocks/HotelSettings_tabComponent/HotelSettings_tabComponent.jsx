@@ -28,6 +28,7 @@ import TextEditor from "../TextEditor/TextEditor.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import { useWindowSize } from "../../../hooks/useWindowSize.jsx";
 import { useLocalStorage } from "../../../hooks/useLocalStorage.jsx";
+import CityRegionPicker from "../CityRegionPicker/CityRegionPicker.jsx";
 import { FormControlLabel, Switch } from "@mui/material";
 import MUISwitch from "../MUISwitch/MUISwitch.jsx";
 import RequisitesIcon from "../../../shared/icons/RequisitesIcon.jsx";
@@ -209,14 +210,11 @@ function HotelSettings_tabComponent({ id }) {
                 ogrn: hotel.information?.ogrn,
                 rs: hotel.information?.rs,
               },
-              // location: {
-              //   country: hotel.location?.country || null,
-              //   region: hotel.location?.region || null,
-              //   republic: hotel.location?.republic || null,
-              //   district: hotel.location?.district || null,
-              //   city: hotel.location?.city || null,
-              //   address: hotel.location?.address || null,
-              // },
+              location: {
+                country: hotel.location?.country || null,
+                cityId: hotel.location?.cityId || null,
+                address: hotel.location?.address || null,
+              },
               breakfastIncluded: !!hotel.breakfastIncluded,
               breakfast: {
                 start: hotel.breakfast.start,
@@ -1225,6 +1223,74 @@ function HotelSettings_tabComponent({ id }) {
                   className={classes.hotelAbout_info_block}
                   style={menuOpen ? { width: "70%" } : {}}
                 >
+                  <div className={classes.hotelAbout_info_label}>
+                    Адрес (справочник)
+                  </div>
+                  <div className={classes.hotelAbout_info_item}>
+                    <label>Страна</label>
+                    <input
+                      type="text"
+                      value={hotel.location?.country || ""}
+                      onChange={(e) =>
+                        setHotel((prev) => ({
+                          ...prev,
+                          location: {
+                            ...prev.location,
+                            country: e.target.value,
+                          },
+                        }))
+                      }
+                      disabled={!isEditing}
+                      className={classes.hotelAbout_info_input}
+                    />
+                  </div>
+                  <div className={classes.hotelAbout_info_item}>
+                    <CityRegionPicker
+                      mode="cityOnly"
+                      allowEmpty={false}
+                      disabled={!isEditing}
+                      value={{
+                        cityId: hotel.location?.cityId || null,
+                        region:
+                          hotel.location?.region ||
+                          hotel.location?.cityRef?.region ||
+                          null,
+                      }}
+                      onChange={({ cityId, region }) =>
+                        setHotel((prev) => ({
+                          ...prev,
+                          location: {
+                            ...prev.location,
+                            cityId: cityId || null,
+                            region: region || null,
+                          },
+                        }))
+                      }
+                    />
+                  </div>
+                  <div className={classes.hotelAbout_info_item}>
+                    <label>Улица</label>
+                    <input
+                      type="text"
+                      value={hotel.location?.address || ""}
+                      onChange={(e) =>
+                        setHotel((prev) => ({
+                          ...prev,
+                          location: {
+                            ...prev.location,
+                            address: e.target.value,
+                          },
+                        }))
+                      }
+                      disabled={!isEditing}
+                      className={classes.hotelAbout_info_input}
+                    />
+                  </div>
+                </div>
+                <div
+                  className={classes.hotelAbout_info_block}
+                  style={menuOpen ? { width: "70%" } : {}}
+                >
                   <div className={classes.hotelAbout_info_label}>Контакты</div>
                   <div className={classes.hotelAbout_info_item}>
                     <label>Почта</label>
@@ -1276,68 +1342,6 @@ function HotelSettings_tabComponent({ id }) {
                   </div> */}
                 </div>
                 </div>
-                {/* <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: 14,
-                    width: "100%",
-                  }}
-                >
-                  <div className={classes.hotelAbout_info_label}>
-                    Географическая привязка
-                  </div>
-                  <div style={{ fontSize: 13, opacity: 0.55, maxWidth: 620 }}>
-                    Используется для подбора тарифов авиакомпаний по адресу
-                    отеля. Заполняйте только нужные уровни: страна / регион /
-                    республика / район / город.
-                  </div>
-                  <div
-                    style={{
-                      display: "grid",
-                      gridTemplateColumns:
-                        "repeat(auto-fill, minmax(260px, 1fr))",
-                      gap: "16px 40px",
-                      maxWidth: 960,
-                    }}
-                  >
-                    {[
-                      { key: "country", title: "Страна" },
-                      { key: "region", title: "Регион / Край" },
-                      { key: "republic", title: "Республика" },
-                      { key: "district", title: "Район" },
-                      { key: "city", title: "Город" },
-                      { key: "address", title: "Улица" },
-                    ].map(({ key, title }) => (
-                      <div
-                        key={key}
-                        style={{
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 6,
-                        }}
-                      >
-                        <label
-                          style={{
-                            fontFamily: "Nunito Sans",
-                            fontSize: 14,
-                            color: "#545873",
-                          }}
-                        >
-                          {title}
-                        </label>
-                        <input
-                          type="text"
-                          name={key}
-                          value={hotel.location?.[key] || ""}
-                          onChange={handleLocationChange}
-                          disabled={!isEditing}
-                          style={{ width: "100%", boxSizing: "border-box" }}
-                        />
-                      </div>
-                    ))}
-                  </div>
-                </div> */}
               </div>
             )}
           </div>

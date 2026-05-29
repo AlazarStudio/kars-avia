@@ -8,10 +8,69 @@
 
 .requestButton {
     display: flex;
-    justify-content: space-between;
+    justify-content: flex-end;
     align-items: center;
+    gap: 10px;
     padding: 20px 20px 20px 30px;
     border-top: 1px solid #54587380;
+}
+
+.requestButton button {
+    width: 50%;
+}
+
+.closeIconWrapper {
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.requestTitle_close {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.groupBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.groupTitle {
+    font-family: Inter, sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.requestDataInfo {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.requestDataInfo_title {
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    width: 40%;
+}
+
+.requestDataInfo_desc {
+    background-color: #9CA4D91A;
+    font-family: Nunito Sans;
+    font-size: 14px;
+    font-weight: 400;
+    width: 60%;
+    padding: 10px 15px;
+    border-radius: 10px;
+    min-height: 37px;
+    box-sizing: border-box;
+}
+
+.requestDataInfo input {
+    width: 60%;
 }
 
 .requestTitle_name {
@@ -109,15 +168,6 @@ select {
     flex-direction: row;
     align-items: center;
     cursor: pointer;
-}
-
-.requestButton {
-    display: flex;
-    justify-content: flex-end;
-}
-
-.requestButton button {
-    width: 49%;
 }
 
 .titleLabel {

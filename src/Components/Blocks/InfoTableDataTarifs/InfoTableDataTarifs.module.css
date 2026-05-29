@@ -9,10 +9,49 @@
     /* Вертикальная прокрутка */
 }
 
+.section {
+    background: var(--white);
+    border: 1px solid #E4E4EF;
+    border-radius: 14px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.section > div[class*="InfoTable"] {
+    background: transparent;
+    border-radius: 0;
+}
+
 .tarifsHeader {
     display: flex;
     align-items: center;
+    min-height: 64px;
+    padding-left: 8px;
+    border-bottom: 1px solid #E4E4EF;
     /* justify-content: space-between; */
+}
+
+.section .InfoTable_data_elem_title {
+    padding: 0;
+}
+
+.headCell {
+    font-family: Inter, sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--main-gray);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0 20px;
+    box-sizing: border-box;
+}
+
+.headButtonCell {
+    display: flex;
+    justify-content: flex-end;
+    flex: 1;
+    padding: 0 20px;
+    box-sizing: border-box;
 }
 
 .InfoTable_title,
@@ -107,6 +146,51 @@
 
 .w40 {
     width: 40%;
+}
+
+/* НДС chip + two-level price cell (Variant A) */
+.vatChip {
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    width: fit-content;
+    padding: 4px 10px;
+    border-radius: 10px;
+    background: #E8ECF6;
+    color: #545873;
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.priceStack {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    text-align: left;
+}
+
+.priceBase {
+    font-family: Nunito Sans, Inter, sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.2;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+
+.priceVat {
+    font-size: 12px;
+    line-height: 1.2;
+    color: var(--main-gray);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.priceMuted {
+    color: var(--main-gray);
 }
 
 .w45 {

@@ -15,9 +15,26 @@ import { useMutation, useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
+import CityRegionPicker from "../CityRegionPicker/CityRegionPicker.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+
+function buildGeographyInput(geo) {
+  if (geo.cityId) {
+    return {
+      country: geo.country || null,
+      cityId: geo.cityId,
+    };
+  }
+  if (geo.region) {
+    return {
+      country: geo.country || null,
+      region: geo.region,
+    };
+  }
+  return {};
+}
 
 function CreateRequestAirlineTarifCategory({
   show,
@@ -49,10 +66,8 @@ function CreateRequestAirlineTarifCategory({
     airportIds: [],
     geography: {
       country: "",
-      region: "",
-      republic: "",
-      district: "",
-      city: "",
+      region: null,
+      cityId: null,
     },
     priceOneCategory: null,
     priceTwoCategory: null,
@@ -113,6 +128,11 @@ function CreateRequestAirlineTarifCategory({
     setFormData({
       name: "",
       airportIds: [],
+      geography: {
+        country: "",
+        region: null,
+        cityId: null,
+      },
       priceOneCategory: null,
       priceTwoCategory: null,
       priceThreeCategory: null,
@@ -154,18 +174,6 @@ function CreateRequestAirlineTarifCategory({
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
-    }));
-  };
-
-  const handleGeographyChange = (e) => {
-    const { name, value } = e.target;
-    setIsEdited(true);
-    setFormData((prevState) => ({
-      ...prevState,
-      geography: {
-        ...prevState.geography,
-        [name]: value,
-      },
     }));
   };
 
@@ -211,13 +219,7 @@ function CreateRequestAirlineTarifCategory({
               {
                 name: formData.name,
                 airportIds: formData.airportIds,
-                geography: {
-                  country: formData.geography.country || null,
-                  region: formData.geography.region || null,
-                  republic: formData.geography.republic || null,
-                  district: formData.geography.district || null,
-                  city: formData.geography.city || null,
-                },
+                geography: buildGeographyInput(formData.geography),
                 prices: {
                   priceOneCategory: parseFloat(formData.priceOneCategory) || 0,
                   priceTwoCategory: parseFloat(formData.priceTwoCategory) || 0,
@@ -424,35 +426,27 @@ function CreateRequestAirlineTarifCategory({
                 }}
               />
 
-              {/* <label>Географическая привязка</label>
-              <div
-                style={{
-                  fontSize: 12,
-                  opacity: 0.55,
-                  marginBottom: 4,
+              <label>Географическая привязка</label>
+              <CityRegionPicker
+                mode="both"
+                allowEmpty
+                value={{
+                  cityId: formData.geography.cityId,
+                  region: formData.geography.region,
                 }}
-              >
-                Тариф применяется к отелям, чей адрес совпадает с заданными
-                уровнями. Заполняйте только нужные.
-              </div>
-              {[
-                { key: "country", title: "Страна" },
-                { key: "region", title: "Регион" },
-                { key: "republic", title: "Республика" },
-                { key: "district", title: "Район" },
-                { key: "city", title: "Город" },
-              ].map(({ key, title }) => (
-                <React.Fragment key={key}>
-                  <label>{title}</label>
-                  <input
-                    type="text"
-                    name={key}
-                    value={formData.geography?.[key] || ""}
-                    onChange={handleGeographyChange}
-                    placeholder={`Введите ${title.toLowerCase()}`}
-                  />
-                </React.Fragment>
-              ))} */}
+                onChange={({ cityId, region }) => {
+                  setIsEdited(true);
+                  setFormData((prev) => ({
+                    ...prev,
+                    geography: {
+                      ...prev.geography,
+                      cityId: cityId || null,
+                      region: region || null,
+                    },
+                  }));
+                }}
+                hint="Пусто — тариф без географии. Только регион — по региону. Регион + город — по городу."
+              />
 
               <label>Стоимость одноместного</label>
               <input

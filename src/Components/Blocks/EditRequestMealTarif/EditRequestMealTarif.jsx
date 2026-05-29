@@ -2,6 +2,8 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./EditRequestMealTarif.module.css";
 import Button from "../../Standart/Button/Button.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu.jsx";
 import {
   getCookie,
   UPDATE_AIRLINE_MEAL_TARIF,
@@ -9,7 +11,6 @@ import {
 } from "../../../../graphQL_requests.js";
 import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
-import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
 
@@ -24,10 +25,13 @@ function EditRequestMealTarif({
   isHotel,
 }) {
   const token = getCookie("token");
-  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { confirm, isDialogOpen } = useDialog();
   const { success, error: notifyError } = useToast();
 
-  const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
+  const [isEditing, setIsEditing] = useState(false);
+  const [isEdited, setIsEdited] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
   const [formData, setFormData] = useState({
     breakfast: "",
     lunch: "",
@@ -37,14 +41,18 @@ function EditRequestMealTarif({
     dinnerForAirline: "",
   });
 
+  const sidebarRef = useRef();
+  const menuRef = useRef(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+
   const resetForm = useCallback(() => {
     setFormData({
-      breakfast: mealPrices?.breakfast || "",
-      lunch: mealPrices?.lunch || "",
-      dinner: mealPrices?.dinner || "",
-      breakfastForAirline: mealPricesAirline?.breakfast || "",
-      lunchForAirline: mealPricesAirline?.lunch || "",
-      dinnerForAirline: mealPricesAirline?.dinner || "",
+      breakfast: mealPrices?.breakfast ?? "",
+      lunch: mealPrices?.lunch ?? "",
+      dinner: mealPrices?.dinner ?? "",
+      breakfastForAirline: mealPricesAirline?.breakfast ?? "",
+      lunchForAirline: mealPricesAirline?.lunch ?? "",
+      dinnerForAirline: mealPricesAirline?.dinner ?? "",
     });
     setIsEdited(false);
   }, [mealPrices, mealPricesAirline]);
@@ -61,25 +69,24 @@ function EditRequestMealTarif({
     }
   );
 
-  const sidebarRef = useRef();
-
   useEffect(() => {
-    if (show && mealPrices && mealPricesAirline) {
+    if (show) {
       setFormData({
-        breakfast: mealPrices.breakfast || "",
-        lunch: mealPrices.lunch || "",
-        dinner: mealPrices.dinner || "",
-        breakfastForAirline: mealPricesAirline?.breakfast || "",
-        lunchForAirline: mealPricesAirline?.lunch || "",
-        dinnerForAirline: mealPricesAirline?.dinner || "",
+        breakfast: mealPrices?.breakfast ?? "",
+        lunch: mealPrices?.lunch ?? "",
+        dinner: mealPrices?.dinner ?? "",
+        breakfastForAirline: mealPricesAirline?.breakfast ?? "",
+        lunchForAirline: mealPricesAirline?.lunch ?? "",
+        dinnerForAirline: mealPricesAirline?.dinner ?? "",
       });
+      setIsEdited(false);
+      setIsEditing(true);
     }
   }, [show, mealPrices, mealPricesAirline]);
 
-  const [isEditing, setIsEditing] = useState(false);
-
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
+    setAnchorEl(null);
 
     if (!isEdited) {
       resetForm();
@@ -98,86 +105,79 @@ function EditRequestMealTarif({
     }
   }, [confirm, isDialogOpen, isEdited, onClose, resetForm]);
 
+  const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+  const handleEditFromMenu = () => {
+    handleMenuClose();
+    setIsEditing(true);
+  };
+  const handleCancelEdit = () => {
+    resetForm();
+    setIsEditing(false);
+  };
+
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
-    setIsEdited(true); // Устанавливаем флаг изменений при любом изменении
+    setIsEdited(true);
     setFormData((prevState) => ({
       ...prevState,
       [name]: value,
     }));
   }, []);
 
-  const [isLoading, setIsLoading] = useState(false);
-
   const handleSubmit = async (e) => {
-    if (isEditing) {
-      e.preventDefault();
-      setIsLoading(true);
+    if (!isEditing) return;
+    e.preventDefault();
+    setIsLoading(true);
 
-      // if (
-      //   !String(formData.breakfast).trim() ||
-      //   !String(formData.lunch).trim() ||
-      //   !String(formData.dinner).trim() ||
-      //   !String(formData.breakfastForAirline).trim() ||
-      //   !String(formData.lunchForAirline).trim() ||
-      //   !String(formData.dinnerForAirline).trim()
-      // ) {
-      //   showAlert("Пожалуйста, заполните все поля!");
-      //   setIsLoading(false);
-      //   return;
-      // }
+    try {
+      const dataSend = {
+        mealPrice: {
+          breakfast: Number(formData.breakfast),
+          lunch: Number(formData.lunch),
+          dinner: Number(formData.dinner),
+        },
+        mealPriceForAir: {
+          breakfast: Number(formData.breakfastForAirline),
+          lunch: Number(formData.lunchForAirline),
+          dinner: Number(formData.dinnerForAirline),
+        },
+      };
 
-      try {
-        const dataSend = {
-          mealPrice: {
-            breakfast: Number(formData.breakfast),
-            lunch: Number(formData.lunch),
-            dinner: Number(formData.dinner),
-          },
-          mealPriceForAir: {
-            breakfast: Number(formData.breakfastForAirline),
-            lunch: Number(formData.lunchForAirline),
-            dinner: Number(formData.dinnerForAirline),
-          },
-        };
+      const updateId = isHotel ? "updateHotelId" : "updateAirlineId";
 
-        let updateId = isHotel ? "updateHotelId" : "updateAirlineId";
+      const response = await updateHotelMealTarif({
+        variables: {
+          [updateId]: id,
+          input: dataSend,
+        },
+      });
 
-        let response_update_meal_tarif = await updateHotelMealTarif({
-          variables: {
-            [updateId]: id,
-            input: dataSend, // передаем MealPrice
-          },
-        });
-
-        if (response_update_meal_tarif) {
-          onSubmit(
-            isHotel
-              ? response_update_meal_tarif.data.updateHotel.mealPrice
-              : response_update_meal_tarif.data.updateAirline.mealPrice
-          );
-          resetForm();
-          onClose();
-          setIsLoading(false);
-          success("Редактирование прошло успешно.");
-        }
-      } catch (error) {
-        console.error("Catch: ", error);
+      if (response) {
+        onSubmit(
+          isHotel
+            ? response.data.updateHotel.mealPrice
+            : response.data.updateAirline.mealPrice
+        );
+        resetForm();
+        onClose();
         setIsLoading(false);
-        notifyError("Не удалось сохранить цены на питание.");
+        setIsEditing(false);
+        success("Редактирование прошло успешно.");
       }
+    } catch (error) {
+      console.error("Catch: ", error);
+      setIsLoading(false);
+      notifyError("Не удалось сохранить цены на питание.");
     }
-    setIsEditing(!isEditing);
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (isDialogOpen) return;
       if (event.target.closest(".MuiSnackbar-root")) return;
-      if (sidebarRef.current?.contains(event.target)) {
-        return;
-      }
-
+      if (anchorEl && menuRef.current?.contains(event.target)) return;
+      if (sidebarRef.current?.contains(event.target)) return;
       closeButton();
     };
 
@@ -190,7 +190,25 @@ function EditRequestMealTarif({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton, isDialogOpen]);
+  }, [show, closeButton, anchorEl, isDialogOpen]);
+
+  const renderRow = (label, name, value) => (
+    <div className={classes.requestDataInfo}>
+      <div className={classes.requestDataInfo_title}>{label}</div>
+      {isEditing ? (
+        <input
+          type="number"
+          name={name}
+          value={value}
+          onChange={handleChange}
+        />
+      ) : (
+        <div className={classes.requestDataInfo_desc}>
+          {value !== "" && value != null ? value : "—"}
+        </div>
+      )}
+    </div>
+  );
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -198,8 +216,17 @@ function EditRequestMealTarif({
         <div className={classes.requestTitle_name}>
           Редактировать цены на питание
         </div>
-        <div className={classes.requestTitle_close} onClick={closeButton}>
-          <CloseIcon />
+        <div className={classes.requestTitle_close}>
+          <AdditionalMenu
+            anchorEl={anchorEl}
+            onOpen={handleMenuOpen}
+            onClose={handleMenuClose}
+            menuRef={menuRef}
+            onEdit={handleEditFromMenu}
+          />
+          <div className={classes.closeIconWrapper} onClick={closeButton}>
+            <CloseIcon />
+          </div>
         </div>
       </div>
 
@@ -207,101 +234,65 @@ function EditRequestMealTarif({
         <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div
+            className={classes.requestMiddle}
+            style={
+              isEditing
+                ? { height: "calc(100vh - 161px)" }
+                : { height: "calc(100vh - 81px)" }
+            }
+          >
             <div className={classes.requestData}>
-              <label>Цены по договору</label>
-
-              <div className={classes.requestDataInputs}>
-                <div className={classes.inputWrapper}>
-                  <label>Завтрак</label>
-                  <input
-                    type="number"
-                    name="breakfast"
-                    value={formData.breakfast}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                  />
-                </div>
-                <div className={classes.inputWrapper}>
-                  <label>Обед</label>
-                  <input
-                    type="number"
-                    name="lunch"
-                    value={formData.lunch}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                  />
-                </div>
-                <div className={classes.inputWrapper}>
-                  <label>Ужин</label>
-                  <input
-                    type="number"
-                    name="dinner"
-                    value={formData.dinner}
-                    onChange={handleChange}
-                    disabled={!isEditing}
-                  />
-                </div>
+              <div className={classes.groupBlock}>
+                <div className={classes.groupTitle}>Цены по договору</div>
+                {renderRow("Завтрак", "breakfast", formData.breakfast)}
+                {renderRow("Обед", "lunch", formData.lunch)}
+                {renderRow("Ужин", "dinner", formData.dinner)}
               </div>
 
               {user?.hotelId ? null : (
-                <>
-                  <label>Цены для АК</label>
-                  <div className={classes.requestDataInputs}>
-                    <div className={classes.inputWrapper}>
-                      <label>Завтрак</label>
-                      <input
-                        type="number"
-                        name="breakfastForAirline"
-                        value={formData.breakfastForAirline}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className={classes.inputWrapper}>
-                      <label>Обед</label>
-                      <input
-                        type="number"
-                        name="lunchForAirline"
-                        value={formData.lunchForAirline}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                    <div className={classes.inputWrapper}>
-                      <label>Ужин</label>
-                      <input
-                        type="number"
-                        name="dinnerForAirline"
-                        value={formData.dinnerForAirline}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                      />
-                    </div>
-                  </div>
-                </>
+                <div className={classes.groupBlock}>
+                  <div className={classes.groupTitle}>Цены для АК</div>
+                  {renderRow(
+                    "Завтрак",
+                    "breakfastForAirline",
+                    formData.breakfastForAirline
+                  )}
+                  {renderRow(
+                    "Обед",
+                    "lunchForAirline",
+                    formData.lunchForAirline
+                  )}
+                  {renderRow(
+                    "Ужин",
+                    "dinnerForAirline",
+                    formData.dinnerForAirline
+                  )}
+                </div>
               )}
             </div>
           </div>
 
-          <div className={classes.requestButton}>
-            <Button
-              type="submit"
-              onClick={handleSubmit}
-              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-              color={!isEditing ? "#3B6C54" : "#fff"}
-            >
-              {isEditing ? (
-                <>
-                  Сохранить <img src="/saveDispatcher.png" alt="" />
-                </>
-              ) : (
-                <>
-                  Изменить <img src="/editDispetcher.png" alt="" />
-                </>
-              )}
-            </Button>
-          </div>
+          {isEditing && (
+            <div className={classes.requestButton}>
+              <Button
+                type="button"
+                onClick={handleCancelEdit}
+                backgroundcolor="var(--hover-gray)"
+                color="#000"
+              >
+                Отмена
+              </Button>
+              <Button
+                type="submit"
+                onClick={handleSubmit}
+                backgroundcolor="#0057C3"
+                color="#fff"
+              >
+                Сохранить <img src="/saveDispatcher.png" alt="" />
+              </Button>
+            </div>
+          )}
         </>
       )}
     </Sidebar>

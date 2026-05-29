@@ -76,6 +76,7 @@ function HotelListRow({ item, user, onClick }) {
       <div className={`${classes.InfoTable_data_elem} ${classes.w25}`}>
         <div className={classes.InfoTable_data_elem_title}>
           {item.information?.city}
+          {item?.location?.city ? ` / ${item.location.city}` : ""}
         </div>
         {item.information?.address ? (
           <div className={classes.InfoTable_data_elem_title} style={{paddingRight:'20px'}}>

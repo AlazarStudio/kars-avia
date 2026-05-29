@@ -2,9 +2,11 @@ import React, { useState, useRef, useEffect, useCallback } from "react";
 import classes from "./EditRequestTarifAdditionalServices.module.css";
 import Button from "../../Standart/Button/Button.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
+import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu.jsx";
 
 import { getCookie, UPDATE_HOTEL_TARIF } from "../../../../graphQL_requests.js";
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
@@ -15,17 +17,19 @@ function EditRequestTarifAdditionalServices({
   tarif,
   id,
   user,
-  type,
 }) {
   const token = getCookie("token");
   const { confirm, isDialogOpen } = useDialog();
   const { success, error: notifyError } = useToast();
 
-  const [formData, setFormData] = useState({
-    images: null,
-  });
+  const [formData, setFormData] = useState({});
+  const [isEditing, setIsEditing] = useState(false);
+  const [isEdited, setIsEdited] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const sidebarRef = useRef();
+  const menuRef = useRef(null);
+  const [anchorEl, setAnchorEl] = useState(null);
 
   const [updateHotelTarif] = useMutation(UPDATE_HOTEL_TARIF, {
     context: {
@@ -36,26 +40,21 @@ function EditRequestTarifAdditionalServices({
     },
   });
 
-  const [isEditing, setIsEditing] = useState(false);
-  const [isEdited, setIsEdited] = useState(false);
-
   useEffect(() => {
-    if (show && tarif) {
-      setFormData({ ...tarif, images: null });
+    if (show && tarif && !isEditing) {
+      setFormData({ ...tarif });
       setIsEdited(false);
-      setIsEditing(false);
     }
-  }, [show, tarif]);
+  }, [show, tarif, isEditing]);
 
   const resetForm = useCallback(() => {
-    if (tarif) {
-      setFormData({ ...tarif, images: null });
-    }
+    if (tarif) setFormData({ ...tarif });
     setIsEdited(false);
   }, [tarif]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
+    setAnchorEl(null);
 
     if (!isEdited) {
       onClose();
@@ -73,8 +72,18 @@ function EditRequestTarifAdditionalServices({
     }
   }, [confirm, isDialogOpen, isEdited, onClose, resetForm]);
 
+  const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+  const handleEditFromMenu = () => {
+    handleMenuClose();
+    setIsEditing(true);
+  };
+  const handleCancelEdit = () => {
+    resetForm();
+    setIsEditing(false);
+  };
+
   const handleChange = (e) => {
-    if (!isEditing) return;
     const { name, value } = e.target;
     setIsEdited(true);
     setFormData((prevState) => ({
@@ -83,53 +92,46 @@ function EditRequestTarifAdditionalServices({
     }));
   };
 
-  const [isLoading, setIsLoading] = useState(false);
-
   const handleSubmit = async (e) => {
-    if (isEditing) {
-      e.preventDefault();
-      setIsLoading(true);
+    if (!isEditing) return;
+    e.preventDefault();
+    setIsLoading(true);
 
-      try {
-        const response_update_tarif = await updateHotelTarif({
-          variables: {
-            updateHotelId: id,
-            input: {
-              additionalServices: [
-                {
-                  id: formData.id,
-                  name: formData.name,
-                  price: parseFloat(formData.price),
-                  priceForAirline: parseFloat(formData.priceForAirline),
-                },
-              ],
-            },
+    try {
+      await updateHotelTarif({
+        variables: {
+          updateHotelId: id,
+          input: {
+            additionalServices: [
+              {
+                id: formData.id,
+                name: formData.name,
+                price: parseFloat(formData.price),
+                priceForAirline: parseFloat(formData.priceForAirline),
+              },
+            ],
           },
-        });
+        },
+      });
 
-        // Сброс состояний после успешного обновления
-        onClose();
-        // refetch();
-        setIsLoading(false);
-        setFormData((prev) => ({ ...prev, images: null }));
-        success("Редактирование доп. услуги прошло успешно.");
-      } catch (error) {
-        setIsLoading(false);
-        console.error("Ошибка при обновлении тарифа:", error);
-        notifyError("Не удалось обновить доп. услугу.");
-      }
+      onClose();
+      setIsLoading(false);
+      setIsEditing(false);
+      setIsEdited(false);
+      success("Редактирование доп. услуги прошло успешно.");
+    } catch (error) {
+      setIsLoading(false);
+      console.error("Ошибка при обновлении тарифа:", error);
+      notifyError("Не удалось обновить доп. услугу.");
     }
-    setIsEditing(!isEditing);
   };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (isDialogOpen) return;
       if (event.target.closest(".MuiSnackbar-root")) return;
-      if (sidebarRef.current?.contains(event.target)) {
-        return;
-      }
-
+      if (anchorEl && menuRef.current?.contains(event.target)) return;
+      if (sidebarRef.current?.contains(event.target)) return;
       closeButton();
     };
 
@@ -142,14 +144,25 @@ function EditRequestTarifAdditionalServices({
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
-  }, [show, closeButton, isDialogOpen]);
+  }, [show, closeButton, anchorEl, isDialogOpen]);
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
-        <div className={classes.requestTitle_name}>Редактировать доп услугу</div>
-        <div className={classes.requestTitle_close} onClick={closeButton}>
-          <img src="/close.png" alt="close" />
+        <div className={classes.requestTitle_name}>
+          Редактировать доп услугу
+        </div>
+        <div className={classes.requestTitle_close}>
+          <AdditionalMenu
+            anchorEl={anchorEl}
+            onOpen={handleMenuOpen}
+            onClose={handleMenuClose}
+            menuRef={menuRef}
+            onEdit={handleEditFromMenu}
+          />
+          <div className={classes.closeIconWrapper} onClick={closeButton}>
+            <CloseIcon />
+          </div>
         </div>
       </div>
 
@@ -157,61 +170,99 @@ function EditRequestTarifAdditionalServices({
         <MUILoader loadSize={"50px"} fullHeight={"90vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div
+            className={classes.requestMiddle}
+            style={
+              isEditing
+                ? { height: "calc(100vh - 161px)" }
+                : { height: "calc(100vh - 81px)" }
+            }
+          >
             <div className={classes.requestData}>
-              <label>Название доп услуги</label>
-              <input
-                type="text"
-                name="name"
-                value={formData.name || ""}
-                onChange={handleChange}
-                placeholder=""
-                disabled={!isEditing}
-              />
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>
+                  Название доп услуги
+                </div>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    name="name"
+                    value={formData.name || ""}
+                    onChange={handleChange}
+                    placeholder=""
+                  />
+                ) : (
+                  <div className={classes.requestDataInfo_desc}>
+                    {formData.name || "—"}
+                  </div>
+                )}
+              </div>
 
-              <label>Стоимость</label>
-              <input
-                type="number"
-                name="price"
-                value={formData.price || 0}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-                disabled={!isEditing}
-              />
-              {!user?.hotelId && (
-                <>
-                  <label>Стоимость для авиакомпании</label>
+              <div className={classes.requestDataInfo}>
+                <div className={classes.requestDataInfo_title}>Стоимость</div>
+                {isEditing ? (
                   <input
                     type="number"
-                    name="priceForAirline"
-                    value={formData.priceForAirline || 0}
+                    name="price"
+                    value={formData.price ?? ""}
                     onChange={handleChange}
                     placeholder="Введите стоимость"
-                    disabled={!isEditing}
                   />
-                </>
+                ) : (
+                  <div className={classes.requestDataInfo_desc}>
+                    {formData.price != null && formData.price !== ""
+                      ? formData.price
+                      : "—"}
+                  </div>
+                )}
+              </div>
+
+              {!user?.hotelId && (
+                <div className={classes.requestDataInfo}>
+                  <div className={classes.requestDataInfo_title}>
+                    Стоимость для авиакомпании
+                  </div>
+                  {isEditing ? (
+                    <input
+                      type="number"
+                      name="priceForAirline"
+                      value={formData.priceForAirline ?? ""}
+                      onChange={handleChange}
+                      placeholder="Введите стоимость"
+                    />
+                  ) : (
+                    <div className={classes.requestDataInfo_desc}>
+                      {formData.priceForAirline != null &&
+                      formData.priceForAirline !== ""
+                        ? formData.priceForAirline
+                        : "—"}
+                    </div>
+                  )}
+                </div>
               )}
             </div>
           </div>
 
-          <div className={classes.requestButton}>
-            <Button
-              type="submit"
-              onClick={handleSubmit}
-              backgroundcolor={!isEditing ? "#3CBC6726" : "#0057C3"}
-              color={!isEditing ? "#3B6C54" : "#fff"}
-            >
-              {isEditing ? (
-                <>
-                  Сохранить <img src="/saveDispatcher.png" alt="" />
-                </>
-              ) : (
-                <>
-                  Изменить <img src="/editDispetcher.png" alt="" />
-                </>
-              )}
-            </Button>
-          </div>
+          {isEditing && (
+            <div className={classes.requestButton}>
+              <Button
+                type="button"
+                onClick={handleCancelEdit}
+                backgroundcolor="var(--hover-gray)"
+                color="#000"
+              >
+                Отмена
+              </Button>
+              <Button
+                type="submit"
+                onClick={handleSubmit}
+                backgroundcolor="#0057C3"
+                color="#fff"
+              >
+                Сохранить <img src="/saveDispatcher.png" alt="" />
+              </Button>
+            </div>
+          )}
         </>
       )}
     </Sidebar>

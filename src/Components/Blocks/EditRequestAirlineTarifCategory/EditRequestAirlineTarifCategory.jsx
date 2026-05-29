@@ -13,11 +13,28 @@ import {
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
+import CityRegionPicker from "../CityRegionPicker/CityRegionPicker.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+
+function buildGeographyInput(geo) {
+  if (geo.cityId) {
+    return {
+      country: geo.country || null,
+      cityId: geo.cityId,
+    };
+  }
+  if (geo.region) {
+    return {
+      country: geo.country || null,
+      region: geo.region,
+    };
+  }
+  return {};
+}
 
 function EditRequestAirlineTarifCategory({
   show,
@@ -58,10 +75,8 @@ function EditRequestAirlineTarifCategory({
       airportIds,
       geography: {
         country: tarif?.geography?.country || "",
-        region: tarif?.geography?.region || "",
-        republic: tarif?.geography?.republic || "",
-        district: tarif?.geography?.district || "",
-        city: tarif?.geography?.city || "",
+        region: tarif?.geography?.region || null,
+        cityId: tarif?.geography?.cityId || null,
       },
       priceOneCategory: tarif?.prices?.priceOneCategory ?? 0,
       priceTwoCategory: tarif?.prices?.priceTwoCategory ?? 0,
@@ -85,10 +100,8 @@ function EditRequestAirlineTarifCategory({
     airportIds: [],
     geography: {
       country: "",
-      region: "",
-      republic: "",
-      district: "",
-      city: "",
+      region: null,
+      cityId: null,
     },
     priceOneCategory: 0,
     priceTwoCategory: 0,
@@ -201,18 +214,6 @@ function EditRequestAirlineTarifCategory({
     }));
   };
 
-  const handleGeographyChange = (e) => {
-    const { name, value } = e.target;
-    setIsEdited(true);
-    setFormData((prevState) => ({
-      ...prevState,
-      geography: {
-        ...prevState.geography,
-        [name]: value,
-      },
-    }));
-  };
-
   const handleFileChange = (e) => {
     const files = e.target.files;
     if (files && files.length > 8) {
@@ -248,13 +249,7 @@ function EditRequestAirlineTarifCategory({
                   id: tarif?.id,
                   name: formData.name,
                   airportIds: formData.airportIds,
-                  geography: {
-                    country: formData.geography.country || null,
-                    region: formData.geography.region || null,
-                    republic: formData.geography.republic || null,
-                    district: formData.geography.district || null,
-                    city: formData.geography.city || null,
-                  },
+                  geography: buildGeographyInput(formData.geography),
                   prices: {
                     priceOneCategory: parseFloat(formData.priceOneCategory),
                     priceTwoCategory: parseFloat(formData.priceTwoCategory),
@@ -473,40 +468,41 @@ function EditRequestAirlineTarifCategory({
                 )}
               </div>
 
-              {/* <div className={classes.requestDataInfo_block}>
+              <div className={classes.requestDataInfo_block}>
                 <div className={classes.requestDataInfo_title}>
                   Географическая привязка
                 </div>
-                <div style={{ fontSize: 12, opacity: 0.55, margin: "4px 0 8px" }}>
-                  Тариф применяется к отелям, чей адрес совпадает с заданными
-                  уровнями. Заполняйте только нужные: страна / регион /
-                  республика / район / город.
-                </div>
-                {[
-                  { key: "country", title: "Страна" },
-                  { key: "region", title: "Регион" },
-                  { key: "republic", title: "Республика" },
-                  { key: "district", title: "Район" },
-                  { key: "city", title: "Город" },
-                ].map(({ key, title }) => (
-                  <div key={key} className={classes.requestDataInfo}>
-                    <div className={classes.requestDataInfo_title}>{title}</div>
-                    {isEditing ? (
-                      <input
-                        type="text"
-                        name={key}
-                        value={formData.geography?.[key] || ""}
-                        onChange={handleGeographyChange}
-                        placeholder={`Введите ${title.toLowerCase()}`}
-                      />
-                    ) : (
-                      <div className={classes.requestDataInfo_desc}>
-                        {formData.geography?.[key] || "—"}
-                      </div>
-                    )}
+                {isEditing ? (
+                  <CityRegionPicker
+                    mode="both"
+                    allowEmpty
+                    value={{
+                      cityId: formData.geography.cityId,
+                      region: formData.geography.region,
+                    }}
+                    onChange={({ cityId, region }) => {
+                      setIsEdited(true);
+                      setFormData((prev) => ({
+                        ...prev,
+                        geography: {
+                          ...prev.geography,
+                          cityId: cityId || null,
+                          region: region || null,
+                        },
+                      }));
+                    }}
+                    hint="Пусто — без географии. Регион — по региону. Регион + город — по городу."
+                  />
+                ) : (
+                  <div className={classes.requestDataInfo_desc}>
+                    {formData.geography.cityId
+                      ? `Город: ${tarif?.geography?.city || "—"}, регион: ${formData.geography.region || "—"}`
+                      : formData.geography.region
+                        ? `Регион: ${formData.geography.region}`
+                        : "—"}
                   </div>
-                ))}
-              </div> */}
+                )}
+              </div>
 
               {[
                 { key: "priceOneCategory", title: "Стоимость одноместного" },

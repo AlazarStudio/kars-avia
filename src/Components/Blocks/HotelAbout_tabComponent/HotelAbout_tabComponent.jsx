@@ -483,6 +483,18 @@ function HotelAbout_tabComponent({ id }) {
                             {hotel.information?.address},{" "}
                             {hotel.information?.city}
                           </div>
+                          {hotel.location?.city ? (
+                            <div className={classes.hotelAbout_info_item}>
+                              <label>Город (справочник)</label>
+                              <div>{hotel.location.city}</div>
+                            </div>
+                          ) : null}
+                          {hotel.location?.region ? (
+                            <div className={classes.hotelAbout_info_item}>
+                              <label>Регион (справочник)</label>
+                              <div>{hotel.location.region}</div>
+                            </div>
+                          ) : null}
                         </div>
                       </div>
                     </div>

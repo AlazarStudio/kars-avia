@@ -3903,10 +3903,14 @@ export const GET_HOTEL = gql`
       location {
         country
         region
-        republic
-        district
         city
+        cityId
         address
+        cityRef {
+          id
+          city
+          region
+        }
       }
       images
       gallery
@@ -4710,9 +4714,8 @@ export const GET_AIRLINE_TARIFS = gql`
         geography {
           country
           region
-          republic
-          district
           city
+          cityId
         }
         id
         name
@@ -6592,6 +6595,16 @@ export const GET_ANALYTICS_USERS = gql`
 export const GET_CITY_REGIONS = gql`
   query CityRegions {
     cityRegions
+  }
+`;
+
+export const GET_CITIES_BY_REGION = gql`
+  query CitiesByRegion($region: String!) {
+    citiesByRegion(region: $region) {
+      id
+      city
+      region
+    }
   }
 `;
 
