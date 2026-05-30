@@ -53,44 +53,134 @@
   border-radius: 10px;
   padding: 20px;
   cursor: pointer;
-  border: 1px solid #E4E4EF;
+  border: 1px solid var(--no-active);
   transition: box-shadow 0.2s, border-color 0.2s;
   display: flex;
   flex-direction: column;
   gap: 12px;
+  position: relative;
 }
 
 .card:hover {
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
   border-color: var(--dark-blue);
+  z-index: 5;
 }
 
-.cardTop {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.cardFlight {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.flightNumber {
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--text);
-}
-
-.flightMeta {
-  font-size: 14px;
-  color: var(--main-gray);
+/* ── Top kicker: request number + status ── */
+.cardKicker {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.cardKickerLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--main-gray);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.cardKickerValue {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.cardKickerSpacer {
+  flex: 1;
+}
+
+/* ── Identity: big logo + airline + flight ── */
+.cardIdentity {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+}
+
+.cardLogoBig {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  color: #fff;
+  flex-shrink: 0;
+  overflow: hidden;
+  background: var(--dark-blue);
+  box-sizing: border-box;
+}
+
+.cardLogoBig img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  background: #fff;
+}
+
+.cardIdentityText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.cardAirlineName {
+  font-size: 17px;
+  font-weight: 800;
+  color: var(--text);
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cardFlightLine {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--main-gray);
+}
+
+.cardFlightLine svg {
+  flex-shrink: 0;
+}
+
+.cardLines {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.cardLine {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--main-gray);
+  min-width: 0;
+}
+
+.cardLine svg {
+  flex-shrink: 0;
+}
+
+.cardLine strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.cardLineTime {
+  color: var(--dark-blue);
+  font-weight: 700;
 }
 
 .dot {
@@ -123,19 +213,54 @@
   font-weight: 500;
 }
 
+.serviceRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 .serviceDots {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
   flex-wrap: wrap;
+}
+
+.serviceDotPlaceholder {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px dashed #CBD2E4;
+  opacity: 0.55;
+  flex-shrink: 0;
 }
 
 .cardBottom {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding-top: 10px;
+  padding-top: 12px;
   border-top: 1px solid #E4E4EF;
+  gap: 12px;
+}
+
+.cardHotel {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  color: var(--main-gray);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cardCrew {
+  font-size: 13px;
+  color: var(--main-gray);
+  flex-shrink: 0;
 }
 
 .cardDate {

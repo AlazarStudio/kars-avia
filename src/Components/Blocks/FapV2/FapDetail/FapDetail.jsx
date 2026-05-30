@@ -153,10 +153,11 @@ function getServiceSummary(serviceKey, request) {
       return `${s?.people?.length ?? 0} / ${s?.plan?.peopleCount ?? 0} чел.`;
     }
     case "living": {
-      const hotels = request.livingService?.plan?.hotels ?? [];
+      const hotels = request.livingService?.hotels ?? [];
       const totalPeople = hotels.reduce((acc, h) => acc + (h.people?.length ?? 0), 0);
-      const totalCap = hotels.reduce((acc, h) => acc + (h.capacity ?? 0), 0);
-      return totalCap > 0 ? `${totalPeople} / ${totalCap} гостей` : `${hotels.length} отелей`;
+      const planCap = request.livingService?.plan?.peopleCount;
+      if (planCap != null) return `${totalPeople} / ${planCap} гостей`;
+      return `${hotels.length} отелей`;
     }
     case "transfer": {
       const drivers = request.transferService?.drivers ?? [];
@@ -616,7 +617,9 @@ export default function FapDetail({ user, canEdit = true }) {
           >
             <img src="/arrow.png" alt="" />
           </button>
-          <span className={classes.headerNavTitle}>Заявка {request.flightNumber}</span>
+          <span className={classes.headerNavTitle}>
+            Заявка {request.requestNumber || request.flightNumber}
+          </span>
           {canCopyRepresentativeLink && (
             <button
               type="button"
@@ -634,21 +637,25 @@ export default function FapDetail({ user, canEdit = true }) {
       <div className={classes.stickyHeader}>
         <div className={classes.headerRow}>
           <div className={classes.headerLeft}>
-            {request.airline?.name && (
-              <>
-                <span className={classes.airlineTag}>
-                  {request.airline.images?.[0] ? (
-                    <img src={getMediaUrl(request.airline.images[0])} alt="" />
-                  ) : (
-                    <span className={classes.airlineLogoFallback}>
-                      {request.airline.name.trim().charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                  {request.airline.name}
+            <span className={classes.airlineTag}>
+              {request.airline?.images?.[0] ? (
+                <img src={getMediaUrl(request.airline.images[0])} alt="" />
+              ) : (
+                <span className={classes.airlineLogoFallback}>
+                  {(request.airline?.name || "?").trim().charAt(0).toUpperCase()}
                 </span>
-                <span className={classes.headerDivider} />
-              </>
-            )}
+              )}
+              <span className={classes.airlineInfo}>
+                <span className={classes.airlineName}>
+                  {request.airline?.name || "—"}
+                </span>
+                {request.flightNumber && (
+                  <span className={classes.airlineFlight}>
+                    Рейс <strong>{request.flightNumber}</strong>
+                  </span>
+                )}
+              </span>
+            </span>
             {renderLightStatusPill()}
           </div>
 
@@ -724,6 +731,7 @@ export default function FapDetail({ user, canEdit = true }) {
         token={token}
         user={user}
         flightNumber={request.flightNumber}
+        requestNumber={request.requestNumber}
       />
 
       {canEdit && showAddService && (

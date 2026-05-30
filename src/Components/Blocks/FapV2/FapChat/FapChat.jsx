@@ -15,6 +15,8 @@ import ChevronIcon from "../../../../shared/icons/ChevronIcon";
 const CHAT_MODE_KEY = "fapV2.chatMode";
 const CHAT_LEGACY_KEY = "fapV2.chatCollapsed";
 const CHAT_POS_KEY = "fapV2.chatPos";
+const CHAT_POS_VER_KEY = "fapV2.chatPosVer";
+const CHAT_POS_VER = "2"; // bump при изменении системы координат (absolute→fixed)
 
 const DEFAULT_POS = { right: 20, bottom: 20 };
 const SIZE = {
@@ -22,7 +24,7 @@ const SIZE = {
   large: { w: 480, h: 640 },
   tab: { w: 240, h: 44 },
 };
-const MIN_VISIBLE = 60;
+const EDGE_MARGIN = 8;
 
 function readMode() {
   if (typeof window === "undefined") return "mini";
@@ -42,6 +44,12 @@ function writeMode(m) {
 function readPos() {
   if (typeof window === "undefined") return DEFAULT_POS;
   try {
+    // если версия системы координат не совпадает — игнорируем старое значение
+    if (localStorage.getItem(CHAT_POS_VER_KEY) !== CHAT_POS_VER) {
+      localStorage.removeItem(CHAT_POS_KEY);
+      localStorage.setItem(CHAT_POS_VER_KEY, CHAT_POS_VER);
+      return DEFAULT_POS;
+    }
     const raw = localStorage.getItem(CHAT_POS_KEY);
     if (!raw) return DEFAULT_POS;
     const p = JSON.parse(raw);
@@ -51,22 +59,38 @@ function readPos() {
 }
 
 function writePos(p) {
-  try { localStorage.setItem(CHAT_POS_KEY, JSON.stringify(p)); } catch { /* ignore */ }
+  try {
+    localStorage.setItem(CHAT_POS_KEY, JSON.stringify(p));
+    localStorage.setItem(CHAT_POS_VER_KEY, CHAT_POS_VER);
+  } catch { /* ignore */ }
 }
 
 function clampPos(p, size) {
   if (typeof window === "undefined") return p;
-  const maxRight = Math.max(0, window.innerWidth - MIN_VISIBLE);
-  const maxBottom = Math.max(0, window.innerHeight - MIN_VISIBLE);
-  const minRight = MIN_VISIBLE - size.w;
-  const minBottom = MIN_VISIBLE - size.h;
+  // Левая граница — правый край сайдбара (MenuDispetcher), если он есть на странице.
+  // Так чат не заходит под сайдбар.
+  const sidebar = typeof document !== "undefined"
+    ? document.querySelector('[data-sidebar="root"]')
+    : null;
+  const sidebarRight = sidebar ? sidebar.getBoundingClientRect().right : 0;
+
+  // pos.right — расстояние от правого края окна до правого края чата.
+  // Левый край чата = window.innerWidth - pos.right - size.w
+  // Он должен быть >= sidebarRight + EDGE_MARGIN.
+  // ⇒ pos.right <= window.innerWidth - size.w - sidebarRight - EDGE_MARGIN
+  const maxRightWindow = Math.max(EDGE_MARGIN, window.innerWidth - size.w - EDGE_MARGIN);
+  const maxRightSidebar = window.innerWidth - size.w - sidebarRight - EDGE_MARGIN;
+  const maxRight = Math.max(EDGE_MARGIN, Math.min(maxRightWindow, maxRightSidebar));
+  const maxBottom = Math.max(EDGE_MARGIN, window.innerHeight - size.h - EDGE_MARGIN);
   return {
-    right: Math.min(maxRight, Math.max(minRight, p.right)),
-    bottom: Math.min(maxBottom, Math.max(minBottom, p.bottom)),
+    right: Math.min(maxRight, Math.max(EDGE_MARGIN, p.right)),
+    bottom: Math.min(maxBottom, Math.max(EDGE_MARGIN, p.bottom)),
   };
 }
 
-export default function FapChat({ passengerRequestId, token, user, flightNumber }) {
+export default function FapChat({ passengerRequestId, token, user, flightNumber, requestNumber }) {
+  const titleLabel = requestNumber || flightNumber || "";
+  const subtitleLabel = flightNumber || "";
   const [mode, setMode] = useState(readMode);
   const [pos, setPos] = useState(readPos);
   const dragRef = useRef(null);
@@ -209,7 +233,7 @@ export default function FapChat({ passengerRequestId, token, user, flightNumber 
     );
   }
 
-  const subtitle = flightNumber ? `Рейс ${flightNumber}` : "";
+  const subtitle = subtitleLabel ? `Рейс ${subtitleLabel}` : "";
 
   return (
     <div
@@ -233,7 +257,7 @@ export default function FapChat({ passengerRequestId, token, user, flightNumber 
         </span>
         <ChatIcon className={classes.titleIcon} />
         <span className={classes.titleText}>
-          Чат{flightNumber ? ` · ${flightNumber}` : ""}
+          Чат{titleLabel ? ` · ${titleLabel}` : ""}
         </span>
         {unreadCount > 0 && (
           <span className={classes.titleBadge}>{unreadCount > 99 ? "99+" : unreadCount}</span>

@@ -1,10 +1,16 @@
 import React, { useState } from "react";
 import { useMutation } from "@apollo/client";
+import { InputMask } from "@react-input/mask";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
 import classes from "../FapDetail/FapDetail.module.css";
 import {
   COMPLETE_PASSENGER_REQUEST_WATER_EARLY,
   COMPLETE_PASSENGER_REQUEST_MEAL_EARLY,
   SET_PASSENGER_SERVICE_STATUS,
+  ADD_PASSENGER_REQUEST_PERSON,
   getCookie,
 } from "../../../../../graphQL_requests";
 import {
@@ -16,6 +22,8 @@ import Button from "../../../Standart/Button/Button";
 import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
+
+const emptyPerson = { fullName: "", phone: "", seat: "" };
 
 export default function FapWaterMealSection({
   service,
@@ -34,6 +42,7 @@ export default function FapWaterMealSection({
   const { confirm } = useDialog();
   const [showEarlyModal, setShowEarlyModal] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [personModal, setPersonModal] = useState(null);
 
   const statusCfg = SERVICE_STATUS_CONFIG[service?.status] || {};
 
@@ -50,6 +59,41 @@ export default function FapWaterMealSection({
   const [setServiceStatus] = useMutation(SET_PASSENGER_SERVICE_STATUS, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
+
+  const [addPerson] = useMutation(ADD_PASSENGER_REQUEST_PERSON, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const handlePersonSave = async () => {
+    if (!personModal) return;
+    const fullName = personModal.fullName.trim();
+    if (!fullName) {
+      notifyError("Укажите ФИО пассажира");
+      return;
+    }
+    try {
+      setSaving(true);
+      await addPerson({
+        variables: {
+          requestId,
+          service: serviceKind,
+          person: {
+            fullName,
+            phone: personModal.phone.trim() || null,
+            seat: personModal.seat.trim() || null,
+            issuedAt: new Date().toISOString(),
+          },
+        },
+      });
+      success("Пассажир добавлен");
+      setPersonModal(null);
+      onRefetch();
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при добавлении");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const handleDelivered = async () => {
     const ok = await confirm(
@@ -149,6 +193,13 @@ export default function FapWaterMealSection({
 
             {canEdit && !isCompleted && (
               <div className={classes.actionsRow}>
+                <Button
+                  backgroundcolor="var(--dark-blue)"
+                  color="#fff"
+                  onClick={() => setPersonModal({ ...emptyPerson })}
+                >
+                  + Добавить пассажира
+                </Button>
                 {service.status === "NEW" && (
                   <Button
                     backgroundcolor="#ECFDF5"
@@ -211,6 +262,56 @@ export default function FapWaterMealSection({
         cancelText="Отмена"
         saving={saving}
       />
+
+      {personModal && (
+        <Dialog open onClose={() => setPersonModal(null)} PaperProps={{ sx: { borderRadius: "15px" } }}>
+          <DialogTitle>
+            {serviceKind === "WATER" ? "Добавить получателя воды" : "Добавить получателя питания"}
+          </DialogTitle>
+          <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, pt: "12px !important", minWidth: 320 }}>
+            <div>
+              <label className={classes.addFormLabel}>ФИО *</label>
+              <input
+                className={classes.addFormInput}
+                style={{ width: "100%", marginTop: 4 }}
+                value={personModal.fullName}
+                onChange={(e) => setPersonModal((m) => ({ ...m, fullName: e.target.value }))}
+                placeholder="Иванов Иван Иванович"
+              />
+            </div>
+            <div>
+              <label className={classes.addFormLabel}>Телефон</label>
+              <InputMask
+                className={classes.addFormInput}
+                style={{ width: "100%", marginTop: 4 }}
+                mask="+7 (___) ___-__-__"
+                replacement={{ _: /\d/ }}
+                value={personModal.phone}
+                onChange={(e) => setPersonModal((m) => ({ ...m, phone: e.target.value }))}
+                placeholder="+7 (___) ___-__-__"
+              />
+            </div>
+            <div>
+              <label className={classes.addFormLabel}>Место</label>
+              <input
+                className={classes.addFormInput}
+                style={{ width: "100%", marginTop: 4 }}
+                value={personModal.seat}
+                onChange={(e) => setPersonModal((m) => ({ ...m, seat: e.target.value }))}
+                placeholder="12A"
+              />
+            </div>
+          </DialogContent>
+          <DialogActions sx={{ padding: "8px 16px 16px" }}>
+            <Button backgroundcolor="var(--hover-gray)" color="#000" onClick={() => setPersonModal(null)}>
+              Отмена
+            </Button>
+            <Button backgroundcolor="var(--dark-blue)" color="#fff" onClick={handlePersonSave} disabled={saving}>
+              {saving ? "Сохранение..." : "Добавить"}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      )}
     </div>
   );
 }

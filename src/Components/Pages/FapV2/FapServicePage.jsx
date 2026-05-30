@@ -9,7 +9,7 @@ import {
 import { SERVICE_CONFIG } from "../../Blocks/FapV2/fapConstants";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import Header from "../../Blocks/Header/Header";
-import FapWaterMealSection from "../../Blocks/FapV2/FapWaterMealSection/FapWaterMealSection";
+import FapWaterMealPage from "../../Blocks/FapV2/FapWaterMealPage/FapWaterMealPage";
 import FapLivingSection from "../../Blocks/FapV2/FapLivingSection/FapLivingSection";
 import FapTransferSection from "../../Blocks/FapV2/FapTransferSection/FapTransferSection";
 import FapBaggageSection from "../../Blocks/FapV2/FapBaggageSection/FapBaggageSection";
@@ -85,31 +85,27 @@ export default function FapServicePage({ user }) {
     switch (serviceKey) {
       case "water":
         return (
-          <FapWaterMealSection
+          <FapWaterMealPage
             service={request.waterService}
             serviceKind="WATER"
             label={cfg.label}
             color={cfg.color}
-            requestId={request.id}
+            bg={cfg.bg}
+            request={request}
             onRefetch={refetch}
-            isOpen={true}
-            onToggle={noop}
-            isPage
             canEdit={canEdit}
           />
         );
       case "meal":
         return (
-          <FapWaterMealSection
+          <FapWaterMealPage
             service={request.mealService}
             serviceKind="MEAL"
             label={cfg.label}
             color={cfg.color}
-            requestId={request.id}
+            bg={cfg.bg}
+            request={request}
             onRefetch={refetch}
-            isOpen={true}
-            onToggle={noop}
-            isPage
             canEdit={canEdit}
           />
         );
@@ -189,8 +185,8 @@ export default function FapServicePage({ user }) {
           </button>
           <span className={classes.headerNavTitle}>
             {request
-              ? `${request.flightNumber} — ${cfg?.label ?? serviceKey}`
-              : cfg?.label ?? serviceKey}
+              ? `Заявка ${request.requestNumber || request.flightNumber || ""}`
+              : ""}
           </span>
           {canCopyRepresentativeLink && (
             <button
@@ -225,6 +221,7 @@ export default function FapServicePage({ user }) {
         token={token}
         user={user}
         flightNumber={request?.flightNumber}
+        requestNumber={request?.requestNumber}
       />
     </div>
   );

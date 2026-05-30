@@ -69,7 +69,7 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
   const toggleHotel = (origIdx) =>
     setExpandedHotels((prev) => ({ ...prev, [origIdx]: !prev[origIdx] }));
 
-  const totalCapacity = hotels.reduce((s, h) => s + (h.peopleCount || 0), 0);
+  const totalCapacity = service.plan?.peopleCount ?? hotels.reduce((s, h) => s + (h.peopleCount || 0), 0);
   const totalGuests = hotels.reduce((s, h) => s + (h.people?.length || 0), 0);
 
   const handleRemoveHotel = async () => {

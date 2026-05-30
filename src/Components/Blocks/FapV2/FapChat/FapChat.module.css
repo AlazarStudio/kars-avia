@@ -1,6 +1,6 @@
 /* ── Плавающее окно чата (mini / large) ── */
 .window {
-  position: absolute;
+  position: fixed;
   right: 20px;
   bottom: 20px;
   z-index: 50;
@@ -157,7 +157,7 @@
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  padding: 0 10px;
+  padding: 0 10px 10px;
   background: #fff;
 }
 
@@ -175,9 +175,99 @@
   height: auto !important;
 }
 
+/* ── Scoped overrides для встроенного Message input bar ──
+   ВАЖНО: используем > (direct child) от .requestData,
+   чтобы [class*="sendBlock"] НЕ матчил .sendBlock_message (он живёт внутри sendBlock). */
+.body :global([class*="requestData_"]) > :global([class*="sendBlock"]) {
+  margin: 8px 2px 0;
+  padding: 10px;
+  border: 1px solid #E4E4EF;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  transition: background 0.15s;
+}
+
+.body :global([class*="requestData_"]) > :global([class*="sendBlock"]) > input {
+  height: 32px;
+  padding: 0 4px;
+  background: transparent;
+  cursor: text;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  line-height: 32px;
+}
+
+.body :global([class*="requestData_"]) > :global([class*="sendBlock"]) > input::placeholder {
+  color: #94A3B8;
+}
+
+.body :global([class*="sendBlock_message"]) {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--dark-blue, #0057C3);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+  flex-shrink: 0;
+  align-self: center;
+  padding: 0;
+  line-height: 0;
+}
+
+.body :global([class*="sendBlock_message"]):hover {
+  background: var(--dark-blue-hover, #00489F);
+}
+
+.body :global([class*="sendBlock_message"]):active {
+  transform: scale(0.94);
+}
+
+.body :global([class*="sendBlock_message"]) svg {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+
+.body :global([class*="sendBlock_message"]) svg path {
+  fill: #fff !important;
+  opacity: 1 !important;
+}
+
+.body :global([class*="smilesBlock"]) {
+  width: 32px;
+  height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+  color: #545873;
+  transition: background 0.15s;
+  align-self: center;
+  flex-shrink: 0;
+}
+
+.body :global([class*="smilesBlock"]):hover {
+  background: #EDF0F7;
+}
+
+.body :global([class*="smiles"]) {
+  display: inline-flex;
+  align-items: center;
+  align-self: center;
+  flex-shrink: 0;
+}
+
 /* ── Свёрнутое состояние — tab ── */
 .tab {
-  position: absolute;
+  position: fixed;
   right: 20px;
   bottom: 20px;
   z-index: 50;

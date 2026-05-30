@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from "react";
 import { useMutation } from "@apollo/client";
+import { InputMask } from "@react-input/mask";
 import Dialog from "@mui/material/Dialog";
 import classes from "./HotelGuestsModal.module.css";
 import {
@@ -489,11 +490,13 @@ export default function HotelGuestsModal({
             )}
             <div className={classes.formField}>
               <label className={classes.formLabel}>Телефон</label>
-              <input
+              <InputMask
                 className={classes.formInput}
+                mask="+7 (___) ___-__-__"
+                replacement={{ _: /\d/ }}
                 value={formData.phone}
                 onChange={(e) => setFormData((f) => ({ ...f, phone: e.target.value }))}
-                placeholder="+7 999 000 00 00"
+                placeholder="+7 (___) ___-__-__"
               />
             </div>
             <div className={classes.formField}>

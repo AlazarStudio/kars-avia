@@ -78,8 +78,8 @@
 .stickyHeader {
   background: #fff;
   border: 1px solid #E4E4EF;
-  border-radius: 10px;
-  padding: 12px 20px;
+  border-radius: 12px;
+  padding: 14px 18px;
   flex-shrink: 0;
 }
 
@@ -94,7 +94,8 @@
 .headerLeft {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 14px;
+  min-width: 0;
 }
 
 .statusBadge {
@@ -107,35 +108,65 @@
 .airlineTag {
   display: inline-flex;
   align-items: center;
-  gap: 9px;
-  font-size: 15px;
-  font-weight: 600;
+  gap: 14px;
   color: var(--text);
-  white-space: nowrap;
+  min-width: 0;
 }
 
 .airlineTag img {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  object-fit: contain;
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  object-fit: cover;
   background: #fff;
   border: 1px solid #E4E4EF;
   flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .airlineLogoFallback {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
   background: var(--gray);
   color: var(--main-gray);
-  font-size: 13px;
+  font-size: 20px;
   font-weight: 700;
   flex-shrink: 0;
+}
+
+.airlineInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.airlineName {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.airlineFlight {
+  font-size: 12px;
+  color: var(--main-gray);
+  margin-top: 2px;
+}
+
+.airlineFlight strong {
+  color: var(--text);
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  font-variant-numeric: tabular-nums;
 }
 
 .headerDivider {

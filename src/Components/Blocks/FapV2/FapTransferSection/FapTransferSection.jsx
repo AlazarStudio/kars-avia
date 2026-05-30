@@ -1,5 +1,6 @@
 import React, { useState, useCallback } from "react";
 import { useMutation } from "@apollo/client";
+import { InputMask } from "@react-input/mask";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -438,12 +439,14 @@ export default function FapTransferSection({ service, color, request, onRefetch,
                 </div>
                 <div>
                   <label className={classes.addFormLabel}>Телефон</label>
-                  <input
+                  <InputMask
                     className={classes.addFormInput}
                     style={{ width: "100%", marginTop: 4 }}
+                    mask="+7 (___) ___-__-__"
+                    replacement={{ _: /\d/ }}
                     value={personModal.form.phone}
                     onChange={(e) => setPersonModal((m) => ({ ...m, form: { ...m.form, phone: e.target.value } }))}
-                    placeholder="+7 999 000 00 00"
+                    placeholder="+7 (___) ___-__-__"
                   />
                 </div>
               </>

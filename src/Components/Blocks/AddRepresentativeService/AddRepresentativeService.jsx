@@ -69,14 +69,36 @@ function AddRepresentativeService({
   }, [show, request?.crewMembers, crewOptions]);
 
   // Определяем, какие услуги уже есть в заявке
-  const hasWaterService = request?.waterService?.plan?.enabled;
-  const hasMealService = request?.mealService?.plan?.enabled;
-  const hasLivingService = request?.livingService?.plan?.enabled;
-  const hasArrivalTransferService = request?.transferService?.plan?.enabled;
-  const hasDepartureTransferService = request?.departureTransferService?.plan?.enabled;
-  const hasBaggageDeliveryService = request?.baggageDeliveryService?.plan?.enabled;
+  const hasWaterService = !!request?.waterService?.plan?.enabled;
+  const hasMealService = !!request?.mealService?.plan?.enabled;
+  const hasLivingService = !!request?.livingService?.plan?.enabled;
+  const hasArrivalTransferService = !!request?.transferService?.plan?.enabled;
+  const hasDepartureTransferService = !!request?.departureTransferService?.plan?.enabled;
+  const hasBaggageDeliveryService = !!request?.baggageDeliveryService?.plan?.enabled;
 
-  // Инициализируем форму только для услуг, которых еще нет
+  // Helpers: ISO → "HH:MM" и "YYYY-MM-DD"
+  const isoToTime = (iso) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    return `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+  };
+  const isoToDate = (iso) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "";
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  };
+
+  // Счётчики уже добавленных данных — для confirm-предупреждения при отключении услуги
+  const waterCount = request?.waterService?.people?.length ?? 0;
+  const mealCount = request?.mealService?.people?.length ?? 0;
+  const livingHotelsCount = request?.livingService?.hotels?.length ?? 0;
+  const arrivalDriversCount = request?.transferService?.drivers?.length ?? 0;
+  const departureDriversCount = request?.departureTransferService?.drivers?.length ?? 0;
+  const baggageDriversCount = request?.baggageDeliveryService?.drivers?.length ?? 0;
+
+  // Инициализируем форму
   const [formData, setFormData] = useState({
     waterSupply: false,
     waterPeopleCount: "",
@@ -99,6 +121,40 @@ function AddRepresentativeService({
     baggageDelivery: false,
     baggageDeliveryPlannedAt: "",
   });
+
+  // Префилл формы из существующих сервисов при открытии
+  useEffect(() => {
+    if (!show) return;
+    setFormData({
+      waterSupply: hasWaterService,
+      waterPeopleCount: request?.waterService?.plan?.peopleCount?.toString() ?? "",
+      waterPlannedAt: isoToTime(request?.waterService?.plan?.plannedAt),
+
+      foodSupply: hasMealService,
+      foodPeopleCount: request?.mealService?.plan?.peopleCount?.toString() ?? "",
+      foodPlannedAt: isoToTime(request?.mealService?.plan?.plannedAt),
+
+      habitation: hasLivingService,
+      habitationPeopleCount: request?.livingService?.plan?.peopleCount?.toString() ?? "",
+      habitationPlannedFromDate: isoToDate(request?.livingService?.plan?.plannedFromAt),
+      habitationPlannedFromTime: isoToTime(request?.livingService?.plan?.plannedFromAt),
+      habitationPlannedToDate: isoToDate(request?.livingService?.plan?.plannedToAt),
+      habitationPlannedToTime: isoToTime(request?.livingService?.plan?.plannedToAt),
+
+      transferArrival: hasArrivalTransferService,
+      transferArrivalPeopleCount: request?.transferService?.plan?.peopleCount?.toString() ?? "",
+      transferArrivalPlannedAt: isoToTime(request?.transferService?.plan?.plannedAt),
+
+      transferDeparture: hasDepartureTransferService,
+      transferDeparturePeopleCount: request?.departureTransferService?.plan?.peopleCount?.toString() ?? "",
+      transferDeparturePlannedAt: isoToTime(request?.departureTransferService?.plan?.plannedAt),
+
+      baggageDelivery: hasBaggageDeliveryService,
+      baggageDeliveryPlannedAt: isoToTime(request?.baggageDeliveryService?.plan?.plannedAt),
+    });
+    setIsEdited(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [show, request?.id]);
 
   const [updatePassengerRequest] = useMutation(UPDATE_PASSENGER_REQUEST, {
     context: {
@@ -149,11 +205,28 @@ function AddRepresentativeService({
     }
   }, [isEdited, resetForm, onClose]);
 
+  const confirmDisable = (was, dataCount, label) => {
+    if (!was || dataCount === 0) return true;
+    return window.confirm(
+      `Услуга «${label}» будет отключена. К ней привязаны данные (${dataCount}). Сохранённые данные не удаляются — услугу можно включить снова. Продолжить?`
+    );
+  };
+
   const handleChange = useCallback((e) => {
     const { name, type, checked, value } = e.target;
-    setIsEdited(true);
 
     if (type === "checkbox") {
+      // Подтверждение отключения услуги с данными
+      if (!checked) {
+        if (name === "waterSupply" && !confirmDisable(hasWaterService, waterCount, "Поставка воды")) return;
+        if (name === "foodSupply" && !confirmDisable(hasMealService, mealCount, "Поставка питания")) return;
+        if (name === "habitation" && !confirmDisable(hasLivingService, livingHotelsCount, "Проживание")) return;
+        if (name === "transferArrival" && !confirmDisable(hasArrivalTransferService, arrivalDriversCount, "Трансфер с аэропорта до гостиницы")) return;
+        if (name === "transferDeparture" && !confirmDisable(hasDepartureTransferService, departureDriversCount, "Трансфер с гостиницы до аэропорта")) return;
+        if (name === "baggageDelivery" && !confirmDisable(hasBaggageDeliveryService, baggageDriversCount, "Доставка багажа")) return;
+      }
+      setIsEdited(true);
+
       setFormData((prev) => {
         if (name === "habitation") {
           return {
@@ -217,9 +290,11 @@ function AddRepresentativeService({
         };
       });
     } else {
+      setIsEdited(true);
       setFormData((prev) => ({ ...prev, [name]: value }));
     }
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasWaterService, hasMealService, hasLivingService, hasArrivalTransferService, hasDepartureTransferService, hasBaggageDeliveryService, waterCount, mealCount, livingHotelsCount, arrivalDriversCount, departureDriversCount, baggageDriversCount]);
 
   const buildPlannedAt = (timeStr) => {
     if (!timeStr) return null;
@@ -275,8 +350,8 @@ function AddRepresentativeService({
 
     const input = {};
 
-    // Добавляем только те услуги, которых еще нет в заявке
-    if (!hasWaterService && formData.waterSupply) {
+    // Вода
+    if (formData.waterSupply) {
       input.waterService = {
         plan: {
           enabled: true,
@@ -284,9 +359,12 @@ function AddRepresentativeService({
           plannedAt: buildPlannedAt(formData.waterPlannedAt),
         },
       };
+    } else if (hasWaterService) {
+      input.waterService = { plan: { enabled: false } };
     }
 
-    if (!hasMealService && formData.foodSupply) {
+    // Питание
+    if (formData.foodSupply) {
       input.mealService = {
         plan: {
           enabled: true,
@@ -294,9 +372,12 @@ function AddRepresentativeService({
           plannedAt: buildPlannedAt(formData.foodPlannedAt),
         },
       };
+    } else if (hasMealService) {
+      input.mealService = { plan: { enabled: false } };
     }
 
-    if (!hasLivingService && formData.habitation) {
+    // Проживание
+    if (formData.habitation) {
       input.livingService = {
         plan: {
           enabled: true,
@@ -305,9 +386,12 @@ function AddRepresentativeService({
           plannedToAt: buildPlannedFromTo(formData.habitationPlannedToDate, formData.habitationPlannedToTime),
         },
       };
+    } else if (hasLivingService) {
+      input.livingService = { plan: { enabled: false } };
     }
 
-    if (!hasArrivalTransferService && formData.transferArrival) {
+    // Трансфер аэропорт → гостиница
+    if (formData.transferArrival) {
       input.transferService = {
         plan: {
           enabled: true,
@@ -315,9 +399,12 @@ function AddRepresentativeService({
           plannedAt: buildPlannedAt(formData.transferArrivalPlannedAt),
         },
       };
+    } else if (hasArrivalTransferService) {
+      input.transferService = { plan: { enabled: false } };
     }
 
-    if (!hasDepartureTransferService && formData.transferDeparture) {
+    // Трансфер гостиница → аэропорт
+    if (formData.transferDeparture) {
       input.departureTransferService = {
         plan: {
           enabled: true,
@@ -325,15 +412,20 @@ function AddRepresentativeService({
           plannedAt: buildPlannedAt(formData.transferDeparturePlannedAt),
         },
       };
+    } else if (hasDepartureTransferService) {
+      input.departureTransferService = { plan: { enabled: false } };
     }
 
-    if (!hasBaggageDeliveryService && formData.baggageDelivery) {
+    // Доставка багажа
+    if (formData.baggageDelivery) {
       input.baggageDeliveryService = {
         plan: {
           enabled: true,
           plannedAt: buildPlannedAt(formData.baggageDeliveryPlannedAt),
         },
       };
+    } else if (hasBaggageDeliveryService) {
+      input.baggageDeliveryService = { plan: { enabled: false } };
     }
 
     // Экипаж: ростер + флаг включения
@@ -427,232 +519,213 @@ function AddRepresentativeService({
 
                 <div className={classes.typeServices}>Вид услуг</div>
 
-                {/* Показываем только если услуги еще нет в заявке */}
-                {!hasWaterService && (
+                {/* Поставка воды */}
+                <label className={classes.checkBoxWrapper}>
+                  <input
+                    type="checkbox"
+                    name="waterSupply"
+                    checked={formData.waterSupply}
+                    onChange={handleChange}
+                  />
+                  Поставка питьевой воды
+                  {hasWaterService && waterCount > 0 && (
+                    <span className={classes.serviceMeta}>выдано: {waterCount}</span>
+                  )}
+                </label>
+                {formData.waterSupply && (
                   <>
-                    <label className={classes.checkBoxWrapper}>
-                      <input
-                        type="checkbox"
-                        name="waterSupply"
-                        checked={formData.waterSupply}
-                        onChange={handleChange}
-                      />
-                      Поставка питьевой воды
-                    </label>
-
-                    {formData.waterSupply && (
-                      <>
-                        <label>Введите количество человек</label>
-                        <input
-                          type="number"
-                          name="waterPeopleCount"
-                          value={formData.waterPeopleCount}
-                          onChange={handleChange}
-                        />
-
-                        <label>Введите время подачи в аэропорт</label>
-                        <input
-                          type="time"
-                          name="waterPlannedAt"
-                          value={formData.waterPlannedAt}
-                          onChange={handleChange}
-                          placeholder="Время"
-                        />
-                      </>
-                    )}
+                    <label>Введите количество человек</label>
+                    <input
+                      type="number"
+                      name="waterPeopleCount"
+                      value={formData.waterPeopleCount}
+                      onChange={handleChange}
+                    />
+                    <label>Введите время подачи в аэропорт</label>
+                    <input
+                      type="time"
+                      name="waterPlannedAt"
+                      value={formData.waterPlannedAt}
+                      onChange={handleChange}
+                      placeholder="Время"
+                    />
                   </>
                 )}
 
-                {!hasMealService && (
+                {/* Поставка питания */}
+                <label className={classes.checkBoxWrapper}>
+                  <input
+                    type="checkbox"
+                    name="foodSupply"
+                    checked={formData.foodSupply}
+                    onChange={handleChange}
+                  />
+                  Поставка питания
+                  {hasMealService && mealCount > 0 && (
+                    <span className={classes.serviceMeta}>выдано: {mealCount}</span>
+                  )}
+                </label>
+                {formData.foodSupply && (
                   <>
-                    <label className={classes.checkBoxWrapper}>
-                      <input
-                        type="checkbox"
-                        name="foodSupply"
-                        checked={formData.foodSupply}
-                        onChange={handleChange}
-                      />
-                      Поставка питания
-                    </label>
-
-                    {formData.foodSupply && (
-                      <>
-                        <label>Введите количество человек</label>
-                        <input
-                          type="number"
-                          name="foodPeopleCount"
-                          value={formData.foodPeopleCount}
-                          onChange={handleChange}
-                        />
-
-                        <label>Введите время подачи в аэропорт</label>
-                        <input
-                          type="time"
-                          name="foodPlannedAt"
-                          value={formData.foodPlannedAt}
-                          onChange={handleChange}
-                          placeholder="Время"
-                        />
-                      </>
-                    )}
+                    <label>Введите количество человек</label>
+                    <input
+                      type="number"
+                      name="foodPeopleCount"
+                      value={formData.foodPeopleCount}
+                      onChange={handleChange}
+                    />
+                    <label>Введите время подачи в аэропорт</label>
+                    <input
+                      type="time"
+                      name="foodPlannedAt"
+                      value={formData.foodPlannedAt}
+                      onChange={handleChange}
+                      placeholder="Время"
+                    />
                   </>
                 )}
 
-                {!hasLivingService && (
+                {/* Проживание */}
+                <label className={classes.checkBoxWrapper}>
+                  <input
+                    type="checkbox"
+                    name="habitation"
+                    checked={formData.habitation}
+                    onChange={handleChange}
+                  />
+                  Проживание
+                  {hasLivingService && livingHotelsCount > 0 && (
+                    <span className={classes.serviceMeta}>отелей: {livingHotelsCount}</span>
+                  )}
+                </label>
+                {formData.habitation && (
                   <>
-                    <label className={classes.checkBoxWrapper}>
-                      <input
-                        type="checkbox"
-                        name="habitation"
-                        checked={formData.habitation}
-                        onChange={handleChange}
-                      />
-                      Проживание
-                    </label>
-
-                    {formData.habitation && (
-                      <>
-                        <label>Введите количество человек</label>
-                        <input
-                          type="number"
-                          name="habitationPeopleCount"
-                          value={formData.habitationPeopleCount}
-                          onChange={handleChange}
-                        />
-
-                        <label>Дата и время заезда</label>
-                        <input
-                          type="date"
-                          name="habitationPlannedFromDate"
-                          value={formData.habitationPlannedFromDate}
-                          onChange={handleChange}
-                        />
-                        <input
-                          type="time"
-                          name="habitationPlannedFromTime"
-                          value={formData.habitationPlannedFromTime}
-                          onChange={handleChange}
-                        />
-
-                        <label>Дата и время выезда</label>
-                        <input
-                          type="date"
-                          name="habitationPlannedToDate"
-                          value={formData.habitationPlannedToDate}
-                          onChange={handleChange}
-                        />
-                        <input
-                          type="time"
-                          name="habitationPlannedToTime"
-                          value={formData.habitationPlannedToTime}
-                          onChange={handleChange}
-                        />
-                      </>
-                    )}
+                    <label>Введите количество человек</label>
+                    <input
+                      type="number"
+                      name="habitationPeopleCount"
+                      value={formData.habitationPeopleCount}
+                      onChange={handleChange}
+                    />
+                    <label>Дата и время заезда</label>
+                    <input
+                      type="date"
+                      name="habitationPlannedFromDate"
+                      value={formData.habitationPlannedFromDate}
+                      onChange={handleChange}
+                    />
+                    <input
+                      type="time"
+                      name="habitationPlannedFromTime"
+                      value={formData.habitationPlannedFromTime}
+                      onChange={handleChange}
+                    />
+                    <label>Дата и время выезда</label>
+                    <input
+                      type="date"
+                      name="habitationPlannedToDate"
+                      value={formData.habitationPlannedToDate}
+                      onChange={handleChange}
+                    />
+                    <input
+                      type="time"
+                      name="habitationPlannedToTime"
+                      value={formData.habitationPlannedToTime}
+                      onChange={handleChange}
+                    />
                   </>
                 )}
 
-                {!hasArrivalTransferService && (
+                {/* Трансфер: аэропорт → гостиница */}
+                <label className={classes.checkBoxWrapper}>
+                  <input
+                    type="checkbox"
+                    name="transferArrival"
+                    checked={formData.transferArrival}
+                    onChange={handleChange}
+                  />
+                  Трансфер с аэропорта до гостиницы
+                  {hasArrivalTransferService && arrivalDriversCount > 0 && (
+                    <span className={classes.serviceMeta}>водителей: {arrivalDriversCount}</span>
+                  )}
+                </label>
+                {formData.transferArrival && (
                   <>
-                    <label className={classes.checkBoxWrapper}>
-                      <input
-                        type="checkbox"
-                        name="transferArrival"
-                        checked={formData.transferArrival}
-                        onChange={handleChange}
-                      />
-                      Трансфер с аэропорта до гостиницы
-                    </label>
-
-                    {formData.transferArrival && (
-                      <>
-                        <label>Введите количество человек</label>
-                        <input
-                          type="number"
-                          name="transferArrivalPeopleCount"
-                          value={formData.transferArrivalPeopleCount}
-                          onChange={handleChange}
-                        />
-
-                        <label>Введите время подачи в аэропорт</label>
-                        <input
-                          type="time"
-                          name="transferArrivalPlannedAt"
-                          value={formData.transferArrivalPlannedAt}
-                          onChange={handleChange}
-                          placeholder="Время"
-                        />
-                      </>
-                    )}
+                    <label>Введите количество человек</label>
+                    <input
+                      type="number"
+                      name="transferArrivalPeopleCount"
+                      value={formData.transferArrivalPeopleCount}
+                      onChange={handleChange}
+                    />
+                    <label>Введите время подачи в аэропорт</label>
+                    <input
+                      type="time"
+                      name="transferArrivalPlannedAt"
+                      value={formData.transferArrivalPlannedAt}
+                      onChange={handleChange}
+                      placeholder="Время"
+                    />
                   </>
                 )}
 
-                {!hasDepartureTransferService && (
+                {/* Трансфер: гостиница → аэропорт */}
+                <label className={classes.checkBoxWrapper}>
+                  <input
+                    type="checkbox"
+                    name="transferDeparture"
+                    checked={formData.transferDeparture}
+                    onChange={handleChange}
+                  />
+                  Трансфер с гостиницы до аэропорта
+                  {hasDepartureTransferService && departureDriversCount > 0 && (
+                    <span className={classes.serviceMeta}>водителей: {departureDriversCount}</span>
+                  )}
+                </label>
+                {formData.transferDeparture && (
                   <>
-                    <label className={classes.checkBoxWrapper}>
-                      <input
-                        type="checkbox"
-                        name="transferDeparture"
-                        checked={formData.transferDeparture}
-                        onChange={handleChange}
-                      />
-                      Трансфер с гостиницы до аэропорта
-                    </label>
-
-                    {formData.transferDeparture && (
-                      <>
-                        <label>Введите количество человек</label>
-                        <input
-                          type="number"
-                          name="transferDeparturePeopleCount"
-                          value={formData.transferDeparturePeopleCount}
-                          onChange={handleChange}
-                        />
-
-                        <label>Введите время подачи к гостинице</label>
-                        <input
-                          type="time"
-                          name="transferDeparturePlannedAt"
-                          value={formData.transferDeparturePlannedAt}
-                          onChange={handleChange}
-                          placeholder="Время"
-                        />
-                      </>
-                    )}
+                    <label>Введите количество человек</label>
+                    <input
+                      type="number"
+                      name="transferDeparturePeopleCount"
+                      value={formData.transferDeparturePeopleCount}
+                      onChange={handleChange}
+                    />
+                    <label>Введите время подачи к гостинице</label>
+                    <input
+                      type="time"
+                      name="transferDeparturePlannedAt"
+                      value={formData.transferDeparturePlannedAt}
+                      onChange={handleChange}
+                      placeholder="Время"
+                    />
                   </>
                 )}
 
-                {!hasBaggageDeliveryService && (
+                {/* Доставка багажа */}
+                <label className={classes.checkBoxWrapper}>
+                  <input
+                    type="checkbox"
+                    name="baggageDelivery"
+                    checked={formData.baggageDelivery}
+                    onChange={handleChange}
+                  />
+                  Доставка багажа
+                  {hasBaggageDeliveryService && baggageDriversCount > 0 && (
+                    <span className={classes.serviceMeta}>водителей: {baggageDriversCount}</span>
+                  )}
+                </label>
+                {formData.baggageDelivery && (
                   <>
-                    <label className={classes.checkBoxWrapper}>
-                      <input
-                        type="checkbox"
-                        name="baggageDelivery"
-                        checked={formData.baggageDelivery}
-                        onChange={handleChange}
-                      />
-                      Доставка багажа
-                    </label>
-
-                    {formData.baggageDelivery && (
-                      <>
-                        <label>Введите время</label>
-                        <input
-                          type="time"
-                          name="baggageDeliveryPlannedAt"
-                          value={formData.baggageDeliveryPlannedAt}
-                          onChange={handleChange}
-                          placeholder="Время"
-                        />
-                      </>
-                    )}
+                    <label>Введите время</label>
+                    <input
+                      type="time"
+                      name="baggageDeliveryPlannedAt"
+                      value={formData.baggageDeliveryPlannedAt}
+                      onChange={handleChange}
+                      placeholder="Время"
+                    />
                   </>
-                )}
-
-                {hasWaterService && hasMealService && hasLivingService && hasArrivalTransferService && hasDepartureTransferService && hasBaggageDeliveryService && (
-                  <div className={classes.noServicesMessage}>
-                    Все доступные услуги уже добавлены в заявку.
-                  </div>
                 )}
               </div>
             </div>

@@ -1928,8 +1928,42 @@ export const CANCEL_PASSENGER_REQUEST = gql`
 `;
 
 export const ADD_PASSENGER_REQUEST_PERSON = gql`
-  mutation AddPassengerRequestPerson($requestId: ID!, $service: PassengerServiceKind!, $person: PassengerServicePersonInput!) {
+  mutation AddPassengerRequestPerson($requestId: ID!, $service: PassengerWaterFoodKind!, $person: PassengerServicePersonInput!) {
     addPassengerRequestPerson(requestId: $requestId, service: $service, person: $person) {
+      id
+    }
+  }
+`;
+
+export const UPDATE_PASSENGER_REQUEST_PERSON = gql`
+  mutation UpdatePassengerRequestPerson(
+    $requestId: ID!
+    $service: PassengerWaterFoodKind!
+    $personIndex: Int!
+    $person: PassengerServicePersonInput!
+  ) {
+    updatePassengerRequestPerson(
+      requestId: $requestId
+      service: $service
+      personIndex: $personIndex
+      person: $person
+    ) {
+      id
+    }
+  }
+`;
+
+export const REMOVE_PASSENGER_REQUEST_PERSON = gql`
+  mutation RemovePassengerRequestPerson(
+    $requestId: ID!
+    $service: PassengerWaterFoodKind!
+    $personIndex: Int!
+  ) {
+    removePassengerRequestPerson(
+      requestId: $requestId
+      service: $service
+      personIndex: $personIndex
+    ) {
       id
     }
   }
@@ -3038,6 +3072,7 @@ export const GET_PASSENGER_REQUESTS = gql`
     passengerRequests(take: $take, skip: $skip, filter: $filter) {
       id
       createdAt
+      requestNumber
       flightNumber
       airline {
         name
@@ -3081,6 +3116,10 @@ export const GET_PASSENGER_REQUESTS = gql`
           plannedAt
         }
       }
+      includesCrew
+      crewMembers {
+        airlinePersonalId
+      }
       livingService {
         status
         plan {
@@ -3090,6 +3129,7 @@ export const GET_PASSENGER_REQUESTS = gql`
         }
         hotels {
           hotelId
+          name
         }
       }
       transferService {
@@ -3268,6 +3308,7 @@ export const GET_PASSENGER_REQUEST = gql`
   query PassengerRequest($passengerRequestId: ID!) {
     passengerRequest(id: $passengerRequestId) {
       id
+      requestNumber
       flightNumber
       flightDate
       includesCrew

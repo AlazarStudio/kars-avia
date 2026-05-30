@@ -296,7 +296,10 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
 
   return (
     <>
-      <div className={menuOpen ? `${classes.menu}` : `${classes.w_closed}`}>
+      <div
+        data-sidebar="root"
+        className={menuOpen ? `${classes.menu}` : `${classes.w_closed}`}
+      >
         <div className={classes.menuHeader}>
           {/* Стрелка для открытия/закрытия меню */}
           <button className={menuOpen ? `${classes.menuToggle}` : `${classes.menuToggleClose}`} onClick={handleMenuToggle}>

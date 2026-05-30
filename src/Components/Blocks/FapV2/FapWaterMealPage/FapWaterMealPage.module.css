@@ -1,0 +1,510 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  font-family: Inter, sans-serif;
+}
+
+/* ── Service header (breadcrumb + title + finish CTA) ── */
+.head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  border-radius: 12px;
+}
+
+.headLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1;
+}
+
+.headIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.headText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.headCrumb {
+  font-size: 12px;
+  color: #545873;
+}
+
+.headTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.headTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.headFlight {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #545873;
+}
+
+.headFlight strong {
+  color: var(--text);
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.statusBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+}
+
+.headRight {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.finishBtn {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 10px;
+  border: none;
+  background: var(--dark-blue);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s, filter 0.15s;
+}
+
+.finishBtn:hover {
+  background: var(--dark-blue-hover, #00489F);
+}
+
+/* ── KPI tiles row ── */
+.kpiRow {
+  display: flex;
+  gap: 10px;
+}
+
+.kpi {
+  flex: 1;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.kpiHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #545873;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.kpiValue {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -0.4px;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiSub {
+  font-size: 11px;
+  color: #545873;
+}
+
+/* ── List card (full-width) ── */
+/* !important: see FapServicePage.module.css — last child gets overflow-y:auto for accordion sections. */
+.listCard {
+  flex: 1;
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden !important;
+  min-width: 0;
+  min-height: 0;
+}
+
+.listHead {
+  padding: 10px 16px;
+  border-bottom: 1px solid #E4E4EF;
+  background: #F8FAFC;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.listTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.listCount {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.searchWrap {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid #E4E4EF;
+  border-radius: 8px;
+  background: #fff;
+}
+
+.searchWrap input {
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--text);
+  width: 180px;
+  background: transparent;
+}
+
+.searchWrap input::placeholder {
+  color: #94A3B8;
+}
+
+/* ── Quick-add bar (top slot) ── */
+.quickAdd {
+  padding: 10px 16px;
+  border-bottom: 1px solid #E4E4EF;
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.smallField {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.smallFieldLabel {
+  font-size: 10px;
+  font-weight: 600;
+  color: #545873;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.smallFieldLabel .req {
+  color: #EF4444;
+}
+
+.smallFieldInput {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.smallFieldInput:hover {
+  border-color: #CBD2E4;
+}
+
+.smallFieldInput:focus {
+  border-color: var(--dark-blue);
+  box-shadow: 0 0 0 3px rgba(0, 87, 195, 0.08);
+}
+
+.fGrow2 { flex: 2; }
+.fGrow1 { flex: 1; }
+.fSeat  { width: 96px; flex-shrink: 0; }
+
+.quickAddBtn {
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 8px;
+  border: none;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-shrink: 0;
+  transition: filter 0.15s, opacity 0.15s;
+}
+
+.quickAddBtn:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.quickAddBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── List body ── */
+.listBody {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
+.row {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid #E4E4EF;
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.rowCheck {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #10B981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.rowMain {
+  flex: 1;
+  min-width: 0;
+}
+
+.rowName {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.rowMeta {
+  font-size: 11px;
+  color: #545873;
+  margin-top: 2px;
+}
+
+.rowTime {
+  text-align: right;
+  flex-shrink: 0;
+}
+
+.rowTimeValue {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.rowTimeVia {
+  font-size: 10px;
+  color: #545873;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 1px;
+}
+
+.rowActions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.row:hover .rowActions {
+  opacity: 1;
+}
+
+.iconBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.iconBtn:hover {
+  background: #F1F4FB;
+}
+
+.iconBtnDanger:hover {
+  background: #FEF2F2;
+  border-color: #FCA5A5;
+}
+
+/* ── Inline edit row ── */
+.editRow {
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-bottom: 1px solid #E4E4EF;
+}
+
+.editPencil {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+}
+
+.editInput {
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 7px;
+  background: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.editSaveBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+  padding: 0;
+  transition: filter 0.15s, opacity 0.15s;
+}
+
+.editSaveBtn:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.editSaveBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.editCancelBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  transition: background 0.15s;
+}
+
+.editCancelBtn:hover {
+  background: #F1F4FB;
+}
+
+.listEmpty {
+  padding: 40px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+}
