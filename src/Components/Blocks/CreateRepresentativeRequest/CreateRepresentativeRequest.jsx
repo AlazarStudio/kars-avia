@@ -183,8 +183,8 @@ function CreateRepresentativeRequest({
         Authorization: `Bearer ${token}`,
       },
     },
-    refetchQueries: [GET_PASSENGER_REQUESTS],
-    awaitRefetchQueries: false,
+    // refetchQueries: [GET_PASSENGER_REQUESTS],
+    // awaitRefetchQueries: false,
   });
 
   const airlineForAirlineAdmin = data?.airlines?.airlines.find(

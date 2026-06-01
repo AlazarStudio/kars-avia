@@ -171,7 +171,6 @@ export const usePlacementData = ({
         status: ["created", "opened"],
       },
     },
-    fetchPolicy: "network-only",
   });
 
   useEffect(() => {

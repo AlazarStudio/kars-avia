@@ -10,8 +10,8 @@ import { SERVICE_CONFIG } from "../../Blocks/FapV2/fapConstants";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import Header from "../../Blocks/Header/Header";
 import FapWaterMealPage from "../../Blocks/FapV2/FapWaterMealPage/FapWaterMealPage";
-import FapLivingSection from "../../Blocks/FapV2/FapLivingSection/FapLivingSection";
-import FapTransferSection from "../../Blocks/FapV2/FapTransferSection/FapTransferSection";
+import FapLivingPage from "../../Blocks/FapV2/FapLivingPage/FapLivingPage";
+import FapTransferPage from "../../Blocks/FapV2/FapTransferPage/FapTransferPage";
 import FapBaggageSection from "../../Blocks/FapV2/FapBaggageSection/FapBaggageSection";
 import {
   isAirlineRole as isAirlineRoleCheck,
@@ -111,14 +111,10 @@ export default function FapServicePage({ user }) {
         );
       case "living":
         return (
-          <FapLivingSection
+          <FapLivingPage
             service={request.livingService}
-            color={cfg.color}
             request={request}
             onRefetch={refetch}
-            isOpen={true}
-            onToggle={noop}
-            isPage
             canEdit={canEdit}
             showLinks={!isAirlineRole}
             user={user}
@@ -126,32 +122,24 @@ export default function FapServicePage({ user }) {
         );
       case "transfer":
         return (
-          <FapTransferSection
+          <FapTransferPage
             service={request.transferService}
-            color={cfg.color}
             request={request}
+            direction="ARRIVAL"
             onRefetch={refetch}
-            isOpen={true}
-            onToggle={noop}
-            isPage
             canEdit={canEdit}
             showLinks={!isAirlineRole}
-            direction="ARRIVAL"
           />
         );
       case "transferDeparture":
         return (
-          <FapTransferSection
+          <FapTransferPage
             service={request.departureTransferService}
-            color={cfg.color}
             request={request}
+            direction="DEPARTURE"
             onRefetch={refetch}
-            isOpen={true}
-            onToggle={noop}
-            isPage
             canEdit={canEdit}
             showLinks={!isAirlineRole}
-            direction="DEPARTURE"
           />
         );
       case "baggage":
@@ -175,7 +163,7 @@ export default function FapServicePage({ user }) {
 
   return (
     <div className={classes.page}>
-      <Header>
+      <Header isExternalUser={isExternalUser(user)}>
         <div className={classes.headerNav}>
           <button
             className={classes.backBtn}
@@ -196,11 +184,6 @@ export default function FapServicePage({ user }) {
               title="Скопировать ссылку для представительства"
             >
               Ссылка <CopyIcon />
-            </button>
-          )}
-          {isExternalUser(user) && (
-            <button className={classes.logoutBtn} onClick={handleExternalLogout}>
-              Выйти
             </button>
           )}
         </div>

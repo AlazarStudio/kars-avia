@@ -1,0 +1,618 @@
+import React, { useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useMutation } from "@apollo/client";
+import classes from "./FapTransferPage.module.css";
+import {
+  COMPLETE_PASSENGER_REQUEST_TRANSFER_EARLY,
+  REMOVE_PASSENGER_REQUEST_DRIVER,
+  getCookie,
+} from "../../../../../graphQL_requests";
+import {
+  SERVICE_STATUS_CONFIG,
+  formatTime,
+  formatDate,
+} from "../fapConstants";
+import { useToast } from "../../../../contexts/ToastContext";
+import FapActionButton from "../FapActionButton/FapActionButton";
+import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
+import AddRepresentativeDriver from "../../AddRepresentativeDriver/AddRepresentativeDriver";
+import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
+import BusIcon from "../../../../shared/icons/BusIcon";
+import BusDownIcon from "../../../../shared/icons/BusDownIcon";
+import DeleteIcon from "../../../../shared/icons/DeleteIcon";
+import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
+import CopyIcon from "../../../../shared/icons/CopyIcon";
+
+const TR = "#8B5CF6";
+const TR_BG = "#F5F3FF";
+const TR_DEP = "#7C3AED";
+
+const PlusSvg = ({ size = 14, color = "#fff" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path d="M12 5v14M5 12h14" stroke={color} strokeWidth="2.6" strokeLinecap="round" />
+  </svg>
+);
+const ClockSvg = ({ size = 12, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2" />
+    <path d="M12 7v5l3 2" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+const PhoneSvg = ({ size = 16, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path
+      d="M22 17v3a2 2 0 0 1-2 2A19 19 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 1.7l.5 3a2 2 0 0 1-.6 1.8l-1.3 1.3a16 16 0 0 0 6.6 6.6l1.3-1.3a2 2 0 0 1 1.8-.6l3 .5A2 2 0 0 1 22 17Z"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+const LinkSvg = ({ size = 14, color = "currentColor", strokeWidth = 1.8 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path
+      d="M10 13a5 5 0 0 0 7 0l2-2a5 5 0 0 0-7-7l-1 1M14 11a5 5 0 0 0-7 0l-2 2a5 5 0 0 0 7 7l1-1"
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+const PinSvg = ({ size = 14, color = "currentColor", strokeWidth = 1.8 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path
+      d="M21 10c0 6-9 13-9 13s-9-7-9-13a9 9 0 1 1 18 0Z"
+      stroke={color}
+      strokeWidth={strokeWidth}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <circle cx="12" cy="10" r="3" stroke={color} strokeWidth={strokeWidth} />
+  </svg>
+);
+const UsersSvg = ({ size = 13, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path
+      d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8ZM22 21v-2a4 4 0 0 0-3-3.9M16 3.1a4 4 0 0 1 0 7.8"
+      stroke={color}
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+const ArrowRightSvg = ({ size = 14, color = "#fff" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path
+      d="M5 12h14M13 5l7 7-7 7"
+      stroke={color}
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
+const RouteArrowSvg = ({ size = 14, color = "currentColor" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path d="M5 12h14M13 6l6 6-6 6" stroke={color} strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const initials = (fullName) => {
+  if (!fullName) return "?";
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return "?";
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+  return (parts[0][0] + parts[1][0]).toUpperCase();
+};
+
+export default function FapTransferPage({
+  service,
+  request,
+  direction = "ARRIVAL",
+  onRefetch,
+  canEdit = true,
+  showLinks = true,
+}) {
+  const navigate = useNavigate();
+  const { requestId } = useParams();
+  const token = getCookie("token");
+  const { success, error: notifyError } = useToast();
+
+  const isDeparture = direction === "DEPARTURE";
+  const color = isDeparture ? TR_DEP : TR;
+  const bg = TR_BG;
+  const HeadIcon = isDeparture ? BusDownIcon : BusIcon;
+  const label = isDeparture ? "Трансфер (в аэропорт)" : "Трансфер (в гостиницу)";
+  const serviceKey = isDeparture ? "transferDeparture" : "transfer";
+
+  const [showAddDriver, setShowAddDriver] = useState(false);
+  const [showLogs, setShowLogs] = useState(false);
+  const [showEarlyModal, setShowEarlyModal] = useState(false);
+  const [deleteDriverConfirm, setDeleteDriverConfirm] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const [completeTransferEarly] = useMutation(COMPLETE_PASSENGER_REQUEST_TRANSFER_EARLY, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const [removeDriver] = useMutation(REMOVE_PASSENGER_REQUEST_DRIVER, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const drivers = service?.drivers || [];
+  const statusCfg = SERVICE_STATUS_CONFIG[service?.status] || {};
+  const isCancelled = service?.status === "CANCELLED";
+  const isCompleted = service?.status === "COMPLETED" || isCancelled;
+  const planCap = service?.plan?.peopleCount ?? null;
+  const plannedAt = service?.plan?.plannedAt;
+
+  const totals = useMemo(() => {
+    const all = drivers.flatMap((d) => d.people || []);
+    const passengers = all.filter((p) => p?.personType !== "CREW").length;
+    const crew = all.length - passengers;
+    return { all: all.length, passengers, crew };
+  }, [drivers]);
+
+  const routesCount = useMemo(
+    () => drivers.filter((d) => d.addressFrom || d.addressTo).length,
+    [drivers]
+  );
+
+  const copyLink = (url) => {
+    if (!url) return;
+    navigator.clipboard
+      .writeText(url)
+      .then(() => success("Ссылка скопирована"))
+      .catch(() => notifyError("Не удалось скопировать ссылку"));
+  };
+
+  const handleCompleteEarly = async (reason) => {
+    try {
+      setSaving(true);
+      await completeTransferEarly({
+        variables: { requestId: request.id, reason, direction },
+      });
+      setShowEarlyModal(false);
+      onRefetch?.();
+      success("Услуга завершена досрочно");
+    } catch {
+      notifyError("Ошибка при завершении");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDriverDelete = async () => {
+    if (deleteDriverConfirm == null) return;
+    try {
+      setSaving(true);
+      await removeDriver({
+        variables: {
+          requestId: request.id,
+          driverIndex: deleteDriverConfirm,
+          direction,
+        },
+      });
+      onRefetch?.();
+      success("Водитель удалён");
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при удалении");
+    } finally {
+      setSaving(false);
+      setDeleteDriverConfirm(null);
+    }
+  };
+
+  if (!service?.plan?.enabled) {
+    return (
+      <div className={classes.root}>
+        <div className={classes.empty}>Услуга не подключена</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={classes.root}>
+      {/* ── Service header ── */}
+      <div className={classes.head}>
+        <div className={classes.headLeft}>
+          <div className={classes.headIcon} style={{ background: bg, color }}>
+            <HeadIcon size={22} strokeWidth={2} />
+          </div>
+          <div className={classes.headText}>
+            <div className={classes.headTitleRow}>
+              <span className={classes.headTitle}>{label}</span>
+              <span
+                className={classes.statusBadge}
+                style={{ color: statusCfg.color, background: statusCfg.bg }}
+              >
+                {statusCfg.label || service.status}
+              </span>
+            </div>
+            {request?.flightNumber && (
+              <div className={classes.headFlight}>
+                Рейс <strong>{request.flightNumber}</strong>
+              </div>
+            )}
+          </div>
+        </div>
+        <div className={classes.headRight}>
+          <FapActionButton
+            variant="secondary"
+            active={showLogs}
+            onClick={() => setShowLogs((v) => !v)}
+          >
+            <ScheduleIcon color={showLogs ? "#fff" : "#545873"} />
+            История
+          </FapActionButton>
+          {canEdit && !isCompleted && (
+            <button
+              type="button"
+              className={classes.addBtn}
+              onClick={() => setShowAddDriver(true)}
+            >
+              <PlusSvg /> Добавить водителя
+            </button>
+          )}
+          {canEdit && !isCompleted && (
+            <button
+              type="button"
+              className={classes.finishBtn}
+              onClick={() => setShowEarlyModal(true)}
+            >
+              Завершить услугу
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ── KPI strip ── */}
+      <div className={classes.kpiRow}>
+        <div className={classes.kpi}>
+          <div className={classes.kpiHead}>
+            <HeadIcon size={12} strokeWidth={2} style={{ color }} />
+            Водителей
+          </div>
+          <div className={classes.kpiValue} style={{ color }}>
+            {drivers.length}
+          </div>
+          <div className={classes.kpiSub}>
+            {drivers.length === 0 ? "нет назначенных" : "из автопарка"}
+          </div>
+        </div>
+        <div className={classes.kpi}>
+          <div className={classes.kpiHead}>
+            <UsersSvg color="#545873" />
+            Пассажиров
+          </div>
+          <div
+            className={classes.kpiValue}
+            style={{
+              color:
+                planCap != null && totals.all >= planCap
+                  ? "#10B981"
+                  : "var(--text)",
+            }}
+          >
+            {totals.all}
+            {planCap != null ? ` / ${planCap}` : ""}
+          </div>
+          <div className={classes.kpiSub}>
+            {totals.crew > 0
+              ? `${totals.passengers} пасс. + ${totals.crew} экипаж`
+              : `${totals.passengers} пасс.`}
+          </div>
+        </div>
+        <div className={classes.kpi}>
+          <div className={classes.kpiHead}>
+            <PinSvg size={12} color="#545873" />
+            Маршрутов
+          </div>
+          <div className={classes.kpiValue}>{routesCount}</div>
+          <div className={classes.kpiSub}>
+            {routesCount > 0 ? "у каждого водителя свой" : "не задано"}
+          </div>
+        </div>
+        <div className={classes.kpi}>
+          <div className={classes.kpiHead}>
+            <ClockSvg color="#545873" />
+            Подача
+          </div>
+          <div className={classes.kpiValue}>
+            {plannedAt ? formatTime(plannedAt) : "—"}
+          </div>
+          <div className={classes.kpiSub}>
+            {plannedAt ? formatDate(plannedAt) : "не указано"}
+          </div>
+        </div>
+      </div>
+
+      {/* ── Drivers list ── */}
+      <div className={classes.drivers}>
+        {drivers.length === 0 ? (
+          <div className={classes.emptyDrivers}>
+            <HeadIcon size={36} strokeWidth={1.6} />
+            <div className={classes.emptyDriversText}>
+              Водители ещё не назначены
+            </div>
+            {canEdit && !isCompleted && (
+              <button
+                type="button"
+                className={classes.addBtn}
+                onClick={() => setShowAddDriver(true)}
+              >
+                <PlusSvg /> Добавить водителя
+              </button>
+            )}
+          </div>
+        ) : (
+          drivers.map((driver, idx) => (
+            <DriverCard
+              key={driver.itemId || idx}
+              driver={driver}
+              index={idx}
+              color={color}
+              bg={bg}
+              HeadIcon={HeadIcon}
+              isCompleted={isCompleted}
+              canEdit={canEdit}
+              showLinks={showLinks}
+              onOpen={() =>
+                navigate(
+                  `/fapv2/${requestId}/service/${serviceKey}/driver/${idx}`
+                )
+              }
+              onCopyLink={copyLink}
+              onDelete={() => setDeleteDriverConfirm(idx)}
+            />
+          ))
+        )}
+      </div>
+
+      {/* ── Dialogs ── */}
+      {showAddDriver && (
+        <AddRepresentativeDriver
+          show={showAddDriver}
+          onClose={() => {
+            setShowAddDriver(false);
+            onRefetch?.();
+          }}
+          request={request}
+          direction={direction}
+        />
+      )}
+
+      <PassengerRequestLogs
+        show={showLogs}
+        onClose={() => setShowLogs(false)}
+        passengerRequestId={request?.id}
+      />
+
+      <FapDestructiveModal
+        open={showEarlyModal}
+        onClose={() => setShowEarlyModal(false)}
+        onConfirm={handleCompleteEarly}
+        title="Досрочное завершение"
+        description="Услуга будет завершена досрочно. Это действие необратимо."
+        reasonLabel="Причина *"
+        placeholder="Укажите причину..."
+        confirmText="Завершить"
+        cancelText="Отмена"
+        saving={saving}
+      />
+
+      <FapDestructiveModal
+        open={deleteDriverConfirm != null}
+        onClose={() => setDeleteDriverConfirm(null)}
+        onConfirm={handleDriverDelete}
+        title="Удалить водителя?"
+        description="Водитель и все его пассажиры будут удалены. Это действие нельзя отменить."
+        confirmText="Удалить"
+        cancelText="Отмена"
+        saving={saving}
+      />
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────
+// DriverCard — list-level only: open / links / delete.
+// Passenger management lives inside FapDriverPage (opened via "Открыть").
+// ──────────────────────────────────────────────────────────────────
+function DriverCard({
+  driver,
+  index,
+  color,
+  bg,
+  HeadIcon,
+  isCompleted,
+  canEdit,
+  showLinks,
+  onOpen,
+  onCopyLink,
+  onDelete,
+}) {
+  const cap = driver.peopleCount || 0;
+  const people = driver.people || [];
+  const placed = people.length;
+  const passengers = people.filter((p) => p?.personType !== "CREW").length;
+  const crew = placed - passengers;
+  const isFull = cap > 0 && placed >= cap;
+  const isEmpty = placed === 0;
+
+  const previewPeople = people.slice(0, 8);
+  const extraCount = placed - previewPeople.length;
+
+  const hasRoute = driver.addressFrom || driver.addressTo;
+  const phoneDigits = driver.phone ? driver.phone.replace(/[^+\d]/g, "") : "";
+  const canDelete = canEdit && !isCompleted;
+
+  return (
+    <div className={classes.driverCard}>
+      {/* Header row */}
+      <div className={classes.driverHead}>
+        <div className={classes.driverBar} style={{ background: isEmpty ? "#CBD2E4" : color }} />
+
+        <div className={classes.driverInfo} onClick={onOpen}>
+          <div className={classes.driverNameRow}>
+            <span className={classes.driverName}>
+              {driver.fullName || "Водитель"}
+            </span>
+            {isFull && <span className={classes.fullBadge}>заполнен</span>}
+          </div>
+          <div className={classes.driverMeta}>
+            {driver.phone && <span>{driver.phone}</span>}
+            {driver.phone && driver.pickupAt && <span className={classes.metaDot} />}
+            {driver.pickupAt && <span>подача {formatTime(driver.pickupAt)}</span>}
+            <span className={classes.metaDot} />
+            <span>
+              {placed}
+              {cap > 0 ? `/${cap}` : ""} пасс.
+            </span>
+          </div>
+        </div>
+
+        {/* Compact passenger preview */}
+        {!isEmpty && (
+          <div className={classes.avatarStack}>
+            {previewPeople.slice(0, 5).map((p, i) => (
+              <span
+                key={i}
+                className={classes.stackAvatar}
+                style={{
+                  background: p?.personType === "CREW" ? "#8B5CF6" : "#3B82F6",
+                  marginLeft: i === 0 ? 0 : -8,
+                }}
+                title={p?.fullName || ""}
+              >
+                {initials(p?.fullName)}
+              </span>
+            ))}
+            {extraCount > 0 && (
+              <span className={classes.stackAvatarMore} style={{ marginLeft: -8 }}>
+                +{extraCount}
+              </span>
+            )}
+          </div>
+        )}
+
+        {phoneDigits && (
+          <a
+            href={`tel:${phoneDigits}`}
+            className={classes.iconBtn}
+            title={`Позвонить ${driver.fullName || "водителю"}`}
+          >
+            <PhoneSvg size={16} color="var(--dark-blue)" />
+          </a>
+        )}
+
+        {showLinks && driver.linkPWA && (
+          <button
+            type="button"
+            className={classes.linkBtn}
+            onClick={() => onCopyLink(driver.linkPWA)}
+            title="Скопировать ссылку «Сканер»"
+          >
+            <LinkSvg color="var(--dark-blue)" /> Сканер <CopyIcon />
+          </button>
+        )}
+        {showLinks && !driver.linkPWA && driver.link && (
+          <button
+            type="button"
+            className={classes.linkBtn}
+            onClick={() => onCopyLink(driver.link)}
+            title="Скопировать ссылку"
+          >
+            <LinkSvg color="var(--dark-blue)" /> Ссылка <CopyIcon />
+          </button>
+        )}
+
+        <button type="button" className={classes.openBtn} onClick={onOpen}>
+          Открыть <ArrowRightSvg />
+        </button>
+
+        {canDelete && (
+          <button
+            type="button"
+            className={classes.removeBtn}
+            onClick={onDelete}
+            title="Удалить водителя"
+            aria-label="Удалить водителя"
+          >
+            <DeleteIcon cursor="pointer" />
+          </button>
+        )}
+      </div>
+
+      {/* Per-driver route strip */}
+      {hasRoute && (
+        <div
+          className={classes.routeStrip}
+          style={{ background: bg, borderColor: `${color}33` }}
+        >
+          <PinSvg size={15} color={color} />
+          <div className={classes.routeText}>
+            {driver.addressFrom && (
+              <span className={classes.routeAddr}>{driver.addressFrom}</span>
+            )}
+            {driver.addressFrom && driver.addressTo && (
+              <span className={classes.routeArrow} style={{ color }}>
+                <RouteArrowSvg color={color} />
+              </span>
+            )}
+            {driver.addressTo && (
+              <span className={classes.routeAddr}>{driver.addressTo}</span>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Read-only summary strip */}
+      <div className={classes.driverStrip}>
+        {isEmpty ? (
+          <>
+            <UsersSvg size={14} color="#94A3B8" />
+            <span>
+              Пассажиры пока не назначены
+              {cap > 0 && (
+                <>
+                  {" · "}
+                  <strong>{cap}</strong> свободных мест
+                </>
+              )}
+              {" — "}
+              <strong className={classes.stripHint} onClick={onOpen}>
+                Открыть
+              </strong>
+              {", чтобы добавить пассажиров или экипаж"}
+            </span>
+          </>
+        ) : (
+          <>
+            <span className={classes.stripItem}>
+              <span className={classes.stripDotPassenger} />
+              {passengers}{" "}
+              {passengers === 1
+                ? "пассажир"
+                : passengers >= 2 && passengers <= 4
+                ? "пассажира"
+                : "пассажиров"}
+            </span>
+            {crew > 0 && (
+              <span className={classes.stripItem}>
+                <span className={classes.stripDotCrew} />
+                {crew} экипаж
+              </span>
+            )}
+            <span className={classes.metaDot} />
+            <span className={classes.stripHintText}>
+              управление составом — на странице водителя
+            </span>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}

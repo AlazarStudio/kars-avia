@@ -1993,6 +1993,22 @@ export const REMOVE_PASSENGER_REQUEST_HOTEL = gql`
   }
 `;
 
+export const UPDATE_PASSENGER_REQUEST_HOTEL = gql`
+  mutation UpdatePassengerRequestHotel(
+    $requestId: ID!
+    $hotelIndex: Int!
+    $hotel: PassengerServiceHotelInput!
+  ) {
+    updatePassengerRequestHotel(
+      requestId: $requestId
+      hotelIndex: $hotelIndex
+      hotel: $hotel
+    ) {
+      id
+    }
+  }
+`;
+
 export const ADD_PASSENGER_REQUEST_DRIVER = gql`
   mutation AddPassengerRequestDriver($requestId: ID!, $driver: PassengerServiceDriverInput!, $direction: TransferDirection) {
     addPassengerRequestDriver(requestId: $requestId, driver: $driver, direction: $direction) {

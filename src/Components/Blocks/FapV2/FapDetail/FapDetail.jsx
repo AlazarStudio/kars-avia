@@ -18,8 +18,10 @@ import {
   SERVICE_CONFIG,
   SERVICE_STATUS_CONFIG,
   REQUEST_STATUS_CONFIG,
+  formatDate,
   formatDateTime,
 } from "../fapConstants";
+import { calculateEffectiveCostDays } from "../../../../utils/effectiveCostDays";
 import MUILoader from "../../MUILoader/MUILoader";
 import Button from "../../../Standart/Button/Button";
 import Header from "../../Header/Header";
@@ -155,21 +157,24 @@ function getServiceSummary(serviceKey, request) {
     case "living": {
       const hotels = request.livingService?.hotels ?? [];
       const totalPeople = hotels.reduce((acc, h) => acc + (h.people?.length ?? 0), 0);
-      const planCap = request.livingService?.plan?.peopleCount;
-      if (planCap != null) return `${totalPeople} / ${planCap} гостей`;
-      return `${hotels.length} отелей`;
+      const planCap = request.livingService?.plan?.peopleCount ?? 0;
+      return `${totalPeople} / ${planCap} чел.`;
     }
     case "transfer": {
       const drivers = request.transferService?.drivers ?? [];
-      return `${drivers.length} водителей`;
+      const totalPeople = drivers.reduce((acc, d) => acc + (d.people?.length ?? 0), 0);
+      const planCap = request.transferService?.plan?.peopleCount ?? 0;
+      return `${totalPeople} / ${planCap} чел.`;
     }
     case "transferDeparture": {
       const drivers = request.departureTransferService?.drivers ?? [];
-      return `${drivers.length} водителей`;
+      const totalPeople = drivers.reduce((acc, d) => acc + (d.people?.length ?? 0), 0);
+      const planCap = request.departureTransferService?.plan?.peopleCount ?? 0;
+      return `${totalPeople} / ${planCap} чел.`;
     }
     case "baggage": {
-      const drivers = request.baggageDeliveryService?.drivers ?? [];
-      return `${drivers.length} водителей`;
+      const planCap = request.baggageDeliveryService?.plan?.peopleCount ?? 0;
+      return `${planCap} чел.`;
     }
     default:
       return "";
@@ -465,6 +470,19 @@ export default function FapDetail({ user, canEdit = true }) {
             ? formatDateTime(svc.plan.plannedAt)
             : "—";
 
+          // Для проживания вместо одного «до X» показываем диапазон + сутки.
+          let livingMeta = null;
+          if (key === "living") {
+            const from = svc?.plan?.plannedFromAt;
+            const to = svc?.plan?.plannedToAt;
+            if (from || to) {
+              const days = from && to ? calculateEffectiveCostDays(from, to) : null;
+              livingMeta = `${from ? formatDate(from) : "—"} → ${to ? formatDate(to) : "—"}${
+                days != null ? ` · ${days} сут.` : ""
+              }`;
+            }
+          }
+
           return (
             <div
               key={key}
@@ -578,7 +596,7 @@ export default function FapDetail({ user, canEdit = true }) {
                                 strokeLinejoin="round"
                               />
                             </svg>
-                            до&nbsp;{deadline}
+                            {livingMeta ? livingMeta : <>до&nbsp;{deadline}</>}
                           </>
                         )}
                       </span>
@@ -608,7 +626,7 @@ export default function FapDetail({ user, canEdit = true }) {
 
   return (
     <div className={classes.page}>
-      <Header>
+      <Header isExternalUser={isExternalUser(user)}>
         <div className={classes.headerNav}>
           <button
             className={classes.backBtn}

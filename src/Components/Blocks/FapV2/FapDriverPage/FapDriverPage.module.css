@@ -1,0 +1,763 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  font-family: Inter, sans-serif;
+}
+
+/* ── Header panel (three-row) ── */
+.headPanel {
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(20, 30, 60, 0.04);
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.headRow1 {
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.headRow2 {
+  padding: 12px 18px;
+  border-top: 1px solid #E4E4EF;
+  background: #F1F4FB;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.headRow3 {
+  padding: 12px 18px;
+  border-top: 1px solid #E4E4EF;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.headIcon {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.headText {
+  flex: 1;
+  min-width: 0;
+}
+
+.headTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.headTitle {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.headSub {
+  margin-top: 3px;
+  font-size: 12.5px;
+  color: #545873;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.headSub strong {
+  color: var(--text);
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.metaDot {
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: #C0C3D6;
+  flex-shrink: 0;
+}
+
+.linkBtn {
+  height: 36px;
+  padding: 0 13px;
+  border-radius: 10px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  color: var(--dark-blue);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.linkBtn:hover {
+  background: #EAF1FB;
+  border-color: #CBD2E4;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.metricLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9AA0B4;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.metricValue {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.composition {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.compChipPassenger {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 7px;
+  background: #EFF6FF;
+  color: #3B82F6;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.compChipCrew {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 9px;
+  border-radius: 7px;
+  background: #F5F3FF;
+  color: #8B5CF6;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.dotPassenger {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3B82F6;
+}
+
+.dotCrew {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #8B5CF6;
+}
+
+.metricDivider {
+  width: 1px;
+  height: 34px;
+  background: #E4E4EF;
+  flex-shrink: 0;
+}
+
+/* Route row */
+.routeAddr {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.routeAddr strong {
+  font-weight: 600;
+}
+
+.routeArrow {
+  font-weight: 800;
+  margin: 0 7px;
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+/* ── Tabs ── */
+.tabs {
+  display: flex;
+  gap: 6px;
+  border-bottom: 1px solid #E4E4EF;
+  flex-shrink: 0;
+}
+
+.tab {
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  color: #545873;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab:hover {
+  color: var(--text);
+}
+
+.tabActive {
+  color: var(--dark-blue);
+  border-bottom-color: var(--dark-blue);
+}
+
+.tabBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #F1F4FB;
+  color: #545873;
+}
+
+.tabActive .tabBadge {
+  background: #EAF1FB;
+  color: var(--dark-blue);
+}
+
+/* ── Content ── */
+.content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── People pane (Состав) ── */
+.peoplePane {
+  flex: 1;
+  min-height: 0;
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.toolbar {
+  padding: 12px 16px;
+  border-bottom: 1px solid #E4E4EF;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.searchWrap {
+  flex: 1;
+  max-width: 320px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #E4E4EF;
+  background: #F1F4FB;
+  display: flex;
+  align-items: center;
+  padding: 0 12px;
+}
+
+.searchWrap input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--text);
+  margin-left: 8px;
+}
+
+.searchWrap input::placeholder {
+  color: #94A3B8;
+}
+
+.primaryBtn {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: none;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: filter 0.15s, opacity 0.15s;
+}
+
+.primaryBtn:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.primaryBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ── People table ── */
+.peopleTable {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.tableHead,
+.row,
+.editRow {
+  display: grid;
+  grid-template-columns: 36px 1fr 200px 110px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+}
+
+.tableHead {
+  background: #F8FAFC;
+  font-size: 11px;
+  font-weight: 700;
+  color: #545873;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  border-bottom: 1px solid #E4E4EF;
+  padding: 8px 16px;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.colActions {
+  text-align: right;
+}
+
+.row {
+  padding: 10px 16px;
+  border-bottom: 1px solid #E4E4EF;
+  transition: background 0.12s;
+}
+
+.row:hover {
+  background: #F8FAFC;
+}
+
+.cellIndex {
+  font-size: 12px;
+  font-weight: 600;
+  color: #94A3B8;
+  font-variant-numeric: tabular-nums;
+}
+
+.cellName {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.cellNameText {
+  min-width: 0;
+}
+
+.personName {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cellPhone {
+  font-size: 13px;
+  color: #545873;
+  font-variant-numeric: tabular-nums;
+}
+
+.dash {
+  color: #94A3B8;
+  font-size: 13px;
+}
+
+.avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.avatarDraft {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1.5px dashed currentColor;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.rowActions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.row:hover .rowActions {
+  opacity: 1;
+}
+
+.iconBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: 7px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.iconBtn:hover {
+  background: #F1F4FB;
+}
+
+.iconBtnDanger:hover {
+  background: #FEF2F2;
+  border-color: #FCA5A5;
+}
+
+/* ── Inline edit row ── */
+.editRow {
+  border-bottom: 1px solid #E4E4EF;
+}
+
+.editInput {
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 7px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  outline: none;
+  box-sizing: border-box;
+}
+
+.editInput:focus {
+  outline: none;
+}
+
+.editSelect {
+  min-width: 0;
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 7px;
+  background: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  font-weight: 600;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.editPhoneRO {
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 7px;
+  border: 1px dashed #CBD2E4;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #545873;
+  font-variant-numeric: tabular-nums;
+  min-width: 0;
+}
+
+.editPhoneROText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editActions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-end;
+}
+
+.saveBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+  padding: 0;
+  transition: filter 0.15s, opacity 0.15s;
+}
+
+.saveBtn:hover:not(:disabled) {
+  filter: brightness(0.92);
+}
+
+.saveBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.cancelBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  padding: 0;
+  transition: background 0.15s;
+}
+
+.cancelBtn:hover {
+  background: #F1F4FB;
+}
+
+.listEmpty {
+  padding: 40px 16px;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+}
+
+/* ── Route pane (Маршрут tab) ── */
+.routePane {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 4px 2px;
+}
+
+.routeCard {
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  border-radius: 14px;
+  padding: 22px;
+  max-width: 720px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.routeCardTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  margin-bottom: 6px;
+}
+
+.timeline {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+/* Continuous vertical line in the dot column; dots are layered on top via z-index. */
+.timeline::before {
+  content: "";
+  position: absolute;
+  left: 5px;
+  top: 16px;
+  bottom: 16px;
+  width: 2px;
+  background: currentColor;
+  opacity: 0.35;
+  border-radius: 2px;
+  z-index: 0;
+}
+
+.timelineSingle::before {
+  display: none;
+}
+
+.timelineItem {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  z-index: 1;
+}
+
+.timelineDot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  background: #fff;
+  flex-shrink: 0;
+  margin-top: 4px;
+  box-sizing: border-box;
+  position: relative;
+  z-index: 2;
+}
+
+.timelineDotFilled {
+  background: currentColor;
+}
+
+.timelineBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.timelineMid {
+  position: relative;
+  padding-left: 26px;
+  font-size: 12px;
+  font-weight: 700;
+  color: inherit;
+  min-height: 18px;
+  z-index: 1;
+}
+
+.routePointLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9AA0B4;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.routePointAddr {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.5;
+  word-break: break-word;
+  margin-top: 2px;
+}
+
+.routeEmpty {
+  background: #fff;
+  border: 1px dashed #E4E4EF;
+  border-radius: 14px;
+  padding: 32px;
+  text-align: center;
+  font-size: 13px;
+  color: #94A3B8;
+}
+
+.mapBtn {
+  margin-top: 14px;
+  align-self: flex-start;
+  height: 38px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: 1px solid;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  transition: filter 0.15s;
+}
+
+.mapBtn:hover {
+  filter: brightness(0.96);
+}
+
+/* ── Empty service ── */
+.empty {
+  padding: 40px 16px;
+  text-align: center;
+  font-size: 14px;
+  color: #94A3B8;
+}

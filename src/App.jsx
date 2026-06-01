@@ -43,6 +43,8 @@ import FapLayout from "./Components/Pages/FapV2/FapLayout";
 import FapDetailPage from "./Components/Pages/FapV2/FapDetailPage";
 import FapReportPage from "./Components/Pages/FapV2/FapReportPage";
 import FapServicePage from "./Components/Pages/FapV2/FapServicePage";
+import FapHotelDetailPage from "./Components/Pages/FapV2/FapHotelDetailPage";
+import FapDriverDetailPage from "./Components/Pages/FapV2/FapDriverDetailPage";
 import HotelPMS from "./Components/HotelPMS/HotelPMS";
 import MaintenanceBannerBar from "./Components/Blocks/MaintenanceBanner/MaintenanceBannerBar";
 
@@ -173,6 +175,14 @@ function App() {
               <Route
                 path="service/:serviceKey"
                 element={<FapServicePage user={user} />}
+              />
+              <Route
+                path="service/living/hotel/:hotelIndex"
+                element={<FapHotelDetailPage user={user} />}
+              />
+              <Route
+                path="service/:serviceKey/driver/:driverIndex"
+                element={<FapDriverDetailPage user={user} />}
               />
             </Route>
             {/* Шахматка */}

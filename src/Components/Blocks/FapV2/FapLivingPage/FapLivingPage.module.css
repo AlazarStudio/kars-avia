@@ -1,0 +1,687 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  font-family: Inter, sans-serif;
+}
+
+/* ── Service header ── */
+.head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.headLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1;
+}
+
+.headIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  background: #ECFDF5;
+  color: #10B981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.headText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.headTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.headTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+}
+
+.statusBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+}
+
+.headFlight {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #545873;
+}
+
+.headFlight strong {
+  color: var(--text);
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.headRight {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.addHotelBtn {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: none;
+  background: var(--dark-blue);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s;
+}
+
+.addHotelBtn:hover {
+  background: var(--dark-blue-hover, #00489F);
+}
+
+.finishBtn {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 10px;
+  border: 1px solid #FCA5A5;
+  background: #fff;
+  color: #EF4444;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.finishBtn:hover {
+  background: #FEF2F2;
+}
+
+/* ── Overview ── */
+.overview {
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  border-radius: 14px;
+  padding: 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex-shrink: 0;
+}
+
+.overviewRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.kpi {
+  flex-shrink: 0;
+  min-width: 120px;
+}
+
+.kpiLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #545873;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.kpiValueRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.kpiValue {
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: -1px;
+  line-height: 1;
+  color: #10B981;
+  font-variant-numeric: tabular-nums;
+}
+
+.kpiTotal {
+  font-size: 20px;
+  font-weight: 700;
+  color: #545873;
+}
+
+.kpiSub {
+  font-size: 12px;
+  color: #545873;
+  margin-top: 4px;
+}
+
+.distribution {
+  flex: 1;
+  min-width: 0;
+}
+
+.distributionHead {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.distributionTitle {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.unplacedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #B45309;
+  background: #FFFBEB;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.unplacedDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #F59E0B;
+}
+
+.segments {
+  display: flex;
+  gap: 4px;
+  height: 34px;
+}
+
+.segment {
+  position: relative;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #E4E4EF;
+  min-width: 0;
+}
+
+.segmentFill {
+  position: absolute;
+  inset: 0;
+  transition: width 0.3s ease;
+}
+
+.segmentLabel {
+  position: relative;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 10px;
+  gap: 6px;
+}
+
+.segmentName {
+  font-size: 12px;
+  font-weight: 700;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.segmentCount {
+  font-size: 12px;
+  font-weight: 800;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.segmentsEmpty {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: #94A3B8;
+  border-radius: 8px;
+  background: #F1F4FB;
+  border: 1px dashed #E4E4EF;
+}
+
+.overviewFoot {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding-top: 14px;
+  border-top: 1px solid #E4E4EF;
+  flex-wrap: wrap;
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.metricLabel {
+  font-size: 11px;
+  font-weight: 700;
+  color: #545873;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.metricValue {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.spacer {
+  flex: 1;
+}
+
+.hotelsCount {
+  font-size: 12px;
+  color: #545873;
+}
+
+.hotelsCount strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* ── Hotels list ── */
+.hotels {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 2px 2px 6px;
+  margin: -2px -2px 0;
+}
+
+.emptyHotels {
+  background: #fff;
+  border: 1px dashed #E4E4EF;
+  border-radius: 12px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #94A3B8;
+}
+
+.emptyHotelsText {
+  font-size: 14px;
+}
+
+/* ── Hotel card ── */
+.hotelCard {
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  border-radius: 12px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.hotelCard:hover {
+  border-color: #CBD2E4;
+  box-shadow: 0 2px 10px rgba(20, 30, 60, 0.04);
+}
+
+.hotelHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+}
+
+.hotelBar {
+  width: 4px;
+  height: 40px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.hotelInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.hotelNameRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.hotelName {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fullBadge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #10B981;
+  background: #ECFDF5;
+  padding: 1px 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.hotelMeta {
+  font-size: 12px;
+  color: #545873;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.metaDot {
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: #C0C3D6;
+  flex-shrink: 0;
+}
+
+.hotelDates {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.dateSep {
+  color: #C0C3D6;
+  font-size: 12px;
+}
+
+.hotelOccupancy {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+  margin-right: 2px;
+}
+
+.avatarStack {
+  display: flex;
+  align-items: center;
+}
+
+.stackAvatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.stackAvatarMore {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: #F1F4FB;
+  color: #545873;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.miniBar {
+  width: 84px;
+  height: 6px;
+  border-radius: 999px;
+  background: #F1F4FB;
+  overflow: hidden;
+  border: 1px solid #E4E4EF;
+}
+
+.miniBarFill {
+  height: 100%;
+  transition: width 0.3s ease;
+}
+
+.occupancyText {
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.linkBtn {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  color: var(--dark-blue);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.linkBtn:hover {
+  background: #EAF1FB;
+  border-color: #CBD2E4;
+}
+
+.openBtn {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: none;
+  background: var(--dark-blue);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.openBtn:hover {
+  background: var(--dark-blue-hover, #00489F);
+}
+
+.editBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.editBtn:hover {
+  background: #EAF1FB;
+  border-color: #CBD2E4;
+}
+
+.removeBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.removeBtn:hover {
+  background: #FEF2F2;
+  border-color: #FCA5A5;
+}
+
+.editHotelField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.editHotelLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #545873;
+}
+
+.editHotelInput {
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #E4E4EF;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  outline: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.editHotelInput:focus {
+  border-color: var(--dark-blue);
+}
+
+.editHotelHint {
+  font-size: 12px;
+  color: #545873;
+}
+
+.editHotelHint strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+/* ── Hotel summary strip ── */
+.hotelStrip {
+  border-top: 1px solid #E4E4EF;
+  padding: 9px 16px;
+  background: #F8FAFC;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  color: #545873;
+}
+
+.stripItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.stripDotPassenger {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #3B82F6;
+}
+
+.stripDotCrew {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #8B5CF6;
+}
+
+.stripHint {
+  color: var(--dark-blue);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.stripHint:hover {
+  text-decoration: underline;
+}
+
+.stripHintText {
+  color: #545873;
+}
+
+/* ── Empty service ── */
+.empty {
+  padding: 40px 16px;
+  text-align: center;
+  font-size: 14px;
+  color: #94A3B8;
+}

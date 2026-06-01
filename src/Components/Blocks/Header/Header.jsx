@@ -434,6 +434,41 @@ function Header({ children, isExternalUser = false }) {
             <div className={classes.section_top_elems_date}>
               <div>{formattedDate}</div>
             </div>
+            <div
+              onClick={() => {
+                document.cookie = "externalUserContext=; Max-Age=0; Path=/";
+                authService.clear();
+                navigate("/");
+                window.location.reload();
+              }}
+              title="Выйти"
+              role="button"
+              tabIndex={0}
+              style={{
+                cursor: "pointer",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 12px",
+                borderRadius: 8,
+                border: "1px solid #EF4444",
+                color: "#EF4444",
+                fontSize: 13,
+                fontWeight: 600,
+                background: "#fff",
+                transition: "background 0.15s",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#FEF2F2")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "#fff")}
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
+                <path d="M8.9 7.56C9.21 3.96 11.06 2.49 15.11 2.49h.13c4.47 0 6.26 1.79 6.26 6.26v6.52c0 4.47-1.79 6.26-6.26 6.26h-.13c-4.02 0-5.87-1.45-6.2-4.99"
+                  stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M15 12H3.62" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M5.85 8.65 2.5 12l3.35 3.35" stroke="#EF4444" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              Выход
+            </div>
           </div>
         )}
       </div>
