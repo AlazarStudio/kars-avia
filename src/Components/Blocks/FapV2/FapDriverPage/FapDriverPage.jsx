@@ -559,7 +559,7 @@ export default function FapDriverPage({
           {p.phone || <span className={classes.dash}>—</span>}
         </div>
         <div className={classes.rowActions}>
-          {canEdit && !isCompleted && (
+          {canEdit && (
             <>
               <button
                 type="button"

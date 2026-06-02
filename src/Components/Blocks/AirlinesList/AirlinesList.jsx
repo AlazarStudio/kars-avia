@@ -18,6 +18,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
 import InfoTableDataRepresentativeAirlines from "../InfoTableDataRepresentativeAirlines/InfoTableDataRepresentativeAirlines";
+import { useDebounce } from "../../../hooks/useDebounce";
 
 function AirlinesList({ children, representative, ...props }) {
   const token = getCookie("token");
@@ -25,9 +26,8 @@ function AirlinesList({ children, representative, ...props }) {
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [companyData, setCompanyData] = useState([]);
   const [filterData, setFilterData] = useState({ filterSelect: "" });
-  const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
-  const [airports, setAirports] = useState([]); // Список аэропортов
-  const [cities, setCities] = useState([]); // Список аэропортов
+  const [airports, setAirports] = useState([]);
+  const [cities, setCities] = useState([]);
 
   const { data: dataSubscription } = useSubscription(
     GET_AIRLINES_SUBSCRIPTION,
@@ -53,17 +53,30 @@ function AirlinesList({ children, representative, ...props }) {
   const location = useLocation();
   const navigate = useNavigate();
 
-  // В URL храним только номер страницы (поиск намеренно не сохраняем).
   const urlParams = useMemo(
     () => new URLSearchParams(location.search),
     [location.search],
   );
   const pageNumber = urlParams.get("page");
   const currentPage = pageNumber ? parseInt(pageNumber) - 1 : 0;
+  const urlSearch = urlParams.get("search") || "";
 
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isSearching, setIsSearching] = useState(false);
+  const [searchQuery, setSearchQuery] = useState(urlSearch);
+  const debouncedSearch = useDebounce(searchQuery, 400);
   const [pageInfo, setPageInfo] = useState({ skip: currentPage, take: 20 });
+
+  const updateUrlParams = (updates) => {
+    const params = new URLSearchParams(location.search);
+    Object.entries(updates).forEach(([key, value]) => {
+      if (value === "" || value == null) {
+        params.delete(key);
+      } else {
+        params.set(key, value);
+      }
+    });
+    const qs = params.toString();
+    navigate(qs ? `?${qs}` : "", { replace: false });
+  };
 
   useEffect(() => {
     setPageInfo((prev) =>
@@ -71,14 +84,43 @@ function AirlinesList({ children, representative, ...props }) {
     );
   }, [currentPage]);
 
+  // Сброс поиска при уходе ?search= из URL (клик по пункту меню).
+  // Реагируем только на изменения URL, иначе эффект срабатывает на
+  // каждое нажатие клавиши и стирает ввод до debounce.
+  useEffect(() => {
+    if (!urlSearch && searchQuery) {
+      setSearchQuery("");
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlSearch]);
+
+  // Сброс страницы + sync URL при смене запроса (только если он реально
+  // отличается от значения в URL).
+  useEffect(() => {
+    const next = debouncedSearch.trim();
+    if (next === urlSearch.trim()) return;
+    setPageInfo((prev) => (prev.skip === 0 ? prev : { ...prev, skip: 0 }));
+    updateUrlParams({ search: next || "", page: "1" });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
+
+  const airlineFilter = useMemo(
+    () => ({
+      ...(debouncedSearch.trim() && { search: debouncedSearch.trim() }),
+    }),
+    [debouncedSearch],
+  );
+
   const { loading, error, data, refetch } = useQuery(GET_AIRLINES, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     },
-    variables: { pagination: { skip: pageInfo.skip, take: pageInfo.take } },
-    skip: isSearching,
+    variables: {
+      pagination: { skip: pageInfo.skip, take: pageInfo.take },
+      filter: Object.keys(airlineFilter).length > 0 ? airlineFilter : undefined,
+    },
   });
 
   const infoAirports = useQuery(GET_AIRPORTS_RELAY, {
@@ -144,43 +186,11 @@ function AirlinesList({ children, representative, ...props }) {
     }));
   };
 
-  const runSearch = async (query) => {
-    if (query.trim() === "") {
-      setIsSearching(false);
-      refetch({
-        pagination: { skip: currentPage, take: 20 },
-      });
-      return;
-    }
-
-    setIsSearching(true);
-
-    try {
-      const { data } = await refetch({
-        pagination: { all: true },
-      });
-
-      if (data && data.airlines?.airlines) {
-        setAllFilteredData(data.airlines.airlines);
-      }
-    } catch (err) {
-      console.error("Ошибка при поиске:", err);
-    }
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
   };
 
-  const handleSearch = async (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    await runSearch(query);
-  };
-
-  // Фильтрация запросов по имени авиакомпании
-  const filteredRequests = useMemo(() => {
-    const dataSource = isSearching ? allFilteredData : companyData; // Используем данные из поиска или стандартные
-    return dataSource.filter((request) =>
-      request.name?.toLowerCase().includes(searchQuery.toLowerCase()),
-    );
-  }, [isSearching, allFilteredData, companyData, searchQuery]);
+  const filteredRequests = companyData;
 
   // Пагинация: общее количество страниц
   const totalPages = data?.airlines?.totalPages;
@@ -198,7 +208,7 @@ function AirlinesList({ children, representative, ...props }) {
   const handlePageClick = (event) => {
     const selectedPage = event.selected;
     setPageInfo((prev) => ({ ...prev, skip: selectedPage }));
-    navigate(`?page=${selectedPage + 1}`);
+    updateUrlParams({ page: String(selectedPage + 1) });
   };
 
   return (

@@ -3877,6 +3877,16 @@ export const GET_HOTELS = gql`
           lunch
           dinner
         }
+        mealPriceForAirReq
+        transferPrice {
+          arrival
+          departure
+        }
+        transferPriceForAir {
+          arrival
+          departure
+        }
+        transferPriceForAirReq
       }
     }
   }
@@ -4014,6 +4024,7 @@ export const GET_HOTEL = gql`
         name
         price
         priceForAirline
+        priceForAirReq
       }
     }
   }
@@ -4116,6 +4127,23 @@ export const GET_HOTEL_MEAL_PRICE = gql`
         lunch
         dinner
       }
+      mealPriceForAirReq
+    }
+  }
+`;
+
+export const GET_HOTEL_TRANSFER_PRICE = gql`
+  query HotelTransferPrice($hotelId: ID!) {
+    hotel(id: $hotelId) {
+      transferPrice {
+        arrival
+        departure
+      }
+      transferPriceForAir {
+        arrival
+        departure
+      }
+      transferPriceForAirReq
     }
   }
 `;
@@ -4304,6 +4332,28 @@ export const UPDATE_HOTEL_MEAL_TARIF = gql`
         lunch
         dinner
       }
+      mealPriceForAir {
+        breakfast
+        lunch
+        dinner
+      }
+      mealPriceForAirReq
+    }
+  }
+`;
+
+export const UPDATE_HOTEL_TRANSFER_TARIF = gql`
+  mutation UpdateHotelTransfer($updateHotelId: ID!, $input: UpdateHotelInput!) {
+    updateHotel(id: $updateHotelId, input: $input) {
+      transferPrice {
+        arrival
+        departure
+      }
+      transferPriceForAir {
+        arrival
+        departure
+      }
+      transferPriceForAirReq
     }
   }
 `;
@@ -4426,8 +4476,8 @@ export const DELETE_HOTEL_USER = gql`
 // Запросы в авиакомпанию
 
 export const GET_AIRLINES = gql`
-  query Airlines($pagination: AirlinePaginationInput) {
-    airlines(pagination: $pagination) {
+  query Airlines($pagination: AirlinePaginationInput, $filter: AirlineFilter) {
+    airlines(pagination: $pagination, filter: $filter) {
       totalCount
       totalPages
       airlines {

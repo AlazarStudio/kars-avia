@@ -12,6 +12,7 @@ import {
   GET_HOTELS_SUBSCRIPTION,
   GET_HOTELS_UPDATE_SUBSCRIPTION,
   GET_CITIES,
+  GET_AIRPORTS_RELAY,
   getCookie,
 } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
@@ -19,6 +20,7 @@ import ReactPaginate from "react-paginate";
 import { useLocation, useNavigate } from "react-router-dom";
 import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
+import { useDebounce } from "../../../hooks/useDebounce";
 
 function HotelsList({ children, user, ...props }) {
   const token = getCookie("token");
@@ -38,6 +40,7 @@ function HotelsList({ children, user, ...props }) {
   const pageNumber = urlParams.get("page");
   const currentPage = pageNumber ? parseInt(pageNumber) - 1 : 0;
   const urlCityId = urlParams.get("city") || "";
+  const urlAirportId = urlParams.get("airport") || "";
   const urlStars = urlParams.get("stars") || "";
   const urlUsStars = urlParams.get("usStars") || "";
   const urlSearch = urlParams.get("search") || "";
@@ -48,9 +51,10 @@ function HotelsList({ children, user, ...props }) {
   });
   const [cities, setCities] = useState([]);
   const [selectedCity, setSelectedCity] = useState(null);
+  const [airports, setAirports] = useState([]);
+  const [selectedAirport, setSelectedAirport] = useState(null);
   const [searchQuery, setSearchQuery] = useState(urlSearch);
-  const [isSearching, setIsSearching] = useState(Boolean(urlSearch));
-  const [allFilteredData, setAllFilteredData] = useState([]);
+  const debouncedSearch = useDebounce(searchQuery, 400);
 
   const updateUrlParams = (updates) => {
     const params = new URLSearchParams(location.search);
@@ -80,13 +84,29 @@ function HotelsList({ children, user, ...props }) {
   const hotelFilter = useMemo(
     () => ({
       ...(selectedCity?.id && { cityId: selectedCity.id }),
+      ...(selectedAirport?.id && { airportId: selectedAirport.id }),
       ...(filterData.filterStars && { stars: filterData.filterStars }),
       ...(filterData.filterUsStars && { usStars: filterData.filterUsStars }),
+      ...(debouncedSearch.trim() && { search: debouncedSearch.trim() }),
     }),
-    [selectedCity?.id, filterData.filterStars, filterData.filterUsStars],
+    [
+      selectedCity?.id,
+      selectedAirport?.id,
+      filterData.filterStars,
+      filterData.filterUsStars,
+      debouncedSearch,
+    ],
   );
 
   const { data: citiesData } = useQuery(GET_CITIES, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  const { data: airportsData } = useQuery(GET_AIRPORTS_RELAY, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -100,6 +120,12 @@ function HotelsList({ children, user, ...props }) {
     }
   }, [citiesData]);
 
+  useEffect(() => {
+    if (airportsData?.airports) {
+      setAirports(airportsData.airports);
+    }
+  }, [airportsData]);
+
   // Восстановление выбранного города из URL после загрузки справочника.
   useEffect(() => {
     if (!urlCityId) {
@@ -111,6 +137,18 @@ function HotelsList({ children, user, ...props }) {
     const city = cities.find((c) => c.id === urlCityId);
     if (city) setSelectedCity(city);
   }, [cities, urlCityId, selectedCity]);
+
+  // Восстановление выбранного аэропорта из URL.
+  useEffect(() => {
+    if (!urlAirportId) {
+      if (selectedAirport) setSelectedAirport(null);
+      return;
+    }
+    if (selectedAirport?.id === urlAirportId) return;
+    if (airports.length === 0) return;
+    const airport = airports.find((a) => a.id === urlAirportId);
+    if (airport) setSelectedAirport(airport);
+  }, [airports, urlAirportId, selectedAirport]);
 
   // Синхронизация локального состояния фильтров со значениями из URL
   // (на случай навигации браузерными кнопками вперёд/назад).
@@ -129,14 +167,29 @@ function HotelsList({ children, user, ...props }) {
   }, [currentPage]);
 
   // Сброс поиска, если в URL не осталось ?search= (например после клика
-  // по пункту меню «Гостиницы»).
+  // по пункту меню «Гостиницы»). Реагируем только на изменения URL,
+  // иначе эффект срабатывает на каждое нажатие клавиши и стирает ввод
+  // до того, как debounce успеет синхронизировать URL.
   useEffect(() => {
     if (!urlSearch && searchQuery) {
       setSearchQuery("");
-      setIsSearching(false);
-      setAllFilteredData([]);
     }
-  }, [urlSearch, searchQuery]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [urlSearch]);
+
+  // При смене поискового запроса сбрасываем страницу на первую и
+  // синхронизируем URL. Игнорируем случай, когда debouncedSearch уже
+  // совпадает со значением из URL (mount / browser back-forward).
+  useEffect(() => {
+    const next = debouncedSearch.trim();
+    if (next === urlSearch.trim()) return;
+    setPageInfo((prev) => (prev.skip === 0 ? prev : { ...prev, skip: 0 }));
+    updateUrlParams({
+      search: next || "",
+      page: "1",
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
 
   const { loading, error, data, refetch } = useQuery(GET_HOTELS, {
     context: {
@@ -148,10 +201,8 @@ function HotelsList({ children, user, ...props }) {
       pagination: { skip: pageInfo.skip, take: pageInfo.take },
       filter: Object.keys(hotelFilter).length > 0 ? hotelFilter : undefined,
     },
-    skip: isSearching,
   });
 
-  // в этой версии проблема с дублированием
   useEffect(() => {
     if (data && data.hotels) {
       // Скрываем external отели (TravelLine и т.п.) — они отображаются в TravelLine Integration
@@ -162,12 +213,6 @@ function HotelsList({ children, user, ...props }) {
     }
 
     if (dataSubscription && dataSubscription.hotelCreated) {
-      // setCompanyData((prevCompanyData) => {
-      //   const updatedData = [...prevCompanyData, dataSubscription.hotelCreated];
-      //   return updatedData.sort((a, b) =>
-      //     a.information?.city?.localeCompare(b.information?.city)
-      //   );
-      // });
       refetch();
     }
   }, [data, refetch, dataSubscription, dataSubscriptionUpd]);
@@ -225,63 +270,17 @@ function HotelsList({ children, user, ...props }) {
     updateUrlParams({ city: newValue?.id || "", page: "1" });
   };
 
-  const runSearch = async (query) => {
-    if (query.trim() === "") {
-      setIsSearching(false);
-      refetch({
-        pagination: { skip: currentPage, take: 20 },
-        filter: Object.keys(hotelFilter).length > 0 ? hotelFilter : undefined,
-      });
-      return;
-    }
-
-    setIsSearching(true);
-
-    try {
-      const { data } = await refetch({
-        pagination: { all: true },
-        filter: Object.keys(hotelFilter).length > 0 ? hotelFilter : undefined,
-      });
-
-      if (data && data.hotels?.hotels) {
-        setAllFilteredData(data.hotels.hotels);
-      }
-    } catch (err) {
-      console.error("Ошибка при поиске:", err);
-    }
+  const handleAirportChange = (_, newValue) => {
+    setSelectedAirport(newValue || null);
+    setPageInfo((prev) => ({ ...prev, skip: 0 }));
+    updateUrlParams({ airport: newValue?.id || "", page: "1" });
   };
 
-  const handleSearch = async (e) => {
-    const query = e.target.value;
-    setSearchQuery(query);
-    updateUrlParams({ search: query.trim() ? query : "" });
-    await runSearch(query);
+  const handleSearch = (e) => {
+    setSearchQuery(e.target.value);
   };
 
-  // Восстановление поиска при возвращении на страницу с непустым ?search=.
-  useEffect(() => {
-    if (urlSearch && isSearching && allFilteredData.length === 0) {
-      runSearch(urlSearch);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [urlSearch]);
-
-  const filteredRequests = useMemo(() => {
-    const dataSource = isSearching ? allFilteredData : companyData;
-
-    if (!searchQuery.trim()) return dataSource;
-
-    return dataSource.filter(
-      (request) =>
-        request.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        request?.information?.city
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase()) ||
-        request.information?.address
-          ?.toLowerCase()
-          .includes(searchQuery.toLowerCase()),
-    );
-  }, [isSearching, allFilteredData, companyData, searchQuery]);
+  const filteredRequests = companyData;
 
   // Пагинация: общее количество страниц
   const totalPages = data?.hotels?.totalPages;
@@ -343,6 +342,30 @@ function HotelsList({ children, user, ...props }) {
               }}
               value={selectedCity}
               onChange={handleCityChange}
+            />
+            <MUIAutocompleteColor
+              dropdownWidth="170px"
+              label="Аэропорт"
+              hideLabelOnFocus={false}
+              options={airports}
+              getOptionLabel={(option) => option?.name ?? ""}
+              renderOption={(optionProps, option) => (
+                <li {...optionProps} key={option.id}>
+                  <span style={{ color: "black", marginRight: 4 }}>
+                    {option.name}
+                  </span>
+                  {option.code && (
+                    <span style={{ color: "gray", marginRight: 4 }}>
+                      {option.code}
+                    </span>
+                  )}
+                  {option.city && (
+                    <span style={{ color: "gray" }}>{option.city}</span>
+                  )}
+                </li>
+              )}
+              value={selectedAirport}
+              onChange={handleAirportChange}
             />
             <MUIAutocomplete
               dropdownWidth="170px"

@@ -98,8 +98,8 @@ const SuperAdminMenu = ({
               />
             </svg>
           </div>
-          {/* {menuOpen ? "ФАП" : ""} */}
-          <DelayedText show={menuOpen} delay={200} >ФАП</DelayedText>
+          {/* {menuOpen ? "ФАП v1" : ""} */}
+          <DelayedText show={menuOpen} delay={200} >ФАП v1</DelayedText>
           {allCreatedReserves > 0 && (
             <div
               className={`${classes.countRequests} ${!menuOpen ? classes.countRequestsMini : ""
@@ -108,7 +108,7 @@ const SuperAdminMenu = ({
               {allCreatedReserves}
             </div>
           )}
-          {!menuOpen && <span className={classes.tooltip}>ФАП</span>}
+          {!menuOpen && <span className={classes.tooltip}>ФАП v1</span>}
         </Link>
         <Link
           to={"/fapv2"}

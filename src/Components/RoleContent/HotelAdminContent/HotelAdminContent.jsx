@@ -6,12 +6,15 @@ import Reserve from "../../Blocks/Reserve/Reserve";
 import Reports from "../../Blocks/Reports/Reports";
 import UpdatesList from "../../Blocks/UpdatesList/UpdatesList";
 import DocumentationList from "../../Blocks/DocumentationList/DocumentationList";
+import FapV2 from "../../Pages/FapV2/FapV2";
 // import HotelTarifs_tabComponent from "../../Blocks/HotelTarifs_tabComponent/HotelTarifs_tabComponent";
 
 const HotelAdminContent = ({ user }) => {
   const { id } = useParams();
 
-  return id === "reserveRequests" ? (
+  return id === "fapv2" ? (
+    <FapV2 user={user} />
+  ) : id === "reserveRequests" ? (
     <Reserve user={user} idHotel={user.hotelId} />
   ) : id === "reports" ? (
     <Reports user={user} />

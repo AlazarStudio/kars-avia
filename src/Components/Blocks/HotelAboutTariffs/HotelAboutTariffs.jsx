@@ -41,42 +41,38 @@ const fmtVat = (n) =>
 const fmtWithVat = (n) =>
   typeof n === "number" ? fmt(Math.round(n * (1 + VAT_RATE))) : "—";
 
-export default function HotelAboutTariffs({user, tariffs = [], mealPrices = null, additionalServices }) {
-  const hasMeals =
-    mealPrices &&
-    ["breakfast", "lunch", "dinner"].some(
-      (k) => typeof mealPrices[k] === "number"
-    );
-    // console.log(mealPrices);
+const transferLabels = {
+  arrival: "Аэропорт → гостиница",
+  departure: "Гостиница → аэропорт",
+};
 
-    // console.log(additionalServices)
-    
+export default function HotelAboutTariffs({
+  user,
+  tariffs = [],
+  mealPrices = null,
+  mealPriceForAirReq = false,
+  transferPrices = null,
+  transferPriceForAirReq = false,
+  additionalServices,
+}) {
+  const hasMeals =
+    mealPriceForAirReq ||
+    (mealPrices &&
+      ["breakfast", "lunch", "dinner"].some(
+        (k) => typeof mealPrices[k] === "number"
+      ));
+
+  const hasTransfer =
+    transferPriceForAirReq ||
+    (transferPrices &&
+      ["arrival", "departure"].some(
+        (k) => typeof transferPrices[k] === "number"
+      ));
 
   return (
     <div className={classes.tariffs}>
       <table className={classes.table}>
-        {/* <thead>
-          <tr>
-            <th>Тарифы</th>
-            <th className={classes.priceCol}>Цены</th>
-          </tr>
-        </thead> */}
         <tbody>
-          {/* {tariffs.map((t) => {
-            const price = t.priceForAirline ?? t.price ?? null;
-            return (
-              <tr key={t.id}>
-                <td>
-                  <div className={classes.name}>{t.name}</div>
-                  <div className={classes.category}>
-                    {categoryNames[t.category] ?? t.category}
-                  </div>
-                </td>
-                <td className={classes.price}>{fmt(price)}</td>
-              </tr>
-            );
-          })} */}
-
           {hasMeals && (
             <>
               <tr className={classes.sectionRow}>
@@ -88,10 +84,21 @@ export default function HotelAboutTariffs({user, tariffs = [], mealPrices = null
               {["breakfast", "lunch", "dinner"].map((k) => (
                 <tr key={`meal-${k}`}>
                   <td className={classes.mealName}>{mealLabels[k]}</td>
-                  <td className={classes.price}>{fmt(mealPrices[k])}</td>
-                  <td className={classes.price}>5%</td>
-                  {/* <td className={classes.price}>{fmtVat(mealPrices[k])}</td> */}
-                  <td className={classes.price}>{fmtWithVat(mealPrices[k])}</td>
+                  {mealPriceForAirReq ? (
+                    <td className={classes.price} colSpan={3}>
+                      <div className={classes.byRequestValue}>По запросу</div>
+                      <div className={classes.priceHint}>
+                        Идёт согласование тарифов и условий размещения — точная
+                        стоимость будет доступна после уточнения деталей.
+                      </div>
+                    </td>
+                  ) : (
+                    <>
+                      <td className={classes.price}>{fmt(mealPrices?.[k])}</td>
+                      <td className={classes.price}>5%</td>
+                      <td className={classes.price}>{fmtWithVat(mealPrices?.[k])}</td>
+                    </>
+                  )}
                 </tr>
               ))}
             </>
@@ -107,10 +114,51 @@ export default function HotelAboutTariffs({user, tariffs = [], mealPrices = null
               {additionalServices.map((k) => (
                 <tr key={k.id}>
                   <td className={classes.mealName}>{k.name}</td>
-                  <td className={classes.price}>{fmt(k?.priceForAirline)}</td>
-                  <td className={classes.price}>5%</td>
-                  {/* <td className={classes.price}>{fmtVat(k?.priceForAirline)}</td> */}
-                  <td className={classes.price}>{fmtWithVat(k?.priceForAirline)}</td>
+                  {k?.priceForAirReq ? (
+                    <td className={classes.price} colSpan={3}>
+                      <div className={classes.byRequestValue}>По запросу</div>
+                      <div className={classes.priceHint}>
+                        Идёт согласование тарифов и условий размещения — точная
+                        стоимость будет доступна после уточнения деталей.
+                      </div>
+                    </td>
+                  ) : (
+                    <>
+                      <td className={classes.price}>{fmt(k?.priceForAirline)}</td>
+                      <td className={classes.price}>5%</td>
+                      <td className={classes.price}>{fmtWithVat(k?.priceForAirline)}</td>
+                    </>
+                  )}
+                </tr>
+              ))}
+            </>
+          )}
+          {hasTransfer && (
+            <>
+              <tr className={classes.sectionRow}>
+                <td>Трансфер</td>
+                <td>Цена без НДС</td>
+                <td>НДС</td>
+                <td>Цена с НДС</td>
+              </tr>
+              {["arrival", "departure"].map((k) => (
+                <tr key={`transfer-${k}`}>
+                  <td className={classes.mealName}>{transferLabels[k]}</td>
+                  {transferPriceForAirReq ? (
+                    <td className={classes.price} colSpan={3}>
+                      <div className={classes.byRequestValue}>По запросу</div>
+                      <div className={classes.priceHint}>
+                        Идёт согласование тарифов и условий размещения — точная
+                        стоимость будет доступна после уточнения деталей.
+                      </div>
+                    </td>
+                  ) : (
+                    <>
+                      <td className={classes.price}>{fmt(transferPrices?.[k])}</td>
+                      <td className={classes.price}>5%</td>
+                      <td className={classes.price}>{fmtWithVat(transferPrices?.[k])}</td>
+                    </>
+                  )}
                 </tr>
               ))}
             </>

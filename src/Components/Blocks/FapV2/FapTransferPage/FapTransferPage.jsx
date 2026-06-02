@@ -7,11 +7,7 @@ import {
   REMOVE_PASSENGER_REQUEST_DRIVER,
   getCookie,
 } from "../../../../../graphQL_requests";
-import {
-  SERVICE_STATUS_CONFIG,
-  formatTime,
-  formatDate,
-} from "../fapConstants";
+import { SERVICE_STATUS_CONFIG, formatTime } from "../fapConstants";
 import { useToast } from "../../../../contexts/ToastContext";
 import FapActionButton from "../FapActionButton/FapActionButton";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
@@ -36,17 +32,6 @@ const ClockSvg = ({ size = 12, color = "currentColor" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2" />
     <path d="M12 7v5l3 2" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
-const PhoneSvg = ({ size = 16, color = "currentColor" }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
-    <path
-      d="M22 17v3a2 2 0 0 1-2 2A19 19 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 1.7l.5 3a2 2 0 0 1-.6 1.8l-1.3 1.3a16 16 0 0 0 6.6 6.6l1.3-1.3a2 2 0 0 1 1.8-.6l3 .5A2 2 0 0 1 22 17Z"
-      stroke={color}
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    />
   </svg>
 );
 const LinkSvg = ({ size = 14, color = "currentColor", strokeWidth = 1.8 }) => (
@@ -253,7 +238,7 @@ export default function FapTransferPage({
               className={classes.addBtn}
               onClick={() => setShowAddDriver(true)}
             >
-              <PlusSvg /> Добавить водителя
+              <PlusSvg /> Создать заявку
             </button>
           )}
           {canEdit && !isCompleted && (
@@ -324,7 +309,7 @@ export default function FapTransferPage({
             {plannedAt ? formatTime(plannedAt) : "—"}
           </div>
           <div className={classes.kpiSub}>
-            {plannedAt ? formatDate(plannedAt) : "не указано"}
+            {plannedAt ? "время подачи" : "не указано"}
           </div>
         </div>
       </div>
@@ -343,7 +328,7 @@ export default function FapTransferPage({
                 className={classes.addBtn}
                 onClick={() => setShowAddDriver(true)}
               >
-                <PlusSvg /> Добавить водителя
+                <PlusSvg /> Создать заявку
               </button>
             )}
           </div>
@@ -446,7 +431,6 @@ function DriverCard({
   const extraCount = placed - previewPeople.length;
 
   const hasRoute = driver.addressFrom || driver.addressTo;
-  const phoneDigits = driver.phone ? driver.phone.replace(/[^+\d]/g, "") : "";
   const canDelete = canEdit && !isCompleted;
 
   return (
@@ -496,16 +480,6 @@ function DriverCard({
               </span>
             )}
           </div>
-        )}
-
-        {phoneDigits && (
-          <a
-            href={`tel:${phoneDigits}`}
-            className={classes.iconBtn}
-            title={`Позвонить ${driver.fullName || "водителю"}`}
-          >
-            <PhoneSvg size={16} color="var(--dark-blue)" />
-          </a>
         )}
 
         {showLinks && driver.linkPWA && (

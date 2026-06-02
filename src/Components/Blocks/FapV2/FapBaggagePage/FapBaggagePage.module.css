@@ -1,0 +1,517 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  font-family: Inter, sans-serif;
+}
+
+/* ── Service header ── */
+.head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 18px;
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  border-radius: 12px;
+  flex-shrink: 0;
+}
+
+.headLeft {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-width: 0;
+  flex: 1;
+}
+
+.headIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.headText {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.headTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.headTitle {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
+}
+
+.statusBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  flex-shrink: 0;
+}
+
+.headFlight {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #545873;
+}
+
+.headFlight strong {
+  color: var(--text);
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.headRight {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.addBtn {
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: none;
+  background: var(--dark-blue);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background 0.15s;
+}
+
+.addBtn:hover {
+  background: var(--dark-blue-hover, #00489F);
+}
+
+.finishBtn {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 10px;
+  border: 1px solid #FCA5A5;
+  background: #fff;
+  color: #EF4444;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.finishBtn:hover {
+  background: #FEF2F2;
+}
+
+/* ── KPI strip ── */
+.kpiRow {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.kpi {
+  flex: 1;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.kpiHead {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #545873;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.kpiValue {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1;
+  letter-spacing: -0.4px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.kpiSub {
+  font-size: 11px;
+  color: #545873;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Tasks list ── */
+.tasks {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 2px 2px 6px;
+  margin: -2px -2px 0;
+}
+
+.emptyTasks {
+  background: #fff;
+  border: 1px dashed #E4E4EF;
+  border-radius: 12px;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #94A3B8;
+}
+
+.emptyTasksText {
+  font-size: 14px;
+}
+
+/* ── Task card ── */
+.taskCard {
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.taskCard:hover {
+  border-color: #CBD2E4;
+  box-shadow: 0 2px 10px rgba(20, 30, 60, 0.04);
+}
+
+.taskCardDone {
+  opacity: 0.82;
+}
+
+.taskHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px 14px 0;
+}
+
+.taskBar {
+  width: 4px;
+  align-self: stretch;
+  border-radius: 0 4px 4px 0;
+  flex-shrink: 0;
+}
+
+.taskIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 11px;
+  margin-left: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.taskInfo {
+  flex: 1;
+  min-width: 0;
+}
+
+.taskTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.taskNumber {
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.taskDriver {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.taskMeta {
+  font-size: 12.5px;
+  color: #545873;
+  margin-top: 2px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.taskMetaItem {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.metaDot {
+  width: 3px;
+  height: 3px;
+  border-radius: 999px;
+  background: #C0C3D6;
+  flex-shrink: 0;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.vDivider {
+  width: 1px;
+  height: 34px;
+  background: #E4E4EF;
+  flex-shrink: 0;
+}
+
+.iconBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  color: var(--dark-blue);
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.iconBtn:hover {
+  background: #EAF1FB;
+  border-color: #CBD2E4;
+}
+
+.iconBtnDanger:hover {
+  background: #FEF2F2;
+  border-color: #FCA5A5;
+}
+
+.mapBtn {
+  height: 36px;
+  padding: 0 13px;
+  border-radius: 10px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  color: var(--dark-blue);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.mapBtn:hover {
+  background: #EAF1FB;
+  border-color: #CBD2E4;
+}
+
+.linkBtn {
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  color: var(--dark-blue);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.linkBtn:hover {
+  background: #EAF1FB;
+  border-color: #CBD2E4;
+}
+
+.completeBtn {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: none;
+  background: #10B981;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.completeBtn:hover {
+  background: #059669;
+}
+
+.completeBtn:disabled {
+  background: #C7E9D8;
+  cursor: not-allowed;
+}
+
+.completeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 36px;
+  border-radius: 10px;
+  background: #ECFDF5;
+  color: #10B981;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.headEndPad {
+  width: 4px;
+  flex-shrink: 0;
+}
+
+/* ── Route strip ── */
+.routeStrip {
+  margin: 0 16px 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #F8FAFC;
+  border: 1px solid #E4E4EF;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.routeText {
+  flex: 1;
+  font-size: 12.5px;
+  color: var(--text);
+  line-height: 1.5;
+  display: inline;
+}
+
+.routeAddr {
+  font-weight: 600;
+  word-break: break-word;
+}
+
+.routeArrow {
+  display: inline-flex;
+  vertical-align: middle;
+  margin: 0 6px;
+  font-weight: 800;
+}
+
+/* ── Description footer ── */
+.descRow {
+  padding: 9px 16px 12px;
+  border-top: 1px solid #E4E4EF;
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  font-size: 12.5px;
+  color: #545873;
+  line-height: 1.45;
+}
+
+.descRow strong {
+  color: var(--text);
+  font-weight: 600;
+}
+
+.descTime {
+  margin-left: auto;
+  font-size: 11.5px;
+  color: #94A3B8;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ── Empty service ── */
+.empty {
+  padding: 40px 16px;
+  text-align: center;
+  font-size: 14px;
+  color: #94A3B8;
+}

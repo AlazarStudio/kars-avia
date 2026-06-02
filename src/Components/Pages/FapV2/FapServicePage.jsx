@@ -12,7 +12,7 @@ import Header from "../../Blocks/Header/Header";
 import FapWaterMealPage from "../../Blocks/FapV2/FapWaterMealPage/FapWaterMealPage";
 import FapLivingPage from "../../Blocks/FapV2/FapLivingPage/FapLivingPage";
 import FapTransferPage from "../../Blocks/FapV2/FapTransferPage/FapTransferPage";
-import FapBaggageSection from "../../Blocks/FapV2/FapBaggageSection/FapBaggageSection";
+import FapBaggagePage from "../../Blocks/FapV2/FapBaggagePage/FapBaggagePage";
 import {
   isAirlineRole as isAirlineRoleCheck,
   isExternalUser,
@@ -44,7 +44,6 @@ export default function FapServicePage({ user }) {
 
   const request = data?.passengerRequest;
   const cfg = SERVICE_CONFIG[serviceKey];
-  const noop = () => {};
 
   const representativePwaLink = useMemo(() => {
     const links = request?.representativeLinks || [];
@@ -144,14 +143,10 @@ export default function FapServicePage({ user }) {
         );
       case "baggage":
         return (
-          <FapBaggageSection
+          <FapBaggagePage
             service={request.baggageDeliveryService}
-            color={cfg.color}
             request={request}
             onRefetch={refetch}
-            isOpen={true}
-            onToggle={noop}
-            isPage
             canEdit={canEdit}
             showLinks={!isAirlineRole}
           />

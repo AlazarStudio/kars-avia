@@ -10,6 +10,7 @@ import {
   decodeJWT,
   GET_HOTELS_UPDATE_SUBSCRIPTION,
   GET_HOTEL_MEAL_PRICE,
+  GET_HOTEL_TRANSFER_PRICE,
   REORDER_GALLERY,
 } from "../../../../graphQL_requests.js";
 import { roles } from "../../../roles.js";
@@ -70,6 +71,14 @@ function HotelAbout_tabComponent({ id }) {
     },
     variables: { hotelId: id },
   });
+  const { data: transferPriceData } = useQuery(GET_HOTEL_TRANSFER_PRICE, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    variables: { hotelId: id },
+  });
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_HOTELS_UPDATE_SUBSCRIPTION
   );
@@ -87,6 +96,16 @@ function HotelAbout_tabComponent({ id }) {
     lunch: 0,
     dinner: 0,
   });
+  const [mealPriceForAirReq, setMealPriceForAirReq] = useState(false);
+  const [transferPrices, setTransferPrices] = useState({
+    arrival: 0,
+    departure: 0,
+  });
+  const [transferPricesAirline, setTransferPricesAirline] = useState({
+    arrival: 0,
+    departure: 0,
+  });
+  const [transferPriceForAirReq, setTransferPriceForAirReq] = useState(false);
 
   const [imagesToDelete, setImagesToDelete] = useState([]);
 
@@ -152,8 +171,27 @@ function HotelAbout_tabComponent({ id }) {
         lunch: mealPriceData.hotel?.mealPriceForAir?.lunch,
         dinner: mealPriceData.hotel?.mealPriceForAir?.dinner,
       });
+      setMealPriceForAirReq(
+        Boolean(mealPriceData.hotel?.mealPriceForAirReq)
+      );
     }
   }, [mealPriceData]);
+
+  useEffect(() => {
+    if (transferPriceData) {
+      setTransferPrices({
+        arrival: transferPriceData.hotel?.transferPrice?.arrival ?? 0,
+        departure: transferPriceData.hotel?.transferPrice?.departure ?? 0,
+      });
+      setTransferPricesAirline({
+        arrival: transferPriceData.hotel?.transferPriceForAir?.arrival ?? 0,
+        departure: transferPriceData.hotel?.transferPriceForAir?.departure ?? 0,
+      });
+      setTransferPriceForAirReq(
+        Boolean(transferPriceData.hotel?.transferPriceForAirReq)
+      );
+    }
+  }, [transferPriceData]);
 
 
   useEffect(() => {
@@ -525,6 +563,9 @@ function HotelAbout_tabComponent({ id }) {
                 user={user}
                 tariffs={rooms || {}}
                 mealPrices={hotel?.meal ? meal : null}
+                mealPriceForAirReq={mealPriceForAirReq}
+                transferPrices={transferPricesAirline}
+                transferPriceForAirReq={transferPriceForAirReq}
                 additionalServices={additionalServices || {}}
               />
             )}

@@ -28,11 +28,25 @@ import ServiceProgressDot from "../../Blocks/FapV2/ServiceProgressDot/ServicePro
 import { roles } from "../../../roles";
 import { canAccessMenu } from "../../../utils/access";
 
-const SERVICE_ORDER = ["water", "meal", "living", "transfer", "transferDeparture", "baggage"];
+const SERVICE_ORDER = [
+  "water",
+  "meal",
+  "living",
+  "transfer",
+  "transferDeparture",
+  "baggage",
+];
 
 const LOGO_PALETTE = [
-  "#0057C3", "#80BD3B", "#0E7BC1", "#D62027",
-  "#003D7A", "#E5A11D", "#C8102E", "#7C3AED", "#10B981",
+  "#0057C3",
+  "#80BD3B",
+  "#0E7BC1",
+  "#D62027",
+  "#003D7A",
+  "#E5A11D",
+  "#C8102E",
+  "#7C3AED",
+  "#10B981",
 ];
 
 function logoColor(name) {
@@ -70,19 +84,32 @@ const PinSvg = ({ size = 14, color = "#545873" }) => (
 const ClockSvg = ({ size = 14, color = "#0057C3" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <circle cx="12" cy="12" r="9" stroke={color} strokeWidth="1.8" />
-    <path d="M12 7v5l3 2" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    <path
+      d="M12 7v5l3 2"
+      stroke={color}
+      strokeWidth="1.8"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
   </svg>
 );
 
 function getServiceForKey(req, key) {
   switch (key) {
-    case "water": return req.waterService;
-    case "meal": return req.mealService;
-    case "living": return req.livingService;
-    case "transfer": return req.transferService;
-    case "transferDeparture": return req.departureTransferService;
-    case "baggage": return req.baggageDeliveryService;
-    default: return null;
+    case "water":
+      return req.waterService;
+    case "meal":
+      return req.mealService;
+    case "living":
+      return req.livingService;
+    case "transfer":
+      return req.transferService;
+    case "transferDeparture":
+      return req.departureTransferService;
+    case "baggage":
+      return req.baggageDeliveryService;
+    default:
+      return null;
   }
 }
 
@@ -177,13 +204,16 @@ export default function FapV2({ user, accessMenu }) {
             <MUIAutocomplete
               dropdownWidth="170px"
               label="Авиакомпания"
+              hideLabelOnFocus={false}
               options={["Все авиакомпании", ...airlines.map((a) => a.name)]}
               value={selectedAirline ? selectedAirline.name : ""}
               onChange={(_, newValue) => {
                 if (!newValue || newValue === "Все авиакомпании") {
                   setSelectedAirline(null);
                 } else {
-                  setSelectedAirline(airlines.find((a) => a.name === newValue) || null);
+                  setSelectedAirline(
+                    airlines.find((a) => a.name === newValue) || null,
+                  );
                 }
               }}
             />
@@ -191,7 +221,11 @@ export default function FapV2({ user, accessMenu }) {
           <MUIAutocompleteColor
             dropdownWidth="170px"
             label="Аэропорт"
-            options={[{ id: null, name: "Все аэропорты", code: "" }, ...airports]}
+            hideLabelOnFocus={false}
+            options={[
+              { id: null, name: "Все аэропорты", code: "" },
+              ...airports,
+            ]}
             getOptionLabel={(o) => (o ? `${o.code} ${o.name}`.trim() : "")}
             renderOption={(optionProps, option) => {
               const isAll = !option.code;
@@ -206,7 +240,13 @@ export default function FapV2({ user, accessMenu }) {
               return (
                 <li {...optionProps} key={option.id}>
                   {words.map((word, i) => (
-                    <span key={i} style={{ color: i === 0 ? "black" : "gray", marginRight: "4px" }}>
+                    <span
+                      key={i}
+                      style={{
+                        color: i === 0 ? "black" : "gray",
+                        marginRight: "4px",
+                      }}
+                    >
                       {word}
                     </span>
                   ))}
@@ -218,13 +258,16 @@ export default function FapV2({ user, accessMenu }) {
               if (!newValue || newValue.name === "Все аэропорты") {
                 setSelectedAirport(null);
               } else {
-                setSelectedAirport(airports.find((a) => a === newValue) || null);
+                setSelectedAirport(
+                  airports.find((a) => a === newValue) || null,
+                );
               }
             }}
           />
           <MUIAutocomplete
             dropdownWidth="170px"
             label="Статус"
+            hideLabelOnFocus={false}
             options={STATUS_OPTIONS}
             value={statusOption}
             onChange={(_, val) => handleStatusChange(val)}
@@ -252,7 +295,7 @@ export default function FapV2({ user, accessMenu }) {
       <div className={classes.grid}>
         {loading ? (
           <div className={classes.loader}>
-            <MUILoader />
+            <MUILoader fullHeight={"60vh"} />
           </div>
         ) : requests.length === 0 ? (
           <div className={classes.empty}>Заявки не найдены</div>
@@ -314,7 +357,12 @@ export default function FapV2({ user, accessMenu }) {
                     {req.flightNumber && (
                       <div className={classes.cardFlightLine}>
                         <PlaneSvg />
-                        Рейс <strong style={{ color: "var(--text)", fontWeight: 700 }}>{req.flightNumber}</strong>
+                        Рейс{" "}
+                        <strong
+                          style={{ color: "var(--text)", fontWeight: 700 }}
+                        >
+                          {req.flightNumber}
+                        </strong>
                       </div>
                     )}
                   </div>
@@ -325,9 +373,10 @@ export default function FapV2({ user, accessMenu }) {
                     <div className={classes.cardLine}>
                       <PinSvg />
                       <strong>{req.airport.code}</strong>
-                      {req.airport.name && req.airport.name !== req.airport.code && (
-                        <>{req.airport.name}</>
-                      )}
+                      {req.airport.name &&
+                        req.airport.name !== req.airport.code && (
+                          <>{req.airport.name}</>
+                        )}
                     </div>
                   )}
                   {req.createdAt && (

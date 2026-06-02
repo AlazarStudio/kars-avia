@@ -387,12 +387,31 @@ function AddRepresentativeHotel({ show, onClose, request }) {
                       getOptionLabel={(option) =>
                         option ? `${option.city}${option.region ? `, ${option.region}` : ""}`.trim() : ""
                       }
+                      renderOption={(optionProps, option) => {
+                        const labelText = `${option.city}${option.region ? `, ${option.region}` : ""}`.trim();
+                        const words = labelText.split(", ");
+                        return (
+                          <li {...optionProps} key={option.id ?? labelText}>
+                            {words.map((word, index) => (
+                              <span
+                                key={index}
+                                style={{
+                                  color: index === 0 ? "black" : "gray",
+                                  marginRight: 4,
+                                }}
+                              >
+                                {word}
+                              </span>
+                            ))}
+                          </li>
+                        );
+                      }}
                       value={citiesList.find((c) => c.city === quickCreate.city) || null}
                       onChange={(e, newValue) =>
                         setQuickCreate((p) => ({ ...p, city: newValue?.city ?? "" }))
                       }
                     />
-                    <label className={classes.quickCreateLabel}>
+                    {/* <label className={classes.quickCreateLabel}>
                       Адрес (справочник)
                     </label>
                     <CityRegionPicker
@@ -410,7 +429,7 @@ function AddRepresentativeHotel({ show, onClose, request }) {
                           locationRegion: region || null,
                         }));
                       }}
-                    />
+                    /> */}
                     <input
                       type="text"
                       placeholder="Улица"

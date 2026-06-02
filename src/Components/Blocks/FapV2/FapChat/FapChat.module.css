@@ -318,10 +318,10 @@
 }
 
 .tabBadge {
-  min-width: 20px;
-  height: 20px;
-  padding: 0 6px;
-  border-radius: 999px;
+  min-width: 25px;
+  height: 25px;
+  /* padding: 0 6px; */
+  border-radius: 50%;
   background: #fff;
   color: #B91C1C;
   display: inline-flex;

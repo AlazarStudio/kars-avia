@@ -1,29 +1,27 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
-import classes from "./EditRequestMealTarif.module.css";
+import classes from "./EditHotelTransferTarif.module.css";
 import Button from "../../Standart/Button/Button.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu.jsx";
 import {
   getCookie,
-  UPDATE_AIRLINE_MEAL_TARIF,
-  UPDATE_HOTEL_MEAL_TARIF,
+  UPDATE_HOTEL_TRANSFER_TARIF,
 } from "../../../../graphQL_requests.js";
 import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
 
-function EditRequestMealTarif({
+function EditHotelTransferTarif({
   show,
   user,
   onClose,
-  mealPrices,
-  mealPricesAirline,
-  mealPriceForAirReq = false,
+  transferPrices,
+  transferPricesAirline,
+  transferPriceForAirReq = false,
   onSubmit,
   id,
-  isHotel,
 }) {
   const token = getCookie("token");
   const { confirm, isDialogOpen } = useDialog();
@@ -34,13 +32,11 @@ function EditRequestMealTarif({
   const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
-    breakfast: "",
-    lunch: "",
-    dinner: "",
-    breakfastForAirline: "",
-    lunchForAirline: "",
-    dinnerForAirline: "",
-    mealPriceForAirReq: false,
+    arrival: "",
+    departure: "",
+    arrivalForAirline: "",
+    departureForAirline: "",
+    transferPriceForAirReq: false,
   });
 
   const sidebarRef = useRef();
@@ -49,44 +45,37 @@ function EditRequestMealTarif({
 
   const resetForm = useCallback(() => {
     setFormData({
-      breakfast: mealPrices?.breakfast ?? "",
-      lunch: mealPrices?.lunch ?? "",
-      dinner: mealPrices?.dinner ?? "",
-      breakfastForAirline: mealPricesAirline?.breakfast ?? "",
-      lunchForAirline: mealPricesAirline?.lunch ?? "",
-      dinnerForAirline: mealPricesAirline?.dinner ?? "",
-      mealPriceForAirReq: Boolean(mealPriceForAirReq),
+      arrival: transferPrices?.arrival ?? "",
+      departure: transferPrices?.departure ?? "",
+      arrivalForAirline: transferPricesAirline?.arrival ?? "",
+      departureForAirline: transferPricesAirline?.departure ?? "",
+      transferPriceForAirReq: Boolean(transferPriceForAirReq),
     });
     setIsEdited(false);
-  }, [mealPrices, mealPricesAirline, mealPriceForAirReq]);
+  }, [transferPrices, transferPricesAirline, transferPriceForAirReq]);
 
-  const [updateHotelMealTarif] = useMutation(
-    isHotel ? UPDATE_HOTEL_MEAL_TARIF : UPDATE_AIRLINE_MEAL_TARIF,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Apollo-Require-Preflight": "true",
-        },
+  const [updateHotelTransferTarif] = useMutation(UPDATE_HOTEL_TRANSFER_TARIF, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Apollo-Require-Preflight": "true",
       },
-    }
-  );
+    },
+  });
 
   useEffect(() => {
     if (show) {
       setFormData({
-        breakfast: mealPrices?.breakfast ?? "",
-        lunch: mealPrices?.lunch ?? "",
-        dinner: mealPrices?.dinner ?? "",
-        breakfastForAirline: mealPricesAirline?.breakfast ?? "",
-        lunchForAirline: mealPricesAirline?.lunch ?? "",
-        dinnerForAirline: mealPricesAirline?.dinner ?? "",
-        mealPriceForAirReq: Boolean(mealPriceForAirReq),
+        arrival: transferPrices?.arrival ?? "",
+        departure: transferPrices?.departure ?? "",
+        arrivalForAirline: transferPricesAirline?.arrival ?? "",
+        departureForAirline: transferPricesAirline?.departure ?? "",
+        transferPriceForAirReq: Boolean(transferPriceForAirReq),
       });
       setIsEdited(false);
       setIsEditing(true);
     }
-  }, [show, mealPrices, mealPricesAirline, mealPriceForAirReq]);
+  }, [show, transferPrices, transferPricesAirline, transferPriceForAirReq]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
@@ -135,53 +124,35 @@ function EditRequestMealTarif({
     setIsLoading(true);
 
     try {
-      const byReq = Boolean(formData.mealPriceForAirReq);
+      const byReq = Boolean(formData.transferPriceForAirReq);
       const dataSend = {
-        mealPrice: {
-          breakfast: Number(formData.breakfast) || 0,
-          lunch: Number(formData.lunch) || 0,
-          dinner: Number(formData.dinner) || 0,
+        transferPrice: {
+          arrival: Number(formData.arrival) || 0,
+          departure: Number(formData.departure) || 0,
         },
-        ...(isHotel
-          ? {
-              mealPriceForAir: byReq
-                ? { breakfast: 0, lunch: 0, dinner: 0 }
-                : {
-                    breakfast: Number(formData.breakfastForAirline) || 0,
-                    lunch: Number(formData.lunchForAirline) || 0,
-                    dinner: Number(formData.dinnerForAirline) || 0,
-                  },
-              mealPriceForAirReq: byReq,
-            }
+        transferPriceForAir: byReq
+          ? { arrival: 0, departure: 0 }
           : {
-              mealPriceForAir: {
-                breakfast: Number(formData.breakfastForAirline) || 0,
-                lunch: Number(formData.lunchForAirline) || 0,
-                dinner: Number(formData.dinnerForAirline) || 0,
-              },
-            }),
+              arrival: Number(formData.arrivalForAirline) || 0,
+              departure: Number(formData.departureForAirline) || 0,
+            },
+        transferPriceForAirReq: byReq,
       };
 
-      const updateId = isHotel ? "updateHotelId" : "updateAirlineId";
-
-      const response = await updateHotelMealTarif({
+      const response = await updateHotelTransferTarif({
         variables: {
-          [updateId]: id,
+          updateHotelId: id,
           input: dataSend,
         },
       });
 
       if (response) {
-        if (isHotel) {
-          onSubmit({
-            mealPrice: response.data.updateHotel.mealPrice,
-            mealPriceForAir: response.data.updateHotel.mealPriceForAir,
-            mealPriceForAirReq:
-              response.data.updateHotel.mealPriceForAirReq ?? byReq,
-          });
-        } else {
-          onSubmit(response.data.updateAirline.mealPrice);
-        }
+        onSubmit({
+          transferPrice: response.data.updateHotel.transferPrice,
+          transferPriceForAir: response.data.updateHotel.transferPriceForAir,
+          transferPriceForAirReq:
+            response.data.updateHotel.transferPriceForAirReq ?? byReq,
+        });
         resetForm();
         onClose();
         setIsLoading(false);
@@ -191,7 +162,7 @@ function EditRequestMealTarif({
     } catch (error) {
       console.error("Catch: ", error);
       setIsLoading(false);
-      notifyError("Не удалось сохранить цены на питание.");
+      notifyError("Не удалось сохранить цены на трансфер.");
     }
   };
 
@@ -242,7 +213,7 @@ function EditRequestMealTarif({
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
         <div className={classes.requestTitle_name}>
-          Редактировать цены на питание
+          Редактировать цены на трансфер
         </div>
         <div className={classes.requestTitle_close}>
           <AdditionalMenu
@@ -273,54 +244,48 @@ function EditRequestMealTarif({
             <div className={classes.requestData}>
               <div className={classes.groupBlock}>
                 <div className={classes.groupTitle}>Цены по договору</div>
-                {renderRow("Завтрак", "breakfast", formData.breakfast)}
-                {renderRow("Обед", "lunch", formData.lunch)}
-                {renderRow("Ужин", "dinner", formData.dinner)}
+                {renderRow("Аэропорт → гостиница", "arrival", formData.arrival)}
+                {renderRow(
+                  "Гостиница → аэропорт",
+                  "departure",
+                  formData.departure
+                )}
               </div>
 
               {user?.hotelId ? null : (
                 <div className={classes.groupBlock}>
                   <div className={classes.groupTitle}>Цены для АК</div>
                   {renderRow(
-                    "Завтрак",
-                    "breakfastForAirline",
-                    formData.breakfastForAirline,
+                    "Аэропорт → гостиница",
+                    "arrivalForAirline",
+                    formData.arrivalForAirline,
                     {
-                      disabled: formData.mealPriceForAirReq,
-                      byRequest: formData.mealPriceForAirReq,
+                      disabled: formData.transferPriceForAirReq,
+                      byRequest: formData.transferPriceForAirReq,
                     }
                   )}
                   {renderRow(
-                    "Обед",
-                    "lunchForAirline",
-                    formData.lunchForAirline,
+                    "Гостиница → аэропорт",
+                    "departureForAirline",
+                    formData.departureForAirline,
                     {
-                      disabled: formData.mealPriceForAirReq,
-                      byRequest: formData.mealPriceForAirReq,
+                      disabled: formData.transferPriceForAirReq,
+                      byRequest: formData.transferPriceForAirReq,
                     }
                   )}
-                  {renderRow(
-                    "Ужин",
-                    "dinnerForAirline",
-                    formData.dinnerForAirline,
-                    {
-                      disabled: formData.mealPriceForAirReq,
-                      byRequest: formData.mealPriceForAirReq,
-                    }
-                  )}
-                  {isHotel && isEditing && (
+                  {isEditing && (
                     <div className={classes.requestDataInfo}>
                       <div className={classes.requestDataInfo_title}>
                         Стоимость по запросу
                       </div>
                       <input
                         type="checkbox"
-                        checked={Boolean(formData.mealPriceForAirReq)}
+                        checked={Boolean(formData.transferPriceForAirReq)}
                         onChange={(e) => {
                           setIsEdited(true);
                           setFormData((prev) => ({
                             ...prev,
-                            mealPriceForAirReq: e.target.checked,
+                            transferPriceForAirReq: e.target.checked,
                           }));
                         }}
                       />
@@ -357,4 +322,4 @@ function EditRequestMealTarif({
   );
 }
 
-export default EditRequestMealTarif;
+export default EditHotelTransferTarif;

@@ -1219,7 +1219,7 @@ function HotelSettings_tabComponent({ id }) {
                     />
                   </div>
                 </div>
-                <div
+                {/* <div
                   className={classes.hotelAbout_info_block}
                   style={menuOpen ? { width: "70%" } : {}}
                 >
@@ -1286,7 +1286,7 @@ function HotelSettings_tabComponent({ id }) {
                       className={classes.hotelAbout_info_input}
                     />
                   </div>
-                </div>
+                </div> */}
                 <div
                   className={classes.hotelAbout_info_block}
                   style={menuOpen ? { width: "70%" } : {}}

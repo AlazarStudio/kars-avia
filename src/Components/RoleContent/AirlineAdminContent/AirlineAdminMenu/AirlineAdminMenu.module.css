@@ -46,7 +46,7 @@
 .menuMain {
   flex: 1 1 auto;
   min-height: 0;
-  overflow-y: auto;
+  /* overflow-y: auto; */
   overflow-x: visible;
   padding-right: 4px;
   scrollbar-width: thin;
@@ -225,6 +225,11 @@
 .menu_items__elem___fill:hover {
   background: var(--menu-item-bg);
   color: var(--white);
+}
+
+.menu_items__elem___fill:hover .tooltip {
+  opacity: 0.9;
+  visibility: visible;
 }
 
 /* fill svg */

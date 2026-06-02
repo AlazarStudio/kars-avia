@@ -16,10 +16,10 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
     <div className={classes.menuContainer}>
       <div className={classes.menuMain}>
         <Link
-          to={"/reserveRequests"}
+          to={"/fapv2"}
           className={`${classes.menu_items__elem} ${
             !menuOpen ? classes.jcc : ""
-          } ${id == "reserveRequests" && classes.menu_items__activeElem}`}
+          } ${id == "fapv2" && classes.menu_items__activeElem}`}
         >
           <div className={classes.svgWrapper}>
             <svg

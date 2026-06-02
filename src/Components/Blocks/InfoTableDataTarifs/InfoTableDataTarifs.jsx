@@ -33,7 +33,18 @@ const fmtWithVat = (n) =>
     ? `${Math.round(n * (1 + VAT_RATE)).toLocaleString("ru-RU")} ₽`
     : "—";
 
-function PriceStack({ value }) {
+function PriceStack({ value, byRequest }) {
+  if (byRequest) {
+    return (
+      <div className={classes.priceStack}>
+        <div className={classes.priceBase}>По запросу</div>
+        <div className={classes.priceHint}>
+          Идёт согласование тарифов и условий размещения — точная стоимость
+          будет доступна после уточнения деталей.
+        </div>
+      </div>
+    );
+  }
   const isNum = typeof value === "number";
   return (
     <div className={classes.priceStack}>
@@ -61,9 +72,11 @@ function InfoTableDataTarifs({
   toggleAS,
   toggleAdditionalServices,
   toggleEditMealPrices,
+  toggleEditTransferPrices,
   requests,
   additionalServices,
   mealPrices,
+  transferPrices,
   openDeleteComponent,
   openDeleteComponentCategory,
   toggleEditTarifsCategory,
@@ -131,15 +144,12 @@ function InfoTableDataTarifs({
                 <div
                   className={`${classes.InfoTable_data_elem} ${classes.w20}`}
                 >
-                  <PriceStack value={item?.priceForAirline} />
+                  <PriceStack
+                    value={item?.priceForAirline}
+                    byRequest={item?.priceForAirReq}
+                  />
                 </div>
               )}
-
-              {/* {user?.role != "HOTELADMIN" &&
-                                <div className={`${classes.InfoTable_data_elem} ${classes.w20}`}>
-                                    <div className={classes.InfoTable_data_elem_title}>Стоимость для авиакомпаний</div>
-                                </div>
-                            } */}
 
               <div className={classes.infoTable_buttons}>
                 <EditPencilIcon
@@ -224,7 +234,88 @@ function InfoTableDataTarifs({
                     <div
                       className={`${classes.InfoTable_data_elem} ${classes.w20}`}
                     >
-                      <PriceStack value={item.priceForAir} />
+                      <PriceStack
+                        value={item.priceForAir}
+                        byRequest={item.priceForAirReq}
+                      />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </InfoTable>
+        </div>
+      )}
+      {transferPrices && transferPrices.length > 0 && (
+        <div className={classes.section}>
+          <div className={classes.tarifsHeader}>
+            <div className={`${classes.headCell} ${classes.w30}`}>Трансфер</div>
+            <div className={`${classes.headCell} ${classes.w8}`}>НДС</div>
+            {user?.hotelId ? null : (
+              <>
+                <div className={`${classes.headCell} ${classes.w20}`}>
+                  Цена по договору
+                </div>
+                <div className={`${classes.headCell} ${classes.w20}`}>
+                  Цена для АК
+                </div>
+              </>
+            )}
+            <div className={classes.headButtonCell}>
+              <Button
+                onClick={() => toggleEditTransferPrices && toggleEditTransferPrices()}
+                minwidth={"180px"}
+                backgroundcolor={"#fff"}
+                color={"var(--text)"}
+                border={"1px solid #E4E4EF"}
+              >
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 8,
+                  }}
+                >
+                  <EditPencilIcon />
+                  Редактировать
+                </span>
+              </Button>
+            </div>
+          </div>
+          <InfoTable isScroll={true}>
+            <div className={classes.bottom}>
+              {transferPrices.map((item, index) => (
+                <div className={classes.InfoTable_data} key={index}>
+                  <div
+                    className={`${classes.InfoTable_data_elem} ${classes.w30}`}
+                  >
+                    <div className={classes.InfoTable_data_elem_title}>
+                      {item.name}
+                    </div>
+                  </div>
+
+                  <div
+                    className={`${classes.InfoTable_data_elem} ${classes.w8}`}
+                  >
+                    <VatChipCell />
+                  </div>
+
+                  {user?.role != roles.airlineAdmin && (
+                    <div
+                      className={`${classes.InfoTable_data_elem} ${classes.w20}`}
+                    >
+                      <PriceStack value={item.price} />
+                    </div>
+                  )}
+
+                  {user?.role != roles.hotelAdmin && (
+                    <div
+                      className={`${classes.InfoTable_data_elem} ${classes.w20}`}
+                    >
+                      <PriceStack
+                        value={item.priceForAir}
+                        byRequest={item.priceForAirReq}
+                      />
                     </div>
                   )}
                 </div>
@@ -281,7 +372,10 @@ function InfoTableDataTarifs({
                 <div
                   className={`${classes.InfoTable_data_elem} ${classes.w20}`}
                 >
-                  <PriceStack value={item.priceForAirline} />
+                  <PriceStack
+                    value={item.priceForAirline}
+                    byRequest={item.priceForAirReq}
+                  />
                 </div>
               )}
 

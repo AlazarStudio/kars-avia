@@ -98,6 +98,11 @@ function EditRequestTarifAdditionalServices({
     setIsLoading(true);
 
     try {
+      const airlineNum = parseFloat(formData.priceForAirline);
+      const hasAirlinePrice =
+        !user?.hotelId &&
+        !formData.priceForAirReq &&
+        !Number.isNaN(airlineNum);
       await updateHotelTarif({
         variables: {
           updateHotelId: id,
@@ -107,7 +112,10 @@ function EditRequestTarifAdditionalServices({
                 id: formData.id,
                 name: formData.name,
                 price: parseFloat(formData.price),
-                priceForAirline: parseFloat(formData.priceForAirline),
+                ...(hasAirlinePrice && { priceForAirline: airlineNum }),
+                ...(!user?.hotelId && {
+                  priceForAirReq: Boolean(formData.priceForAirReq),
+                }),
               },
             ],
           },
@@ -218,27 +226,54 @@ function EditRequestTarifAdditionalServices({
               </div>
 
               {!user?.hotelId && (
-                <div className={classes.requestDataInfo}>
-                  <div className={classes.requestDataInfo_title}>
-                    Стоимость для авиакомпании
-                  </div>
-                  {isEditing ? (
-                    <input
-                      type="number"
-                      name="priceForAirline"
-                      value={formData.priceForAirline ?? ""}
-                      onChange={handleChange}
-                      placeholder="Введите стоимость"
-                    />
-                  ) : (
-                    <div className={classes.requestDataInfo_desc}>
-                      {formData.priceForAirline != null &&
-                      formData.priceForAirline !== ""
-                        ? formData.priceForAirline
-                        : "—"}
+                <>
+                  <div className={classes.requestDataInfo}>
+                    <div className={classes.requestDataInfo_title}>
+                      Стоимость для авиакомпании
                     </div>
-                  )}
-                </div>
+                    {isEditing ? (
+                      <input
+                        type="number"
+                        name="priceForAirline"
+                        value={formData.priceForAirline ?? ""}
+                        onChange={handleChange}
+                        placeholder="Введите стоимость"
+                        disabled={Boolean(formData.priceForAirReq)}
+                      />
+                    ) : (
+                      <div className={classes.requestDataInfo_desc}>
+                        {formData.priceForAirReq
+                          ? "По запросу"
+                          : formData.priceForAirline != null &&
+                              formData.priceForAirline !== ""
+                            ? formData.priceForAirline
+                            : "—"}
+                      </div>
+                    )}
+                  </div>
+                  <div className={classes.requestDataInfo}>
+                    <div className={classes.requestDataInfo_title}>
+                      Стоимость по запросу
+                    </div>
+                    {isEditing ? (
+                      <input
+                        type="checkbox"
+                        checked={Boolean(formData.priceForAirReq)}
+                        onChange={(e) => {
+                          setIsEdited(true);
+                          setFormData((prev) => ({
+                            ...prev,
+                            priceForAirReq: e.target.checked,
+                          }));
+                        }}
+                      />
+                    ) : (
+                      <div className={classes.requestDataInfo_desc}>
+                        {formData.priceForAirReq ? "Да" : "Нет"}
+                      </div>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           </div>

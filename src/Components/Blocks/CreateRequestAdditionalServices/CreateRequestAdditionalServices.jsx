@@ -29,6 +29,7 @@ function CreateRequestAdditionalServices({
     name: "",
     price: "",
     priceForAirline: "",
+    priceForAirReq: false,
   });
 
   const [updateHotelTarif] = useMutation(UPDATE_HOTEL_TARIF, {
@@ -48,6 +49,7 @@ function CreateRequestAdditionalServices({
       name: "",
       price: "",
       priceForAirline: "",
+      priceForAirReq: false,
     });
     setIsEdited(false);
   }, []);
@@ -94,7 +96,7 @@ function CreateRequestAdditionalServices({
       return false;
     }
 
-    if (!user?.hotelId) {
+    if (!user?.hotelId && !formData.priceForAirReq) {
       const airlineNum = parseFloat(formData.priceForAirline);
       if (
         formData.priceForAirline === "" ||
@@ -118,11 +120,15 @@ function CreateRequestAdditionalServices({
 
     const nameTrim = String(formData.name ?? "").trim();
     const priceNum = parseFloat(formData.price);
-    const priceForAirlineNum = parseFloat(formData.priceForAirline);
+    const airlineNum = parseFloat(formData.priceForAirline);
 
     setIsLoading(true);
 
     try {
+      const hasAirlinePrice =
+        !user?.hotelId &&
+        !formData.priceForAirReq &&
+        !Number.isNaN(airlineNum);
       let response_update_tarif = await updateHotelTarif({
         variables: {
           updateHotelId: id,
@@ -131,7 +137,10 @@ function CreateRequestAdditionalServices({
               {
                 name: nameTrim,
                 price: priceNum,
-                priceForAirline: priceForAirlineNum,
+                ...(hasAirlinePrice && { priceForAirline: airlineNum }),
+                ...(!user?.hotelId && {
+                  priceForAirReq: Boolean(formData.priceForAirReq),
+                }),
               },
             ],
           },
@@ -216,7 +225,22 @@ function CreateRequestAdditionalServices({
                     value={formData.priceForAirline}
                     onChange={handleChange}
                     placeholder="Введите стоимость для авиакомпании"
+                    disabled={Boolean(formData.priceForAirReq)}
                   />
+                  <label className={classes.checkboxLabel}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(formData.priceForAirReq)}
+                      onChange={(e) => {
+                        setIsEdited(true);
+                        setFormData((prev) => ({
+                          ...prev,
+                          priceForAirReq: e.target.checked,
+                        }));
+                      }}
+                    />
+                    <span style={{ marginLeft: 8 }}>Стоимость по запросу</span>
+                  </label>
                 </>
               )}
 

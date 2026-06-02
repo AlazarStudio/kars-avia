@@ -15,12 +15,14 @@ import {
   DELETE_HOTEL_CATEGORY,
   DELETE_HOTEL_TARIFF,
   GET_HOTEL_MEAL_PRICE,
+  GET_HOTEL_TRANSFER_PRICE,
   GET_HOTELS_UPDATE_SUBSCRIPTION,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 
 import EditRequestTarifCategory from "../EditRequestTarifCategory/EditRequestTarifCategory";
 import EditRequestMealTarif from "../EditRequestMealTarif/EditRequestMealTarif.jsx";
+import EditHotelTransferTarif from "../EditHotelTransferTarif/EditHotelTransferTarif.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import { useToast } from "../../../contexts/ToastContext";
 import CreateRequestAdditionalServices from "../CreateRequestAdditionalServices/CreateRequestAdditionalServices.jsx";
@@ -55,6 +57,18 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
     variables: { hotelId: id },
   });
 
+  const {
+    data: transferPriceData,
+    refetch: transferRefetch,
+  } = useQuery(GET_HOTEL_TRANSFER_PRICE, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    variables: { hotelId: id },
+  });
+
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_HOTELS_UPDATE_SUBSCRIPTION,
     {
@@ -62,6 +76,7 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
         if (!showAddTarifCategory) {
           refetch();
           mealRefetch();
+          transferRefetch();
         }
       },
     }
@@ -83,6 +98,18 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
     dinner: 0,
   });
 
+  const [mealPriceForAirReq, setMealPriceForAirReq] = useState(false);
+
+  const [transferPrices, setTransferPrices] = useState({
+    arrival: 0,
+    departure: 0,
+  });
+  const [transferPricesAirline, setTransferPricesAirline] = useState({
+    arrival: 0,
+    departure: 0,
+  });
+  const [transferPriceForAirReq, setTransferPriceForAirReq] = useState(false);
+
   const [showAddTarif, setShowAddTarif] = useState(false);
   const [showAddAS, setShowAddAS] = useState(false);
   const [showEditAddTarif, setEditShowAddTarif] = useState(false);
@@ -90,6 +117,7 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
     useState(false);
   const [showAdditionalServices, setShowAdditionalServices] = useState(false);
   const [showEditMealPrices, setShowEditMealPrices] = useState(false);
+  const [showEditTransferPrices, setShowEditTransferPrices] = useState(false);
   const [selectedTarif, setSelectedTarif] = useState(null);
   const [selectedAS, setSelectedAS] = useState(null);
   const [showDelete, setShowDelete] = useState(false);
@@ -131,8 +159,27 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
         lunch: mealPriceData.hotel?.mealPriceForAir?.lunch,
         dinner: mealPriceData.hotel?.mealPriceForAir?.dinner,
       });
+      setMealPriceForAirReq(
+        Boolean(mealPriceData.hotel?.mealPriceForAirReq)
+      );
     }
   }, [mealPriceData]);
+
+  useEffect(() => {
+    if (transferPriceData) {
+      setTransferPrices({
+        arrival: transferPriceData.hotel?.transferPrice?.arrival ?? 0,
+        departure: transferPriceData.hotel?.transferPrice?.departure ?? 0,
+      });
+      setTransferPricesAirline({
+        arrival: transferPriceData.hotel?.transferPriceForAir?.arrival ?? 0,
+        departure: transferPriceData.hotel?.transferPriceForAir?.departure ?? 0,
+      });
+      setTransferPriceForAirReq(
+        Boolean(transferPriceData.hotel?.transferPriceForAirReq)
+      );
+    }
+  }, [transferPriceData]);
 
   const deleteComponentRef = useRef();
 
@@ -327,13 +374,49 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
   //   }
   // };
 
-  const handleEditMealPrices = (updatedPrices) => {
-    setMealPrices(updatedPrices);
+  const handleEditMealPrices = (updated) => {
+    if (updated && (updated.mealPrice || updated.mealPriceForAir)) {
+      if (updated.mealPrice) setMealPrices(updated.mealPrice);
+      if (updated.mealPriceForAir) setMealPricesAirline(updated.mealPriceForAir);
+      if (typeof updated.mealPriceForAirReq === "boolean") {
+        setMealPriceForAirReq(updated.mealPriceForAirReq);
+      }
+    } else if (updated) {
+      // airline-path: receives just mealPrice block
+      setMealPrices(updated);
+    }
     setShowEditMealPrices(false);
   };
 
   const toggleEditMealPrices = () => {
     setShowEditMealPrices(!showEditMealPrices);
+  };
+
+  const handleEditTransferPrices = ({
+    transferPrice,
+    transferPriceForAir,
+    transferPriceForAirReq: nextByReq,
+  }) => {
+    if (transferPrice) {
+      setTransferPrices({
+        arrival: transferPrice.arrival ?? 0,
+        departure: transferPrice.departure ?? 0,
+      });
+    }
+    if (transferPriceForAir) {
+      setTransferPricesAirline({
+        arrival: transferPriceForAir.arrival ?? 0,
+        departure: transferPriceForAir.departure ?? 0,
+      });
+    }
+    if (typeof nextByReq === "boolean") {
+      setTransferPriceForAirReq(nextByReq);
+    }
+    setShowEditTransferPrices(false);
+  };
+
+  const toggleEditTransferPrices = () => {
+    setShowEditTransferPrices(!showEditTransferPrices);
   };
 
   const filteredRequestsTarif = addTarif?.filter((request) => {
@@ -350,16 +433,34 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
       name: "Завтрак",
       price: mealPrices.breakfast,
       priceForAir: mealPricesAirline.breakfast,
+      priceForAirReq: mealPriceForAirReq,
     },
     {
       name: "Обед",
       price: mealPrices.lunch,
       priceForAir: mealPricesAirline.lunch,
+      priceForAirReq: mealPriceForAirReq,
     },
     {
       name: "Ужин",
       price: mealPrices.dinner,
       priceForAir: mealPricesAirline.dinner,
+      priceForAirReq: mealPriceForAirReq,
+    },
+  ];
+
+  const filteredRequestsTransferTarif = [
+    {
+      name: "Аэропорт → гостиница",
+      price: transferPrices.arrival,
+      priceForAir: transferPricesAirline.arrival,
+      priceForAirReq: transferPriceForAirReq,
+    },
+    {
+      name: "Гостиница → аэропорт",
+      price: transferPrices.departure,
+      priceForAir: transferPricesAirline.departure,
+      priceForAirReq: transferPriceForAirReq,
     },
   ];
 
@@ -399,9 +500,11 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
           toggleRequestSidebar={toggleEditTarifsCategory}
           toggleEditTarifsCategory={toggleEditTarifsCategory}
           toggleEditMealPrices={toggleEditMealPrices}
+          toggleEditTransferPrices={toggleEditTransferPrices}
           requests={filteredRequestsTarif}
           additionalServices={additionalServices}
           mealPrices={filteredRequestsMealTarif}
+          transferPrices={filteredRequestsTransferTarif}
           openDeleteComponent={openDeleteComponent}
           openDeleteComponentCategory={openDeleteComponentCategory}
           user={user}
@@ -443,9 +546,20 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
         show={showEditMealPrices}
         mealPrices={mealPrices}
         mealPricesAirline={mealPricesAirline}
+        mealPriceForAirReq={mealPriceForAirReq}
         onClose={toggleEditMealPrices}
         onSubmit={handleEditMealPrices}
         isHotel={true}
+      />
+      <EditHotelTransferTarif
+        id={id}
+        user={user}
+        show={showEditTransferPrices}
+        transferPrices={transferPrices}
+        transferPricesAirline={transferPricesAirline}
+        transferPriceForAirReq={transferPriceForAirReq}
+        onClose={toggleEditTransferPrices}
+        onSubmit={handleEditTransferPrices}
       />
       <EditRequestTarifCategory
         user={user}
