@@ -303,7 +303,7 @@ export default function FapReport({ request, hotelIndex, hotelName, canEdit = tr
       {/* Header */}
       <div className={classes.header}>
         <div className={classes.headerLeft}>
-          <button className={classes.backBtn} onClick={() => navigate(`/fapv2/${request?.id}`)} aria-label="Назад">
+          <button className={classes.backBtn} onClick={() => navigate(`/far/${request?.id}`)} aria-label="Назад">
             <img src="/arrow.png" alt="" />
           </button>
           <div className={classes.title}>Отчёт — {hotelName}</div>

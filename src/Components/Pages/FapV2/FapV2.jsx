@@ -26,7 +26,7 @@ import { useDebounce } from "../../../hooks/useDebounce";
 import Header from "../../Blocks/Header/Header";
 import ServiceProgressDot from "../../Blocks/FapV2/ServiceProgressDot/ServiceProgressDot";
 import { roles } from "../../../roles";
-import { canAccessMenu } from "../../../utils/access";
+import { canAccessMenu, isAirlineRole } from "../../../utils/access";
 
 const SERVICE_ORDER = [
   "water",
@@ -144,7 +144,7 @@ export default function FapV2({ user, accessMenu }) {
 
   const { data: airlinesData } = useQuery(GET_AIRLINES_RELAY, {
     context: { headers: { Authorization: `Bearer ${token}` } },
-    skip: user?.role === roles.airlineAdmin,
+    skip: isAirlineRole(user),
   });
   const { data: airportsData } = useQuery(GET_AIRPORTS_RELAY, {
     context: { headers: { Authorization: `Bearer ${token}` } },
@@ -158,6 +158,10 @@ export default function FapV2({ user, accessMenu }) {
     if (airportsData) setAirports(airportsData.airports || []);
   }, [airportsData]);
 
+  const effectiveAirlineId = isAirlineRole(user)
+    ? user?.airlineId
+    : selectedAirline?.id;
+
   const { loading, data, refetch } = useQuery(GET_PASSENGER_REQUESTS, {
     context: { headers: { Authorization: `Bearer ${token}` } },
     variables: {
@@ -166,7 +170,7 @@ export default function FapV2({ user, accessMenu }) {
       filter: {
         status: statusOption?.value ?? undefined,
         search: debouncedSearch || undefined,
-        airlineId: selectedAirline?.id,
+        airlineId: effectiveAirlineId,
         airportId: selectedAirport?.id,
       },
     },
@@ -200,7 +204,7 @@ export default function FapV2({ user, accessMenu }) {
       <Header>ФАП — заявки</Header>
       <div className={classes.toolbar}>
         <div className={classes.filters}>
-          {user?.role !== roles.airlineAdmin && (
+          {!isAirlineRole(user) && (
             <MUIAutocomplete
               dropdownWidth="170px"
               label="Авиакомпания"
@@ -313,7 +317,7 @@ export default function FapV2({ user, accessMenu }) {
               <div
                 key={req.id}
                 className={classes.card}
-                onClick={() => navigate(`/fapv2/${req.id}`)}
+                onClick={() => navigate(`/far/${req.id}`)}
               >
                 {/* Kicker: request number + status */}
                 <div className={classes.cardKicker}>

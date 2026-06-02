@@ -21,7 +21,7 @@ const SuperAdminMenu = ({
       ? "var(--white)" /* цвет hover */
       : "var(--menu-gray)";
 
-  const requestsIds = ["relay", "representativeRequests", "fapv2", "orders", undefined, "", null];
+  const requestsIds = ["relay", "representativeRequests", "far", "orders", undefined, "", null];
   const manageIds = ["airlines", "airlineAccess", "airlineNotifications", "hotels", "driversCompany", "driversList", "company", "dispatcherAccess", "dispatcherNotifications", "myCompany"];
   const toolsIds = ["hotel-pms", "travelline", "registerOfContracts", "reports", "analytics"];
   const serviceIds = ["support", "documentation", "maintenanceBanner"];
@@ -111,9 +111,9 @@ const SuperAdminMenu = ({
           {!menuOpen && <span className={classes.tooltip}>ФАП v1</span>}
         </Link>
         <Link
-          to={"/fapv2"}
+          to={"/far"}
           className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-            } ${id == "fapv2" && classes.menu_items__activeElem}`}
+            } ${id == "far" && classes.menu_items__activeElem}`}
         >
           <div className={classes.svgWrapper}>
             <FAPIcon />

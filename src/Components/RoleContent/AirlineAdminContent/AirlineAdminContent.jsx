@@ -72,7 +72,7 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
         props: () => ({ user, accessMenu: safeAccessMenu }),
       },
       {
-        ids: ["fapv2"],
+        ids: ["far"],
         guardKey: "reserveMenu",
         Comp: FapV2,
         props: () => ({ user, accessMenu: safeAccessMenu }),

@@ -166,7 +166,7 @@ function App() {
               path="/:id/representativeRequestsPlacement/:idRequest/driver/:driverIndex"
               element={<RepresentativeDriverDetailPage user={user} />}
             />
-            <Route path="/fapv2/:requestId" element={<FapLayout user={user} />}>
+            <Route path="/far/:requestId" element={<FapLayout user={user} />}>
               <Route index element={<FapDetailPage user={user} />} />
               <Route
                 path="report/:hotelIndex"

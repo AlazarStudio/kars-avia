@@ -425,7 +425,7 @@ function CreateRequestAirlineTarifCategory({
                   }));
                 }}
               />
-
+{/* 
               <label>Географическая привязка</label>
               <CityRegionPicker
                 mode="both"
@@ -446,7 +446,7 @@ function CreateRequestAirlineTarifCategory({
                   }));
                 }}
                 hint="Пусто — тариф без географии. Только регион — по региону. Регион + город — по городу."
-              />
+              /> */}
 
               <label>Стоимость одноместного</label>
               <input

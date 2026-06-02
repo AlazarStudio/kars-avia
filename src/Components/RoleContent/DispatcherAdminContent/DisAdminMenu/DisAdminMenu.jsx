@@ -67,9 +67,9 @@ const DisAdminMenu = ({
         )}
         {canAccessMenu(accessMenu, "reserveMenu", user) && (
           <Link
-            to={"/fapv2"}
+            to={"/far"}
             className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-              } ${id == "fapv2" && classes.menu_items__activeElem}`}
+              } ${id == "far" && classes.menu_items__activeElem}`}
           >
             <div className={classes.svgWrapper}>
             <FAPIcon/>

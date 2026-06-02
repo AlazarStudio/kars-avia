@@ -12,7 +12,7 @@ import FapV2 from "../../Pages/FapV2/FapV2";
 const HotelAdminContent = ({ user }) => {
   const { id } = useParams();
 
-  return id === "fapv2" ? (
+  return id === "far" ? (
     <FapV2 user={user} />
   ) : id === "reserveRequests" ? (
     <Reserve user={user} idHotel={user.hotelId} />

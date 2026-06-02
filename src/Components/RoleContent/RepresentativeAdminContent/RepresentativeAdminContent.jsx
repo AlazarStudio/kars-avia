@@ -21,7 +21,7 @@ const RepresentativeAdminContent = ({ user }) => {
       {(id === "representativeRequests" || (!id && !hotelID && !airlineID)) && (
         <RepresentativeRequests user={user} />
       )}
-      {id === "fapv2" && <FapV2 user={user} />}
+      {id === "far" && <FapV2 user={user} />}
       {id === "representativeCompany" && <RepresentativeAirlineCompany_tabComponent user={user} id={user?.airlineId} />}
       {id === "airlines" && <AirlinesList user={user} representative={true}/>}
       {id === "reports" && <Reports user={user} />}

@@ -37,7 +37,8 @@ export default function FapDriverDetailPage({ user }) {
   });
 
   const request = data?.passengerRequest;
-  const canEdit = canAccessMenu(accessMenu, "reserveUpdate", user);
+  const canEdit =
+    canAccessMenu(accessMenu, "reserveUpdate", user) && !isAirlineRole;
 
   return (
     <div className={classes.page}>
@@ -45,7 +46,7 @@ export default function FapDriverDetailPage({ user }) {
         <div className={classes.headerNav}>
           <button
             className={classes.backBtn}
-            onClick={() => navigate(`/fapv2/${requestId}/service/${backKey}`)}
+            onClick={() => navigate(`/far/${requestId}/service/${backKey}`)}
             aria-label="Назад"
           >
             <img src="/arrow.png" alt="" />

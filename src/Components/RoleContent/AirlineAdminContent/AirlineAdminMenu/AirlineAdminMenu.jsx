@@ -70,9 +70,9 @@ const AirlineAdminMenu = ({
         )}
         {hasAccessMenu(accessMenu, "reserveMenu") && (
           <Link
-            to={"/fapv2"}
+            to={"/far"}
             className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""
-              } ${(id == "fapv2" ||
+              } ${(id == "far" ||
                 ((id == undefined || !id) &&
                   safeAccessMenu.requestMenu === false)) &&
               classes.menu_items__activeElem

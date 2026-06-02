@@ -41,7 +41,7 @@ import BusDownIcon from "../../../../shared/icons/BusDownIcon";
 import BaggageIcon from "../../../../shared/icons/BaggageIcon";
 import FapActionButton from "../FapActionButton/FapActionButton";
 import FapChat from "../FapChat/FapChat";
-import { isExternalUser } from "../../../../utils/access";
+import { isExternalUser, isAirlineRole } from "../../../../utils/access";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 
 const STATUS_TRANSITIONS = {
@@ -283,6 +283,7 @@ export default function FapDetail({ user, canEdit = true }) {
   const nextStatuses = STATUS_TRANSITIONS[request.status] || [];
   const isFinal = request.status === "COMPLETED" || request.status === "CANCELLED";
   const popoverEnabled = canEdit && !isFinal;
+  const canChangeStatus = canEdit && !isAirlineRole(user);
 
   const handleConfirmStatus = async () => {
     if (!pendingStatus) return;
@@ -322,9 +323,11 @@ export default function FapDetail({ user, canEdit = true }) {
   // ── Поповер переходов статуса (4A) ──
   const renderStatusPopover = () => (
     <div className={classes.statusPopover} ref={popoverRef} role="menu">
-      <div className={classes.statusPopoverHead}>Перевести в статус</div>
+      <div className={classes.statusPopoverHead}>
+        {canChangeStatus ? "Перевести в статус" : "Действия с заявкой"}
+      </div>
       <div className={classes.statusPopoverBody}>
-        {nextStatuses.map((s) => {
+        {canChangeStatus && nextStatuses.map((s) => {
           const cfg = REQUEST_STATUS_CONFIG[s] || {};
           return (
             <button
@@ -354,7 +357,7 @@ export default function FapDetail({ user, canEdit = true }) {
             </button>
           );
         })}
-        {nextStatuses.length > 0 && <div className={classes.statusPopoverDivider} />}
+        {canChangeStatus && nextStatuses.length > 0 && <div className={classes.statusPopoverDivider} />}
         <button
           type="button"
           className={classes.statusPopoverItem}
@@ -459,8 +462,28 @@ export default function FapDetail({ user, canEdit = true }) {
           const svc = getServiceData(key, request);
           const Icon = SERVICE_ICON[key];
           const status = svc?.status || "NEW";
-          const summary = getServiceSummary(key, request);
-          const m = parseServiceSummary(summary, status);
+          let m;
+          if (key === "baggage") {
+            const drivers = request.baggageDeliveryService?.drivers ?? [];
+            const total = drivers.length;
+            const done = drivers.filter((d) => d.deliveryCompletedAt).length;
+            if (status === "COMPLETED") {
+              m = total > 0
+                ? { num: `${total}/${total}`, unit: "доставок", pct: 100 }
+                : { num: "✓", unit: "доставлено", pct: 100 };
+            } else if (total === 0) {
+              m = { num: "—", unit: "ожидает заявок", pct: 0 };
+            } else {
+              m = {
+                num: `${done}/${total}`,
+                unit: "доставок",
+                pct: total ? Math.round((done / total) * 100) : 0,
+              };
+            }
+          } else {
+            const summary = getServiceSummary(key, request);
+            m = parseServiceSummary(summary, status);
+          }
           const isCanc = status === "CANCELLED";
           const isDone = status === "COMPLETED";
           const isNew = status === "NEW";
@@ -491,7 +514,7 @@ export default function FapDetail({ user, canEdit = true }) {
                 "--svc-color": cfg.color,
                 "--svc-shadow": `${cfg.color}22`,
               }}
-              onClick={() => navigate(`/fapv2/${request.id}/service/${key}`)}
+              onClick={() => navigate(`/far/${request.id}/service/${key}`)}
               role="button"
               tabIndex={0}
             >
@@ -630,7 +653,7 @@ export default function FapDetail({ user, canEdit = true }) {
         <div className={classes.headerNav}>
           <button
             className={classes.backBtn}
-            onClick={() => navigate("/fapv2")}
+            onClick={() => navigate("/far")}
             aria-label="Назад"
           >
             <img src="/arrow.png" alt="" />

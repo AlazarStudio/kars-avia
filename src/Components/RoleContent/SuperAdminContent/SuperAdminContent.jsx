@@ -42,7 +42,7 @@ const SuperAdminContent = ({ user }) => {
         <Estafeta user={user} />
       )}
       {id === 'representativeRequests' && <RepresentativeRequests user={user} />}
-      {id === 'fapv2' && <FapV2 user={user} />}
+      {id === 'far' && <FapV2 user={user} />}
       {/* {id === 'reserve' && <Reserve user={user} />} */}
       {id === 'company' && <Company user={user} />}
       {id === 'hotels' && <HotelsList user={user} />}

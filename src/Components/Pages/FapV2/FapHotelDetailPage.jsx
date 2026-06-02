@@ -39,7 +39,7 @@ export default function FapHotelDetailPage({ user }) {
   const request = data?.passengerRequest;
 
   const canEdit =
-    canAccessMenu(accessMenu, "reserveUpdate", user) ||
+    (canAccessMenu(accessMenu, "reserveUpdate", user) && !isAirlineRole) ||
     (isExternalUser(user) && user?.scope === "HOTEL");
 
   const handleExternalLogout = () => {
@@ -53,7 +53,7 @@ export default function FapHotelDetailPage({ user }) {
         <div className={classes.headerNav}>
           <button
             className={classes.backBtn}
-            onClick={() => navigate(`/fapv2/${requestId}/service/living`)}
+            onClick={() => navigate(`/far/${requestId}/service/living`)}
             aria-label="Назад"
           >
             <img src="/arrow.png" alt="" />

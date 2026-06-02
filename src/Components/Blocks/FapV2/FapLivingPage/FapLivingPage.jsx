@@ -106,7 +106,7 @@ export default function FapLivingPage({
   useEffect(() => {
     if (isExtHotel && displayHotels.length > 0) {
       const idx = displayHotels[0].origIdx;
-      navigate(`/fapv2/${requestId}/service/living/hotel/${idx}`, { replace: true });
+      navigate(`/far/${requestId}/service/living/hotel/${idx}`, { replace: true });
     }
   }, [isExtHotel, displayHotels, navigate, requestId]);
 
@@ -415,7 +415,7 @@ export default function FapLivingPage({
               canEdit={canEdit}
               isExtHotel={isExtHotel}
               isCompleted={isCompleted}
-              onOpen={() => navigate(`/fapv2/${requestId}/service/living/hotel/${origIdx}`)}
+              onOpen={() => navigate(`/far/${requestId}/service/living/hotel/${origIdx}`)}
               onCopyLink={copyLink}
               onEdit={() => openEditHotel(origIdx)}
               onRemove={() => setRemoveHotelIndex(origIdx)}

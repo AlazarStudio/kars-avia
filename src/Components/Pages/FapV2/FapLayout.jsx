@@ -55,7 +55,7 @@ export default function FapLayout({ user }) {
   return (
     <div className={classes.main}>
       {!isExternalUser(user) && (
-        <MenuDispetcher id="fapv2" user={user} accessMenu={accessMenu} />
+        <MenuDispetcher id="far" user={user} accessMenu={accessMenu} />
       )}
       <Outlet context={{ user, accessMenu }} />
     </div>

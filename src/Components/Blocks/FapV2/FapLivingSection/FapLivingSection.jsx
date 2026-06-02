@@ -218,7 +218,7 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
                     </div>
                     <button
                       className={lClasses.reportBtn}
-                      onClick={(e) => { e.stopPropagation(); navigate(`/fapv2/${requestId}/report/${origIdx}`); }}
+                      onClick={(e) => { e.stopPropagation(); navigate(`/far/${requestId}/report/${origIdx}`); }}
                       title="Отчёт по отелю"
                     >
                       Отчёт
@@ -365,7 +365,7 @@ export default function FapLivingSection({ service, color, request, onRefetch, i
             ? () => {
                 const idx = hotelMgmtIndex;
                 setHotelMgmtIndex(null);
-                navigate(`/fapv2/${requestId}/report/${idx}`);
+                navigate(`/far/${requestId}/report/${idx}`);
               }
             : undefined
         }

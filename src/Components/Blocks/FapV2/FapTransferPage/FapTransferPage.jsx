@@ -346,7 +346,7 @@ export default function FapTransferPage({
               showLinks={showLinks}
               onOpen={() =>
                 navigate(
-                  `/fapv2/${requestId}/service/${serviceKey}/driver/${idx}`
+                  `/far/${requestId}/service/${serviceKey}/driver/${idx}`
                 )
               }
               onCopyLink={copyLink}

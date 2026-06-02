@@ -60,7 +60,8 @@ export default function FapServicePage({ user }) {
     return firstWithPwa?.linkPWA || "";
   }, [request?.representativeLinks, user?.representativeDepartmentId]);
 
-  const canEdit = canAccessMenu(accessMenu, "reserveUpdate", user);
+  const canEdit =
+    canAccessMenu(accessMenu, "reserveUpdate", user) && !isAirlineRole;
 
   const handleExternalLogout = () => {
     document.cookie = "externalUserContext=; Max-Age=0; Path=/";
@@ -162,7 +163,7 @@ export default function FapServicePage({ user }) {
         <div className={classes.headerNav}>
           <button
             className={classes.backBtn}
-            onClick={() => navigate(`/fapv2/${requestId}`)}
+            onClick={() => navigate(`/far/${requestId}`)}
           >
             <img src="/arrow.png" alt="" />
           </button>

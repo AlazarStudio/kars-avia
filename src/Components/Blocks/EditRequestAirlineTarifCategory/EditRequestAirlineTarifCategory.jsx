@@ -468,7 +468,7 @@ function EditRequestAirlineTarifCategory({
                 )}
               </div>
 
-              <div className={classes.requestDataInfo_block}>
+              {/* <div className={classes.requestDataInfo_block}>
                 <div className={classes.requestDataInfo_title}>
                   Географическая привязка
                 </div>
@@ -502,7 +502,7 @@ function EditRequestAirlineTarifCategory({
                         : "—"}
                   </div>
                 )}
-              </div>
+              </div> */}
 
               {[
                 { key: "priceOneCategory", title: "Стоимость одноместного" },

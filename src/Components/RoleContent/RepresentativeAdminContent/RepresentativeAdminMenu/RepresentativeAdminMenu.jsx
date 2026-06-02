@@ -83,8 +83,8 @@ const RepresentativeAdminMenu = ({
           {!menuOpen && <span className={classes.tooltip}>Заявки</span>}
         </Link>
         <Link
-          to={"/fapv2"}
-          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""} ${id == "fapv2" && classes.menu_items__activeElem}`}
+          to={"/far"}
+          className={`${classes.menu_items__elem} ${!menuOpen ? classes.jcc : ""} ${id == "far" && classes.menu_items__activeElem}`}
         >
           <div className={classes.svgWrapper}>
             <FAPIcon />
