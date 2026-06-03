@@ -112,7 +112,7 @@ function HotelPage({ children, id, user, accessMenu = {}, ...props }) {
             )}
             {getTitle()}
             {data?.hotel && (isSuperAdmin(user) || isDispatcherAdmin(user)) && (
-              <HotelReadinessIndicator hotel={{ ...data.hotel, _users: usersData?.hotelUsers?.users }} />
+              <HotelReadinessIndicator hotel={{ ...data.hotel, _users: usersData?.hotelUsers?.users }} user={user} />
             )}
           </div>
         </Header>

@@ -279,7 +279,7 @@ function CreateRequestDispatcherCompany({
         showAlert("Пользователь с таким логином уже существует");
       } else if (
         String(e).startsWith(
-          "ApolloError: Пользователь с такой почтой уже существует"
+          "ApolloError: Пользователь с таким email уже существует"
         )
       ) {
         showAlert("Пользователь с такой почтой уже существует");

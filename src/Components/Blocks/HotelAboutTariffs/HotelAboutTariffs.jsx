@@ -148,7 +148,7 @@ export default function HotelAboutTariffs({
                     <td className={classes.price} colSpan={3}>
                       <div className={classes.byRequestValue}>По запросу</div>
                       <div className={classes.priceHint}>
-                        Идёт согласование тарифов и условий размещения — точная
+                        Идёт согласование тарифов и условий перевозки — точная
                         стоимость будет доступна после уточнения деталей.
                       </div>
                     </td>

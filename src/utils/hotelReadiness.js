@@ -1,3 +1,5 @@
+import { isDispatcherRole, isSuperAdmin } from './access';
+
 export const HOTEL_READINESS_GROUPS = [
   {
     tab: 'О гостинице',
@@ -17,6 +19,16 @@ export const HOTEL_READINESS_GROUPS = [
       { key: 'meal',            label: 'Питание включено',               check: h => h.meal === true },
       { key: 'mealPrice',       label: 'Выставлены цены на питание',     check: h => Boolean(h.mealPrice?.breakfast || h.mealPrice?.lunch || h.mealPrice?.dinner) },
       { key: 'mealPriceForAir', label: 'Выставлены цены питания для АК', check: h => Boolean(h.mealPriceForAir?.breakfast || h.mealPriceForAir?.lunch || h.mealPriceForAir?.dinner) },
+      { key: 'transferPrice',       label: 'Выставлены цены трансфера',         dispatcherOnly: true,
+        check: h => Boolean(h.transferPrice?.arrival > 0 || h.transferPrice?.departure > 0) },
+      { key: 'transferPriceForAir', label: 'Выставлены цены трансфера для АК',  dispatcherOnly: true,
+        check: h => h.transferPriceForAirReq === true
+                 || h.transferPriceForAir?.arrival > 0
+                 || h.transferPriceForAir?.departure > 0 },
+      { key: 'additionalServicesPrices', label: 'Цены доп. услуг проставлены',  dispatcherOnly: true,
+        check: h => !h.additionalServices?.length
+                 || h.additionalServices.every(s =>
+                      s.price > 0 && (s.priceForAirReq === true || s.priceForAirline > 0)) },
     ],
   },
   {
@@ -41,14 +53,18 @@ export const HOTEL_READINESS_GROUPS = [
   },
 ];
 
-export function computeHotelReadiness(hotel) {
+export function computeHotelReadiness(hotel, user) {
+  const isDispatcher = isSuperAdmin(user) || isDispatcherRole(user);
   const groups = HOTEL_READINESS_GROUPS
     // пропускаем опциональные группы если данных нет
     .filter(g => !g.optional || hotel._users !== undefined)
     .map(({ tab, items }) => ({
       tab,
-      items: items.map(({ key, label, check }) => ({ key, label, done: check(hotel) })),
-    }));
+      items: items
+        .filter(item => !item.dispatcherOnly || isDispatcher)
+        .map(({ key, label, check }) => ({ key, label, done: check(hotel) })),
+    }))
+    .filter(g => g.items.length > 0);
   const total = groups.reduce((s, g) => s + g.items.length, 0);
   const done = groups.reduce((s, g) => s + g.items.filter(i => i.done).length, 0);
   return { isReady: done === total, done, total, groups };

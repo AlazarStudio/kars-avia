@@ -1,14 +1,14 @@
 import { gql } from "@apollo/client";
 
 
-// export const path = import.meta.env.VITE_PRODUCTION_PATH;
-// export const server = import.meta.env.VITE_PRODUCTION_SERVER;
+export const path = import.meta.env.VITE_PRODUCTION_PATH;
+export const server = import.meta.env.VITE_PRODUCTION_SERVER;
 
 // export const path = import.meta.env.VITE_DEMO_PATH;
 // export const server = import.meta.env.VITE_DEMO_SERVER;
 
-export const path = import.meta.env.VITE_DEV_PATH;
-export const server = import.meta.env.VITE_DEV_SERVER;
+// export const path = import.meta.env.VITE_DEV_PATH;
+// export const server = import.meta.env.VITE_DEV_SERVER;
 
 
 export const YMAPS_KEY = import.meta.env.VITE_YMAPS_KEY;
@@ -3887,6 +3887,12 @@ export const GET_HOTELS = gql`
           departure
         }
         transferPriceForAirReq
+        additionalServices {
+          id
+          price
+          priceForAirline
+          priceForAirReq
+        }
       }
     }
   }
@@ -4207,6 +4213,21 @@ export const GET_HOTEL_NAME = gql`
         breakfast
         lunch
         dinner
+      }
+      transferPrice {
+        arrival
+        departure
+      }
+      transferPriceForAir {
+        arrival
+        departure
+      }
+      transferPriceForAirReq
+      additionalServices {
+        id
+        price
+        priceForAirline
+        priceForAirReq
       }
     }
   }

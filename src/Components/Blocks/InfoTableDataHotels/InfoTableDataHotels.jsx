@@ -117,7 +117,7 @@ function HotelListRow({ item, user, onClick }) {
         className={`${classes.InfoTable_data_elem} ${classes.w8}`}
         style={{ alignItems: "center" }}
       >
-        {!isAirlineRole(user) && <HotelReadinessIndicator hotel={hotel} />}
+        {!isAirlineRole(user) && <HotelReadinessIndicator hotel={hotel} user={user} />}
       </div>
     </Link>
   );
