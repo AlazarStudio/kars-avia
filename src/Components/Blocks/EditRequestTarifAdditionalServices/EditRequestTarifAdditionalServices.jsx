@@ -17,6 +17,7 @@ function EditRequestTarifAdditionalServices({
   tarif,
   id,
   user,
+  openDelete,
 }) {
   const token = getCookie("token");
   const { confirm, isDialogOpen } = useDialog();
@@ -77,6 +78,12 @@ function EditRequestTarifAdditionalServices({
   const handleEditFromMenu = () => {
     handleMenuClose();
     setIsEditing(true);
+  };
+  const handleDeleteFromMenu = () => {
+    handleMenuClose();
+    if (formData?.id) {
+      openDelete?.(formData.id);
+    }
   };
   const handleCancelEdit = () => {
     resetForm();
@@ -167,6 +174,7 @@ function EditRequestTarifAdditionalServices({
             onClose={handleMenuClose}
             menuRef={menuRef}
             onEdit={handleEditFromMenu}
+            onDelete={openDelete ? handleDeleteFromMenu : undefined}
           />
           <div className={classes.closeIconWrapper} onClick={closeButton}>
             <CloseIcon />

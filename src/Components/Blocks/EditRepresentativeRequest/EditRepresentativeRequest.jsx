@@ -31,14 +31,6 @@ function isoToDateString(iso) {
   );
 }
 
-function buildPlannedAt(timeStr) {
-  if (!timeStr) return null;
-  const [hours, minutes] = timeStr.split(":").map(Number);
-  const d = new Date();
-  d.setHours(hours, minutes, 0, 0);
-  return d.toISOString();
-}
-
 function buildPlannedFromTo(dateStr, timeStr) {
   if (!dateStr || !timeStr) return null;
   const [hours, minutes] = timeStr.split(":").map(Number);
@@ -50,9 +42,11 @@ function buildPlannedFromTo(dateStr, timeStr) {
 const initialFormState = {
   waterEnabled: false,
   waterPeopleCount: "",
+  waterPlannedDate: "",
   waterPlannedAt: "",
   mealEnabled: false,
   mealPeopleCount: "",
+  mealPlannedDate: "",
   mealPlannedAt: "",
   livingEnabled: false,
   livingPeopleCount: "",
@@ -62,8 +56,10 @@ const initialFormState = {
   livingPlannedToTime: "",
   transferEnabled: false,
   transferPeopleCount: "",
+  transferPlannedDate: "",
   transferPlannedAt: "",
   baggageEnabled: false,
+  baggagePlannedDate: "",
   baggagePlannedAt: "",
 };
 
@@ -87,9 +83,11 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
     setFormData({
       waterEnabled: !!hasWater,
       waterPeopleCount: hasWater ? String(p(request.waterService, "peopleCount") ?? "") : "",
+      waterPlannedDate: hasWater ? isoToDateString(p(request.waterService, "plannedAt")) : "",
       waterPlannedAt: hasWater ? isoToTimeString(p(request.waterService, "plannedAt")) : "",
       mealEnabled: !!hasMeal,
       mealPeopleCount: hasMeal ? String(p(request.mealService, "peopleCount") ?? "") : "",
+      mealPlannedDate: hasMeal ? isoToDateString(p(request.mealService, "plannedAt")) : "",
       mealPlannedAt: hasMeal ? isoToTimeString(p(request.mealService, "plannedAt")) : "",
       livingEnabled: !!hasLiving,
       livingPeopleCount: hasLiving ? String(p(request.livingService, "peopleCount") ?? "") : "",
@@ -99,8 +97,10 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
       livingPlannedToTime: hasLiving ? isoToTimeString(p(request.livingService, "plannedToAt")) : "",
       transferEnabled: !!hasTransfer,
       transferPeopleCount: hasTransfer ? String(p(request.transferService, "peopleCount") ?? "") : "",
+      transferPlannedDate: hasTransfer ? isoToDateString(p(request.transferService, "plannedAt")) : "",
       transferPlannedAt: hasTransfer ? isoToTimeString(p(request.transferService, "plannedAt")) : "",
       baggageEnabled: !!hasBaggage,
+      baggagePlannedDate: hasBaggage ? isoToDateString(p(request.baggageDeliveryService, "plannedAt")) : "",
       baggagePlannedAt: hasBaggage ? isoToTimeString(p(request.baggageDeliveryService, "plannedAt")) : "",
     });
     setIsEdited(false);
@@ -158,14 +158,14 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
       plan: buildPlan(formData.waterEnabled, {
         enabled: true,
         peopleCount: formData.waterPeopleCount ? Number(formData.waterPeopleCount) : (request?.waterService?.plan?.peopleCount ?? undefined),
-        plannedAt: (buildPlannedAt(formData.waterPlannedAt) ?? request?.waterService?.plan?.plannedAt) ?? undefined,
+        plannedAt: (buildPlannedFromTo(formData.waterPlannedDate, formData.waterPlannedAt) ?? request?.waterService?.plan?.plannedAt) ?? undefined,
       }),
     };
     input.mealService = {
       plan: buildPlan(formData.mealEnabled, {
         enabled: true,
         peopleCount: formData.mealPeopleCount ? Number(formData.mealPeopleCount) : (request?.mealService?.plan?.peopleCount ?? undefined),
-        plannedAt: (buildPlannedAt(formData.mealPlannedAt) ?? request?.mealService?.plan?.plannedAt) ?? undefined,
+        plannedAt: (buildPlannedFromTo(formData.mealPlannedDate, formData.mealPlannedAt) ?? request?.mealService?.plan?.plannedAt) ?? undefined,
       }),
     };
     input.livingService = {
@@ -180,13 +180,13 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
       plan: buildPlan(formData.transferEnabled, {
         enabled: true,
         peopleCount: formData.transferPeopleCount ? Number(formData.transferPeopleCount) : (request?.transferService?.plan?.peopleCount ?? undefined),
-        plannedAt: (buildPlannedAt(formData.transferPlannedAt) ?? request?.transferService?.plan?.plannedAt) ?? undefined,
+        plannedAt: (buildPlannedFromTo(formData.transferPlannedDate, formData.transferPlannedAt) ?? request?.transferService?.plan?.plannedAt) ?? undefined,
       }),
     };
     input.baggageDeliveryService = {
       plan: buildPlan(formData.baggageEnabled, {
         enabled: true,
-        plannedAt: (buildPlannedAt(formData.baggagePlannedAt) ?? request?.baggageDeliveryService?.plan?.plannedAt) ?? undefined,
+        plannedAt: (buildPlannedFromTo(formData.baggagePlannedDate, formData.baggagePlannedAt) ?? request?.baggageDeliveryService?.plan?.plannedAt) ?? undefined,
       }),
     };
 
@@ -254,14 +254,22 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
                     onChange={handleChange}
                     min={0}
                   />
-                  <label>Введите время</label>
-                  <input
-                    type="time"
-                    name="waterPlannedAt"
-                    value={formData.waterPlannedAt}
-                    onChange={handleChange}
-                    placeholder="Время"
-                  />
+                  <label>Дата и время</label>
+                  <div className={classes.reis_info}>
+                    <input
+                      type="date"
+                      name="waterPlannedDate"
+                      value={formData.waterPlannedDate}
+                      onChange={handleChange}
+                    />
+                    <input
+                      type="time"
+                      name="waterPlannedAt"
+                      value={formData.waterPlannedAt}
+                      onChange={handleChange}
+                      placeholder="Время"
+                    />
+                  </div>
                 </>
               )}
 
@@ -284,14 +292,22 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
                     onChange={handleChange}
                     min={0}
                   />
-                  <label>Введите время</label>
-                  <input
-                    type="time"
-                    name="mealPlannedAt"
-                    value={formData.mealPlannedAt}
-                    onChange={handleChange}
-                    placeholder="Время"
-                  />
+                  <label>Дата и время</label>
+                  <div className={classes.reis_info}>
+                    <input
+                      type="date"
+                      name="mealPlannedDate"
+                      value={formData.mealPlannedDate}
+                      onChange={handleChange}
+                    />
+                    <input
+                      type="time"
+                      name="mealPlannedAt"
+                      value={formData.mealPlannedAt}
+                      onChange={handleChange}
+                      placeholder="Время"
+                    />
+                  </div>
                 </>
               )}
 
@@ -362,14 +378,22 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
                     onChange={handleChange}
                     min={0}
                   />
-                  <label>Введите время</label>
-                  <input
-                    type="time"
-                    name="transferPlannedAt"
-                    value={formData.transferPlannedAt}
-                    onChange={handleChange}
-                    placeholder="Время"
-                  />
+                  <label>Дата и время</label>
+                  <div className={classes.reis_info}>
+                    <input
+                      type="date"
+                      name="transferPlannedDate"
+                      value={formData.transferPlannedDate}
+                      onChange={handleChange}
+                    />
+                    <input
+                      type="time"
+                      name="transferPlannedAt"
+                      value={formData.transferPlannedAt}
+                      onChange={handleChange}
+                      placeholder="Время"
+                    />
+                  </div>
                 </>
               )}
 
@@ -384,14 +408,22 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
               </label>
               {formData.baggageEnabled && (
                 <>
-                  <label>Введите время</label>
-                  <input
-                    type="time"
-                    name="baggagePlannedAt"
-                    value={formData.baggagePlannedAt}
-                    onChange={handleChange}
-                    placeholder="Время"
-                  />
+                  <label>Дата и время</label>
+                  <div className={classes.reis_info}>
+                    <input
+                      type="date"
+                      name="baggagePlannedDate"
+                      value={formData.baggagePlannedDate}
+                      onChange={handleChange}
+                    />
+                    <input
+                      type="time"
+                      name="baggagePlannedAt"
+                      value={formData.baggagePlannedAt}
+                      onChange={handleChange}
+                      placeholder="Время"
+                    />
+                  </div>
                 </>
               )}
             </div>

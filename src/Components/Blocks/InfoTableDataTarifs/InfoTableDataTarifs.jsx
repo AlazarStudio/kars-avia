@@ -79,6 +79,7 @@ function InfoTableDataTarifs({
   transferPrices,
   openDeleteComponent,
   openDeleteComponentCategory,
+  openDeleteComponentAS,
   toggleEditTarifsCategory,
   user,
   height,
@@ -386,6 +387,12 @@ function InfoTableDataTarifs({
                     toggleAdditionalServices(item);
                   }}
                 />
+                {openDeleteComponentAS && (
+                  <DeleteIcon
+                    cursor="pointer"
+                    onClick={() => openDeleteComponentAS(item.id)}
+                  />
+                )}
               </div>
             </div>
           ))}

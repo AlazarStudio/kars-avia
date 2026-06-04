@@ -53,6 +53,17 @@
     cursor: pointer;
 }
 
+.reis_info {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 10px;
+}
+
+.reis_info input {
+    width: 50%;
+}
+
 .requestMiddle {
     height: calc(100vh - 80px - 81px);
     overflow: hidden;

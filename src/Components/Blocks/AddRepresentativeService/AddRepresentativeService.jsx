@@ -5,6 +5,7 @@ import Button from "../../Standart/Button/Button.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
 import {
   CREATE_PASSENGER_REQUEST,
+  GET_AIRLINE_POSITIONS,
   GET_AIRLINES_RELAY,
   GET_PASSENGER_REQUEST,
   GET_PASSENGER_REQUESTS,
@@ -13,6 +14,7 @@ import {
 } from "../../../../graphQL_requests.js";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
+import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 
 function AddRepresentativeService({
@@ -29,11 +31,48 @@ function AddRepresentativeService({
   // Экипаж заявки
   const airlineId = request?.airline?.id ?? request?.airlineId;
   const [selectedCrew, setSelectedCrew] = useState([]);
+  const [positions, setPositions] = useState([]);
+  const [showAddStaff, setShowAddStaff] = useState(false);
+  const [newStaffData, setNewStaffData] = useState(null);
 
-  const { data: airlinesData } = useQuery(GET_AIRLINES_RELAY, {
+  const { data: airlinesData, refetch: refetchAirlines } = useQuery(GET_AIRLINES_RELAY, {
     context: { headers: { Authorization: `Bearer ${token}` } },
     skip: !show,
   });
+
+  const { data: airlinePositionsData } = useQuery(GET_AIRLINE_POSITIONS, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    skip: !show,
+  });
+
+  useEffect(() => {
+    if (airlinePositionsData) {
+      setPositions(airlinePositionsData.getAirlinePositions || []);
+    }
+  }, [airlinePositionsData]);
+
+  const toggleAddStaff = useCallback(() => {
+    setShowAddStaff((prev) => !prev);
+  }, []);
+
+  useEffect(() => {
+    if (!newStaffData) return;
+    const newOption = {
+      id: newStaffData.id,
+      name: newStaffData.name || "",
+      positionName: newStaffData.position?.name || "",
+      gender: newStaffData.gender || "",
+      number: newStaffData.number || "",
+      label: [newStaffData.name, newStaffData.position?.name, newStaffData.gender]
+        .filter(Boolean)
+        .join(", "),
+    };
+    setSelectedCrew((prev) =>
+      prev.some((c) => c.id === newOption.id) ? prev : [...prev, newOption]
+    );
+    setIsEdited(true);
+    setNewStaffData(null);
+  }, [newStaffData]);
 
   const crewOptions = useMemo(() => {
     const airlines = airlinesData?.airlines?.airlines || [];
@@ -48,9 +87,20 @@ function AddRepresentativeService({
     }));
   }, [airlinesData, airlineId]);
 
-  // Инициализация выбранного экипажа из ростера заявки
+  // Инициализация выбранного экипажа из ростера заявки —
+  // один раз на открытие/смену заявки, иначе авто-выбор нового сотрудника
+  // затирался бы рефетчем airlines после добавления через "+"
+  const crewInitKeyRef = useRef(null);
   useEffect(() => {
-    if (!show) return;
+    if (!show) {
+      crewInitKeyRef.current = null;
+      return;
+    }
+    const key = request?.id || "empty";
+    if (crewInitKeyRef.current === key) return;
+    // ждём загрузки crewOptions, если в заявке уже есть сотрудники
+    if ((request?.crewMembers?.length || 0) > 0 && crewOptions.length === 0) return;
+
     const existing = request?.crewMembers || [];
     const mapped = existing.map((m) => {
       const opt = crewOptions.find((o) => o.id === m.airlinePersonalId);
@@ -66,7 +116,8 @@ function AddRepresentativeService({
       );
     });
     setSelectedCrew(mapped);
-  }, [show, request?.crewMembers, crewOptions]);
+    crewInitKeyRef.current = key;
+  }, [show, request?.id, request?.crewMembers, crewOptions]);
 
   // Определяем, какие услуги уже есть в заявке
   const hasWaterService = !!request?.waterService?.plan?.enabled;
@@ -102,9 +153,11 @@ function AddRepresentativeService({
   const [formData, setFormData] = useState({
     waterSupply: false,
     waterPeopleCount: "",
+    waterPlannedDate: "",
     waterPlannedAt: "",
     foodSupply: false,
     foodPeopleCount: "",
+    foodPlannedDate: "",
     foodPlannedAt: "",
     habitation: false,
     habitationPeopleCount: "",
@@ -114,11 +167,14 @@ function AddRepresentativeService({
     habitationPlannedToTime: "",
     transferArrival: false,
     transferArrivalPeopleCount: "",
+    transferArrivalPlannedDate: "",
     transferArrivalPlannedAt: "",
     transferDeparture: false,
     transferDeparturePeopleCount: "",
+    transferDeparturePlannedDate: "",
     transferDeparturePlannedAt: "",
     baggageDelivery: false,
+    baggageDeliveryPlannedDate: "",
     baggageDeliveryPlannedAt: "",
   });
 
@@ -128,10 +184,12 @@ function AddRepresentativeService({
     setFormData({
       waterSupply: hasWaterService,
       waterPeopleCount: request?.waterService?.plan?.peopleCount?.toString() ?? "",
+      waterPlannedDate: isoToDate(request?.waterService?.plan?.plannedAt),
       waterPlannedAt: isoToTime(request?.waterService?.plan?.plannedAt),
 
       foodSupply: hasMealService,
       foodPeopleCount: request?.mealService?.plan?.peopleCount?.toString() ?? "",
+      foodPlannedDate: isoToDate(request?.mealService?.plan?.plannedAt),
       foodPlannedAt: isoToTime(request?.mealService?.plan?.plannedAt),
 
       habitation: hasLivingService,
@@ -143,13 +201,16 @@ function AddRepresentativeService({
 
       transferArrival: hasArrivalTransferService,
       transferArrivalPeopleCount: request?.transferService?.plan?.peopleCount?.toString() ?? "",
+      transferArrivalPlannedDate: isoToDate(request?.transferService?.plan?.plannedAt),
       transferArrivalPlannedAt: isoToTime(request?.transferService?.plan?.plannedAt),
 
       transferDeparture: hasDepartureTransferService,
       transferDeparturePeopleCount: request?.departureTransferService?.plan?.peopleCount?.toString() ?? "",
+      transferDeparturePlannedDate: isoToDate(request?.departureTransferService?.plan?.plannedAt),
       transferDeparturePlannedAt: isoToTime(request?.departureTransferService?.plan?.plannedAt),
 
       baggageDelivery: hasBaggageDeliveryService,
+      baggageDeliveryPlannedDate: isoToDate(request?.baggageDeliveryService?.plan?.plannedAt),
       baggageDeliveryPlannedAt: isoToTime(request?.baggageDeliveryService?.plan?.plannedAt),
     });
     setIsEdited(false);
@@ -170,9 +231,11 @@ function AddRepresentativeService({
     setFormData({
       waterSupply: false,
       waterPeopleCount: "",
+      waterPlannedDate: "",
       waterPlannedAt: "",
       foodSupply: false,
       foodPeopleCount: "",
+      foodPlannedDate: "",
       foodPlannedAt: "",
       habitation: false,
       habitationPeopleCount: "",
@@ -182,11 +245,14 @@ function AddRepresentativeService({
       habitationPlannedToTime: "",
       transferArrival: false,
       transferArrivalPeopleCount: "",
+      transferArrivalPlannedDate: "",
       transferArrivalPlannedAt: "",
       transferDeparture: false,
       transferDeparturePeopleCount: "",
+      transferDeparturePlannedDate: "",
       transferDeparturePlannedAt: "",
       baggageDelivery: false,
+      baggageDeliveryPlannedDate: "",
       baggageDeliveryPlannedAt: "",
     });
     setIsEdited(false);
@@ -245,6 +311,7 @@ function AddRepresentativeService({
             ...prev,
             transferArrival: checked,
             transferArrivalPeopleCount: checked ? prev.transferArrivalPeopleCount : "",
+            transferArrivalPlannedDate: checked ? prev.transferArrivalPlannedDate : "",
             transferArrivalPlannedAt: checked ? prev.transferArrivalPlannedAt : "",
           };
         }
@@ -254,6 +321,7 @@ function AddRepresentativeService({
             ...prev,
             transferDeparture: checked,
             transferDeparturePeopleCount: checked ? prev.transferDeparturePeopleCount : "",
+            transferDeparturePlannedDate: checked ? prev.transferDeparturePlannedDate : "",
             transferDeparturePlannedAt: checked ? prev.transferDeparturePlannedAt : "",
           };
         }
@@ -262,6 +330,7 @@ function AddRepresentativeService({
           return {
             ...prev,
             baggageDelivery: checked,
+            baggageDeliveryPlannedDate: checked ? prev.baggageDeliveryPlannedDate : "",
             baggageDeliveryPlannedAt: checked ? prev.baggageDeliveryPlannedAt : "",
           };
         }
@@ -271,6 +340,7 @@ function AddRepresentativeService({
             ...prev,
             waterSupply: checked,
             waterPeopleCount: checked ? prev.waterPeopleCount : "",
+            waterPlannedDate: checked ? prev.waterPlannedDate : "",
             waterPlannedAt: checked ? prev.waterPlannedAt : "",
           };
         }
@@ -280,6 +350,7 @@ function AddRepresentativeService({
             ...prev,
             foodSupply: checked,
             foodPeopleCount: checked ? prev.foodPeopleCount : "",
+            foodPlannedDate: checked ? prev.foodPlannedDate : "",
             foodPlannedAt: checked ? prev.foodPlannedAt : "",
           };
         }
@@ -295,14 +366,6 @@ function AddRepresentativeService({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasWaterService, hasMealService, hasLivingService, hasArrivalTransferService, hasDepartureTransferService, hasBaggageDeliveryService, waterCount, mealCount, livingHotelsCount, arrivalDriversCount, departureDriversCount, baggageDriversCount]);
-
-  const buildPlannedAt = (timeStr) => {
-    if (!timeStr) return null;
-    const [hours, minutes] = timeStr.split(":").map(Number);
-    const d = new Date();
-    d.setHours(hours, minutes, 0, 0);
-    return d.toISOString();
-  };
 
   const buildPlannedFromTo = (dateStr, timeStr) => {
     if (!dateStr || !timeStr) return null;
@@ -356,7 +419,7 @@ function AddRepresentativeService({
         plan: {
           enabled: true,
           peopleCount: Number(formData.waterPeopleCount),
-          plannedAt: buildPlannedAt(formData.waterPlannedAt),
+          plannedAt: buildPlannedFromTo(formData.waterPlannedDate, formData.waterPlannedAt),
         },
       };
     } else if (hasWaterService) {
@@ -369,7 +432,7 @@ function AddRepresentativeService({
         plan: {
           enabled: true,
           peopleCount: Number(formData.foodPeopleCount),
-          plannedAt: buildPlannedAt(formData.foodPlannedAt),
+          plannedAt: buildPlannedFromTo(formData.foodPlannedDate, formData.foodPlannedAt),
         },
       };
     } else if (hasMealService) {
@@ -396,7 +459,7 @@ function AddRepresentativeService({
         plan: {
           enabled: true,
           peopleCount: Number(formData.transferArrivalPeopleCount),
-          plannedAt: buildPlannedAt(formData.transferArrivalPlannedAt),
+          plannedAt: buildPlannedFromTo(formData.transferArrivalPlannedDate, formData.transferArrivalPlannedAt),
         },
       };
     } else if (hasArrivalTransferService) {
@@ -409,7 +472,7 @@ function AddRepresentativeService({
         plan: {
           enabled: true,
           peopleCount: Number(formData.transferDeparturePeopleCount),
-          plannedAt: buildPlannedAt(formData.transferDeparturePlannedAt),
+          plannedAt: buildPlannedFromTo(formData.transferDeparturePlannedDate, formData.transferDeparturePlannedAt),
         },
       };
     } else if (hasDepartureTransferService) {
@@ -421,7 +484,7 @@ function AddRepresentativeService({
       input.baggageDeliveryService = {
         plan: {
           enabled: true,
-          plannedAt: buildPlannedAt(formData.baggageDeliveryPlannedAt),
+          plannedAt: buildPlannedFromTo(formData.baggageDeliveryPlannedDate, formData.baggageDeliveryPlannedAt),
         },
       };
     } else if (hasBaggageDeliveryService) {
@@ -502,7 +565,14 @@ function AddRepresentativeService({
             <div className={classes.requestMiddle}>
               <div className={classes.requestData}>
                 <div className={classes.typeServices}>Экипаж</div>
-                <label>Сотрудники экипажа</label>
+                <div className={classes.staffWrapper}>
+                  <label>Сотрудники экипажа</label>
+                  {airlineId && (
+                    <div className={classes.addStaff} onClick={toggleAddStaff}>
+                      <img src="/plus.png" alt="" />
+                    </div>
+                  )}
+                </div>
                 <MultiSelectAutocomplete
                   dropdownWidth="100%"
                   label="Выберите сотрудников"
@@ -541,14 +611,22 @@ function AddRepresentativeService({
                       value={formData.waterPeopleCount}
                       onChange={handleChange}
                     />
-                    <label>Введите время подачи в аэропорт</label>
-                    <input
-                      type="time"
-                      name="waterPlannedAt"
-                      value={formData.waterPlannedAt}
-                      onChange={handleChange}
-                      placeholder="Время"
-                    />
+                    <label>Дата и время подачи в аэропорт</label>
+                    <div className={classes.reis_info}>
+                      <input
+                        type="date"
+                        name="waterPlannedDate"
+                        value={formData.waterPlannedDate}
+                        onChange={handleChange}
+                      />
+                      <input
+                        type="time"
+                        name="waterPlannedAt"
+                        value={formData.waterPlannedAt}
+                        onChange={handleChange}
+                        placeholder="Время"
+                      />
+                    </div>
                   </>
                 )}
 
@@ -574,14 +652,22 @@ function AddRepresentativeService({
                       value={formData.foodPeopleCount}
                       onChange={handleChange}
                     />
-                    <label>Введите время подачи в аэропорт</label>
-                    <input
-                      type="time"
-                      name="foodPlannedAt"
-                      value={formData.foodPlannedAt}
-                      onChange={handleChange}
-                      placeholder="Время"
-                    />
+                    <label>Дата и время подачи в аэропорт</label>
+                    <div className={classes.reis_info}>
+                      <input
+                        type="date"
+                        name="foodPlannedDate"
+                        value={formData.foodPlannedDate}
+                        onChange={handleChange}
+                      />
+                      <input
+                        type="time"
+                        name="foodPlannedAt"
+                        value={formData.foodPlannedAt}
+                        onChange={handleChange}
+                        placeholder="Время"
+                      />
+                    </div>
                   </>
                 )}
 
@@ -658,14 +744,22 @@ function AddRepresentativeService({
                       value={formData.transferArrivalPeopleCount}
                       onChange={handleChange}
                     />
-                    <label>Введите время подачи в аэропорт</label>
-                    <input
-                      type="time"
-                      name="transferArrivalPlannedAt"
-                      value={formData.transferArrivalPlannedAt}
-                      onChange={handleChange}
-                      placeholder="Время"
-                    />
+                    <label>Дата и время подачи в аэропорт</label>
+                    <div className={classes.reis_info}>
+                      <input
+                        type="date"
+                        name="transferArrivalPlannedDate"
+                        value={formData.transferArrivalPlannedDate}
+                        onChange={handleChange}
+                      />
+                      <input
+                        type="time"
+                        name="transferArrivalPlannedAt"
+                        value={formData.transferArrivalPlannedAt}
+                        onChange={handleChange}
+                        placeholder="Время"
+                      />
+                    </div>
                   </>
                 )}
 
@@ -691,14 +785,22 @@ function AddRepresentativeService({
                       value={formData.transferDeparturePeopleCount}
                       onChange={handleChange}
                     />
-                    <label>Введите время подачи к гостинице</label>
-                    <input
-                      type="time"
-                      name="transferDeparturePlannedAt"
-                      value={formData.transferDeparturePlannedAt}
-                      onChange={handleChange}
-                      placeholder="Время"
-                    />
+                    <label>Дата и время подачи к гостинице</label>
+                    <div className={classes.reis_info}>
+                      <input
+                        type="date"
+                        name="transferDeparturePlannedDate"
+                        value={formData.transferDeparturePlannedDate}
+                        onChange={handleChange}
+                      />
+                      <input
+                        type="time"
+                        name="transferDeparturePlannedAt"
+                        value={formData.transferDeparturePlannedAt}
+                        onChange={handleChange}
+                        placeholder="Время"
+                      />
+                    </div>
                   </>
                 )}
 
@@ -717,14 +819,22 @@ function AddRepresentativeService({
                 </label>
                 {formData.baggageDelivery && (
                   <>
-                    <label>Введите время</label>
-                    <input
-                      type="time"
-                      name="baggageDeliveryPlannedAt"
-                      value={formData.baggageDeliveryPlannedAt}
-                      onChange={handleChange}
-                      placeholder="Время"
-                    />
+                    <label>Дата и время</label>
+                    <div className={classes.reis_info}>
+                      <input
+                        type="date"
+                        name="baggageDeliveryPlannedDate"
+                        value={formData.baggageDeliveryPlannedDate}
+                        onChange={handleChange}
+                      />
+                      <input
+                        type="time"
+                        name="baggageDeliveryPlannedAt"
+                        value={formData.baggageDeliveryPlannedAt}
+                        onChange={handleChange}
+                        placeholder="Время"
+                      />
+                    </div>
                   </>
                 )}
               </div>
@@ -734,6 +844,17 @@ function AddRepresentativeService({
               <Button onClick={handleSubmit}>Сохранить</Button>
             </div>
           </>
+        )}
+        {airlineId && (
+          <CreateRequestAirlineStaff
+            id={airlineId}
+            show={showAddStaff}
+            onClose={toggleAddStaff}
+            airlineRefetch={refetchAirlines}
+            setNewStaffId={setNewStaffData}
+            positions={positions}
+            isExist={true}
+          />
         )}
       </Sidebar>
     </>

@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation } from "@apollo/client";
 import { InputMask } from "@react-input/mask";
@@ -111,8 +111,8 @@ function getPersonDays(person, hotelIndex, plan) {
 }
 
 const emptyPD = (person, hotelIndex, plan) => ({
-  roomNumber: person.roomNumber ?? "",
-  daysCount: getPersonDays(person, hotelIndex, plan),
+  roomNumber: person?.roomNumber ?? "",
+  daysCount: getPersonDays(person ?? {}, hotelIndex, plan),
   tariffId: null,
   breakfast: 0,
   lunch: 0,
@@ -171,6 +171,30 @@ export default function FapHotelPage({
 
   const [saving, setSaving] = useState(false);
 
+  // Refs хранят актуальное состояние для отложенного автосохранения —
+  // дебаунс-таймер должен видеть последние значения, а не замороженные в замыкании.
+  // `people` инициализируем пустым массивом: значение синхронизируется через useEffect ниже,
+  // т.к. сама переменная `people` объявлена позже по коду.
+  const tariffsRef = useRef(tariffs);
+  const personDataRef = useRef(personData);
+  const peopleRef = useRef([]);
+  const saveTimerRef = useRef(null);
+  // persistReportRef нужен для cleanup'a на размонтирование — обычное замыкание
+  // useEffect([], ...) видит persistReport времени монтирования, а мы хотим вызвать
+  // АКТУАЛЬНЫЙ с up-to-date зависимостями (requestId, mutation client и т.д.).
+  const persistReportRef = useRef(null);
+  useEffect(() => { tariffsRef.current = tariffs; }, [tariffs]);
+  useEffect(() => { personDataRef.current = personData; }, [personData]);
+  useEffect(() => () => {
+    // Флаш отложенного сейва при размонтировании — иначе изменения
+    // в пределах debounce-окна теряются при навигации/обновлении.
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current);
+      saveTimerRef.current = null;
+      persistReportRef.current?.();
+    }
+  }, []);
+
   // ── Mutations ──
   const [addPerson] = useMutation(ADD_PASSENGER_REQUEST_HOTEL_PERSON, {
     context: { headers: { Authorization: `Bearer ${token}` } },
@@ -193,6 +217,7 @@ export default function FapHotelPage({
 
   // ── Derived ──
   const people = hotel?.people ?? [];
+  useEffect(() => { peopleRef.current = people; }, [people]);
   const totalCap = hotel?.peopleCount ?? 0;
   const placed = people.length;
   const isFull = totalCap > 0 && placed >= totalCap;
@@ -279,13 +304,24 @@ export default function FapHotelPage({
       people.forEach((p, i) => {
         data[i] = emptyPD(p, hotelIndex, plan);
       });
+      // Матчим строки отчёта к гостям ТОЛЬКО по ФИО + порядок (consumed-сет).
+      // Раньше в условие входил roomNumber, но это давало баг: номер в строке отчёта
+      // и у гостя — это два разных поля (одно из вкладки «Гости», другое из «Отчёта»).
+      // Когда диспетчер вводил номер в «Отчёте», people[i].roomNumber оставался пустой,
+      // а row.roomNumber становился «123» → матч проваливался → тариф «слетал».
+      // Сейчас ходим по строкам по порядку (buildReportRows пишет их в порядке people),
+      // расходуя уже подобранные индексы — дубликаты ФИО тоже корректно матчатся.
+      const consumed = new Set();
       savedRows.forEach((row) => {
+        // Пропускаем теневые строки тарифов (без ФИО) — они не привязаны к гостю.
+        if (!(row.fullName ?? "").trim()) return;
         const idx = people.findIndex(
-          (p) =>
-            (p.fullName ?? "").trim() === (row.fullName ?? "").trim() &&
-            (p.roomNumber ?? "").trim() === (row.roomNumber ?? "").trim()
+          (p, i) =>
+            !consumed.has(i) &&
+            (p.fullName ?? "").trim() === (row.fullName ?? "").trim()
         );
         if (idx < 0) return;
+        consumed.add(idx);
         const k = priceKey(row);
         const t = restored.find((tt) => priceKey(tt) === k);
         data[idx] = {
@@ -310,6 +346,108 @@ export default function FapHotelPage({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [request?.id, hotelIndex]);
+
+  // ── Persistence helpers ──
+  // Сериализация текущих тарифов + personData в строки отчёта.
+  // Бэк не хранит тарифы отдельно — восстанавливает их при загрузке из
+  // уникальных ценовых ключей строк. Непривязанные тарифы добавляем как
+  // «теневые» строки (пустой ФИО), иначе они терялись бы при следующем входе.
+  const buildReportRows = useCallback(() => {
+    const currentTariffs = tariffsRef.current;
+    const currentPersonData = personDataRef.current;
+    const currentPeople = peopleRef.current;
+    const usedTariffIds = new Set(
+      Object.values(currentPersonData).map((pd) => pd?.tariffId).filter(Boolean)
+    );
+    const ghostRows = currentTariffs
+      .filter((t) => !t.draft && !usedTariffIds.has(t.id))
+      .map((t) => ({
+        fullName: "",
+        roomNumber: "",
+        roomCategory: t.name || "",
+        roomKind: "",
+        daysCount: 0,
+        breakfast: toNum(t.breakfast),
+        lunch: toNum(t.lunch),
+        dinner: toNum(t.dinner),
+        foodCost: toNum(t.breakfast) + toNum(t.lunch) + toNum(t.dinner),
+        accommodationCost: toNum(t.accommodationCost),
+      }));
+    const personRows = currentPeople.map((person, i) => {
+      const pd = currentPersonData[i] ?? emptyPD(person, hotelIndex, plan);
+      const tariff = currentTariffs.find((tt) => tt.id === pd.tariffId);
+      return {
+        fullName: person.fullName ?? "",
+        roomNumber: pd.roomNumber ?? "",
+        roomCategory: tariff?.name ?? "",
+        roomKind: "",
+        daysCount: toNum(pd.daysCount),
+        breakfast: toNum(pd.breakfast),
+        lunch: toNum(pd.lunch),
+        dinner: toNum(pd.dinner),
+        foodCost: toNum(pd.breakfast) + toNum(pd.lunch) + toNum(pd.dinner),
+        accommodationCost: toNum(pd.accommodationCost),
+      };
+    });
+    return [...personRows, ...ghostRows];
+  }, [hotelIndex, plan]);
+
+  const persistReport = useCallback(async () => {
+    if (!request?.id) return;
+    try {
+      setSaving(true);
+      await saveReport({
+        variables: {
+          requestId: request.id,
+          hotelIndex: Number(hotelIndex),
+          reportRows: buildReportRows(),
+        },
+      });
+    } catch (e) {
+      notifyError("Ошибка при сохранении тарифа");
+      console.error(e);
+    } finally {
+      setSaving(false);
+    }
+  }, [request?.id, hotelIndex, buildReportRows, saveReport, notifyError]);
+
+  // Единый дебаунс для всех изменений (ввод и клики).
+  // Раньше клики стреляли flushSave немедленно — это создавало race condition:
+  // несколько последовательных кликов = параллельные мутации, и более ранняя
+  // (с устаревшим snapshot'ом) могла прийти на бэк позже и затереть результаты
+  // более поздних. С дебаунсом серия быстрых кликов схлопывается в один сейв
+  // с финальным состоянием — буква mutation отправляется одна, и она всегда
+  // содержит все накопленные изменения (personDataRef обновляется синхронно).
+  const scheduleSave = useCallback(() => {
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      saveTimerRef.current = null;
+      persistReport();
+    }, 300);
+  }, [persistReport]);
+
+  // Синк-ref для cleanup на unmount.
+  useEffect(() => { persistReportRef.current = persistReport; }, [persistReport]);
+
+  // Гарантируем, что personData содержит запись для каждого фактического гостя.
+  // Init useEffect выше срабатывает только при смене request.id/hotelIndex.
+  // Когда диспетчер добавляет гостя через вкладку «Гости», request.id не меняется,
+  // но people растёт — раньше «Применить всем» пропускал новых гостей, т.к.
+  // их индексов не было в personData. Теперь — добавляем.
+  useEffect(() => {
+    setPersonData((prev) => {
+      const next = { ...prev };
+      let changed = false;
+      people.forEach((person, i) => {
+        if (!next[i]) {
+          next[i] = emptyPD(person, hotelIndex, plan);
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [people.length]);
 
   // ── Tariff handlers ──
   const addTariff = useCallback(() => setTariffs((prev) => [...prev, newTariff()]), []);
@@ -384,18 +522,47 @@ export default function FapHotelPage({
     [tariffs, personData, people, hotelIndex, plan, request?.id, saveReport, notifyError]
   );
   const updateTariff = useCallback((tariffId, field, value) => {
-    setTariffs((prev) =>
-      prev.map((t) => {
-        if (t.id !== tariffId) return t;
-        const next = { ...t, [field]: value };
-        if (field === "breakfast" || field === "lunch" || field === "dinner") {
-          next.foodCost =
-            toNum(next.breakfast) + toNum(next.lunch) + toNum(next.dinner);
+    let updated = null;
+    const nextTariffs = tariffsRef.current.map((t) => {
+      if (t.id !== tariffId) return t;
+      const n = { ...t, [field]: value };
+      if (field === "breakfast" || field === "lunch" || field === "dinner") {
+        n.foodCost = toNum(n.breakfast) + toNum(n.lunch) + toNum(n.dinner);
+      }
+      updated = n;
+      return n;
+    });
+    tariffsRef.current = nextTariffs;
+    setTariffs(nextTariffs);
+
+    // Цены распространяем на привязанных гостей, чтобы отчёт оставался синхронным с тарифом.
+    // Название не трогаем — оно подтягивается в отчёт через tariffId.
+    if (updated && field !== "name") {
+      const prevPD = personDataRef.current;
+      const nextPD = { ...prevPD };
+      let changed = false;
+      Object.keys(nextPD).forEach((k) => {
+        if (nextPD[k]?.tariffId === tariffId) {
+          nextPD[k] = {
+            ...nextPD[k],
+            breakfast: toNum(updated.breakfast),
+            lunch: toNum(updated.lunch),
+            dinner: toNum(updated.dinner),
+            foodCost: toNum(updated.foodCost),
+            accommodationCost: toNum(updated.accommodationCost),
+          };
+          changed = true;
         }
-        return next;
-      })
-    );
-  }, []);
+      });
+      if (changed) {
+        personDataRef.current = nextPD;
+        setPersonData(nextPD);
+      }
+    }
+
+    // Автосохранение только для уже сохранённых тарифов. Черновики сохраняются явной кнопкой.
+    if (updated && !updated.draft) scheduleSave();
+  }, [scheduleSave]);
   const cancelTariff = useCallback((tariffId) => {
     setTariffs((prev) => prev.filter((t) => t.id !== tariffId));
   }, []);
@@ -489,39 +656,45 @@ export default function FapHotelPage({
     (tariffId) => {
       const t = tariffs.find((x) => x.id === tariffId);
       if (!t) return;
-      setPersonData((prev) => {
-        const next = { ...prev };
-        Object.keys(next).forEach((k) => {
-          next[k] = {
-            ...next[k],
-            tariffId,
-            breakfast: t.breakfast,
-            lunch: t.lunch,
-            dinner: t.dinner,
-            foodCost: t.foodCost,
-            accommodationCost: t.accommodationCost,
-          };
-        });
-        return next;
+      // Считаем новое состояние явно и сразу пишем в state и в ref —
+      // scheduleSave ниже читает personDataRef и должен видеть свежие данные.
+      const next = { ...personDataRef.current };
+      people.forEach((person, i) => {
+        const base = next[i] ?? emptyPD(person, hotelIndex, plan);
+        next[i] = {
+          ...base,
+          tariffId,
+          breakfast: toNum(t.breakfast),
+          lunch: toNum(t.lunch),
+          dinner: toNum(t.dinner),
+          foodCost: toNum(t.foodCost),
+          accommodationCost: toNum(t.accommodationCost),
+        };
       });
+      personDataRef.current = next;
+      setPersonData(next);
+      scheduleSave();
     },
-    [tariffs]
+    [tariffs, scheduleSave, people, hotelIndex, plan]
   );
   const applyTariffToPerson = useCallback(
     (personIndex, tariffId) => {
       const t = tariffs.find((x) => x.id === tariffId);
-      setPersonData((prev) => ({
+      const prev = personDataRef.current;
+      const base =
+        prev[personIndex] ?? emptyPD(people[personIndex], hotelIndex, plan);
+      const next = {
         ...prev,
         [personIndex]: {
-          ...prev[personIndex],
+          ...base,
           tariffId: tariffId || null,
           ...(t
             ? {
-                breakfast: t.breakfast,
-                lunch: t.lunch,
-                dinner: t.dinner,
-                foodCost: t.foodCost,
-                accommodationCost: t.accommodationCost,
+                breakfast: toNum(t.breakfast),
+                lunch: toNum(t.lunch),
+                dinner: toNum(t.dinner),
+                foodCost: toNum(t.foodCost),
+                accommodationCost: toNum(t.accommodationCost),
               }
             : {
                 // Снятие привязки → обнуляем цены, иначе остаются от прошлого тарифа.
@@ -532,21 +705,27 @@ export default function FapHotelPage({
                 accommodationCost: 0,
               }),
         },
-      }));
+      };
+      personDataRef.current = next;
+      setPersonData(next);
+      scheduleSave();
     },
-    [tariffs]
+    [tariffs, scheduleSave, people, hotelIndex, plan]
   );
   const updatePersonReport = useCallback((personIndex, field, value) => {
-    setPersonData((prev) => {
-      const cur = prev[personIndex] ?? {};
-      const next = { ...cur, [field]: value };
-      if (field === "breakfast" || field === "lunch" || field === "dinner") {
-        next.foodCost =
-          toNum(next.breakfast) + toNum(next.lunch) + toNum(next.dinner);
-      }
-      return { ...prev, [personIndex]: next };
-    });
-  }, []);
+    const prev = personDataRef.current;
+    const cur =
+      prev[personIndex] ?? emptyPD(people[personIndex], hotelIndex, plan);
+    const updated = { ...cur, [field]: value };
+    if (field === "breakfast" || field === "lunch" || field === "dinner") {
+      updated.foodCost =
+        toNum(updated.breakfast) + toNum(updated.lunch) + toNum(updated.dinner);
+    }
+    const nextAll = { ...prev, [personIndex]: updated };
+    personDataRef.current = nextAll;
+    setPersonData(nextAll);
+    scheduleSave();
+  }, [scheduleSave, people, hotelIndex, plan]);
 
   const reportRows = useMemo(
     () =>
@@ -1333,7 +1512,7 @@ export default function FapHotelPage({
                     {t.draft && <span className={classes.draftBadge}>Черновик</span>}
                     <input
                       className={classes.tariffName}
-                      value={t.name}
+                      value={t.name ?? ""}
                       onChange={(e) => canEdit && updateTariff(t.id, "name", e.target.value)}
                       readOnly={!canEdit}
                       placeholder="Название тарифа (напр. Стандарт 2-мест.)"
@@ -1401,7 +1580,7 @@ export default function FapHotelPage({
                             <input
                               type="number"
                               min={0}
-                              value={displayVal === 0 ? "" : displayVal}
+                              value={displayVal ? displayVal : ""}
                               onChange={(e) =>
                                 canEdit && !computed && updateTariff(t.id, key, e.target.value)
                               }
@@ -1436,7 +1615,6 @@ export default function FapHotelPage({
                 Тариф назначен: <strong>{boundCount}</strong> из {placed}
               </span>
               <span className={classes.spacer} />
-              {canEdit && (
                 <button
                   type="button"
                   className={classes.secondaryBtn}
@@ -1445,7 +1623,6 @@ export default function FapHotelPage({
                 >
                   <DownloadIcon /> Excel
                 </button>
-              )}
               {canEdit && (
                 <button
                   type="button"
@@ -1512,7 +1689,7 @@ export default function FapHotelPage({
                           <input
                             type="text"
                             className={classes.cellInput}
-                            value={pd.roomNumber}
+                            value={pd.roomNumber ?? ""}
                             onChange={(e) =>
                               canEdit && updatePersonReport(i, "roomNumber", e.target.value)
                             }
@@ -1526,7 +1703,7 @@ export default function FapHotelPage({
                             min={0}
                             step={0.5}
                             className={classes.cellInputNum}
-                            value={pd.daysCount === 0 ? "" : pd.daysCount}
+                            value={pd.daysCount ? pd.daysCount : ""}
                             onChange={(e) =>
                               canEdit && updatePersonReport(i, "daysCount", e.target.value)
                             }
@@ -1553,7 +1730,7 @@ export default function FapHotelPage({
                             type="number"
                             min={0}
                             className={classes.cellInputNum}
-                            value={pd.breakfast === 0 ? "" : pd.breakfast}
+                            value={pd.breakfast ? pd.breakfast : ""}
                             onChange={(e) =>
                               canEdit && updatePersonReport(i, "breakfast", e.target.value)
                             }
@@ -1565,7 +1742,7 @@ export default function FapHotelPage({
                             type="number"
                             min={0}
                             className={classes.cellInputNum}
-                            value={pd.lunch === 0 ? "" : pd.lunch}
+                            value={pd.lunch ? pd.lunch : ""}
                             onChange={(e) =>
                               canEdit && updatePersonReport(i, "lunch", e.target.value)
                             }
@@ -1577,7 +1754,7 @@ export default function FapHotelPage({
                             type="number"
                             min={0}
                             className={classes.cellInputNum}
-                            value={pd.dinner === 0 ? "" : pd.dinner}
+                            value={pd.dinner ? pd.dinner : ""}
                             onChange={(e) =>
                               canEdit && updatePersonReport(i, "dinner", e.target.value)
                             }
@@ -1593,7 +1770,7 @@ export default function FapHotelPage({
                                 type="number"
                                 min={0}
                                 className={classes.cellInputNum}
-                                value={computedFood === 0 ? "" : computedFood}
+                                value={computedFood ? computedFood : ""}
                                 readOnly
                                 title="Сумма завтрака, обеда и ужина"
                               />
@@ -1605,7 +1782,7 @@ export default function FapHotelPage({
                             type="number"
                             min={0}
                             className={classes.cellInputNum}
-                            value={pd.accommodationCost === 0 ? "" : pd.accommodationCost}
+                            value={pd.accommodationCost ? pd.accommodationCost : ""}
                             onChange={(e) =>
                               canEdit &&
                               updatePersonReport(i, "accommodationCost", e.target.value)

@@ -4403,6 +4403,14 @@ export const DELETE_HOTEL_TARIFF = gql`
   }
 `;
 
+export const DELETE_ADDITIONAL_SERVICE = gql`
+  mutation DeleteAdditionalService($id: ID!) {
+    deleteAdditionalService(id: $id) {
+      id
+    }
+  }
+`;
+
 export const DELETE_HOTEL_ROOM = gql`
   mutation Mutation($deleteRoomId: ID!) {
     deleteRoom(id: $deleteRoomId) {

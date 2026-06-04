@@ -14,6 +14,7 @@ import {
   GET_HOTEL_TARIFS,
   DELETE_HOTEL_CATEGORY,
   DELETE_HOTEL_TARIFF,
+  DELETE_ADDITIONAL_SERVICE,
   GET_HOTEL_MEAL_PRICE,
   GET_HOTEL_TRANSFER_PRICE,
   GET_HOTELS_UPDATE_SUBSCRIPTION,
@@ -139,6 +140,16 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
       },
     },
   });
+  const [deleteAdditionalServiceMutation] = useMutation(
+    DELETE_ADDITIONAL_SERVICE,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+    }
+  );
 
   useEffect(() => {
     if (!data || showAddTarifCategory) return;
@@ -319,6 +330,28 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
     }
   };
 
+  const deleteAdditionalService = async (asID) => {
+    try {
+      const response = await deleteAdditionalServiceMutation({
+        variables: { id: asID },
+      });
+
+      if (response) {
+        setAdditionalServices((prev) =>
+          (prev || []).filter((item) => item.id !== asID)
+        );
+        setShowDelete(false);
+        setShowAdditionalServices(false);
+        setSelectedAS(null);
+        refetch();
+        success("Дополнительная услуга удалена.");
+      }
+    } catch (err) {
+      console.error(err);
+      notifyError("Не удалось удалить дополнительную услугу.");
+    }
+  };
+
   const openDeleteComponent = (index, tarifID) => {
     setShowDelete(true);
     setDeleteIndex({
@@ -329,6 +362,14 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
       },
     });
     setEditShowAddTarif(false);
+  };
+
+  const openDeleteComponentAS = (asID) => {
+    setShowDelete(true);
+    setDeleteIndex({
+      type: "deleteAS",
+      data: { asID },
+    });
   };
 
   const closeDeleteComponent = () => {
@@ -507,6 +548,7 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
           transferPrices={filteredRequestsTransferTarif}
           openDeleteComponent={openDeleteComponent}
           openDeleteComponentCategory={openDeleteComponentCategory}
+          openDeleteComponentAS={openDeleteComponentAS}
           user={user}
           meal={meal}
           height={height}
@@ -579,24 +621,28 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
         show={showAdditionalServices}
         onClose={() => setShowAdditionalServices(false)}
         tarif={selectedAS}
+        openDelete={openDeleteComponentAS}
       />
 
       {showDelete && (
         <DeleteComponent
           ref={deleteComponentRef}
-          remove={
-            () =>
-              // deleteIndex.type == "deleteTarif"
-              //   ?
-              deleteTarif(deleteIndex.data.index, deleteIndex.data.tarifID)
-            // : deleteTarifCategory(
-            //     deleteIndex.data.category,
-            //     deleteIndex.data.tarif
-            //   )
-          }
+          remove={() => {
+            if (deleteIndex.type === "deleteAS") {
+              return deleteAdditionalService(deleteIndex.data.asID);
+            }
+            return deleteTarif(
+              deleteIndex.data.index,
+              deleteIndex.data.tarifID
+            );
+          }}
           close={closeDeleteComponent}
           title={`Вы действительно хотите удалить ${
-            deleteIndex.type == "deleteTarif" ? "тариф" : "категорию"
+            deleteIndex.type === "deleteTarif"
+              ? "тариф"
+              : deleteIndex.type === "deleteAS"
+                ? "дополнительную услугу"
+                : "категорию"
           }?`}
         />
       )}
