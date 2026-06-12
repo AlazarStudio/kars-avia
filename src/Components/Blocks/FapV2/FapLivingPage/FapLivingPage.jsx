@@ -14,7 +14,8 @@ import {
 } from "../../../../../graphQL_requests";
 import { SERVICE_STATUS_CONFIG, formatDate, formatDateTime } from "../fapConstants";
 import { calculateEffectiveCostDays } from "../../../../utils/effectiveCostDays";
-import { isExternalUser } from "../../../../utils/access";
+import { isExternalUser, isAirlineRole } from "../../../../utils/access";
+import { downloadLivingReport } from "../reports/buildReportSheets";
 import { useToast } from "../../../../contexts/ToastContext";
 import Button from "../../../Standart/Button/Button";
 import FapActionButton from "../FapActionButton/FapActionButton";
@@ -264,6 +265,19 @@ export default function FapLivingPage({
             <ScheduleIcon color={showLogs ? "#fff" : "#545873"} />
             История
           </FapActionButton>
+          {canEdit &&
+           !isAirlineRole(user) &&
+           !(isExternalUser(user) && user?.scope === "HOTEL") && (
+            <FapActionButton
+              variant="secondary"
+              onClick={async () => {
+                try { await downloadLivingReport(request); }
+                catch (e) { notifyError("Ошибка экспорта"); console.error(e); }
+              }}
+            >
+              Скачать отчёт
+            </FapActionButton>
+          )}
           {canEdit && !isCompleted && !isExtHotel && (
             <button
               type="button"

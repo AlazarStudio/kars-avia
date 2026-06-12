@@ -497,3 +497,47 @@
   font-size: 14px;
   color: #94A3B8;
 }
+
+.driverReportFields {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  align-items: center;
+  padding: 8px 14px;
+  font-size: 12px;
+  border-top: 1px solid #E2E8F0;
+  background: #FAFBFC;
+}
+.reportField {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: text;
+}
+.reportFieldLabel {
+  color: #64748B;
+  white-space: nowrap;
+  font-weight: 500;
+}
+.reportInput,
+.reportInputNumber {
+  border: 1px solid #CBD2E4;
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 12px;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+.reportInput { min-width: 200px; }
+.reportInputNumber { width: 110px; }
+.reportInput:focus,
+.reportInputNumber:focus {
+  border-color: #8B5CF6;
+}
+.reportInput:disabled,
+.reportInputNumber:disabled {
+  background: #F1F5F9;
+  color: #94A3B8;
+  cursor: not-allowed;
+}

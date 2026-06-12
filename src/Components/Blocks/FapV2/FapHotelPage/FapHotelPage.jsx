@@ -403,13 +403,14 @@ export default function FapHotelPage({
           reportRows: buildReportRows(),
         },
       });
+      onRefetch?.();
     } catch (e) {
       notifyError("Ошибка при сохранении тарифа");
       console.error(e);
     } finally {
       setSaving(false);
     }
-  }, [request?.id, hotelIndex, buildReportRows, saveReport, notifyError]);
+  }, [request?.id, hotelIndex, buildReportRows, saveReport, notifyError, onRefetch]);
 
   // Единый дебаунс для всех изменений (ввод и клики).
   // Раньше клики стреляли flushSave немедленно — это создавало race condition:
@@ -512,6 +513,7 @@ export default function FapHotelPage({
             reportRows: [...personRows, ...ghostRows],
           },
         });
+        onRefetch?.();
       } catch (e) {
         notifyError("Ошибка при удалении тарифа");
         console.error(e);
@@ -632,6 +634,7 @@ export default function FapHotelPage({
             reportRows: [...personRows, ...ghostRows],
           },
         });
+        onRefetch?.();
         success("Тариф сохранён");
       } catch (e) {
         notifyError("Ошибка при сохранении тарифа");
@@ -1032,6 +1035,7 @@ export default function FapHotelPage({
           reportRows: rowsForSave,
         },
       });
+      onRefetch?.();
       success("Отчёт сохранён");
     } catch (e) {
       notifyError("Ошибка при сохранении");
@@ -1469,6 +1473,7 @@ export default function FapHotelPage({
                 <div className={classes.colActions}>Действия</div>
               </div>
 
+              {adding && renderAddRow()}
               {filteredPeople.length === 0 && !adding ? (
                 <div className={classes.emptyRow}>
                   {search.trim()
@@ -1480,8 +1485,6 @@ export default function FapHotelPage({
               ) : (
                 filteredPeople.map((p) => renderGuestRow(p))
               )}
-
-              {adding && renderAddRow()}
             </div>
           </div>
         )}

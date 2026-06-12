@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useMemo, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMutation } from "@apollo/client";
-import * as XLSX from "xlsx";
+import { downloadHotelReport } from "../reports/buildReportSheets";
 import classes from "./FapReport.module.css";
 import {
   SAVE_PASSENGER_REQUEST_HOTEL_REPORT,
@@ -278,24 +278,17 @@ export default function FapReport({ request, hotelIndex, hotelName, canEdit = tr
     }
   };
 
-  const handleExport = () => {
-    const headers = [
-      "ID", "ФИО", "Тип", "Номер", "Тариф", "Суток",
-      "Завтрак", "Обед", "Ужин", "Ст-ть питания", "Ст-ть проживания", "Итого",
-    ];
-    const dataRows = reportRows.map((row, i) => [
-      i + 1, row.fullName,
-      PERSON_TYPE_CONFIG[row.personType === "CREW" ? "CREW" : "PASSENGER"].label,
-      row.roomNumber, row.roomCategory, toNum(row.daysCount),
-      toNum(row.breakfast), toNum(row.lunch), toNum(row.dinner),
-      toNum(row.foodCost), toNum(row.accommodationCost), rowTotal(row),
-    ]);
-    const aoa = [headers, ...dataRows, [], ["Итого:", grandTotal]];
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Отчёт");
-    const safe = (s) => String(s).replace(/[/\\?*[\]:]/g, "_").slice(0, 100);
-    XLSX.writeFile(wb, `otchet-${safe(hotelName)}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  const handleExport = async () => {
+    try {
+      await downloadHotelReport(request, hotelIndex, {
+        mode: "current",
+        tariffs,
+        personData,
+      });
+    } catch (e) {
+      notifyError("Ошибка экспорта");
+      console.error(e);
+    }
   };
 
   return (

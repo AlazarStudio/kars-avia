@@ -42,6 +42,7 @@ import BaggageIcon from "../../../../shared/icons/BaggageIcon";
 import FapActionButton from "../FapActionButton/FapActionButton";
 import FapChat from "../FapChat/FapChat";
 import { isExternalUser, isAirlineRole } from "../../../../utils/access";
+import { downloadRequestReport } from "../reports/buildReportSheets";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 
 const STATUS_TRANSITIONS = {
@@ -715,6 +716,17 @@ export default function FapDetail({ user, canEdit = true }) {
               <ScheduleIcon color={showLogs ? "#fff" : "#545873"} />
               История
             </FapActionButton>
+            {canEdit && !isAirlineRole(user) && (
+              <FapActionButton
+                variant="secondary"
+                onClick={async () => {
+                  try { await downloadRequestReport(request, notifyError); }
+                  catch (e) { notifyError("Ошибка экспорта"); console.error(e); }
+                }}
+              >
+                Скачать отчёт
+              </FapActionButton>
+            )}
           </div>
         </div>
       </div>

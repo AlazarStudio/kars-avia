@@ -1,12 +1,14 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useState, useEffect, useRef } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation } from "@apollo/client";
 import classes from "./FapTransferPage.module.css";
 import {
   COMPLETE_PASSENGER_REQUEST_TRANSFER_EARLY,
   REMOVE_PASSENGER_REQUEST_DRIVER,
+  UPDATE_PASSENGER_REQUEST_DRIVER,
   getCookie,
 } from "../../../../../graphQL_requests";
+import { downloadTransferReport } from "../reports/buildReportSheets";
 import { SERVICE_STATUS_CONFIG, formatTime, formatDateTime } from "../fapConstants";
 import { useToast } from "../../../../contexts/ToastContext";
 import FapActionButton from "../FapActionButton/FapActionButton";
@@ -224,6 +226,17 @@ export default function FapTransferPage({
           </div>
         </div>
         <div className={classes.headRight}>
+          {drivers.length > 0 && (
+            <FapActionButton
+              variant="secondary"
+              onClick={async () => {
+                try { await downloadTransferReport(request, direction); }
+                catch (e) { notifyError("Ошибка экспорта"); console.error(e); }
+              }}
+            >
+              Скачать отчёт
+            </FapActionButton>
+          )}
           <FapActionButton
             variant="secondary"
             active={showLogs}
@@ -351,6 +364,9 @@ export default function FapTransferPage({
               }
               onCopyLink={copyLink}
               onDelete={() => setDeleteDriverConfirm(idx)}
+              requestId={request.id}
+              direction={direction}
+              token={token}
             />
           ))
         )}
@@ -418,6 +434,9 @@ function DriverCard({
   onOpen,
   onCopyLink,
   onDelete,
+  requestId,
+  direction,
+  token,
 }) {
   const cap = driver.peopleCount || 0;
   const people = driver.people || [];
@@ -432,6 +451,83 @@ function DriverCard({
 
   const hasRoute = driver.addressFrom || driver.addressTo;
   const canDelete = canEdit && !isCompleted;
+
+  const [updateDriver] = useMutation(UPDATE_PASSENGER_REQUEST_DRIVER, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const [vehicleTypeDraft, setVehicleTypeDraft] = useState(driver.vehicleType ?? "");
+  const [reportCostDraft, setReportCostDraft] = useState(
+    driver.reportCost != null ? String(driver.reportCost) : ""
+  );
+
+  // Ref'ы хранят актуальный driver, чтобы debounced-замыкания видели свежее значение
+  // (вместо «замороженного» в момент создания callback'а).
+  const driverRef = useRef(driver);
+  useEffect(() => { driverRef.current = driver; }, [driver]);
+
+  useEffect(() => { setVehicleTypeDraft(driver.vehicleType ?? ""); }, [driver.vehicleType]);
+  useEffect(() => {
+    setReportCostDraft(driver.reportCost != null ? String(driver.reportCost) : "");
+  }, [driver.reportCost]);
+
+  const savePatch = async (patch) => {
+    try {
+      await updateDriver({
+        variables: { requestId, driverIndex: index, direction, patch },
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  // ── Debounced save для текстовых правок ──
+  // Тип ТС и Сумма сохраняются автоматически через 800мс после последнего нажатия,
+  // плюс по blur и по Enter. Если пользователь уходит со страницы / закрывает вкладку
+  // до истечения таймера, cleanup ниже флешит изменения.
+  const vtTimer = useRef(null);
+  const rcTimer = useRef(null);
+
+  const flushVehicleType = () => {
+    if (vtTimer.current) { clearTimeout(vtTimer.current); vtTimer.current = null; }
+    const next = vehicleTypeDraft.trim();
+    const prev = (driverRef.current.vehicleType ?? "").trim();
+    if (next === prev) return;
+    savePatch({ vehicleType: next === "" ? null : next });
+  };
+
+  const flushReportCost = () => {
+    if (rcTimer.current) { clearTimeout(rcTimer.current); rcTimer.current = null; }
+    const nextNum = reportCostDraft === "" ? null : Number(reportCostDraft);
+    const prevNum = driverRef.current.reportCost ?? null;
+    if (nextNum === prevNum) return;
+    if (nextNum != null && !Number.isFinite(nextNum)) return;
+    savePatch({ reportCost: nextNum });
+  };
+
+  const onVehicleTypeChange = (e) => {
+    setVehicleTypeDraft(e.target.value);
+    if (vtTimer.current) clearTimeout(vtTimer.current);
+    vtTimer.current = setTimeout(flushVehicleType, 800);
+  };
+
+  const onReportCostChange = (e) => {
+    setReportCostDraft(e.target.value);
+    if (rcTimer.current) clearTimeout(rcTimer.current);
+    rcTimer.current = setTimeout(flushReportCost, 800);
+  };
+
+  const onEnterBlur = (e) => {
+    if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); }
+  };
+
+  // Флэш на размонтирование (навигация уходит со страницы — добиваем сейв).
+  useEffect(() => {
+    return () => {
+      if (vtTimer.current) { clearTimeout(vtTimer.current); flushVehicleType(); }
+      if (rcTimer.current) { clearTimeout(rcTimer.current); flushReportCost(); }
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div className={classes.driverCard}>
@@ -542,6 +638,38 @@ function DriverCard({
           </div>
         </div>
       )}
+
+      {/* Report fields: vehicle type + cost (outside clickable area) */}
+      <div className={classes.driverReportFields}>
+        <label className={classes.reportField}>
+          <span className={classes.reportFieldLabel}>Тип ТС</span>
+          <input
+            type="text"
+            value={vehicleTypeDraft}
+            onChange={onVehicleTypeChange}
+            onBlur={flushVehicleType}
+            onKeyDown={onEnterBlur}
+            placeholder="автобус до 50 мест"
+            disabled={!canEdit || isCompleted}
+            className={classes.reportInput}
+          />
+        </label>
+        <label className={classes.reportField}>
+          <span className={classes.reportFieldLabel}>Сумма, ₽</span>
+          <input
+            type="number"
+            min={0}
+            step={1}
+            value={reportCostDraft}
+            onChange={onReportCostChange}
+            onBlur={flushReportCost}
+            onKeyDown={onEnterBlur}
+            placeholder="0"
+            disabled={!canEdit || isCompleted}
+            className={classes.reportInputNumber}
+          />
+        </label>
+      </div>
 
       {/* Read-only summary strip */}
       <div className={classes.driverStrip}>

@@ -3368,6 +3368,12 @@ export const GET_PASSENGER_REQUEST = gql`
         name
         images
       }
+      airport {
+        id
+        name
+        code
+        city
+      }
       earlyCompletionReason
       earlyCompletedAt
       livingService {
@@ -3402,6 +3408,8 @@ export const GET_PASSENGER_REQUEST = gql`
             roomKind
             personType
             airlinePersonalId
+            arrival
+            departure
             accommodationChesses {
               hotelIndex
               hotelName
@@ -3441,6 +3449,8 @@ export const GET_PASSENGER_REQUEST = gql`
           linkPWA
           addressFrom
           addressTo
+          vehicleType
+          reportCost
           people {
             fullName
             phone
@@ -3471,6 +3481,8 @@ export const GET_PASSENGER_REQUEST = gql`
           linkPWA
           addressFrom
           addressTo
+          vehicleType
+          reportCost
           people {
             fullName
             phone
