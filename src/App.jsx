@@ -47,6 +47,7 @@ import FapHotelDetailPage from "./Components/Pages/FapV2/FapHotelDetailPage";
 import FapDriverDetailPage from "./Components/Pages/FapV2/FapDriverDetailPage";
 import HotelPMS from "./Components/HotelPMS/HotelPMS";
 import MaintenanceBannerBar from "./Components/Blocks/MaintenanceBanner/MaintenanceBannerBar";
+import AirlineSystemBanner from "./Components/Blocks/AirlineSystemBanner/AirlineSystemBanner";
 
 const TransferOrder = lazy(() =>
   import("./Components/Blocks/TransferOrder/TransferOrder")
@@ -118,6 +119,7 @@ function App() {
       <TokenRefresher />
       {user && <UserActivityTracker />}
       <MaintenanceBannerBar />
+      <AirlineSystemBanner />
       <Routes>
         <Route path="/external-login" element={<ExternalLogin />} />
         {user ? (
