@@ -16,6 +16,7 @@ import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.j
 import { AddressField } from "../AddressField/AddressField.jsx";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
+import { toLocalInputValue, formatDateTime } from "../FapV2/fapConstants";
 
 function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL" }) {
   const token = getCookie("token");
@@ -39,6 +40,7 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
     addressFrom: "",
     addressTo: "",
     link: "",
+    pickupAt: "",
   });
 
   const transferServiceObj =
@@ -55,6 +57,14 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
     typeof totalServicePeople === "number"
       ? Math.max(totalServicePeople - usedServicePeople, 0)
       : null;
+
+  useEffect(() => {
+    if (!show) return;
+    const servicePlanned = transferServiceObj?.plan?.plannedAt;
+    if (!servicePlanned) return;
+    setFormData((p) => (p.pickupAt ? p : { ...p, pickupAt: toLocalInputValue(servicePlanned) }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [show]);
 
   const { data: driversData, refetch: refetchDrivers } = useQuery(DRIVERS_QUERY, {
     context: {
@@ -104,6 +114,7 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
       addressFrom: "",
       addressTo: "",
       link: "",
+      pickupAt: "",
     });
     setShowQuickCreate(false);
     setQuickCreate({ name: "", number: "", email: "", password: "" });
@@ -239,7 +250,7 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
       fullName: formData.fullName.trim(),
       phone: formData.phone?.trim() || null,
       peopleCount: Number(formData.peopleCount),
-      pickupAt: null,
+      pickupAt: formData.pickupAt ? new Date(formData.pickupAt).toISOString() : null,
       link: formData.link?.trim() || null,
       addressFrom: formData.addressFrom?.trim() || null,
       addressTo: formData.addressTo?.trim() || null,
@@ -407,6 +418,19 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
                 onChange={handleChange}
                 placeholder="Количество людей"
               />
+
+              <label>Дата и время подачи</label>
+              <input
+                type="datetime-local"
+                name="pickupAt"
+                value={formData.pickupAt}
+                onChange={handleChange}
+              />
+              {transferServiceObj?.plan?.plannedAt && (
+                <span style={{ fontSize: 12, color: "#94A3B8", marginTop: -4 }}>
+                  По умолчанию — {formatDateTime(transferServiceObj.plan.plannedAt)} (время услуги)
+                </span>
+              )}
 
             </div>
           </div>

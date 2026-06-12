@@ -2017,6 +2017,24 @@ export const ADD_PASSENGER_REQUEST_DRIVER = gql`
   }
 `;
 
+export const UPDATE_PASSENGER_REQUEST_DRIVER = gql`
+  mutation UpdatePassengerRequestDriver(
+    $requestId: ID!
+    $driverIndex: Int!
+    $patch: PassengerServiceDriverPatchInput!
+    $direction: TransferDirection!
+  ) {
+    updatePassengerRequestDriver(
+      requestId: $requestId
+      driverIndex: $driverIndex
+      patch: $patch
+      direction: $direction
+    ) {
+      id
+    }
+  }
+`;
+
 export const REMOVE_PASSENGER_REQUEST_DRIVER = gql`
   mutation RemovePassengerRequestDriver($requestId: ID!, $driverIndex: Int!, $direction: TransferDirection) {
     removePassengerRequestDriver(requestId: $requestId, driverIndex: $driverIndex, direction: $direction) {

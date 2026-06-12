@@ -7,9 +7,10 @@ import {
   ADD_PASSENGER_REQUEST_DRIVER_PERSON,
   UPDATE_PASSENGER_REQUEST_DRIVER_PERSON,
   REMOVE_PASSENGER_REQUEST_DRIVER_PERSON,
+  UPDATE_PASSENGER_REQUEST_DRIVER,
   getCookie,
 } from "../../../../../graphQL_requests";
-import { formatTime, formatDate } from "../fapConstants";
+import { formatTime, formatDate, toLocalInputValue } from "../fapConstants";
 import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 import PersonTypeToggle from "../PersonTypeToggle/PersonTypeToggle";
@@ -146,6 +147,9 @@ export default function FapDriverPage({
   const [editForm, setEditForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
+  const [editingPickup, setEditingPickup] = useState(false);
+  const [pickupDraft, setPickupDraft] = useState("");
+  const [savingPickup, setSavingPickup] = useState(false);
 
   const [addPerson] = useMutation(ADD_PASSENGER_REQUEST_DRIVER_PERSON, {
     context: { headers: { Authorization: `Bearer ${token}` } },
@@ -154,6 +158,9 @@ export default function FapDriverPage({
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
   const [removePerson] = useMutation(REMOVE_PASSENGER_REQUEST_DRIVER_PERSON, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const [updateDriver] = useMutation(UPDATE_PASSENGER_REQUEST_DRIVER, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
 
@@ -397,6 +404,29 @@ export default function FapDriverPage({
       notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при удалении");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const savePickup = async () => {
+    try {
+      setSavingPickup(true);
+      await updateDriver({
+        variables: {
+          requestId: request.id,
+          driverIndex: Number(driverIndex),
+          direction,
+          patch: {
+            pickupAt: pickupDraft ? new Date(pickupDraft).toISOString() : null,
+          },
+        },
+      });
+      setEditingPickup(false);
+      onRefetch?.();
+      success("Время подачи обновлено");
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при обновлении");
+    } finally {
+      setSavingPickup(false);
     }
   };
 
@@ -751,11 +781,46 @@ export default function FapDriverPage({
         <div className={classes.headRow2}>
           <div className={classes.metric}>
             <span className={classes.metricLabel}>Подача</span>
-            <span className={classes.metricValue}>
-              {driver.pickupAt
-                ? `${formatDate(driver.pickupAt)} · ${formatTime(driver.pickupAt)}`
-                : "—"}
-            </span>
+            {!editingPickup ? (
+              <span className={classes.metricValue} style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                {driver.pickupAt
+                  ? `${formatDate(driver.pickupAt)} · ${formatTime(driver.pickupAt)}`
+                  : "не указана"}
+                {canEdit && !isCompleted && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setPickupDraft(toLocalInputValue(driver.pickupAt));
+                      setEditingPickup(true);
+                    }}
+                    style={{ background: "none", border: 0, padding: 0, cursor: "pointer", color: "#94A3B8" }}
+                    title="Изменить время подачи"
+                    aria-label="Изменить время подачи"
+                  >
+                    <EditPencilIcon />
+                  </button>
+                )}
+              </span>
+            ) : (
+              <span style={{ display: "inline-flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
+                <input
+                  type="datetime-local"
+                  value={pickupDraft}
+                  onChange={(e) => setPickupDraft(e.target.value)}
+                  disabled={savingPickup}
+                />
+                <FapActionButton variant="primary" onClick={savePickup} disabled={savingPickup}>
+                  Сохранить
+                </FapActionButton>
+                <FapActionButton
+                  variant="secondary"
+                  onClick={() => setEditingPickup(false)}
+                  disabled={savingPickup}
+                >
+                  Отмена
+                </FapActionButton>
+              </span>
+            )}
           </div>
           <div className={classes.metric}>
             <span className={classes.metricLabel}>Кол-во мест</span>

@@ -93,3 +93,13 @@ export function formatDateTime(dateStr) {
     minute: "2-digit",
   });
 }
+
+// ISO/Date → строка "YYYY-MM-DDTHH:mm" в локальной зоне браузера,
+// для использования в <input type="datetime-local">.
+export const toLocalInputValue = (iso) => {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+};

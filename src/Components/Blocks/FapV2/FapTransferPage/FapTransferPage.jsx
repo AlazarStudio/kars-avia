@@ -7,7 +7,7 @@ import {
   REMOVE_PASSENGER_REQUEST_DRIVER,
   getCookie,
 } from "../../../../../graphQL_requests";
-import { SERVICE_STATUS_CONFIG, formatTime } from "../fapConstants";
+import { SERVICE_STATUS_CONFIG, formatTime, formatDateTime } from "../fapConstants";
 import { useToast } from "../../../../contexts/ToastContext";
 import FapActionButton from "../FapActionButton/FapActionButton";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
@@ -306,10 +306,10 @@ export default function FapTransferPage({
             Подача
           </div>
           <div className={classes.kpiValue}>
-            {plannedAt ? formatTime(plannedAt) : "—"}
+            {plannedAt ? formatDateTime(plannedAt) : "—"}
           </div>
           <div className={classes.kpiSub}>
-            {plannedAt ? "время подачи" : "не указано"}
+            {plannedAt ? "дата и время подачи" : "не указано"}
           </div>
         </div>
       </div>
@@ -449,7 +449,7 @@ function DriverCard({
           <div className={classes.driverMeta}>
             {driver.phone && <span>{driver.phone}</span>}
             {driver.phone && driver.pickupAt && <span className={classes.metaDot} />}
-            {driver.pickupAt && <span>подача {formatTime(driver.pickupAt)}</span>}
+            {driver.pickupAt && <span>подача {formatDateTime(driver.pickupAt)}</span>}
             <span className={classes.metaDot} />
             <span>
               {placed}

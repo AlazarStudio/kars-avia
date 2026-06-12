@@ -785,7 +785,7 @@ function AddRepresentativeService({
                       value={formData.transferDeparturePeopleCount}
                       onChange={handleChange}
                     />
-                    <label>Дата и время подачи к гостинице</label>
+                    <label>Дата и время прибытия пассажиров в аэропорт</label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
