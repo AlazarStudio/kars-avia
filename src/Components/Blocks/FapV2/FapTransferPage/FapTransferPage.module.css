@@ -531,7 +531,34 @@
   transition: border-color 0.12s ease;
 }
 .reportInput { min-width: 200px; }
-.reportInputNumber { width: 110px; }
+.reportInputNumber {
+  width: 180px;
+  box-sizing: border-box;
+  border: 1px solid #e2e5ee;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+}
+.saveBtn {
+  margin-left: auto;
+  height: 36px;
+  padding: 0 18px;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s, filter 0.15s;
+}
+.saveBtn:hover:not(:disabled) {
+  filter: brightness(0.95);
+}
+.saveBtn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
 .reportInput:focus,
 .reportInputNumber:focus {
   border-color: #8B5CF6;

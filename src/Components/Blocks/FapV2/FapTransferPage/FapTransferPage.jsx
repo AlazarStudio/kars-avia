@@ -12,6 +12,7 @@ import { downloadTransferReport } from "../reports/buildReportSheets";
 import { SERVICE_STATUS_CONFIG, formatTime, formatDateTime } from "../fapConstants";
 import { useToast } from "../../../../contexts/ToastContext";
 import FapActionButton from "../FapActionButton/FapActionButton";
+import FapSelect from "../FapSelect/FapSelect";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import AddRepresentativeDriver from "../../AddRepresentativeDriver/AddRepresentativeDriver";
 import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
@@ -24,6 +25,15 @@ import CopyIcon from "../../../../shared/icons/CopyIcon";
 const TR = "#8B5CF6";
 const TR_BG = "#F5F3FF";
 const TR_DEP = "#7C3AED";
+
+// Справочник типов ТС для дропдауна «Тип ТС» в карточке водителя.
+const VEHICLE_TYPES = [
+  "легковая",
+  "минивэн (до 8)",
+  "микроавтобус (до 20)",
+  "автобус до 30",
+  "автобус до 50",
+];
 
 const PlusSvg = ({ size = 14, color = "#fff" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -462,11 +472,6 @@ function DriverCard({
     driver.reportCost != null ? String(driver.reportCost) : ""
   );
 
-  // Ref'ы хранят актуальный driver, чтобы debounced-замыкания видели свежее значение
-  // (вместо «замороженного» в момент создания callback'а).
-  const driverRef = useRef(driver);
-  useEffect(() => { driverRef.current = driver; }, [driver]);
-
   // Пока инпут в фокусе — не перезатираем draft значением из кэша:
   // иначе refetch после автосейва может «откатить» только что напечатанное.
   const vtFocused = useRef(false);
@@ -481,23 +486,25 @@ function DriverCard({
     }
   }, [driver.reportCost]);
 
+  const { success, error: notifyError } = useToast();
+  const [saving, setSaving] = useState(false);
+
+  // Ref с актуальным driver — чтобы debounced-замыкания видели свежее сохранённое значение.
+  const driverRef = useRef(driver);
+  useEffect(() => { driverRef.current = driver; }, [driver]);
+
+  // ── Тихий автосейв-подстраховка (без тоста): debounce + blur + размонтирование ──
   const savePatch = async (patch) => {
     try {
       await updateDriver({
         variables: { requestId, driverIndex: index, direction, patch },
       });
-      // Мутация возвращает только { id } — обновляем кэш родителя, чтобы
-      // отчёт и возврат на страницу видели сохранённое значение (не stale).
       onRefetch?.();
     } catch (e) {
       console.error(e);
     }
   };
 
-  // ── Debounced save для текстовых правок ──
-  // Тип ТС и Сумма сохраняются автоматически через 800мс после последнего нажатия,
-  // плюс по blur и по Enter. Если пользователь уходит со страницы / закрывает вкладку
-  // до истечения таймера, cleanup ниже флешит изменения.
   const vtTimer = useRef(null);
   const rcTimer = useRef(null);
 
@@ -508,7 +515,6 @@ function DriverCard({
     if (next === prev) return;
     savePatch({ vehicleType: next === "" ? null : next });
   };
-
   const flushReportCost = () => {
     if (rcTimer.current) { clearTimeout(rcTimer.current); rcTimer.current = null; }
     const nextNum = reportCostDraft === "" ? null : Number(reportCostDraft);
@@ -518,28 +524,24 @@ function DriverCard({
     savePatch({ reportCost: nextNum });
   };
 
-  const onVehicleTypeChange = (e) => {
-    setVehicleTypeDraft(e.target.value);
-    if (vtTimer.current) clearTimeout(vtTimer.current);
-    vtTimer.current = setTimeout(flushVehicleType, 800);
+  // Тип ТС — коммитим сразу при выборе (плюс остаётся явная кнопка).
+  const handleVehicleTypeSelect = (value) => {
+    if (vtTimer.current) { clearTimeout(vtTimer.current); vtTimer.current = null; }
+    setVehicleTypeDraft(value);
+    const next = (value ?? "").trim();
+    const prev = (driverRef.current.vehicleType ?? "").trim();
+    if (next !== prev) savePatch({ vehicleType: next === "" ? null : next });
   };
-
+  // Сумма — автосейв через 800мс после ввода.
   const onReportCostChange = (e) => {
     setReportCostDraft(e.target.value);
     if (rcTimer.current) clearTimeout(rcTimer.current);
     rcTimer.current = setTimeout(flushReportCost, 800);
   };
 
-  const onEnterBlur = (e) => {
-    if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); }
-  };
-
-  // Держим актуальные flush-функции в ref, чтобы cleanup на размонтировании
-  // не использовал устаревшее замыкание (draft из первого рендера).
+  // Флэш на размонтирование (навигация уходит со страницы — не теряем правки).
   const flushRef = useRef({ vt: flushVehicleType, rc: flushReportCost });
   flushRef.current = { vt: flushVehicleType, rc: flushReportCost };
-
-  // Флэш на размонтирование (навигация уходит со страницы — добиваем сейв).
   useEffect(() => {
     return () => {
       if (vtTimer.current) { clearTimeout(vtTimer.current); flushRef.current.vt(); }
@@ -547,6 +549,40 @@ function DriverCard({
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // ── Явное сохранение по кнопке (оба поля одним запросом, с тостом) ──
+  const vtNext = vehicleTypeDraft.trim();
+  const vtPrev = (driver.vehicleType ?? "").trim();
+  const rcNext = reportCostDraft === "" ? null : Number(reportCostDraft);
+  const rcPrev = driver.reportCost ?? null;
+  const isDirty = vtNext !== vtPrev || rcNext !== rcPrev;
+
+  const handleSave = async () => {
+    if (vtTimer.current) { clearTimeout(vtTimer.current); vtTimer.current = null; }
+    if (rcTimer.current) { clearTimeout(rcTimer.current); rcTimer.current = null; }
+    const patch = {};
+    if (vtNext !== vtPrev) patch.vehicleType = vtNext === "" ? null : vtNext;
+    if (rcNext !== rcPrev) {
+      if (rcNext != null && !Number.isFinite(rcNext)) {
+        notifyError("Некорректная сумма");
+        return;
+      }
+      patch.reportCost = rcNext;
+    }
+    if (Object.keys(patch).length === 0) return;
+    try {
+      setSaving(true);
+      await updateDriver({
+        variables: { requestId, driverIndex: index, direction, patch },
+      });
+      success("Сохранено");
+      onRefetch?.();
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при сохранении");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <div className={classes.driverCard}>
@@ -662,16 +698,20 @@ function DriverCard({
       <div className={classes.driverReportFields}>
         <label className={classes.reportField}>
           <span className={classes.reportFieldLabel}>Тип ТС</span>
-          <input
-            type="text"
+          <FapSelect
             value={vehicleTypeDraft}
-            onChange={onVehicleTypeChange}
-            onFocus={() => { vtFocused.current = true; }}
-            onBlur={() => { vtFocused.current = false; flushVehicleType(); }}
-            onKeyDown={onEnterBlur}
-            placeholder="автобус до 50 мест"
+            onChange={handleVehicleTypeSelect}
             disabled={!canEdit || isCompleted}
-            className={classes.reportInput}
+            placeholder="— тип ТС —"
+            accent={color}
+            style={{ width: 180 }}
+            options={[
+              { value: "", label: "Не указан" },
+              ...(vehicleTypeDraft && !VEHICLE_TYPES.includes(vehicleTypeDraft)
+                ? [{ value: vehicleTypeDraft, label: vehicleTypeDraft }]
+                : []),
+              ...VEHICLE_TYPES.map((t) => ({ value: t, label: t })),
+            ]}
           />
         </label>
         <label className={classes.reportField}>
@@ -684,12 +724,23 @@ function DriverCard({
             onChange={onReportCostChange}
             onFocus={() => { rcFocused.current = true; }}
             onBlur={() => { rcFocused.current = false; flushReportCost(); }}
-            onKeyDown={onEnterBlur}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSave(); } }}
             placeholder="0"
             disabled={!canEdit || isCompleted}
             className={classes.reportInputNumber}
           />
         </label>
+        {canEdit && !isCompleted && (
+          <button
+            type="button"
+            className={classes.saveBtn}
+            style={{ background: color }}
+            onClick={handleSave}
+            disabled={!isDirty || saving}
+          >
+            {saving ? "Сохранение…" : "Сохранить"}
+          </button>
+        )}
       </div>
 
       {/* Read-only summary strip */}

@@ -148,6 +148,7 @@ export default function FapDriverPage({
   const [editing, setEditing] = useState(null); // person index
   const [editForm, setEditForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [selected, setSelected] = useState([]);
   const [showLogs, setShowLogs] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [editingPickup, setEditingPickup] = useState(false);
@@ -175,9 +176,17 @@ export default function FapDriverPage({
   const crew = people.filter((p) => p?.personType === "CREW");
 
   const savedPassengers = request?.savedPassengers || [];
+  // «уже добавлен» — по всем водителям текущего направления, а не только текущего:
+  // пассажир, назначенный другому водителю того же направления, не должен предлагаться повторно.
   const excludeKeys = useMemo(
-    () => new Set(people.map((p) => personKey(p)).filter(Boolean)),
-    [people]
+    () =>
+      new Set(
+        (service?.drivers ?? [])
+          .flatMap((d) => d?.people ?? [])
+          .map((p) => personKey(p))
+          .filter(Boolean)
+      ),
+    [service]
   );
 
   const handleCatalogConfirm = async (selected) => {
@@ -245,6 +254,22 @@ export default function FapDriverPage({
         (p.phone || "").toLowerCase().includes(q)
     );
   }, [personMode, people, passengers, crew, search]);
+
+  const allSelected =
+    visible.length > 0 && visible.every((p) => selected.includes(p._realIdx));
+  const toggleAll = () =>
+    setSelected((prev) => {
+      const ids = visible.map((p) => p._realIdx);
+      const all = ids.every((i) => prev.includes(i));
+      if (all) return prev.filter((i) => !ids.includes(i));
+      return [...new Set([...prev, ...ids])].sort((a, b) => a - b);
+    });
+
+  const toggleSel = (idx) =>
+    setSelected((prev) =>
+      prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx].sort((a, b) => a - b)
+    );
+  const clearSel = () => setSelected([]);
 
   const copyLink = (url) => {
     if (!url) return;
@@ -420,6 +445,38 @@ export default function FapDriverPage({
     }
   };
 
+  const handleBulkDelete = async () => {
+    if (selected.length === 0) return;
+    const isCrew = personMode === "CREW";
+    const ok = await confirm(
+      isCrew
+        ? `Снять выбранных (${selected.length}) с водителя?`
+        : `Удалить выбранных (${selected.length})?`
+    );
+    if (!ok) return;
+    try {
+      setSaving(true);
+      const sorted = [...selected].sort((a, b) => b - a);
+      for (const idx of sorted) {
+        await removePerson({
+          variables: {
+            requestId: request.id,
+            driverIndex: Number(driverIndex),
+            personIndex: idx,
+            direction,
+          },
+        });
+      }
+      success(isCrew ? `Снято: ${selected.length}` : `Удалено: ${selected.length}`);
+      clearSel();
+      onRefetch?.();
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при удалении");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleDelete = async (p) => {
     const isCrew = p.personType === "CREW";
     const ok = await confirm(
@@ -489,6 +546,7 @@ export default function FapDriverPage({
       const isCrewEdit = editForm.personType === "CREW";
       return (
         <div key={p._realIdx} className={classes.editRow} style={{ background: `${color}11` }}>
+          <span className={classes.selectBox} />
           <span
             className={classes.avatar}
             style={{
@@ -609,6 +667,15 @@ export default function FapDriverPage({
     }
     return (
       <div key={p._realIdx} className={classes.row}>
+        <span className={classes.selectBox}>
+          {canEdit && (
+            <input
+              type="checkbox"
+              checked={selected.includes(p._realIdx)}
+              onChange={() => toggleSel(p._realIdx)}
+            />
+          )}
+        </span>
         <span
           className={classes.avatar}
           style={{ background: p.personType === "CREW" ? TR : "#3B82F6" }}
@@ -656,6 +723,7 @@ export default function FapDriverPage({
     const isCrewAdd = addForm.personType === "CREW";
     return (
       <div className={classes.editRow} style={{ background: `${color}11` }}>
+        <span className={classes.selectBox} />
         <span
           className={classes.avatarDraft}
           style={{ color }}
@@ -932,6 +1000,7 @@ export default function FapDriverPage({
                     setPersonMode(v);
                     cancelAdd();
                     cancelEdit();
+                    clearSel();
                   }}
                 />
               )}
@@ -977,8 +1046,31 @@ export default function FapDriverPage({
               )}
             </div>
 
+            {canEdit && selected.length > 0 && (
+              <div className={classes.selectionBar}>
+                <span className={classes.selectionCount}>Выбрано: {selected.length}</span>
+                <button
+                  type="button"
+                  className={`${classes.bulkBtn} ${classes.bulkBtnDanger}`}
+                  onClick={handleBulkDelete}
+                  disabled={saving}
+                >
+                  <DeleteIcon /> {personMode === "CREW" ? "Снять выбранных" : "Удалить выбранных"}
+                </button>
+                <span className={classes.spacer} />
+                <button type="button" className={classes.clearSelBtn} onClick={clearSel}>
+                  Снять выбор
+                </button>
+              </div>
+            )}
+
             <div className={classes.peopleTable}>
               <div className={classes.tableHead}>
+                <span className={classes.colCheck}>
+                  {canEdit && (
+                    <input type="checkbox" checked={allSelected} onChange={toggleAll} />
+                  )}
+                </span>
                 <span />
                 <span>ФИО</span>
                 <span>Телефон</span>
@@ -1079,6 +1171,7 @@ export default function FapDriverPage({
         onClose={() => setCatalogOpen(false)}
         savedPassengers={savedPassengers}
         excludeKeys={excludeKeys}
+        maxSelectable={remainingSlots ?? undefined}
         loading={saving}
         onConfirm={handleCatalogConfirm}
       />

@@ -97,6 +97,13 @@ export default function FapWaterMealPage({
   const [editingIdx, setEditingIdx] = useState(null);
   const [editForm, setEditForm] = useState(emptyForm);
 
+  const [selected, setSelected] = useState([]);
+  const toggleSel = (idx) =>
+    setSelected((prev) =>
+      prev.includes(idx) ? prev.filter((i) => i !== idx) : [...prev, idx].sort((a, b) => a - b)
+    );
+  const clearSel = () => setSelected([]);
+
   const [addPerson] = useMutation(ADD_PASSENGER_REQUEST_PERSON, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
@@ -178,6 +185,16 @@ export default function FapWaterMealPage({
         (p.seat || "").toLowerCase().includes(q)
     );
   }, [people, search]);
+
+  const allSelected =
+    filteredPeople.length > 0 && filteredPeople.every((p) => selected.includes(p._idx));
+  const toggleAll = () =>
+    setSelected((prev) => {
+      const ids = filteredPeople.map((p) => p._idx);
+      const all = ids.every((i) => prev.includes(i));
+      if (all) return prev.filter((i) => !ids.includes(i));
+      return [...new Set([...prev, ...ids])].sort((a, b) => a - b);
+    });
 
   const handleAdd = async (e) => {
     e?.preventDefault?.();
@@ -269,6 +286,28 @@ export default function FapWaterMealPage({
         },
       });
       success("Запись удалена");
+      onRefetch?.();
+    } catch (err) {
+      notifyError(err?.graphQLErrors?.[0]?.message || "Ошибка при удалении");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selected.length === 0) return;
+    const ok = await confirm(`Удалить выбранных (${selected.length})?`);
+    if (!ok) return;
+    try {
+      setSaving(true);
+      const sorted = [...selected].sort((a, b) => b - a);
+      for (const idx of sorted) {
+        await removePerson({
+          variables: { requestId: request.id, service: serviceKind, personIndex: idx },
+        });
+      }
+      success(`Удалено: ${selected.length}`);
+      clearSel();
       onRefetch?.();
     } catch (err) {
       notifyError(err?.graphQLErrors?.[0]?.message || "Ошибка при удалении");
@@ -468,6 +507,34 @@ export default function FapWaterMealPage({
           </form>
         )}
 
+        {canMutate && filteredPeople.length > 0 && (
+          <div className={classes.selectionBar}>
+            <label className={classes.selectAllLabel}>
+              <input type="checkbox" checked={allSelected} onChange={toggleAll} />
+              <span>Выбрать все ({filteredPeople.length})</span>
+            </label>
+            {selected.length > 0 && (
+              <span className={classes.selectionCount}>Выбрано: {selected.length}</span>
+            )}
+            <span className={classes.spacer} />
+            {selected.length > 0 && (
+              <>
+                <button
+                  type="button"
+                  className={`${classes.bulkBtn} ${classes.bulkBtnDanger}`}
+                  onClick={handleBulkDelete}
+                  disabled={saving}
+                >
+                  <DeleteIcon /> Удалить выбранных
+                </button>
+                <button type="button" className={classes.clearSelBtn} onClick={clearSel}>
+                  Снять выбор
+                </button>
+              </>
+            )}
+          </div>
+        )}
+
         {/* List body */}
         <div className={classes.listBody}>
           {filteredPeople.length === 0 ? (
@@ -545,6 +612,15 @@ export default function FapWaterMealPage({
               }
               return (
                 <div key={p._idx} className={classes.row}>
+                  {canMutate && (
+                    <span className={classes.selectBox}>
+                      <input
+                        type="checkbox"
+                        checked={selected.includes(p._idx)}
+                        onChange={() => toggleSel(p._idx)}
+                      />
+                    </span>
+                  )}
                   <span className={classes.rowCheck}>
                     <CheckSvg />
                   </span>

@@ -3441,6 +3441,7 @@ export const GET_PASSENGER_REQUEST = gql`
             roomCategory
             roomKind
             personType
+            personCategory
             airlinePersonalId
             arrival
             departure
@@ -4100,6 +4101,25 @@ export const GET_HOTEL = gql`
         priceForAirline
         priceForAirReq
       }
+    }
+  }
+`;
+
+export const GET_FAP_HOTEL_TARIFFS = gql`
+  query FapHotelTariffs($id: ID!) {
+    hotel(id: $id) {
+      id
+      roomKind {
+        id
+        name
+        category
+        price
+        priceForAirline
+        priceForAirReq
+      }
+      mealPrice { breakfast lunch dinner }
+      mealPriceForAir { breakfast lunch dinner }
+      mealPriceForAirReq
     }
   }
 `;

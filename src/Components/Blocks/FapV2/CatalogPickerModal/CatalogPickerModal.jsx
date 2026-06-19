@@ -24,6 +24,7 @@ export default function CatalogPickerModal({
   onClose,
   savedPassengers = [],
   excludeKeys,
+  maxSelectable,
   loading = false,
   onConfirm,
 }) {
@@ -53,24 +54,32 @@ export default function CatalogPickerModal({
   }, [savedPassengers, search, exclude]);
 
   const selectableRows = rows.filter((r) => !r.disabled);
+  // Ограничение по свободным местам (отель/водитель). undefined → без лимита.
+  const limit =
+    typeof maxSelectable === "number" ? Math.max(0, maxSelectable) : Infinity;
+  const atLimit = selectedIds.size >= limit;
+  const cappedSelectable =
+    limit === Infinity ? selectableRows : selectableRows.slice(0, limit);
   const allSelected =
-    selectableRows.length > 0 &&
-    selectableRows.every((r) => selectedIds.has(r.person.personId));
+    cappedSelectable.length > 0 &&
+    cappedSelectable.every((r) => selectedIds.has(r.person.personId));
 
   const toggleOne = (id) =>
     setSelectedIds((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
-      else next.add(id);
+      else if (next.size < limit) next.add(id);
       return next;
     });
 
   const toggleAll = () =>
     setSelectedIds((prev) => {
-      const next = new Set(prev);
-      if (allSelected) selectableRows.forEach((r) => next.delete(r.person.personId));
-      else selectableRows.forEach((r) => next.add(r.person.personId));
-      return next;
+      if (allSelected) {
+        const next = new Set(prev);
+        cappedSelectable.forEach((r) => next.delete(r.person.personId));
+        return next;
+      }
+      return new Set(cappedSelectable.map((r) => r.person.personId));
     });
 
   const reset = () => {
@@ -116,11 +125,14 @@ export default function CatalogPickerModal({
           <input
             type="checkbox"
             checked={allSelected}
-            disabled={selectableRows.length === 0}
+            disabled={cappedSelectable.length === 0}
             onChange={toggleAll}
           />
           <span>
-            Выбрать все ({selectableRows.length})
+            Выбрать все ({cappedSelectable.length})
+            {limit !== Infinity && (
+              <span className={classes.selCount}> · свободно мест: {limit}</span>
+            )}
             {selectedIds.size > 0 && (
               <span className={classes.selCount}> · выбрано {selectedIds.size}</span>
             )}
@@ -138,7 +150,9 @@ export default function CatalogPickerModal({
                 <input
                   type="checkbox"
                   checked={selectedIds.has(person.personId)}
-                  disabled={disabled}
+                  disabled={
+                    disabled || (atLimit && !selectedIds.has(person.personId))
+                  }
                   onChange={() => toggleOne(person.personId)}
                 />
                 <span className={classes.avatar}>{initials(person.fullName)}</span>

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { useMutation } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import { InputMask } from "@react-input/mask";
 import * as XLSX from "xlsx";
 import Dialog from "@mui/material/Dialog";
@@ -16,6 +16,7 @@ import {
   RELOCATE_PASSENGER_REQUEST_HOTEL_PERSON,
   EVICT_PASSENGER_REQUEST_HOTEL_PERSON,
   SAVE_PASSENGER_REQUEST_HOTEL_REPORT,
+  GET_FAP_HOTEL_TARIFFS,
   getCookie,
 } from "../../../../../graphQL_requests";
 import { calculateEffectiveCostDays } from "../../../../utils/effectiveCostDays";
@@ -129,7 +130,38 @@ const emptyForm = {
   roomNumber: "",
   personType: "PASSENGER",
   airlinePersonalId: "",
+  personCategory: "ADULT",
 };
+
+const PERSON_CATEGORY_LABEL = { ADULT: "Взрослый", CHILD: "Ребёнок", INFANT: "Инфант" };
+const PERSON_CATEGORY_BADGE = {
+  CHILD: { bg: "#FEF3C7", color: "#B45309", label: "ребёнок" },
+  INFANT: { bg: "#E0F2FE", color: "#0369A1", label: "инфант" },
+};
+// всё, кроме CHILD/INFANT (в т.ч. undefined у легаси-гостей), считаем взрослым
+const normalizeCategory = (v) => (v === "CHILD" || v === "INFANT" ? v : "ADULT");
+
+function CategoryBadge({ category }) {
+  const cfg = PERSON_CATEGORY_BADGE[category];
+  if (!cfg) return null;
+  return (
+    <span
+      style={{
+        marginLeft: 8,
+        padding: "1px 8px",
+        borderRadius: 8,
+        fontSize: 11,
+        fontWeight: 500,
+        whiteSpace: "nowrap",
+        verticalAlign: "middle",
+        background: cfg.bg,
+        color: cfg.color,
+      }}
+    >
+      {cfg.label}
+    </span>
+  );
+}
 
 export default function FapHotelPage({
   request,
@@ -182,6 +214,7 @@ export default function FapHotelPage({
   const personDataRef = useRef(personData);
   const peopleRef = useRef([]);
   const saveTimerRef = useRef(null);
+  const reconciledKeyRef = useRef(null);
   // persistReportRef нужен для cleanup'a на размонтирование — обычное замыкание
   // useEffect([], ...) видит persistReport времени монтирования, а мы хотим вызвать
   // АКТУАЛЬНЫЙ с up-to-date зависимостями (requestId, mutation client и т.д.).
@@ -225,10 +258,86 @@ export default function FapHotelPage({
   const people = hotel?.people ?? [];
   useEffect(() => { peopleRef.current = people; }, [people]);
 
+  const { data: hotelTariffData, loading: hotelTariffLoading } = useQuery(
+    GET_FAP_HOTEL_TARIFFS,
+    { variables: { id: hotel?.hotelId }, skip: !hotel?.hotelId }
+  );
+
+  const hotelTariffs = useMemo(() => {
+    const h = hotelTariffData?.hotel;
+    if (!h || !Array.isArray(h.roomKind)) return [];
+    const meals = h.mealPriceForAirReq ? h.mealPriceForAir : h.mealPrice;
+    const b = toNum(meals?.breakfast), l = toNum(meals?.lunch), d = toNum(meals?.dinner);
+    return h.roomKind.map((rk) => ({
+      id: rk.id,
+      name: rk.name || "Без названия",
+      source: "hotel",
+      draft: false,
+      breakfast: b,
+      lunch: l,
+      dinner: d,
+      foodCost: b + l + d,
+      accommodationCost: rk.priceForAirReq ? toNum(rk.priceForAirline ?? rk.price) : toNum(rk.price),
+    }));
+  }, [hotelTariffData]);
+
+  const hotelTariffsReady = !hotel?.hotelId || !hotelTariffLoading;
+
+  const findTariff = useCallback(
+    (id) => tariffs.find((t) => t.id === id) || hotelTariffs.find((t) => t.id === id) || null,
+    [tariffs, hotelTariffs]
+  );
+
+  const reportGroups = useMemo(() => {
+    const groups = [];
+    const byRoom = new Map();
+    people.forEach((person, i) => {
+      const pd = personData[i] ?? emptyPD(person, hotelIndex, plan);
+      const room = (pd.roomNumber ?? "").trim();
+      const member = {
+        person,
+        index: i,
+        pd,
+        food: toNum(pd.breakfast) + toNum(pd.lunch) + toNum(pd.dinner),
+      };
+      if (!room) {
+        groups.push({ key: `__noroom_${i}`, roomNumber: "", members: [member], noRoom: true });
+      } else if (byRoom.has(room)) {
+        byRoom.get(room).members.push(member);
+      } else {
+        const g = { key: room, roomNumber: room, members: [member], noRoom: false };
+        byRoom.set(room, g);
+        groups.push(g);
+      }
+    });
+    return groups.map((g) => {
+      const accommodation = Math.max(0, ...g.members.map((m) => toNum(m.pd.accommodationCost)));
+      const food = g.members.reduce((s, m) => s + m.food, 0);
+      const withTariff = g.members.find((m) => findTariff(m.pd.tariffId));
+      const tariffName = withTariff ? findTariff(withTariff.pd.tariffId)?.name ?? "" : "";
+      return {
+        ...g,
+        memberIndices: g.members.map((m) => m.index),
+        accommodation,
+        food,
+        total: accommodation + food,
+        tariffName,
+      };
+    });
+  }, [people, personData, hotelIndex, plan, findTariff]);
+
   const savedPassengers = request?.savedPassengers || [];
+  // «уже добавлен» — по всей услуге проживания (любая гостиница), а не только текущая:
+  // человек, размещённый в другой гостинице заявки, не должен предлагаться к повторному заселению.
   const excludeKeys = useMemo(
-    () => new Set(people.map((p) => personKey(p)).filter(Boolean)),
-    [people]
+    () =>
+      new Set(
+        (request?.livingService?.hotels ?? [])
+          .flatMap((h) => h?.people ?? [])
+          .map((p) => personKey(p))
+          .filter(Boolean)
+      ),
+    [request?.livingService?.hotels]
   );
 
   const handleCatalogConfirm = async (selected) => {
@@ -279,6 +388,16 @@ export default function FapHotelPage({
     );
   }, [indexed, search, personMode]);
 
+  const allSelected =
+    filteredPeople.length > 0 && filteredPeople.every((p) => selected.includes(p._idx));
+  const toggleAll = () =>
+    setSelected((prev) => {
+      const ids = filteredPeople.map((p) => p._idx);
+      const all = ids.every((i) => prev.includes(i));
+      if (all) return prev.filter((i) => !ids.includes(i));
+      return [...new Set([...prev, ...ids])].sort((a, b) => a - b);
+    });
+
   const crewRoster = request?.crewMembers || [];
   const assignedCrewIds = useMemo(
     () =>
@@ -307,11 +426,21 @@ export default function FapHotelPage({
   // ── Report initialization ──
   useEffect(() => {
     if (!request || !hotel) return;
+    if (!hotelTariffsReady) return;
+    const reconcileKey = `${request?.id}:${hotelIndex}`;
+    if (reconciledKeyRef.current === reconcileKey) return;
+    reconciledKeyRef.current = reconcileKey;
     const saved = (request.hotelReports ?? []).find((r) => r.hotelIndex === Number(hotelIndex));
     const savedRows = saved?.reportRows ?? [];
 
     const priceKey = (r) =>
       [toNum(r.breakfast), toNum(r.lunch), toNum(r.dinner), toNum(r.foodCost), toNum(r.accommodationCost)].join("|");
+
+    const matchHotelTariff = (row) => {
+      const rowName = [row.roomCategory, row.roomKind].filter(Boolean).join(" / ");
+      const k = priceKey(row);
+      return hotelTariffs.find((ht) => ht.name === rowName && priceKey(ht) === k) || null;
+    };
 
     if (savedRows.length > 0) {
       const tariffByKey = new Map();
@@ -322,6 +451,7 @@ export default function FapHotelPage({
         // но при следующем входе тариф возвращался инференцией).
         const hasName = (r.roomCategory || "").trim() || (r.roomKind || "").trim();
         if (!hasName) return;
+        if (matchHotelTariff(r)) return;
 
         const k = priceKey(r);
         if (!tariffByKey.has(k)) {
@@ -362,7 +492,7 @@ export default function FapHotelPage({
         if (idx < 0) return;
         consumed.add(idx);
         const k = priceKey(row);
-        const t = restored.find((tt) => priceKey(tt) === k);
+        const t = matchHotelTariff(row) || restored.find((tt) => priceKey(tt) === k);
         data[idx] = {
           roomNumber: row.roomNumber ?? "",
           daysCount: toNum(row.daysCount),
@@ -384,7 +514,7 @@ export default function FapHotelPage({
       setTariffs([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [request?.id, hotelIndex]);
+  }, [request?.id, hotelIndex, hotelTariffsReady]);
 
   // ── Persistence helpers ──
   // Сериализация текущих тарифов + personData в строки отчёта.
@@ -414,7 +544,9 @@ export default function FapHotelPage({
       }));
     const personRows = currentPeople.map((person, i) => {
       const pd = currentPersonData[i] ?? emptyPD(person, hotelIndex, plan);
-      const tariff = currentTariffs.find((tt) => tt.id === pd.tariffId);
+      const tariff =
+        currentTariffs.find((tt) => tt.id === pd.tariffId) ||
+        hotelTariffs.find((tt) => tt.id === pd.tariffId);
       return {
         fullName: person.fullName ?? "",
         roomNumber: pd.roomNumber ?? "",
@@ -429,7 +561,7 @@ export default function FapHotelPage({
       };
     });
     return [...personRows, ...ghostRows];
-  }, [hotelIndex, plan]);
+  }, [hotelIndex, plan, hotelTariffs]);
 
   const persistReport = useCallback(async () => {
     if (!request?.id) return;
@@ -532,10 +664,13 @@ export default function FapHotelPage({
           }));
         const personRows = people.map((person, i) => {
           const pd = newPersonData[i] ?? emptyPD(person, hotelIndex, plan);
+          const tariff =
+            newTariffs.find((tt) => tt.id === pd.tariffId) ||
+            hotelTariffs.find((tt) => tt.id === pd.tariffId);
           return {
             fullName: person.fullName ?? "",
             roomNumber: pd.roomNumber,
-            roomCategory: "",
+            roomCategory: tariff?.name ?? "",
             roomKind: "",
             daysCount: toNum(pd.daysCount),
             breakfast: toNum(pd.breakfast),
@@ -560,7 +695,7 @@ export default function FapHotelPage({
         setSaving(false);
       }
     },
-    [tariffs, personData, people, hotelIndex, plan, request?.id, saveReport, notifyError]
+    [tariffs, hotelTariffs, personData, people, hotelIndex, plan, request?.id, saveReport, notifyError]
   );
   const updateTariff = useCallback((tariffId, field, value) => {
     let updated = null;
@@ -652,7 +787,9 @@ export default function FapHotelPage({
           }));
         const personRows = people.map((person, i) => {
           const pd = personData[i] ?? emptyPD(person, hotelIndex, plan);
-          const tariff = newTariffs.find((tt) => tt.id === pd.tariffId);
+          const tariff =
+            newTariffs.find((tt) => tt.id === pd.tariffId) ||
+            hotelTariffs.find((tt) => tt.id === pd.tariffId);
           return {
             fullName: person.fullName ?? "",
             roomNumber: pd.roomNumber,
@@ -684,6 +821,7 @@ export default function FapHotelPage({
     },
     [
       tariffs,
+      hotelTariffs,
       personData,
       people,
       hotelIndex,
@@ -696,7 +834,7 @@ export default function FapHotelPage({
   );
   const applyTariffToAll = useCallback(
     (tariffId) => {
-      const t = tariffs.find((x) => x.id === tariffId);
+      const t = findTariff(tariffId);
       if (!t) return;
       // Считаем новое состояние явно и сразу пишем в state и в ref —
       // scheduleSave ниже читает personDataRef и должен видеть свежие данные.
@@ -717,11 +855,11 @@ export default function FapHotelPage({
       setPersonData(next);
       scheduleSave();
     },
-    [tariffs, scheduleSave, people, hotelIndex, plan]
+    [findTariff, scheduleSave, people, hotelIndex, plan]
   );
   const applyTariffToPerson = useCallback(
     (personIndex, tariffId) => {
-      const t = tariffs.find((x) => x.id === tariffId);
+      const t = findTariff(tariffId);
       const prev = personDataRef.current;
       const base =
         prev[personIndex] ?? emptyPD(people[personIndex], hotelIndex, plan);
@@ -752,7 +890,7 @@ export default function FapHotelPage({
       setPersonData(next);
       scheduleSave();
     },
-    [tariffs, scheduleSave, people, hotelIndex, plan]
+    [findTariff, scheduleSave, people, hotelIndex, plan]
   );
   const updatePersonReport = useCallback((personIndex, field, value) => {
     const prev = personDataRef.current;
@@ -769,15 +907,28 @@ export default function FapHotelPage({
     scheduleSave();
   }, [scheduleSave, people, hotelIndex, plan]);
 
+  const updateRoomAccommodation = useCallback((memberIndices, value) => {
+    const prev = personDataRef.current;
+    const next = { ...prev };
+    memberIndices.forEach((idx) => {
+      const base = next[idx] ?? emptyPD(people[idx], hotelIndex, plan);
+      next[idx] = { ...base, accommodationCost: value };
+    });
+    personDataRef.current = next;
+    setPersonData(next);
+    scheduleSave();
+  }, [people, hotelIndex, plan, scheduleSave]);
+
   const reportRows = useMemo(
     () =>
       people.map((person, i) => {
         const pd = personData[i] ?? emptyPD(person, hotelIndex, plan);
-        const tariff = tariffs.find((t) => t.id === pd.tariffId);
+        const tariff = findTariff(pd.tariffId);
         return {
           personIndex: i,
           fullName: person.fullName ?? "",
           personType: person.personType === "CREW" ? "CREW" : "PASSENGER",
+          personCategory: normalizeCategory(person.personCategory),
           roomNumber: pd.roomNumber,
           roomCategory: tariff?.name ?? "",
           roomKind: "",
@@ -789,21 +940,21 @@ export default function FapHotelPage({
           accommodationCost: toNum(pd.accommodationCost),
         };
       }),
-    [people, personData, tariffs, hotelIndex, plan]
+    [people, personData, findTariff, hotelIndex, plan]
   );
 
   const grandTotal = useMemo(
-    () => reportRows.reduce((s, r) => s + toNum(r.foodCost) + toNum(r.accommodationCost), 0),
-    [reportRows]
+    () => reportGroups.reduce((s, g) => s + g.total, 0),
+    [reportGroups]
   );
 
-  const filteredReportPeople = useMemo(() => {
-    if (!reportSearch.trim()) return people.map((p, i) => ({ person: p, index: i }));
+  const visibleGroups = useMemo(() => {
     const q = reportSearch.trim().toLowerCase();
-    return people
-      .map((p, i) => ({ person: p, index: i }))
-      .filter(({ person }) => (person.fullName || "").toLowerCase().includes(q));
-  }, [people, reportSearch]);
+    if (!q) return reportGroups;
+    return reportGroups
+      .map((g) => ({ ...g, members: g.members.filter((m) => (m.person.fullName || "").toLowerCase().includes(q)) }))
+      .filter((g) => g.members.length > 0);
+  }, [reportGroups, reportSearch]);
 
   const boundCount = useMemo(
     () => reportRows.filter((r) => r.roomCategory).length,
@@ -850,6 +1001,7 @@ export default function FapHotelPage({
             personType: addForm.personType === "CREW" ? "CREW" : "PASSENGER",
             airlinePersonalId:
               addForm.personType === "CREW" ? addForm.airlinePersonalId || null : null,
+            personCategory: addForm.personType === "CREW" ? "ADULT" : addForm.personCategory,
           },
         },
       });
@@ -871,6 +1023,7 @@ export default function FapHotelPage({
       roomNumber: p.roomNumber || "",
       personType: p.personType === "CREW" ? "CREW" : "PASSENGER",
       airlinePersonalId: p.airlinePersonalId || "",
+      personCategory: normalizeCategory(p.personCategory),
     });
     setAdding(false);
   };
@@ -898,6 +1051,7 @@ export default function FapHotelPage({
             personType: editForm.personType === "CREW" ? "CREW" : "PASSENGER",
             airlinePersonalId:
               editForm.personType === "CREW" ? editForm.airlinePersonalId || null : null,
+            personCategory: editForm.personType === "CREW" ? "ADULT" : editForm.personCategory,
           },
         },
       });
@@ -1086,17 +1240,32 @@ export default function FapHotelPage({
 
   const handleExport = () => {
     const headers = [
-      "ID", "ФИО", "Тип", "Номер", "Тариф", "Суток",
+      "ID", "ФИО", "Тип", "Категория", "Номер", "Тариф", "Суток",
       "Завтрак", "Обед", "Ужин", "Ст-ть питания", "Ст-ть проживания", "Итого",
     ];
-    const dataRows = reportRows.map((row, i) => [
-      i + 1, row.fullName,
-      PERSON_TYPE_CONFIG[row.personType === "CREW" ? "CREW" : "PASSENGER"].label,
-      row.roomNumber, row.roomCategory, toNum(row.daysCount),
-      toNum(row.breakfast), toNum(row.lunch), toNum(row.dinner),
-      toNum(row.foodCost), toNum(row.accommodationCost),
-      toNum(row.foodCost) + toNum(row.accommodationCost),
-    ]);
+    const dataRows = [];
+    let n = 0;
+    reportGroups.forEach((g) => {
+      g.members.forEach((m, mi) => {
+        n += 1;
+        const pd = m.pd;
+        const acc = mi === 0 ? toNum(g.accommodation) : 0;
+        const tariffName = findTariff(pd.tariffId)?.name ?? "";
+        dataRows.push([
+          n,
+          m.person.fullName ?? "",
+          PERSON_TYPE_CONFIG[m.person.personType === "CREW" ? "CREW" : "PASSENGER"].label,
+          PERSON_CATEGORY_LABEL[normalizeCategory(m.person.personCategory)] ?? "Взрослый",
+          g.roomNumber || "",
+          tariffName,
+          toNum(pd.daysCount),
+          toNum(pd.breakfast), toNum(pd.lunch), toNum(pd.dinner),
+          m.food,
+          acc,
+          m.food + acc,
+        ]);
+      });
+    });
     const aoa = [headers, ...dataRows, [], ["Итого:", grandTotal]];
     const ws = XLSX.utils.aoa_to_sheet(aoa);
     const wb = XLSX.utils.book_new();
@@ -1139,6 +1308,18 @@ export default function FapHotelPage({
               placeholder="ФИО"
               disabled={editForm.personType === "CREW"}
             />
+            {editForm.personType !== "CREW" && (
+              <select
+                className={classes.editInput}
+                style={{ maxWidth: 140 }}
+                value={editForm.personCategory}
+                onChange={(e) => setEditForm((f) => ({ ...f, personCategory: e.target.value }))}
+              >
+                <option value="ADULT">Взрослый</option>
+                <option value="CHILD">Ребёнок</option>
+                <option value="INFANT">Инфант</option>
+              </select>
+            )}
           </div>
           <InputMask
             className={classes.editInput}
@@ -1201,6 +1382,7 @@ export default function FapHotelPage({
             <div className={classes.guestName}>
               {p.fullName || "—"}
               {p.personType === "CREW" && <PersonBadge type="CREW" />}
+              {p.personType !== "CREW" && <CategoryBadge category={p.personCategory} />}
             </div>
           </div>
         </div>
@@ -1283,6 +1465,18 @@ export default function FapHotelPage({
             onChange={(e) => setAddForm((f) => ({ ...f, fullName: e.target.value }))}
             placeholder="ФИО пассажира"
           />
+        )}
+        {addForm.personType !== "CREW" && (
+          <select
+            className={classes.editInput}
+            style={{ maxWidth: 140 }}
+            value={addForm.personCategory}
+            onChange={(e) => setAddForm((f) => ({ ...f, personCategory: e.target.value }))}
+          >
+            <option value="ADULT">Взрослый</option>
+            <option value="CHILD">Ребёнок</option>
+            <option value="INFANT">Инфант</option>
+          </select>
         )}
       </div>
       <InputMask
@@ -1515,7 +1709,11 @@ export default function FapHotelPage({
 
             <div className={classes.guestTable}>
               <div className={classes.tableHead}>
-                {canMutateGuests && <div className={classes.colCheck} />}
+                {canMutateGuests && (
+                  <div className={classes.colCheck}>
+                    <input type="checkbox" checked={allSelected} onChange={toggleAll} />
+                  </div>
+                )}
                 <div>Гость</div>
                 <div>Телефон</div>
                 <div>Номер</div>
@@ -1650,6 +1848,55 @@ export default function FapHotelPage({
                 </div>
               ))
             )}
+            {hotelTariffs.length > 0 && (
+              <>
+                <div className={classes.tariffsHead} style={{ marginTop: 16 }}>
+                  <p className={classes.tariffsHint}>
+                    Тарифы гостиницы — подставляются из карточки гостиницы, доступны для назначения в «Отчёте».
+                  </p>
+                </div>
+                {hotelTariffs.map((t) => (
+                  <div key={t.id} className={classes.tariffCard}>
+                    <div className={classes.tariffHead}>
+                      <span className={classes.draftBadge} style={{ background: "#EAF1FB", color: "#0057C2" }}>
+                        из гостиницы
+                      </span>
+                      <input className={classes.tariffName} value={t.name ?? ""} readOnly />
+                    </div>
+                    <div className={classes.tariffFields}>
+                      {[
+                        ["breakfast", "Завтрак"],
+                        ["lunch", "Обед"],
+                        ["dinner", "Ужин"],
+                        ["foodCost", "Ст-ть питания", true, true],
+                        ["accommodationCost", "Ст-ть проживания", true],
+                      ].map(([key, label, accent]) => {
+                        const displayVal =
+                          key === "foodCost"
+                            ? toNum(t.breakfast) + toNum(t.lunch) + toNum(t.dinner)
+                            : t[key];
+                        return (
+                          <label key={key} className={classes.tariffField}>
+                            <span className={classes.tariffFieldLabel}>{label}</span>
+                            <div className={classes.tariffInputWrap}>
+                              <input
+                                type="number"
+                                min={0}
+                                value={displayVal ? displayVal : ""}
+                                readOnly
+                                placeholder="0"
+                                className={accent ? classes.tariffInputAccent : classes.tariffInput}
+                              />
+                              <span className={classes.tariffCurrency}>₽</span>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </>
+            )}
           </div>
         )}
 
@@ -1691,160 +1938,120 @@ export default function FapHotelPage({
               <div className={classes.emptyRow}>Гости ещё не добавлены</div>
             ) : (
               <div className={classes.reportTableWrap}>
-                <div className={classes.reportTableHead}>
-                  <div>#</div>
-                  <div>Гость</div>
-                  <div>Номер</div>
-                  <div className={classes.numRight}>Суток</div>
-                  <div>Тариф</div>
-                  <div className={classes.numRight}>Завтрак</div>
-                  <div className={classes.numRight}>Обед</div>
-                  <div className={classes.numRight}>Ужин</div>
-                  <div className={classes.numRight}>Питание</div>
-                  <div className={classes.numRight}>Проживание</div>
-                  <div className={classes.numRight}>Итого</div>
-                </div>
-                <div className={classes.reportTableBody}>
-                  {filteredReportPeople.map(({ person, index: i }, displayIdx) => {
-                    const pd = personData[i] ?? emptyPD(person, hotelIndex, plan);
-                    const computedFood =
-                      toNum(pd.breakfast) + toNum(pd.lunch) + toNum(pd.dinner);
-                    const total = computedFood + toNum(pd.accommodationCost);
-                    const unbound = !pd.tariffId;
+                <div className={classes.reportGroups}>
+                  {visibleGroups.map((g) => {
+                    const memberIndices = g.memberIndices;
                     return (
-                      <div
-                        key={i}
-                        className={`${classes.reportRow} ${unbound ? classes.reportRowUnbound : ""}`}
-                      >
-                        <div className={classes.cellIdx}>{displayIdx + 1}</div>
-                        <div className={classes.reportCellName}>
-                          <span
-                            className={classes.avatar}
-                            style={{
-                              background: person.personType === "CREW" ? "#8B5CF6" : LIV,
-                              width: 28,
-                              height: 28,
-                            }}
-                          >
-                            {initials(person.fullName)}
+                      <div key={g.key} className={`${classes.roomGroup} ${g.noRoom ? classes.roomGroupNoRoom : ""}`}>
+                        <div className={classes.roomHead}>
+                          <span className={classes.roomNo}>
+                            {g.noRoom ? <span className={classes.noRoomBadge}>Без номера</span> : <>№ {g.roomNumber}</>}
                           </span>
-                          <span className={classes.reportName}>
-                            {person.fullName || "—"}
+                          {g.tariffName && <span className={classes.roomCat}>{g.tariffName}</span>}
+                          <span className={classes.roomAccWrap}>
+                            <span className={classes.roomAccLabel}>проживание{g.noRoom ? "" : " / номер"}</span>
+                            <input
+                              type="number"
+                              min={0}
+                              className={classes.roomAccInput}
+                              value={g.accommodation ? g.accommodation : ""}
+                              onChange={(e) => canEdit && updateRoomAccommodation(memberIndices, e.target.value)}
+                              readOnly={!canEdit}
+                            />
+                            <span className={classes.roomAccCur}>₽</span>
                           </span>
-                          {person.personType === "CREW" && (
-                            <span className={classes.reportBadge}>
-                              <PersonBadge type="CREW" />
-                            </span>
-                          )}
+                          <span className={classes.roomTotalVal}>{g.total > 0 ? fmt(g.total) : "—"}</span>
                         </div>
-                        <div>
-                          <input
-                            type="text"
-                            className={classes.cellInput}
-                            value={pd.roomNumber ?? ""}
-                            onChange={(e) =>
-                              canEdit && updatePersonReport(i, "roomNumber", e.target.value)
-                            }
-                            readOnly={!canEdit}
-                            placeholder="№"
-                          />
+                        <div className={classes.memberColHead}>
+                          <span>Гость</span>
+                          <span>Номер</span>
+                          <span>Тариф</span>
+                          <span className={classes.numRight}>Сут.</span>
+                          <span className={classes.numRight}>Завтр.</span>
+                          <span className={classes.numRight}>Обед</span>
+                          <span className={classes.numRight}>Ужин</span>
+                          <span className={classes.numRight}>Питание</span>
                         </div>
-                        <div>
-                          <input
-                            type="number"
-                            min={0}
-                            step={0.5}
-                            className={classes.cellInputNum}
-                            value={pd.daysCount ? pd.daysCount : ""}
-                            onChange={(e) =>
-                              canEdit && updatePersonReport(i, "daysCount", e.target.value)
-                            }
-                            readOnly={!canEdit}
-                          />
-                        </div>
-                        <div>
-                          <select
-                            className={`${classes.tariffSelect} ${unbound ? classes.tariffSelectUnbound : ""}`}
-                            value={pd.tariffId || ""}
-                            onChange={(e) => canEdit && applyTariffToPerson(i, e.target.value)}
-                            disabled={!canEdit}
-                          >
-                            <option value="">Выбрать тариф</option>
-                            {tariffs.filter((t) => !t.draft).map((t) => (
-                              <option key={t.id} value={t.id}>
-                                {t.name || "Без названия"}
-                              </option>
-                            ))}
-                          </select>
-                        </div>
-                        <div>
-                          <input
-                            type="number"
-                            min={0}
-                            className={classes.cellInputNum}
-                            value={pd.breakfast ? pd.breakfast : ""}
-                            onChange={(e) =>
-                              canEdit && updatePersonReport(i, "breakfast", e.target.value)
-                            }
-                            readOnly={!canEdit}
-                          />
-                        </div>
-                        <div>
-                          <input
-                            type="number"
-                            min={0}
-                            className={classes.cellInputNum}
-                            value={pd.lunch ? pd.lunch : ""}
-                            onChange={(e) =>
-                              canEdit && updatePersonReport(i, "lunch", e.target.value)
-                            }
-                            readOnly={!canEdit}
-                          />
-                        </div>
-                        <div>
-                          <input
-                            type="number"
-                            min={0}
-                            className={classes.cellInputNum}
-                            value={pd.dinner ? pd.dinner : ""}
-                            onChange={(e) =>
-                              canEdit && updatePersonReport(i, "dinner", e.target.value)
-                            }
-                            readOnly={!canEdit}
-                          />
-                        </div>
-                        <div>
-                          {(() => {
-                            const computedFood =
-                              toNum(pd.breakfast) + toNum(pd.lunch) + toNum(pd.dinner);
-                            return (
-                              <input
-                                type="number"
-                                min={0}
-                                className={classes.cellInputNum}
-                                value={computedFood ? computedFood : ""}
-                                readOnly
-                                title="Сумма завтрака, обеда и ужина"
-                              />
-                            );
-                          })()}
-                        </div>
-                        <div>
-                          <input
-                            type="number"
-                            min={0}
-                            className={classes.cellInputNum}
-                            value={pd.accommodationCost ? pd.accommodationCost : ""}
-                            onChange={(e) =>
-                              canEdit &&
-                              updatePersonReport(i, "accommodationCost", e.target.value)
-                            }
-                            readOnly={!canEdit}
-                          />
-                        </div>
-                        <div className={`${classes.numRight} ${classes.rowTotal}`}>
-                          {total > 0 ? fmt(total) : "—"}
-                        </div>
+                        {g.members.map((m) => {
+                          const { person, index: i, pd } = m;
+                          const unbound = !pd.tariffId;
+                          return (
+                            <div key={i} className={classes.memberRow}>
+                              <div className={classes.reportCellName}>
+                                <span
+                                  className={classes.avatar}
+                                  style={{ background: person.personType === "CREW" ? "#8B5CF6" : LIV, width: 26, height: 26 }}
+                                >
+                                  {initials(person.fullName)}
+                                </span>
+                                <span className={classes.reportName}>{person.fullName || "—"}</span>
+                                {person.personType === "CREW" && <span className={classes.reportBadge}><PersonBadge type="CREW" /></span>}
+                                {person.personType !== "CREW" && <CategoryBadge category={person.personCategory} />}
+                              </div>
+                              <div>
+                                <input
+                                  type="text"
+                                  className={classes.cellInput}
+                                  value={pd.roomNumber ?? ""}
+                                  onChange={(e) => canEdit && updatePersonReport(i, "roomNumber", e.target.value)}
+                                  readOnly={!canEdit}
+                                  placeholder="№"
+                                />
+                              </div>
+                              <div>
+                                <select
+                                  className={`${classes.tariffSelect} ${unbound ? classes.tariffSelectUnbound : ""}`}
+                                  value={pd.tariffId || ""}
+                                  onChange={(e) => canEdit && applyTariffToPerson(i, e.target.value)}
+                                  disabled={!canEdit}
+                                >
+                                  <option value="">Выбрать тариф</option>
+                                  {tariffs.filter((t) => !t.draft).length > 0 && (
+                                    <optgroup label="Тарифы заявки">
+                                      {tariffs.filter((t) => !t.draft).map((t) => (
+                                        <option key={t.id} value={t.id}>{t.name || "Без названия"}</option>
+                                      ))}
+                                    </optgroup>
+                                  )}
+                                  {hotelTariffs.length > 0 && (
+                                    <optgroup label="Тарифы гостиницы">
+                                      {hotelTariffs.map((t) => (
+                                        <option key={t.id} value={t.id}>{t.name || "Без названия"}</option>
+                                      ))}
+                                    </optgroup>
+                                  )}
+                                </select>
+                              </div>
+                              <div>
+                                <input type="number" min={0} step={0.5} className={classes.cellInputNum}
+                                  value={pd.daysCount ? pd.daysCount : ""}
+                                  onChange={(e) => canEdit && updatePersonReport(i, "daysCount", e.target.value)}
+                                  readOnly={!canEdit} />
+                              </div>
+                              <div>
+                                <input type="number" min={0} className={classes.cellInputNum}
+                                  value={pd.breakfast ? pd.breakfast : ""}
+                                  onChange={(e) => canEdit && updatePersonReport(i, "breakfast", e.target.value)}
+                                  readOnly={!canEdit} />
+                              </div>
+                              <div>
+                                <input type="number" min={0} className={classes.cellInputNum}
+                                  value={pd.lunch ? pd.lunch : ""}
+                                  onChange={(e) => canEdit && updatePersonReport(i, "lunch", e.target.value)}
+                                  readOnly={!canEdit} />
+                              </div>
+                              <div>
+                                <input type="number" min={0} className={classes.cellInputNum}
+                                  value={pd.dinner ? pd.dinner : ""}
+                                  onChange={(e) => canEdit && updatePersonReport(i, "dinner", e.target.value)}
+                                  readOnly={!canEdit} />
+                              </div>
+                              <div className={`${classes.numRight} ${classes.memberFood}`}>
+                                {m.food > 0 ? fmt(m.food) : "—"}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     );
                   })}
@@ -1888,6 +2095,7 @@ export default function FapHotelPage({
         onClose={() => setCatalogOpen(false)}
         savedPassengers={savedPassengers}
         excludeKeys={excludeKeys}
+        maxSelectable={totalCap > 0 ? Math.max(0, totalCap - placed) : undefined}
         loading={saving}
         onConfirm={handleCatalogConfirm}
       />

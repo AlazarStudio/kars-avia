@@ -362,7 +362,7 @@
 .row,
 .editRow {
   display: grid;
-  grid-template-columns: 36px 1fr 200px 110px;
+  grid-template-columns: 32px 36px 1fr 200px 110px;
   align-items: center;
   gap: 12px;
   padding: 8px 16px;
@@ -760,4 +760,74 @@
   text-align: center;
   font-size: 14px;
   color: #94A3B8;
+}
+
+/* ── Bulk selection ── */
+.selectionBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background: #f4fbf8;
+  border-bottom: 1px solid #e4e4ef;
+}
+
+.selectionCount {
+  font-size: 12px;
+  font-weight: 700;
+  color: #10b981;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.bulkBtn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #e4e4ef;
+  background: #fff;
+  color: #0057c3;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.bulkBtn:hover { background: #f1f4fb; }
+
+.bulkBtnDanger { color: #ef4444; border-color: #fca5a5; }
+
+.bulkBtnDanger:hover { background: #fef2f2; }
+
+.clearSelBtn {
+  background: transparent;
+  border: none;
+  color: #545873;
+  font-size: 12px;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+
+.spacer { flex: 1; }
+
+.colCheck { display: flex; align-items: center; justify-content: center; }
+
+.colCheck input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #0057c3;
+}
+
+.selectBox { display: flex; align-items: center; justify-content: center; }
+
+.selectBox input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: #0057c3;
 }
