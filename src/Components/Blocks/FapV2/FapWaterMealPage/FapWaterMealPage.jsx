@@ -4,6 +4,7 @@ import { InputMask } from "@react-input/mask";
 import classes from "./FapWaterMealPage.module.css";
 import {
   ADD_PASSENGER_REQUEST_PERSON,
+  ADD_PASSENGER_REQUEST_PEOPLE,
   UPDATE_PASSENGER_REQUEST_PERSON,
   REMOVE_PASSENGER_REQUEST_PERSON,
   COMPLETE_PASSENGER_REQUEST_WATER_EARLY,
@@ -15,6 +16,7 @@ import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import FapActionButton from "../FapActionButton/FapActionButton";
+import CatalogPickerModal, { personKey } from "../CatalogPickerModal/CatalogPickerModal";
 import AddRepresentativeService from "../../AddRepresentativeService/AddRepresentativeService";
 import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
 import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
@@ -89,6 +91,7 @@ export default function FapWaterMealPage({
   const [showEarlyModal, setShowEarlyModal] = useState(false);
   const [showAddService, setShowAddService] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
 
   // editingIdx — индекс редактируемой строки (в исходном массиве people)
   const [editingIdx, setEditingIdx] = useState(null);
@@ -103,6 +106,9 @@ export default function FapWaterMealPage({
   const [removePerson] = useMutation(REMOVE_PASSENGER_REQUEST_PERSON, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
+  const [addPeople] = useMutation(ADD_PASSENGER_REQUEST_PEOPLE, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
   const [completeWaterEarly] = useMutation(
     COMPLETE_PASSENGER_REQUEST_WATER_EARLY,
     { context: { headers: { Authorization: `Bearer ${token}` } } }
@@ -115,6 +121,39 @@ export default function FapWaterMealPage({
   const people = service?.people || [];
   const planCount = service?.plan?.peopleCount ?? null;
   const remaining = planCount != null ? Math.max(0, planCount - people.length) : null;
+  const savedPassengers = request?.savedPassengers || [];
+  const excludeKeys = useMemo(
+    () => new Set(people.map((p) => personKey(p)).filter(Boolean)),
+    [people]
+  );
+
+  const handleCatalogConfirm = async (selected) => {
+    try {
+      setSaving(true);
+      const issuedAt = new Date().toISOString();
+      await addPeople({
+        variables: {
+          requestId: request.id,
+          service: serviceKind,
+          people: selected.map((p) => ({
+            personId: p.personId,
+            fullName: p.fullName,
+            phone: p.phone || null,
+            seat: p.seat || null,
+            issuedAt,
+          })),
+        },
+      });
+      success(`Добавлено ${selected.length}`);
+      setCatalogOpen(false);
+      onRefetch?.();
+    } catch (err) {
+      console.error("Error adding people from catalog", err);
+      notifyError(err?.graphQLErrors?.[0]?.message || "Ошибка при добавлении");
+    } finally {
+      setSaving(false);
+    }
+  };
   const pct = planCount && planCount > 0
     ? Math.min(100, Math.round((people.length / planCount) * 100))
     : 0;
@@ -415,6 +454,17 @@ export default function FapWaterMealPage({
             >
               <PlusSvg /> Добавить
             </button>
+            {savedPassengers.length > 0 && (
+              <button
+                type="button"
+                className={classes.quickAddBtn}
+                style={{ background: "#fff", color, border: `1px solid ${color}` }}
+                onClick={() => setCatalogOpen(true)}
+                disabled={saving}
+              >
+                Из каталога
+              </button>
+            )}
           </form>
         )}
 
@@ -568,6 +618,15 @@ export default function FapWaterMealPage({
         show={showLogs}
         onClose={() => setShowLogs(false)}
         passengerRequestId={request?.id}
+      />
+
+      <CatalogPickerModal
+        open={catalogOpen}
+        onClose={() => setCatalogOpen(false)}
+        savedPassengers={savedPassengers}
+        excludeKeys={excludeKeys}
+        loading={saving}
+        onConfirm={handleCatalogConfirm}
       />
     </div>
   );

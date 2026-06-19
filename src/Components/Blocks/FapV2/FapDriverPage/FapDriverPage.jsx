@@ -5,6 +5,7 @@ import { InputMask } from "@react-input/mask";
 import classes from "./FapDriverPage.module.css";
 import {
   ADD_PASSENGER_REQUEST_DRIVER_PERSON,
+  ADD_PASSENGER_REQUEST_DRIVER_PEOPLE,
   UPDATE_PASSENGER_REQUEST_DRIVER_PERSON,
   REMOVE_PASSENGER_REQUEST_DRIVER_PERSON,
   UPDATE_PASSENGER_REQUEST_DRIVER,
@@ -15,6 +16,7 @@ import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 import PersonTypeToggle from "../PersonTypeToggle/PersonTypeToggle";
 import PersonBadge from "../PersonBadge/PersonBadge";
+import CatalogPickerModal, { personKey } from "../CatalogPickerModal/CatalogPickerModal";
 import FapActionButton from "../FapActionButton/FapActionButton";
 import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
 import BusIcon from "../../../../shared/icons/BusIcon";
@@ -147,6 +149,7 @@ export default function FapDriverPage({
   const [editForm, setEditForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [showLogs, setShowLogs] = useState(false);
+  const [catalogOpen, setCatalogOpen] = useState(false);
   const [editingPickup, setEditingPickup] = useState(false);
   const [pickupDraft, setPickupDraft] = useState("");
   const [savingPickup, setSavingPickup] = useState(false);
@@ -160,6 +163,9 @@ export default function FapDriverPage({
   const [removePerson] = useMutation(REMOVE_PASSENGER_REQUEST_DRIVER_PERSON, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
+  const [addPeople] = useMutation(ADD_PASSENGER_REQUEST_DRIVER_PEOPLE, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
   const [updateDriver] = useMutation(UPDATE_PASSENGER_REQUEST_DRIVER, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
@@ -167,6 +173,38 @@ export default function FapDriverPage({
   const people = driver?.people || [];
   const passengers = people.filter((p) => p?.personType !== "CREW");
   const crew = people.filter((p) => p?.personType === "CREW");
+
+  const savedPassengers = request?.savedPassengers || [];
+  const excludeKeys = useMemo(
+    () => new Set(people.map((p) => personKey(p)).filter(Boolean)),
+    [people]
+  );
+
+  const handleCatalogConfirm = async (selected) => {
+    try {
+      setSaving(true);
+      await addPeople({
+        variables: {
+          requestId: request.id,
+          driverIndex: Number(driverIndex),
+          direction,
+          people: selected.map((p) => ({
+            personId: p.personId,
+            fullName: p.fullName,
+            phone: p.phone || undefined,
+            personType: "PASSENGER",
+          })),
+        },
+      });
+      success(`Добавлено ${selected.length}`);
+      setCatalogOpen(false);
+      onRefetch?.();
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при добавлении");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Crew roster minus those already assigned ANY driver in this direction
   const allAssignedCrewIds = useMemo(() => {
@@ -927,6 +965,16 @@ export default function FapDriverPage({
                     : "Добавить пассажира"}
                 </button>
               )}
+              {canEdit && !isCompleted && personMode !== "CREW" && savedPassengers.length > 0 && (
+                <button
+                  type="button"
+                  className={classes.primaryBtn}
+                  style={{ background: "#fff", color, border: `1px solid ${color}` }}
+                  onClick={() => setCatalogOpen(true)}
+                >
+                  <PlusSvg color={color} /> Из каталога
+                </button>
+              )}
             </div>
 
             <div className={classes.peopleTable}>
@@ -1025,6 +1073,14 @@ export default function FapDriverPage({
         show={showLogs}
         onClose={() => setShowLogs(false)}
         passengerRequestId={request?.id}
+      />
+      <CatalogPickerModal
+        open={catalogOpen}
+        onClose={() => setCatalogOpen(false)}
+        savedPassengers={savedPassengers}
+        excludeKeys={excludeKeys}
+        loading={saving}
+        onConfirm={handleCatalogConfirm}
       />
     </div>
   );

@@ -1,0 +1,35 @@
+.previewPage {
+  min-height: 100vh;
+  background: #f5f6fa;
+  display: flex;
+  flex-direction: column;
+}
+
+.previewHeader {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 32px;
+  background: #fff;
+  border-bottom: 1px solid #e4e4ef;
+}
+
+.previewLogo {
+  font-size: 20px;
+  font-weight: 700;
+  color: #545873;
+}
+
+.previewBody {
+  flex: 1;
+  padding: 24px 32px;
+}
+
+.previewError {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  color: #545873;
+  font-size: 18px;
+}

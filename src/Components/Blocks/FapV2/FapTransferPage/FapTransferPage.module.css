@@ -217,6 +217,7 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  flex-shrink: 0;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 

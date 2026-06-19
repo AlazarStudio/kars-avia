@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useLazyQuery } from "@apollo/client";
 
 import { TL_CANCELLATION_PENALTY, getCookie } from "../../../../graphQL_requests";
+import { fmtDateTime, tzLabel } from "../TravellinePage/shared/helpers";
 import MUILoader from "../MUILoader/MUILoader";
 import classes from "./TlCancelDialog.module.css";
 
@@ -66,6 +67,11 @@ export default function TlCancelDialog({ bookingId, onConfirm, onClose, confirmi
               )}
               {penalty.description && (
                 <div className={classes.boxText}>{penalty.description}</div>
+              )}
+              {penalty.deadline && (
+                <div className={classes.boxText}>
+                  Срок: {fmtDateTime(penalty.deadline)} ({tzLabel(penalty.timezone)})
+                </div>
               )}
             </div>
           ) : (

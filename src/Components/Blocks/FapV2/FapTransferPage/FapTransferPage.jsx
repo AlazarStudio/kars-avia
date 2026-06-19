@@ -364,6 +364,7 @@ export default function FapTransferPage({
               }
               onCopyLink={copyLink}
               onDelete={() => setDeleteDriverConfirm(idx)}
+              onRefetch={onRefetch}
               requestId={request.id}
               direction={direction}
               token={token}
@@ -434,6 +435,7 @@ function DriverCard({
   onOpen,
   onCopyLink,
   onDelete,
+  onRefetch,
   requestId,
   direction,
   token,
@@ -465,9 +467,18 @@ function DriverCard({
   const driverRef = useRef(driver);
   useEffect(() => { driverRef.current = driver; }, [driver]);
 
-  useEffect(() => { setVehicleTypeDraft(driver.vehicleType ?? ""); }, [driver.vehicleType]);
+  // Пока инпут в фокусе — не перезатираем draft значением из кэша:
+  // иначе refetch после автосейва может «откатить» только что напечатанное.
+  const vtFocused = useRef(false);
+  const rcFocused = useRef(false);
+
   useEffect(() => {
-    setReportCostDraft(driver.reportCost != null ? String(driver.reportCost) : "");
+    if (!vtFocused.current) setVehicleTypeDraft(driver.vehicleType ?? "");
+  }, [driver.vehicleType]);
+  useEffect(() => {
+    if (!rcFocused.current) {
+      setReportCostDraft(driver.reportCost != null ? String(driver.reportCost) : "");
+    }
   }, [driver.reportCost]);
 
   const savePatch = async (patch) => {
@@ -475,6 +486,9 @@ function DriverCard({
       await updateDriver({
         variables: { requestId, driverIndex: index, direction, patch },
       });
+      // Мутация возвращает только { id } — обновляем кэш родителя, чтобы
+      // отчёт и возврат на страницу видели сохранённое значение (не stale).
+      onRefetch?.();
     } catch (e) {
       console.error(e);
     }
@@ -520,11 +534,16 @@ function DriverCard({
     if (e.key === "Enter") { e.preventDefault(); e.currentTarget.blur(); }
   };
 
+  // Держим актуальные flush-функции в ref, чтобы cleanup на размонтировании
+  // не использовал устаревшее замыкание (draft из первого рендера).
+  const flushRef = useRef({ vt: flushVehicleType, rc: flushReportCost });
+  flushRef.current = { vt: flushVehicleType, rc: flushReportCost };
+
   // Флэш на размонтирование (навигация уходит со страницы — добиваем сейв).
   useEffect(() => {
     return () => {
-      if (vtTimer.current) { clearTimeout(vtTimer.current); flushVehicleType(); }
-      if (rcTimer.current) { clearTimeout(rcTimer.current); flushReportCost(); }
+      if (vtTimer.current) { clearTimeout(vtTimer.current); flushRef.current.vt(); }
+      if (rcTimer.current) { clearTimeout(rcTimer.current); flushRef.current.rc(); }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -647,7 +666,8 @@ function DriverCard({
             type="text"
             value={vehicleTypeDraft}
             onChange={onVehicleTypeChange}
-            onBlur={flushVehicleType}
+            onFocus={() => { vtFocused.current = true; }}
+            onBlur={() => { vtFocused.current = false; flushVehicleType(); }}
             onKeyDown={onEnterBlur}
             placeholder="автобус до 50 мест"
             disabled={!canEdit || isCompleted}
@@ -662,7 +682,8 @@ function DriverCard({
             step={1}
             value={reportCostDraft}
             onChange={onReportCostChange}
-            onBlur={flushReportCost}
+            onFocus={() => { rcFocused.current = true; }}
+            onBlur={() => { rcFocused.current = false; flushReportCost(); }}
             onKeyDown={onEnterBlur}
             placeholder="0"
             disabled={!canEdit || isCompleted}

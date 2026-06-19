@@ -10,6 +10,7 @@ import DialogActions from "@mui/material/DialogActions";
 import classes from "./FapHotelPage.module.css";
 import {
   ADD_PASSENGER_REQUEST_HOTEL_PERSON,
+  ADD_PASSENGER_REQUEST_HOTEL_PEOPLE,
   UPDATE_PASSENGER_REQUEST_HOTEL_PERSON,
   REMOVE_PASSENGER_REQUEST_HOTEL_PERSON,
   RELOCATE_PASSENGER_REQUEST_HOTEL_PERSON,
@@ -23,6 +24,7 @@ import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 import Button from "../../../Standart/Button/Button";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
+import CatalogPickerModal, { personKey } from "../CatalogPickerModal/CatalogPickerModal";
 import PersonTypeToggle from "../PersonTypeToggle/PersonTypeToggle";
 import PersonBadge from "../PersonBadge/PersonBadge";
 import HotelBedIcon from "../../../../shared/icons/HotelBedIcon";
@@ -157,6 +159,7 @@ export default function FapHotelPage({
   const [editForm, setEditForm] = useState(emptyForm);
   const [adding, setAdding] = useState(false);
   const [addForm, setAddForm] = useState(emptyForm);
+  const [catalogOpen, setCatalogOpen] = useState(false);
 
   // Relocate / Evict
   const [relocateState, setRelocateState] = useState(null);
@@ -199,6 +202,9 @@ export default function FapHotelPage({
   const [addPerson] = useMutation(ADD_PASSENGER_REQUEST_HOTEL_PERSON, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
+  const [addPeople] = useMutation(ADD_PASSENGER_REQUEST_HOTEL_PEOPLE, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
   const [updatePerson] = useMutation(UPDATE_PASSENGER_REQUEST_HOTEL_PERSON, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
@@ -218,6 +224,39 @@ export default function FapHotelPage({
   // ── Derived ──
   const people = hotel?.people ?? [];
   useEffect(() => { peopleRef.current = people; }, [people]);
+
+  const savedPassengers = request?.savedPassengers || [];
+  const excludeKeys = useMemo(
+    () => new Set(people.map((p) => personKey(p)).filter(Boolean)),
+    [people]
+  );
+
+  const handleCatalogConfirm = async (selected) => {
+    try {
+      setSaving(true);
+      await addPeople({
+        variables: {
+          requestId: request.id,
+          hotelIndex: Number(hotelIndex),
+          people: selected.map((p) => ({
+            personId: p.personId,
+            fullName: p.fullName,
+            phone: p.phone || null,
+            roomNumber: null,
+            personType: "PASSENGER",
+            airlinePersonalId: null,
+          })),
+        },
+      });
+      success(`Добавлено ${selected.length}`);
+      setCatalogOpen(false);
+      onRefetch?.();
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при добавлении");
+    } finally {
+      setSaving(false);
+    }
+  };
   const totalCap = hotel?.peopleCount ?? 0;
   const placed = people.length;
   const isFull = totalCap > 0 && placed >= totalCap;
@@ -1436,6 +1475,16 @@ export default function FapHotelPage({
                   <PlusSvg /> Добавить гостя
                 </button>
               )}
+              {canAdd && personMode !== "CREW" && savedPassengers.length > 0 && (
+                <button
+                  type="button"
+                  className={classes.primaryBtn}
+                  style={{ background: "#fff", color: "#0057C3", border: "1px solid #0057C3" }}
+                  onClick={() => setCatalogOpen(true)}
+                >
+                  <PlusSvg color="#0057C3" /> Из каталога
+                </button>
+              )}
             </div>
 
             {selected.length > 0 && (
@@ -1832,6 +1881,15 @@ export default function FapHotelPage({
         }
         cancelText="Отмена"
         saving={saving}
+      />
+
+      <CatalogPickerModal
+        open={catalogOpen}
+        onClose={() => setCatalogOpen(false)}
+        savedPassengers={savedPassengers}
+        excludeKeys={excludeKeys}
+        loading={saving}
+        onConfirm={handleCatalogConfirm}
       />
 
       <Dialog

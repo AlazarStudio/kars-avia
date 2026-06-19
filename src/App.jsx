@@ -39,6 +39,7 @@ import RepresentativeHotelDetailPage from "./Components/Pages/RepresentativeHote
 import RepresentativeHotelReportPage from "./Components/Pages/RepresentativeHotelReportPage/RepresentativeHotelReportPage";
 import RepresentativeDriverDetailPage from "./Components/Pages/RepresentativeDriverDetailPage/RepresentativeDriverDetailPage";
 import ExternalLogin from "./Components/Pages/ExternalLogin/ExternalLogin";
+import HotelPreview from "./Components/Pages/HotelPreview/HotelPreview";
 import FapLayout from "./Components/Pages/FapV2/FapLayout";
 import FapDetailPage from "./Components/Pages/FapV2/FapDetailPage";
 import FapReportPage from "./Components/Pages/FapV2/FapReportPage";
@@ -60,12 +61,20 @@ const TravellinePage = lazy(() =>
 function App() {
   const { user } = useAuth();
 
-  const authLink = setContext((operation, { context }) => {
-    // External login must run without Bearer so backend gets empty context
-    if (operation?.operationName === "AuthorizeExternalAuth") {
+  const authLink = setContext((operation, prevContext) => {
+    const { context } = prevContext ?? {};
+    // These operations control Authorization themselves (or run without Bearer).
+    // Hotel preview must NOT receive the logged-in admin's cookie token — it
+    // supplies its own preview-JWT via per-request context.headers, which we
+    // must preserve (read from prevContext.headers, not the undefined context).
+    if (
+      operation?.operationName === "AuthorizeExternalAuth" ||
+      operation?.operationName === "AuthorizeHotelPreview" ||
+      operation?.operationName === "HotelPreview"
+    ) {
       return {
         ...context,
-        headers: { ...(context?.headers || {}) },
+        headers: { ...(prevContext?.headers || {}) },
       };
     }
     const token = authService.getAccessToken();
@@ -122,6 +131,7 @@ function App() {
       <AirlineSystemBanner />
       <Routes>
         <Route path="/external-login" element={<ExternalLogin />} />
+        <Route path="/hotel-preview" element={<HotelPreview />} />
         {user ? (
           <Route path="/" element={<Layout />}>
             <Route index element={<Main_Page user={user} />} />

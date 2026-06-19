@@ -22,9 +22,9 @@ export const getCookie = (name) => {
   return token === undefined ? undefined : (token || undefined);
 };
 
-export const getMediaUrl = (path) => {
+export const getMediaUrl = (path, tokenOverride) => {
   if (!path) return null;
-  const token = getCookie("token");
+  const token = tokenOverride || getCookie("token");
   return `${server}${path}?token=${token}`;
 };
 
@@ -1935,6 +1935,30 @@ export const ADD_PASSENGER_REQUEST_PERSON = gql`
   }
 `;
 
+export const ADD_PASSENGER_REQUEST_PEOPLE = gql`
+  mutation AddPassengerRequestPeople($requestId: ID!, $service: PassengerWaterFoodKind!, $people: [PassengerServicePersonInput!]!) {
+    addPassengerRequestPeople(requestId: $requestId, service: $service, people: $people) {
+      id
+    }
+  }
+`;
+
+export const ADD_PASSENGER_REQUEST_HOTEL_PEOPLE = gql`
+  mutation AddPassengerRequestHotelPeople($requestId: ID!, $hotelIndex: Int!, $people: [PassengerServiceHotelPersonInput!]!) {
+    addPassengerRequestHotelPeople(requestId: $requestId, hotelIndex: $hotelIndex, people: $people) {
+      id
+    }
+  }
+`;
+
+export const ADD_PASSENGER_REQUEST_DRIVER_PEOPLE = gql`
+  mutation AddPassengerRequestDriverPeople($requestId: ID!, $driverIndex: Int!, $people: [PassengerServiceDriverPersonInput!]!, $direction: TransferDirection) {
+    addPassengerRequestDriverPeople(requestId: $requestId, driverIndex: $driverIndex, people: $people, direction: $direction) {
+      id
+    }
+  }
+`;
+
 export const UPDATE_PASSENGER_REQUEST_PERSON = gql`
   mutation UpdatePassengerRequestPerson(
     $requestId: ID!
@@ -3354,6 +3378,15 @@ export const GET_PASSENGER_REQUEST = gql`
         gender
         phone
       }
+      savedPassengers {
+        personId
+        fullName
+        phone
+        seat
+        personType
+        airlinePersonalId
+        addedAt
+      }
       createdBy {
         id
         name
@@ -3401,6 +3434,7 @@ export const GET_PASSENGER_REQUEST = gql`
           linkCRM
           linkPWA
           people {
+            personId
             fullName
             phone
             roomNumber
@@ -3452,6 +3486,7 @@ export const GET_PASSENGER_REQUEST = gql`
           vehicleType
           reportCost
           people {
+            personId
             fullName
             phone
             personType
@@ -3484,6 +3519,7 @@ export const GET_PASSENGER_REQUEST = gql`
           vehicleType
           reportCost
           people {
+            personId
             fullName
             phone
             personType
@@ -3531,6 +3567,7 @@ export const GET_PASSENGER_REQUEST = gql`
           cancelledAt
         }
         people {
+          personId
           fullName
           issuedAt
           phone
@@ -3562,6 +3599,7 @@ export const GET_PASSENGER_REQUEST = gql`
           cancelledAt
         }
         people {
+          personId
           fullName
           issuedAt
           phone
@@ -4058,6 +4096,117 @@ export const GET_HOTEL = gql`
       additionalServices {
         id
         name
+        price
+        priceForAirline
+        priceForAirReq
+      }
+    }
+  }
+`;
+
+export const CREATE_HOTEL_PREVIEW_LINK = gql`
+  mutation CreateHotelPreviewLink($hotelId: ID!, $hours: Int!) {
+    createHotelPreviewLink(hotelId: $hotelId, hours: $hours) {
+      link
+      expiresAt
+      hotelId
+    }
+  }
+`;
+
+export const AUTHORIZE_HOTEL_PREVIEW = gql`
+  mutation AuthorizeHotelPreview($token: String!) {
+    authorizeHotelPreview(token: $token) {
+      token
+      expiresAt
+      hotelId
+    }
+  }
+`;
+
+export const GET_HOTEL_PREVIEW = gql`
+  query HotelPreview {
+    hotelPreview {
+      id
+      name
+      nameFull
+      type
+      stars
+      usStars
+      airportDistance
+      meal
+      breakfastIncluded
+      discount
+      mealPriceForAir {
+        breakfast
+        lunch
+        dinner
+      }
+      mealPriceForAirReq
+      transferPriceForAir {
+        arrival
+        departure
+      }
+      transferPriceForAirReq
+      location {
+        country
+        region
+        city
+        address
+      }
+      information {
+        description
+        address
+        city
+      }
+      images
+      gallery
+      breakfast {
+        start
+        end
+      }
+      lunch {
+        start
+        end
+      }
+      dinner {
+        start
+        end
+      }
+      airport {
+        id
+        name
+        city
+      }
+      rooms {
+        id
+        name
+        category
+        description
+        descriptionSecond
+        square
+        images
+        type
+        price
+        priceForAirline
+      }
+      roomKind {
+        id
+        name
+        description
+        category
+        square
+        images
+        roomsCount
+        price
+        priceForAirline
+        priceForAirReq
+      }
+      additionalServices {
+        id
+        name
+        description
+        images
         price
         priceForAirline
         priceForAirReq
@@ -7128,6 +7277,7 @@ export const TL_AVAILABILITY = gql`
       rates {
         roomTypeId
         roomTypeName
+        placementName
         maxOccupancy
         ratePlanId
         ratePlanName
@@ -7143,6 +7293,7 @@ export const TL_AVAILABILITY = gql`
         cancellationPolicies {
           amount
           deadline
+          deadlineUtc
           timezone
         }
         checksum
@@ -7261,30 +7412,47 @@ export const GET_TL_RESERVATION = gql`
 export const CREATE_TL_RESERVATION = gql`
   mutation TlCreateReservation($input: TlCreateReservationInput!) {
     tlCreateReservation(input: $input) {
-      id
-      propertyId
-      propertyName
-      roomTypeId
-      ratePlanId
-      arrival
-      departure
-      adults
-      children
-      totalPrice
-      currency
-      status
-      guest {
-        firstName
-        lastName
-        email
-        phone
+      conditionChange
+      alternative {
+        newPriceBeforeTax
+        newTax
+        newTotalPrice
+        newPenaltyAmount
+        newChecksum
+        message
+        cancellationPolicy {
+          amount
+          deadline
+          deadlineUtc
+          timezone
+        }
       }
-      comment
-      roomTypeName
-      ratePlanName
-      cancellationPoliciesJson
-      createdAt
-      raw
+      reservation {
+        id
+        propertyId
+        propertyName
+        roomTypeId
+        ratePlanId
+        arrival
+        departure
+        adults
+        children
+        totalPrice
+        currency
+        status
+        guest {
+          firstName
+          lastName
+          email
+          phone
+        }
+        comment
+        roomTypeName
+        ratePlanName
+        cancellationPoliciesJson
+        createdAt
+        raw
+      }
     }
   }
 `;

@@ -685,6 +685,7 @@ export default function SearchBookingTab() {
                     </p>
                     <p className={classes.smallText} style={{ marginTop: 4 }}>
                       {fmtDateTime(r.arrival)} → {fmtDateTime(r.departure)}
+                      {r.roomTypeName ? ` · ${r.roomTypeName}` : ""}
                       {r.adults > 0 && <span style={{ marginLeft: 8 }}>{r.adults} взр.{r.children > 0 ? ` · ${r.children} дет.` : ""}</span>}
                     </p>
                   </div>

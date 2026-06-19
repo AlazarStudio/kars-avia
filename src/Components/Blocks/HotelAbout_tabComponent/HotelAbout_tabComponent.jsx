@@ -7,6 +7,7 @@ import {
   getMediaUrl,
   getCookie,
   GET_HOTEL,
+  GET_HOTEL_PREVIEW,
   decodeJWT,
   GET_HOTELS_UPDATE_SUBSCRIPTION,
   GET_HOTEL_MEAL_PRICE,
@@ -28,10 +29,10 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import TariffsIcon from "../../../shared/icons/TariffsIcon.jsx";
 import HomeIcon from "../../../shared/icons/HomeIcon.jsx";
 
-function HotelAbout_tabComponent({ id }) {
-  // const [userRole, setUserRole] = useState();
-  const token = getCookie("token");
-  const user = decodeJWT(token);
+function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
+  const token = isPreview ? null : getCookie("token");
+  const user = isPreview ? null : decodeJWT(token);
+  const mediaToken = isPreview ? previewToken : undefined;
 
   const navigate = useNavigate();
 
@@ -51,6 +52,7 @@ function HotelAbout_tabComponent({ id }) {
   // }, [token]);
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL, {
+    skip: isPreview,
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -59,11 +61,26 @@ function HotelAbout_tabComponent({ id }) {
     variables: { hotelId: id },
     // fetchPolicy: "cache-and-network",
   });
+
+  const {
+    loading: previewLoading,
+    error: previewError,
+    data: previewData,
+  } = useQuery(GET_HOTEL_PREVIEW, {
+    skip: !isPreview,
+    context: {
+      headers: {
+        Authorization: `Bearer ${previewToken}`,
+      },
+    },
+  });
+
   const {
     loading: mealPriceLoading,
     error: mealPriceError,
     data: mealPriceData,
   } = useQuery(GET_HOTEL_MEAL_PRICE, {
+    skip: isPreview,
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -72,6 +89,7 @@ function HotelAbout_tabComponent({ id }) {
     variables: { hotelId: id },
   });
   const { data: transferPriceData } = useQuery(GET_HOTEL_TRANSFER_PRICE, {
+    skip: isPreview,
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -80,7 +98,8 @@ function HotelAbout_tabComponent({ id }) {
     variables: { hotelId: id },
   });
   const { data: dataSubscriptionUpd } = useSubscription(
-    GET_HOTELS_UPDATE_SUBSCRIPTION
+    GET_HOTELS_UPDATE_SUBSCRIPTION,
+    { skip: isPreview }
   );
 
   const [hotel, setHotel] = useState(null);
@@ -132,6 +151,25 @@ function HotelAbout_tabComponent({ id }) {
     }
   }, [data]);
 
+  useEffect(() => {
+    if (isPreview && previewData?.hotelPreview) {
+      const preview = previewData.hotelPreview;
+      setHotel(preview);
+      setAdditionalServices(preview.additionalServices);
+      setMealPricesAirline({
+        breakfast: preview.mealPriceForAir?.breakfast,
+        lunch: preview.mealPriceForAir?.lunch,
+        dinner: preview.mealPriceForAir?.dinner,
+      });
+      setMealPriceForAirReq(Boolean(preview.mealPriceForAirReq));
+      setTransferPricesAirline({
+        arrival: preview.transferPriceForAir?.arrival ?? 0,
+        departure: preview.transferPriceForAir?.departure ?? 0,
+      });
+      setTransferPriceForAirReq(Boolean(preview.transferPriceForAirReq));
+    }
+  }, [isPreview, previewData]);
+
   const imagesArray = hotel?.gallery.filter(
     (img) => !imagesToDelete.includes(img)
   );
@@ -140,6 +178,7 @@ function HotelAbout_tabComponent({ id }) {
   // console.log(imagesToDelete);
 
   const handleDeleteImages = async () => {
+    if (isPreview) return;
     try {
       // console.log(id);
       // console.log(imagesArray);
@@ -207,17 +246,26 @@ function HotelAbout_tabComponent({ id }) {
   // const meal = user?.airlineId ? mealPricesAirline : mealPrices;
 
   
+  const isLoading = isPreview ? previewLoading : loading;
+  const queryError = isPreview ? previewError : error;
+
   return (
     <>
-      {loading && <MUILoader fullHeight={"70vh"} />}
-      {error && <p>Error: {error.message}</p>}
+      {isLoading && <MUILoader fullHeight={"70vh"} />}
+      {queryError && <p>Error: {queryError.message}</p>}
 
-      {!loading && !error && hotel && (
+      {!isLoading && !queryError && hotel && (
         // <div className={classes.hotelAbout} style={user?.role === roles.airlineAdmin ? {height:'calc(100vh - 130px)'} : {}}>
         <div
           className={classes.hotelAbout}
           style={
-            user?.hotelId || user?.airlineId
+            isPreview
+              ? {
+                  height: "calc(100vh - 112px)",
+                  display: "flex",
+                  flexDirection: "column",
+                }
+              : user?.hotelId || user?.airlineId
               ? { height: "calc(100vh - 130px)" }
               : {}
           }
@@ -279,6 +327,9 @@ function HotelAbout_tabComponent({ id }) {
                 ? classes.hotelAbout_info__hotel
                 : classes.hotelAbout_info
             }
+            style={
+              isPreview ? { flex: 1, minHeight: 0, overflow: "auto" } : undefined
+            }
           >
             {displayInfo == "generalInfo2" ? (
               <div className={classes.hotelAboutWrapper}>
@@ -288,7 +339,7 @@ function HotelAbout_tabComponent({ id }) {
                       <img
                         src={
                           hotel.images.length !== 0
-                            ? getMediaUrl(hotel.images[0])
+                            ? getMediaUrl(hotel.images[0], mediaToken)
                             : "/no-avatar.png"
                         }
                         alt={hotel.name}
@@ -298,10 +349,12 @@ function HotelAbout_tabComponent({ id }) {
                       </p>
                     </div>
                     <div className={classes.hotelAboutText}>
-                      <div className={classes.hotelAbout_info_item}>
-                        <p>Мощность</p>{" "}
-                        <span className="blueText">{hotel?.capacity}</span>
-                      </div>
+                      {!isPreview && (
+                        <div className={classes.hotelAbout_info_item}>
+                          <p>Мощность</p>{" "}
+                          <span className="blueText">{hotel?.capacity}</span>
+                        </div>
+                      )}
                       <div className={classes.hotelAbout_info_item}>
                         <p>Рейтинг</p>{" "}
                         <div>
@@ -378,7 +431,7 @@ function HotelAbout_tabComponent({ id }) {
                           >
                             {/* <div className={classes.hotelAboutImage}> */}
                             <img
-                              src={getMediaUrl(img)}
+                              src={getMediaUrl(img, mediaToken)}
                               alt=""
                               // onClick={() =>
                               //   user?.role === roles.dispatcerAdmin ||
@@ -546,6 +599,7 @@ function HotelAbout_tabComponent({ id }) {
                     ? classes.hotelAbout_rooms_block__hotel
                     : classes.hotelAbout_rooms_block
                 }
+                style={isPreview ? { height: "auto", overflow: "visible" } : undefined}
               >
                 <div
                   className={`${classes.rooms_wrapper} ${
@@ -553,7 +607,12 @@ function HotelAbout_tabComponent({ id }) {
                   }`}
                 >
                   {rooms.map((room) => (
-                    <HotelAboutRoomBlock key={room.id} user={user} {...room} />
+                    <HotelAboutRoomBlock
+                      key={room.id}
+                      user={user}
+                      mediaToken={mediaToken}
+                      {...room}
+                    />
                   ))}
                   {/* {console.log(hotel)} */}
                 </div>

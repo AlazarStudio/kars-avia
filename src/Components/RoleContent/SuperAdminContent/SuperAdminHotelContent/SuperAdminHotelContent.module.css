@@ -13,7 +13,7 @@
   position: absolute;
   bottom: 0;
   left: 0;
-  right: 0;
+  right: 56px;
   height: 1px;
   background-color: var(--no-active);
   z-index: 1;

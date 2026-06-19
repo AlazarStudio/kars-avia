@@ -6,12 +6,11 @@ import {
   TL_AVAILABILITY,
   TL_CORPORATES,
   TL_EXTRA_STAYS,
-  TL_PROPERTY_CALENDAR,
-  TL_VERIFY_BOOKING
+  TL_PROPERTY_CALENDAR
 } from "../../../../../graphQL_requests"
 import classes from "../TravellinePage.module.css"
 import { Badge, Btn, JsonViewer, Spinner, StarRow } from "../shared/ui"
-import { cn, fmtDateTime, nightWord, nightsBetween, tlImg } from "../shared/helpers"
+import { cn, fmtCancellationPolicy, fmtDateTime, fmtTimeWithTz, nightWord, nightsBetween, tlImg } from "../shared/helpers"
 
 export default function PropertyModal({ property, onClose, searchDates, onBookingCreated }) {
   const [tab, setTab] = useState(searchDates ? "book" : "overview")
@@ -48,7 +47,6 @@ export default function PropertyModal({ property, onClose, searchDates, onBookin
   const [getAvail, { data: availData, loading: availLoading }] = useLazyQuery(TL_AVAILABILITY)
   const [getExtraStays, { loading: extraStaysLoading }] = useLazyQuery(TL_EXTRA_STAYS)
   const [loadCorporates, { data: corporatesData, loading: corporatesLoading }] = useLazyQuery(TL_CORPORATES, { fetchPolicy: "cache-first" })
-  const [verifyBooking, { loading: verifying }] = useMutation(TL_VERIFY_BOOKING)
   const [createRes, { loading: creating }] = useMutation(CREATE_TL_RESERVATION)
 
   const [bookingRate, setBookingRate] = useState(null)
@@ -57,7 +55,6 @@ export default function PropertyModal({ property, onClose, searchDates, onBookin
   const [differentBooker, setDifferentBooker] = useState(false)
   const [bookResult, setBookResult] = useState(null)
   const [conditionChange, setConditionChange] = useState(null)
-  const [pendingChecksum, setPendingChecksum] = useState(undefined)
   const [bookError, setBookError] = useState("")
   const [corporateId, setCorporateId] = useState(searchDates?.corporateId ?? "")
   const [selectedEarlyCheckIn, setSelectedEarlyCheckIn] = useState(null)
@@ -100,7 +97,6 @@ export default function PropertyModal({ property, onClose, searchDates, onBookin
   const handleSelectRate = (rate) => {
     setBookingRate(rate)
     setConditionChange(null)
-    setPendingChecksum(rate.checksum)
     setBookResult(null)
     setBookError("")
     setSelectedEarlyCheckIn(null)
@@ -130,65 +126,38 @@ export default function PropertyModal({ property, onClose, searchDates, onBookin
     }
   }
 
-  const submitBooking = async () => {
+  const submitBooking = () => {
     if (!bookingRate || !searchDates) return
+    setConditionChange(null)
     setBookError("")
-    try {
-      const vRes = await verifyBooking({
-        variables: {
-          input: {
-            propertyId: property.id,
-            roomTypeId: bookingRate.roomTypeId,
-            ratePlanId: bookingRate.ratePlanId,
-            arrival: searchDates.arrival,
-            departure: searchDates.departure,
-            adults: searchDates.adults,
-            childAges: searchDates.childAges ?? [],
-            checksum: pendingChecksum,
-            roomTypePlacements: bookingRate.roomTypePlacements,
-            checkInTime: bookingRate.checkInTime,
-            checkOutTime: bookingRate.checkOutTime,
-            corporateId: corporateId || null,
-            earlyCheckInDateTime: selectedEarlyCheckIn?.dateTimeLocal ?? null,
-            lateCheckOutDateTime: selectedLateCheckOut?.dateTimeLocal ?? null
-          }
-        }
-      })
-      const vData = vRes.data?.tlVerifyBooking
-      if (vData?.conditionChange) {
-        setConditionChange({
-          newPriceBeforeTax: vData.newPriceBeforeTax,
-          newTotalPrice: vData.newTotalPrice,
-          newTax: vData.newTax,
-          newChecksum: vData.newChecksum,
-          message: vData.message
-        })
-        setPendingChecksum(vData.newChecksum)
-        return
-      }
-    } catch {
-      // verify не критичен — продолжаем
+    if (!bookForm.firstName || !bookForm.lastName || !bookForm.email || !bookForm.phone) {
+      setBookError("Заполните ФИО, email и телефон гостя")
+      return
     }
-    await doCreate()
+    if (differentBooker && (!bookerForm.firstName || !bookerForm.lastName || !bookerForm.email || !bookerForm.phone)) {
+      setBookError("Заполните ФИО, email и телефон заказчика")
+      return
+    }
+    const guest = {
+      firstName: bookForm.firstName,
+      lastName: bookForm.lastName,
+      email: bookForm.email || null,
+      phone: bookForm.phone || null
+    }
+    const booker = differentBooker
+      ? {
+          firstName: bookerForm.firstName,
+          lastName: bookerForm.lastName,
+          email: bookerForm.email || null,
+          phone: bookerForm.phone || null
+        }
+      : null
+    doCreate(bookingRate.checksum, guest, booker)
   }
 
-  const doCreate = async () => {
+  const doCreate = async (checksum, guest, booker) => {
     if (!bookingRate || !searchDates) return
     try {
-      const guest = {
-        firstName: bookForm.firstName,
-        lastName: bookForm.lastName,
-        email: bookForm.email || null,
-        phone: bookForm.phone || null
-      }
-      const booker = differentBooker
-        ? {
-            firstName: bookerForm.firstName,
-            lastName: bookerForm.lastName,
-            email: bookerForm.email || null,
-            phone: bookerForm.phone || null
-          }
-        : null
       const res = await createRes({
         variables: {
           input: {
@@ -203,7 +172,7 @@ export default function PropertyModal({ property, onClose, searchDates, onBookin
             guest,
             booker,
             comment: bookForm.comment || null,
-            checksum: pendingChecksum,
+            checksum,
             roomTypePlacements: bookingRate.roomTypePlacements,
             checkInTime: bookingRate.checkInTime,
             checkOutTime: bookingRate.checkOutTime,
@@ -218,14 +187,56 @@ export default function PropertyModal({ property, onClose, searchDates, onBookin
           }
         }
       })
-      const created = res.data?.tlCreateReservation
-      setBookResult(created)
-      setBookingRate(null)
-      setConditionChange(null)
-      onBookingCreated?.()
+      const tlRes = res.data?.tlCreateReservation
+      if (tlRes?.conditionChange) {
+        setConditionChange({
+          newPriceBeforeTax: tlRes.alternative?.newPriceBeforeTax,
+          newTotalPrice: tlRes.alternative?.newTotalPrice,
+          newTax: tlRes.alternative?.newTax,
+          newPenaltyAmount: tlRes.alternative?.newPenaltyAmount,
+          newChecksum: tlRes.alternative?.newChecksum,
+          cancellationPolicy: tlRes.alternative?.cancellationPolicy,
+          message: tlRes.alternative?.message
+        })
+      } else {
+        setBookResult(tlRes?.reservation ?? tlRes)
+        setBookingRate(null)
+        setConditionChange(null)
+        onBookingCreated?.()
+      }
     } catch (err) {
       setBookError(err.message)
     }
+  }
+
+  const acceptAlternative = () => {
+    if (!conditionChange?.newChecksum) return
+    setBookError("")
+    if (!bookForm.firstName || !bookForm.lastName || !bookForm.email || !bookForm.phone) {
+      setBookError("Заполните ФИО, email и телефон гостя")
+      return
+    }
+    if (differentBooker && (!bookerForm.firstName || !bookerForm.lastName || !bookerForm.email || !bookerForm.phone)) {
+      setBookError("Заполните ФИО, email и телефон заказчика")
+      return
+    }
+    const guest = {
+      firstName: bookForm.firstName,
+      lastName: bookForm.lastName,
+      email: bookForm.email || null,
+      phone: bookForm.phone || null
+    }
+    const booker = differentBooker
+      ? {
+          firstName: bookerForm.firstName,
+          lastName: bookerForm.lastName,
+          email: bookerForm.email || null,
+          phone: bookerForm.phone || null
+        }
+      : null
+    const newChecksum = conditionChange.newChecksum
+    setConditionChange(null)
+    doCreate(newChecksum, guest, booker)
   }
 
   const calendarFrom = searchDates?.arrival ?? new Date().toISOString().slice(0, 10)
@@ -359,8 +370,7 @@ export default function PropertyModal({ property, onClose, searchDates, onBookin
               setBookResult={setBookResult}
               handleSelectRate={handleSelectRate}
               submitBooking={submitBooking}
-              doCreate={doCreate}
-              verifying={verifying}
+              acceptAlternative={acceptAlternative}
               creating={creating}
               bookError={bookError}
               onClose={onClose}
@@ -684,8 +694,7 @@ function BookView({
   setBookResult,
   handleSelectRate,
   submitBooking,
-  doCreate,
-  verifying,
+  acceptAlternative,
   creating,
   bookError,
   onClose,
@@ -795,10 +804,15 @@ function BookView({
                   {(conditionChange.newTotalPrice ?? 0).toLocaleString("ru-RU")} {bookingRate?.currency}
                 </span>
               </div>
+              {conditionChange.newPenaltyAmount != null && (
+                <p style={{ fontSize: 12, color: "#c2410c", margin: "4px 0 0" }}>
+                  Новый штраф за отмену: {Number(conditionChange.newPenaltyAmount).toLocaleString("ru-RU")} {bookingRate?.currency}
+                </p>
+              )}
             </div>
           )}
           <div className={classes.flexRow} style={{ gap: 8, marginTop: 12 }}>
-            <Btn onClick={doCreate} loading={creating}>Принять и забронировать</Btn>
+            <Btn onClick={acceptAlternative} loading={creating}>Принять и забронировать</Btn>
             <Btn
               variant="secondary"
               onClick={() => {
@@ -806,7 +820,7 @@ function BookView({
                 setBookingRate(null)
               }}
             >
-              Отмена
+              Искать снова
             </Btn>
           </div>
         </div>
@@ -834,7 +848,7 @@ function BookView({
           <p className={classes.label}>Данные гостя</p>
           <div className={classes.gridForm2} style={{ marginTop: 8, marginBottom: 12 }}>
             {["firstName", "lastName", "email", "phone"].map((k) => {
-              const labels = { firstName: "Имя *", lastName: "Фамилия *", email: "Email", phone: "Телефон" }
+              const labels = { firstName: "Имя *", lastName: "Фамилия *", email: "Email *", phone: "Телефон *" }
               return (
                 <div key={k} className={classes.fieldGroup}>
                   <label style={{ fontSize: 11, color: "#94a3b8" }}>{labels[k]}</label>
@@ -863,7 +877,7 @@ function BookView({
               <p className={classes.label}>Данные заказчика</p>
               <div className={classes.gridForm2} style={{ marginTop: 8, marginBottom: 12 }}>
                 {["firstName", "lastName", "email", "phone"].map((k) => {
-                  const labels = { firstName: "Имя *", lastName: "Фамилия *", email: "Email", phone: "Телефон" }
+                  const labels = { firstName: "Имя *", lastName: "Фамилия *", email: "Email *", phone: "Телефон *" }
                   return (
                     <div key={k} className={classes.fieldGroup}>
                       <label style={{ fontSize: 11, color: "#94a3b8" }}>{labels[k]}</label>
@@ -885,7 +899,7 @@ function BookView({
           )}
 
           {(extraStays?.earlyCheckIn?.length > 0 || extraStays?.lateCheckOut?.length > 0) && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12, marginBottom: 12, alignItems: "start" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12, marginBottom: 0, alignItems: "start" }}>
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {extraStays?.earlyCheckIn?.length > 0 && (
                   <div>
@@ -943,7 +957,7 @@ function BookView({
                     fontSize: 13
                   }}>
                     {effectiveCheckInTime
-                      ? effectiveCheckInTime.slice(0, 10).split("-").reverse().join(".") + " " + effectiveCheckInTime.slice(11, 16)
+                      ? fmtTimeWithTz(effectiveCheckInTime, bookingRate?.timezone)
                       : (searchDates?.arrival?.slice(0, 10).split("-").reverse().join(".") ?? "—")}
                   </p>
                   {selectedEarlyCheckIn && (
@@ -958,7 +972,7 @@ function BookView({
                     fontSize: 13
                   }}>
                     {effectiveCheckOutTime
-                      ? effectiveCheckOutTime.slice(0, 10).split("-").reverse().join(".") + " " + effectiveCheckOutTime.slice(11, 16)
+                      ? fmtTimeWithTz(effectiveCheckOutTime, bookingRate?.timezone)
                       : (searchDates?.departure?.slice(0, 10).split("-").reverse().join(".") ?? "—")}
                   </p>
                   {selectedLateCheckOut && (
@@ -967,6 +981,12 @@ function BookView({
                 </div>
               </div>
             </div>
+          )}
+
+          {(selectedEarlyCheckIn || selectedLateCheckOut) && (
+            <p style={{ fontSize: 12, color: "#c2410c", margin: "8px 0 0" }}>
+              ⚠ Ранний заезд / поздний выезд увеличивает размер штрафа за отмену.
+            </p>
           )}
 
           {extraCost > 0 && (
@@ -1000,11 +1020,13 @@ function BookView({
           {bookError && <p className={classes.statusWarn} style={{ fontSize: 12 }}>{bookError}</p>}
           <Btn
             onClick={submitBooking}
-            loading={verifying || creating}
+            loading={creating}
             disabled={
               !bookForm.firstName.trim() ||
               !bookForm.lastName.trim() ||
-              (differentBooker && (!bookerForm.firstName.trim() || !bookerForm.lastName.trim()))
+              !bookForm.email.trim() ||
+              !bookForm.phone.trim() ||
+              (differentBooker && (!bookerForm.firstName.trim() || !bookerForm.lastName.trim() || !bookerForm.email.trim() || !bookerForm.phone.trim()))
             }
           >
             Подтвердить бронирование
@@ -1075,6 +1097,9 @@ function BookView({
                 <div className={classes.rateInfo}>
                   <div className={classes.flexRow} style={{ gap: 8, flexWrap: "wrap", alignItems: "center" }}>
                     <p style={{ fontSize: 13, fontWeight: 600, margin: 0 }}>{rate.roomTypeName || "Номер"}</p>
+                    {rate.placementName && (
+                      <p style={{ fontSize: 11, color: "#64748b", margin: "2px 0 0" }}>{rate.placementName}</p>
+                    )}
                     {rate.corporateIds?.length > 0 && (
                       <span style={{
                         fontSize: 10, fontWeight: 700, padding: "2px 7px", borderRadius: 4,
@@ -1108,9 +1133,7 @@ function BookView({
                     <div style={{ marginTop: 8 }}>
                       {rate.cancellationPolicies.map((cp, ci) => (
                         <p key={ci} style={{ fontSize: 11, color: "#c2410c", margin: 0 }}>
-                          {cp.deadline
-                            ? `Штраф ${cp.amount?.toLocaleString("ru-RU")} ${rate.currency} при отмене после ${fmtDateTime(cp.deadline)}`
-                            : `Безвозвратный тариф — штраф ${cp.amount?.toLocaleString("ru-RU")} ${rate.currency}`}
+                          {fmtCancellationPolicy(cp, rate.currency)}
                         </p>
                       ))}
                     </div>

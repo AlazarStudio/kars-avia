@@ -5,10 +5,13 @@ import {
   CREATE_TL_RESERVATION,
   GET_REQUEST,
   TL_AVAILABILITY,
-  TL_VERIFY_BOOKING,
   getCookie,
   mediaSrc,
 } from "../../../../graphQL_requests";
+import {
+  fmtCancellationPolicy,
+  tzLabel,
+} from "../TravellinePage/shared/helpers";
 import Sidebar from "../Sidebar/Sidebar";
 import MUILoader from "../MUILoader/MUILoader";
 import CloseIcon from "../../../shared/icons/CloseIcon";
@@ -115,7 +118,6 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
     phone: "",
   });
   const [conditionChange, setConditionChange] = useState(null);
-  const [pendingChecksum, setPendingChecksum] = useState(undefined);
   const [bookError, setBookError] = useState("");
   const [bookResult, setBookResult] = useState(null);
 
@@ -188,9 +190,6 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
   const hiddenCount = allRates.length - filteredRates.length;
   const rates = filteredRates;
 
-  const [verifyBooking, { loading: verifying }] = useMutation(TL_VERIFY_BOOKING, {
-    context: { headers: { Authorization: `Bearer ${token}` } },
-  });
   const [createReservation, { loading: creating }] = useMutation(
     CREATE_TL_RESERVATION,
     {
@@ -200,7 +199,6 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
 
   const handlePickRate = (rate) => {
     setSelectedRate(rate);
-    setPendingChecksum(rate.checksum);
     setConditionChange(null);
     setBookError("");
     setBookResult(null);
@@ -216,57 +214,35 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
       ? (selectedRate.priceBeforeTax || 0) * nights + extraCost
       : 0;
 
-  // Строим checkInTime / checkOutTime с учётом выбранных опций
-  const effectiveCheckInTime = selectedEarlyCheckIn
-    ? `${arrival?.slice(0, 10)}T${selectedEarlyCheckIn.periodFrom}`
-    : selectedRate?.checkInTime ?? null;
-  const effectiveCheckOutTime = selectedLateCheckOut
-    ? `${departure?.slice(0, 10)}T${selectedLateCheckOut.periodTo}`
-    : selectedRate?.checkOutTime ?? null;
-
   const submitBooking = async () => {
     if (!selectedRate || !arrival || !departure) return;
+    setConditionChange(null);
     setBookError("");
-    // verify первым шагом — на случай изменения условий
-    try {
-      const vRes = await verifyBooking({
-        variables: {
-          input: {
-            propertyId: property.id,
-            roomTypeId: selectedRate.roomTypeId,
-            ratePlanId: selectedRate.ratePlanId,
-            arrival,
-            departure,
-            adults: 1,
-            childAges: [],
-            checksum: pendingChecksum,
-            roomTypePlacements: selectedRate.roomTypePlacements,
-            checkInTime: effectiveCheckInTime,
-            checkOutTime: effectiveCheckOutTime,
-            corporateId: selectedRate.corporateIds?.[0] ?? null,
-          },
-        },
-      });
-      const vData = vRes.data?.tlVerifyBooking;
-      if (vData?.conditionChange) {
-        setConditionChange({
-          newPriceBeforeTax: vData.newPriceBeforeTax,
-          newTotalPrice: vData.newTotalPrice,
-          newTax: vData.newTax,
-          newChecksum: vData.newChecksum,
-          message: vData.message,
-        });
-        setPendingChecksum(vData.newChecksum);
-        return;
-      }
-    } catch {
-      /* verify не критичен — продолжаем */
+
+    if (!guest.firstName || !guest.lastName || !guest.email || !guest.phone) {
+      setBookError("Заполните ФИО, email и телефон гостя");
+      return;
     }
-    await doCreate();
+    if (differentBooker && (!booker.firstName || !booker.lastName || !booker.email || !booker.phone)) {
+      setBookError("Заполните ФИО, email и телефон заказчика");
+      return;
+    }
+
+    await doCreate(selectedRate?.checksum);
   };
 
-  const doCreate = async () => {
+  const doCreate = async (checksum) => {
     if (!selectedRate || !arrival || !departure) return;
+
+    const arrivalDate = String(arrival).slice(0, 10);
+    const departureDate = String(departure).slice(0, 10);
+    const earlyCheckInDateTime = selectedEarlyCheckIn
+      ? `${arrivalDate}T${selectedEarlyCheckIn.periodFrom}`
+      : null;
+    const lateCheckOutDateTime = selectedLateCheckOut
+      ? `${departureDate}T${selectedLateCheckOut.periodTo}`
+      : null;
+
     try {
       const res = await createReservation({
         variables: {
@@ -274,10 +250,13 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
             propertyId: property.id,
             roomTypeId: selectedRate.roomTypeId,
             ratePlanId: selectedRate.ratePlanId,
+            roomTypePlacements: selectedRate.roomTypePlacements,
+            roomTypeName: selectedRate.roomTypeName || null,
+            ratePlanName: selectedRate.ratePlanName || null,
+            mealPlanCode: selectedRate.mealType || null,
             arrival,
             departure,
             adults: 1,
-            children: 0,
             childAges: [],
             guest: {
               firstName: guest.firstName,
@@ -294,35 +273,52 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
                 }
               : null,
             comment: guest.comment || null,
-            checksum: pendingChecksum,
-            roomTypePlacements: selectedRate.roomTypePlacements,
-            checkInTime: effectiveCheckInTime,
-            checkOutTime: effectiveCheckOutTime,
-            roomTypeName: selectedRate.roomTypeName || null,
-            corporateId: selectedRate.corporateIds?.[0] ?? null,
-            ratePlanName: selectedRate.ratePlanName || null,
-            cancellationPoliciesJson: selectedRate.cancellationPolicies?.length
-              ? JSON.stringify(selectedRate.cancellationPolicies)
-              : null,
+            checksum,
             requestId: request?.id,
-            mealPlanCode: selectedRate.mealType || null,
+            checkInTime: selectedRate.checkInTime ?? null,
+            checkOutTime: selectedRate.checkOutTime ?? null,
+            earlyCheckInDateTime,
+            lateCheckOutDateTime,
           },
         },
       });
       const created = res.data?.tlCreateReservation;
-      setBookResult(created);
-      setSelectedRate(null);
-      setConditionChange(null);
+      if (created?.conditionChange) {
+        setConditionChange({
+          newPriceBeforeTax: created.alternative?.newPriceBeforeTax,
+          newTotalPrice: created.alternative?.newTotalPrice,
+          newTax: created.alternative?.newTax,
+          newPenaltyAmount: created.alternative?.newPenaltyAmount,
+          newChecksum: created.alternative?.newChecksum,
+          message: created.alternative?.message,
+          cancellationPolicy: created.alternative?.cancellationPolicy,
+        });
+      } else {
+        setBookResult(created?.reservation ?? created);
+        setSelectedRate(null);
+        setConditionChange(null);
+      }
     } catch (err) {
       setBookError(err.message);
     }
   };
 
+  const acceptAlternative = async () => {
+    const checksum = conditionChange?.newChecksum;
+    setConditionChange(null);
+    await doCreate(checksum);
+  };
+
   const submitDisabled =
     !guest.firstName?.trim() ||
     !guest.lastName?.trim() ||
-    (differentBooker && (!booker.firstName?.trim() || !booker.lastName?.trim())) ||
-    verifying ||
+    !guest.email?.trim() ||
+    !guest.phone?.trim() ||
+    (differentBooker &&
+      (!booker.firstName?.trim() ||
+        !booker.lastName?.trim() ||
+        !booker.email?.trim() ||
+        !booker.phone?.trim())) ||
     creating;
 
   return (
@@ -506,11 +502,16 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
                         </strong>
                       </div>
                     )}
+                    {conditionChange.newPenaltyAmount != null && (
+                      <p style={{ fontSize: 12, color: "#c2410c", margin: "4px 0 0" }}>
+                        Новый штраф за отмену: {Number(conditionChange.newPenaltyAmount).toLocaleString("ru-RU")} {selectedRate?.currency}
+                      </p>
+                    )}
                     <div className={classes.conditionChangeActions}>
                       <button
                         type="button"
                         className={classes.btnPrimary}
-                        onClick={doCreate}
+                        onClick={acceptAlternative}
                         disabled={creating}
                       >
                         Принять и забронировать
@@ -523,7 +524,7 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
                           setSelectedRate(null);
                         }}
                       >
-                        Отмена
+                        Найти снова
                       </button>
                     </div>
                   </div>
@@ -551,12 +552,12 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
                     </div>
                     <div className={classes.formRow}>
                       <FormField
-                        label="Email"
+                        label="Email *"
                         value={guest.email}
                         onChange={(v) => setGuest({ ...guest, email: v })}
                       />
                       <FormField
-                        label="Телефон"
+                        label="Телефон *"
                         value={guest.phone}
                         onChange={(v) => setGuest({ ...guest, phone: v })}
                       />
@@ -593,12 +594,12 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
                         </div>
                         <div className={classes.formRow}>
                           <FormField
-                            label="Email"
+                            label="Email *"
                             value={booker.email}
                             onChange={(v) => setBooker({ ...booker, email: v })}
                           />
                           <FormField
-                            label="Телефон"
+                            label="Телефон *"
                             value={booker.phone}
                             onChange={(v) => setBooker({ ...booker, phone: v })}
                           />
@@ -657,6 +658,12 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
                       </div>
                     )}
 
+                    {(selectedEarlyCheckIn || selectedLateCheckOut) && (
+                      <p style={{ fontSize: 12, color: "#c2410c", margin: "8px 0 0" }}>
+                        ⚠ Ранний заезд / поздний выезд увеличивает размер штрафа за отмену.
+                      </p>
+                    )}
+
                     {/* Итог с учётом доп. услуг */}
                     {extraCost > 0 && (
                       <div className={classes.totalBlock}>
@@ -681,7 +688,7 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
                       disabled={submitDisabled}
                       onClick={submitBooking}
                     >
-                      {verifying || creating
+                      {creating
                         ? "Бронируем…"
                         : "Подтвердить бронирование"}
                     </button>
@@ -711,22 +718,6 @@ function FormField({ label, value, onChange, placeholder }) {
   );
 }
 
-function formatDateTimeWithTz(value, tz) {
-  if (!value) return "—";
-  const d = new Date(value);
-  if (isNaN(d.getTime())) return value;
-  const datePart = d.toLocaleDateString("ru-RU", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
-  const hasT = String(value).includes("T");
-  const timePart = hasT
-    ? " " + d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })
-    : "";
-  return `${datePart}${timePart}${tz ? ` (${tz})` : ""}`;
-}
-
 function RateCard({ rate, nights, selected, onPick }) {
   const total = (rate.priceBeforeTax || 0) * nights;
   const checkInTimeOnly =
@@ -750,14 +741,16 @@ function RateCard({ rate, nights, selected, onPick }) {
             <span className={classes.corporateBadge}>Корпоративный</span>
           )}
         </div>
+        {rate.placementName && (
+          <p style={{ fontSize: 11, color: "#64748b", margin: "2px 0 0" }}>{rate.placementName}</p>
+        )}
         <div className={classes.rateSub}>
           {rate.ratePlanName}
           {rate.mealType ? ` · ${rate.mealType}` : ""}
         </div>
         {(checkInTimeOnly || checkOutTimeOnly) && (
           <div className={classes.rateSub}>
-            Заезд {checkInTimeOnly || "—"} · Выезд {checkOutTimeOnly || "—"}
-            {rate.timezone ? ` (${rate.timezone})` : ""}
+            Заезд {checkInTimeOnly || "—"} · Выезд {checkOutTimeOnly || "—"} ({tzLabel(rate.timezone)})
           </div>
         )}
         {(hasEarly || hasLate) && (
@@ -789,11 +782,9 @@ function RateCard({ rate, nights, selected, onPick }) {
         {rate.cancellationPolicies?.length > 0 ? (
           <div className={classes.rateCancel}>
             {rate.cancellationPolicies.map((cp, ci) => (
-              <div key={ci}>
-                {cp.deadline
-                  ? `Штраф ${cp.amount?.toLocaleString("ru-RU")} ${rate.currency} при отмене после ${formatDateTimeWithTz(cp.deadline, cp.timezone || rate.timezone)}`
-                  : `Безвозвратный — штраф ${cp.amount?.toLocaleString("ru-RU")} ${rate.currency}`}
-              </div>
+              <p key={ci} style={{ fontSize: 11, color: "#c2410c", margin: 0 }}>
+                {fmtCancellationPolicy(cp, rate.currency)}
+              </p>
             ))}
           </div>
         ) : (

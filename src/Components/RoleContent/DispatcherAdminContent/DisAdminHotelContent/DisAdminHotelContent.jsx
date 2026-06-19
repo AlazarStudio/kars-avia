@@ -31,6 +31,7 @@ const HotelSettingsTab = lazy(() =>
 
 import classes from "./DisAdminHotelContent.module.css";
 import MUILoader from "../../../Blocks/MUILoader/MUILoader";
+import HotelPreviewShareButton from "../../../Blocks/HotelPreviewShareButton/HotelPreviewShareButton";
 
 const DisAdminHotelContent = ({
   id,
@@ -49,17 +50,20 @@ const DisAdminHotelContent = ({
         forceRenderTabPanel={false}
       >
         <TabList className={classes.tabList}>
-          <Tab className={classes.tab}>Шахматка</Tab>
-          {type === "apartment" ? null : (
-            <Tab className={classes.tab}>Тарифы</Tab>
-          )}
+          <div style={{ display: "flex" }}>
+            <Tab className={classes.tab}>Шахматка</Tab>
+            {type === "apartment" ? null : (
+              <Tab className={classes.tab}>Тарифы</Tab>
+            )}
 
-          <Tab className={classes.tab}>Реестр договоров</Tab>
-          <Tab className={classes.tab}>Номерной фонд</Tab>
-          <Tab className={classes.tab}>Пользователи</Tab>
-          <Tab className={classes.tab}>О гостинице</Tab>
-          <Tab className={classes.tab}>Редактирование</Tab>
-          {/* <Tab className={classes.tab}>Настройки</Tab> */}
+            <Tab className={classes.tab}>Реестр договоров</Tab>
+            <Tab className={classes.tab}>Номерной фонд</Tab>
+            <Tab className={classes.tab}>Пользователи</Tab>
+            <Tab className={classes.tab}>О гостинице</Tab>
+            <Tab className={classes.tab}>Редактирование</Tab>
+            {/* <Tab className={classes.tab}>Настройки</Tab> */}
+          </div>
+          <HotelPreviewShareButton hotelId={id} />
         </TabList>
 
         <TabPanel className={classes.tabPanel} forceRender={false}>

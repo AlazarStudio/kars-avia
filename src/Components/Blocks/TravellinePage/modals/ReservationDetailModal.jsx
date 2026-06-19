@@ -4,7 +4,7 @@ import { useLazyQuery, useMutation } from "@apollo/client"
 import { AMEND_TL_RESERVATION, TL_EXTRA_STAYS_FOR_AMEND } from "../../../../../graphQL_requests"
 import classes from "../TravellinePage.module.css"
 import { Btn, StarRow } from "../shared/ui"
-import { fmtDateTime, nightWord, tlImg } from "../shared/helpers"
+import { fmtCancellationPolicy, fmtDateTime, nightWord, tlImg, tzLabel } from "../shared/helpers"
 
 // ─── Amend sub-modal ──────────────────────────────────────────────────────────
 
@@ -285,6 +285,12 @@ function AmendModal({ r, onClose, onSuccess }) {
             </div>
           )}
 
+          {(selectedEarly || selectedLate) && (
+            <p style={{ fontSize: 11, color: "#c2410c", margin: "6px 0 0" }}>
+              ⚠ Ранний заезд / поздний выезд увеличивает размер штрафа за отмену.
+            </p>
+          )}
+
           {/* Extra cost */}
           {extraCost > 0 && (
             <div style={{
@@ -462,7 +468,7 @@ export default function ReservationDetailModal({
               {arrDate ? arrDate.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—"}
             </p>
             {arrDate && arrHasTime && (
-              <p className={classes.resvDateTime}>{arrDate.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}</p>
+              <p className={classes.resvDateTime}>{arrDate.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })} ({tzLabel(effectiveCancPolicy?.timezone)})</p>
             )}
             {(r.earlyCheckInDateTime ?? amendResult?.earlyCheckInDateTime) && (
               <p style={{ margin: "3px 0 0", fontSize: 10, fontWeight: 600, color: "#d97706" }}>
@@ -480,7 +486,7 @@ export default function ReservationDetailModal({
               {depDate ? depDate.toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" }) : "—"}
             </p>
             {depDate && depHasTime && (
-              <p className={classes.resvDateTime}>{depDate.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}</p>
+              <p className={classes.resvDateTime}>{depDate.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })} ({tzLabel(effectiveCancPolicy?.timezone)})</p>
             )}
             {(r.lateCheckOutDateTime ?? amendResult?.lateCheckOutDateTime) && (
               <p style={{ margin: "3px 0 0", fontSize: 10, fontWeight: 600, color: "#d97706" }}>
@@ -553,9 +559,10 @@ export default function ReservationDetailModal({
             <div className={classes.resvCancPaid}>
               <p className={classes.resvCancPaidTitle}>Условия отмены</p>
               <p className={classes.resvCancPaidText}>
-                {cancDeadline
-                  ? `Штраф ${cancPenalty.toLocaleString("ru-RU")} ${r.currency} при отмене после ${fmtDateTime(cancDeadline)}`
-                  : `Безвозвратный тариф — штраф ${cancPenalty.toLocaleString("ru-RU")} ${r.currency}`}
+                {fmtCancellationPolicy(
+                  { amount: cancPenalty, deadline: cancDeadline, deadlineUtc: effectiveCancPolicy?.deadlineUtc ?? null, timezone: effectiveCancPolicy?.timezone ?? null },
+                  r.currency
+                )}
               </p>
             </div>
           ) : (

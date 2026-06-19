@@ -43,6 +43,7 @@ function HotelAboutRoomBlock({
   handleChange,
   index,
   user,
+  mediaToken,
   ...props
 }) {
   const [modalIsOpen, setModalIsOpen] = useState(false);
@@ -81,7 +82,7 @@ function HotelAboutRoomBlock({
         <div className={classes.roomImages_wrapper}>
           <img
             src={
-              getMediaUrl(props.images[0]) ?? "/no-image.png"
+              getMediaUrl(props.images[0], mediaToken) ?? "/no-image.png"
             }
             alt="Room"
             className={classes.roomImage}
@@ -165,12 +166,12 @@ function HotelAboutRoomBlock({
                   props.images.map((img, i) => (
                     <SwiperSlide key={i}>
                       <img
-                        src={getMediaUrl(img)}
+                        src={getMediaUrl(img, mediaToken)}
                         alt={`slide ${i}`}
                         className={classes.modalImageAbs}
                       />
                       <img
-                        src={getMediaUrl(img)}
+                        src={getMediaUrl(img, mediaToken)}
                         alt={`slide ${i}`}
                         className={classes.modalImage}
                       />

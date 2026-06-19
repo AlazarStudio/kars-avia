@@ -31,3 +31,28 @@ export function nightWord(n) {
   if (n < 5) return "ночи"
   return "ночей"
 }
+
+// Метка часового пояса: конкретное смещение или «время местное» (требование №1)
+export function tzLabel(timezone) {
+  return timezone && String(timezone).trim() ? String(timezone) : "время местное"
+}
+
+// Дата-время + пояс отеля, напр. «15.07.2026 07:30 (UTC+03:00)»
+export function fmtTimeWithTz(value, timezone) {
+  if (!value) return "—"
+  return `${fmtDateTime(value)} (${tzLabel(timezone)})`
+}
+
+// Полная строка правил отмены: сумма + дедлайн (дата, время) + пояс (требование №2).
+// cp: { amount, deadline, deadlineUtc, timezone }
+export function fmtCancellationPolicy(cp, currency) {
+  if (!cp) return null
+  const amount = Number(cp.amount ?? 0)
+  const cur = currency || ""
+  if (!cp.deadline) {
+    return `Безвозвратный тариф — штраф ${amount.toLocaleString("ru-RU")} ${cur}`.trim()
+  }
+  return `Штраф ${amount.toLocaleString("ru-RU")} ${cur} при отмене после ${fmtDateTime(
+    cp.deadline
+  )} (${tzLabel(cp.timezone)})`.trim()
+}
