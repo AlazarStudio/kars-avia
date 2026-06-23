@@ -1646,6 +1646,43 @@ function ExistRequest({
                         </>
                       )}
 
+                    {/* Данные рейса (массовый импорт) */}
+                    {(formData?.bulkGroupId || formData?.arrivalFlightNumber) && (
+                      <>
+                        <div className={classes.requestDataTitle}>Данные рейса</div>
+                        <div className={classes.requestDataInfo}>
+                          <div className={classes.requestDataInfo_title}>Рейс прибытия</div>
+                          <div className={classes.requestDataInfo_desc}>
+                            {formData.arrivalFlightNumber || "—"}
+                            {formData.arrivalAircraftType ? ` · ${formData.arrivalAircraftType}` : ""}
+                            {formData.arrivalFlightStatus ? ` · ${formData.arrivalFlightStatus}` : ""}
+                          </div>
+                        </div>
+                        <div className={classes.requestDataInfo}>
+                          <div className={classes.requestDataInfo_title}>Рейс вылета</div>
+                          <div className={classes.requestDataInfo_desc}>
+                            {formData.departureFlightNumber || "—"}
+                            {formData.departureAircraftType ? ` · ${formData.departureAircraftType}` : ""}
+                            {formData.departureFlightStatus ? ` · ${formData.departureFlightStatus}` : ""}
+                          </div>
+                        </div>
+                        <div className={classes.requestDataInfo}>
+                          <div className={classes.requestDataInfo_title}>Номера (1-/2-мест.)</div>
+                          <div className={classes.requestDataInfo_desc}>
+                            {(formData.singleRoomCount ?? 0)} / {(formData.doubleRoomCount ?? 0)}
+                          </div>
+                        </div>
+                        {formData.linkNumber && (
+                          <div className={classes.requestDataInfo}>
+                            <div className={classes.requestDataInfo_title}>Номер связки</div>
+                            <div className={classes.requestDataInfo_desc} style={{ fontFamily: "monospace" }}>
+                              {formData.linkNumber}
+                            </div>
+                          </div>
+                        )}
+                      </>
+                    )}
+
                     {/* Примечание */}
                     {(isEditing || formData.note) && (
                       <>

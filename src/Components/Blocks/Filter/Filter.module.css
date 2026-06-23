@@ -18,3 +18,10 @@
         gap: 10px;
     }
 }
+
+.filterVertical {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+  width: 100%;
+}

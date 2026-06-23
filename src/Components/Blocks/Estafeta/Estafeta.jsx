@@ -1,9 +1,10 @@
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import classes from "./Estafeta.module.css";
 import { useLocation, useNavigate } from "react-router-dom";
 import Filter from "../Filter/Filter";
 import InfoTableData from "../InfoTableData/InfoTableData";
-import CreateRequest from "../CreateRequest/CreateRequest";
+import GroupedRequests from "../GroupedRequests/GroupedRequests";
+import CreateRequestSidebar from "../CreateRequest/CreateRequestSidebar";
 import ExistRequest from "../ExistRequest/ExistRequest";
 import ChooseHotel from "../ChooseHotel/ChooseHotel";
 import Header from "../Header/Header";
@@ -13,12 +14,14 @@ import {
   REQUEST_CREATED_SUBSCRIPTION,
   REQUEST_UPDATED_SUBSCRIPTION,
   GET_REQUESTS_ARCHIVED,
+  REQUESTS_BY_GROUP,
   getCookie,
   CANCEL_REQUEST,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import ReactPaginate from "react-paginate";
-import { Box, CircularProgress, TextField } from "@mui/material";
+import { Box, CircularProgress, Popover, TextField } from "@mui/material";
+import FilterIcon from "../../../shared/icons/FilterIcon";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import { menuAccess, statusMapping } from "../../../roles.js";
@@ -79,6 +82,18 @@ function Estafeta({ user, accessMenu }) {
     return localStorage.getItem("statusFilter") || "all";
   });
 
+  const [viewMode, setViewMode] = useState(
+    () => localStorage.getItem("requestViewMode") || "list"
+  );
+  const isGroups = viewMode === "groups" && statusFilter !== "archived";
+  const GROUPS_PER_PAGE = 10;
+  const [groups, setGroups] = useState([]);
+  const [selectedGroupKey, setSelectedGroupKey] = useState(null);
+  const [detailPage, setDetailPage] = useState(0);
+  useEffect(() => {
+    setDetailPage(0);
+  }, [selectedGroupKey]);
+
   // Состояние для хранения информации о странице (для пагинации)
   const [pageInfo, setPageInfo] = useState({
     skip: currentPageRelay,
@@ -95,6 +110,7 @@ function Estafeta({ user, accessMenu }) {
         Authorization: `Bearer ${token}`,
       },
     },
+    skip: isGroups,
     variables: {
       pagination: {
         skip: pageInfo.skip,
@@ -109,12 +125,40 @@ function Estafeta({ user, accessMenu }) {
     },
   });
 
+  const {
+    loading: groupsLoading,
+    error: groupsError,
+    data: groupsData,
+    refetch: groupsRefetch,
+  } = useQuery(REQUESTS_BY_GROUP, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    skip: !isGroups,
+    variables: {
+      pagination: {
+        skip: pageInfo.skip,
+        take: GROUPS_PER_PAGE,
+        status: statusFilter.split(" / "),
+        airlineId: selectedAirline?.id,
+        airportId: selectedAirport?.id,
+        arrival: dateRange.startDate?.toISOString(),
+        departure: dateRange.endDate?.toISOString(),
+        search: debouncedSearch,
+      },
+    },
+  });
+
+  const isGroupsRef = useRef(isGroups);
+  useEffect(() => {
+    isGroupsRef.current = isGroups;
+  }, [isGroups]);
+
   // Подписки для отслеживания создания и обновления заявок
   const { data: subscriptionData } = useSubscription(
     REQUEST_CREATED_SUBSCRIPTION,
     {
       onData: () => {
-        refetch();
+        if (isGroupsRef.current) groupsRefetch();
+        else refetch();
       },
     },
   );
@@ -122,7 +166,8 @@ function Estafeta({ user, accessMenu }) {
     REQUEST_UPDATED_SUBSCRIPTION,
     {
       onData: () => {
-        refetch();
+        if (isGroupsRef.current) groupsRefetch();
+        else refetch();
       },
     },
   );
@@ -165,6 +210,7 @@ function Estafeta({ user, accessMenu }) {
 
   // Обновление списка заявок на основе данных запроса и новых заявок
   useEffect(() => {
+    if (isGroups) return;
     if (data && data.requests?.requests) {
       let sortedRequests = [...data.requests.requests];
       if (currentPageRelay === 0 && newRequests.length > 0) {
@@ -186,7 +232,14 @@ function Estafeta({ user, accessMenu }) {
       setTotalPages(data.requestArchive.totalPages);
     }
     // refetch();
-  }, [data, currentPageRelay, newRequests, refetch]);
+  }, [isGroups, data, currentPageRelay, newRequests, refetch]);
+
+  useEffect(() => {
+    if (isGroups && groupsData?.requestsByGroup) {
+      setGroups(groupsData.requestsByGroup.groups || []);
+      setTotalPages(groupsData.requestsByGroup.totalPages || 1);
+    }
+  }, [isGroups, groupsData]);
 
   // Обновление данных при получении новой информации по подписке на обновление заявок
   // useEffect(() => {
@@ -205,7 +258,33 @@ function Estafeta({ user, accessMenu }) {
     navigate("?page=1");
   };
 
+  const handleViewChange = (v) => {
+    setViewMode(v);
+    localStorage.setItem("requestViewMode", v);
+    setPageInfo((prev) => ({ ...prev, skip: 0 }));
+    setSelectedGroupKey(null);
+    navigate("?page=1");
+  };
+
+  const activeFilterCount =
+    (selectedAirline ? 1 : 0) +
+    (selectedAirport ? 1 : 0) +
+    ((dateRange.startDate || dateRange.endDate) ? 1 : 0) +
+    (statusFilter !== "all" ? 1 : 0);
+
+  const handleResetFilters = () => {
+    setSelectedAirline(null);
+    setSelectedAirport(null);
+    setDateRange({ startDate: null, endDate: null });
+    handleStatusChange("all");
+    setPageInfo((prev) => ({ ...prev, skip: 0 }));
+    navigate("?page=1");
+    setFilterAnchorEl(null);
+  };
+
   // Управление состоянием боковых панелей для создания и просмотра заявок
+  const [filterAnchorEl, setFilterAnchorEl] = useState(null);
+
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [existRequestData, setExistRequestData] = useState(null); // Для хранения данных match
@@ -295,10 +374,10 @@ function Estafeta({ user, accessMenu }) {
     setPageInfo((prev) => ({ ...prev, skip: 0 }));
     navigate("?page=1");
 
-    refetch({
+    (isGroups ? groupsRefetch : refetch)({
       pagination: {
         skip: 0,
-        take: pageInfo.take,
+        take: isGroups ? GROUPS_PER_PAGE : pageInfo.take,
         status: statusFilter.split(" / "),
         airlineId: selectedAirline?.id,
         airportId: selectedAirport?.id,
@@ -313,6 +392,7 @@ function Estafeta({ user, accessMenu }) {
     selectedAirline,
     selectedAirport,
     dateRange,
+    viewMode,
   ]);
 
   // useEffect(() => {
@@ -506,30 +586,98 @@ function Estafeta({ user, accessMenu }) {
   const validCurrentPage = urlPage < totalPages ? urlPage : 0;
   // const validCurrentPage = currentPageRelay < totalPages ? currentPageRelay : 0;
 
+  // Детальный экран группы: клиентская пагинация заявок группы по 50
+  const DETAIL_PAGE_SIZE = 50;
+  const detailGroup = isGroups
+    ? groups.find((g) => g.key === selectedGroupKey)
+    : null;
+  const detailRequests = detailGroup?.requests || [];
+  const detailPageCount = Math.ceil(detailRequests.length / DETAIL_PAGE_SIZE);
+
   return (
     <div className={classes.section}>
       {/* <Header>Эстафета</Header> */}
       <Header>Эскадрилья</Header>
       <div className={classes.section_searchAndFilter}>
-        <Filter
-          user={user}
-          isEstafeta={true}
-          isVisibleAirFiler={true}
-          toggleSidebar={toggleCreateSidebar}
-          handleChange={handleChange}
-          selectedAirline={selectedAirline}
-          setSelectedAirline={setSelectedAirline}
-          selectedAirport={selectedAirport}
-          setSelectedAirport={setSelectedAirport}
-          filterData={filterData}
-          buttonTitle={"Создать заявку"}
-          filterList={filterList}
-          needDate={true}
-          filterLocalData={localStorage.getItem("statusFilter")}
-          handleStatusChange={handleStatusChange} // передаем обработчик изменения статуса
-          initialRange={dateRange}
-          onRangeChange={setDateRange}
-        />
+        <button
+          type="button"
+          className={`${classes.filterButton} ${activeFilterCount > 0 ? classes.filterButtonActive : ""}`}
+          onClick={(e) => setFilterAnchorEl(e.currentTarget)}
+        >
+          <FilterIcon />
+          <span>Фильтры</span>
+          {activeFilterCount > 0 && (
+            <span className={classes.filterBadge}>{activeFilterCount}</span>
+          )}
+        </button>
+        <Popover
+          open={Boolean(filterAnchorEl)}
+          anchorEl={filterAnchorEl}
+          onClose={() => setFilterAnchorEl(null)}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          transformOrigin={{ vertical: "top", horizontal: "left" }}
+          slotProps={{
+            paper: {
+              sx: {
+                mt: "8px",
+                borderRadius: "12px",
+                boxShadow: "0 8px 24px rgba(20, 24, 42, 0.12)",
+                overflow: "visible",
+              },
+            },
+          }}
+        >
+          <div className={classes.filterPopover}>
+            <div className={classes.filterPopoverHeader}>
+              <span>Фильтры</span>
+              {activeFilterCount > 0 && (
+                <button
+                  type="button"
+                  className={classes.filterReset}
+                  onClick={handleResetFilters}
+                >
+                  Сбросить
+                </button>
+              )}
+            </div>
+            <Filter
+              vertical
+              user={user}
+              isEstafeta={true}
+              isVisibleAirFiler={true}
+              toggleSidebar={toggleCreateSidebar}
+              handleChange={handleChange}
+              selectedAirline={selectedAirline}
+              setSelectedAirline={setSelectedAirline}
+              selectedAirport={selectedAirport}
+              setSelectedAirport={setSelectedAirport}
+              filterData={filterData}
+              buttonTitle={"Создать заявку"}
+              filterList={filterList}
+              needDate={true}
+              filterLocalData={localStorage.getItem("statusFilter")}
+              handleStatusChange={handleStatusChange}
+              initialRange={dateRange}
+              onRangeChange={setDateRange}
+            />
+          </div>
+        </Popover>
+        <div className={classes.viewToggle}>
+          <button
+            type="button"
+            className={viewMode === "list" ? classes.viewToggleActive : ""}
+            onClick={() => handleViewChange("list")}
+          >
+            Список
+          </button>
+          <button
+            type="button"
+            className={viewMode === "groups" ? classes.viewToggleActive : ""}
+            onClick={() => handleViewChange("groups")}
+          >
+            Группы
+          </button>
+        </div>
         <MUITextField
           className={classes.mainSearch}
           label={"Поиск"}
@@ -540,48 +688,82 @@ function Estafeta({ user, accessMenu }) {
           <Button onClick={toggleCreateSidebar}>Создать заявку</Button>
         ) : null}
       </div>
-      {loading && <MUILoader />}
-      {error && <p>Error: {error.message}</p>}
+      {(isGroups ? groupsLoading : loading) && <MUILoader />}
+      {(isGroups ? groupsError : error) && <p>Error: {(isGroups ? groupsError : error).message}</p>}
 
       {/* Отображение таблицы заявок и компонентов пагинации */}
-      {!loading && !error && requests && (
+      {!(isGroups ? groupsLoading : loading) && !(isGroups ? groupsError : error) && (
         <>
-          <InfoTableData
-            user={user}
-            toggleRequestSidebar={toggleRequestSidebar}
-            requests={filteredRequests}
-            chooseRequestID={chooseRequestID}
-            setChooseObject={setChooseObject}
-            setChooseRequestID={setChooseRequestID}
-            pageInfo={pageInfo.skip}
-            scrollToId={requestIdFromState}
-          />
-
-          {totalPages > 0 && (
-            <div className={classes.pagination}>
-              <ReactPaginate
-                previousLabel={"←"}
-                nextLabel={"→"}
-                breakLabel={"..."}
-                pageCount={totalPages}
-                marginPagesDisplayed={2}
-                pageRangeDisplayed={5}
-                onPageChange={handlePageClick}
-                forcePage={validCurrentPage}
-                containerClassName={classes.pagination}
-                activeClassName={classes.activePaginationNumber}
-                pageLinkClassName={classes.paginationNumber}
-              />
-            </div>
+          {isGroups ? (
+            <GroupedRequests
+              groups={groups}
+              user={user}
+              toggleRequestSidebar={toggleRequestSidebar}
+              setChooseObject={setChooseObject}
+              setChooseRequestID={setChooseRequestID}
+              chooseRequestID={chooseRequestID}
+              selectedGroupKey={selectedGroupKey}
+              setSelectedGroupKey={setSelectedGroupKey}
+              detailPage={detailPage}
+              detailPageSize={DETAIL_PAGE_SIZE}
+            />
+          ) : (
+            <InfoTableData
+              user={user}
+              toggleRequestSidebar={toggleRequestSidebar}
+              requests={filteredRequests}
+              chooseRequestID={chooseRequestID}
+              setChooseObject={setChooseObject}
+              setChooseRequestID={setChooseRequestID}
+              pageInfo={pageInfo.skip}
+              scrollToId={requestIdFromState}
+            />
           )}
+
+          {detailGroup
+            ? detailPageCount > 1 && (
+                <div className={classes.pagination}>
+                  <ReactPaginate
+                    previousLabel={"←"}
+                    nextLabel={"→"}
+                    breakLabel={"..."}
+                    pageCount={detailPageCount}
+                    marginPagesDisplayed={2}
+                    pageRangeDisplayed={5}
+                    onPageChange={(e) => setDetailPage(e.selected)}
+                    forcePage={Math.min(detailPage, detailPageCount - 1)}
+                    containerClassName={classes.pagination}
+                    activeClassName={classes.activePaginationNumber}
+                    pageLinkClassName={classes.paginationNumber}
+                  />
+                </div>
+              )
+            : totalPages > 0 && (
+                <div className={classes.pagination}>
+                  <ReactPaginate
+                    previousLabel={"←"}
+                    nextLabel={"→"}
+                    breakLabel={"..."}
+                    pageCount={totalPages}
+                    marginPagesDisplayed={2}
+                    pageRangeDisplayed={5}
+                    onPageChange={handlePageClick}
+                    forcePage={validCurrentPage}
+                    containerClassName={classes.pagination}
+                    activeClassName={classes.activePaginationNumber}
+                    pageLinkClassName={classes.paginationNumber}
+                  />
+                </div>
+              )}
         </>
       )}
       {/* Боковые панели для создания и выбора заявок */}
-      <CreateRequest
+      <CreateRequestSidebar
         show={showCreateSidebar}
         onClose={toggleCreateSidebar}
         onMatchFound={handleOpenExistRequest}
         user={user}
+        onImported={() => (isGroups ? groupsRefetch() : refetch())}
       />
       <ExistRequest
         setChooseCityRequest={setChooseCityRequest}

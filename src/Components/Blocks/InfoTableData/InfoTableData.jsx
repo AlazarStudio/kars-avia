@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import classes from './InfoTableData.module.css';
 import InfoTable from "../InfoTable/InfoTable";
-import { convertToDate, convertToDateNew, getMediaUrl } from "../../../../graphQL_requests";
+import RequestRow from "./RequestRow";
 
 // Основная таблица с данными о заявках
 function InfoTableData({ user, toggleRequestSidebar, scrollToId, requests, setChooseObject, chooseRequestID, setChooseRequestID, pageInfo }) {
@@ -24,20 +24,6 @@ function InfoTableData({ user, toggleRequestSidebar, scrollToId, requests, setCh
         setChooseRequestID(id);
         toggleRequestSidebar();
     }, [setChooseObject, setChooseRequestID, toggleRequestSidebar]);
-
-    // Массив статусов для улучшения читаемости
-    const statusLabels = {
-        created: 'Создан',
-        opened: 'В обработке',
-        extended: 'Продлен',
-        reduced: 'Сокращен',
-        transferred: 'Перенесен',
-        earlyStart: 'Ранний заезд',
-        canceled: 'Отменен',
-        archiving: 'Готов к архиву',
-        archived: 'Архив',
-        done: 'Размещен'
-    };
 
     // Ref для контейнера списка
     const listContainerRef = useRef(null);
@@ -77,79 +63,14 @@ function InfoTableData({ user, toggleRequestSidebar, scrollToId, requests, setCh
 
             {/* Данные о заявках */}
             <div className={classes.bottom} ref={listContainerRef}>
-                {requests.map((item, index) => (
-                    <div
-                        className={`${classes.InfoTable_data} ${chooseRequestID === item.id && classes.InfoTable_data_active}`}
-                        style={{ opacity: (item.status !== 'archiving' && item.status !== 'canceled' ) ? 1 : 0.5 }}
-                        onClick={() => handleObject(item.id, item.arrival, item.departure, item.person, item.requestNumber)}
+                {requests.map((item) => (
+                    <RequestRow
                         key={item.id}
-                        // data-id={item.id}
-                    >
-                        {/* {item.status === 'created' && <div className={classes.newRequest}></div>} */}
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>{item.requestNumber}</div>
-                        {/* <div className={`${classes.InfoTable_data_elem} ${classes.w10}`} style={{justifyContent:'center', padding:'0'}}>{item.requestNumber?.slice(0, 4)}</div> */}
-                        {(() => {
-                            const totalUnread = (item?.chat || []).reduce((acc, chat) => {
-                                if (chat.unreadMessagesCount > 0 && (
-                                    (user.hotelId && chat.hotelId === user.hotelId) ||
-                                    (user.airlineId && chat.airlineId === user.airlineId) ||
-                                    (!user.hotelId && !user.airlineId)
-                                )) {
-                                    return acc + chat.unreadMessagesCount;
-                                }
-                                return acc;
-                            }, 0);
-                            return totalUnread > 0 ? (
-                                <div className={classes.newRequest}>{totalUnread > 99 ? '99+' : totalUnread}</div>
-                            ) : null;
-                        })()}
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w15}`}>
-                            <div className={classes.InfoTable_data_elem_information}>
-                                {item.person ?
-                                (
-                                    <>
-                                        <div className={classes.InfoTable_data_elem_title}>{item?.person?.name} {' '} {item?.reserve ? '(Резерв)' : ''} </div>
-                                        <div className={classes.InfoTable_data_elem_moreInfo}>{item?.person?.position?.name?.split(' ')[0]}</div>
-                                        {/* <div className={classes.InfoTable_data_elem_moreInfo}>{item?.person?.position?.split(' ')[0]}</div> */}
-                                    </>
-                                )
-                                : "Предварительная бронь"}
-                            </div>
-                        </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w13}`} style={{justifyContent:'center', padding:'0 0 0 10px'}}>{convertToDate(item.createdAt)}</div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w10}`} style={{ padding: "0 10px" }}>
-                            <div className={classes.InfoTable_data_elem_img} >
-                                <img src={getMediaUrl(item.airline.images[0])} alt="" />
-                            </div>
-                            {item.airline.name}
-                        </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`} style={{justifyContent:'center'}}>{item.airport?.code}</div>
-                        {/* <div className={`${classes.InfoTable_data_elem} ${classes.w12}`} style={{justifyContent:'center'}}>{item.airport.name} ({item.airport?.code})</div> */}
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>
-                            <div className={classes.InfoTable_data_elem_information}>
-                                {/* <div className={classes.InfoTable_data_elem_title}>{item.arrival.flight}</div> */}
-                                <div className={classes.InfoTable_data_elem_moreInfo}>
-                                    <span><img src="/calendar.png" alt="" /> {convertToDateNew(item.arrival)}</span>
-                                    <span><img src="/time.png" alt="" /> {convertToDateNew(item.arrival, true)}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>
-                            <div className={classes.InfoTable_data_elem_information}>
-                                {/* <div className={classes.InfoTable_data_elem_title}>{item.departure.flight}</div> */}
-                                <div className={classes.InfoTable_data_elem_moreInfo}>
-                                    <span><img src="/calendar.png" alt="" /> {convertToDateNew(item.departure)}</span>
-                                    <span><img src="/time.png" alt="" /> {convertToDateNew(item.departure, true)}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`}>
-                            <div className={classes.InfoTable_data_elem_position}>
-                                <div className={item.status}></div>
-                                {statusLabels[item.status]}
-                            </div>
-                        </div>
-                    </div>
+                        item={item}
+                        user={user}
+                        chooseRequestID={chooseRequestID}
+                        onSelect={(it) => handleObject(it.id, it.arrival, it.departure, it.person, it.requestNumber)}
+                    />
                 ))}
             </div>
         </InfoTable>

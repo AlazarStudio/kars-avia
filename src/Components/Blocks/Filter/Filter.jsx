@@ -35,6 +35,7 @@ function Filter({
   isEstafeta,
   initialRange,
   onRangeChange,
+  vertical = false,
   ...props
 }) {
   const [airlines, setAirlines] = useState([]);
@@ -153,6 +154,7 @@ function Filter({
   let filter = filterLocalData || "all";
 
   const [dropdownWidth, setDropdownWidth] = useState("200px"); // Начальное значение ширины
+  const controlWidth = vertical ? "100%" : dropdownWidth;
   const { width } = useWindowSize();
   // Функция для расчета ширины в зависимости от ширины экрана
   const calculateWidth = () => {
@@ -184,14 +186,14 @@ function Filter({
   }, []);
 
   return (
-    <div className={classes.filter}>
+    <div className={`${classes.filter} ${vertical ? classes.filterVertical : ""}`}>
       {isVisibleAirFiler && (
         <>
           {user?.role === roles.airlineAdmin
             ? null
             : !transfer && (
               <MUIAutocomplete
-                dropdownWidth={dropdownWidth}
+                dropdownWidth={controlWidth}
                 label={"Авиакомпания"}
                 hideLabelOnFocus={false}
                 options={[
@@ -221,7 +223,7 @@ function Filter({
 
           {!transfer && (
             <MUIAutocompleteColor
-              dropdownWidth={dropdownWidth}
+              dropdownWidth={controlWidth}
               label={"Аэропорт"}
               hideLabelOnFocus={false}
               options={[
@@ -287,7 +289,7 @@ function Filter({
 
           {!representativeRequests && (
             <DateRangeModalSelector
-              width={transfer ? "200px" : dropdownWidth}
+              width={transfer ? "200px" : controlWidth}
               initialRange={initialRange}
               onChange={(start, end) =>
                 onRangeChange({ startDate: start, endDate: end })
@@ -326,7 +328,7 @@ function Filter({
         <>
           {/* <div className={classes.filter_title}>Статус:</div> */}
           <MUIAutocomplete
-            dropdownWidth={transfer ? "200px" : dropdownWidth}
+            dropdownWidth={transfer ? "200px" : controlWidth}
             label={"Статус"}
             hideLabelOnFocus={false}
             options={statusOptions?.map((option) => option.label)}

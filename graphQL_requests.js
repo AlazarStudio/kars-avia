@@ -1347,6 +1347,68 @@ export const GET_REQUESTS_ARCHIVED = gql`
   }
 `;
 
+export const REQUESTS_BY_GROUP = gql`
+  query RequestsByGroup($pagination: RequestGroupPaginationInput) {
+    requestsByGroup(pagination: $pagination) {
+      totalGroups
+      totalPages
+      groups {
+        key
+        label
+        isBulk
+        bulkGroupId
+        requestCount
+        airline {
+          id
+          name
+          images
+        }
+        airport {
+          id
+          name
+          code
+        }
+        year
+        month
+        requests {
+          id
+          requestNumber
+          createdAt
+          arrival
+          departure
+          status
+          reserve
+          person {
+            id
+            name
+            position {
+              id
+              name
+            }
+          }
+          airline {
+            id
+            name
+            images
+          }
+          airport {
+            id
+            name
+            code
+          }
+          chat {
+            unreadMessagesCount
+            airlineId
+            hotelId
+          }
+          bulkGroupId
+          linkNumber
+        }
+      }
+    }
+  }
+`;
+
 export const REQUEST_CREATED_SUBSCRIPTION = gql`
     subscription RequestCreated {
         requestCreated {
@@ -1637,6 +1699,21 @@ export const CREATE_REQUEST_MUTATION = gql`
     }
 `;
 
+export const IMPORT_BULK_REQUESTS = gql`
+  mutation ImportBulkRequests($file: Upload!, $input: BulkRequestImportInput!) {
+    importBulkRequests(file: $file, input: $input) {
+      bulkGroupId
+      createdCount
+      linkNumbers
+      sourceFile
+      errors {
+        row
+        message
+      }
+    }
+  }
+`;
+
 export const CREATE_PASSENGER_REQUEST = gql`
   mutation CreatePassengerRequest($input: PassengerRequestCreateInput!) {
     createPassengerRequest(input: $input) {
@@ -1853,6 +1930,16 @@ export const GET_REQUEST = gql`
         airlineId
         hotelId
       }
+      bulkGroupId
+      linkNumber
+      arrivalFlightNumber
+      arrivalAircraftType
+      arrivalFlightStatus
+      departureFlightNumber
+      departureAircraftType
+      departureFlightStatus
+      singleRoomCount
+      doubleRoomCount
     }
   }
 `;

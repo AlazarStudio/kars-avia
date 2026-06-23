@@ -1,0 +1,195 @@
+/* Плитки группового вида (groupStyle: Плитки) по дизайну Эскадрилья.dc.html */
+.tilesScroll {
+  height: calc(100vh - 335px);
+  overflow-y: auto;
+}
+
+.tilesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 16px;
+  padding: 20px 24px;
+}
+
+.tile {
+  border: 1px solid #eceff6;
+  border-radius: 14px;
+  padding: 16px;
+  background: #fff;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(20, 30, 60, 0.05);
+  transition: box-shadow 0.15s, border-color 0.15s;
+}
+
+.tile:hover {
+  box-shadow: 0 8px 22px rgba(20, 30, 60, 0.12);
+}
+
+.tileHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.tileAirline {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  min-width: 0;
+}
+
+.tileAvatar {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 0.3px;
+}
+
+.tileAvatarLogo {
+  background: #fff;
+  border: 1px solid #eceff4;
+  overflow: hidden;
+}
+
+.tileAvatarLogo img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tileNameWrap {
+  min-width: 0;
+}
+
+.tileName {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1f2333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tileMeta {
+  font-size: 12px;
+  color: #9097ac;
+  margin-top: 2px;
+}
+
+.tileBulk {
+  background: #ede7f6;
+  color: #5e35b1;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.tileCount {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin-bottom: 14px;
+}
+
+.tileCountNum {
+  font-size: 34px;
+  font-weight: 800;
+  color: #1a1c22;
+  letter-spacing: -1px;
+}
+
+.tileCountWord {
+  font-size: 13px;
+  color: #9097ac;
+  font-weight: 600;
+}
+
+.tileBar {
+  display: flex;
+  height: 7px;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #eef1f7;
+  margin-bottom: 9px;
+}
+
+.tileLegend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 14px;
+  font-size: 11px;
+}
+
+.legendDone {
+  color: #1e7e34;
+  font-weight: 600;
+}
+
+.legendWork {
+  color: #1565c0;
+  font-weight: 600;
+}
+
+.legendArchiving {
+  color: #a86a2a;
+  font-weight: 600;
+}
+
+/* Детальный экран группы (карточка: шапка-бар + список заявок) */
+.drillHead {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 24px;
+  border-bottom: 1px solid #eef1f7;
+  background: #fbfcfe;
+}
+
+.backPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  color: #0057c3;
+  padding: 7px 13px 7px 10px;
+  border-radius: 10px;
+  background: #eaf1fb;
+}
+
+.drillTitleWrap {
+  min-width: 0;
+}
+
+.drillTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.drillTitle {
+  font-size: 18px;
+  font-weight: 800;
+  color: #1a1c22;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.drillCount {
+  font-size: 13px;
+  color: #9097ac;
+  margin-top: 2px;
+}

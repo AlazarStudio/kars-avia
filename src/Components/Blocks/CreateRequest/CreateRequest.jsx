@@ -31,7 +31,7 @@ import { useToast } from "../../../contexts/ToastContext.jsx";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
 
 // Компонент для создания новой заявки
-function CreateRequest({ show, onClose, onMatchFound, user }) {
+function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, registerClose }) {
   const token = getCookie("token");
   const { success } = useToast();
   const { showAlert, confirm, isDialogOpen } = useDialog();
@@ -650,7 +650,7 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
       closeButton();
     };
 
-    if (show) {
+    if (show && !embedded) {
       document.addEventListener("mousedown", handleClickOutside);
     } else {
       document.removeEventListener("mousedown", handleClickOutside);
@@ -658,7 +658,12 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
 
     // Очистка эффекта при демонтировании компонента
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeButton, isDialogOpen]);
+  }, [show, embedded, closeButton, isDialogOpen]);
+
+  // В embedded-режиме враппер закрывает активный режим через этот колбэк
+  useEffect(() => {
+    if (embedded) registerClose?.(closeButton);
+  }, [embedded, registerClose, closeButton]);
 
   const meal = [
     {
@@ -690,15 +695,16 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
 
   // console.log(formData);
 
-  return (
+  const inner = (
     <>
-      <Sidebar show={show} sidebarRef={sidebarRef}>
+      {!embedded && (
         <div className={classes.requestTitle}>
           <div className={classes.requestTitle_name}>Создать заявку</div>
           <div className={classes.requestTitle_close} onClick={closeButton}>
             <CloseIcon />
           </div>
         </div>
+      )}
 
         {/* <div className={classes.tabs}>
           <div
@@ -1107,8 +1113,15 @@ function CreateRequest({ show, onClose, onMatchFound, user }) {
           // setSelectedAirline={setSelectedAirline}
           />
         )}
-      </Sidebar>
     </>
+  );
+
+  return embedded ? (
+    inner
+  ) : (
+    <Sidebar show={show} sidebarRef={sidebarRef}>
+      {inner}
+    </Sidebar>
   );
 }
 

@@ -1,0 +1,53 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 24px 16px;
+  flex: none;
+}
+
+.title {
+  font-size: 21px;
+  font-weight: 800;
+  color: #1a1c22;
+}
+
+.close {
+  display: flex;
+  align-items: center;
+  color: #8a90a8;
+  cursor: pointer;
+}
+
+/* Сегмент Одиночная / Массовая — белый активный стиль по дизайну Эскадрилья.dc.html */
+.modeRow {
+  padding: 0 24px 18px;
+  flex: none;
+}
+
+.segment {
+  display: flex;
+  background: #eaedf5;
+  border-radius: 11px;
+  padding: 3px;
+}
+
+.segment button {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 9px;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: #8a90a8;
+}
+
+.segment button.segActive {
+  background: #fff;
+  color: #1a1c22;
+  font-weight: 600;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
