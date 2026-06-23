@@ -18,6 +18,7 @@ import {
   SERVICE_CONFIG,
   SERVICE_STATUS_CONFIG,
   REQUEST_STATUS_CONFIG,
+  getServiceByKey,
   formatDate,
   formatDateTime,
 } from "../fapConstants";
@@ -44,6 +45,7 @@ import FapChat from "../FapChat/FapChat";
 import { isExternalUser, isAirlineRole } from "../../../../utils/access";
 import { downloadRequestReport } from "../reports/buildReportSheets";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
+import { useRepresentativeLink } from "../hooks/useRepresentativeLink";
 
 const STATUS_TRANSITIONS = {
   CREATED: ["ACCEPTED"],
@@ -83,14 +85,6 @@ const SERVICE_ICON = {
   baggage: BaggageIcon,
 };
 
-const STATUS_PROGRESS = {
-  NEW: 0,
-  ACCEPTED: 25,
-  IN_PROGRESS: 60,
-  COMPLETED: 100,
-  CANCELLED: 0,
-};
-
 const STATUS_VERB = {
   NEW: "Не начато",
   ACCEPTED: "Принято",
@@ -100,86 +94,56 @@ const STATUS_VERB = {
 };
 
 const STATUS_DOT_COLOR = {
+  ...Object.fromEntries(
+    Object.entries(SERVICE_STATUS_CONFIG).map(([k, v]) => [k, v.color])
+  ),
   NEW: "#CBD2E4",
-  ACCEPTED: "#3B82F6",
-  IN_PROGRESS: "#F59E0B",
-  COMPLETED: "#10B981",
-  CANCELLED: "#EF4444",
 };
 
-// Парсит summary вида "6 / 9 чел." → { num: "6/9", unit: "чел.", pct: 67 }
-// или "2 водителей" → { num: "2", unit: "водителей", pct: by status }
-function parseServiceSummary(summary, status) {
-  if (!summary) return { num: "—", unit: "", pct: 0 };
-  const ratio = summary.match(/^(\d+)\s*\/\s*(\d+)\s*(.*)$/);
-  if (ratio) {
-    const cur = +ratio[1];
-    const tot = +ratio[2];
-    return {
-      num: `${cur}/${tot}`,
-      unit: ratio[3] || "",
-      pct: tot ? Math.round((cur / tot) * 100) : 0,
-    };
-  }
-  const single = summary.match(/^(\d+)\s+(.*)$/);
-  if (single) {
-    const n = +single[1];
-    return {
-      num: single[1],
-      unit: single[2] || "",
-      pct: status === "COMPLETED" ? 100 : n > 0 ? 60 : 0,
-    };
-  }
-  return { num: "—", unit: summary, pct: 0 };
-}
-
-function getServiceData(serviceKey, request) {
-  switch (serviceKey) {
-    case "water":             return request.waterService;
-    case "meal":              return request.mealService;
-    case "living":            return request.livingService;
-    case "transfer":          return request.transferService;
-    case "transferDeparture": return request.departureTransferService;
-    case "baggage":           return request.baggageDeliveryService;
-    default:                  return null;
-  }
-}
-
-function getServiceSummary(serviceKey, request) {
+// Метрики KPI-плитки услуги: { num: "cur/tot", unit: "чел.", pct }.
+// baggage считается отдельно в renderGrid и сюда не попадает.
+function getTileMetrics(serviceKey, request) {
+  let cur = 0;
+  let tot = 0;
   switch (serviceKey) {
     case "water": {
       const s = request.waterService;
-      return `${s?.people?.length ?? 0} / ${s?.plan?.peopleCount ?? 0} чел.`;
+      cur = s?.people?.length ?? 0;
+      tot = s?.plan?.peopleCount ?? 0;
+      break;
     }
     case "meal": {
       const s = request.mealService;
-      return `${s?.people?.length ?? 0} / ${s?.plan?.peopleCount ?? 0} чел.`;
+      cur = s?.people?.length ?? 0;
+      tot = s?.plan?.peopleCount ?? 0;
+      break;
     }
     case "living": {
       const hotels = request.livingService?.hotels ?? [];
-      const totalPeople = hotels.reduce((acc, h) => acc + (h.people?.length ?? 0), 0);
-      const planCap = request.livingService?.plan?.peopleCount ?? 0;
-      return `${totalPeople} / ${planCap} чел.`;
+      cur = hotels.reduce((acc, h) => acc + (h.people?.length ?? 0), 0);
+      tot = request.livingService?.plan?.peopleCount ?? 0;
+      break;
     }
     case "transfer": {
       const drivers = request.transferService?.drivers ?? [];
-      const totalPeople = drivers.reduce((acc, d) => acc + (d.people?.length ?? 0), 0);
-      const planCap = request.transferService?.plan?.peopleCount ?? 0;
-      return `${totalPeople} / ${planCap} чел.`;
+      cur = drivers.reduce((acc, d) => acc + (d.people?.length ?? 0), 0);
+      tot = request.transferService?.plan?.peopleCount ?? 0;
+      break;
     }
     case "transferDeparture": {
       const drivers = request.departureTransferService?.drivers ?? [];
-      const totalPeople = drivers.reduce((acc, d) => acc + (d.people?.length ?? 0), 0);
-      const planCap = request.departureTransferService?.plan?.peopleCount ?? 0;
-      return `${totalPeople} / ${planCap} чел.`;
-    }
-    case "baggage": {
-      const planCap = request.baggageDeliveryService?.plan?.peopleCount ?? 0;
-      return `${planCap} чел.`;
+      cur = drivers.reduce((acc, d) => acc + (d.people?.length ?? 0), 0);
+      tot = request.departureTransferService?.plan?.peopleCount ?? 0;
+      break;
     }
     default:
-      return "";
+      return { num: "—", unit: "", pct: 0 };
   }
+  return {
+    num: `${cur}/${tot}`,
+    unit: "чел.",
+    pct: tot ? Math.round((cur / tot) * 100) : 0,
+  };
 }
 
 export default function FapDetail({ user, canEdit = true }) {
@@ -205,7 +169,13 @@ export default function FapDetail({ user, canEdit = true }) {
   });
 
   useSubscription(PASSENGER_REQUEST_UPDATED_SUBSCRIPTION, {
-    onData: () => refetch(),
+    onData: ({ data }) => {
+      if (
+        String(data?.data?.passengerRequestUpdated?.id) === String(requestId)
+      ) {
+        refetch();
+      }
+    },
   });
 
   const [setStatus] = useMutation(SET_PASSENGER_REQUEST_STATUS, {
@@ -220,7 +190,7 @@ export default function FapDetail({ user, canEdit = true }) {
 
   const enabledKeys = useMemo(() => {
     if (!request) return [];
-    return SERVICE_KEYS.filter((k) => getServiceData(k, request)?.plan?.enabled);
+    return SERVICE_KEYS.filter((k) => getServiceByKey(request, k)?.plan?.enabled);
   }, [request]);
 
   // Закрытие поповера по клику вне.
@@ -238,31 +208,10 @@ export default function FapDetail({ user, canEdit = true }) {
     return () => document.removeEventListener("mousedown", onDown);
   }, [statusAnchor]);
 
-  const representativePwaLink = useMemo(() => {
-    const links = request?.representativeLinks || [];
-    if (!Array.isArray(links) || links.length === 0) return "";
-    const byDepartment = user?.representativeDepartmentId
-      ? links.find(
-          (item) =>
-            String(item?.representativeDepartmentId) ===
-              String(user.representativeDepartmentId) && item?.linkPWA
-        )
-      : null;
-    if (byDepartment?.linkPWA) return byDepartment.linkPWA;
-    const firstWithPwa = links.find((item) => item?.linkPWA);
-    return firstWithPwa?.linkPWA || "";
-  }, [request?.representativeLinks, user?.representativeDepartmentId]);
-
-  const canCopyRepresentativeLink = !isExternalUser(user) && Boolean(representativePwaLink);
-
-  const handleCopyRepresentativeLink = async () => {
-    try {
-      await navigator.clipboard.writeText(representativePwaLink);
-      success("Ссылка представительства скопирована");
-    } catch {
-      notifyError("Не удалось скопировать ссылку");
-    }
-  };
+  const {
+    canCopy: canCopyRepresentativeLink,
+    copy: handleCopyRepresentativeLink,
+  } = useRepresentativeLink(user, request);
 
   if (loading) {
     return (
@@ -424,33 +373,6 @@ export default function FapDetail({ user, canEdit = true }) {
     );
   };
 
-  // Пилл-статус для смелой шапки.
-  const renderBoldStatusPill = () => {
-    if (!popoverEnabled) {
-      return <span className={classes.boldStatusPill}>{statusCfg.label || request.status}</span>;
-    }
-    const open = statusAnchor === "bold";
-    return (
-      <span className={classes.statusPillWrap} data-statuspill>
-        <button
-          type="button"
-          className={classes.boldStatusPillBtn}
-          onClick={() => setStatusAnchor(open ? null : "bold")}
-          aria-haspopup="menu"
-          aria-expanded={open}
-        >
-          {statusCfg.label || request.status}
-          <ChevronIcon
-            width="14"
-            height="14"
-            className={`${classes.statusPillChevron} ${open ? classes.statusPillChevronOpen : ""}`}
-          />
-        </button>
-        {open && renderStatusPopover()}
-      </span>
-    );
-  };
-
   // ── 3C: KPI-плитки 3×2 ──
   const renderGrid = () => {
     if (enabledKeys.length === 0) {
@@ -460,7 +382,7 @@ export default function FapDetail({ user, canEdit = true }) {
       <div className={classes.servicesGrid}>
         {enabledKeys.map((key) => {
           const cfg = SERVICE_CONFIG[key];
-          const svc = getServiceData(key, request);
+          const svc = getServiceByKey(request, key);
           const Icon = SERVICE_ICON[key];
           const status = svc?.status || "NEW";
           let m;
@@ -482,8 +404,7 @@ export default function FapDetail({ user, canEdit = true }) {
               };
             }
           } else {
-            const summary = getServiceSummary(key, request);
-            m = parseServiceSummary(summary, status);
+            m = getTileMetrics(key, request);
           }
           const isCanc = status === "CANCELLED";
           const isDone = status === "COMPLETED";
@@ -730,47 +651,6 @@ export default function FapDetail({ user, canEdit = true }) {
           </div>
         </div>
       </div>
-
-      {/* Смелый вариант шапки — скрыт. Раскомментировать для сравнения.
-      <div className={classes.boldHeader}>
-        <div className={classes.boldLeft}>
-          <div className={classes.boldLogo}>
-            {request.airline?.images?.[0] ? (
-              <img src={getMediaUrl(request.airline.images[0])} alt="" />
-            ) : (
-              <span className={classes.boldLogoFallback}>
-                {(request.airline?.name || "?").trim().charAt(0).toUpperCase()}
-              </span>
-            )}
-          </div>
-          <div className={classes.boldInfo}>
-            <div className={classes.boldAirline}>{request.airline?.name || "Авиакомпания"}</div>
-            <div className={classes.boldSub}>
-              <span className={classes.boldFlight}>Рейс {request.flightNumber}</span>
-              {renderBoldStatusPill()}
-            </div>
-          </div>
-        </div>
-
-        <div className={classes.boldRight}>
-          {canEdit && !isFinal && (
-            <FapActionButton variant="secondary" onDark onClick={() => setShowAddService(true)}>
-              <EditPencilIcon color="#fff" />
-              Редактировать
-            </FapActionButton>
-          )}
-          <FapActionButton
-            variant="secondary"
-            onDark
-            active={showLogs}
-            onClick={() => setShowLogs((v) => !v)}
-          >
-            <ScheduleIcon color={showLogs ? "var(--dark-blue)" : "#fff"} />
-            История
-          </FapActionButton>
-        </div>
-      </div>
-      */}
 
       {/* Контентный ряд */}
       <div className={classes.contentRow}>

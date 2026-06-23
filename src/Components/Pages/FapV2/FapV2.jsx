@@ -14,6 +14,7 @@ import {
 import {
   SERVICE_CONFIG,
   REQUEST_STATUS_CONFIG,
+  getServiceByKey,
   formatDateTime,
 } from "../../Blocks/FapV2/fapConstants";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
@@ -94,32 +95,12 @@ const ClockSvg = ({ size = 14, color = "#0057C3" }) => (
   </svg>
 );
 
-function getServiceForKey(req, key) {
-  switch (key) {
-    case "water":
-      return req.waterService;
-    case "meal":
-      return req.mealService;
-    case "living":
-      return req.livingService;
-    case "transfer":
-      return req.transferService;
-    case "transferDeparture":
-      return req.departureTransferService;
-    case "baggage":
-      return req.baggageDeliveryService;
-    default:
-      return null;
-  }
-}
-
 const STATUS_OPTIONS = [
   { value: null, label: "Все статусы" },
-  { value: "CREATED", label: "Создан" },
-  { value: "ACCEPTED", label: "Принят" },
-  { value: "IN_PROGRESS", label: "В работе" },
-  { value: "COMPLETED", label: "Завершён" },
-  { value: "CANCELLED", label: "Отменён" },
+  ...Object.entries(REQUEST_STATUS_CONFIG).map(([value, { label }]) => ({
+    value,
+    label,
+  })),
 ];
 
 const LS_STATUS_KEY = "statusFilterFapV2";
@@ -188,7 +169,7 @@ export default function FapV2({ user, accessMenu }) {
 
   const serviceDots = (req) =>
     SERVICE_ORDER.map((key) => {
-      const svc = getServiceForKey(req, key);
+      const svc = getServiceByKey(req, key);
       const enabled = !!svc?.plan?.enabled;
       return { key, enabled, status: svc?.status };
     });

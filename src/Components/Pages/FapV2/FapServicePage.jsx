@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { useNavigate, useParams, useOutletContext } from "react-router-dom";
 import { useQuery, useSubscription } from "@apollo/client";
 import {
@@ -10,6 +10,7 @@ import { SERVICE_CONFIG } from "../../Blocks/FapV2/fapConstants";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import Header from "../../Blocks/Header/Header";
 import FapWaterMealPage from "../../Blocks/FapV2/FapWaterMealPage/FapWaterMealPage";
+import { useRepresentativeLink } from "../../Blocks/FapV2/hooks/useRepresentativeLink";
 import FapLivingPage from "../../Blocks/FapV2/FapLivingPage/FapLivingPage";
 import FapTransferPage from "../../Blocks/FapV2/FapTransferPage/FapTransferPage";
 import FapBaggagePage from "../../Blocks/FapV2/FapBaggagePage/FapBaggagePage";
@@ -21,7 +22,6 @@ import {
 import { authService } from "../../../services/authService";
 import CopyIcon from "../../../shared/icons/CopyIcon";
 import FapChat from "../../Blocks/FapV2/FapChat/FapChat";
-import { useToast } from "../../../contexts/ToastContext";
 import classes from "./FapServicePage.module.css";
 
 export default function FapServicePage({ user }) {
@@ -29,7 +29,6 @@ export default function FapServicePage({ user }) {
   const { accessMenu } = useOutletContext();
   const navigate = useNavigate();
   const token = getCookie("token");
-  const { success, error: notifyError } = useToast();
 
   const isAirlineRole = isAirlineRoleCheck(user);
 
@@ -39,26 +38,22 @@ export default function FapServicePage({ user }) {
   });
 
   useSubscription(PASSENGER_REQUEST_UPDATED_SUBSCRIPTION, {
-    onData: () => refetch(),
+    onData: ({ data }) => {
+      if (
+        String(data?.data?.passengerRequestUpdated?.id) === String(requestId)
+      ) {
+        refetch();
+      }
+    },
   });
 
   const request = data?.passengerRequest;
   const cfg = SERVICE_CONFIG[serviceKey];
 
-  const representativePwaLink = useMemo(() => {
-    const links = request?.representativeLinks || [];
-    if (!Array.isArray(links) || links.length === 0) return "";
-    const byDepartment = user?.representativeDepartmentId
-      ? links.find(
-          (item) =>
-            String(item?.representativeDepartmentId) ===
-              String(user.representativeDepartmentId) && item?.linkPWA
-        )
-      : null;
-    if (byDepartment?.linkPWA) return byDepartment.linkPWA;
-    const firstWithPwa = links.find((item) => item?.linkPWA);
-    return firstWithPwa?.linkPWA || "";
-  }, [request?.representativeLinks, user?.representativeDepartmentId]);
+  const {
+    canCopy: canCopyRepresentativeLink,
+    copy: handleCopyRepresentativeLink,
+  } = useRepresentativeLink(user, request);
 
   const canEdit =
     canAccessMenu(accessMenu, "reserveUpdate", user) && !isAirlineRole;
@@ -66,17 +61,6 @@ export default function FapServicePage({ user }) {
   const handleExternalLogout = () => {
     document.cookie = "externalUserContext=; Max-Age=0; Path=/";
     authService.clear();
-  };
-
-  const canCopyRepresentativeLink = !isExternalUser(user) && Boolean(representativePwaLink);
-
-  const handleCopyRepresentativeLink = async () => {
-    try {
-      await navigator.clipboard.writeText(representativePwaLink);
-      success("Ссылка представительства скопирована");
-    } catch {
-      notifyError("Не удалось скопировать ссылку");
-    }
   };
 
   const renderSection = () => {

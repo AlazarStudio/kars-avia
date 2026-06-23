@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery } from "@apollo/client";
 import { InputMask } from "@react-input/mask";
 import * as XLSX from "xlsx";
@@ -171,8 +170,6 @@ export default function FapHotelPage({
   showLinks = true,
   isExtHotel = false,
 }) {
-  const navigate = useNavigate();
-  const { requestId } = useParams();
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
   const { confirm } = useDialog();
@@ -1181,51 +1178,11 @@ export default function FapHotelPage({
     if (!request?.id) return;
     setSaving(true);
     try {
-      // Бекенд не хранит тарифы отдельно — восстанавливает их на загрузке из
-      // уникальных ценовых ключей строк отчёта. Чтобы непривязанные тарифы
-      // не терялись, добавляем «теневые» строки (пустой ФИО — не отображаются
-      // как гость, но восстанавливаются тарифной инференцией).
-      const usedTariffIds = new Set(
-        Object.values(personData)
-          .map((pd) => pd?.tariffId)
-          .filter(Boolean)
-      );
-      const ghostRows = tariffs
-        .filter((t) => !t.draft && !usedTariffIds.has(t.id))
-        .map((t) => ({
-          fullName: "",
-          roomNumber: "",
-          roomCategory: t.name || "",
-          roomKind: "",
-          daysCount: 0,
-          breakfast: toNum(t.breakfast),
-          lunch: toNum(t.lunch),
-          dinner: toNum(t.dinner),
-          foodCost: toNum(t.foodCost),
-          accommodationCost: toNum(t.accommodationCost),
-        }));
-
-      const rowsForSave = [
-        ...reportRows.map((row) => ({
-          fullName: row.fullName,
-          roomNumber: row.roomNumber,
-          roomCategory: row.roomCategory,
-          roomKind: row.roomKind,
-          daysCount: toNum(row.daysCount),
-          breakfast: toNum(row.breakfast),
-          lunch: toNum(row.lunch),
-          dinner: toNum(row.dinner),
-          foodCost: toNum(row.foodCost),
-          accommodationCost: toNum(row.accommodationCost),
-        })),
-        ...ghostRows,
-      ];
-
       await saveReport({
         variables: {
           requestId: request.id,
           hotelIndex: Number(hotelIndex),
-          reportRows: rowsForSave,
+          reportRows: buildReportRows(),
         },
       });
       onRefetch?.();
@@ -1283,7 +1240,7 @@ export default function FapHotelPage({
     );
   }
 
-  const canMutateGuests = canEdit && !isExtHotel || (isExtHotel && canEdit);
+  const canMutateGuests = canEdit;
   const showCrewToggle = request?.includesCrew;
 
   // ── Render helpers ──

@@ -9,7 +9,7 @@ import {
   getCookie,
 } from "../../../../../graphQL_requests";
 import { downloadTransferReport } from "../reports/buildReportSheets";
-import { SERVICE_STATUS_CONFIG, formatTime, formatDateTime } from "../fapConstants";
+import { SERVICE_STATUS_CONFIG, formatDateTime } from "../fapConstants";
 import { useToast } from "../../../../contexts/ToastContext";
 import FapActionButton from "../FapActionButton/FapActionButton";
 import FapSelect from "../FapSelect/FapSelect";

@@ -326,29 +326,6 @@
   flex-shrink: 0;
 }
 
-/* ── Driver action buttons ── */
-.iconBtn {
-  width: 36px;
-  height: 36px;
-  border-radius: 10px;
-  border: 1px solid #E4E4EF;
-  background: #fff;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0;
-  flex-shrink: 0;
-  color: var(--dark-blue);
-  text-decoration: none;
-  transition: background 0.15s, border-color 0.15s;
-}
-
-.iconBtn:hover {
-  background: #EAF1FB;
-  border-color: #CBD2E4;
-}
-
 .linkBtn {
   height: 36px;
   padding: 0 12px;
@@ -520,17 +497,6 @@
   white-space: nowrap;
   font-weight: 500;
 }
-.reportInput,
-.reportInputNumber {
-  border: 1px solid #CBD2E4;
-  border-radius: 4px;
-  padding: 4px 8px;
-  font-size: 12px;
-  background: #fff;
-  outline: none;
-  transition: border-color 0.12s ease;
-}
-.reportInput { min-width: 200px; }
 .reportInputNumber {
   width: 180px;
   box-sizing: border-box;
@@ -538,6 +504,9 @@
   border-radius: 8px;
   padding: 8px 10px;
   font-size: 13px;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.12s ease;
 }
 .saveBtn {
   margin-left: auto;
@@ -559,11 +528,9 @@
   opacity: 0.45;
   cursor: default;
 }
-.reportInput:focus,
 .reportInputNumber:focus {
   border-color: #8B5CF6;
 }
-.reportInput:disabled,
 .reportInputNumber:disabled {
   background: #F1F5F9;
   color: #94A3B8;

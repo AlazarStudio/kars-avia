@@ -27,6 +27,42 @@ import CloseIcon from "../../../../shared/icons/CloseIcon";
 import CopyIcon from "../../../../shared/icons/CopyIcon";
 import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
 
+// Валидация формы + сборка person-объекта для CREW/PASSENGER.
+// Возвращает { ok, error } при ошибке валидации или { ok, person } при успехе.
+function buildPersonInput(form, crewRoster) {
+  if (form.personType === "CREW") {
+    if (!form.airlinePersonalId) {
+      return { ok: false, error: "Выберите сотрудника экипажа" };
+    }
+    const member = crewRoster.find(
+      (m) => m.airlinePersonalId === form.airlinePersonalId
+    );
+    if (!member) {
+      return { ok: false, error: "Сотрудник не найден в ростере" };
+    }
+    return {
+      ok: true,
+      person: {
+        fullName: member.fullName,
+        phone: member.phone || undefined,
+        personType: "CREW",
+        airlinePersonalId: member.airlinePersonalId,
+      },
+    };
+  }
+  if (!form.fullName.trim()) {
+    return { ok: false, error: "Укажите ФИО пассажира" };
+  }
+  return {
+    ok: true,
+    person: {
+      fullName: form.fullName.trim(),
+      phone: form.phone.trim() || undefined,
+      personType: "PASSENGER",
+    },
+  };
+}
+
 const TR = "#8B5CF6";
 const TR_BG = "#F5F3FF";
 const TR_DEP = "#7C3AED";
@@ -300,68 +336,32 @@ export default function FapDriverPage({
   };
 
   const handleAdd = async () => {
-    if (addForm.personType === "CREW") {
-      if (!addForm.airlinePersonalId) {
-        notifyError("Выберите сотрудника экипажа");
-        return;
-      }
-      const member = crewRoster.find(
-        (m) => m.airlinePersonalId === addForm.airlinePersonalId
+    const built = buildPersonInput(addForm, crewRoster);
+    if (!built.ok) {
+      notifyError(built.error);
+      return;
+    }
+    try {
+      setSaving(true);
+      await addPerson({
+        variables: {
+          requestId: request.id,
+          driverIndex: Number(driverIndex),
+          direction,
+          person: built.person,
+        },
+      });
+      success(
+        built.person.personType === "CREW"
+          ? "Член экипажа добавлен"
+          : "Пассажир добавлен"
       );
-      if (!member) {
-        notifyError("Сотрудник не найден в ростере");
-        return;
-      }
-      try {
-        setSaving(true);
-        await addPerson({
-          variables: {
-            requestId: request.id,
-            driverIndex: Number(driverIndex),
-            direction,
-            person: {
-              fullName: member.fullName,
-              phone: member.phone || undefined,
-              personType: "CREW",
-              airlinePersonalId: member.airlinePersonalId,
-            },
-          },
-        });
-        success("Член экипажа добавлен");
-        cancelAdd();
-        onRefetch?.();
-      } catch (e) {
-        notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при добавлении");
-      } finally {
-        setSaving(false);
-      }
-    } else {
-      if (!addForm.fullName.trim()) {
-        notifyError("Укажите ФИО пассажира");
-        return;
-      }
-      try {
-        setSaving(true);
-        await addPerson({
-          variables: {
-            requestId: request.id,
-            driverIndex: Number(driverIndex),
-            direction,
-            person: {
-              fullName: addForm.fullName.trim(),
-              phone: addForm.phone.trim() || undefined,
-              personType: "PASSENGER",
-            },
-          },
-        });
-        success("Пассажир добавлен");
-        cancelAdd();
-        onRefetch?.();
-      } catch (e) {
-        notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при добавлении");
-      } finally {
-        setSaving(false);
-      }
+      cancelAdd();
+      onRefetch?.();
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при добавлении");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -378,46 +378,9 @@ export default function FapDriverPage({
 
   const handleSaveEdit = async () => {
     if (editing == null) return;
-    if (editForm.personType === "CREW") {
-      if (!editForm.airlinePersonalId) {
-        notifyError("Выберите сотрудника экипажа");
-        return;
-      }
-      const member = crewRoster.find(
-        (m) => m.airlinePersonalId === editForm.airlinePersonalId
-      );
-      if (!member) {
-        notifyError("Сотрудник не найден в ростере");
-        return;
-      }
-      try {
-        setSaving(true);
-        await updatePerson({
-          variables: {
-            requestId: request.id,
-            driverIndex: Number(driverIndex),
-            personIndex: editing,
-            direction,
-            person: {
-              fullName: member.fullName,
-              phone: member.phone || undefined,
-              personType: "CREW",
-              airlinePersonalId: member.airlinePersonalId,
-            },
-          },
-        });
-        success("Сохранено");
-        cancelEdit();
-        onRefetch?.();
-      } catch (e) {
-        notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при сохранении");
-      } finally {
-        setSaving(false);
-      }
-      return;
-    }
-    if (!editForm.fullName.trim()) {
-      notifyError("Укажите ФИО пассажира");
+    const built = buildPersonInput(editForm, crewRoster);
+    if (!built.ok) {
+      notifyError(built.error);
       return;
     }
     try {
@@ -428,11 +391,7 @@ export default function FapDriverPage({
           driverIndex: Number(driverIndex),
           personIndex: editing,
           direction,
-          person: {
-            fullName: editForm.fullName.trim(),
-            phone: editForm.phone.trim() || undefined,
-            personType: "PASSENGER",
-          },
+          person: built.person,
         },
       });
       success("Сохранено");

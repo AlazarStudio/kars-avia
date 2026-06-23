@@ -11,7 +11,6 @@ import { authService } from "../../../../services/authService";
 import { calculateEffectiveCostDays } from "../../../../utils/effectiveCostDays";
 import Button from "../../../Standart/Button/Button";
 import { useToast } from "../../../../contexts/ToastContext";
-import { PERSON_TYPE_CONFIG } from "../fapConstants";
 import PersonBadge from "../PersonBadge/PersonBadge";
 import DownloadIcon from "../../../../shared/icons/DownloadIcon";
 import FapChat from "../FapChat/FapChat";

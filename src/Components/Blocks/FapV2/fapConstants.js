@@ -45,6 +45,9 @@ export const SERVICE_CONFIG = {
   },
 };
 
+export const getServiceByKey = (request, key) =>
+  request?.[SERVICE_CONFIG[key]?.key] ?? null;
+
 export const PERSON_TYPE_CONFIG = {
   PASSENGER: { label: "Пассажир", color: "#3B82F6", bg: "#EFF6FF" },
   CREW: { label: "Экипаж", color: "#8B5CF6", bg: "#F5F3FF" },
