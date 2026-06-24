@@ -162,6 +162,30 @@ function CategoryBadge({ category }) {
   );
 }
 
+// Поле номера в отчёте коммитит значение по blur/Enter, а не на каждый символ.
+// Иначе каждый набранный символ менял бы группировку (reportGroups группирует
+// гостей по roomNumber) → группа-контейнер пересоздаётся → input теряет фокус
+// после одной цифры, плюс на каждый символ срабатывал автосейв.
+function RoomNumberCell({ value, canEdit, onCommit }) {
+  const [local, setLocal] = useState(value ?? "");
+  useEffect(() => { setLocal(value ?? ""); }, [value]);
+  const commit = () => {
+    if ((local ?? "") !== (value ?? "")) onCommit(local);
+  };
+  return (
+    <input
+      type="text"
+      className={classes.cellInput}
+      value={local}
+      onChange={(e) => setLocal(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
+      readOnly={!canEdit}
+      placeholder="№"
+    />
+  );
+}
+
 export default function FapHotelPage({
   request,
   hotelIndex,
@@ -1946,13 +1970,10 @@ export default function FapHotelPage({
                                 {person.personType !== "CREW" && <CategoryBadge category={person.personCategory} />}
                               </div>
                               <div>
-                                <input
-                                  type="text"
-                                  className={classes.cellInput}
-                                  value={pd.roomNumber ?? ""}
-                                  onChange={(e) => canEdit && updatePersonReport(i, "roomNumber", e.target.value)}
-                                  readOnly={!canEdit}
-                                  placeholder="№"
+                                <RoomNumberCell
+                                  value={pd.roomNumber}
+                                  canEdit={canEdit}
+                                  onCommit={(v) => updatePersonReport(i, "roomNumber", v)}
                                 />
                               </div>
                               <div>

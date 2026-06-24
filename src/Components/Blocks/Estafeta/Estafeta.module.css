@@ -106,7 +106,8 @@
   color: #6b7090;
 }
 .viewToggle button.viewToggleActive {
-  background: #0057c3;
+  background: #1976d2;
+  /* background: #0057c3; */
   color: #fff;
   font-weight: 600;
 }
