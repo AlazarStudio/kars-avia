@@ -3,232 +3,178 @@ import Modal from "@mui/material/Modal";
 import Box from "@mui/material/Box";
 import { getMediaUrl } from "../../../../graphQL_requests";
 import classes from "./HotelAboutRoomBlock.module.css";
-import "swiper/css";
-import "swiper/css/pagination";
-import { Swiper, SwiperSlide } from "swiper/react";
-import { Autoplay, Pagination } from "swiper/modules";
 import TextEditorOutput from "../TextEditorOutput/TextEditorOutput";
 
-// … ваши карты categoryMap, bedsMap, normalize_count_form …
-// Карты соответствия для категорий и количества кроватей
-const categoryMap = {
-  luxe: "Люкс 2 места",
-  apartment: "Апартаменты",
-  studio: "Студия",
-  onePlace: "1 место",
-  twoPlace: "2 места",
-  threePlace: "3 места",
-  fourPlace: "4 места",
-  fivePlace: "5 мест",
-  sixPlace: "6 мест",
-  sevenPlace: "7 мест",
-  eightPlace: "8 мест",
-  ninePlace: "9 мест",
-  tenPlace: "10 мест",
+// Код категории → вместимость («до N чел.»). Для apartment берём props.places.
+const categoryPlaces = {
+  luxe: 2,
+  studio: 2,
+  onePlace: 1,
+  twoPlace: 2,
+  threePlace: 3,
+  fourPlace: 4,
+  fivePlace: 5,
+  sixPlace: 6,
+  sevenPlace: 7,
+  eightPlace: 8,
+  ninePlace: 9,
+  tenPlace: 10,
 };
 
-const bedsMap = {
-  1: "1 кровать",
-  2: "2 кровати",
-  3: "3 кровати",
-  4: "4 кровати",
-  5: "5 кроватей",
-  6: "6 кроватей",
-  7: "7 кроватей",
-  8: "8 кроватей",
+const declension = (number, forms) => {
+  const n = Math.abs(Number(number));
+  if (!Number.isInteger(n)) return forms[1];
+  const opts = [2, 0, 1, 1, 1, 2];
+  return forms[
+    n % 100 > 4 && n % 100 < 20 ? 2 : opts[n % 10 < 5 ? n % 10 : 5]
+  ];
 };
 
-function HotelAboutRoomBlock({
-  isEditing,
-  handleChange,
-  index,
-  user,
-  mediaToken,
-  ...props
-}) {
-  const [modalIsOpen, setModalIsOpen] = useState(false);
-  const [swiper, setSwiper] = useState();
-  const [activeIndex, setActiveIndex] = useState(0);
+function Chevron({ dir = "left" }) {
+  return (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path
+        d={dir === "left" ? "M15 5l-7 7 7 7" : "M9 5l7 7-7 7"}
+        stroke="currentColor"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
 
-  const closeModal = () => {
-    setModalIsOpen(false);
-    setActiveIndex(0);
-  };
-  const handleModalClick = (e) => {
-    if (e.target === e.currentTarget) closeModal();
-  };
+export default function HotelAboutRoomBlock({ mediaToken, ...props }) {
+  const [open, setOpen] = useState(false);
+  const [index, setIndex] = useState(0);
 
-  const normalize_count_form = (number, words_arr) => {
-    number = Math.abs(number);
-    if (Number.isInteger(number)) {
-      let options = [2, 0, 1, 1, 1, 2];
-      return words_arr[
-        number % 100 > 4 && number % 100 < 20
-          ? 2
-          : options[number % 10 < 5 ? number % 10 : 5]
-      ];
-    }
-    return words_arr[1];
+  const images = props.images || [];
+  const count = images.length;
+
+  const roomsCount = Number(props.roomsCount) || 0;
+  const places = props.places ?? categoryPlaces[props.category];
+  const priceByReq = props.priceForAirReq;
+  const price = props.priceForAirline;
+
+  const roomsLabel = roomsCount
+    ? `${roomsCount} ${declension(roomsCount, ["номер", "номера", "номеров"])}`
+    : null;
+
+  const specs = [
+    props.square ? `${props.square} м²` : null,
+    places ? `до ${places} чел.` : null,
+    roomsLabel,
+  ].filter(Boolean);
+
+  const close = () => {
+    setOpen(false);
+    setIndex(0);
   };
-  // console.log(props);
+  const prev = () => setIndex((i) => (i - 1 + count) % count);
+  const next = () => setIndex((i) => (i + 1) % count);
+
+  const cardImg = count ? getMediaUrl(images[0], mediaToken) : "/no-image.png";
+  const priceText = price ? `${price.toLocaleString("ru-RU")} ₽` : "—";
 
   return (
     <>
-      {/* === Карточка номера === */}
-      <article
-        className={classes.hotelAbout_room}
-        onClick={() => setModalIsOpen(true)}
-      >
-        <div className={classes.roomImages_wrapper}>
-          <img
-            src={
-              getMediaUrl(props.images[0], mediaToken) ?? "/no-image.png"
-            }
-            alt="Room"
-            className={classes.roomImage}
-          />
+      <article className={classes.card} onClick={() => setOpen(true)}>
+        <div className={classes.imageWrap}>
+          <img src={cardImg} alt={props.name} className={classes.image} />
+          {roomsLabel && <span className={classes.countBadge}>{roomsLabel}</span>}
         </div>
-        <div className={classes.roomInfo}>
-          <p className={classes.roomInfoItem}>{props.name}</p>
-          <div className={classes.roomMeta}>
-            {props.roomsCount && props.roomsCount > 0 ? (
-              <p className="blueText">
-                {props.roomsCount}{" "}
-                {normalize_count_form(Number(props.roomsCount), [
-                  "номер",
-                  "номера",
-                  "номеров",
-                ])}
-              </p>
+        <div className={classes.body}>
+          <p className={classes.title}>{props.name}</p>
+          {specs.length > 0 && <p className={classes.specs}>{specs.join(" · ")}</p>}
+          <div className={classes.footer}>
+            {priceByReq ? (
+              <span className={classes.priceByReq}>Цена по запросу</span>
             ) : (
-              ""
+              <div className={classes.priceWrap}>
+                <span className={classes.price}>{priceText}</span>
+                <span className={classes.perNight}>/ ночь</span>
+              </div>
             )}
-            {props.square ? <span>{props.square} м²</span> : null}
+            <span className={classes.more}>Подробнее ›</span>
           </div>
-
-          <div className={classes.roomInfoItem} style={{ fontSize: "20px" }}>
-            {props.priceForAirReq
-              ? "Цена по запросу"
-              : `${
-                  props.priceForAirline
-                    ? props?.priceForAirline?.toLocaleString()
-                    : ""
-                } ₽`}
-          </div>
-
-          {props.priceForAirReq && (
-            <p className={classes.priceHint}>
-              Идёт согласование тарифов и условий размещения — точная стоимость
-              будет доступна после уточнения деталей.
-            </p>
-          )}
-
-          {/* {user?.airlineId ? (
-            <div className={classes.roomInfoItem} style={{ fontSize: "20px" }}>
-              {props.priceForAirReq
-                ? "Цена по запросу"
-                : `${
-                    props.priceForAirline
-                      ? props?.priceForAirline?.toLocaleString()
-                      : ""
-                  } ₽`}
-            </div>
-          ) : (
-            <div className={classes.roomInfoItem} style={{ fontSize: "20px" }}>
-              {props.price
-                ? "Цена по запросу"
-                : `${props?.price?.toLocaleString() || ""} ₽`}
-            </div>
-          )} */}
         </div>
       </article>
 
-      {/* === Модалка === */}
-      <Modal open={modalIsOpen} onClose={closeModal}>
-        <Box className={classes.modalBackdrop} onClick={handleModalClick}>
-          <div className={classes.modalContainer}>
-            <button className={classes.closeButton} onClick={closeModal} />
+      <Modal open={open} onClose={close}>
+        <Box
+          className={classes.backdrop}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) close();
+          }}
+        >
+          <div className={classes.modal}>
+            <button type="button" className={classes.close} onClick={close} />
             <div className={classes.modalLeft}>
-              <Swiper
-                spaceBetween={20}
-                slidesPerView={1}
-                loop={props.images.length > 1}
-                pagination={{ clickable: true }}
-                autoplay={{
-                  delay: 4000,
-                  disableOnInteraction: false,
-                }}
-                onSwiper={setSwiper}
-                onSlideChange={(s) => setActiveIndex(s.realIndex)}
-                modules={[Autoplay, Pagination]}
-              >
-                {props.images.length ? (
-                  props.images.map((img, i) => (
-                    <SwiperSlide key={i}>
-                      <img
-                        src={getMediaUrl(img, mediaToken)}
-                        alt={`slide ${i}`}
-                        className={classes.modalImageAbs}
-                      />
-                      <img
-                        src={getMediaUrl(img, mediaToken)}
-                        alt={`slide ${i}`}
-                        className={classes.modalImage}
-                      />
-                    </SwiperSlide>
-                  ))
-                ) : (
-                  <img
-                    src="/no-image.png"
-                    className={classes.modalImage}
-                    style={{ objectFit: "cover" }}
-                  />
+              <div className={classes.slider}>
+                <img
+                  src={count ? getMediaUrl(images[index], mediaToken) : "/no-image.png"}
+                  alt={props.name}
+                  className={classes.slideImg}
+                />
+                {count > 1 && (
+                  <>
+                    <button
+                      type="button"
+                      className={`${classes.slideNav} ${classes.slidePrev}`}
+                      onClick={prev}
+                    >
+                      <Chevron dir="left" />
+                    </button>
+                    <button
+                      type="button"
+                      className={`${classes.slideNav} ${classes.slideNext}`}
+                      onClick={next}
+                    >
+                      <Chevron dir="right" />
+                    </button>
+                  </>
                 )}
-              </Swiper>
-              {props.images.length > 1 && (
-                <div className={classes.swiperButtons}>
-                  <button onClick={() => swiper?.slidePrev()} />
-                  <button onClick={() => swiper?.slideNext()} />
+              </div>
+              {count > 1 && (
+                <div className={classes.modalThumbs}>
+                  {images.map((img, i) => (
+                    <button
+                      type="button"
+                      key={i}
+                      className={`${classes.modalThumb} ${
+                        i === index ? classes.modalThumbActive : ""
+                      }`}
+                      onClick={() => setIndex(i)}
+                    >
+                      <img src={getMediaUrl(img, mediaToken)} alt="" />
+                    </button>
+                  ))}
                 </div>
               )}
             </div>
             <div className={classes.modalRight}>
               <p className={classes.modalTitle}>{props.name}</p>
-              <div style={{ display: "flex", gap: "20px" }}>
-                {props.roomsCount && props.roomsCount > 0 ? (
-                  <p className="blueText">
-                    {props.roomsCount}{" "}
-                    {normalize_count_form(Number(props.roomsCount), [
-                      "номер",
-                      "номера",
-                      "номеров",
-                    ])}
-                  </p>
-                ) : (
-                  ""
-                )}
-                {props.square ? (
-                  <span className="blueText">{props.square} м²</span>
-                ) : null}
-              </div>
-              <span className={classes.price}>
-                {props.priceForAirReq
-                  ? "Цена по запросу"
-                  : `${
-                      props.priceForAirline
-                        ? props?.priceForAirline?.toLocaleString()
-                        : ""
-                    } ₽`}
-              </span>
-
-              {props.priceForAirReq && (
+              {specs.length > 0 && (
+                <p className={classes.modalSpecs}>{specs.join(" · ")}</p>
+              )}
+              {priceByReq ? (
+                <div className={classes.modalPriceByReq}>Цена по запросу</div>
+              ) : (
+                <div className={classes.modalPrice}>
+                  {priceText} <span>/ ночь</span>
+                </div>
+              )}
+              {priceByReq && (
                 <p className={classes.priceHint}>
-                  Идёт согласование тарифов и условий размещения — точная
-                  стоимость будет доступна после уточнения деталей.
+                  Идёт согласование тарифов и условий размещения — точная стоимость
+                  будет доступна после уточнения деталей.
                 </p>
               )}
-
-              <TextEditorOutput description={props.description} />
+              {props.description && (
+                <div className={classes.modalDesc}>
+                  <TextEditorOutput description={props.description} />
+                </div>
+              )}
             </div>
           </div>
         </Box>
@@ -236,204 +182,3 @@ function HotelAboutRoomBlock({
     </>
   );
 }
-export default HotelAboutRoomBlock;
-
-// import { useState } from "react";
-// import Modal from "@mui/material/Modal";
-// import Box from "@mui/material/Box";
-// import { server } from "../../../../graphQL_requests";
-// import classes from "./HotelAboutRoomBlock.module.css";
-// import "swiper/css";
-// import "swiper/css/pagination";
-// import { Swiper, SwiperSlide } from "swiper/react";
-// import { Autoplay, Pagination } from "swiper/modules";
-
-// // Карты соответствия для категорий и количества кроватей
-// const categoryMap = {
-//   luxe: "Люкс 2 места",
-//   apartment: "Апартаменты",
-//   studio: "Студия",
-//   onePlace: "1 место",
-//   twoPlace: "2 места",
-//   threePlace: "3 места",
-//   fourPlace: "4 места",
-//   fivePlace: "5 мест",
-//   sixPlace: "6 мест",
-//   sevenPlace: "7 мест",
-//   eightPlace: "8 мест",
-//   ninePlace: "9 мест",
-//   tenPlace: "10 мест",
-// };
-
-// const bedsMap = {
-//   1: "1 кровать",
-//   2: "2 кровати",
-//   3: "3 кровати",
-//   4: "4 кровати",
-//   5: "5 кроватей",
-//   6: "6 кроватей",
-//   7: "7 кроватей",
-//   8: "8 кроватей",
-// };
-
-// function HotelAboutRoomBlock({ isEditing, handleChange, index, ...props }) {
-//   const [modalIsOpen, setModalIsOpen] = useState(false);
-//   const [swiper, setSwiper] = useState();
-//   const [activeIndex, setActiveIndex] = useState(0);
-
-//   const closeModal = () => {
-//     setModalIsOpen(false);
-//     setActiveIndex(0);
-//   };
-
-//   const handleModalClick = (e) => {
-//     // Если клик был по фону (а не по изображению), закрыть модальное окно
-//     if (e.target === e.currentTarget) {
-//       closeModal();
-//     }
-//   };
-//   const normalize_count_form = (number, words_arr) => {
-//     number = Math.abs(number);
-//     if (Number.isInteger(number)) {
-//       let options = [2, 0, 1, 1, 1, 2];
-//       return words_arr[
-//         number % 100 > 4 && number % 100 < 20
-//           ? 2
-//           : options[number % 10 < 5 ? number % 10 : 5]
-//       ];
-//     }
-//     return words_arr[1];
-//   };
-
-//   // console.log(props)
-
-//   return (
-//     <>
-//       <article
-//         key={props.id}
-//         className={classes.hotelAbout_room}
-//         onClick={() => setModalIsOpen(true)}
-//       >
-//         <div className={classes.roomImages_wrapper}>
-//           <img
-//             src={
-//               props.images.length !== 0
-//                 ? `${server}${props.images[0]}`
-//                 : "/no-image.png"
-//             }
-//             className={classes.roomImage}
-//             alt="Room"
-//           />
-//         </div>
-//         <div className={classes.roomInfoItem}>
-//           <p>{props.name}</p>
-//         </div>
-//         {/* Отображаем категорию через карту соответствия */}
-//         <div className={classes.roomInfoItem} style={{ fontWeight: "500" }}>
-//           {/* <p className="blueText">
-//             {categoryMap[props.category] || "Неизвестная категория"}
-//           </p> */}
-//           {props.roomsCount && props.roomsCount > 0 ? (
-//             <p className="blueText">
-//               {props.roomsCount}{" "}
-//               {normalize_count_form(Number(props.roomsCount), [
-//                 "номер",
-//                 "номера",
-//                 "номеров",
-//               ])}
-//             </p>
-//           ) : (
-//             ""
-//           )}
-//         </div>
-
-//         {/* Отображаем количество кроватей через карту соответствия */}
-//         {/* <div className={classes.roomInfoItem} style={{ fontWeight: "400" }}>
-//           {props.description}
-//         </div> */}
-//         <div
-//           style={{ padding: "0 15px 0 15px" }}
-//           dangerouslySetInnerHTML={{ __html: props.description }}
-//         ></div>
-//         {/* <div className={`${classes.roomInfoItem} ${classes.ri_textarea}`}>
-//         <p>{props.description ? props.description : "Описания нет"}</p>
-//       </div> */}
-//       </article>
-//       <Modal open={modalIsOpen} onClose={closeModal}>
-//         <Box
-//           className={classes.modalContent}
-//           onClick={handleModalClick} // Закрытие при клике на фон
-//         >
-//           <img
-//             onClick={closeModal}
-//             className={classes.closeButton}
-//             src="/closeSwiper.webp"
-//             alt=""
-//           />
-//           <Swiper
-//             className={classes.sliderBox}
-//             spaceBetween={50}
-//             slidesPerView={1}
-//             direction="horizontal"
-//             pagination={{ clickable: true }}
-//             onSwiper={setSwiper}
-//             onSlideChange={(swiper) => setActiveIndex(swiper.realIndex)}
-//             modules={[Autoplay, Pagination]}
-//           >
-//             {props.images.length !== 0 ? (
-//               props.images.map((slide, index) => (
-//                 <SwiperSlide key={index} className={classes.swiperSlide}>
-//                   <img
-//                     src={`${server}${slide}`}
-//                     alt="Room"
-//                     className={classes.modalImage}
-//                   />
-//                 </SwiperSlide>
-//               ))
-//             ) : (
-//               <img
-//                 src={"/no-image.png"}
-//                 alt="Room"
-//                 className={classes.modalImage}
-//               />
-//             )}
-//           </Swiper>
-//           <div
-//             className={classes.swiperButtons}
-//             style={props.images.length <= 1 ? { display: "none" } : {}}
-//           >
-//             <button
-//               onClick={() => swiper.slidePrev()}
-//               style={{
-//                 opacity: activeIndex === 0 ? 0.5 : 1,
-//                 cursor: activeIndex === 0 ? "auto" : "pointer",
-//                 userSelect: "none",
-//               }}
-//               disabled={activeIndex === 0}
-//             >
-//               <img
-//                 src="/swiper-arrow.png"
-//                 alt=""
-//                 style={{ rotate: "180deg" }}
-//               />
-//             </button>
-//             <button
-//               onClick={() => swiper.slideNext()}
-//               style={{
-//                 opacity: activeIndex === props.images.length - 1 ? 0.5 : 1,
-//                 cursor:
-//                   activeIndex === props.images.length - 1 ? "auto" : "pointer",
-//                 userSelect: "none",
-//               }}
-//               disabled={activeIndex === props.images.length - 1}
-//             >
-//               <img src="/swiper-arrow.png" alt="" />
-//             </button>
-//           </div>
-//         </Box>
-//       </Modal>
-//     </>
-//   );
-// }
-
-// export default HotelAboutRoomBlock;

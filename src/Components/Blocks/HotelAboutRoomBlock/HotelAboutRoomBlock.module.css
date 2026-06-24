@@ -1,330 +1,311 @@
-.hotelAbout_room {
-  border: 1px solid #E4E4EF;
-  border-radius: 10px;
-  overflow: hidden;
-  cursor: pointer;
+/* ===== Card ===== */
+.card {
   display: flex;
   flex-direction: column;
-  background: #fff;
-}
-
-.roomImages_wrapper {
-  height: 200px;
+  border: 1px solid #e8eaf1;
+  border-radius: 14px;
   overflow: hidden;
+  background: #fff;
+  cursor: pointer;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease, transform 0.2s ease;
 }
 
-.roomImage {
+.card:hover {
+  border-color: #d3d8ea;
+  box-shadow: 0 8px 24px rgba(20, 30, 60, 0.1);
+  transform: translateY(-2px);
+}
+
+.imageWrap {
+  position: relative;
+  height: 190px;
+  overflow: hidden;
+  background: #eef0f6;
+}
+
+.image {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  display: block;
 }
 
-.roomInfo {
-  padding: 15px;
+.countBadge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 5px 11px;
+  border-radius: 8px;
+  background: rgba(20, 24, 40, 0.72);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.body {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  padding: 16px;
 }
 
-.roomTitle {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 500;
-  color: #333;
+.title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #2d3147;
 }
 
-.roomMeta {
-  display: flex;
-  gap: 12px;
-  font-size: 14px;
-  color: #007AFF;
+.specs {
+  font-size: 13.5px;
+  color: #8a8fa6;
 }
 
-.roomFooter {
+.footer {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.priceWrap {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
 }
 
 .price {
-  font-size: 24px;
+  font-size: 19px;
   font-weight: 700;
-  color: var(--main-gray);
+  color: #2d3147;
 }
 
 .perNight {
-  font-size: 14px;
-  color: #666;
+  font-size: 13px;
+  color: #8a8fa6;
 }
 
-/* Модалка */
-.modalBackdrop {
-  position: absolute;
+.priceByReq {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2d3147;
+}
+
+.more {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #1976d2;
+  white-space: nowrap;
+}
+
+/* ===== Modal ===== */
+.backdrop {
+  position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(15, 17, 26, 0.55);
+}
+
+.modal {
+  position: relative;
+  display: flex;
+  width: min(1080px, 100%);
+  height: 600px;
+  max-height: 86vh;
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 34px;
+  height: 34px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+}
+
+.close::before,
+.close::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 15px;
+  height: 2px;
+  background: #2d3147;
+}
+
+.close::before {
+  transform: translate(-50%, -50%) rotate(45deg);
+}
+
+.close::after {
+  transform: translate(-50%, -50%) rotate(-45deg);
+}
+
+.modalLeft {
+  flex: 1 1 55%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: #f4f5f9;
+  min-width: 0;
+}
+
+.slider {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #e7e9f1;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.roomInfoItem {
-  display: flex;
-  color: var(--main-gray);
-  font-weight: 700;
-  font-size: 16px;
-  align-items: center;
-  gap: 10px;
-}
-
-.modalContainer {
-  width: 1300px;
-  max-height: 600px;
-  min-height: 600px;
-  border-radius: 8px;
-  display: flex;
-  overflow: hidden;
-  position: relative;
-}
-
-.closeButton {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 14px;
-  height: 14px;
-  background: url('/closeIcon.png') no-repeat center;
-  background-size: contain;
-  border: none;
-  cursor: pointer;
-  z-index: 10;
-}
-
-.modalLeft,
-.modalRight {
-  flex: 1;
-  overflow: hidden;
-}
-
-.modalLeft {
-  background: transparent;
-  position: relative;
-}
-
-.modalImage {
+.slideImg {
   width: 100%;
-  min-height: 600px;
-  max-height: 600px;
-  object-fit: contain;
-  position: relative;
-}
-
-.modalImageAbs {
-  width: 100%;
-  min-height: 600px;
-  max-height: 600px;
+  height: 100%;
   object-fit: cover;
-  position: absolute;
-  top: 0;
-  left: 0;
-  filter: blur(5px) brightness(0.5);
+  display: block;
 }
 
-.swiperButtons {
+.slideNav {
   position: absolute;
   top: 50%;
-  width: 100%;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  transform: translateY(-50%);
-  z-index: 99;
-}
-
-.swiperButtons button {
-  width: 70px;
-  height: 70px;
+  justify-content: center;
   border: none;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  color: #2d3147;
   cursor: pointer;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  transition: background 0.2s ease;
 }
 
-.swiperButtons button:first-child {
-  margin-top: -1px;
-  background: url('/new-swiper-arrow-left.png') no-repeat center;
-  background-size: contain;
+.slideNav:hover {
+  background: #fff;
 }
 
-.swiperButtons button:last-child {
-  background: url('/new-swiper-arrow.png') no-repeat center;
-  background-size: contain;
+.slidePrev {
+  left: 14px;
+}
+
+.slideNext {
+  right: 14px;
+}
+
+.modalThumbs {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.modalThumb {
+  width: 64px;
+  height: 46px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  background: #e7e9f1;
+  transition: border-color 0.2s ease;
+}
+
+.modalThumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.modalThumbActive {
+  border-color: #1976d2;
 }
 
 .modalRight {
-  background: #fff;
-  padding: 24px;
-  /* overflow-y: auto; */
+  flex: 1 1 45%;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
+  padding: 28px;
+  overflow-y: auto;
 }
 
 .modalTitle {
-  width: 90%;
   font-size: 24px;
-  font-weight: 600;
-  color: var(--main-gray);
+  font-weight: 700;
+  color: #2d3147;
+}
+
+.modalSpecs {
+  font-size: 14px;
+  color: #8a8fa6;
+}
+
+.modalPrice {
+  font-size: 26px;
+  font-weight: 700;
+  color: #2d3147;
+}
+
+.modalPrice span {
+  font-size: 14px;
+  font-weight: 400;
+  color: #8a8fa6;
+}
+
+.modalPriceByReq {
+  font-size: 20px;
+  font-weight: 700;
+  color: #2d3147;
 }
 
 .priceHint {
   font-size: 13px;
   font-weight: 400;
-  color: #8a8a99;
   line-height: 1.4;
+  color: #8a8a99;
 }
 
-
-
-/* .hotelAbout_room {
-  min-height: 370px;
-  padding: 0 0 15px 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  border: 1px solid #E4E4EF;
-  border-radius: 10px;
-  overflow: hidden;
-  cursor: pointer;
+.modalDesc {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #4a4f6a;
 }
 
-.noImage {
-  padding: 15px 15px 0 15px;
-}
-
-.roomInfoItem {
-  padding: 0 15px 0 15px;
-  display: flex;
-  color: var(--main-gray);
-  font-weight: 700;
-  align-items: center;
-  gap: 10px;
-}
-
-.ri_textarea {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-}
-
-.roomInfoItem input {
-  width: 100%;
-}
-
-.roomInfoItem textarea {
-  height: 150px;
-  width: 100%;
-}
-
-.roomImages_wrapper {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  height: 250px;
-}
-
-.roomImage {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-.modalContent {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: transparent;
-  padding: 20px;
-  border-radius: 8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 100vh;
-  width: 100vw;
-  overflow: visible;
-}
-
-.modalImage {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  user-select: none;
-}
-
-.closeButton {
-  position: absolute;
-  top: 30px;
-  right: 30px;
-  border: none;
-  cursor: pointer;
-  width: 40px;
-  height: 40px;
-  filter: invert(100%);
-  user-select: none;
-}
-
-.sliderBox {
-  display: flex;
-  justify-content: center !important;
-  align-items: center !important;
-  max-height: 70vh;
-  width: 800px;
-}
-
-.swiperSlide {
-  display: flex !important;
-  justify-content: center !important;
-  align-items: center !important;
-  height: 70vh !important;
-}
-
-.swiperButtons {
-  width: 1000px;
-  height: 60px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: absolute;
-  z-index: 99;
-}
-
-.swiperButtons button {
-  background-color: transparent;
-  border: none;
-  outline: none;
-  color: #fff;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 60px;
-  height: 60px;
-  cursor: pointer;
-}
-
-.swiperButtons button img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  filter: invert(1);
-}
-
-
-
-
-@media (min-width: 0px) and (max-width: 1399px) {
-  .hotelAbout_room {
-    min-height: 360px;
+@media (min-width: 0px) and (max-width: 900px) {
+  .modal {
+    flex-direction: column;
+    height: auto;
+    max-height: 90vh;
+    overflow-y: auto;
   }
 
-  .roomInfoItem {
-    font-size: 14px;
+  .modalLeft {
+    flex: none;
   }
-} */
+
+  .slider {
+    height: 280px;
+    flex: none;
+  }
+}
