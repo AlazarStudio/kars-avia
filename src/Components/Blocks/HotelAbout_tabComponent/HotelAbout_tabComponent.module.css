@@ -40,11 +40,31 @@
   min-width: 0;
 }
 
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .name {
   font-size: 22px;
   font-weight: 700;
   line-height: 1.1;
   color: #2d3147;
+}
+
+.discountBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 8px;
+  background: #e8f5e9;
+  color: #2e7d32;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 .identityMeta {
@@ -107,13 +127,13 @@
 
 .tabActive {
   background: #fff;
-  color: #1976d2;
+  color: #0057C3;
   font-weight: 600;
   box-shadow: 0 1px 5px rgba(20, 30, 60, 0.1);
 }
 
 .tabActive:hover {
-  color: #1976d2;
+  color: #0057C3;
 }
 
 /* ===== Content scroll area ===== */
@@ -201,6 +221,13 @@
 .railRowLabel {
   color: #8a8fa6;
   flex-shrink: 0;
+}
+
+.railRowIcon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: #9aa0b5;
 }
 
 .railRowValue {

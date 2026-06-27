@@ -65,9 +65,7 @@ function MaintenanceBannerBar() {
         <span className={classes.message}>{message}</span>
 
         {endsAt && left != null && (
-          <span className={classes.timer}>
-            Осталось: {formatCountdown(left)}
-          </span>
+          <span className={classes.timer}>{formatCountdown(left)}</span>
         )}
       </div>
     </div>

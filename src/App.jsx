@@ -49,6 +49,7 @@ import FapDriverDetailPage from "./Components/Pages/FapV2/FapDriverDetailPage";
 import HotelPMS from "./Components/HotelPMS/HotelPMS";
 import MaintenanceBannerBar from "./Components/Blocks/MaintenanceBanner/MaintenanceBannerBar";
 import AirlineSystemBanner from "./Components/Blocks/AirlineSystemBanner/AirlineSystemBanner";
+import SystemUpdateGate from "./Components/Blocks/SystemUpdate/SystemUpdateGate";
 
 const TransferOrder = lazy(() =>
   import("./Components/Blocks/TransferOrder/TransferOrder")
@@ -129,6 +130,7 @@ function App() {
       {user && <UserActivityTracker />}
       <MaintenanceBannerBar />
       <AirlineSystemBanner />
+      <SystemUpdateGate />
       <Routes>
         <Route path="/external-login" element={<ExternalLogin />} />
         <Route path="/hotel-preview" element={<HotelPreview />} />

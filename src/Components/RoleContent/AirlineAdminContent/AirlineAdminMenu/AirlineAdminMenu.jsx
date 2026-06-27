@@ -13,6 +13,8 @@ const AirlineAdminMenu = ({
   id,
   allCreatedRequests,
   allCreatedReserves,
+  fapCreatedCount = 0,
+  transferPendingCount = 0,
   menuOpen,
   accessMenu,
   user,
@@ -104,12 +106,12 @@ const AirlineAdminMenu = ({
             <DelayedText show={menuOpen} delay={200}>
               ФАП
             </DelayedText>
-            {allCreatedReserves > 0 && (
+            {fapCreatedCount > 0 && (
               <div
                 className={`${classes.countRequests} ${!menuOpen ? classes.countRequestsMini : ""
                   }`}
               >
-                {allCreatedReserves}
+                {fapCreatedCount}
               </div>
             )}
             {!menuOpen && <span className={classes.tooltip}>ФАП</span>}
@@ -170,6 +172,13 @@ const AirlineAdminMenu = ({
             <DelayedText show={menuOpen} delay={200}>
               Трансфер
             </DelayedText>
+            {transferPendingCount > 0 && (
+              <div
+                className={`${classes.countRequests} ${!menuOpen ? classes.countRequestsMini : ""}`}
+              >
+                {transferPendingCount}
+              </div>
+            )}
             {!menuOpen && <span className={classes.tooltip}>Трансфер</span>}
           </Link>
         )}

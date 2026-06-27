@@ -6,8 +6,8 @@ import Header from "../Header/Header";
 import InfoTableDataHotels from "../InfoTableDataHotels/InfoTableDataHotels";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
-import { Popover } from "@mui/material";
-import FilterIcon from "../../../shared/icons/FilterIcon";
+import FilterPopoverButton from "../FilterPopoverButton/FilterPopoverButton";
+import StarRatingFilter from "../StarRatingFilter/StarRatingFilter";
 import { useQuery, useSubscription } from "@apollo/client";
 import {
   GET_HOTELS,
@@ -303,10 +303,6 @@ function HotelsList({ children, user, ...props }) {
     updateUrlParams({ page: String(selectedPage + 1) });
   };
 
-  const starsOptions = ["1", "2", "3", "4", "5"];
-  const usStarsOptions = ["1", "2", "3", "4", "5"];
-
-  const [filterAnchorEl, setFilterAnchorEl] = useState(null);
   const activeFilterCount =
     (selectedCity ? 1 : 0) +
     (selectedAirport ? 1 : 0) +
@@ -333,125 +329,68 @@ function HotelsList({ children, user, ...props }) {
         <Header>Гостиницы</Header>
 
         <div className={classes.section_searchAndFilter}>
-          <button
-            type="button"
-            className={`${classes.filterButton} ${activeFilterCount > 0 ? classes.filterButtonActive : ""}`}
-            onClick={(e) => setFilterAnchorEl(e.currentTarget)}
+          <FilterPopoverButton
+            activeCount={activeFilterCount}
+            onReset={handleResetFilters}
           >
-            <FilterIcon />
-            <span>Фильтры</span>
-            {activeFilterCount > 0 && (
-              <span className={classes.filterBadge}>{activeFilterCount}</span>
-            )}
-          </button>
-          <Popover
-            open={Boolean(filterAnchorEl)}
-            anchorEl={filterAnchorEl}
-            onClose={() => setFilterAnchorEl(null)}
-            anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-            transformOrigin={{ vertical: "top", horizontal: "left" }}
-            slotProps={{
-              paper: {
-                sx: {
-                  mt: "8px",
-                  borderRadius: "12px",
-                  boxShadow: "0 8px 24px rgba(20, 24, 42, 0.12)",
-                  overflow: "visible",
-                },
-              },
-            }}
-          >
-            <div className={classes.filterPopover}>
-              <div className={classes.filterPopoverHeader}>
-                <span>Фильтры</span>
-                {activeFilterCount > 0 && (
-                  <button
-                    type="button"
-                    className={classes.filterReset}
-                    onClick={handleResetFilters}
-                  >
-                    Сбросить
-                  </button>
-                )}
-              </div>
-              <MUIAutocompleteColor
-                dropdownWidth="100%"
-                label="Город"
-                hideLabelOnFocus={false}
-                options={cities}
-                getOptionLabel={(option) => option?.city ?? ""}
-                renderOption={(optionProps, option) => {
-                  const cityPart =
-                    option.city && option.city !== option.region
-                      ? `, регион: ${option.region}`
-                      : "";
-                  const labelText = `${option.city}${cityPart}`.trim();
-                  const words = labelText.split(" ");
-                  return (
-                    <li {...optionProps} key={option.id}>
-                      {words.map((word, index) => (
-                        <span
-                          key={index}
-                          style={{
-                            color: index === 0 ? "black" : "gray",
-                            marginRight: 4,
-                          }}
-                        >
-                          {word}
-                        </span>
-                      ))}
-                    </li>
-                  );
-                }}
-                value={selectedCity}
-                onChange={handleCityChange}
-              />
-              <MUIAutocompleteColor
-                dropdownWidth="100%"
-                label="Аэропорт"
-                hideLabelOnFocus={false}
-                options={airports}
-                getOptionLabel={(option) => option?.name ?? ""}
-                renderOption={(optionProps, option) => (
+            <MUIAutocompleteColor
+              dropdownWidth="100%"
+              label="Город"
+              hideLabelOnFocus={false}
+              options={cities}
+              getOptionLabel={(option) => option?.city ?? ""}
+              renderOption={(optionProps, option) => {
+                const cityPart =
+                  option.city && option.city !== option.region
+                    ? `, регион: ${option.region}`
+                    : "";
+                const labelText = `${option.city}${cityPart}`.trim();
+                const words = labelText.split(" ");
+                return (
                   <li {...optionProps} key={option.id}>
-                    <span style={{ color: "black", marginRight: 4 }}>
-                      {option.name}
-                    </span>
-                    {option.code && (
-                      <span style={{ color: "gray", marginRight: 4 }}>
-                        {option.code}
+                    {words.map((word, index) => (
+                      <span
+                        key={index}
+                        style={{ color: index === 0 ? "black" : "gray", marginRight: 4 }}
+                      >
+                        {word}
                       </span>
-                    )}
-                    {option.city && (
-                      <span style={{ color: "gray" }}>{option.city}</span>
-                    )}
+                    ))}
                   </li>
-                )}
-                value={selectedAirport}
-                onChange={handleAirportChange}
-              />
-              <MUIAutocomplete
-                dropdownWidth="100%"
-                hideLabelOnFocus={false}
-                label="Оценка"
-                options={starsOptions}
-                value={filterData.filterStars || ""}
-                onChange={(_, newValue) =>
-                  handleFilterChange("filterStars", newValue || "")
-                }
-              />
-              <MUIAutocomplete
-                dropdownWidth="100%"
-                hideLabelOnFocus={false}
-                label="Звёздность"
-                options={usStarsOptions}
-                value={filterData.filterUsStars || ""}
-                onChange={(_, newValue) =>
-                  handleFilterChange("filterUsStars", newValue || "")
-                }
-              />
-            </div>
-          </Popover>
+                );
+              }}
+              value={selectedCity}
+              onChange={handleCityChange}
+            />
+            <MUIAutocompleteColor
+              dropdownWidth="100%"
+              label="Аэропорт"
+              hideLabelOnFocus={false}
+              options={airports}
+              getOptionLabel={(option) => option?.name ?? ""}
+              renderOption={(optionProps, option) => (
+                <li {...optionProps} key={option.id}>
+                  <span style={{ color: "black", marginRight: 4 }}>{option.name}</span>
+                  {option.code && (
+                    <span style={{ color: "gray", marginRight: 4 }}>{option.code}</span>
+                  )}
+                  {option.city && <span style={{ color: "gray" }}>{option.city}</span>}
+                </li>
+              )}
+              value={selectedAirport}
+              onChange={handleAirportChange}
+            />
+            <StarRatingFilter
+              label="Оценка"
+              value={filterData.filterStars}
+              onChange={(v) => handleFilterChange("filterStars", v)}
+            />
+            <StarRatingFilter
+              label="Звёздность"
+              value={filterData.filterUsStars}
+              onChange={(v) => handleFilterChange("filterUsStars", v)}
+            />
+          </FilterPopoverButton>
           <MUITextField
             label={"Поиск"}
             className={classes.mainSearch}

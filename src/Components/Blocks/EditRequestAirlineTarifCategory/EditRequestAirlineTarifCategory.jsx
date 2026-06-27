@@ -13,28 +13,13 @@ import {
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
-import CityRegionPicker from "../CityRegionPicker/CityRegionPicker.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
+import TariffGeographyList from "../TariffGeographyList/TariffGeographyList.jsx";
+import { geographyToRows, rowsToGeographyInput } from "../../../utils/airlineTariffGeography.js";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
-
-function buildGeographyInput(geo) {
-  if (geo.cityId) {
-    return {
-      country: geo.country || null,
-      cityId: geo.cityId,
-    };
-  }
-  if (geo.region) {
-    return {
-      country: geo.country || null,
-      region: geo.region,
-    };
-  }
-  return {};
-}
 
 function EditRequestAirlineTarifCategory({
   show,
@@ -73,11 +58,7 @@ function EditRequestAirlineTarifCategory({
     return {
       name: tarif?.name || "",
       airportIds,
-      geography: {
-        country: tarif?.geography?.country || "",
-        region: tarif?.geography?.region || null,
-        cityId: tarif?.geography?.cityId || null,
-      },
+      geography: geographyToRows(tarif?.geography),
       priceOneCategory: tarif?.prices?.priceOneCategory ?? 0,
       priceTwoCategory: tarif?.prices?.priceTwoCategory ?? 0,
       priceThreeCategory: tarif?.prices?.priceThreeCategory ?? 0,
@@ -98,11 +79,7 @@ function EditRequestAirlineTarifCategory({
   const [formData, setFormData] = useState(() => ({
     name: "",
     airportIds: [],
-    geography: {
-      country: "",
-      region: null,
-      cityId: null,
-    },
+    geography: [],
     priceOneCategory: 0,
     priceTwoCategory: 0,
     priceThreeCategory: 0,
@@ -237,6 +214,11 @@ function EditRequestAirlineTarifCategory({
   const handleSubmit = async (e) => {
     if (isEditing) {
       e.preventDefault();
+      const geographyInput = rowsToGeographyInput(formData.geography);
+      if (geographyInput.length === 0 && (formData.airportIds?.length || 0) === 0) {
+        showAlert("Укажите хотя бы один город/регион или аэропорт — иначе тариф не будет применяться.");
+        return;
+      }
       setIsLoading(true);
 
       try {
@@ -249,7 +231,7 @@ function EditRequestAirlineTarifCategory({
                   id: tarif?.id,
                   name: formData.name,
                   airportIds: formData.airportIds,
-                  geography: buildGeographyInput(formData.geography),
+                  geography: geographyInput,
                   prices: {
                     priceOneCategory: parseFloat(formData.priceOneCategory),
                     priceTwoCategory: parseFloat(formData.priceTwoCategory),
@@ -468,41 +450,13 @@ function EditRequestAirlineTarifCategory({
                 )}
               </div>
 
-              {/* <div className={classes.requestDataInfo_block}>
-                <div className={classes.requestDataInfo_title}>
-                  Географическая привязка
-                </div>
-                {isEditing ? (
-                  <CityRegionPicker
-                    mode="both"
-                    allowEmpty
-                    value={{
-                      cityId: formData.geography.cityId,
-                      region: formData.geography.region,
-                    }}
-                    onChange={({ cityId, region }) => {
-                      setIsEdited(true);
-                      setFormData((prev) => ({
-                        ...prev,
-                        geography: {
-                          ...prev.geography,
-                          cityId: cityId || null,
-                          region: region || null,
-                        },
-                      }));
-                    }}
-                    hint="Пусто — без географии. Регион — по региону. Регион + город — по городу."
-                  />
-                ) : (
-                  <div className={classes.requestDataInfo_desc}>
-                    {formData.geography.cityId
-                      ? `Город: ${tarif?.geography?.city || "—"}, регион: ${formData.geography.region || "—"}`
-                      : formData.geography.region
-                        ? `Регион: ${formData.geography.region}`
-                        : "—"}
-                  </div>
-                )}
-              </div> */}
+              <TariffGeographyList
+                value={formData.geography}
+                onChange={(rows) => {
+                  setIsEdited(true);
+                  setFormData((prev) => ({ ...prev, geography: rows }));
+                }}
+              />
 
               {[
                 { key: "priceOneCategory", title: "Стоимость одноместного" },

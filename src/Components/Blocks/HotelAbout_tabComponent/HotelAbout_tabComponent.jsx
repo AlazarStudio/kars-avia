@@ -16,6 +16,7 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import TextEditorOutput from "../TextEditorOutput/TextEditorOutput.jsx";
 import HotelAboutTariffs from "../HotelAboutTariffs/HotelAboutTariffs.jsx";
 import HotelAboutGallery from "./HotelAboutGallery.jsx";
+import PinIcon from "../../../shared/icons/PinIcon.jsx";
 
 const TABS = [
   { key: "about", label: "Общая информация", icon: DocIcon },
@@ -52,14 +53,7 @@ function TagIcon() {
   );
 }
 
-function PinIcon() {
-  return (
-    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0z" />
-      <circle cx="12" cy="10" r="3" />
-    </svg>
-  );
-}
+
 
 function StarRow({ value = 0, size = 16 }) {
   const filled = Math.max(0, Math.min(5, Math.round(Number(value) || 0)));
@@ -79,10 +73,41 @@ function StarRow({ value = 0, size = 16 }) {
   );
 }
 
-function RailRow({ label, value, strong }) {
+function PercentIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <line x1="19" y1="5" x2="5" y2="19" />
+      <circle cx="6.5" cy="6.5" r="2.5" />
+      <circle cx="17.5" cy="17.5" r="2.5" />
+    </svg>
+  );
+}
+
+function MailIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="M22 7l-10 7L2 7" />
+    </svg>
+  );
+}
+
+function PhoneIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+    </svg>
+  );
+}
+
+function RailRow({ label, value, strong, icon }) {
   return (
     <div className={classes.railRow}>
-      <span className={classes.railRowLabel}>{label}</span>
+      {icon ? (
+        <span className={classes.railRowIcon}>{icon}</span>
+      ) : label ? (
+        <span className={classes.railRowLabel}>{label}</span>
+      ) : null}
       <span className={`${classes.railRowValue} ${strong ? classes.railRowStrong : ""}`}>
         {value}
       </span>
@@ -232,7 +257,14 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
           <img src={avatar} alt={hotel.name} />
         </div>
         <div className={classes.identityText}>
-          <div className={classes.name}>{hotel.name}</div>
+          <div className={classes.nameRow}>
+            <div className={classes.name}>{hotel.name}</div>
+            {hotel.discount > 0 && (
+              <span className={classes.discountBadge}>
+                Выгода от {hotel.discount} %
+              </span>
+            )}
+          </div>
           <div className={classes.identityMeta}>
             <StarRow value={hotel.stars} />
             {locationLine && (
@@ -279,9 +311,14 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
               <div className={classes.railCard}>
                 <div className={classes.railTitle}>Информация</div>
                 <div className={classes.railRows}>
-                  <RailRow label="Класс" value={<StarRow value={hotel.stars} />} />
+                  {hotel.usStars ? (
+                    <RailRow label="Звёздность" value={<StarRow value={hotel.usStars} />} />
+                  ) : null}
+                  {hotel.stars ? (
+                    <RailRow label="Рейтинг" value={<StarRow value={hotel.stars} />} />
+                  ) : null}
                   {!isPreview && hotel.capacity ? (
-                    <RailRow label="Вместимость" value={`${hotel.capacity} мест`} strong />
+                    <RailRow label="Мощность" value={`${hotel.capacity} мест`} strong />
                   ) : null}
                   {hotel.airportDistance ? (
                     <RailRow label="До аэропорта" value={`${hotel.airportDistance} мин`} strong />
@@ -295,19 +332,20 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
               <div className={classes.railCard}>
                 <div className={classes.railTitle}>Контакты</div>
                 <div className={classes.railRows}>
-                  {city ? <RailRow label="Город" value={city} strong /> : null}
-                  {address ? <RailRow label="Адрес" value={address} strong /> : null}
-                  {hotel.information?.number ? (
-                    <RailRow label="Телефон" value={hotel.information.number} strong />
-                  ) : null}
-                  {hotel.information?.email ? (
-                    <RailRow label="E-mail" value={hotel.information.email} strong />
-                  ) : null}
-                  {hotel.information?.link ? (
-                    <RailRow label="Сайт" value={hotel.information.link} strong />
-                  ) : null}
+                  <RailRow label="" value="booking@kars-avia.ru" icon={<MailIcon />} strong />
+                  <RailRow label="" value="booking@aniaero.ru" icon={<MailIcon />} strong />
+                  <RailRow label="" value="8 (800) 550-04-88" icon={<PhoneIcon />} strong />
                 </div>
               </div>
+
+              {locationLine && (
+                <div className={classes.railCard}>
+                  <div className={classes.railTitle}>Адрес</div>
+                  <div className={classes.railRows}>
+                    <RailRow label="" value={locationLine} strong />
+                  </div>
+                </div>
+              )}
 
               {hotel.meal && (
                 <div className={classes.railCard}>

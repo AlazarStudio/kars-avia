@@ -45,6 +45,12 @@ function TariffSection({ title, items }) {
         </span>
       </div>
       <table className={classes.table}>
+        <colgroup>
+          <col className={classes.colName} />
+          <col className={classes.colNet} />
+          <col className={classes.colVat} />
+          <col className={classes.colGross} />
+        </colgroup>
         <thead>
           <tr>
             <th>Наименование</th>

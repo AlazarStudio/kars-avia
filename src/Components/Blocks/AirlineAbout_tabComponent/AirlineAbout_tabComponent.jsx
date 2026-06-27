@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import classes from "./AirlineAbout_tabComponent.module.css";
-import { requestsAirlanes } from "../../../requests.js";
 import Button from "../../Standart/Button/Button.jsx";
 import {
   decodeJWT,
@@ -16,19 +15,18 @@ import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import { roles } from "../../../roles.js";
 import Logs from "../LogsHistory/Logs.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
-import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
+import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
 import { InputMask } from "@react-input/mask";
-import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
-import RequisitesIcon from "../../../shared/icons/RequisitesIcon.jsx";
-import { useLocalStorage } from "../../../hooks/useLocalStorage.jsx";
-import { useWindowSize } from "../../../hooks/useWindowSize.jsx";
 import HomeIcon from "../../../shared/icons/HomeIcon.jsx";
-import { is } from "date-fns/locale";
+import RequisitesIcon from "../../../shared/icons/RequisitesIcon.jsx";
+import ContactsIcon from "../../../shared/icons/ContactsIcon.jsx";
+import PinIcon from "../../../shared/icons/PinIcon.jsx";
+import ScheduleIcon from "../../../shared/icons/ScheduleIcon.jsx";
 import AirlineReadinessIndicator from "../AirlineReadinessIndicator/AirlineReadinessIndicator";
 
-function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
+function AirlineAbout_tabComponent({ id, accessMenu }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
   const { showAlert } = useDialog();
@@ -36,96 +34,26 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
 
   const [displayInfo, setDisplayInfo] = useState("generalInfo");
   const [showLogsSidebar, setShowLogsSidebar] = useState(false);
-  // const [menuOpen, setMenuOpen] = useState(() => {
-  //   return JSON.parse(localStorage.getItem("menuOpen")) ?? true;
-  // });
-  const [menuOpen] = useLocalStorage("menuOpen", true);
-  const { width } = useWindowSize();
-  // const [windowWidth, setWindowWidth] = useState(window.innerWidth);
-
-  // useEffect(() => {
-  //   const updateState = () => {
-  //     setMenuOpen(JSON.parse(localStorage.getItem("menuOpen")));
-  //   };
-
-  //   // Отслеживание изменений localStorage в других вкладках
-  //   window.addEventListener("storage", updateState);
-
-  //   // Перехват изменений в текущей вкладке
-  //   const originalSetItem = localStorage.setItem;
-  //   localStorage.setItem = function (key, value) {
-  //     originalSetItem.apply(this, arguments);
-  //     if (key === "menuOpen") {
-  //       updateState(); // Обновляем состояние
-  //     }
-  //   };
-
-  //   return () => {
-  //     window.removeEventListener("storage", updateState);
-  //     localStorage.setItem = originalSetItem; // Возвращаем исходный метод
-  //   };
-  // }, []);
-  // console.log(menuOpen);
-
-  // useEffect(() => {
-  //   const handleResize = () => setWindowWidth(window.innerWidth);
-  //   window.addEventListener("resize", handleResize);
-
-  //   return () => window.removeEventListener("resize", handleResize);
-  // }, []);
 
   const toggleLogsSidebar = () => setShowLogsSidebar(!showLogsSidebar);
 
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
+    context: { headers: { Authorization: `Bearer ${token}` } },
     variables: { airlineId: id },
   });
 
   const { data: dataSubscriptionUpd } = useSubscription(
     GET_AIRLINES_UPDATE_SUBSCRIPTION,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-      // onData: () => {
-      //   refetch();
-      // },
-    }
+    { context: { headers: { Authorization: `Bearer ${token}` } } }
   );
 
   let infoCities = useQuery(GET_CITIES, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
+    context: { headers: { Authorization: `Bearer ${token}` } },
   });
   const [cities, setCities] = useState([]);
 
-  // useEffect(() => {
-  //   if (infoCities.data) {
-  //     setCities(
-  //       infoCities.data?.citys.map(
-  //         // (item) => `${item.city}, регион: ${item.region}`
-  //         (item) => item.city
-  //       ) || []
-  //     );
-  //   }
-  // }, [infoCities]);
-
   useEffect(() => {
     if (infoCities.data) {
-      const mappedCities =
-        infoCities.data?.citys.map((item) => ({
-          label: `${item.city}, ${item.region}`,
-          value: item.city,
-        })) || [];
       setCities(infoCities.data?.citys);
     }
   }, [infoCities]);
@@ -143,33 +71,18 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
     },
   });
 
-  // useEffect(() => {
-  //   if (data) {
-  //     setAirline(data.airline);
-  //   }
-  //   if (dataSubscriptionUpd) refetch();
-  // }, [data, dataSubscriptionUpd, refetch]);
-
-    // 1. начальная загрузка / обновление, но только когда не редактируем
   useEffect(() => {
     if (!data?.airline) return;
-
-    // если сейчас не редактируем — можно синхронизировать с сервером
     if (!isEditing) {
       setAirline(data.airline);
     }
   }, [data, isEditing]);
 
-  // 2. подписка: если пришло обновление — рефетчим,
-  //   но НЕ во время редактирования, чтобы не сбивать форму
   useEffect(() => {
     if (dataSubscriptionUpd && !isEditing) {
       refetch();
     }
   }, [dataSubscriptionUpd, isEditing, refetch]);
-
-
-  // console.log(data);
 
   const [isLoading, setIsLoading] = useState(false);
 
@@ -231,74 +144,50 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
         ...prevState,
         images: [`${data.airline.images[0]}`],
       }));
-
       if (fileInputRef.current) {
-        fileInputRef.current.value = null; // Сброс значения в DOM-элементе
+        fileInputRef.current.value = null;
       }
       return;
     }
-
-    setNewImage(file); // Сохраняем объект файла
-    const imageUrl = URL.createObjectURL(file); // Создаем URL для отображения
+    setNewImage(file);
+    const imageUrl = URL.createObjectURL(file);
     setAirline((prevState) => ({
       ...prevState,
-      images: [imageUrl], // Обновляем URL изображения для отображения
+      images: [imageUrl],
     }));
   };
 
   const INFO_FIELDS = new Set([
-    "country","city","address","bank","bik","email","index","inn","number","ogrn","rs"
+    "country", "city", "address", "bank", "bik", "email", "index", "inn", "number", "ogrn", "rs",
   ]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setAirline(prev =>
+    setAirline((prev) =>
       INFO_FIELDS.has(name)
         ? { ...prev, information: { ...prev.information, [name]: value } }
         : { ...prev, [name]: value }
     );
   };
 
-  // const handleChange = (e) => {
-  //   const { name, value } = e.target;
-  //   // console.log(name);
-  //   // console.log(value);
+  const canEdit =
+    user?.role === roles.superAdmin ||
+    user?.role === roles.airlineAdmin ||
+    user?.role === roles.dispatcerAdmin;
 
-  //   setAirline((prev) => {
-  //     // Проверяем, обновляется ли поле в `information`
-  //     if (Object.keys(prev.information || {}).includes(name)) {
-  //       return {
-  //         ...prev,
-  //         information: {
-  //           ...prev.information,
-  //           [name]: value, // Обновляем только нужное поле в `information`
-  //         },
-  //       };
-  //     } else {
-  //       // Обновление верхнеуровневых полей
-  //       return {
-  //         ...prev,
-  //         [name]: value,
-  //       };
-  //     }
-  //   });
-  // };
+  const avatarSrc = newImage
+    ? URL.createObjectURL(newImage)
+    : getMediaUrl(airline?.images?.[0]) ?? "/no-avatar.png";
 
-  // console.log(user);
+  const locationLine = [airline?.information?.city, airline?.information?.address]
+    .filter(Boolean)
+    .join(", ");
 
-  const renderField = ({ label, value }) => {
-    return (
-      <div className={classes.airlineAbout_info_item}>
-        <label style={{ flexBasis: "50%" }}>{label}</label>
-        <div
-          className={classes.hotelAbout_info_value}
-          style={{ width: "400px" }}
-        >
-          {value || " "}
-        </div>
-      </div>
-    );
-  };
+  const TABS = [
+    { key: "generalInfo", label: "Общая информация", icon: <HomeIcon /> },
+    { key: "requisites", label: "Реквизиты", icon: <RequisitesIcon /> },
+    { key: "contacts", label: "Контакты и адрес", icon: <ContactsIcon /> },
+  ];
 
   return (
     <>
@@ -307,409 +196,242 @@ function AirlineAbout_tabComponent({ id, accessMenu, ...props }) {
 
       {!loading && !isLoading && !error && airline && (
         <div
-          className={classes.airlineAbout}
+          className={classes.card}
           style={user?.airlineId ? { height: "calc(100vh - 130px)" } : {}}
         >
-          <div className={classes.column}>
-            <div className={classes.airlineAbout_top}>
-              <div className={classes.airlineAbout_top_complete}>
-                <div className={classes.airlineAbout_top_img}>
-                  <img
-                    src={
-                      newImage
-                        ? URL.createObjectURL(newImage)
-                        : getMediaUrl(airline.images[0])
-                    }
-                    alt={airline.name}
-                  />
-                </div>
-                <div className={classes.airlineAbout_top_title}>
-                  <div className={classes.airlineAbout_top_title_name} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    {airline.name}
-                    {user?.role === roles.airlineAdmin && <AirlineReadinessIndicator airline={airline} />}
-                  </div>
-                  <div className={classes.airlineAbout_top_title_desc}>
-                    <img src="/map.png" alt="" />
-                    {airline.information?.city}, {airline.information?.address}
-                  </div>
-                </div>
+          <div className={classes.header}>
+            <div className={classes.headerLeft}>
+              <div className={classes.avatar}>
+                <img src={avatarSrc} alt={airline.name} />
               </div>
-              <div className={classes.airlineAbout_top_button}>
-                {(user?.role == roles.superAdmin ||
-                  user?.role == roles.airlineAdmin ||
-                  user?.role == roles.dispatcerAdmin) && (
-                  <>
-                    <div className={classes.airlineAbout_info__filters}>
-                      <button onClick={toggleLogsSidebar}>
-                        <img src="/scheduleIcon.png" alt="" />
-                        История
-                      </button>
-                    </div>
-                    {(!user?.airlineId || accessMenu?.airlineUpdate) && (
-                      <Button onClick={handleEditClick}>
-                        <img
-                          src={isEditing ? "/save.png" : "/editIcon.png"}
-                          alt=""
-                        />
-                        {isEditing ? "Сохранить" : "Редактировать"}
-                      </Button>
-                    )}
-                  </>
+              <div className={classes.headerInfo}>
+                <div
+                  className={classes.headerName}
+                  style={{ display: "flex", alignItems: "center", gap: 8 }}
+                >
+                  {airline.name}
+                  {user?.role === roles.airlineAdmin && (
+                    <AirlineReadinessIndicator airline={airline} />
+                  )}
+                </div>
+                {locationLine && (
+                  <div className={classes.headerLocation}>
+                    <PinIcon />
+                    {locationLine}
+                  </div>
                 )}
               </div>
             </div>
-            <div className={classes.airlineAbout_info__filters}>
-              <button
-                className={
-                  displayInfo == "generalInfo" ? classes.activeButton : null
-                }
-                onClick={() => {
-                  setDisplayInfo("generalInfo");
-                }}
-              >
-                {/* <img src="/houseIcon.png" alt="" />  */}
-                <HomeIcon />
-                Общая информация
-              </button>
-              <button
-                className={
-                  displayInfo == "requisites" ? classes.activeButton : null
-                }
-                onClick={() => {
-                  setDisplayInfo("requisites");
-                }}
-              >
-                {/* <img src="/requisitesIcon.svg" alt="" />  */}
-                <RequisitesIcon />
-                Реквизиты
-              </button>
-              <button
-                className={
-                  displayInfo == "contacts" ? classes.activeButton : null
-                }
-                onClick={() => {
-                  setDisplayInfo("contacts");
-                }}
-              >
-                <img src="/contacts_icon.png" alt="" /> Контакты и адрес
-              </button>
-            </div>
-          </div>
-          <div className={classes.airlineAbout_info}>
-            {displayInfo == "generalInfo" ? (
-              <div
-                className={`${classes.column} ${
-                  menuOpen && width <= 1600 ? classes.w70 : classes.w50
-                }`}
-              >
-                {
-                  // user?.hotelId &&
-                  user?.role !== roles.airlineAdmin &&
-                  user?.role !== roles.dispatcerAdmin &&
-                  user?.role !== roles.superAdmin ? (
-                    <>
-                      {renderField({ label: "Название", value: airline?.name })}
-                      {renderField({
-                        label: "Наименование",
-                        value: airline?.nameFull,
-                      })}
-                    </>
-                  ) : (
-                    <>
-                      <div className={classes.airlineAbout_info_item}>
-                        <label>Название</label>
-                        <input
-                          type="text"
-                          name="name"
-                          value={airline.name || ""}
-                          onChange={handleChange}
-                          disabled={!isEditing}
-                          className={classes.airlineAbout_info_input}
-                        />
-                      </div>
-
-                      {isEditing ? (
-                      <div className={classes.airlineAbout_info_item}>
-                        <label>Изображение</label>
-                        <input
-                          type="file"
-                          name="images"
-                          onChange={handleFileChange}
-                          ref={fileInputRef}
-                          disabled={!isEditing}
-                          className={classes.airlineAbout_info_input}
-                        />
-                      </div>
-                      ) : null}
-                    </>
-                  )
-                }
-              </div>
-            ) : displayInfo == "contacts" ? (
-              <>
-                <div
-                  className={
-                    user?.role === roles.airlineAdmin
-                      ? classes.airlineAbout_info_block
-                      : classes.airlineAbout_info_block__airline
-                  }
-                  style={
-                    menuOpen && width <= 1580
-                      ? {
-                          flexDirection: "column",
-                          height: "100%",
-                          overflow: "scroll",
-                        }
-                      : !menuOpen && width < 1305
-                      ? { flexDirection: "column" }
-                      : {}
-                  }
+            {canEdit && (
+              <div className={classes.headerActions}>
+                <button
+                  type="button"
+                  className={classes.historyBtn}
+                  onClick={toggleLogsSidebar}
                 >
-                  <div
-                    className={`${classes.column} ${
-                      menuOpen && width <= 1600 ? classes.w60 : classes.w50
-                    }`}
-                  >
-                    <div className={classes.airlineAbout_info_label}>Адрес</div>
-                    {user?.role !== roles.airlineAdmin &&
-                    user?.role !== roles.dispatcerAdmin &&
-                    user?.role !== roles.superAdmin ? (
-                      <>
-                        {renderField({
-                          label: "Страна",
-                          value: airline.information?.country,
-                        })}
-                        {renderField({
-                          label: "Город",
-                          value: airline.information?.city,
-                        })}
-                        {renderField({
-                          label: "Улица",
-                          value: airline.information?.address,
-                        })}
-                        {renderField({
-                          label: "Индекс",
-                          value: airline.information?.index,
-                        })}
-                      </>
-                    ) : (
-                      <>
-                        <div className={classes.airlineAbout_info_item}>
-                          <label>Страна</label>
-                          <input
-                            type="text"
-                            name="country"
-                            value={airline.information?.country || ""}
-                            onChange={handleChange}
-                            disabled={!isEditing}
-                            className={classes.airlineAbout_info_input}
-                          />
-                        </div>
-                        <div className={classes.airlineAbout_info_item}>
-                          <label>Город</label>
-                          <MUIAutocompleteColor
-                            dropdownWidth="400px"
-                            listboxHeight={"300px"}
-                            isDisabled={!isEditing}
-                            options={cities}
-                            getOptionLabel={(option) =>
-                              option
-                                ? `${option.city} ${option.region}`.trim()
-                                : ""
-                            }
-                            renderOption={(optionProps, option) => {
-                              // Формируем строку для отображения
-                              const labelText =
-                                `${option.city} ${option.region}`.trim();
-                              // Разбиваем строку по пробелам
-                              const words = labelText.split(" ");
-                              return (
-                                <li {...optionProps} key={option.id}>
-                                  {words.map((word, index) => (
-                                    <span
-                                      key={index}
-                                      style={{
-                                        color: index === 0 ? "black" : "gray",
-                                        marginRight: "4px",
-                                      }}
-                                    >
-                                      {word}
-                                    </span>
-                                  ))}
-                                </li>
-                              );
-                            }}
-                            value={
-                              cities.find(
-                                (option) =>
-                                  option.city === airline.information?.city
-                              ) || null
-                            }
-                            onChange={(e, newValue) => {
-                              setAirline((prevAirline) => ({
-                                ...prevAirline,
-                                information: {
-                                  ...prevAirline.information,
-                                  city: newValue ? newValue.city : "", // Обновляем поле `city`
-                                },
-                              }));
-                            }}
-                          />
-                        </div>
-                        <div className={classes.airlineAbout_info_item}>
-                          <label>Улица</label>
-                          <input
-                            type="text"
-                            name="address"
-                            value={airline.information?.address || ""}
-                            onChange={handleChange}
-                            disabled={!isEditing}
-                            className={classes.airlineAbout_info_input}
-                          />
-                        </div>
-                        <div className={classes.airlineAbout_info_item}>
-                          <label>Индекс</label>
-                          <input
-                            type="text"
-                            name="index"
-                            value={airline.information?.index || ""}
-                            onChange={handleChange}
-                            disabled={!isEditing}
-                            className={classes.airlineAbout_info_input}
-                          />
-                        </div>
-                      </>
-                    )}
-                  </div>
-
-                  <div
-                    className={`${classes.column} ${
-                      menuOpen && width <= 1600 ? classes.w60 : classes.w50
-                    }`}
-                  >
-                    <div className={classes.airlineAbout_info_label}>
-                      Контакты
-                    </div>
-                    <div className={classes.airlineAbout_info_item}>
-                      <label>Почта</label>
-                      <input
-                        type="email"
-                        name="email"
-                        value={airline.information?.email || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className={classes.airlineAbout_info_input}
-                      />
-                    </div>
-                    <div className={classes.airlineAbout_info_item}>
-                      <label>Телефон</label>
-                      <InputMask
-                        className={classes.airlineAbout_info_input}
-                        type="text"
-                        mask="+7 (___) ___-__-__"
-                        replacement={{ _: /\d/ }}
-                        name="number"
-                        value={airline.information?.number || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        placeholder="+7 (___) ___-__-__"
-                        autoComplete="new-password"
-                      />
-                      {/* <input
-                        type="tel"
-                        name="number"
-                        value={airline.information?.number || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className={classes.airlineAbout_info_input}
-                      /> */}
-                    </div>
-                  </div>
-                </div>
-              </>
-            ) : (
-              <>
-                <div className={classes.airlineAbout_info_block}>
-                  <div
-                    className={`${classes.column} ${
-                      menuOpen && width <= 1575
-                        ? classes.w70
-                        : !menuOpen && width <= 1280
-                        ? classes.w60
-                        : classes.w50
-                    }`}
-                  >
-                    <div className={classes.airlineAbout_info_item}>
-                      <label>Наименование</label>
-                      <input
-                        type="text"
-                        name="nameFull"
-                        value={airline.nameFull || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className={classes.airlineAbout_info_input}
-                      />
-                    </div>
-                    <div className={classes.airlineAbout_info_item}>
-                      <label>ИНН</label>
-                      <input
-                        type="text"
-                        name="inn"
-                        value={airline.information?.inn || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className={classes.airlineAbout_info_input}
-                      />
-                    </div>
-                    <div className={classes.airlineAbout_info_item}>
-                      <label>ОГРН</label>
-                      <input
-                        type="text"
-                        name="ogrn"
-                        value={airline.information?.ogrn || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className={classes.airlineAbout_info_input}
-                      />
-                    </div>
-                    <div className={classes.airlineAbout_info_item}>
-                      <label>Р/С</label>
-                      <input
-                        type="text"
-                        name="rs"
-                        value={airline.information?.rs || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className={classes.airlineAbout_info_input}
-                      />
-                    </div>
-                    <div className={classes.airlineAbout_info_item}>
-                      <label>В БАНКЕ</label>
-                      <input
-                        type="text"
-                        name="bank"
-                        value={airline.information?.bank || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className={classes.airlineAbout_info_input}
-                      />
-                    </div>
-                    <div className={classes.airlineAbout_info_item}>
-                      <label>БИК</label>
-                      <input
-                        type="text"
-                        name="bik"
-                        value={airline.information?.bik || ""}
-                        onChange={handleChange}
-                        disabled={!isEditing}
-                        className={classes.airlineAbout_info_input}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </>
+                  <ScheduleIcon /> История
+                </button>
+                {(!user?.airlineId || accessMenu?.airlineUpdate) && (
+                  <Button onClick={handleEditClick}>
+                    <img
+                      src={isEditing ? "/save.png" : "/editIcon.png"}
+                      alt=""
+                      style={{ width: 16, height: 16 }}
+                    />
+                    {isEditing ? "Сохранить" : "Редактировать"}
+                  </Button>
+                )}
+              </div>
             )}
           </div>
+
+          <div className={classes.tabs}>
+            {TABS.map(({ key, label, icon }) => (
+              <button
+                key={key}
+                type="button"
+                className={`${classes.tab} ${displayInfo === key ? classes.tabActive : ""}`}
+                onClick={() => setDisplayInfo(key)}
+              >
+                {icon}
+                {label}
+              </button>
+            ))}
+          </div>
+
+          <div className={classes.content}>
+            {displayInfo === "generalInfo" && (
+              <div className={`${classes.formSection} ${classes.formSectionHalf}`}>
+                <div className={classes.sectionTitle}>Основные данные</div>
+                <div className={classes.fieldRow}>
+                  <span className={classes.fieldLabel}>Название</span>
+                  <input
+                    type="text"
+                    name="name"
+                    value={airline.name || ""}
+                    onChange={handleChange}
+                    disabled={!isEditing}
+                    className={classes.fieldInput}
+                  />
+                </div>
+                {isEditing && (
+                  <div className={classes.fileRow}>
+                    <span className={classes.fileLabel}>Изображение</span>
+                    <input
+                      type="file"
+                      name="images"
+                      onChange={handleFileChange}
+                      ref={fileInputRef}
+                      className={classes.fileInput}
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {displayInfo === "requisites" && (
+              <div className={`${classes.formSection} ${classes.formSectionHalf}`}>
+                <div className={classes.sectionTitle}>Юридические данные</div>
+                {[
+                  { name: "nameFull", label: "Наименование", value: airline.nameFull },
+                  { name: "inn", label: "ИНН", value: airline.information?.inn },
+                  { name: "ogrn", label: "ОГРН", value: airline.information?.ogrn },
+                  { name: "rs", label: "Р/С", value: airline.information?.rs },
+                  { name: "bank", label: "В банке", value: airline.information?.bank },
+                  { name: "bik", label: "БИК", value: airline.information?.bik },
+                ].map(({ name, label, value }) => (
+                  <div className={classes.fieldRow} key={name}>
+                    <span className={classes.fieldLabel}>{label}</span>
+                    <input
+                      type="text"
+                      name={name}
+                      value={value || ""}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      className={`${classes.fieldInput} ${classes.fieldInputWide}`}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {displayInfo === "contacts" && (
+              <div className={classes.twoColumns}>
+                <div className={classes.formSection}>
+                  <div className={classes.sectionTitle}>Адрес</div>
+                  <div className={classes.fieldRow}>
+                    <span className={classes.fieldLabel}>Страна</span>
+                    <input
+                      type="text"
+                      name="country"
+                      value={airline.information?.country || ""}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      className={`${classes.fieldInput} ${classes.fieldInputWide}`}
+                    />
+                  </div>
+                  <div className={classes.fieldRow}>
+                    <span className={classes.fieldLabel}>Город</span>
+                    <MUIAutocompleteColor
+                      dropdownWidth="100%"
+                      listboxHeight={"300px"}
+                      isDisabled={!isEditing}
+                      options={cities}
+                      getOptionLabel={(option) =>
+                        option ? `${option.city} ${option.region}`.trim() : ""
+                      }
+                      renderOption={(optionProps, option) => {
+                        const labelText = `${option.city} ${option.region}`.trim();
+                        const words = labelText.split(" ");
+                        return (
+                          <li {...optionProps} key={option.id}>
+                            {words.map((word, index) => (
+                              <span
+                                key={index}
+                                style={{
+                                  color: index === 0 ? "black" : "gray",
+                                  marginRight: "4px",
+                                }}
+                              >
+                                {word}
+                              </span>
+                            ))}
+                          </li>
+                        );
+                      }}
+                      value={
+                        cities.find(
+                          (option) => option.city === airline.information?.city
+                        ) || null
+                      }
+                      onChange={(e, newValue) => {
+                        setAirline((prev) => ({
+                          ...prev,
+                          information: {
+                            ...prev.information,
+                            city: newValue ? newValue.city : "",
+                          },
+                        }));
+                      }}
+                    />
+                  </div>
+                  <div className={classes.fieldRow}>
+                    <span className={classes.fieldLabel}>Улица</span>
+                    <input
+                      type="text"
+                      name="address"
+                      value={airline.information?.address || ""}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      className={`${classes.fieldInput} ${classes.fieldInputWide}`}
+                    />
+                  </div>
+                  <div className={classes.fieldRow}>
+                    <span className={classes.fieldLabel}>Индекс</span>
+                    <input
+                      type="text"
+                      name="index"
+                      value={airline.information?.index || ""}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      className={`${classes.fieldInput} ${classes.fieldInputWide}`}
+                    />
+                  </div>
+                </div>
+
+                <div className={classes.formSection}>
+                  <div className={classes.sectionTitle}>Контакты</div>
+                  <div className={classes.fieldRow}>
+                    <span className={classes.fieldLabel}>Почта</span>
+                    <input
+                      type="email"
+                      name="email"
+                      value={airline.information?.email || ""}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      className={`${classes.fieldInput} ${classes.fieldInputWide}`}
+                    />
+                  </div>
+                  <div className={classes.fieldRow}>
+                    <span className={classes.fieldLabel}>Телефон</span>
+                    <InputMask
+                      className={`${classes.fieldInput} ${classes.fieldInputWide}`}
+                      type="text"
+                      mask="+7 (___) ___-__-__"
+                      replacement={{ _: /\d/ }}
+                      name="number"
+                      value={airline.information?.number || ""}
+                      onChange={handleChange}
+                      disabled={!isEditing}
+                      placeholder="+7 (___) ___-__-__"
+                      autoComplete="new-password"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
           <Logs
             type={"airline"}
             queryLog={GET_AIRLINE_LOGS}

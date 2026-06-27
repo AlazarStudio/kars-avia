@@ -13,6 +13,7 @@ import DropDownList from "../DropDownList/DropDownList";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
+import StarRatingFilter from "../StarRatingFilter/StarRatingFilter";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
@@ -361,21 +362,21 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
               />
 
               <label>Оценка</label>
-              <input
-                type="text"
-                name="stars"
+              <StarRatingFilter
+                integer
                 value={formData.stars}
-                placeholder="от 1 до 5"
-                onChange={handleChange}
+                onChange={(val) =>
+                  handleChange({ target: { name: "stars", value: val } })
+                }
               />
 
               <label>Звёздность</label>
-              <input
-                type="text"
-                name="usStars"
+              <StarRatingFilter
+                integer
                 value={formData.usStars}
-                placeholder="от 1 до 5"
-                onChange={handleChange}
+                onChange={(val) =>
+                  handleChange({ target: { name: "usStars", value: val } })
+                }
               />
 
               <label>Аэропорт</label>

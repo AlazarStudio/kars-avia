@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import classes from "./AirlineRegisterOfContracts.module.css";
 import Filter from "../Filter/Filter.jsx";
+import FilterPopoverButton from "../FilterPopoverButton/FilterPopoverButton.jsx";
 
 import {
   getCookie,
@@ -206,6 +207,21 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
     setSearchTarif(e.target.value);
   };
 
+  const activeFilterCount =
+    (archived ? 1 : 0) +
+    (dateRange.startDate || dateRange.endDate ? 1 : 0) +
+    (selectedType ? 1 : 0) +
+    (selectedCompany ? 1 : 0);
+
+  const handleResetFilters = () => {
+    setArchived(false);
+    setDateRange({ startDate: null, endDate: null });
+    setSelectedType(null);
+    setSelectedCompany(null);
+    setPageInfo((prev) => ({ ...prev, skip: 0 }));
+    navigate("?page=1", { replace: true });
+  };
+
   // const deleteComponentRef = useRef();
 
   // const toggleTarifs = () => {
@@ -380,56 +396,62 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
   return (
     <div className={classes.tariffsWrapper}>
       <div className={classes.section_searchAndFilter}>
-        <MUIAutocomplete
-          dropdownWidth={"140px"}
-          label={"Статус"}
-          hideLabelOnFocus={false}
-          options={["Активные", "Архив"]}
-          value={archived ? "Архив" : "Активные"}
-          onChange={(event, newValue) => {
-            setArchived(newValue === "Архив");
-          }}
-        />
+        <FilterPopoverButton
+          activeCount={activeFilterCount}
+          onReset={handleResetFilters}
+          width={360}
+        >
+          <MUIAutocomplete
+            dropdownWidth={"100%"}
+            label={"Статус"}
+            hideLabelOnFocus={false}
+            options={["Активные", "Архив"]}
+            value={archived ? "Архив" : "Активные"}
+            onChange={(event, newValue) => {
+              setArchived(newValue === "Архив");
+            }}
+          />
 
-        <DateRangeModalSelector
-          width={"140px"}
-          initialRange={dateRange}
-          onChange={(start, end) =>
-            setDateRange({ startDate: start, endDate: end })
-          }
-        />
-
-        <MUIAutocomplete
-          dropdownWidth={"140px"}
-          hideLabelOnFocus={false}
-          label={"Вид приложения"}
-          options={["Все", ...action]}
-          value={selectedType ? selectedType : ""}
-          onChange={(event, newValue) => {
-            const selectedOption = action.find(
-              (airline) => airline === newValue
-            );
-            setSelectedType(selectedOption);
-          }}
-        />
-
-        <MUIAutocomplete
-          dropdownWidth={"140px"}
-          hideLabelOnFocus={false}
-          label={"ГК Карс"}
-          options={["Все компании", ...companies?.map((item) => item.name)]}
-          value={selectedCompany ? selectedCompany?.name : ""}
-          onChange={(event, newValue) => {
-            if (newValue === "Все компании" || !newValue) {
-              setSelectedCompany(null);
-            } else {
-              const selectedCompany = companies.find(
-                (item) => item.name === newValue
-              );
-              setSelectedCompany(selectedCompany);
+          <DateRangeModalSelector
+            width={"100%"}
+            initialRange={dateRange}
+            onChange={(start, end) =>
+              setDateRange({ startDate: start, endDate: end })
             }
-          }}
-        />
+          />
+
+          <MUIAutocomplete
+            dropdownWidth={"100%"}
+            hideLabelOnFocus={false}
+            label={"Вид приложения"}
+            options={["Все", ...action]}
+            value={selectedType ? selectedType : ""}
+            onChange={(event, newValue) => {
+              const selectedOption = action.find(
+                (airline) => airline === newValue
+              );
+              setSelectedType(selectedOption);
+            }}
+          />
+
+          <MUIAutocomplete
+            dropdownWidth={"100%"}
+            hideLabelOnFocus={false}
+            label={"ГК Карс"}
+            options={["Все компании", ...companies?.map((item) => item.name)]}
+            value={selectedCompany ? selectedCompany?.name : ""}
+            onChange={(event, newValue) => {
+              if (newValue === "Все компании" || !newValue) {
+                setSelectedCompany(null);
+              } else {
+                const selectedCompany = companies.find(
+                  (item) => item.name === newValue
+                );
+                setSelectedCompany(selectedCompany);
+              }
+            }}
+          />
+        </FilterPopoverButton>
         <MUITextField
           className={classes.mainSearch}
           label={"Поиск по договорам"}

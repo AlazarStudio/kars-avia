@@ -232,15 +232,16 @@
     background: var(--pill-dot, #9E9E9E);
     flex: none;
 }
+/* Цвета статусов — старая схема из index.css (точки списка); текст — читаемый тон */
 .st_created    { --pill-dot: #9E9E9E; --pill-fg: #616161; }
-.st_opened     { --pill-dot: #2196F3; --pill-fg: #1565C0; }
-.st_done       { --pill-dot: #1E8E3E; --pill-fg: #1E7E34; }
+.st_opened     { --pill-dot: #FFBD97; --pill-fg: #C2410C; }
+.st_done       { --pill-dot: #7CFFC0; --pill-fg: #1E7E34; }
 .st_archiving  { --pill-dot: #D6A570; --pill-fg: #A86A2A; }
 .st_extended   { --pill-dot: #2196F3; --pill-fg: #1565C0; }
 .st_reduced    { --pill-dot: #F44336; --pill-fg: #C62828; }
 .st_transferred{ --pill-dot: #FF9800; --pill-fg: #E65100; }
 .st_earlyStart { --pill-dot: #9575CD; --pill-fg: #5E35B1; }
-.st_canceled   { --pill-dot: #C03B28; --pill-fg: #C03B28; }
+.st_canceled   { --pill-dot: #FF6A6A; --pill-fg: #C03B28; }
 .st_archived   { --pill-dot: #A0A0A0; --pill-fg: #757575; }
 
 @media (min-width: 0px) and (max-width: 1599px) {

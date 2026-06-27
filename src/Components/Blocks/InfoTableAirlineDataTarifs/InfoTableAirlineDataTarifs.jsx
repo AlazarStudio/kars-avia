@@ -164,6 +164,29 @@ function InfoTableAirlineDataTarifs({
                   ))}
                 </div>
 
+                {/* Блок географии (если есть) */}
+                {Array.isArray(item.geography) && item.geography.length > 0 && (
+                  <>
+                    <div className={classes.airportListTitle}>География</div>
+                    <ChipsList
+                      items={item.geography}
+                      renderChip={(geo, i) => {
+                        const city = geo.cityRef?.city || geo.city;
+                        const region = geo.cityRef?.region || geo.region;
+                        const label = city
+                          ? region ? `${city} (${region})` : city
+                          : region || geo.country || "—";
+                        return (
+                          <div key={geo.cityId || region || geo.country || i} className={classes.airportChip}>
+                            <div className={classes.airportInfo}>
+                              <span className={classes.airportCity}>{label}</span>
+                            </div>
+                          </div>
+                        );
+                      }}
+                    />
+                  </>
+                )}
                 {/* Блок аэропортов (если есть) */}
                 {item.airports && item.airports.length > 0 && (
                   <>

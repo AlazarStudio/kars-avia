@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
-import classes from "./MaintenanceBannerSettings.module.css";
-import Header from "../Header/Header";
+import classes from "../SystemUpdate/SystemNotificationsSettings.module.css";
 import Button from "../../Standart/Button/Button";
 import MUISwitch from "../MUISwitch/MUISwitch";
 import MUILoader from "../MUILoader/MUILoader";
@@ -11,7 +10,10 @@ import {
   UPDATE_MAINTENANCE_BANNER,
   getCookie,
 } from "../../../../graphQL_requests";
-import { formatCountdown, useMaintenanceCountdown } from "./useMaintenanceCountdown";
+import {
+  formatCountdown,
+  useMaintenanceCountdown,
+} from "./useMaintenanceCountdown";
 
 // ISO (UTC) -> значение для <input type="datetime-local"> в локальном времени
 function isoToLocalInput(iso) {
@@ -93,94 +95,127 @@ function MaintenanceBannerSettings() {
   const previewMessage = message.trim();
   const previewEndsAtISO = localInputToISO(endsAtLocal);
   const previewLeft = useMaintenanceCountdown(previewEndsAtISO);
+  const showPreview = enabled && previewMessage;
 
   return (
-    <div className={classes.section}>
-      <Header>Плашка техработ</Header>
-
+    <>
       {loading && !data && <MUILoader />}
       {error && <p>Ошибка: {error.message}</p>}
 
-      <div className={classes.form}>
-        <MUISwitch
-          label="Показывать плашку"
-          checked={enabled}
-          onChange={(e) => setEnabled(e.target.checked)}
-          width="260px"
-        />
-
-        <label className={classes.field}>
-          <span className={classes.label}>Текст плашки</span>
-          <textarea
-            className={classes.textarea}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            rows={3}
-            placeholder="Плановые работы. Возможны кратковременные перебои."
-          />
-        </label>
-
-        <label className={classes.field}>
-          <span className={classes.label}>Окончание работ (необязательно)</span>
-          <div className={classes.dateRow}>
-            <input
-              type="datetime-local"
-              className={classes.dateInput}
-              value={endsAtLocal}
-              onChange={(e) => setEndsAtLocal(e.target.value)}
+      <div className={classes.split}>
+        {/* LEFT: форма */}
+        <div className={classes.formCol}>
+          <div className={classes.publishRow}>
+            <div>
+              <div className={classes.publishTitle}>Показывать плашку</div>
+              <div className={classes.publishHint}>
+                Видна всем, включая страницу входа.
+              </div>
+            </div>
+            <MUISwitch
+              checked={enabled}
+              onChange={(e) => setEnabled(e.target.checked)}
             />
-            {endsAtLocal && (
-              <Button
-                backgroundcolor="#AFB4BA"
-                padding="0 16px"
-                onClick={() => setEndsAtLocal("")}
-              >
-                Очистить
-              </Button>
-            )}
           </div>
-        </label>
 
-        <div className={classes.previewBlock}>
-          <span className={classes.label}>Превью</span>
-          {enabled && previewMessage ? (
-            <div className={classes.previewBanner}>
-              <svg
-                width="16"
-                height="16"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  d="M12 9V13M12 17H12.01M10.29 3.86L1.82 18A2 2 0 0 0 3.53 21H20.47A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-              <span className={classes.previewMessage}>{previewMessage}</span>
-              {previewEndsAtISO && previewLeft != null && (
-                <span className={classes.previewTimer}>
-                  Осталось: {formatCountdown(previewLeft)}
+          <div className={classes.divider} />
+
+          <label className={classes.field}>
+            <span className={classes.label}>Текст плашки</span>
+            <div className={classes.textareaShell}>
+              <textarea
+                className={classes.textareaField}
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                rows={3}
+                placeholder="Плановые работы. Возможны кратковременные перебои."
+              />
+              <div className={classes.textareaFooter}>
+                <span className={classes.textareaFooterHint}>
+                  Показывается одной строкой
                 </span>
+                <span className={classes.textareaCount}>{message.length} симв.</span>
+              </div>
+            </div>
+          </label>
+
+          <label className={classes.field}>
+            <span className={classes.label}>Окончание работ (необязательно)</span>
+            <div className={classes.dateRow}>
+              <input
+                type="datetime-local"
+                className={`${classes.input} ${classes.dateInput}`}
+                value={endsAtLocal}
+                onChange={(e) => setEndsAtLocal(e.target.value)}
+              />
+              {endsAtLocal && (
+                <Button
+                  backgroundcolor="#AFB4BA"
+                  padding="0 16px"
+                  onClick={() => setEndsAtLocal("")}
+                >
+                  Очистить
+                </Button>
               )}
             </div>
-          ) : (
-            <p className={classes.previewEmpty}>
-              Плашка скрыта (выключена или пустой текст).
-            </p>
-          )}
+          </label>
+
+          <div className={classes.actions}>
+            <Button onClick={handleSave} disabled={saving} padding="0 28px">
+              {saving ? "Сохранение..." : "Сохранить"}
+            </Button>
+          </div>
         </div>
 
-        <div className={classes.actions}>
-          <Button onClick={handleSave} disabled={saving} padding="0 28px">
-            {saving ? "Сохранение..." : "Сохранить"}
-          </Button>
+        {/* RIGHT: живое превью */}
+        <div className={classes.previewCol}>
+          <span className={classes.sectionLabel}>Предпросмотр</span>
+          <div className={classes.previewSub}>Как увидит пользователь</div>
+
+          <div className={classes.screen}>
+            {showPreview ? (
+              <>
+                <div className={classes.pvBanner}>
+                  <svg
+                    width="14"
+                    height="14"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                  >
+                    <path
+                      d="M12 9V13M12 17H12.01M10.29 3.86L1.82 18A2 2 0 0 0 3.53 21H20.47A2 2 0 0 0 22.18 18L13.71 3.86A2 2 0 0 0 10.29 3.86Z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  <span className={classes.pvBannerMsg}>{previewMessage}</span>
+                  {previewEndsAtISO && previewLeft != null && (
+                    <span className={classes.pvBannerTimer}>
+                      {formatCountdown(previewLeft)}
+                    </span>
+                  )}
+                </div>
+                <div className={classes.pvPage}>
+                  <div className={classes.pvPageHead} />
+                  <div className={classes.pvPageLine} />
+                  <div className={classes.pvPageLine} />
+                </div>
+              </>
+            ) : (
+              <div className={classes.previewEmpty}>
+                Плашка скрыта (выключена или пустой текст).
+              </div>
+            )}
+          </div>
+          <div className={classes.caption}>
+            Таймер тикает в реальном времени. Выкл/истёк → полоса исчезает.
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

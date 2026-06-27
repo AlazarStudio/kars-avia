@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import classes from "./RegisterOfContracts.module.css";
 import Filter from "../Filter/Filter.jsx";
+import FilterPopoverButton from "../FilterPopoverButton/FilterPopoverButton.jsx";
 
 import {
   getCookie,
@@ -313,6 +314,33 @@ function RegisterOfContracts({
     setSearchTarif(e.target.value);
   };
 
+  const activeFilterCount =
+    (archived ? 1 : 0) +
+    (dateRange.startDate || dateRange.endDate ? 1 : 0) +
+    (selectedCompany ? 1 : 0) +
+    (activeTab === "airlines"
+      ? (selectedAirline ? 1 : 0) + (selectedType ? 1 : 0)
+      : 0) +
+    (activeTab === "hotels"
+      ? (selectedHotel ? 1 : 0) + (selectedCity ? 1 : 0)
+      : 0) +
+    (activeTab === "transfer"
+      ? (selectedOrganization ? 1 : 0) + (selectedCity ? 1 : 0)
+      : 0);
+
+  const handleResetFilters = () => {
+    setArchived(false);
+    setDateRange({ startDate: null, endDate: null });
+    setSelectedCompany(null);
+    setSelectedAirline(null);
+    setSelectedType(null);
+    setSelectedHotel(null);
+    setSelectedOrganization(null);
+    setSelectedCity(null);
+    setPageInfo((prev) => ({ ...prev, skip: 0 }));
+    navigate("?page=1");
+  };
+
   const deleteComponentRef = useRef();
 
   const toggleTarifs = () => {
@@ -543,20 +571,25 @@ function RegisterOfContracts({
         ))}
       </div>
       <div className={classes.section_searchAndFilter}>
-        <MUIAutocomplete
-          dropdownWidth={"140px"}
-          label={"Статус"}
-          hideLabelOnFocus={false}
-          options={["Активные", "Архив"]}
-          value={archived ? "Архив" : "Активные"}
-          onChange={(event, newValue) => {
-            setArchived(newValue === "Архив");
-          }}
-        />
+        <FilterPopoverButton
+          activeCount={activeFilterCount}
+          onReset={handleResetFilters}
+          width={360}
+        >
+          <MUIAutocomplete
+            dropdownWidth={"100%"}
+            label={"Статус"}
+            hideLabelOnFocus={false}
+            options={["Активные", "Архив"]}
+            value={archived ? "Архив" : "Активные"}
+            onChange={(event, newValue) => {
+              setArchived(newValue === "Архив");
+            }}
+          />
 
-        <DateRangeModalSelector
-          width={"140px"}
-          initialRange={dateRange}
+          <DateRangeModalSelector
+            width={"100%"}
+            initialRange={dateRange}
           onChange={(start, end) =>
             setDateRange({ startDate: start, endDate: end })
           }
@@ -565,7 +598,7 @@ function RegisterOfContracts({
         {activeTab === "airlines" && (
           <>
             <MUIAutocomplete
-              dropdownWidth={"140px"}
+              dropdownWidth={"100%"}
               label={"Авиакомпания"}
               hideLabelOnFocus={false}
               options={[
@@ -585,7 +618,7 @@ function RegisterOfContracts({
               }}
             />
             <MUIAutocomplete
-              dropdownWidth={"140px"}
+              dropdownWidth={"100%"}
               label={"Вид приложения"}
               hideLabelOnFocus={false}
               options={["Все", ...action]}
@@ -603,7 +636,7 @@ function RegisterOfContracts({
         {activeTab === "hotels" && (
           <>
             <MUIAutocompleteColor
-              dropdownWidth={"140px"}
+              dropdownWidth={"100%"}
               label={"Гостиница"}
               hideLabelOnFocus={false}
               options={[
@@ -663,7 +696,7 @@ function RegisterOfContracts({
             />
 
             <MUIAutocompleteColor
-              dropdownWidth={"140px"}
+              dropdownWidth={"100%"}
               label={"Город"}
               hideLabelOnFocus={false}
               options={[
@@ -733,7 +766,7 @@ function RegisterOfContracts({
         {activeTab === "transfer" && (
           <>
             <MUIAutocomplete
-              dropdownWidth={"140px"}
+              dropdownWidth={"100%"}
               label={"Организация"}
               hideLabelOnFocus={false}
               options={["Все организации", ...orgs.map((org) => org.name)]}
@@ -751,7 +784,7 @@ function RegisterOfContracts({
             />
 
             <MUIAutocompleteColor
-              dropdownWidth={"140px"}
+              dropdownWidth={"100%"}
               label={"Город"}
               hideLabelOnFocus={false}
               options={[
@@ -818,23 +851,24 @@ function RegisterOfContracts({
           </>
         )}
 
-        <MUIAutocomplete
-          dropdownWidth={"140px"}
-          label={"ГК Карс"}
-          hideLabelOnFocus={false}
-          options={["Все компании", ...companies?.map((item) => item.name)]}
-          value={selectedCompany ? selectedCompany?.name : ""}
-          onChange={(event, newValue) => {
-            if (newValue === "Все компании" || !newValue) {
-              setSelectedCompany(null);
-            } else {
-              const selectedCompany = companies.find(
-                (item) => item.name === newValue,
-              );
-              setSelectedCompany(selectedCompany);
-            }
-          }}
-        />
+          <MUIAutocomplete
+            dropdownWidth={"100%"}
+            label={"ГК Карс"}
+            hideLabelOnFocus={false}
+            options={["Все компании", ...companies?.map((item) => item.name)]}
+            value={selectedCompany ? selectedCompany?.name : ""}
+            onChange={(event, newValue) => {
+              if (newValue === "Все компании" || !newValue) {
+                setSelectedCompany(null);
+              } else {
+                const selectedCompany = companies.find(
+                  (item) => item.name === newValue,
+                );
+                setSelectedCompany(selectedCompany);
+              }
+            }}
+          />
+        </FilterPopoverButton>
 
         <MUITextField
           className={classes.mainSearch}

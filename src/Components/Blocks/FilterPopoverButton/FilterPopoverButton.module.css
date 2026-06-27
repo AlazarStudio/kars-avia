@@ -1,0 +1,74 @@
+.filterButton {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid rgba(0, 0, 0, 0.23);
+  background-color: transparent;
+  color: #545873;
+  cursor: pointer;
+  flex: none;
+}
+.filterButton svg {
+  pointer-events: none;
+}
+.filterButton:hover {
+  background-color: #fff;
+}
+.filterButtonActive {
+  background-color: #fff;
+}
+.filterBadge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 9px;
+  border: 2px solid #fff;
+  background-color: #0057c3;
+  color: #fff;
+  font-family: Inter, sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1;
+}
+.filterPopover {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+}
+.filterPopoverHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  color: #545873;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.filterReset {
+  border: none;
+  background: none;
+  color: #0057c3;
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.filterReset:hover {
+  text-decoration: underline;
+}

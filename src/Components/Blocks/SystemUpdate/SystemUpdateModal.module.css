@@ -1,0 +1,160 @@
+.wrap {
+    display: flex;
+    width: 100%;
+    min-height: 380px;
+    font-family: Inter, sans-serif;
+}
+
+/* ===== Left brand panel ===== */
+.brand {
+    position: relative;
+    flex: 0 0 256px;
+    padding: 30px 26px;
+    display: flex;
+    flex-direction: column;
+    color: #fff;
+    background: linear-gradient(155deg, #0a59cf 0%, #2f86ef 100%);
+    overflow: hidden;
+}
+
+.brandGlow {
+    position: absolute;
+    left: -44px;
+    bottom: -36px;
+    width: 170px;
+    height: 170px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.10);
+}
+
+.iconBox {
+    position: relative;
+    z-index: 1;
+    width: 52px;
+    height: 52px;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.16);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 22px;
+    color: #fff;
+}
+
+.brandTitle {
+    position: relative;
+    z-index: 1;
+    font-size: 25px;
+    line-height: 1.15;
+    font-weight: 700;
+}
+
+.brandSpacer {
+    flex: 1;
+    min-height: 26px;
+}
+
+.brandVersion {
+    position: relative;
+    z-index: 1;
+    font-size: 29px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+}
+
+.brandDate {
+    position: relative;
+    z-index: 1;
+    margin-top: 5px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+/* ===== Right changes panel ===== */
+.changes {
+    flex: 1;
+    min-width: 0;
+    padding: 28px 28px 22px;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+}
+
+.changesLabel {
+    text-transform: uppercase;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    font-weight: 700;
+    color: #9aa0b5;
+    margin-bottom: 12px;
+}
+
+.changesList {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.changeRow {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 11px 0;
+    border-bottom: 1px solid #f1f3f8;
+    font-size: 14px;
+    line-height: 1.4;
+    color: #2d3147;
+}
+
+.changeRow:last-child {
+    border-bottom: none;
+}
+
+.checkDot {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    background: #e6f0fb;
+    color: #0057c3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-top: 1px;
+}
+
+.actions {
+    display: flex;
+    justify-content: flex-end;
+    padding-top: 16px;
+}
+
+/* ===== Narrow screens — stack ===== */
+@media (max-width: 560px) {
+    .wrap {
+        flex-direction: column;
+    }
+    .brand {
+        flex: none;
+        flex-direction: row;
+        align-items: center;
+        gap: 16px;
+        padding: 20px 22px;
+    }
+    .iconBox {
+        margin-bottom: 0;
+    }
+    .brandSpacer {
+        display: none;
+    }
+    .brandTitle {
+        font-size: 19px;
+    }
+    .brandVersion {
+        font-size: 21px;
+        margin-left: auto;
+    }
+    .brandDate {
+        display: none;
+    }
+}

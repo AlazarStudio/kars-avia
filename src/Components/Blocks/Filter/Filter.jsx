@@ -7,6 +7,8 @@ import { useQuery } from "@apollo/client";
 import {
   GET_AIRLINES_RELAY,
   GET_AIRPORTS_RELAY,
+  GET_ORGANIZATIONS,
+  DRIVERS_QUERY,
   getCookie,
 } from "../../../../graphQL_requests";
 import { Autocomplete, TextField } from "@mui/material";
@@ -35,6 +37,12 @@ function Filter({
   isEstafeta,
   initialRange,
   onRangeChange,
+  statusValues,
+  onAirlineChange,
+  selectedOrganization,
+  onOrganizationChange,
+  selectedDriver,
+  onDriverChange,
   vertical = false,
   ...props
 }) {
@@ -82,6 +90,38 @@ function Filter({
     }
   }, [airportsData]);
 
+  const isAirlineAccount =
+    user?.role === roles.airlineAdmin || user?.role === roles.airlineModerator;
+
+  // списки для фильтров трансфера тянем только когда они реально показываются
+  const skipTransferLists = !(transfer && isVisibleAirFiler && !isAirlineAccount);
+
+  const [organizations, setOrganizations] = useState([]);
+  const [drivers, setDrivers] = useState([]);
+
+  const { data: organizationsData } = useQuery(GET_ORGANIZATIONS, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    variables: { pagination: { all: true } },
+    skip: skipTransferLists,
+  });
+  const { data: driversData } = useQuery(DRIVERS_QUERY, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    variables: { pagination: { all: true } },
+    skip: skipTransferLists,
+  });
+
+  useEffect(() => {
+    if (organizationsData) {
+      setOrganizations(organizationsData.organizations?.organizations || []);
+    }
+  }, [organizationsData]);
+
+  useEffect(() => {
+    if (driversData) {
+      setDrivers(driversData.drivers?.drivers || []);
+    }
+  }, [driversData]);
+
   // Опции для выбора состояния
   let filterListShow;
 
@@ -125,12 +165,7 @@ function Filter({
     ];
   }
 
-  if (
-    ((user && user?.role === roles.superAdmin) ||
-      user?.role === roles.dispatcerAdmin ||
-      user?.role === roles.airlineAdmin) &&
-    transfer
-  ) {
+  if (transfer) {
     filterListShow = [
       { label: "Все заявки", value: null },
       { label: "Ожидание обработки", value: "PENDING" },
@@ -138,12 +173,16 @@ function Filter({
       { label: "Принят водителем", value: "ACCEPTED" },
       { label: "Водитель приехал", value: "ARRIVED" },
       { label: "В пути к клиенту", value: "IN_PROGRESS_TO_CLIENT" },
+      { label: "В пути к месту назначения", value: "IN_PROGRESS_TO_HOTEL" },
       { label: "Завершена", value: "COMPLETED" },
       { label: "Отменена", value: "CANCELLED" },
     ];
   }
 
-  const statusOptions = useMemo(() => filterListShow, [representativeRequests]);
+  const statusOptions = useMemo(
+    () => filterListShow,
+    [representativeRequests, transfer, user?.role]
+  );
 
   // Опции для фильтрации по роли
   // const filterOptions = useMemo(() => [
@@ -287,9 +326,55 @@ function Filter({
             />
           )}
 
+          {transfer && !isAirlineAccount && (
+            <>
+              <MUIAutocomplete
+                dropdownWidth={controlWidth}
+                label={"Авиакомпания"}
+                hideLabelOnFocus={false}
+                options={[{ id: null, name: "Все авиакомпании" }, ...airlines]}
+                getOptionLabel={(option) => option?.name || ""}
+                isOptionEqualToValue={(option, value) => option?.id === value?.id}
+                value={selectedAirline || null}
+                onChange={(event, newValue) =>
+                  onAirlineChange?.(newValue && newValue.id ? newValue : null)
+                }
+              />
+              <MUIAutocomplete
+                dropdownWidth={controlWidth}
+                label={"Организация"}
+                hideLabelOnFocus={false}
+                options={[
+                  { id: null, name: "Все организации" },
+                  ...organizations,
+                ]}
+                getOptionLabel={(option) => option?.name || ""}
+                isOptionEqualToValue={(option, value) => option?.id === value?.id}
+                value={selectedOrganization || null}
+                onChange={(event, newValue) =>
+                  onOrganizationChange?.(
+                    newValue && newValue.id ? newValue : null
+                  )
+                }
+              />
+              <MUIAutocomplete
+                dropdownWidth={controlWidth}
+                label={"Водитель"}
+                hideLabelOnFocus={false}
+                options={[{ id: null, name: "Все водители" }, ...drivers]}
+                getOptionLabel={(option) => option?.name || ""}
+                isOptionEqualToValue={(option, value) => option?.id === value?.id}
+                value={selectedDriver || null}
+                onChange={(event, newValue) =>
+                  onDriverChange?.(newValue && newValue.id ? newValue : null)
+                }
+              />
+            </>
+          )}
+
           {!representativeRequests && (
             <DateRangeModalSelector
-              width={transfer ? "200px" : controlWidth}
+              width={transfer && !vertical ? "200px" : controlWidth}
               initialRange={initialRange}
               onChange={(start, end) =>
                 onRangeChange({ startDate: start, endDate: end })
@@ -326,41 +411,55 @@ function Filter({
 
       {handleStatusChange && (
         <>
-          {/* <div className={classes.filter_title}>Статус:</div> */}
-          <MUIAutocomplete
-            dropdownWidth={transfer ? "200px" : controlWidth}
-            label={"Статус"}
-            hideLabelOnFocus={false}
-            options={statusOptions?.map((option) => option.label)}
-            value={
-              statusOptions?.find((option) => option.value === filter)
-                ?.label === "Все заявки"
-                ? ""
-                : statusOptions?.find((option) => option.value === filter)
-                  ?.label || ""
-            }
-            onChange={(event, newValue) => {
-              const selectedOption = statusOptions.find(
-                (option) => option.label === newValue
-              );
-              handleStatusChange(selectedOption?.value || "all");
-            }}
-          />
-          {/* <DropDownList
-            width={dropdownWidth}
-            placeholder="Выберите состояние"
-            searchable={false}
-            options={statusOptions.map((option) => option.label)}
-            initialValue={
-              statusOptions.find((option) => option.value === filter)?.label
-            }
-            onSelect={(value) => {
-              const selectedOption = statusOptions.find(
-                (option) => option.label === value
-              );
-              handleStatusChange(selectedOption?.value || "");
-            }}
-          /> */}
+          {transfer ? (
+            <MUIAutocomplete
+              multiple
+              limitTags={1}
+              disableCloseOnSelect
+              dropdownWidth={!vertical ? "200px" : controlWidth}
+              label={"Статус"}
+              hideLabelOnFocus={false}
+              options={statusOptions
+                ?.filter((option) => option.value && option.value !== "all")
+                .map((option) => option.label)}
+              value={(statusValues || [])
+                .map(
+                  (v) =>
+                    statusOptions?.find((option) => option.value === v)?.label
+                )
+                .filter(Boolean)}
+              onChange={(event, newLabels) => {
+                const values = newLabels
+                  .map(
+                    (lbl) =>
+                      statusOptions?.find((option) => option.label === lbl)
+                        ?.value
+                  )
+                  .filter(Boolean);
+                handleStatusChange(values);
+              }}
+            />
+          ) : (
+            <MUIAutocomplete
+              dropdownWidth={controlWidth}
+              label={"Статус"}
+              hideLabelOnFocus={false}
+              options={statusOptions?.map((option) => option.label)}
+              value={
+                statusOptions?.find((option) => option.value === filter)
+                  ?.label === "Все заявки"
+                  ? ""
+                  : statusOptions?.find((option) => option.value === filter)
+                    ?.label || ""
+              }
+              onChange={(event, newValue) => {
+                const selectedOption = statusOptions.find(
+                  (option) => option.label === newValue
+                );
+                handleStatusChange(selectedOption?.value || "all");
+              }}
+            />
+          )}
         </>
       )}
 

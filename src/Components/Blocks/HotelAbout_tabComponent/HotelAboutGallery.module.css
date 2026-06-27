@@ -103,7 +103,7 @@
 }
 
 .thumbActive {
-  border-color: #1976d2;
+  border-color: #0057C3;
 }
 
 /* ===== Lightbox ===== */
@@ -190,11 +190,11 @@
 }
 
 .lightboxPrev {
-  left: -8px;
+  left: -66px;
 }
 
 .lightboxNext {
-  right: -8px;
+  right: -66px;
 }
 
 .lightboxBottom {

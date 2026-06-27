@@ -16,7 +16,7 @@ export default function RequisitesIcon(props) {
       <path
         d="M7.5 11H14.5M7.5 14.0625H12.3125M4 5.75V17.125C4 18.5748 5.17526 19.75 6.625 19.75H15.375C16.8248 19.75 18 18.5748 18 17.125V12.75M4 5.75V4.875M4 5.75H15.375C16.8248 5.75 18 6.92526 18 8.375V9.25"
         stroke="#545873"
-        strokeWidth="1.13514"
+        strokeWidth={1.5}
         strokeLinecap="round"
       />
     </svg>

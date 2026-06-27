@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import classes from "./HotelRegisterOfContracts.module.css";
 import Filter from "../Filter/Filter.jsx";
+import FilterPopoverButton from "../FilterPopoverButton/FilterPopoverButton.jsx";
 
 import {
   getCookie,
@@ -202,6 +203,21 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
     setSearchTarif(e.target.value);
   };
 
+  const activeFilterCount =
+    (archived ? 1 : 0) +
+    (dateRange.startDate || dateRange.endDate ? 1 : 0) +
+    (selectedCity ? 1 : 0) +
+    (selectedCompany ? 1 : 0);
+
+  const handleResetFilters = () => {
+    setArchived(false);
+    setDateRange({ startDate: null, endDate: null });
+    setSelectedCity(null);
+    setSelectedCompany(null);
+    setPageInfo((prev) => ({ ...prev, skip: 0 }));
+    navigate("?page=1", { replace: true });
+  };
+
   const deleteComponentRef = useRef();
 
   const toggleTarifs = () => {
@@ -367,108 +383,114 @@ function HotelRegisterOfContracts({ children, id, user, accessMenu = {}, ...prop
   return (
     <div className={classes.tariffsWrapper}>
       <div className={classes.section_searchAndFilter}>
-        <MUIAutocomplete
-          dropdownWidth={"140px"}
-          label={"Статус"}
-          hideLabelOnFocus={false}
-          options={["Активные", "Архив"]}
-          value={archived ? "Архив" : "Активные"}
-          onChange={(event, newValue) => {
-            setArchived(newValue === "Архив");
-          }}
-        />
+        <FilterPopoverButton
+          activeCount={activeFilterCount}
+          onReset={handleResetFilters}
+          width={360}
+        >
+          <MUIAutocomplete
+            dropdownWidth={"100%"}
+            label={"Статус"}
+            hideLabelOnFocus={false}
+            options={["Активные", "Архив"]}
+            value={archived ? "Архив" : "Активные"}
+            onChange={(event, newValue) => {
+              setArchived(newValue === "Архив");
+            }}
+          />
 
-        <DateRangeModalSelector
-          width={"140px"}
-          initialRange={dateRange}
-          onChange={(start, end) =>
-            setDateRange({ startDate: start, endDate: end })
-          }
-        />
+          <DateRangeModalSelector
+            width={"100%"}
+            initialRange={dateRange}
+            onChange={(start, end) =>
+              setDateRange({ startDate: start, endDate: end })
+            }
+          />
 
-        <MUIAutocompleteColor
-          dropdownWidth={"140px"}
-          hideLabelOnFocus={false}
-          label={"Город"}
-          options={[
-            {
-              id: null,
-              city: "Все города",
-              region: null,
-            },
-            ...cities,
-          ]}
-          // getOptionLabel={(option) => {
-          //   if (!option) return "";
-          //   const cityPart =
-          //     option.city && option.city !== option.region
-          //       ? `, регион: ${option.region}`
-          //       : "";
-          //   return `${option.city}${cityPart}`.trim();
-          // }}
-          getOptionLabel={(option) => option?.city ?? ""}
-          renderOption={(optionProps, option) => {
-            const isAll = option.id === null;
+          <MUIAutocompleteColor
+            dropdownWidth={"100%"}
+            hideLabelOnFocus={false}
+            label={"Город"}
+            options={[
+              {
+                id: null,
+                city: "Все города",
+                region: null,
+              },
+              ...cities,
+            ]}
+            // getOptionLabel={(option) => {
+            //   if (!option) return "";
+            //   const cityPart =
+            //     option.city && option.city !== option.region
+            //       ? `, регион: ${option.region}`
+            //       : "";
+            //   return `${option.city}${cityPart}`.trim();
+            // }}
+            getOptionLabel={(option) => option?.city ?? ""}
+            renderOption={(optionProps, option) => {
+              const isAll = option.id === null;
 
-            if (isAll) {
+              if (isAll) {
+                return (
+                  <li {...optionProps} key={option.id ?? "all-hotels"}>
+                    <span style={{ color: "black" }}>{option.city}</span>
+                  </li>
+                );
+              }
+
+              const cityPart =
+                option.city && option.city !== option.name
+                  ? `, регион: ${option.region}`
+                  : "";
+              const labelText = `${option.city}${cityPart}`.trim();
+              const words = labelText.split(" ");
+
               return (
-                <li {...optionProps} key={option.id ?? "all-hotels"}>
-                  <span style={{ color: "black" }}>{option.city}</span>
+                <li {...optionProps} key={option.id}>
+                  {words.map((word, index) => (
+                    <span
+                      key={index}
+                      style={{
+                        color: index === 0 ? "black" : "gray",
+                        marginRight: 4,
+                      }}
+                    >
+                      {word}
+                    </span>
+                  ))}
                 </li>
               );
-            }
+            }}
+            value={selectedCity ? selectedCity : ""}
+            onChange={(e, newValue) => {
+              if (newValue === "Все города" || !newValue) {
+                setSelectedCity(null);
+              } else {
+                const nextHotel = cities.find((item) => item === newValue);
+                setSelectedCity(nextHotel);
+              }
+            }}
+          />
 
-            const cityPart =
-              option.city && option.city !== option.name
-                ? `, регион: ${option.region}`
-                : "";
-            const labelText = `${option.city}${cityPart}`.trim();
-            const words = labelText.split(" ");
-
-            return (
-              <li {...optionProps} key={option.id}>
-                {words.map((word, index) => (
-                  <span
-                    key={index}
-                    style={{
-                      color: index === 0 ? "black" : "gray",
-                      marginRight: 4,
-                    }}
-                  >
-                    {word}
-                  </span>
-                ))}
-              </li>
-            );
-          }}
-          value={selectedCity ? selectedCity : ""}
-          onChange={(e, newValue) => {
-            if (newValue === "Все города" || !newValue) {
-              setSelectedCity(null);
-            } else {
-              const nextHotel = cities.find((item) => item === newValue);
-              setSelectedCity(nextHotel);
-            }
-          }}
-        />
-
-        <MUIAutocomplete
-          dropdownWidth={"140px"}
-          hideLabelOnFocus={false}
-          label={"ГК Карс"}
-          options={["Все компании", ...companies?.map((item) => item.name)]}
-          value={selectedCompany ? selectedCompany?.name : ""}
-          onChange={(event, newValue) => {
-            if (newValue === "Все компании" || !newValue) {
-              setSelectedCompany(null);
-            } else {
-              const selectedCompany = companies.find(
-                (item) => item.name === newValue
-              );
-              setSelectedCompany(selectedCompany);
-            }
-          }}
-        />
+          <MUIAutocomplete
+            dropdownWidth={"100%"}
+            hideLabelOnFocus={false}
+            label={"ГК Карс"}
+            options={["Все компании", ...companies?.map((item) => item.name)]}
+            value={selectedCompany ? selectedCompany?.name : ""}
+            onChange={(event, newValue) => {
+              if (newValue === "Все компании" || !newValue) {
+                setSelectedCompany(null);
+              } else {
+                const selectedCompany = companies.find(
+                  (item) => item.name === newValue
+                );
+                setSelectedCompany(selectedCompany);
+              }
+            }}
+          />
+        </FilterPopoverButton>
 
         <MUITextField
           className={classes.mainSearch}

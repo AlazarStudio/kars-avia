@@ -6,15 +6,48 @@
     z-index: 1200;
     background-color: #C03B28;
     color: var(--white);
-    min-height: 34px;
+    min-height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 6px 16px;
+    padding: 9px 16px 10px;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+/* Bottom edge — running diagonal work stripe (light red) */
+.banner::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 5px;
+    background-image: repeating-linear-gradient(
+        45deg,
+        #f0b3a6 0,
+        #f0b3a6 8px,
+        #d56b57 8px,
+        #d56b57 16px
+    );
+    animation: bannerHazard 0.7s linear infinite;
+}
+
+@keyframes bannerHazard {
+    to {
+        background-position: 23px 0;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .banner::after {
+        animation: none;
+    }
 }
 
 .inner {
+    position: relative;
+    z-index: 1;
     display: flex;
     align-items: center;
     gap: 12px;
@@ -35,8 +68,12 @@
 
 .timer {
     flex: 0 0 auto;
+    background: #9d2a1c;
+    color: #fff;
     font-weight: 700;
+    font-size: 12px;
     font-variant-numeric: tabular-nums;
-    padding-left: 8px;
-    border-left: 1px solid rgba(255, 255, 255, 0.4);
+    letter-spacing: 0.02em;
+    padding: 3px 10px;
+    border-radius: 6px;
 }

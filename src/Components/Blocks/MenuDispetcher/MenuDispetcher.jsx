@@ -7,11 +7,16 @@ import {
   GET_HOTEL_CITY,
   GET_REQUESTS,
   GET_RESERVE_REQUESTS,
+  GET_PASSENGER_REQUESTS,
+  GET_TRANSFER_REQUESTS,
   GET_USER_SUPPORT_CHATS,
   getCookie,
   MESSAGE_SENT_SUBSCRIPTION,
   REQUEST_CREATED_SUBSCRIPTION,
   REQUEST_RESERVE_CREATED_SUBSCRIPTION,
+  PASSENGER_REQUEST_CREATED_SUBSCRIPTION,
+  TRANSFER_CREATED_SUBSCRIPTION,
+  TRANSFER_UPDATED_SUBSCRIPTION,
 } from "../../../../graphQL_requests";
 import { useQuery, useSubscription } from "@apollo/client";
 import { roles } from "../../../roles";
@@ -136,6 +141,8 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
 
   const [allCreatedReserves, setAllCreatedReserves] = useState(0);
   const [allCreatedRequests, setAllCreatedRequests] = useState(0);
+  const [fapCreatedCount, setFapCreatedCount] = useState(0);
+  const [transferPendingCount, setTransferPendingCount] = useState(0);
 
   const { data: dispatcherUserData } = useQuery(GET_DISPATCHER, {
     context: { headers: { Authorization: `Bearer ${token}` } },
@@ -189,12 +196,42 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
     skip: isExternalPassengerRequestUser,
   });
 
+  const {
+    data: fapData,
+    refetch: refetchFap,
+  } = useQuery(GET_PASSENGER_REQUESTS, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    variables: { take: 999999999, skip: 0, filter: { status: "CREATED" } },
+    skip: isExternalPassengerRequestUser,
+  });
+
+  const {
+    data: transferData,
+    refetch: refetchTransfer,
+  } = useQuery(GET_TRANSFER_REQUESTS, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    variables: { pagination: { skip: 0, take: 999999999 } },
+    skip: isExternalPassengerRequestUser,
+  });
+
   const { data: subscriptionData } = useSubscription(
     REQUEST_RESERVE_CREATED_SUBSCRIPTION,
     { skip: isExternalPassengerRequestUser }
   );
   const { data: subscriptionDataRequest } = useSubscription(
     REQUEST_CREATED_SUBSCRIPTION,
+    { skip: isExternalPassengerRequestUser }
+  );
+  const { data: fapSubData } = useSubscription(
+    PASSENGER_REQUEST_CREATED_SUBSCRIPTION,
+    { skip: isExternalPassengerRequestUser }
+  );
+  const { data: transferCreateSubData } = useSubscription(
+    TRANSFER_CREATED_SUBSCRIPTION,
+    { skip: isExternalPassengerRequestUser }
+  );
+  const { data: transferUpdateSubData } = useSubscription(
+    TRANSFER_UPDATED_SUBSCRIPTION,
     { skip: isExternalPassengerRequestUser }
   );
 
@@ -289,9 +326,52 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
     }
   }, [data, dataRequest, hotelCity, airlineName, newReserves, newRequests]);
 
+  useEffect(() => {
+    if (fapData?.passengerRequests) {
+      setFapCreatedCount(fapData.passengerRequests.length);
+    }
+  }, [fapData]);
+
+  useEffect(() => {
+    if (transferData?.transfers?.transfers) {
+      setTransferPendingCount(
+        transferData.transfers.transfers.filter((t) => t.status === "PENDING").length
+      );
+    }
+  }, [transferData]);
+
+  useEffect(() => {
+    if (fapSubData) refetchFap();
+  }, [fapSubData]);
+
+  useEffect(() => {
+    if (transferCreateSubData || transferUpdateSubData) refetchTransfer();
+  }, [transferCreateSubData, transferUpdateSubData]);
+
   // Пока значение menuOpen не загружено из localStorage, ничего не рендерим
   if (menuOpen === null || !user) {
     return null; // или можно вернуть спиннер загрузки
+  }
+
+  // Суперадмин — отдельная раскладка «рельс + панель» (вариант C)
+  if (isSuperAdmin(user)) {
+    return (
+      <div
+        data-sidebar="root"
+        className={menuOpen ? classes.superMenu : classes.superMenuClosed}
+      >
+        <SuperAdminMenu
+          id={id}
+          allCreatedReserves={allCreatedReserves}
+          allCreatedRequests={allCreatedRequests}
+          fapCreatedCount={fapCreatedCount}
+          transferPendingCount={transferPendingCount}
+          activeSupportCount={activeSupportCount}
+          menuOpen={menuOpen}
+          setMenuOpen={setMenuOpen}
+        />
+      </div>
+    );
   }
 
   return (
@@ -394,26 +474,21 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
               id={id}
               allCreatedRequests={allCreatedRequests}
               allCreatedReserves={allCreatedReserves}
+              fapCreatedCount={fapCreatedCount}
+              transferPendingCount={transferPendingCount}
               menuOpen={menuOpen}
               user={user}
               accessMenu={accessMenu}
             />
           )}
 
-          {isSuperAdmin(user) && (
-            <SuperAdminMenu
-              id={id}
-              allCreatedReserves={allCreatedReserves}
-              allCreatedRequests={allCreatedRequests}
-              activeSupportCount={activeSupportCount}
-              menuOpen={menuOpen}
-            />
-          )}
           {isDispatcherAdmin(user) && (
             <DisAdminMenu
               id={id}
               allCreatedReserves={allCreatedReserves}
               allCreatedRequests={allCreatedRequests}
+              fapCreatedCount={fapCreatedCount}
+              transferPendingCount={transferPendingCount}
               activeSupportCount={activeSupportCount}
               isSupportAgent={isSupportAgent}
               menuOpen={menuOpen}

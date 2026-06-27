@@ -5138,6 +5138,11 @@ export const GET_AIRLINE_TARIFS = gql`
           region
           city
           cityId
+          cityRef {
+            id
+            city
+            region
+          }
         }
         id
         name
@@ -6316,6 +6321,65 @@ export const MAINTENANCE_BANNER_UPDATED = gql`
 `;
 
 // Maintenance Banner
+
+
+// Системное уведомление о релизе («Что нового»)
+
+// Статус релиза для текущего пользователя. shouldShow считает бэкенд:
+// enabled && version задан && version !== user.lastSeenAppVersion.
+// Для неавторизованных и не-USER субъектов shouldShow всегда false.
+export const SYSTEM_UPDATE = gql`
+  query SystemUpdate {
+    systemUpdate {
+      version
+      title
+      message
+      enabled
+      publishedAt
+      shouldShow
+    }
+  }
+`;
+
+// Закрытие модалки: пишет lastSeenAppVersion = version, shouldShow станет false.
+// Требует JWT авторизованного User.
+export const MARK_SYSTEM_UPDATE_SEEN = gql`
+  mutation MarkSystemUpdateSeen {
+    markSystemUpdateSeen {
+      shouldShow
+      version
+    }
+  }
+`;
+
+// Live-публикация релиза: SuperAdmin сохраняет → событие у всех клиентов.
+export const SYSTEM_UPDATE_PUBLISHED = gql`
+  subscription SystemUpdatePublished {
+    systemUpdatePublished {
+      version
+      title
+      message
+      enabled
+      publishedAt
+      shouldShow
+    }
+  }
+`;
+
+// Публикация/редактирование релиза — только SUPERADMIN (защищено на бэке).
+export const UPDATE_SYSTEM_UPDATE = gql`
+  mutation UpdateSystemUpdate($input: UpdateSystemUpdateInput!) {
+    updateSystemUpdate(input: $input) {
+      version
+      title
+      message
+      enabled
+      publishedAt
+    }
+  }
+`;
+
+// System Update
 
 
 // Документация

@@ -20,8 +20,8 @@ import {
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import ReactPaginate from "react-paginate";
-import { Box, CircularProgress, Popover, TextField } from "@mui/material";
-import FilterIcon from "../../../shared/icons/FilterIcon";
+import { Box, CircularProgress, TextField } from "@mui/material";
+import FilterPopoverButton from "../FilterPopoverButton/FilterPopoverButton";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import { menuAccess, statusMapping } from "../../../roles.js";
@@ -279,12 +279,9 @@ function Estafeta({ user, accessMenu }) {
     handleStatusChange("all");
     setPageInfo((prev) => ({ ...prev, skip: 0 }));
     navigate("?page=1");
-    setFilterAnchorEl(null);
   };
 
   // Управление состоянием боковых панелей для создания и просмотра заявок
-  const [filterAnchorEl, setFilterAnchorEl] = useState(null);
-
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [existRequestData, setExistRequestData] = useState(null); // Для хранения данных match
@@ -599,69 +596,31 @@ function Estafeta({ user, accessMenu }) {
       {/* <Header>Эстафета</Header> */}
       <Header>Эскадрилья</Header>
       <div className={classes.section_searchAndFilter}>
-        <button
-          type="button"
-          className={`${classes.filterButton} ${activeFilterCount > 0 ? classes.filterButtonActive : ""}`}
-          onClick={(e) => setFilterAnchorEl(e.currentTarget)}
+        <FilterPopoverButton
+          activeCount={activeFilterCount}
+          onReset={handleResetFilters}
         >
-          <FilterIcon />
-          <span>Фильтры</span>
-          {activeFilterCount > 0 && (
-            <span className={classes.filterBadge}>{activeFilterCount}</span>
-          )}
-        </button>
-        <Popover
-          open={Boolean(filterAnchorEl)}
-          anchorEl={filterAnchorEl}
-          onClose={() => setFilterAnchorEl(null)}
-          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-          transformOrigin={{ vertical: "top", horizontal: "left" }}
-          slotProps={{
-            paper: {
-              sx: {
-                mt: "8px",
-                borderRadius: "12px",
-                boxShadow: "0 8px 24px rgba(20, 24, 42, 0.12)",
-                overflow: "visible",
-              },
-            },
-          }}
-        >
-          <div className={classes.filterPopover}>
-            <div className={classes.filterPopoverHeader}>
-              <span>Фильтры</span>
-              {activeFilterCount > 0 && (
-                <button
-                  type="button"
-                  className={classes.filterReset}
-                  onClick={handleResetFilters}
-                >
-                  Сбросить
-                </button>
-              )}
-            </div>
-            <Filter
-              vertical
-              user={user}
-              isEstafeta={true}
-              isVisibleAirFiler={true}
-              toggleSidebar={toggleCreateSidebar}
-              handleChange={handleChange}
-              selectedAirline={selectedAirline}
-              setSelectedAirline={setSelectedAirline}
-              selectedAirport={selectedAirport}
-              setSelectedAirport={setSelectedAirport}
-              filterData={filterData}
-              buttonTitle={"Создать заявку"}
-              filterList={filterList}
-              needDate={true}
-              filterLocalData={localStorage.getItem("statusFilter")}
-              handleStatusChange={handleStatusChange}
-              initialRange={dateRange}
-              onRangeChange={setDateRange}
-            />
-          </div>
-        </Popover>
+          <Filter
+            vertical
+            user={user}
+            isEstafeta={true}
+            isVisibleAirFiler={true}
+            toggleSidebar={toggleCreateSidebar}
+            handleChange={handleChange}
+            selectedAirline={selectedAirline}
+            setSelectedAirline={setSelectedAirline}
+            selectedAirport={selectedAirport}
+            setSelectedAirport={setSelectedAirport}
+            filterData={filterData}
+            buttonTitle={"Создать заявку"}
+            filterList={filterList}
+            needDate={true}
+            filterLocalData={localStorage.getItem("statusFilter")}
+            handleStatusChange={handleStatusChange}
+            initialRange={dateRange}
+            onRangeChange={setDateRange}
+          />
+        </FilterPopoverButton>
         <div className={classes.viewToggle}>
           <button
             type="button"

@@ -20,6 +20,7 @@ import {
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import MUITextField from "../../Blocks/MUITextField/MUITextField";
 import MUIAutocomplete from "../../Blocks/MUIAutocomplete/MUIAutocomplete";
+import FilterPopoverButton from "../../Blocks/FilterPopoverButton/FilterPopoverButton";
 import MUIAutocompleteColor from "../../Blocks/MUIAutocompleteColor/MUIAutocompleteColor";
 import Button from "../../Standart/Button/Button";
 import CreateRepresentativeRequest from "../../Blocks/CreateRepresentativeRequest/CreateRepresentativeRequest";
@@ -180,14 +181,28 @@ export default function FapV2({ user, accessMenu }) {
     localStorage.setItem(LS_STATUS_KEY, option.value ?? "");
   };
 
+  const activeFilterCount =
+    (selectedAirline ? 1 : 0) +
+    (selectedAirport ? 1 : 0) +
+    (statusOption?.value ? 1 : 0);
+
+  const handleResetFilters = () => {
+    setSelectedAirline(null);
+    setSelectedAirport(null);
+    handleStatusChange(STATUS_OPTIONS[0]);
+  };
+
   return (
     <div className={classes.section}>
       <Header>ФАП — заявки</Header>
       <div className={classes.toolbar}>
-        <div className={classes.filters}>
+        <FilterPopoverButton
+          activeCount={activeFilterCount}
+          onReset={handleResetFilters}
+        >
           {!isAirlineRole(user) && (
             <MUIAutocomplete
-              dropdownWidth="170px"
+              dropdownWidth="100%"
               label="Авиакомпания"
               hideLabelOnFocus={false}
               options={["Все авиакомпании", ...airlines.map((a) => a.name)]}
@@ -204,13 +219,10 @@ export default function FapV2({ user, accessMenu }) {
             />
           )}
           <MUIAutocompleteColor
-            dropdownWidth="170px"
+            dropdownWidth="100%"
             label="Аэропорт"
             hideLabelOnFocus={false}
-            options={[
-              { id: null, name: "Все аэропорты", code: "" },
-              ...airports,
-            ]}
+            options={[{ id: null, name: "Все аэропорты", code: "" }, ...airports]}
             getOptionLabel={(o) => (o ? `${o.code} ${o.name}`.trim() : "")}
             renderOption={(optionProps, option) => {
               const isAll = !option.code;
@@ -227,10 +239,7 @@ export default function FapV2({ user, accessMenu }) {
                   {words.map((word, i) => (
                     <span
                       key={i}
-                      style={{
-                        color: i === 0 ? "black" : "gray",
-                        marginRight: "4px",
-                      }}
+                      style={{ color: i === 0 ? "black" : "gray", marginRight: "4px" }}
                     >
                       {word}
                     </span>
@@ -243,14 +252,12 @@ export default function FapV2({ user, accessMenu }) {
               if (!newValue || newValue.name === "Все аэропорты") {
                 setSelectedAirport(null);
               } else {
-                setSelectedAirport(
-                  airports.find((a) => a === newValue) || null,
-                );
+                setSelectedAirport(airports.find((a) => a === newValue) || null);
               }
             }}
           />
           <MUIAutocomplete
-            dropdownWidth="170px"
+            dropdownWidth="100%"
             label="Статус"
             hideLabelOnFocus={false}
             options={STATUS_OPTIONS}
@@ -259,13 +266,13 @@ export default function FapV2({ user, accessMenu }) {
             getOptionLabel={(o) => o?.label ?? ""}
             isOptionEqualToValue={(o, v) => o?.value === v?.value}
           />
-          <MUITextField
-            className={classes.searchWrap}
-            label="Поиск"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-          />
-        </div>
+        </FilterPopoverButton>
+        <MUITextField
+          className={classes.searchWrap}
+          label="Поиск"
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
         {canAccessMenu(accessMenu, "reserveCreate", user) && (
           <Button
             backgroundcolor="var(--dark-blue)"

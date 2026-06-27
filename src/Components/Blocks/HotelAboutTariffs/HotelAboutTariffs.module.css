@@ -36,6 +36,23 @@
   border-collapse: collapse;
   color: #2d3147;
   font-size: 14px;
+  table-layout: fixed;
+}
+
+.table colgroup .colName {
+  width: 40%;
+}
+
+.table colgroup .colNet {
+  width: 20%;
+}
+
+.table colgroup .colVat {
+  width: 15%;
+}
+
+.table colgroup .colGross {
+  width: 25%;
 }
 
 .table thead th {

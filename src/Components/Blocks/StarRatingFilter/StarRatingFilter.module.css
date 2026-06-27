@@ -1,0 +1,149 @@
+.field {
+  position: relative;
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid rgba(0, 0, 0, 0.23);
+  border-radius: 12px;
+}
+.fieldBare {
+  justify-content: flex-start;
+}
+.fieldDisabled {
+  opacity: 0.55;
+}
+
+/* Лейбл (только в фильтре, где label передан) — всегда наверху на рамке */
+.floatLabel {
+  position: absolute;
+  top: -8px;
+  left: 12px;
+  padding: 0 5px;
+  font-family: Inter, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.6);
+  background: #fff;
+}
+
+.controls {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stars {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* Одна звезда: серая база + золотая заливка, обрезанная по доле (полузвёзды) */
+.starWrap {
+  position: relative;
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+}
+.starBase,
+.starFill {
+  width: 18px;
+  height: 18px;
+  display: block;
+}
+.starBase {
+  fill: #d9deea;
+}
+.starFillClip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  overflow: hidden;
+}
+.starFill {
+  fill: #ffb400;
+}
+
+/* Половинки-кликзоны поверх звезды */
+.half {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  width: 50%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+.halfL {
+  left: 0;
+}
+.halfR {
+  right: 0;
+}
+.halfFull {
+  left: 0;
+  width: 100%;
+}
+
+/* Число встроено как значение поля — без отдельной рамки */
+.valueGroup {
+  margin-left: auto;
+  display: flex;
+  align-items: baseline;
+  gap: 3px;
+}
+/* .valueGroup .num — повышенная специфичность, чтобы глобальные правила форм
+   вида `.hotelAbout_info_item input { width: 400px }` не перебивали ширину */
+.valueGroup .num {
+  width: 40px;
+  height: auto;
+  min-width: 0;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: Inter, sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  color: #1a1c22;
+  text-align: right;
+  outline: none;
+}
+.valueGroup .num:disabled {
+  color: #1a1c22;
+}
+.numSuffix {
+  font-family: Inter, sans-serif;
+  font-size: 12px;
+  color: #9094a8;
+}
+
+.clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: none;
+  color: #9aa0b5;
+  cursor: pointer;
+}
+.clear svg {
+  width: 14px;
+  height: 14px;
+}
+.clear:hover {
+  color: #545873;
+}
+.clearHidden {
+  visibility: hidden;
+  pointer-events: none;
+}

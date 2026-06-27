@@ -2,11 +2,10 @@ import React, { useEffect, useState, useMemo } from "react";
 import classes from "./TransferOrders.module.css";
 import { useLocation, useNavigate } from "react-router-dom";
 import Filter from "../Filter/Filter.jsx";
-import ChooseHotel from "../ChooseHotel/ChooseHotel.jsx";
+import FilterPopoverButton from "../FilterPopoverButton/FilterPopoverButton.jsx";
 import Header from "../Header/Header.jsx";
 import {
   GET_AIRLINE,
-  GET_REQUESTS_ARCHIVED,
   getCookie,
   GET_TRANSFER_REQUESTS,
   UPDATE_TRANSFER_REQUEST_MUTATION,
@@ -17,7 +16,6 @@ import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import ReactPaginate from "react-paginate";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
-import { menuAccess, statusMapping, roles } from "../../../roles.js";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import { useDebounce } from "../../../hooks/useDebounce.jsx";
 import InfoTableDataTransferOrders from "../InfoTableDataTransferOrders/InfoTableDataTransferOrders.jsx";
@@ -36,9 +34,6 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
 
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 500);
-  const [selectedAirline, setSelectedAirline] = useState(null);
-  const [selectedAirport, setSelectedAirport] = useState(null);
-
   const [dateRange, setDateRange] = useState({
     startDate: null,
     endDate: null,
@@ -52,8 +47,20 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
 
   // Состояние для фильтрации по статусу. Получаем фильтр из localStorage или устанавливаем значение по умолчанию
   const [statusFilterTransfer, setStatusFilter] = useState(() => {
-    return localStorage.getItem("statusFilterTransfer") || "all";
+    const raw = localStorage.getItem("statusFilterTransfer");
+    if (!raw) return [];
+    try {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      // старое строковое значение ("all" / одиночный статус)
+    }
+    return raw && raw !== "all" ? [raw] : [];
   });
+
+  const [selectedAirline, setSelectedAirline] = useState(null);
+  const [selectedOrganization, setSelectedOrganization] = useState(null);
+  const [selectedDriver, setSelectedDriver] = useState(null);
 
   // Состояние для хранения информации о странице (для пагинации)
   const [pageInfo, setPageInfo] = useState({
@@ -70,14 +77,20 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     },
     variables: {
       pagination: {
-        skip: pageInfo.skip,
+        // skip — смещение строк (индекс страницы * размер), а не номер страницы
+        skip: pageInfo.skip * pageInfo.take,
         take: pageInfo.take,
-        // airlineId: selectedAirline?.id,
-        // status: statusFilterTransfer.split(" / "),
-        // airportId: selectedAirport?.id,
-        // arrival: dateRange.startDate?.toISOString(),
-        // departure: dateRange.endDate?.toISOString(),
-        // search: debouncedSearch,
+        search: debouncedSearch?.trim() || undefined,
+        status: statusFilterTransfer.length ? statusFilterTransfer : undefined,
+        airlineId: selectedAirline?.id || undefined,
+        organizationId: selectedOrganization?.id || undefined,
+        driverId: selectedDriver?.id || undefined,
+        scheduledFrom: dateRange.startDate
+          ? dateRange.startDate.toISOString()
+          : undefined,
+        scheduledTo: dateRange.endDate
+          ? dateRange.endDate.toISOString()
+          : undefined,
       },
     },
   });
@@ -112,49 +125,40 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
   // Обновление списка заявок на основе данных запроса и новых заявок
   useEffect(() => {
     if (data && data.transfers?.transfers) {
-      let sortedRequests = [...data.transfers.transfers];
+      let nextRequests = [...data.transfers.transfers];
       if (currentPageTransfer === 0 && newRequests.length > 0) {
-        sortedRequests = [...newRequests, ...sortedRequests];
+        nextRequests = [...newRequests, ...nextRequests];
         setNewRequests([]);
       }
 
-      setRequests(sortedRequests);
+      setRequests(nextRequests);
       setTotalPages(data.transfers.totalPages);
     }
   }, [data, currentPageTransfer, newRequests, refetch]);
 
-  // Обновление состояния фильтрации по статусу
-  const handleStatusChange = (value) => {
-    setStatusFilter(value);
-    localStorage.setItem("statusFilterTransfer", value);
-
-    // Сбрасываем текущую страницу на первую
+  const resetToFirstPage = () => {
     setPageInfo((prev) => ({ ...prev, skip: 0 }));
-    navigate("?page=1");
+    navigate("?page=1", { replace: true });
+  };
+
+  // Обновление состояния фильтрации по статусу
+  const handleStatusChange = (values) => {
+    const arr = Array.isArray(values) ? values : [];
+    setStatusFilter(arr);
+    localStorage.setItem("statusFilterTransfer", JSON.stringify(arr));
+    resetToFirstPage();
   };
 
   // Управление состоянием боковых панелей для создания и просмотра заявок
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [existRequestData, setExistRequestData] = useState(null); // Для хранения данных match
-  const [showChooseHotel, setShowChooseHotel] = useState(false);
   const [chooseObject, setChooseObject] = useState([]);
   const [chooseRequestID, setChooseRequestID] = useState();
-  const [chooseCityRequest, setChooseCityRequest] = useState();
 
   // Функции для переключения видимости боковых панелей
   const toggleCreateSidebar = () => setShowCreateSidebar(!showCreateSidebar);
   const toggleRequestSidebar = () => setShowRequestSidebar(!showRequestSidebar);
-  const toggleChooseHotel = () => setShowChooseHotel(!showChooseHotel);
-
-  // Состояние фильтра и строки поиска для фильтрации заявок
-  const [filterData, setFilterData] = useState({
-    filterSelect: "",
-    filterDate: "",
-  });
-
-  const [isSearching, setIsSearching] = useState(false); // Флаг, указывающий, идёт ли поиск
-  const [allFilteredData, setAllFilteredData] = useState([]); // Хранилище всех данных для поиска
 
   const canCreateTransfer = accessMenu
     ? hasAccessMenu(accessMenu, "transferCreate")
@@ -166,39 +170,47 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     ? hasAccessMenu(accessMenu, "transferUpdate")
     : true;
 
-  const handleChange = (e) =>
-    setFilterData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
-    // никакого refetch — ждем debounce
+    resetToFirstPage();
   };
 
-  // useEffect(() => {
-  //   // сбрасываем на первую страницу
-  //   // setPageInfo((prev) => ({ ...prev, skip: 0 }));
-  //   // navigate("?page=1");
+  const handleDateRangeChange = (range) => {
+    setDateRange(range);
+    resetToFirstPage();
+  };
 
-  //   refetch({
-  //     pagination: {
-  //       // skip: 0,
-  //       // take: pageInfo.take,
-  //       all: true,
-  //       // airlineId: selectedAirline?.id,
-  //       // status: statusFilterTransfer.split(" / "),
-  //       // airportId: selectedAirport?.id,
-  //       // arrival: dateRange.startDate?.toISOString(),
-  //       // departure: dateRange.endDate?.toISOString(),
-  //       // search: debouncedSearch,
-  //     },
-  //   }).catch(console.error);
-  // }, [
-  //   debouncedSearch,
-  //   statusFilterTransfer,
-  //   selectedAirline,
-  //   selectedAirport,
-  //   dateRange,
-  // ]);
+  const handleAirlineChange = (airline) => {
+    setSelectedAirline(airline);
+    resetToFirstPage();
+  };
+
+  const handleOrganizationChange = (organization) => {
+    setSelectedOrganization(organization);
+    resetToFirstPage();
+  };
+
+  const handleDriverChange = (driver) => {
+    setSelectedDriver(driver);
+    resetToFirstPage();
+  };
+
+  const activeFilterCount =
+    (statusFilterTransfer.length ? 1 : 0) +
+    (dateRange.startDate || dateRange.endDate ? 1 : 0) +
+    (selectedAirline ? 1 : 0) +
+    (selectedOrganization ? 1 : 0) +
+    (selectedDriver ? 1 : 0);
+
+  const handleResetFilters = () => {
+    setStatusFilter([]);
+    localStorage.setItem("statusFilterTransfer", JSON.stringify([]));
+    setDateRange({ startDate: null, endDate: null });
+    setSelectedAirline(null);
+    setSelectedOrganization(null);
+    setSelectedDriver(null);
+    resetToFirstPage();
+  };
 
   const handleOpenExistRequest = (matchData) => {
     const transferId =
@@ -272,43 +284,10 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     if (airlineData) setAirlineName(airlineData.airline.name);
   }, [airlineData]);
 
-  // Мемоизированная функция для фильтрации и сортировки заявок
-  const filteredRequests = useMemo(() => {
-    const dataSource = requests; // Используем данные из поиска или стандартные
-
-    const filtered = dataSource.filter((request) => {
-      const matchesSelect =
-        !filterData.filterSelect ||
-        request.airline?.name.includes(filterData.filterSelect);
-      const matchesDate =
-        !filterData.filterDate ||
-        convertToDate(Number(request.createdAt)) === filterData.filterDate;
-      const matchesSearch = searchQuery.toLowerCase().trim();
-
-      // Если поиск пустой, не фильтруем по поиску
-      const matchesSearchFilter =
-        !matchesSearch ||
-        (() => {
-          // Получаем читаемое название статуса
-          const statusDisplay = statusMapping[request.status] || request.status;
-
-          const searchFields = [
-            request?.persons?.map((p) => p.name).join(" ") || "",
-            request?.persons?.map((p) => p.email).join(" ") || "",
-            request.airline?.name || "",
-            statusDisplay || "",
-          ].filter(Boolean);
-
-          return searchFields.some((field) =>
-            String(field)?.toLowerCase().includes(matchesSearch),
-          );
-        })();
-
-      return matchesSelect && matchesDate && matchesSearchFilter;
-    });
-
-    // Сортировка: сначала заявки до которых < 2 часов, потом на сегодня, потом остальные по scheduledPickupAt
-    return filtered.sort((a, b) => {
+  // Фильтрация выполняется на сервере; на клиенте остаётся только сортировка текущей страницы.
+  // Сортировка: сначала заявки до которых < 2 часов, потом на сегодня, потом остальные по scheduledPickupAt
+  const sortedRequests = useMemo(() => {
+    return [...requests].sort((a, b) => {
       const aScheduledTime = a.scheduledPickupAt
         ? new Date(a.scheduledPickupAt)
         : null;
@@ -359,9 +338,7 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
       // Если обе на сегодня или обе не на сегодня - сортируем по времени (новые вверху)
       return bScheduledTime.getTime() - aScheduledTime.getTime();
     });
-  }, [isSearching, allFilteredData, requests, filterData, searchQuery, user]);
-
-  const filterList = ["Азимут", "S7 airlines", "Северный ветер"];
+  }, [requests]);
 
   // Текущая страница из URL (0-based)
   const urlPage = useMemo(() => {
@@ -390,12 +367,6 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     navigate(`?page=${selectedPage + 1}`);
   };
 
-  // Конвертация времени создания из милисекунд в дату
-  function convertToDate(timestamp) {
-    const date = new Date(timestamp);
-    return date.toLocaleDateString(); // возвращает дату в удобном для чтения формате
-  }
-
   // Корректировка текущей страницы
   const validCurrentPage = urlPage < totalPages ? urlPage : 0;
 
@@ -406,21 +377,29 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
     >
       {!disAdmin && <Header>Трансфер</Header>}
       <div className={classes.section_searchAndFilter}>
-        <Filter
-          user={user}
-          isEstafeta={true}
-          isVisibleAirFiler={true}
-          transfer={true}
-          toggleSidebar={toggleCreateSidebar}
-          handleChange={handleChange}
-          filterData={filterData}
-          filterList={filterList}
-          needDate={true}
-          filterLocalData={localStorage.getItem("statusFilterTransfer")}
-          handleStatusChange={handleStatusChange} // передаем обработчик изменения статуса
-          initialRange={dateRange}
-          onRangeChange={setDateRange}
-        />
+        <FilterPopoverButton
+          activeCount={activeFilterCount}
+          onReset={handleResetFilters}
+        >
+          <Filter
+            vertical
+            user={user}
+            isEstafeta={true}
+            isVisibleAirFiler={true}
+            transfer={true}
+            toggleSidebar={toggleCreateSidebar}
+            statusValues={statusFilterTransfer}
+            handleStatusChange={handleStatusChange}
+            initialRange={dateRange}
+            onRangeChange={handleDateRangeChange}
+            selectedAirline={selectedAirline}
+            onAirlineChange={handleAirlineChange}
+            selectedOrganization={selectedOrganization}
+            onOrganizationChange={handleOrganizationChange}
+            selectedDriver={selectedDriver}
+            onDriverChange={handleDriverChange}
+          />
+        </FilterPopoverButton>
         <MUITextField
           className={classes.mainSearch}
           label={"Поиск"}
@@ -444,7 +423,7 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
             canChat={canChatTransfer}
             toggleRequestSidebar={toggleRequestSidebar}
             onSelectTransfer={handleSelectTransfer}
-            requests={filteredRequests || []}
+            requests={sortedRequests}
             chooseRequestID={chooseRequestID}
             setChooseObject={setChooseObject}
             setChooseRequestID={setChooseRequestID}
@@ -489,15 +468,6 @@ function TransferOrders({ user, disAdmin, accessMenu }) {
         openDeleteComponent={openDeleteComponent}
         setRequestId={setChooseRequestId}
       />
-      {/* <ChooseHotel
-        chooseCityRequest={chooseCityRequest}
-        show={showChooseHotel}
-        onClose={toggleChooseHotel}
-        chooseObject={chooseObject}
-        chooseRequestID={chooseRequestID}
-        id={"main"}
-      /> */}
-
       {showDelete && (
         <DeleteComponent
           remove={() => {

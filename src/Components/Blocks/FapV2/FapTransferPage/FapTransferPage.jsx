@@ -33,6 +33,7 @@ const VEHICLE_TYPES = [
   "микроавтобус (до 20)",
   "автобус до 30",
   "автобус до 50",
+  "автобус до 70",
 ];
 
 const PlusSvg = ({ size = 14, color = "#fff" }) => (
@@ -489,68 +490,7 @@ function DriverCard({
   const { success, error: notifyError } = useToast();
   const [saving, setSaving] = useState(false);
 
-  // Ref с актуальным driver — чтобы debounced-замыкания видели свежее сохранённое значение.
-  const driverRef = useRef(driver);
-  useEffect(() => { driverRef.current = driver; }, [driver]);
-
-  // ── Тихий автосейв-подстраховка (без тоста): debounce + blur + размонтирование ──
-  const savePatch = async (patch) => {
-    try {
-      await updateDriver({
-        variables: { requestId, driverIndex: index, direction, patch },
-      });
-      onRefetch?.();
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  const vtTimer = useRef(null);
-  const rcTimer = useRef(null);
-
-  const flushVehicleType = () => {
-    if (vtTimer.current) { clearTimeout(vtTimer.current); vtTimer.current = null; }
-    const next = vehicleTypeDraft.trim();
-    const prev = (driverRef.current.vehicleType ?? "").trim();
-    if (next === prev) return;
-    savePatch({ vehicleType: next === "" ? null : next });
-  };
-  const flushReportCost = () => {
-    if (rcTimer.current) { clearTimeout(rcTimer.current); rcTimer.current = null; }
-    const nextNum = reportCostDraft === "" ? null : Number(reportCostDraft);
-    const prevNum = driverRef.current.reportCost ?? null;
-    if (nextNum === prevNum) return;
-    if (nextNum != null && !Number.isFinite(nextNum)) return;
-    savePatch({ reportCost: nextNum });
-  };
-
-  // Тип ТС — коммитим сразу при выборе (плюс остаётся явная кнопка).
-  const handleVehicleTypeSelect = (value) => {
-    if (vtTimer.current) { clearTimeout(vtTimer.current); vtTimer.current = null; }
-    setVehicleTypeDraft(value);
-    const next = (value ?? "").trim();
-    const prev = (driverRef.current.vehicleType ?? "").trim();
-    if (next !== prev) savePatch({ vehicleType: next === "" ? null : next });
-  };
-  // Сумма — автосейв через 800мс после ввода.
-  const onReportCostChange = (e) => {
-    setReportCostDraft(e.target.value);
-    if (rcTimer.current) clearTimeout(rcTimer.current);
-    rcTimer.current = setTimeout(flushReportCost, 800);
-  };
-
-  // Флэш на размонтирование (навигация уходит со страницы — не теряем правки).
-  const flushRef = useRef({ vt: flushVehicleType, rc: flushReportCost });
-  flushRef.current = { vt: flushVehicleType, rc: flushReportCost };
-  useEffect(() => {
-    return () => {
-      if (vtTimer.current) { clearTimeout(vtTimer.current); flushRef.current.vt(); }
-      if (rcTimer.current) { clearTimeout(rcTimer.current); flushRef.current.rc(); }
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // ── Явное сохранение по кнопке (оба поля одним запросом, с тостом) ──
+  // ── Сохранение только по кнопке (оба поля одним запросом, с тостом) ──
   const vtNext = vehicleTypeDraft.trim();
   const vtPrev = (driver.vehicleType ?? "").trim();
   const rcNext = reportCostDraft === "" ? null : Number(reportCostDraft);
@@ -558,8 +498,6 @@ function DriverCard({
   const isDirty = vtNext !== vtPrev || rcNext !== rcPrev;
 
   const handleSave = async () => {
-    if (vtTimer.current) { clearTimeout(vtTimer.current); vtTimer.current = null; }
-    if (rcTimer.current) { clearTimeout(rcTimer.current); rcTimer.current = null; }
     const patch = {};
     if (vtNext !== vtPrev) patch.vehicleType = vtNext === "" ? null : vtNext;
     if (rcNext !== rcPrev) {
@@ -590,7 +528,7 @@ function DriverCard({
       <div className={classes.driverHead}>
         <div className={classes.driverBar} style={{ background: isEmpty ? "#CBD2E4" : color }} />
 
-        <div className={classes.driverInfo} onClick={onOpen}>
+        <div className={classes.driverInfo}>
           <div className={classes.driverNameRow}>
             <span className={classes.driverName}>
               {driver.fullName || "Водитель"}
@@ -700,7 +638,7 @@ function DriverCard({
           <span className={classes.reportFieldLabel}>Тип ТС</span>
           <FapSelect
             value={vehicleTypeDraft}
-            onChange={handleVehicleTypeSelect}
+            onChange={setVehicleTypeDraft}
             disabled={!canEdit || isCompleted}
             placeholder="— тип ТС —"
             accent={color}
@@ -721,9 +659,9 @@ function DriverCard({
             min={0}
             step={1}
             value={reportCostDraft}
-            onChange={onReportCostChange}
+            onChange={(e) => setReportCostDraft(e.target.value)}
             onFocus={() => { rcFocused.current = true; }}
-            onBlur={() => { rcFocused.current = false; flushReportCost(); }}
+            onBlur={() => { rcFocused.current = false; }}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSave(); } }}
             placeholder="0"
             disabled={!canEdit || isCompleted}
