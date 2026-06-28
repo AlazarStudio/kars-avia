@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import classes from "./Header.module.css";
-import Notifications from "../Notifications/Notifications";
 import {
   CANCEL_REQUEST,
   decodeJWT,
@@ -395,22 +394,6 @@ function Header({ children, isExternalUser = false }) {
               /> */}
               <NotifyIcon />
             </div>
-
-            {/* {isNotificationsFullyVisible && (
-              <div
-                className={`${classes.notify_dropdown} ${
-                  isNotificationsOpen ? classes.open : classes.closed
-                }`}
-                onClick={(e) => e.stopPropagation()}
-              >
-                <Notifications
-                  onRequestClick={handleNotificationClick}
-                  user={data?.user}
-                  token={token}
-                  isNotificationsFullyVisible={isNotificationsFullyVisible}
-                />
-              </div>
-            )} */}
 
             <div className={classes.section_top_elems_date}>
               <div>{formattedDate}</div>

@@ -1,0 +1,8 @@
+.loaderRow {
+    padding: 12px 0;
+}
+
+.endOfListNote {
+    display: flex;
+    justify-content: center;
+}

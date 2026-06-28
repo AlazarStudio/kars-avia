@@ -1,51 +1,51 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef } from "react";
 import classes from "./PassengerRequestLogs.module.css";
 import Sidebar from "../Sidebar/Sidebar";
 import CloseIcon from "../../../shared/icons/CloseIcon";
-import { useQuery } from "@apollo/client";
 import {
-  convertToDate,
   convertToDateNew,
   GET_PASSENGER_REQUEST_LOGS,
   getCookie,
   getMediaUrl,
 } from "../../../../graphQL_requests";
-import ReactPaginate from "react-paginate";
 import MUILoader from "../MUILoader/MUILoader";
 import { roleLabels } from "../../../roles";
+import useInfiniteScroll from "../../../hooks/useInfiniteScroll";
+import InfiniteScrollSentinel from "../InfiniteScrollSentinel/InfiniteScrollSentinel";
 
 const PAGE_SIZE = 50;
 
 function PassengerRequestLogs({ show, onClose, passengerRequestId }) {
   const token = getCookie("token");
   const sidebarRef = useRef(null);
-  const logRef = useRef(null);
-  const [pageInfo, setPageInfo] = useState({ skip: 0, take: PAGE_SIZE });
 
-  useEffect(() => {
-    if (show) {
-      setPageInfo({ skip: 0, take: PAGE_SIZE });
-    }
-  }, [show]);
-
-  const { data: logsData, loading } = useQuery(GET_PASSENGER_REQUEST_LOGS, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    variables: {
+  const {
+    items,
+    loading,
+    loadingMore,
+    error,
+    hasMore,
+    wrapperRef,
+    sentinelRef,
+  } = useInfiniteScroll(GET_PASSENGER_REQUEST_LOGS, {
+    take: PAGE_SIZE,
+    enabled: show && !!passengerRequestId,
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    // OFFSET-пагинация: skip = page * take
+    buildVariables: (page, take) => ({
       passengerRequestId,
-      pagination: pageInfo,
-    },
-    skip: !show || !passengerRequestId,
+      pagination: { skip: page * take, take },
+    }),
+    getItems: (d) => d?.passengerRequest?.logs?.logs ?? [],
+    getPageInfo: (d) => ({
+      totalPages: d?.passengerRequest?.logs?.totalPages,
+      totalCount: d?.passengerRequest?.logs?.totalCount,
+    }),
+    resetKeys: [passengerRequestId],
   });
 
-  const logsList = logsData?.passengerRequest?.logs?.logs ?? [];
-  const totalPages = logsData?.passengerRequest?.logs?.totalPages ?? 1;
-
   const groupedHistory = useMemo(() => {
-    const sorted = [...logsList].sort(
+    const sorted = [...items].sort(
       (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
     );
     const dayKey = (dateStr) => {
@@ -60,7 +60,7 @@ function PassengerRequestLogs({ show, onClose, passengerRequestId }) {
       m.get(k).push(log);
     }
     return Array.from(m.entries()).sort((a, b) => b[0] - a[0]);
-  }, [logsList]);
+  }, [items]);
 
   const fmtDay = (ts) =>
     new Date(ts).toLocaleDateString("ru-RU", {
@@ -68,16 +68,6 @@ function PassengerRequestLogs({ show, onClose, passengerRequestId }) {
       month: "long",
       year: "numeric",
     });
-
-  const handlePageClick = useCallback((e) => {
-    if (logRef.current) {
-      logRef.current.scrollTo({ top: 0, behavior: "instant" });
-    }
-    setPageInfo((prev) => ({
-      ...prev,
-      skip: e.selected * prev.take,
-    }));
-  }, []);
 
   const closeButton = useCallback(() => {
     onClose();
@@ -111,25 +101,15 @@ function PassengerRequestLogs({ show, onClose, passengerRequestId }) {
 
         {loading && <MUILoader fullHeight={"92vh"} />}
 
-        {logsData && (
-          <div
-            className={classes.requestData}
-            style={{ paddingBottom: totalPages > 1 ? "40px" : "0" }}
-          >
-            <div ref={logRef} className={classes.logs}>
+        {!loading && !error && (
+          <div className={classes.requestData} style={{ paddingBottom: "0" }}>
+            <div ref={wrapperRef} className={classes.logs}>
               {groupedHistory.length === 0 ? (
-                <div className={classes.empty}>
-                  Записей в истории пока нет.
-                </div>
+                <div className={classes.empty}>Записей в истории пока нет.</div>
               ) : (
                 groupedHistory.map(([dayTs, dayLogs]) => (
-                  <div
-                    className={classes.historySection}
-                    key={dayTs}
-                  >
-                    <div className={classes.historyDate}>
-                      {fmtDay(dayTs)}
-                    </div>
+                  <div className={classes.historySection} key={dayTs}>
+                    <div className={classes.historyDate}>{fmtDay(dayTs)}</div>
                     {dayLogs.map((log, idx) => (
                       <div
                         className={classes.logText}
@@ -161,13 +141,13 @@ function PassengerRequestLogs({ show, onClose, passengerRequestId }) {
                           title={
                             log.user
                               ? [
-                                log.user?.name,
-                                roleLabels[log.user?.role] ??
-                                roleLabels[log.user?.role?.toUpperCase()] ??
-                                log.user?.role,
-                              ]
-                                .filter(Boolean)
-                                .join(", ") || undefined
+                                  log.user?.name,
+                                  roleLabels[log.user?.role] ??
+                                    roleLabels[log.user?.role?.toUpperCase()] ??
+                                    log.user?.role,
+                                ]
+                                  .filter(Boolean)
+                                  .join(", ") || undefined
                               : undefined
                           }
                         >
@@ -185,23 +165,15 @@ function PassengerRequestLogs({ show, onClose, passengerRequestId }) {
                   </div>
                 ))
               )}
+
+              <InfiniteScrollSentinel
+                sentinelRef={sentinelRef}
+                loadingMore={loadingMore}
+                hasMore={hasMore}
+                hasItems={groupedHistory.length > 0}
+                endLabel="Это вся история"
+              />
             </div>
-            {totalPages > 1 && (
-              <div className={classes.pagination}>
-                <ReactPaginate
-                  previousLabel="←"
-                  nextLabel="→"
-                  breakLabel="..."
-                  pageCount={totalPages}
-                  marginPagesDisplayed={1}
-                  pageRangeDisplayed={2}
-                  onPageChange={handlePageClick}
-                  containerClassName={classes.pagination}
-                  activeClassName={classes.activePaginationNumber}
-                  pageLinkClassName={classes.paginationNumber}
-                />
-              </div>
-            )}
           </div>
         )}
       </div>
