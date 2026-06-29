@@ -16,6 +16,7 @@ import { roles, rolesObject } from "../../../roles";
 import { isDispatcherModerator } from "../../../utils/access";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import AvatarUpload from "../AvatarUpload/AvatarUpload";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
 import { useDialog } from "../../../contexts/DialogContext";
@@ -184,29 +185,12 @@ function ExistRequestCompany({
     }));
   }, []);
 
-  const fileInputRef = useRef(null);
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
-    if (file && file.size > maxSizeInBytes) {
-      showAlert("Размер файла не должен превышать 8 МБ!");
-      setFormData((prevState) => ({
-        ...prevState,
-        images: null,
-      }));
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""; // Сброс значения в DOM-элементе
-      }
-      return;
-    }
-
-    if (file) {
-      setFormData((prevState) => ({
-        ...prevState,
-        images: file,
-      }));
-    }
+  const handleAvatarChange = (file) => {
+    setIsEdited(true);
+    setFormData((prevState) => ({
+      ...prevState,
+      images: file,
+    }));
   };
 
   const handleCreatePosition = useCallback(async () => {
@@ -678,13 +662,12 @@ function ExistRequestCompany({
                       />
                     </div>
                   </div>
-                  <div className={classes.requestDataInfo}>
+                  <div className={`${classes.requestDataInfo} ${classes.avatarField}`}>
                     <div className={classes.requestDataInfo_title}>Аватар</div>
-                    <input
-                      type="file"
-                      name="images"
-                      onChange={handleFileChange}
-                      ref={fileInputRef}
+                    <AvatarUpload
+                      value={formData.images}
+                      onChange={handleAvatarChange}
+                      onError={showAlert}
                     />
                   </div>
                 </>

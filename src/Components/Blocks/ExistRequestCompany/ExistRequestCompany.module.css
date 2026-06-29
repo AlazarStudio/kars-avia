@@ -148,6 +148,16 @@
     justify-content: space-between;
 }
 
+.avatarField {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+}
+
+.avatarField .requestDataInfo_title {
+    width: 100%;
+}
+
 .requestDataInfo_title {
     font-family: Nunito Sans;
     font-size: 14px;

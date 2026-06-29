@@ -14,6 +14,7 @@ import DropDownList from "../DropDownList/DropDownList";
 import DropDownListObj from "../DropDownListObj/DropDownListObj";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import AvatarUpload from "../AvatarUpload/AvatarUpload";
 import { rolesObject } from "../../../roles";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import { useDialog } from "../../../contexts/DialogContext";
@@ -105,29 +106,12 @@ function CreateRequestAirlineCompany({
     }));
   }, []);
 
-  const fileInputRef = useRef(null);
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
-    if (file && file.size > maxSizeInBytes) {
-      showAlert("Размер файла не должен превышать 8 МБ!");
-      setFormData((prevState) => ({
-        ...prevState,
-        images: "",
-      }));
-      if (fileInputRef.current) {
-        fileInputRef.current.value = ""; // Сброс значения в DOM-элементе
-      }
-      return;
-    }
-
-    if (file) {
-      setFormData((prevState) => ({
-        ...prevState,
-        images: file,
-      }));
-    }
+  const handleAvatarChange = (file) => {
+    setIsEdited(true);
+    setFormData((prevState) => ({
+      ...prevState,
+      images: file,
+    }));
   };
 
   const [createAirlineUser] = useMutation(CREATE_AIRLINE_USER, {
@@ -528,11 +512,10 @@ function CreateRequestAirlineCompany({
               </select> */}
 
               <label>Аватар</label>
-              <input
-                type="file"
-                name="images"
-                onChange={handleFileChange}
-                ref={fileInputRef}
+              <AvatarUpload
+                value={formData.images}
+                onChange={handleAvatarChange}
+                onError={showAlert}
               />
             </div>
           </div>

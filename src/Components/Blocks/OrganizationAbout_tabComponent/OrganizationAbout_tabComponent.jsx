@@ -13,6 +13,7 @@ import {
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import { fullNotifyTime, notifyTime, roles } from "../../../roles.js";
 import MUILoader from "../MUILoader/MUILoader.jsx";
+import AvatarUpload from "../AvatarUpload/AvatarUpload.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import Notification from "../../Notification/Notification.jsx";
 import { InputMask } from "@react-input/mask";
@@ -132,30 +133,26 @@ function OrganizationAbout_tabComponent({ id, accessMenu }) {
     setIsEditing(!isEditing);
   };
 
-  const fileInputRef = useRef(null);
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
+  const handleFileChange = (file) => {
+    if (!file) {
+      setNewImage(null);
+      setOrganization((prevState) => ({
+        ...prevState,
+        images: data?.organization?.images ?? null,
+      }));
+      return;
+    }
     const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
     if (file.size > maxSizeInBytes) {
       alert("Размер файла не должен превышать 8 МБ!");
-      setOrganization((prevState) => ({
-        ...prevState,
-        images: [`${data.organization.images[0]}`],
-      }));
-      if (fileInputRef.current) {
-        fileInputRef.current.value = null;
-      }
       return;
     }
-    if (file) {
-      setNewImage(file);
-      const imageUrl = URL.createObjectURL(file);
-      setOrganization((prevState) => ({
-        ...prevState,
-        images: [imageUrl],
-      }));
-    }
+    setNewImage(file);
+    const imageUrl = URL.createObjectURL(file);
+    setOrganization((prevState) => ({
+      ...prevState,
+      images: [imageUrl],
+    }));
   };
 
   const INFO_FIELDS = new Set([
@@ -265,14 +262,14 @@ function OrganizationAbout_tabComponent({ id, accessMenu }) {
                   />
                 </div>
                 {isEditing && (
-                  <div className={classes.fileRow}>
+                  <div className={`${classes.fileRow} ${classes.avatarFileRow}`}>
                     <span className={classes.fileLabel}>Изображение</span>
-                    <input
-                      type="file"
-                      name="images"
+                    <AvatarUpload
+                      value={newImage}
                       onChange={handleFileChange}
-                      ref={fileInputRef}
-                      className={classes.fileInput}
+                      onError={(msg) => alert(msg)}
+                      label="Загрузить изображение"
+                      variant="image"
                     />
                   </div>
                 )}

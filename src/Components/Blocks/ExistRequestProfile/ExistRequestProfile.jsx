@@ -6,6 +6,7 @@ import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
 import { getCookie, getMediaUrl, UPDATE_USER } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
+import AvatarUpload from "../AvatarUpload/AvatarUpload";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
@@ -120,16 +121,7 @@ function ExistRequestProfile({
     }));
   }, []);
 
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const maxSizeInBytes = 8 * 1024 * 1024;
-    if (file.size > maxSizeInBytes) {
-      showAlert("Размер файла не должен превышать 8 МБ!");
-      return;
-    }
-
+  const handleAvatarChange = (file) => {
     setIsEdited(true);
     setFormData((prevState) => ({
       ...prevState,
@@ -400,12 +392,12 @@ function ExistRequestProfile({
               )}
 
               {(mode === "profile" || mode === null) && isEditing && (
-                <div className={classes.requestDataInfo}>
+                <div className={`${classes.requestDataInfo} ${classes.avatarField}`}>
                   <div className={classes.requestDataInfo_title}>Аватар</div>
-                  <input
-                    type="file"
-                    name="images"
-                    onChange={handleFileChange}
+                  <AvatarUpload
+                    value={formData.images}
+                    onChange={handleAvatarChange}
+                    onError={showAlert}
                   />
                 </div>
               )}

@@ -15,6 +15,7 @@ import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import { roles } from "../../../roles.js";
 import Logs from "../LogsHistory/Logs.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
+import AvatarUpload from "../AvatarUpload/AvatarUpload.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
@@ -132,21 +133,11 @@ function AirlineAbout_tabComponent({ id, accessMenu }) {
     setIsEditing(!isEditing);
   };
 
-  const fileInputRef = useRef(null);
-
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
+  const handleFileChange = (file) => {
+    if (!file) { setNewImage(null); return; }
+    const maxSizeInBytes = 8 * 1024 * 1024;
     if (file.size > maxSizeInBytes) {
       showAlert("Размер файла не должен превышать 8 МБ!");
-      setAirline((prevState) => ({
-        ...prevState,
-        images: [`${data.airline.images[0]}`],
-      }));
-      if (fileInputRef.current) {
-        fileInputRef.current.value = null;
-      }
       return;
     }
     setNewImage(file);
@@ -277,12 +268,12 @@ function AirlineAbout_tabComponent({ id, accessMenu }) {
                 {isEditing && (
                   <div className={classes.fileRow}>
                     <span className={classes.fileLabel}>Изображение</span>
-                    <input
-                      type="file"
-                      name="images"
+                    <AvatarUpload
+                      value={newImage}
                       onChange={handleFileChange}
-                      ref={fileInputRef}
-                      className={classes.fileInput}
+                      onError={showAlert}
+                      label="Загрузить изображение"
+                      variant="image"
                     />
                   </div>
                 )}

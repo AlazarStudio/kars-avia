@@ -14,6 +14,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import DropDownList from "../DropDownList/DropDownList.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
+import AvatarUpload from "../AvatarUpload/AvatarUpload.jsx";
 import { roles, rolesObject } from "../../../roles.js";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
@@ -157,25 +158,7 @@ function ExistRequestCompanyHotel({
     }));
   }, []);
 
-  const fileInputRef = useRef(null);
-
-  const handleFileChange = (e) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const maxSizeInBytes = 8 * 1024 * 1024;
-    if (file.size > maxSizeInBytes) {
-      showAlert("Размер файла не должен превышать 8 МБ!");
-      setFormData((prevState) => ({
-        ...prevState,
-        images: null,
-      }));
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-      return;
-    }
-
+  const handleAvatarChange = (file) => {
     setIsEdited(true);
     setFormData((prevState) => ({
       ...prevState,
@@ -518,13 +501,12 @@ function ExistRequestCompanyHotel({
                       />
                     </div>
                   </div>
-                  <div className={classes.requestDataInfo}>
+                  <div className={`${classes.requestDataInfo} ${classes.avatarField}`}>
                     <div className={classes.requestDataInfo_title}>Аватар</div>
-                    <input
-                      type="file"
-                      name="images"
-                      onChange={handleFileChange}
-                      ref={fileInputRef}
+                    <AvatarUpload
+                      value={formData.images}
+                      onChange={handleAvatarChange}
+                      onError={showAlert}
                     />
                   </div>
                 </>

@@ -567,3 +567,9 @@
 - В GraphQL добавлены мутации `UPDATE_POSITION` / `DELETE_POSITION` и поле `accessMenu` в запросах должностей.
 - Бейджи-счётчики в меню диспетчера переведены на «тонкие» запросы `*_COUNT` (`GET_REQUESTS_COUNT`, `GET_PASSENGER_REQUESTS_COUNT`, `GET_TRANSFERS_COUNT`): вместо загрузки полных списков `take: 999999999` берётся только `totalCount`.
 - Меню супер-администратора переоформлено в виде «рельса иконок»; структура пунктов меню приведена к единому виду.
+
+### v12.11 (29.06.2026)
+- Добавлен единый компонент загрузки аватара/изображения с обрезкой `AvatarUpload` (`src/Components/Blocks/AvatarUpload/`) на базе `react-easy-crop`: drag-and-drop или выбор файла, модалка обрезки (круглый кроп, масштабирование), превью текущего файла с действиями «Заменить» / «Удалить», проверка типа и размера (до 8 МБ), сообщения об ошибках через `onError`.
+- Сырые `<input type="file">` заменены на `AvatarUpload` в формах создания/редактирования заявок и профиля (`CreateRequestAirlineCompany`, `CreateRequestCompanyHotel`, `CreateRequestDispatcherCompany`, `EditRequestAirlineCompany`, `ExistRequestCompany`, `ExistRequestCompanyHotel`, `ExistRequestProfile`) и во вкладках «Об авиакомпании», «Об организации», «Настройки гостиницы».
+- Добавлены иконки `CheckCircleIcon` и `ImageIcon` в `src/shared/icons/`; вариант `variant="image"` показывает иконку изображения вместо заглушки аватара.
+- Из `HotelSettings_tabComponent` удалён крупный устаревший закомментированный блок legacy-кода.

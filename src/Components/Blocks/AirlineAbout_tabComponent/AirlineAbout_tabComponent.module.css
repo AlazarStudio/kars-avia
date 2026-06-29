@@ -258,12 +258,11 @@
 /* ===== File upload ===== */
 .fileRow {
   display: flex;
-  align-items: center;
-  gap: 20px;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .fileLabel {
-  flex: 0 0 200px;
   font-size: 14px;
   font-weight: 500;
   color: #6b7090;

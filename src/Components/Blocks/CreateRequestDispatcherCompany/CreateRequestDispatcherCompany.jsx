@@ -11,6 +11,7 @@ import {
 import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
+import AvatarUpload from "../AvatarUpload/AvatarUpload";
 import { rolesObject } from "../../../roles";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import { useDialog } from "../../../contexts/DialogContext";
@@ -89,29 +90,12 @@ function CreateRequestDispatcherCompany({
     }));
   }, []);
 
-  const fileInputRef = useRef(null);
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    const maxSizeInBytes = 8 * 1024 * 1024; // 8 MB
-    if (file && file.size > maxSizeInBytes) {
-      showAlert("Размер файла не должен превышать 8 МБ!");
-      setFormData((prevState) => ({
-        ...prevState,
-        images: "",
-      }));
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
-      return;
-    }
-
-    if (file) {
-      setFormData((prevState) => ({
-        ...prevState,
-        images: file,
-      }));
-    }
+  const handleAvatarChange = (file) => {
+    setIsEdited(true);
+    setFormData((prevState) => ({
+      ...prevState,
+      images: file,
+    }));
   };
 
   const [uploadFile] = useMutation(CREATE_DISPATCHER_USER, {
@@ -468,11 +452,10 @@ function CreateRequestDispatcherCompany({
               />
 
               <label>Аватар</label>
-              <input
-                type="file"
-                name="images"
-                onChange={handleFileChange}
-                ref={fileInputRef}
+              <AvatarUpload
+                value={formData.images}
+                onChange={handleAvatarChange}
+                onError={showAlert}
               />
             </div>
           </div>
