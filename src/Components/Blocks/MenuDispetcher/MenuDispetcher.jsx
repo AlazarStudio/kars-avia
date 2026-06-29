@@ -2,18 +2,14 @@ import React, { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   decodeJWT,
-  GET_AIRLINE,
   GET_DISPATCHER,
-  GET_HOTEL_CITY,
-  GET_REQUESTS,
-  GET_RESERVE_REQUESTS,
-  GET_PASSENGER_REQUESTS,
-  GET_TRANSFER_REQUESTS,
+  GET_REQUESTS_COUNT,
+  GET_PASSENGER_REQUESTS_COUNT,
+  GET_TRANSFERS_COUNT,
   GET_USER_SUPPORT_CHATS,
   getCookie,
   MESSAGE_SENT_SUBSCRIPTION,
   REQUEST_CREATED_SUBSCRIPTION,
-  REQUEST_RESERVE_CREATED_SUBSCRIPTION,
   PASSENGER_REQUEST_CREATED_SUBSCRIPTION,
   TRANSFER_CREATED_SUBSCRIPTION,
   TRANSFER_UPDATED_SUBSCRIPTION,
@@ -80,12 +76,6 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
 
   // const navigate = useNavigate();
 
-  const [reserves, setReserves] = useState([]);
-  const [requests, setRequests] = useState([]);
-
-  const [newReserves, setNewReserves] = useState([]);
-  const [newRequests, setNewRequests] = useState([]);
-
   // const handleClick = () => {
   //   let result = confirm("Вы уверены что хотите выйти?");
   //   if (result) {
@@ -95,51 +85,6 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
   //   }
   // };
 
-  const [hotelCity, setHotelCity] = useState();
-
-  const {
-    loading: hotelLoading,
-    error: hotelError,
-    data: hotelData,
-  } = useQuery(GET_HOTEL_CITY, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    variables: { hotelId: user?.hotelId },
-    skip: !user?.hotelId,
-  });
-
-  useEffect(() => {
-    if (hotelData) {
-      setHotelCity(hotelData.hotel.city);
-    }
-  }, [hotelData]);
-
-  const [airlineName, setAirlineName] = useState();
-
-  const {
-    loading: airlineLoading,
-    error: airlineError,
-    data: airlineData,
-  } = useQuery(GET_AIRLINE, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    variables: { airlineId: user?.airlineId },
-    skip: !user?.airlineId,
-  });
-
-  useEffect(() => {
-    if (airlineData) {
-      setAirlineName(airlineData.airline.name);
-    }
-  }, [airlineData]);
-
-  const [allCreatedReserves, setAllCreatedReserves] = useState(0);
   const [allCreatedRequests, setAllCreatedRequests] = useState(0);
   const [fapCreatedCount, setFapCreatedCount] = useState(0);
   const [transferPendingCount, setTransferPendingCount] = useState(0);
@@ -167,39 +112,32 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
     (r) => r.supportStatus !== "RESOLVED" && r.messages?.length > 0
   ).length;
 
-  const { loading, error, data, refetch } = useQuery(GET_RESERVE_REQUESTS, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    variables: {
-      pagination: { skip: 0, take: 999999999, status: "created" },
-    },
-    skip: isExternalPassengerRequestUser,
-  });
-
+  // Эскадрилья есть у диспетчера/суперадмина и авиакомпании; у гостиницы её нет.
+  // Авиакомпании фильтруем по airlineId на сервере → берём totalCount.
   const {
-    loading: loadingRequest,
-    error: errorRequest,
     data: dataRequest,
     refetch: refetchRequest,
-  } = useQuery(GET_REQUESTS, {
+  } = useQuery(GET_REQUESTS_COUNT, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     },
     variables: {
-      pagination: { skip: 0, take: 999999999, status: "created" },
+      pagination: {
+        skip: 0,
+        take: 1,
+        status: "created",
+        airlineId: user?.airlineId || undefined,
+      },
     },
-    skip: isExternalPassengerRequestUser,
+    skip: isExternalPassengerRequestUser || !!user?.hotelId,
   });
 
   const {
     data: fapData,
     refetch: refetchFap,
-  } = useQuery(GET_PASSENGER_REQUESTS, {
+  } = useQuery(GET_PASSENGER_REQUESTS_COUNT, {
     context: { headers: { Authorization: `Bearer ${token}` } },
     variables: { take: 999999999, skip: 0, filter: { status: "CREATED" } },
     skip: isExternalPassengerRequestUser,
@@ -208,16 +146,12 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
   const {
     data: transferData,
     refetch: refetchTransfer,
-  } = useQuery(GET_TRANSFER_REQUESTS, {
+  } = useQuery(GET_TRANSFERS_COUNT, {
     context: { headers: { Authorization: `Bearer ${token}` } },
-    variables: { pagination: { skip: 0, take: 999999999 } },
-    skip: isExternalPassengerRequestUser,
+    variables: { pagination: { skip: 0, take: 1, status: ["PENDING"] } },
+    skip: isExternalPassengerRequestUser || !!user?.hotelId,
   });
 
-  const { data: subscriptionData } = useSubscription(
-    REQUEST_RESERVE_CREATED_SUBSCRIPTION,
-    { skip: isExternalPassengerRequestUser }
-  );
   const { data: subscriptionDataRequest } = useSubscription(
     REQUEST_CREATED_SUBSCRIPTION,
     { skip: isExternalPassengerRequestUser }
@@ -236,95 +170,16 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
   );
 
   useEffect(() => {
-    if (subscriptionData) {
-      // const newReserve = subscriptionData.reserveCreated;
-
-      // setReserves((prevRequests) => {
-      //   const exists = prevRequests.some(
-      //     (request) => request.id === newReserve.id
-      //   );
-      //   if (!exists) {
-      //     setNewReserves((prevNewRequests) => [newReserve, ...prevNewRequests]);
-      //   }
-      //   return prevRequests;
-      // });
-
-      refetch();
-    }
-
     if (subscriptionDataRequest) {
-      // const newRequest = subscriptionDataRequest.requestCreated;
-
-      // setRequests((prevRequests) => {
-      //   const exists = prevRequests.some(
-      //     (request) => request.id === newRequest.id
-      //   );
-      //   if (!exists) {
-      //     setNewRequests((prevNewRequests) => [newRequest, ...prevNewRequests]);
-      //   }
-      //   return prevRequests;
-      // });
-
       refetchRequest();
     }
-  }, [
-    subscriptionData,
-    subscriptionDataRequest,
-    hotelCity,
-    airlineName,
-    data,
-    dataRequest,
-  ]);
+  }, [subscriptionDataRequest, dataRequest]);
 
   useEffect(() => {
-    if (data && data.reserves.reserves) {
-      let sortedRequests = [...data.reserves.reserves];
-
-      if (newReserves.length > 0) {
-        sortedRequests = [...newReserves, ...sortedRequests];
-        setNewReserves([]);
-      }
-
-      setReserves(sortedRequests);
-
-      setAllCreatedReserves(
-        sortedRequests.filter(
-          (request) =>
-            request.status === "created" &&
-            (user.hotelId ? request.airport?.city === hotelCity : true) &&
-            (user.airlineId ? request.airline?.name === airlineName : true)
-        ).length
-      );
-
-      // refetch();
+    if (dataRequest?.requests) {
+      setAllCreatedRequests(dataRequest.requests.totalCount ?? 0);
     }
-
-    if (dataRequest && dataRequest.requests.requests) {
-      let sortedRequests = [...dataRequest.requests.requests];
-
-      if (newRequests.length > 0) {
-        sortedRequests = [...newRequests, ...sortedRequests];
-        setNewRequests([]);
-      }
-
-      // Удаляем дубли
-      const uniqueRequests = sortedRequests.filter(
-        (request, index, self) =>
-          index === self.findIndex((r) => r.id === request.id)
-      );
-
-      setRequests(uniqueRequests);
-
-      setAllCreatedRequests(
-        uniqueRequests.filter(
-          (request) =>
-            // request.status === "created" &&
-            (user.hotelId ? request.airport?.city === hotelCity : true) &&
-            (user.airlineId ? request.airline?.name === airlineName : true)
-        ).length
-      );
-    }
-  }, [data, dataRequest, hotelCity, airlineName, newReserves, newRequests]);
+  }, [dataRequest]);
 
   useEffect(() => {
     if (fapData?.passengerRequests) {
@@ -333,10 +188,8 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
   }, [fapData]);
 
   useEffect(() => {
-    if (transferData?.transfers?.transfers) {
-      setTransferPendingCount(
-        transferData.transfers.transfers.filter((t) => t.status === "PENDING").length
-      );
+    if (transferData?.transfers) {
+      setTransferPendingCount(transferData.transfers.totalCount ?? 0);
     }
   }, [transferData]);
 
@@ -362,7 +215,6 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
       >
         <SuperAdminMenu
           id={id}
-          allCreatedReserves={allCreatedReserves}
           allCreatedRequests={allCreatedRequests}
           fapCreatedCount={fapCreatedCount}
           transferPendingCount={transferPendingCount}
@@ -464,7 +316,6 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
           {user.role == roles.hotelAdmin && (
             <HotelAdminMenu
               id={id}
-              allCreatedReserves={allCreatedReserves}
               menuOpen={menuOpen}
             />
           )}
@@ -473,7 +324,6 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
             <AirlineAdminMenu
               id={id}
               allCreatedRequests={allCreatedRequests}
-              allCreatedReserves={allCreatedReserves}
               fapCreatedCount={fapCreatedCount}
               transferPendingCount={transferPendingCount}
               menuOpen={menuOpen}
@@ -485,7 +335,6 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
           {isDispatcherAdmin(user) && (
             <DisAdminMenu
               id={id}
-              allCreatedReserves={allCreatedReserves}
               allCreatedRequests={allCreatedRequests}
               fapCreatedCount={fapCreatedCount}
               transferPendingCount={transferPendingCount}

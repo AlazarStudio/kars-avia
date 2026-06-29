@@ -7,6 +7,7 @@ import {
   GET_AIRLINE_DEPARTMENT,
   GET_AIRLINES_UPDATE_SUBSCRIPTION,
   GET_DISPATCHER_DEPARTMENTS,
+  GET_USER_EFFECTIVE_ACCESS_MENU,
   getCookie,
 } from "../../../../graphQL_requests.js";
 import { useQuery, useSubscription } from "@apollo/client";
@@ -15,6 +16,7 @@ import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice.jsx";
 import {
   isAirlineRole as isAirlineRoleCheck,
   isDispatcherRole as isDispatcherRoleCheck,
+  safeAccessMenu,
 } from "../../../utils/access";
 
 function Main_Page({ user }) {
@@ -63,6 +65,19 @@ function Main_Page({ user }) {
     }
   );
 
+  const { data: effectiveData, refetch: refetchEffective } = useQuery(
+    GET_USER_EFFECTIVE_ACCESS_MENU,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      },
+      variables: { userId: user?.userId },
+      skip: !user?.userId,
+    }
+  );
+
 //   console.log(user);
 //   console.log(isDispatcherRole)
 // console.log(isAirlineRole)
@@ -76,21 +91,32 @@ function Main_Page({ user }) {
     skip: !isAirlineRole || !user?.airlineDepartmentId,
     onData: () => {
       refetchAirlineDepartment();
+      refetchEffective();
     },
   });
 
   useEffect(() => {
+    const effective = effectiveData?.user?.effectiveAccessMenu;
+
     if (isDispatcherRole) {
       const department =
         dispatcherDepartmentsData?.dispatcherDepartments?.departments?.find(
           (item) => item.id === dispatcherDepartmentId
         );
-      setAccessMenu(department?.accessMenu || {});
+      // effective уже включает меню отдела как базовый слой; отдел снизу — на случай
+      // если effective == null (нет должности/переопределений) или разрежён.
+      setAccessMenu({
+        ...safeAccessMenu(department?.accessMenu),
+        ...safeAccessMenu(effective),
+      });
       return;
     }
 
     if (isAirlineRole) {
-      setAccessMenu(airlineDepartmentData?.airlineDepartment?.accessMenu || {});
+      setAccessMenu({
+        ...safeAccessMenu(airlineDepartmentData?.airlineDepartment?.accessMenu),
+        ...safeAccessMenu(effective),
+      });
       return;
     }
 
@@ -101,6 +127,7 @@ function Main_Page({ user }) {
     dispatcherDepartmentId,
     dispatcherDepartmentsData,
     airlineDepartmentData,
+    effectiveData,
   ]);
 
 

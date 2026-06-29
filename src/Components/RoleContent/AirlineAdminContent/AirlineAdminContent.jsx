@@ -24,6 +24,7 @@ import {
   safeAccessMenu as getSafeAccessMenu,
 } from "../../../utils/access";
 import AccessSettings from "../../Blocks/AccessSettings/AccessSettings";
+import PositionAccessPage from "../../Blocks/PositionAccessPage/PositionAccessPage";
 import { useQuery, useSubscription } from "@apollo/client";
 import {
   GET_AIRLINE_DEPARTMENT,
@@ -107,6 +108,12 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
         ids: ["access", "airlineAccess"],
         guardKey: "userUpdate",
         Comp: AccessSettings,
+        props: () => ({ user }),
+      },
+      {
+        ids: ["positions"],
+        guardKey: "userUpdate",
+        Comp: PositionAccessPage,
         props: () => ({ user }),
       },
       {

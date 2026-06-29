@@ -415,6 +415,8 @@ const DraggableRequestV2 = ({
                   alt=""
                   style={{
                     height: request.status === "Ожидает" ? "30px" : "25px",
+                    minWidth: request.status === "Ожидает" ? "30px" : "25px",
+                    maxWidth: request.status === "Ожидает" ? "30px" : "25px",
                     width: request.status === "Ожидает" ? "30px" : "25px",
                     objectFit: "cover",
                     borderRadius: "50%",

@@ -7,7 +7,6 @@ import FAPIcon from "../../../../shared/icons/FAPIcon";
 
 const RepresentativeAdminMenu = ({
   id,
-  allCreatedReserves,
   allCreatedRequests,
   menuOpen,
 }) => {

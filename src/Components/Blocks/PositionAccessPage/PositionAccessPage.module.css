@@ -1,0 +1,494 @@
+.section {
+  width: 100%;
+  min-width: 1000px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  padding: 30px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+/* ---------- Header ---------- */
+.titleHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: Inter, sans-serif;
+  font-size: 32px;
+  font-weight: 500;
+  line-height: 38px;
+  color: var(--main-gray, #545873);
+}
+
+.backButton {
+  width: 35px;
+  height: 35px;
+  border: 1px dotted #545873;
+  border-radius: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 6px;
+  cursor: pointer;
+  background: transparent;
+  flex: none;
+  transition: background 0.2s ease;
+}
+
+.backButton:hover {
+  background: #f1f4fb;
+}
+
+.backButton img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ---------- Body / two-panel layout ---------- */
+.body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 24px;
+}
+
+.listPanel,
+.detailPanel {
+  background: #fff;
+  border: 1px solid #e7ebf3;
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(20, 33, 61, 0.04);
+}
+
+/* ---------- List panel ---------- */
+.listPanel {
+  width: 380px;
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.listTop {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  border-bottom: 1px solid #eef1f7;
+}
+
+.listTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.listTitle {
+  font-family: "Nunito Sans", sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  color: #1c2230;
+}
+
+.countBadge {
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  font-family: "Nunito Sans", sans-serif;
+  font-weight: 700;
+  font-size: 12.5px;
+  color: #1366e1;
+  background: #eaf1fe;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.addBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #1366e1;
+  color: #fff;
+  border: none;
+  border-radius: 11px;
+  padding: 12px 14px;
+  font-family: "Inter", sans-serif;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(19, 102, 225, 0.24);
+  transition: background 0.18s ease, transform 0.05s ease;
+}
+
+.addBtn:hover {
+  background: #0f57c4;
+}
+
+.addBtn:active {
+  transform: scale(0.99);
+}
+
+.addPlus {
+  font-size: 20px;
+  line-height: 1;
+  font-weight: 400;
+}
+
+.listHint {
+  font-family: "Nunito Sans", sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9ca3b4;
+}
+
+.listScroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  scrollbar-width: thin;
+}
+
+.listLoader {
+  padding: 30px 0;
+  display: flex;
+  justify-content: center;
+}
+
+.li {
+  position: relative;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 9px;
+  background: #fff;
+  border: 1px solid transparent;
+  border-radius: 11px;
+  padding: 11px 12px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: background 0.15s ease;
+}
+
+.li:hover {
+  background: #f5f7fb;
+}
+
+.li:focus-visible {
+  outline: 2px solid #1366e1;
+  outline-offset: 1px;
+}
+
+.liActive {
+  background: #eaf1fe;
+}
+
+.liActive::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  bottom: 8px;
+  width: 3px;
+  border-radius: 0 3px 3px 0;
+  background: #1366e1;
+}
+
+.liActive:hover {
+  background: #e3edfd;
+}
+
+.liName {
+  flex: 1;
+  min-width: 0;
+  font-family: "Nunito Sans", sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: #1c2230;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.liRight {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: none;
+}
+
+.badge {
+  font-family: "Nunito Sans", sans-serif;
+  font-weight: 700;
+  font-size: 10.5px;
+  border-radius: 999px;
+  padding: 3px 9px;
+  white-space: nowrap;
+}
+
+.badgeOwn {
+  background: #1366e1;
+  color: #fff;
+}
+
+.badgeInherit {
+  background: #edeff5;
+  color: #7a8194;
+}
+
+.iconBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.iconBtn:hover {
+  background: #e4eaf4;
+}
+
+.iconBtn:focus-visible {
+  outline: 2px solid #1366e1;
+  outline-offset: 1px;
+}
+
+/* ---------- Detail panel ---------- */
+.detailPanel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.detailEmpty {
+  margin: auto;
+  max-width: 360px;
+  padding: 40px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.detailEmptyMark {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: #eaf1fe;
+  border: 1px solid #d4e4ff;
+  position: relative;
+}
+
+.detailEmptyMark::after {
+  content: "";
+  position: absolute;
+  inset: 24px;
+  border-radius: 9px;
+  border: 2px solid #1366e1;
+  opacity: 0.55;
+}
+
+.detailEmptyTitle {
+  font-family: "Nunito Sans", sans-serif;
+  font-weight: 800;
+  font-size: 19px;
+  color: #1c2230;
+}
+
+.detailEmptyText {
+  font-family: "Nunito Sans", sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #9097a8;
+}
+
+.detailInner {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 20px 26px;
+  border-bottom: 1px solid #eef1f7;
+  flex-shrink: 0;
+}
+
+.detailName {
+  font-family: "Nunito Sans", sans-serif;
+  font-weight: 800;
+  font-size: 20px;
+  color: #1c2230;
+}
+
+.headBadge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-family: "Nunito Sans", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.headBadgeOwn {
+  background: #1366e1;
+  color: #fff;
+}
+
+.headBadgeInherit {
+  background: #edeff5;
+  color: #7a8194;
+}
+
+.detailBody {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 26px;
+}
+
+.inheritRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 16px;
+  border: 1px solid #e7ebf3;
+  border-radius: 12px;
+  background: #fbfcfe;
+  margin-bottom: 18px;
+}
+
+.inheritText {
+  min-width: 0;
+}
+
+.inheritTitle {
+  font-family: "Inter", sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  color: #1c2230;
+  margin-bottom: 3px;
+}
+
+.inheritDesc {
+  font-family: "Inter", sans-serif;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: #9097a8;
+}
+
+.sectionsLabel {
+  font-family: "Inter", sans-serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9ca3b4;
+  margin: 0 2px 11px;
+}
+
+.gridWrap {
+  position: relative;
+}
+
+.lockOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(251, 252, 254, 0.66);
+  border-radius: 12px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 30px;
+  cursor: not-allowed;
+}
+
+.lockPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 15px;
+  border-radius: 999px;
+  background: #fff;
+  border: 1px solid #e2e7f1;
+  color: #5a6172;
+  font-family: "Inter", sans-serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  box-shadow: 0 4px 14px rgba(20, 33, 61, 0.08);
+}
+
+.saveRow {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 26px;
+  border-top: 1px solid #eef1f7;
+  flex-shrink: 0;
+}
+
+/* ---------- Add/Edit modal ---------- */
+.modalBackdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(20, 30, 55, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  width: 400px;
+  max-width: 90vw;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 20px 60px rgba(20, 30, 55, 0.25);
+}
+
+.modalTitle {
+  font-family: "Nunito Sans", sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  color: #1c2230;
+}
+
+.modalActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.listEmpty {
+  padding: 30px 16px;
+  text-align: center;
+  font-family: "Nunito Sans", sans-serif;
+  font-size: 14px;
+  color: #9aa0b5;
+}

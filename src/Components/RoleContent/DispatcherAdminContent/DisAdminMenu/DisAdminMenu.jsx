@@ -8,7 +8,6 @@ import FAPIcon from "../../../../shared/icons/FAPIcon";
 
 const DisAdminMenu = ({
   id,
-  allCreatedReserves,
   allCreatedRequests,
   fapCreatedCount = 0,
   transferPendingCount = 0,

@@ -12,7 +12,6 @@ import FAPIcon from "../../../../shared/icons/FAPIcon";
 const AirlineAdminMenu = ({
   id,
   allCreatedRequests,
-  allCreatedReserves,
   fapCreatedCount = 0,
   transferPendingCount = 0,
   menuOpen,

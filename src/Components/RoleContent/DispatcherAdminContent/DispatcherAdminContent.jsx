@@ -20,6 +20,7 @@ import NotificationsSettings from "../../Blocks/NotificationsSettings/Notificati
 import DisAdminTransferContent from "./DisAdminTransferContent/DisAdminTransferContent";
 import DisAdminAutoparkContent from "./DisAdminAutoparkContent/DisAdminAutoparkContent";
 import DispatcherAccessSettings from "../../Blocks/DispatcherAccessSettings/DispatcherAccessSettings";
+import PositionAccessPage from "../../Blocks/PositionAccessPage/PositionAccessPage";
 import DispatcherNotificationsSettings from "../../Blocks/DispatcherNotificationsSettings/DispatcherNotificationsSettings";
 import { canAccessMenu, safeAccessMenu as getSafeAccessMenu } from "../../../utils/access";
 import RepresentativeRequests from "../../Blocks/RepresentativeRequests/RepresentativeRequests";
@@ -121,6 +122,12 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
         guardKey: "userUpdate",
         Comp: DispatcherAccessSettings,
         props: () => ({}),
+      },
+      {
+        ids: ["positions"],
+        guardKey: "userUpdate",
+        Comp: PositionAccessPage,
+        props: () => ({ user }),
       },
       {
         ids: ["dispatcherNotifications"],

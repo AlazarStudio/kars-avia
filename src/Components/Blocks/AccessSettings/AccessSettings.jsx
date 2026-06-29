@@ -3,7 +3,6 @@ import classes from "./AccessSettings.module.css";
 import Header from "../Header/Header";
 import {
   GET_AIRLINE_COMPANY,
-  GET_AIRLINE_POSITIONS,
   getCookie,
   UPDATE_AIRLINE,
 } from "../../../../graphQL_requests";
@@ -14,8 +13,8 @@ import { useMutation, useQuery } from "@apollo/client";
 import { fullNotifyTime } from "../../../roles";
 import Notification from "../../Notification/Notification";
 import Button from "../../Standart/Button/Button";
-import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete";
 import { isDispatcherRole, isAirlineRole } from "../../../utils/access";
+import { buildAccessPayload } from "../../../utils/accessPayload";
 
 export default function AccessSettings({ user }) {
   const token = getCookie("token");
@@ -27,11 +26,9 @@ export default function AccessSettings({ user }) {
   const [isEditing, setIsEditing] = useState(false);
 
   const [accessMenu, setAccessMenu] = useState();
-  const [airlinePositions, setAirlinePositions] = useState([]);
   // const [department, setDepartment] = useState();
   // const accessMenuFromRoute = location?.state?.item?.accessMenu || {};
   const airlineId = location?.state?.airlineId;
-  const [positionIds, setPositionIds] = useState([]);
 
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE_COMPANY, {
     context: {
@@ -41,15 +38,6 @@ export default function AccessSettings({ user }) {
     },
     skip: !airlineId,
     variables: { airlineId: airlineId },
-  });
-
-  const { data: airlinePositionsData } = useQuery(GET_AIRLINE_POSITIONS, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    skip: !airlineId,
   });
 
   const [updateAirline] = useMutation(UPDATE_AIRLINE, {
@@ -69,18 +57,10 @@ export default function AccessSettings({ user }) {
       // console.log(sortedDepartment);
 
       setAccessMenu(sortedDepartment?.accessMenu);
-      setPositionIds(sortedDepartment?.position?.map((i) => String(i.id)));
       // setDepartment(sortedDepartment);
     }
-    if (airlinePositionsData) {
-      setAirlinePositions(airlinePositionsData?.getAirlinePositions);
-    }
-  }, [data, airlinePositionsData, airlineId]);
+  }, [data, airlineId]);
 
-  const positionOptions = airlinePositions.map((i) => ({
-    value: String(i.id), // используем value вместо id
-    label: `${i.name}`,
-  }));
   // реф, чтобы при сабмите забрать актуальный локальный стейт из дочерней панели
   const localStateRef = useRef(null);
 
@@ -91,42 +71,6 @@ export default function AccessSettings({ user }) {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
     }, fullNotifyTime);
   };
-
-  // сборка payload (строго boolean; null/undefined → false)
-  const buildAccessPayload = (s) => ({
-    requestMenu: !!s?.squadron?.access,
-    requestCreate: !!s?.squadron?.create,
-    requestChat: !!s?.squadron?.chat,
-    requestUpdate: !!s?.squadron?.edit,
-
-    transferMenu: !!s?.transfer?.access,
-    transferCreate: !!s?.transfer?.create,
-    transferUpdate: !!s?.transfer?.edit,
-    transferChat: !!s?.transfer?.chat,
-
-    reserveMenu: !!s?.passengers?.access,
-    reserveCreate: !!s?.passengers?.create,
-    reserveUpdate: !!s?.passengers?.edit,
-
-    userMenu: !!s?.users?.access,
-    userCreate: !!s?.users?.add,
-    userUpdate: !!s?.users?.edit,
-
-    personalMenu: !!s?.employees?.access,
-    personalCreate: !!s?.employees?.add,
-    personalUpdate: !!s?.employees?.edit,
-
-    contracts: !!s?.contracts?.access,
-
-    analyticsMenu: !!s?.analytics?.access,
-    analyticsUpload: !!s?.analytics?.export,
-
-    airlineMenu: !!s?.aboutAirlines?.access,
-    airlineUpdate: !!s?.aboutAirlines?.edit,
-
-    reportMenu: !!s?.reports?.access,
-    reportCreate: !!s?.reports?.create,
-  });
 
   const handleSubmit = async () => {
     if (!isEditing) {
@@ -148,7 +92,6 @@ export default function AccessSettings({ user }) {
               {
                 id: location?.state?.item?.id,
                 accessMenu: department,
-                positionIds: positionIds,
               },
             ],
           },
@@ -223,9 +166,6 @@ export default function AccessSettings({ user }) {
           <>
             <AccessPermissionsPanel
               accessMenu={accessMenu}
-              positionOptions={positionOptions}
-              positionIds={positionIds}
-              setPositionIds={setPositionIds}
               stateRef={localStateRef}
               isEditing={isEditing}
             />
@@ -251,7 +191,7 @@ export default function AccessSettings({ user }) {
   );
 }
 
-function AccessPermissionsPanel({ accessMenu = {}, positionOptions, positionIds, setPositionIds, stateRef, isEditing }) {
+function AccessPermissionsPanel({ accessMenu = {}, stateRef, isEditing }) {
   // безопасный boolean
   const b = (v) => !!v;
 
@@ -285,7 +225,9 @@ function AccessPermissionsPanel({ accessMenu = {}, positionOptions, positionIds,
         edit: b(accessMenu?.personalUpdate),
       },
       contracts: {
-        access: b(accessMenu?.contracts)
+        access: b(accessMenu?.contracts),
+        create: b(accessMenu?.contractCreate),
+        edit: b(accessMenu?.contractUpdate),
       },
       analytics: {
         access: b(accessMenu?.analyticsMenu),
@@ -298,6 +240,13 @@ function AccessPermissionsPanel({ accessMenu = {}, positionOptions, positionIds,
       reports: {
         access: b(accessMenu?.reportMenu),
         create: b(accessMenu?.reportCreate),
+      },
+      organization: {
+        access: b(accessMenu?.organizationMenu),
+        create: b(accessMenu?.organizationCreate),
+        edit: b(accessMenu?.organizationUpdate),
+        addDrivers: b(accessMenu?.organizationAddDrivers),
+        acceptDrivers: b(accessMenu?.organizationAcceptDrivers),
       },
     }),
     [accessMenu]
@@ -318,22 +267,6 @@ function AccessPermissionsPanel({ accessMenu = {}, positionOptions, positionIds,
 
   return (
     <div className={classes.accessPanel}>
-      <SectionCard title="Должности">
-        <MultiSelectAutocomplete
-          isDisabled={!isEditing}
-          isMultiple={true}
-          dropdownWidth={"32.5%"}
-          label={"Выберите должности"}
-          options={positionOptions}
-          // Фильтруем options, используя значение поля value (которое совпадает с id)
-          value={positionOptions.filter((option) =>
-            positionIds?.includes(option.value)
-          )}
-          onChange={(event, newValue) => {
-            setPositionIds(newValue.map((option) => option.value));
-          }}
-        />
-      </SectionCard>
       <div className={classes.accessGrid}>
         {/* Эскадрилья */}
         <SectionCard title="Эскадрилья">
@@ -464,6 +397,18 @@ function AccessPermissionsPanel({ accessMenu = {}, positionOptions, positionIds,
             onChange={(v) => set("contracts", "access", v)}
             disabled={!isEditing}
           />
+          <RowSwitch
+            label="Создание"
+            checked={state.contracts.create}
+            onChange={(v) => set("contracts", "create", v)}
+            disabled={!isEditing || !state.contracts.access}
+          />
+          <RowSwitch
+            label="Редактирование"
+            checked={state.contracts.edit}
+            onChange={(v) => set("contracts", "edit", v)}
+            disabled={!isEditing || !state.contracts.access}
+          />
         </SectionCard>
 
         {/* Аналитика */}
@@ -511,6 +456,40 @@ function AccessPermissionsPanel({ accessMenu = {}, positionOptions, positionIds,
             checked={state.reports.create}
             onChange={(v) => set("reports", "create", v)}
             disabled={!isEditing || !state.reports.access}
+          />
+        </SectionCard>
+
+        {/* Автопарк */}
+        <SectionCard title="Автопарк">
+          <RowSwitch
+            label="Доступ к разделу"
+            checked={state.organization.access}
+            onChange={(v) => set("organization", "access", v)}
+            disabled={!isEditing}
+          />
+          <RowSwitch
+            label="Создание"
+            checked={state.organization.create}
+            onChange={(v) => set("organization", "create", v)}
+            disabled={!isEditing || !state.organization.access}
+          />
+          <RowSwitch
+            label="Редактирование"
+            checked={state.organization.edit}
+            onChange={(v) => set("organization", "edit", v)}
+            disabled={!isEditing || !state.organization.access}
+          />
+          <RowSwitch
+            label="Добавление водителей"
+            checked={state.organization.addDrivers}
+            onChange={(v) => set("organization", "addDrivers", v)}
+            disabled={!isEditing || !state.organization.access}
+          />
+          <RowSwitch
+            label="Принятие водителей"
+            checked={state.organization.acceptDrivers}
+            onChange={(v) => set("organization", "acceptDrivers", v)}
+            disabled={!isEditing || !state.organization.access}
           />
         </SectionCard>
       </div>

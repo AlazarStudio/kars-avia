@@ -166,7 +166,7 @@ const CATEGORIES = [
     title: "Заявки",
     items: [
       { label: "Эскадрилья", meta: "Заявки на рейсы", to: "/relay?page=1", ids: ["relay"], icon: ItemIcon.relay, badgeKey: "requests" },
-      { label: "ФАП v1", meta: "Реестр размещения", to: "/representativeRequests", ids: ["representativeRequests"], icon: ItemIcon.fapV1, badgeKey: "reserves" },
+      { label: "ФАП v1", meta: "Реестр размещения", to: "/representativeRequests", ids: ["representativeRequests"], icon: ItemIcon.fapV1 },
       { label: "ФАП v2", meta: "Реестр размещения", to: "/far", ids: ["far"], icon: ItemIcon.fapV2, badgeKey: "fapCreated" },
       { label: "Трансфер", meta: "Заявки на трансфер", to: "/orders", ids: ["orders"], icon: ItemIcon.transfer, badgeKey: "transferPending" },
     ],
@@ -223,7 +223,6 @@ const resolveActive = (id) => {
 
 const SuperAdminMenu = ({
   id,
-  allCreatedReserves,
   allCreatedRequests,
   fapCreatedCount = 0,
   transferPendingCount = 0,
@@ -247,7 +246,6 @@ const SuperAdminMenu = ({
 
   const badges = {
     requests: allCreatedRequests,
-    reserves: allCreatedReserves,
     fapCreated: fapCreatedCount,
     transferPending: transferPendingCount,
     support: activeSupportCount,

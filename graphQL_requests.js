@@ -615,6 +615,14 @@ export const GET_TRANSFER_REQUESTS = gql`
   }
 `;
 
+export const GET_TRANSFERS_COUNT = gql`
+  query TransfersCount($pagination: TransferPaginationInput!) {
+    transfers(pagination: $pagination) {
+      totalCount
+    }
+  }
+`;
+
 export const GET_TRANSFER_REQUEST = gql`
   query Transfer($transferId: ID!) {
     transfer(id: $transferId) {
@@ -1187,6 +1195,39 @@ export const GET_AIRLINE_USERS_POSITIONS = gql`
       id
       name
       separator
+      accessMenu {
+        requestMenu
+        requestCreate
+        requestUpdate
+        requestChat
+        transferMenu
+        transferCreate
+        transferUpdate
+        transferChat
+        personalMenu
+        personalCreate
+        personalUpdate
+        reserveMenu
+        reserveCreate
+        reserveUpdate
+        analyticsMenu
+        analyticsUpload
+        reportMenu
+        reportCreate
+        userMenu
+        userCreate
+        userUpdate
+        airlineMenu
+        airlineUpdate
+        contracts
+        contractCreate
+        contractUpdate
+        organizationMenu
+        organizationCreate
+        organizationUpdate
+        organizationAddDrivers
+        organizationAcceptDrivers
+      }
     }
   }
 `;
@@ -1219,6 +1260,39 @@ export const GET_DISPATCHER_POSITIONS = gql`
       name
       separator
       category
+      accessMenu {
+        requestMenu
+        requestCreate
+        requestUpdate
+        requestChat
+        transferMenu
+        transferCreate
+        transferUpdate
+        transferChat
+        personalMenu
+        personalCreate
+        personalUpdate
+        reserveMenu
+        reserveCreate
+        reserveUpdate
+        analyticsMenu
+        analyticsUpload
+        reportMenu
+        reportCreate
+        userMenu
+        userCreate
+        userUpdate
+        airlineMenu
+        airlineUpdate
+        contracts
+        contractCreate
+        contractUpdate
+        organizationMenu
+        organizationCreate
+        organizationUpdate
+        organizationAddDrivers
+        organizationAcceptDrivers
+      }
     }
   }
 `;
@@ -1230,6 +1304,69 @@ export const CREATE_POSITION = gql`
       name
       separator
       category
+    }
+  }
+`;
+
+export const UPDATE_POSITION = gql`
+  mutation UpdatePosition($input: PositionInput!) {
+    updatePosition(input: $input) {
+      id
+      name
+      separator
+      category
+      accessMenu {
+        requestMenu
+      }
+    }
+  }
+`;
+
+export const DELETE_POSITION = gql`
+  mutation DeletePosition($id: ID!) {
+    deletePosition(id: $id) {
+      id
+    }
+  }
+`;
+
+export const GET_USER_EFFECTIVE_ACCESS_MENU = gql`
+  query GetUserEffectiveAccessMenu($userId: ID!) {
+    user(userId: $userId) {
+      id
+      effectiveAccessMenu {
+        requestMenu
+        requestCreate
+        requestUpdate
+        requestChat
+        transferMenu
+        transferCreate
+        transferUpdate
+        transferChat
+        personalMenu
+        personalCreate
+        personalUpdate
+        reserveMenu
+        reserveCreate
+        reserveUpdate
+        analyticsMenu
+        analyticsUpload
+        reportMenu
+        reportCreate
+        userMenu
+        userCreate
+        userUpdate
+        airlineMenu
+        airlineUpdate
+        contracts
+        contractCreate
+        contractUpdate
+        organizationMenu
+        organizationCreate
+        organizationUpdate
+        organizationAddDrivers
+        organizationAcceptDrivers
+      }
     }
   }
 `;
@@ -1295,6 +1432,14 @@ export const GET_REQUESTS = gql`
     }
 }
 
+`;
+
+export const GET_REQUESTS_COUNT = gql`
+  query RequestsCount($pagination: PaginationInput) {
+    requests(pagination: $pagination) {
+      totalCount
+    }
+  }
 `;
 
 export const GET_REQUESTS_ARCHIVED = gql`
@@ -3301,6 +3446,14 @@ export const GET_PASSENGER_REQUESTS = gql`
           plannedAt
         }
       }
+    }
+  }
+`;
+
+export const GET_PASSENGER_REQUESTS_COUNT = gql`
+  query PassengerRequestsCount($take: Int, $skip: Int, $filter: PassengerRequestFilterInput) {
+    passengerRequests(take: $take, skip: $skip, filter: $filter) {
+      id
     }
   }
 `;

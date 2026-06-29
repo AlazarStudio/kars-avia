@@ -21,6 +21,7 @@ import AccessSettings from '../../Blocks/AccessSettings/AccessSettings'
 import DisAdminTransferContent from '../DispatcherAdminContent/DisAdminTransferContent/DisAdminTransferContent'
 import DisAdminAutoparkContent from '../DispatcherAdminContent/DisAdminAutoparkContent/DisAdminAutoparkContent'
 import DispatcherAccessSettings from '../../Blocks/DispatcherAccessSettings/DispatcherAccessSettings'
+import PositionAccessPage from '../../Blocks/PositionAccessPage/PositionAccessPage'
 import NotificationsSettings from '../../Blocks/NotificationsSettings/NotificationsSettings'
 import DispatcherNotificationsSettings from '../../Blocks/DispatcherNotificationsSettings/DispatcherNotificationsSettings'
 import SystemNotificationsSettings from '../../Blocks/SystemUpdate/SystemNotificationsSettings'
@@ -56,6 +57,7 @@ const SuperAdminContent = ({ user }) => {
       {id === 'airlineAccess' && <AccessSettings user={user} />}
       {id === 'airlineNotifications' && <NotificationsSettings user={user} />}
       {id === 'dispatcherAccess' && <DispatcherAccessSettings user={user} />}
+      {id === 'positions' && <PositionAccessPage user={user} />}
       {id === 'dispatcherNotifications' && <DispatcherNotificationsSettings user={user} />}
       {id === 'myCompany' && <MyCompany user={user} />}
       {id === 'patchNotes' && <PatchNotesList user={user} />}

@@ -5,12 +5,12 @@ import { useMutation, useQuery } from "@apollo/client";
 import {
   GET_AIRLINE_COMPANY,
   GET_DISPATCHER_DEPARTMENTS,
-  GET_AIRLINE_POSITIONS,
   UPDATE_AIRLINE,
   UPDATE_DISPATCHER_DEPARTMENT,
   getCookie,
 } from "../../../../graphQL_requests";
 import MUILoader from "../MUILoader/MUILoader";
+import { buildAccessPayload } from "../../../utils/accessPayload";
 import { useToast } from "../../../contexts/ToastContext";
 import AccessPermissionsPanel from "./AccessPermissionsPanel";
 import NotificationsPermissionsPanel from "./NotificationsPermissionsPanel";
@@ -37,9 +37,6 @@ export default function SettingsSidebar({
 
   const [accessMenu, setAccessMenu] = useState({});
   const [notificationMenu, setNotificationMenu] = useState({});
-  const [airlinePositions, setAirlinePositions] = useState([]);
-  // { [positionId]: { requestMenu, transferMenu, personalMenu } }
-  const [positionAccessMenusByPosId, setPositionAccessMenusByPosId] = useState({});
 
   const accessStateRef = useRef(null);
   const notificationsStateRef = useRef(null);
@@ -74,16 +71,6 @@ export default function SettingsSidebar({
       },
     }
   );
-
-  // Запрос должностей для авиакомпаний
-  const { data: airlinePositionsData } = useQuery(GET_AIRLINE_POSITIONS, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    skip: type !== "airline" || !airlineId,
-  });
 
   const [updateAirline] = useMutation(UPDATE_AIRLINE, {
     context: {
@@ -121,69 +108,8 @@ export default function SettingsSidebar({
     if (show && currentDepartment) {
       setAccessMenu(currentDepartment.accessMenu || {});
       setNotificationMenu(currentDepartment.notificationMenu || {});
-
-      if (type === "airline") {
-        const byPosId = {};
-        currentDepartment.positionAccessMenus?.forEach((pam) => {
-          byPosId[pam.positionId] = {
-            requestMenu: !!pam.accessMenu?.requestMenu,
-            transferMenu: !!pam.accessMenu?.transferMenu,
-            personalMenu: !!pam.accessMenu?.personalMenu,
-          };
-        });
-        setPositionAccessMenusByPosId(byPosId);
-      }
     }
   }, [show, currentDepartment, type]);
-
-  useEffect(() => {
-    if (airlinePositionsData) {
-      setAirlinePositions(airlinePositionsData.getAirlinePositions || []);
-    }
-  }, [airlinePositionsData]);
-
-  const buildAccessPayload = (s) => ({
-    requestMenu: !!s?.squadron?.access,
-    requestCreate: !!s?.squadron?.create,
-    requestChat: !!s?.squadron?.chat,
-    requestUpdate: !!s?.squadron?.edit,
-
-    transferMenu: !!s?.transfer?.access,
-    transferCreate: !!s?.transfer?.create,
-    transferUpdate: !!s?.transfer?.edit,
-    transferChat: !!s?.transfer?.chat,
-
-    reserveMenu: !!s?.passengers?.access,
-    reserveCreate: !!s?.passengers?.create,
-    reserveUpdate: !!s?.passengers?.edit,
-
-    userMenu: !!s?.users?.access,
-    userCreate: !!s?.users?.add,
-    userUpdate: !!s?.users?.edit,
-
-    personalMenu: !!s?.employees?.access,
-    personalCreate: !!s?.employees?.add,
-    personalUpdate: !!s?.employees?.edit,
-
-    contracts: !!s?.contracts?.access,
-    contractCreate: !!s?.contracts?.create,
-    contractUpdate: !!s?.contracts?.edit,
-
-    analyticsMenu: !!s?.analytics?.access,
-    analyticsUpload: !!s?.analytics?.export,
-
-    airlineMenu: !!s?.aboutAirlines?.access,
-    airlineUpdate: !!s?.aboutAirlines?.edit,
-
-    reportMenu: !!s?.reports?.access,
-    reportCreate: !!s?.reports?.create,
-
-    organizationMenu: !!s?.organization?.access,
-    organizationCreate: !!s?.organization?.create,
-    organizationUpdate: !!s?.organization?.edit,
-    organizationAddDrivers: !!s?.organization?.addDrivers,
-    organizationAcceptDrivers: !!s?.organization?.acceptDrivers,
-  });
 
   const buildNotificationPayload = (s) => ({
     requestCreate: !!s?.requestCreate,
@@ -246,10 +172,6 @@ export default function SettingsSidebar({
       const notificationPayload = buildNotificationPayload(notificationsStateRef.current);
 
       if (type === "airline" && airlineId && currentDepartment) {
-        const positionIds = Object.keys(positionAccessMenusByPosId);
-        const positionPayloads = Object.entries(positionAccessMenusByPosId).map(
-          ([posId, access]) => ({ positionId: posId, accessMenu: access })
-        );
         await updateAirline({
           variables: {
             updateAirlineId: airlineId,
@@ -259,8 +181,6 @@ export default function SettingsSidebar({
                   id: currentDepartment.id,
                   accessMenu: accessPayload,
                   notificationMenu: notificationPayload,
-                  positionIds,
-                  positionAccessMenus: positionPayloads,
                 },
               ],
             },
@@ -301,17 +221,6 @@ export default function SettingsSidebar({
     if (currentDepartment) {
       setAccessMenu(currentDepartment.accessMenu || {});
       setNotificationMenu(currentDepartment.notificationMenu || {});
-      if (type === "airline") {
-        const byPosId = {};
-        currentDepartment.positionAccessMenus?.forEach((pam) => {
-          byPosId[pam.positionId] = {
-            requestMenu: !!pam.accessMenu?.requestMenu,
-            transferMenu: !!pam.accessMenu?.transferMenu,
-            personalMenu: !!pam.accessMenu?.personalMenu,
-          };
-        });
-        setPositionAccessMenusByPosId(byPosId);
-      }
     }
     setIsEditing(false);
   };
@@ -322,11 +231,6 @@ export default function SettingsSidebar({
     setActiveTab("access");
     onClose();
   };
-
-  const positionOptions = airlinePositions.map((i) => ({
-    value: String(i.id),
-    label: `${i.name}`,
-  }));
 
   const loading = type === "airline" ? airlineLoading : dispatcherLoading;
 
@@ -399,9 +303,6 @@ export default function SettingsSidebar({
                   stateRef={accessStateRef}
                   isEditing={isEditing}
                   type={type}
-                  positionOptions={positionOptions}
-                  positionAccessMenusByPosId={positionAccessMenusByPosId}
-                  setPositionAccessMenusByPosId={setPositionAccessMenusByPosId}
                 />
               </div>
               <div style={{ display: activeTab === "notifications" ? "" : "none" }}>

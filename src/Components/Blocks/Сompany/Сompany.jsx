@@ -1,6 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import classes from "./Сompany.module.css";
-import Filter from "../Filter/Filter";
 import Header from "../Header/Header";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
@@ -25,6 +24,8 @@ import CreateRequestDispatcherDepartment from "../CreateRequestDispatcherDepartm
 import EditRequestDispatcherDepartment from "../EditRequestDispatcherDepartment/EditRequestDispatcherDepartment";
 import ExistRequestCompany from "../ExistRequestCompany/ExistRequestCompany";
 import SettingsSidebar from "../SettingsSidebar/SettingsSidebar";
+import PositionsAccessButton from "../PositionsAccessButton/PositionsAccessButton";
+import AddMenuButton from "../AddMenuButton/AddMenuButton";
 
 function Company({ user, accessMenu }) {
   const token = getCookie("token");
@@ -345,15 +346,20 @@ function Company({ user, accessMenu }) {
           />
           {canCreate && (
             <div className={classes.section_searchAndFilter_filter}>
-              <Filter
-                toggleSidebar={() => setShowCreateDepartment(true)}
-                handleChange={""}
-                buttonTitle={"Добавить отдел"}
+              <PositionsAccessButton
+                onClick={() =>
+                  navigate("/positions", {
+                    state: {
+                      type: "dispatcher",
+                      seedAccessMenu: departments?.[0]?.accessMenu,
+                    },
+                  })
+                }
               />
-              <Filter
-                toggleSidebar={() => setShowCreateDispatcher(true)}
-                handleChange={""}
-                buttonTitle={"Добавить аккаунт диспетчера"}
+              <AddMenuButton
+                onAddDepartment={() => setShowCreateDepartment(true)}
+                onAddUser={() => setShowCreateDispatcher(true)}
+                userSubtitle="Аккаунт диспетчера"
               />
             </div>
           )}

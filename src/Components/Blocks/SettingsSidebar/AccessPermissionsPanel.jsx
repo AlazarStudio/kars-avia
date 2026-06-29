@@ -1,16 +1,12 @@
 import React, { useState, useEffect, useMemo } from "react";
 import classes from "./SettingsSidebar.module.css";
 import MUISwitch from "../MUISwitch/MUISwitch";
-import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete";
 
 export default function AccessPermissionsPanel({
   accessMenu = {},
   stateRef,
   isEditing,
   type = "dispatcher",
-  positionOptions = [],
-  positionAccessMenusByPosId = {},
-  setPositionAccessMenusByPosId,
 }) {
   const b = (v) => !!v;
 
@@ -132,42 +128,6 @@ export default function AccessPermissionsPanel({
       )
     );
 
-  const positionsForSection = (field) =>
-    positionOptions.filter(
-      (opt) => !!positionAccessMenusByPosId[opt.value]?.[field],
-    );
-
-  const handleSectionPositionChange = (field, newValue) => {
-    const newIds = newValue.map((o) => o.value);
-    setPositionAccessMenusByPosId((prev) => {
-      const next = { ...prev };
-      Object.keys(next).forEach((id) => {
-        if (!newIds.includes(id)) {
-          const updated = { ...next[id], [field]: false };
-          if (
-            !updated.requestMenu &&
-            !updated.transferMenu &&
-            !updated.personalMenu
-          ) {
-            delete next[id];
-          } else {
-            next[id] = updated;
-          }
-        }
-      });
-      newIds.forEach((id) => {
-        next[id] = {
-          requestMenu: false,
-          transferMenu: false,
-          personalMenu: false,
-          ...next[id],
-          [field]: true,
-        };
-      });
-      return next;
-    });
-  };
-
   return (
     <div className={classes.accessPanel}>
       {isEditing && (
@@ -190,21 +150,6 @@ export default function AccessPermissionsPanel({
             onChange={(v) => setInteraction("squadron", v)}
             disabled={!isEditing || !state.squadron.access}
           />
-          {type === "airline" && positionOptions.length > 0 && (
-            <div className={classes.sectionPositionSelect}>
-              <MultiSelectAutocomplete
-                isDisabled={!isEditing}
-                isMultiple={true}
-                dropdownWidth={"100%"}
-                label="Должности"
-                options={positionOptions}
-                value={positionsForSection("requestMenu")}
-                onChange={(e, newValue) =>
-                  handleSectionPositionChange("requestMenu", newValue)
-                }
-              />
-            </div>
-          )}
         </SectionCard>
 
         {/* Пассажиры */}
@@ -237,21 +182,6 @@ export default function AccessPermissionsPanel({
             onChange={(v) => setInteraction("transfer", v)}
             disabled={!isEditing || !state.transfer.access}
           />
-          {type === "airline" && positionOptions.length > 0 && (
-            <div className={classes.sectionPositionSelect}>
-              <MultiSelectAutocomplete
-                isDisabled={!isEditing}
-                isMultiple={true}
-                dropdownWidth={"100%"}
-                label="Должности"
-                options={positionOptions}
-                value={positionsForSection("transferMenu")}
-                onChange={(e, newValue) =>
-                  handleSectionPositionChange("transferMenu", newValue)
-                }
-              />
-            </div>
-          )}
         </SectionCard>
 
         {/* Автопарк - только для диспетчеров */}
@@ -302,21 +232,6 @@ export default function AccessPermissionsPanel({
             onChange={(v) => setInteraction("employees", v)}
             disabled={!isEditing || !state.employees.access}
           />
-          {type === "airline" && positionOptions.length > 0 && (
-            <div className={classes.sectionPositionSelect}>
-              <MultiSelectAutocomplete
-                isDisabled={!isEditing}
-                isMultiple={true}
-                dropdownWidth={"100%"}
-                label="Должности"
-                options={positionOptions}
-                value={positionsForSection("personalMenu")}
-                onChange={(e, newValue) =>
-                  handleSectionPositionChange("personalMenu", newValue)
-                }
-              />
-            </div>
-          )}
         </SectionCard>
 
         {/* Реестр договоров */}

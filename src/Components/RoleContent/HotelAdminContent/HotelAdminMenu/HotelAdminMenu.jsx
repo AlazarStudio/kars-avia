@@ -4,7 +4,7 @@ import classes from "./HotelAdminMenu.module.css";
 import { useState } from "react";
 import DelayedText from "../../../Blocks/DelayedText/DelayedText";
 
-const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
+const HotelAdminMenu = ({ id, menuOpen }) => {
   const [hovered, setHovered] = useState(false);
 
   const strokeVal = hovered || id == "updates" ? "unset" : "unset";
@@ -47,15 +47,6 @@ const HotelAdminMenu = ({ id, allCreatedReserves, menuOpen }) => {
           <DelayedText show={menuOpen} delay={200}>
             ФАП
           </DelayedText>
-          {allCreatedReserves > 0 && (
-            <div
-              className={`${classes.countRequests} ${
-                !menuOpen ? classes.countRequestsMini : ""
-              }`}
-            >
-              {allCreatedReserves}
-            </div>
-          )}
           {!menuOpen && <span className={classes.tooltip}>ФАП</span>}
         </Link>
         <Link

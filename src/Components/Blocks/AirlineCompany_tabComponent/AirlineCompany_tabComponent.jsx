@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import classes from "./AirlineCompany_tabComponent.module.css";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
-import Filter from "../Filter/Filter";
 
 import { requestsAirlinesCompany } from "../../../requests";
 import CreateRequestAirlineCompany from "../CreateRequestAirlineCompany/CreateRequestAirlineCompany";
@@ -26,10 +25,14 @@ import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
 import SettingsSidebar from "../SettingsSidebar/SettingsSidebar";
 import { useToast } from "../../../contexts/ToastContext";
+import { useNavigate } from "react-router-dom";
+import PositionsAccessButton from "../PositionsAccessButton/PositionsAccessButton";
+import AddMenuButton from "../AddMenuButton/AddMenuButton";
 
 function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
+  const navigate = useNavigate();
 
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE_COMPANY, {
     context: {
@@ -377,15 +380,20 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
         />
         {(!user?.airlineId || accessMenu.userCreate) && (
           <div className={classes.section_searchAndFilter_filter}>
-            <Filter
-              toggleSidebar={toggleCategory}
-              handleChange={""}
-              buttonTitle={"Добавить отдел"}
+            <PositionsAccessButton
+              onClick={() =>
+                navigate("/positions", {
+                  state: {
+                    type: "airline",
+                    airlineId: id,
+                    seedAccessMenu: addTarif?.[0]?.accessMenu,
+                  },
+                })
+              }
             />
-            <Filter
-              toggleSidebar={toggleTarifs}
-              handleChange={""}
-              buttonTitle={"Добавить пользователя"}
+            <AddMenuButton
+              onAddDepartment={toggleCategory}
+              onAddUser={toggleTarifs}
             />
           </div>
         )}
