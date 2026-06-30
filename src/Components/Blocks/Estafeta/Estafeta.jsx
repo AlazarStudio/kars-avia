@@ -24,7 +24,7 @@ import { Box, CircularProgress, TextField } from "@mui/material";
 import FilterPopoverButton from "../FilterPopoverButton/FilterPopoverButton";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
-import { menuAccess, statusMapping } from "../../../roles.js";
+import { menuAccess, statusMapping, roles } from "../../../roles.js";
 import {
   canCreateRequest as canCreateRequestAccess,
   getDispatcherAccess,
@@ -82,10 +82,13 @@ function Estafeta({ user, accessMenu }) {
     return localStorage.getItem("statusFilter") || "all";
   });
 
+  const canUseGroups = user?.role === roles.superAdmin;
   const [viewMode, setViewMode] = useState(
-    () => localStorage.getItem("requestViewMode") || "list"
+    () =>
+      (canUseGroups && localStorage.getItem("requestViewMode")) || "list"
   );
-  const isGroups = viewMode === "groups" && statusFilter !== "archived";
+  const isGroups =
+    canUseGroups && viewMode === "groups" && statusFilter !== "archived";
   const GROUPS_PER_PAGE = 10;
   const [groups, setGroups] = useState([]);
   const [selectedGroupKey, setSelectedGroupKey] = useState(null);
@@ -621,22 +624,24 @@ function Estafeta({ user, accessMenu }) {
             onRangeChange={setDateRange}
           />
         </FilterPopoverButton>
-        <div className={classes.viewToggle}>
-          <button
-            type="button"
-            className={viewMode === "list" ? classes.viewToggleActive : ""}
-            onClick={() => handleViewChange("list")}
-          >
-            Список
-          </button>
-          <button
-            type="button"
-            className={viewMode === "groups" ? classes.viewToggleActive : ""}
-            onClick={() => handleViewChange("groups")}
-          >
-            Группы
-          </button>
-        </div>
+        {canUseGroups ? (
+          <div className={classes.viewToggle}>
+            <button
+              type="button"
+              className={viewMode === "list" ? classes.viewToggleActive : ""}
+              onClick={() => handleViewChange("list")}
+            >
+              Список
+            </button>
+            <button
+              type="button"
+              className={viewMode === "groups" ? classes.viewToggleActive : ""}
+              onClick={() => handleViewChange("groups")}
+            >
+              Группы
+            </button>
+          </div>
+        ) : null}
         <MUITextField
           className={classes.mainSearch}
           label={"Поиск"}

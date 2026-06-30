@@ -186,11 +186,11 @@ function CreateRequestAirlineTarifCategory({
       return;
     }
 
-    const geographyInput = rowsToGeographyInput(formData.geography);
-    if (geographyInput.length === 0 && (formData.airportIds?.length || 0) === 0) {
-      showAlert("Укажите хотя бы один город/регион или аэропорт — иначе тариф не будет применяться.");
-      return;
-    }
+    // const geographyInput = rowsToGeographyInput(formData.geography);
+    // if (geographyInput.length === 0 && (formData.airportIds?.length || 0) === 0) {
+    //   showAlert("Укажите хотя бы один город/регион или аэропорт — иначе тариф не будет применяться.");
+    //   return;
+    // }
 
     setIsLoading(true);
 
@@ -203,7 +203,7 @@ function CreateRequestAirlineTarifCategory({
               {
                 name: formData.name,
                 airportIds: formData.airportIds,
-                geography: geographyInput,
+                // geography: geographyInput,
                 prices: {
                   priceOneCategory: parseFloat(formData.priceOneCategory) || 0,
                   priceTwoCategory: parseFloat(formData.priceTwoCategory) || 0,
@@ -409,13 +409,13 @@ function CreateRequestAirlineTarifCategory({
                   }));
                 }}
               />
-              <TariffGeographyList
+              {/* <TariffGeographyList
                 value={formData.geography}
                 onChange={(rows) => {
                   setIsEdited(true);
                   setFormData((prev) => ({ ...prev, geography: rows }));
                 }}
-              />
+              /> */}
 
               <label>Стоимость одноместного</label>
               <input

@@ -19,7 +19,8 @@ import {
   getCookie,
 } from "../../../../../graphQL_requests";
 import { calculateEffectiveCostDays } from "../../../../utils/effectiveCostDays";
-import { PERSON_TYPE_CONFIG, formatDateTime } from "../fapConstants";
+import { PERSON_TYPE_CONFIG, formatDateTime, PERSON_CATEGORY_LABEL, normalizeCategory, PERSON_CATEGORY_OPTIONS } from "../fapConstants";
+import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 import Button from "../../../Standart/Button/Button";
@@ -132,35 +133,6 @@ const emptyForm = {
   personCategory: "ADULT",
 };
 
-const PERSON_CATEGORY_LABEL = { ADULT: "Взрослый", CHILD: "Ребёнок", INFANT: "Инфант" };
-const PERSON_CATEGORY_BADGE = {
-  CHILD: { bg: "#FEF3C7", color: "#B45309", label: "ребёнок" },
-  INFANT: { bg: "#E0F2FE", color: "#0369A1", label: "инфант" },
-};
-// всё, кроме CHILD/INFANT (в т.ч. undefined у легаси-гостей), считаем взрослым
-const normalizeCategory = (v) => (v === "CHILD" || v === "INFANT" ? v : "ADULT");
-
-function CategoryBadge({ category }) {
-  const cfg = PERSON_CATEGORY_BADGE[category];
-  if (!cfg) return null;
-  return (
-    <span
-      style={{
-        marginLeft: 8,
-        padding: "1px 8px",
-        borderRadius: 8,
-        fontSize: 11,
-        fontWeight: 500,
-        whiteSpace: "nowrap",
-        verticalAlign: "middle",
-        background: cfg.bg,
-        color: cfg.color,
-      }}
-    >
-      {cfg.label}
-    </span>
-  );
-}
 
 // Поле номера в отчёте коммитит значение по blur/Enter, а не на каждый символ.
 // Иначе каждый набранный символ менял бы группировку (reportGroups группирует
@@ -1221,7 +1193,7 @@ export default function FapHotelPage({
 
   const handleExport = () => {
     const headers = [
-      "ID", "ФИО", "Тип", "Категория", "Номер", "Тариф", "Суток",
+      "ID", "ФИО", "Тип", "Возрастная категория", "Номер", "Тариф", "Суток",
       "Завтрак", "Обед", "Ужин", "Ст-ть питания", "Ст-ть проживания", "Итого",
     ];
     const dataRows = [];
@@ -1289,17 +1261,20 @@ export default function FapHotelPage({
               placeholder="ФИО"
               disabled={editForm.personType === "CREW"}
             />
-            {editForm.personType !== "CREW" && (
+          </div>
+          <div className={classes.cellCategory}>
+            {editForm.personType !== "CREW" ? (
               <select
                 className={classes.editInput}
-                style={{ maxWidth: 140 }}
                 value={editForm.personCategory}
                 onChange={(e) => setEditForm((f) => ({ ...f, personCategory: e.target.value }))}
               >
-                <option value="ADULT">Взрослый</option>
-                <option value="CHILD">Ребёнок</option>
-                <option value="INFANT">Инфант</option>
+                {PERSON_CATEGORY_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
               </select>
+            ) : (
+              <span className={classes.dash}>—</span>
             )}
           </div>
           <InputMask
@@ -1363,9 +1338,15 @@ export default function FapHotelPage({
             <div className={classes.guestName}>
               {p.fullName || "—"}
               {p.personType === "CREW" && <PersonBadge type="CREW" />}
-              {p.personType !== "CREW" && <CategoryBadge category={p.personCategory} />}
             </div>
           </div>
+        </div>
+        <div className={classes.cellCategory}>
+          {p.personType === "CREW" ? (
+            <span className={classes.dash}>—</span>
+          ) : (
+            <CategoryBadge category={normalizeCategory(p.personCategory)} />
+          )}
         </div>
         <div className={classes.cellPhone}>{p.phone || "—"}</div>
         <div>
@@ -1447,17 +1428,20 @@ export default function FapHotelPage({
             placeholder="ФИО пассажира"
           />
         )}
-        {addForm.personType !== "CREW" && (
+      </div>
+      <div className={classes.cellCategory}>
+        {addForm.personType !== "CREW" ? (
           <select
             className={classes.editInput}
-            style={{ maxWidth: 140 }}
             value={addForm.personCategory}
             onChange={(e) => setAddForm((f) => ({ ...f, personCategory: e.target.value }))}
           >
-            <option value="ADULT">Взрослый</option>
-            <option value="CHILD">Ребёнок</option>
-            <option value="INFANT">Инфант</option>
+            {PERSON_CATEGORY_OPTIONS.map((o) => (
+              <option key={o.value} value={o.value}>{o.label}</option>
+            ))}
           </select>
+        ) : (
+          <span className={classes.dash}>—</span>
         )}
       </div>
       <InputMask
@@ -1696,6 +1680,7 @@ export default function FapHotelPage({
                   </div>
                 )}
                 <div>Гость</div>
+                <div>Возрастная категория</div>
                 <div>Телефон</div>
                 <div>Номер</div>
                 <div className={classes.colActions}>Действия</div>

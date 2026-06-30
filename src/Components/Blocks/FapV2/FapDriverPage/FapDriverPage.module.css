@@ -362,7 +362,7 @@
 .row,
 .editRow {
   display: grid;
-  grid-template-columns: 32px 36px 1fr 200px 110px;
+  grid-template-columns: 32px 36px 1fr 130px 200px 110px;
   align-items: center;
   gap: 12px;
   padding: 8px 16px;
@@ -425,6 +425,11 @@
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.cellCategory {
+  display: flex;
+  align-items: center;
 }
 
 .cellPhone {

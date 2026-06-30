@@ -11,7 +11,8 @@ import {
   COMPLETE_PASSENGER_REQUEST_MEAL_EARLY,
   getCookie,
 } from "../../../../../graphQL_requests";
-import { SERVICE_STATUS_CONFIG, formatTime } from "../fapConstants";
+import { SERVICE_STATUS_CONFIG, formatTime, PERSON_CATEGORY_OPTIONS, normalizeCategory } from "../fapConstants";
+import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
@@ -69,7 +70,7 @@ const initials = (fullName) => {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 };
 
-const emptyForm = { fullName: "", phone: "", seat: "" };
+const emptyForm = { fullName: "", phone: "", seat: "", personCategory: "ADULT" };
 
 export default function FapWaterMealPage({
   service,
@@ -147,6 +148,7 @@ export default function FapWaterMealPage({
             fullName: p.fullName,
             phone: p.phone || null,
             seat: p.seat || null,
+            personCategory: "ADULT",
             issuedAt,
           })),
         },
@@ -213,6 +215,7 @@ export default function FapWaterMealPage({
             fullName,
             phone: form.phone.trim() || null,
             seat: form.seat.trim() || null,
+            personCategory: form.personCategory || "ADULT",
             issuedAt: new Date().toISOString(),
           },
         },
@@ -233,6 +236,7 @@ export default function FapWaterMealPage({
       fullName: p.fullName || "",
       phone: p.phone || "",
       seat: p.seat || "",
+      personCategory: normalizeCategory(p.personCategory),
     });
   };
 
@@ -259,6 +263,7 @@ export default function FapWaterMealPage({
             fullName,
             phone: editForm.phone.trim() || null,
             seat: editForm.seat.trim() || null,
+            personCategory: editForm.personCategory || "ADULT",
             // не передаём issuedAt — бэк сохранит существующее
           },
         },
@@ -485,6 +490,18 @@ export default function FapWaterMealPage({
                 placeholder="12A"
               />
             </div>
+            <div className={`${classes.smallField} ${classes.fSeat}`}>
+              <label className={classes.smallFieldLabel}>Категория</label>
+              <select
+                className={classes.smallFieldInput}
+                value={form.personCategory}
+                onChange={(e) => setForm((f) => ({ ...f, personCategory: e.target.value }))}
+              >
+                {PERSON_CATEGORY_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            </div>
             <button
               type="submit"
               className={classes.quickAddBtn}
@@ -589,6 +606,16 @@ export default function FapWaterMealPage({
                       onChange={(e) => setEditForm((f) => ({ ...f, seat: e.target.value }))}
                       placeholder="Место"
                     />
+                    <select
+                      className={`${classes.editInput} ${classes.fSeat}`}
+                      style={{ border: `1px solid ${color}`, boxShadow: `0 0 0 3px ${bg}` }}
+                      value={editForm.personCategory}
+                      onChange={(e) => setEditForm((f) => ({ ...f, personCategory: e.target.value }))}
+                    >
+                      {PERSON_CATEGORY_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
                     <button
                       type="button"
                       className={classes.editSaveBtn}
@@ -628,7 +655,10 @@ export default function FapWaterMealPage({
                     {initials(p.fullName)}
                   </span>
                   <div className={classes.rowMain}>
-                    <div className={classes.rowName}>{p.fullName || "—"}</div>
+                    <div className={classes.rowName} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                      <span>{p.fullName || "—"}</span>
+                      <CategoryBadge category={normalizeCategory(p.personCategory)} />
+                    </div>
                     <div className={classes.rowMeta}>
                       {[p.seat && `место ${p.seat}`, p.phone].filter(Boolean).join(" · ") || "—"}
                     </div>

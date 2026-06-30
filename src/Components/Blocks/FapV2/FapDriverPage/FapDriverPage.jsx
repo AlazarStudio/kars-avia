@@ -11,11 +11,12 @@ import {
   UPDATE_PASSENGER_REQUEST_DRIVER,
   getCookie,
 } from "../../../../../graphQL_requests";
-import { formatTime, formatDate, toLocalInputValue } from "../fapConstants";
+import { formatTime, formatDate, toLocalInputValue, PERSON_CATEGORY_OPTIONS, normalizeCategory } from "../fapConstants";
 import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 import PersonTypeToggle from "../PersonTypeToggle/PersonTypeToggle";
 import PersonBadge from "../PersonBadge/PersonBadge";
+import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import CatalogPickerModal, { personKey } from "../CatalogPickerModal/CatalogPickerModal";
 import FapActionButton from "../FapActionButton/FapActionButton";
 import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
@@ -47,6 +48,7 @@ function buildPersonInput(form, crewRoster) {
         phone: member.phone || undefined,
         personType: "CREW",
         airlinePersonalId: member.airlinePersonalId,
+        personCategory: "ADULT",
       },
     };
   }
@@ -59,6 +61,7 @@ function buildPersonInput(form, crewRoster) {
       fullName: form.fullName.trim(),
       phone: form.phone.trim() || undefined,
       personType: "PASSENGER",
+      personCategory: form.personCategory || "ADULT",
     },
   };
 }
@@ -137,7 +140,7 @@ const initials = (fullName) => {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 };
 
-const emptyForm = { fullName: "", phone: "", personType: "PASSENGER", airlinePersonalId: "" };
+const emptyForm = { fullName: "", phone: "", personType: "PASSENGER", airlinePersonalId: "", personCategory: "ADULT" };
 
 const buildMapUrl = (from, to) => {
   const f = (from || "").trim();
@@ -238,6 +241,7 @@ export default function FapDriverPage({
             fullName: p.fullName,
             phone: p.phone || undefined,
             personType: "PASSENGER",
+            personCategory: "ADULT",
           })),
         },
       });
@@ -332,6 +336,7 @@ export default function FapDriverPage({
       phone: "",
       personType: personMode,
       airlinePersonalId: "",
+      personCategory: "ADULT",
     });
   };
 
@@ -373,6 +378,7 @@ export default function FapDriverPage({
       phone: p.phone || "",
       personType: p.personType === "CREW" ? "CREW" : "PASSENGER",
       airlinePersonalId: p.airlinePersonalId || "",
+      personCategory: normalizeCategory(p.personCategory),
     });
   };
 
@@ -572,6 +578,22 @@ export default function FapDriverPage({
               />
             )}
           </div>
+          <div className={classes.cellCategory}>
+            {isCrewEdit ? (
+              <span className={classes.dash}>—</span>
+            ) : (
+              <select
+                className={classes.editInput}
+                style={{ width: "100%", border: `1px solid ${color}`, boxShadow: `0 0 0 3px ${bg}` }}
+                value={editForm.personCategory}
+                onChange={(e) => setEditForm((f) => ({ ...f, personCategory: e.target.value }))}
+              >
+                {PERSON_CATEGORY_OPTIONS.map((o) => (
+                  <option key={o.value} value={o.value}>{o.label}</option>
+                ))}
+              </select>
+            )}
+          </div>
           {isCrewEdit ? (
             <div className={classes.editPhoneRO}>
               <PhoneSvg size={12} color="#9AA0B4" />
@@ -648,6 +670,13 @@ export default function FapDriverPage({
               {p.personType === "CREW" && <PersonBadge type="CREW" />}
             </div>
           </div>
+        </div>
+        <div className={classes.cellCategory}>
+          {p.personType === "CREW" ? (
+            <span className={classes.dash}>—</span>
+          ) : (
+            <CategoryBadge category={normalizeCategory(p.personCategory)} />
+          )}
         </div>
         <div className={classes.cellPhone}>
           {p.phone || <span className={classes.dash}>—</span>}
@@ -734,6 +763,22 @@ export default function FapDriverPage({
               placeholder="ФИО пассажира"
               autoFocus
             />
+          )}
+        </div>
+        <div className={classes.cellCategory}>
+          {isCrewAdd ? (
+            <span className={classes.dash}>—</span>
+          ) : (
+            <select
+              className={classes.editInput}
+              style={{ width: "100%", border: `1px solid ${color}`, boxShadow: `0 0 0 3px ${bg}` }}
+              value={addForm.personCategory}
+              onChange={(e) => setAddForm((f) => ({ ...f, personCategory: e.target.value }))}
+            >
+              {PERSON_CATEGORY_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>{o.label}</option>
+              ))}
+            </select>
           )}
         </div>
         {isCrewAdd ? (
@@ -1032,6 +1077,7 @@ export default function FapDriverPage({
                 </span>
                 <span />
                 <span>ФИО</span>
+                <span>Возрастная категория</span>
                 <span>Телефон</span>
                 <span className={classes.colActions}>Действия</span>
               </div>

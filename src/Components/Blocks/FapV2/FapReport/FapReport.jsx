@@ -12,6 +12,8 @@ import { calculateEffectiveCostDays } from "../../../../utils/effectiveCostDays"
 import Button from "../../../Standart/Button/Button";
 import { useToast } from "../../../../contexts/ToastContext";
 import PersonBadge from "../PersonBadge/PersonBadge";
+import CategoryBadge from "../CategoryBadge/CategoryBadge";
+import { normalizeCategory } from "../fapConstants";
 import DownloadIcon from "../../../../shared/icons/DownloadIcon";
 import FapChat from "../FapChat/FapChat";
 
@@ -445,6 +447,7 @@ export default function FapReport({ request, hotelIndex, hotelName, canEdit = tr
                       <tr>
                         <th>#</th>
                         <th>ФИО</th>
+                        <th>Возрастная категория</th>
                         <th>Номер</th>
                         <th>Суток</th>
                         <th>Тариф</th>
@@ -466,6 +469,9 @@ export default function FapReport({ request, hotelIndex, hotelName, canEdit = tr
                             <td className={classes.nameCell}>
                               {person.fullName || "—"}
                               <PersonBadge type={person.personType} />
+                            </td>
+                            <td>
+                              <CategoryBadge category={normalizeCategory(person.personCategory)} />
                             </td>
                             <td>
                               <input

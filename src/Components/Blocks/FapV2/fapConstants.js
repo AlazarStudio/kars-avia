@@ -106,3 +106,21 @@ export const toLocalInputValue = (iso) => {
   const pad = (n) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
+
+export const PERSON_CATEGORY_LABEL = { ADULT: "Взрослый", CHILD: "Ребёнок", INFANT: "Инфант" };
+
+// ВАЖНО: ADULT теперь имеет бейдж — взрослых показываем явно (решение заказчика).
+export const PERSON_CATEGORY_BADGE = {
+  ADULT: { bg: "#F1F5F9", color: "#475569", label: "взрослый" },
+  CHILD: { bg: "#FEF3C7", color: "#B45309", label: "ребёнок" },
+  INFANT: { bg: "#E0F2FE", color: "#0369A1", label: "инфант" },
+};
+
+// всё, кроме CHILD/INFANT (в т.ч. undefined у легаси), считаем взрослым
+export const normalizeCategory = (v) => (v === "CHILD" || v === "INFANT" ? v : "ADULT");
+
+export const PERSON_CATEGORY_OPTIONS = [
+  { value: "ADULT", label: "Взрослый" },
+  { value: "CHILD", label: "Ребёнок" },
+  { value: "INFANT", label: "Инфант" },
+];

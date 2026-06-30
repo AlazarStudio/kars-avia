@@ -1,4 +1,5 @@
 import ExcelJS from "exceljs";
+import { PERSON_CATEGORY_LABEL, normalizeCategory } from "../fapConstants";
 
 // ── helpers ──
 
@@ -61,26 +62,27 @@ function applyHotelColumnWidths(ws) {
   ws.getColumn(1).width = 6;      // A = ID
   ws.getColumn(2).width = 28;     // B = ФИО
   ws.getColumn(3).width = 12;     // C = Тип
-  ws.getColumn(4).width = 13;     // D = Дата заезда
-  ws.getColumn(5).width = 11;     // E = Время заезда
-  ws.getColumn(6).width = 13;     // F = Дата выезда
-  ws.getColumn(7).width = 11;     // G = Время выезда
-  ws.getColumn(8).width = 12;     // H = Номер
-  ws.getColumn(9).width = 20;     // I = Тариф
-  ws.getColumn(10).width = 11;    // J = Кол-во суток
-  ws.getColumn(11).width = 11;    // K
-  ws.getColumn(12).width = 11;    // L = Завтрак
-  ws.getColumn(13).width = 11;    // M
-  ws.getColumn(14).width = 11;    // N = Обед
-  ws.getColumn(15).width = 11;    // O
-  ws.getColumn(16).width = 11;    // P = Ужин
-  ws.getColumn(17).width = 14;    // Q = Стоимость питания
-  ws.getColumn(18).width = 14;    // R = Стоимость проживания
-  ws.getColumn(19).width = 12;    // S = Итого
+  ws.getColumn(4).width = 14;     // D = Возрастная категория
+  ws.getColumn(5).width = 13;     // E = Дата заезда
+  ws.getColumn(6).width = 11;     // F = Время заезда
+  ws.getColumn(7).width = 13;     // G = Дата выезда
+  ws.getColumn(8).width = 11;     // H = Время выезда
+  ws.getColumn(9).width = 12;     // I = Номер
+  ws.getColumn(10).width = 20;    // J = Тариф
+  ws.getColumn(11).width = 11;    // K = Кол-во суток
+  ws.getColumn(12).width = 11;    // L
+  ws.getColumn(13).width = 11;    // M = Завтрак
+  ws.getColumn(14).width = 11;    // N
+  ws.getColumn(15).width = 11;    // O = Обед
+  ws.getColumn(16).width = 11;    // P
+  ws.getColumn(17).width = 11;    // Q = Ужин
+  ws.getColumn(18).width = 14;    // R = Стоимость питания
+  ws.getColumn(19).width = 14;    // S = Стоимость проживания
+  ws.getColumn(20).width = 12;    // T = Итого
 }
 
 const HOTEL_HEADERS = [
-  "ID", "ФИО", "Тип", "Дата заезда", "Время заезда",
+  "ID", "ФИО", "Тип", "Возрастная категория", "Дата заезда", "Время заезда",
   "Дата выезда", "Время выезда", "Номер", "Тариф",
   "Количество суток", "Количество завтраков", "Завтрак",
   "Количество обедов", "Обед", "Количество ужинов", "Ужин",
@@ -137,11 +139,11 @@ export function addHotelSheet(wb, opts) {
 
   // ── Шапка ──
   ws.getCell("A1").value = request?.airline?.name ?? "";
-  ws.getCell("S1").value = "Договор № или \"по согласованию\"";
-  ws.getCell("S1").alignment = { horizontal: "right" };
+  ws.getCell("T1").value = "Договор № или \"по согласованию\"";
+  ws.getCell("T1").alignment = { horizontal: "right" };
   ws.getCell("C3").value =
     `Детализация оказанных услуг пассажиров задерженного рейса № ${request?.flightNumber ?? ""} г. ${city} гостиница ${hotelName}`;
-  [ws.getCell("A1"), ws.getCell("S1"), ws.getCell("C3")].forEach((c) => {
+  [ws.getCell("A1"), ws.getCell("T1"), ws.getCell("C3")].forEach((c) => {
     c.font = { name: "Calibri", size: 12, bold: true };
   });
 
@@ -217,32 +219,33 @@ export function addHotelSheet(wb, opts) {
     row.getCell(1).value = i + 1; // A
     row.getCell(2).value = p.fullName ?? ""; // B
     row.getCell(3).value = p.personType === "CREW" ? "Экипаж" : "Пассажир"; // C
+    row.getCell(4).value = PERSON_CATEGORY_LABEL[normalizeCategory(p.personCategory)] ?? "Взрослый"; // D
     if (inAt) {
       const inLocal = toExcelLocal(inAt);
-      row.getCell(4).value = inLocal;
-      row.getCell(4).numFmt = fmtDate;
       row.getCell(5).value = inLocal;
-      row.getCell(5).numFmt = fmtTime;
+      row.getCell(5).numFmt = fmtDate;
+      row.getCell(6).value = inLocal;
+      row.getCell(6).numFmt = fmtTime;
     }
     if (outAt) {
       const outLocal = toExcelLocal(outAt);
-      row.getCell(6).value = outLocal;
-      row.getCell(6).numFmt = fmtDate;
       row.getCell(7).value = outLocal;
-      row.getCell(7).numFmt = fmtTime;
+      row.getCell(7).numFmt = fmtDate;
+      row.getCell(8).value = outLocal;
+      row.getCell(8).numFmt = fmtTime;
     }
-    row.getCell(8).value = r.roomNumber; // H
-    row.getCell(9).value = r.tariffName; // I
-    row.getCell(10).value = r.daysCount; // J
-    row.getCell(11).value = r.breakfast > 0 ? 1 : 0; // K
-    row.getCell(12).value = r.breakfast; // L
-    row.getCell(13).value = r.lunch > 0 ? 1 : 0; // M
-    row.getCell(14).value = r.lunch; // N
-    row.getCell(15).value = r.dinner > 0 ? 1 : 0; // O
-    row.getCell(16).value = r.dinner; // P
-    row.getCell(17).value = r.foodCost; // Q
-    row.getCell(18).value = r.accommodationCost; // R
-    row.getCell(19).value = r.foodCost + r.accommodationCost; // S
+    row.getCell(9).value = r.roomNumber; // I
+    row.getCell(10).value = r.tariffName; // J
+    row.getCell(11).value = r.daysCount; // K
+    row.getCell(12).value = r.breakfast > 0 ? 1 : 0; // L
+    row.getCell(13).value = r.breakfast; // M
+    row.getCell(14).value = r.lunch > 0 ? 1 : 0; // N
+    row.getCell(15).value = r.lunch; // O
+    row.getCell(16).value = r.dinner > 0 ? 1 : 0; // P
+    row.getCell(17).value = r.dinner; // Q
+    row.getCell(18).value = r.foodCost; // R
+    row.getCell(19).value = r.accommodationCost; // S
+    row.getCell(20).value = r.foodCost + r.accommodationCost; // T
 
     rowIdx += 1;
   });
@@ -252,7 +255,7 @@ export function addHotelSheet(wb, opts) {
   // ── Блок «Трансфер» (одна пустая строка + 3 строки) ──
   rowIdx += 1; // gap
   const tHeaderRow = rowIdx;
-  ws.mergeCells(`B${tHeaderRow}:G${tHeaderRow}`);
+  ws.mergeCells(`B${tHeaderRow}:H${tHeaderRow}`);
   const tHdr = ws.getCell(`B${tHeaderRow}`);
   tHdr.value = "Трансфер";
   tHdr.font = { name: "Calibri", size: 12, bold: true };
@@ -273,12 +276,12 @@ export function addHotelSheet(wb, opts) {
   aRow.getCell(3).value = aFirstType;
   if (arrival?.plan?.plannedAt) {
     const dt = toExcelLocal(new Date(arrival.plan.plannedAt));
-    aRow.getCell(4).value = dt;
-    aRow.getCell(4).numFmt = fmtDate;
     aRow.getCell(5).value = dt;
-    aRow.getCell(5).numFmt = fmtTime;
+    aRow.getCell(5).numFmt = fmtDate;
+    aRow.getCell(6).value = dt;
+    aRow.getCell(6).numFmt = fmtTime;
   }
-  if (aCost != null) aRow.getCell(19).value = aCost;
+  if (aCost != null) aRow.getCell(20).value = aCost;
   rowIdx += 1;
 
   // DEPARTURE
@@ -295,12 +298,12 @@ export function addHotelSheet(wb, opts) {
   dRow.getCell(3).value = dFirstType;
   if (departure?.plan?.plannedAt) {
     const dt = toExcelLocal(new Date(departure.plan.plannedAt));
-    dRow.getCell(4).value = dt;
-    dRow.getCell(4).numFmt = fmtDate;
     dRow.getCell(5).value = dt;
-    dRow.getCell(5).numFmt = fmtTime;
+    dRow.getCell(5).numFmt = fmtDate;
+    dRow.getCell(6).value = dt;
+    dRow.getCell(6).numFmt = fmtTime;
   }
-  if (dCost != null) dRow.getCell(19).value = dCost;
+  if (dCost != null) dRow.getCell(20).value = dCost;
   const lastTransferRow = rowIdx;
   rowIdx += 1;
 
@@ -309,7 +312,6 @@ export function addHotelSheet(wb, opts) {
   totalRow.getCell(1).value = "Итого:";
   totalRow.getCell(1).font = { name: "Calibri", size: 12, bold: true };
   if (lastPersonRow >= 5) {
-    totalRow.getCell(10).value = { formula: `SUM(J5:J${lastPersonRow})` };
     totalRow.getCell(11).value = { formula: `SUM(K5:K${lastPersonRow})` };
     totalRow.getCell(12).value = { formula: `SUM(L5:L${lastPersonRow})` };
     totalRow.getCell(13).value = { formula: `SUM(M5:M${lastPersonRow})` };
@@ -318,9 +320,10 @@ export function addHotelSheet(wb, opts) {
     totalRow.getCell(16).value = { formula: `SUM(P5:P${lastPersonRow})` };
     totalRow.getCell(17).value = { formula: `SUM(Q5:Q${lastPersonRow})` };
     totalRow.getCell(18).value = { formula: `SUM(R5:R${lastPersonRow})` };
+    totalRow.getCell(19).value = { formula: `SUM(S5:S${lastPersonRow})` };
   }
-  totalRow.getCell(19).value = {
-    formula: `SUM(S5:S${lastTransferRow})`,
+  totalRow.getCell(20).value = {
+    formula: `SUM(T5:T${lastTransferRow})`,
   };
 
   applyHotelColumnWidths(ws);
@@ -431,11 +434,11 @@ export function addCombinedSheet(wb, opts) {
 
   // ── Шапка ──
   ws.getCell("A1").value = request?.airline?.name ?? "";
-  ws.getCell("S1").value = "Договор № или \"по согласованию\"";
-  ws.getCell("S1").alignment = { horizontal: "right" };
+  ws.getCell("T1").value = "Договор № или \"по согласованию\"";
+  ws.getCell("T1").alignment = { horizontal: "right" };
   ws.getCell("C3").value =
     `Детализация оказанных услуг пассажиров задерженного рейса № ${request?.flightNumber ?? ""} г. ${city}`;
-  [ws.getCell("A1"), ws.getCell("S1"), ws.getCell("C3")].forEach((c) => {
+  [ws.getCell("A1"), ws.getCell("T1"), ws.getCell("C3")].forEach((c) => {
     c.font = { name: "Calibri", size: 12, bold: true };
   });
 
@@ -460,8 +463,8 @@ export function addCombinedSheet(wb, opts) {
     const people = hotel?.people ?? [];
     if (people.length === 0) return; // пустые гостиницы пропускаем в сводке
 
-    // Сабхедер гостиницы — merged A:S
-    ws.mergeCells(`A${rowIdx}:S${rowIdx}`);
+    // Сабхедер гостиницы — merged A:T
+    ws.mergeCells(`A${rowIdx}:T${rowIdx}`);
     const hdr = ws.getCell(`A${rowIdx}`);
     hdr.value = `Гостиница: ${pickHotelName(hotel)}${hotel?.address ? ` · ${hotel.address}` : ""}`;
     hdr.font = { name: "Calibri", size: 12, bold: true };
@@ -495,28 +498,29 @@ export function addCombinedSheet(wb, opts) {
       row.getCell(1).value = runningId;
       row.getCell(2).value = p.fullName ?? "";
       row.getCell(3).value = p.personType === "CREW" ? "Экипаж" : "Пассажир";
+      row.getCell(4).value = PERSON_CATEGORY_LABEL[normalizeCategory(p.personCategory)] ?? "Взрослый";
       if (inAt) {
         const inLocal = toExcelLocal(inAt);
-        row.getCell(4).value = inLocal;  row.getCell(4).numFmt = fmtDate;
-        row.getCell(5).value = inLocal;  row.getCell(5).numFmt = fmtTime;
+        row.getCell(5).value = inLocal;  row.getCell(5).numFmt = fmtDate;
+        row.getCell(6).value = inLocal;  row.getCell(6).numFmt = fmtTime;
       }
       if (outAt) {
         const outLocal = toExcelLocal(outAt);
-        row.getCell(6).value = outLocal; row.getCell(6).numFmt = fmtDate;
-        row.getCell(7).value = outLocal; row.getCell(7).numFmt = fmtTime;
+        row.getCell(7).value = outLocal; row.getCell(7).numFmt = fmtDate;
+        row.getCell(8).value = outLocal; row.getCell(8).numFmt = fmtTime;
       }
-      row.getCell(8).value = r.roomNumber ?? "";
-      row.getCell(9).value = r.roomCategory ?? "";
-      row.getCell(10).value = toNum(r.daysCount);
-      row.getCell(11).value = toNum(r.breakfast) > 0 ? 1 : 0;
-      row.getCell(12).value = toNum(r.breakfast);
-      row.getCell(13).value = toNum(r.lunch) > 0 ? 1 : 0;
-      row.getCell(14).value = toNum(r.lunch);
-      row.getCell(15).value = toNum(r.dinner) > 0 ? 1 : 0;
-      row.getCell(16).value = toNum(r.dinner);
-      row.getCell(17).value = toNum(r.foodCost);
-      row.getCell(18).value = toNum(r.accommodationCost);
-      row.getCell(19).value = toNum(r.foodCost) + toNum(r.accommodationCost);
+      row.getCell(9).value = r.roomNumber ?? "";
+      row.getCell(10).value = r.roomCategory ?? "";
+      row.getCell(11).value = toNum(r.daysCount);
+      row.getCell(12).value = toNum(r.breakfast) > 0 ? 1 : 0;
+      row.getCell(13).value = toNum(r.breakfast);
+      row.getCell(14).value = toNum(r.lunch) > 0 ? 1 : 0;
+      row.getCell(15).value = toNum(r.lunch);
+      row.getCell(16).value = toNum(r.dinner) > 0 ? 1 : 0;
+      row.getCell(17).value = toNum(r.dinner);
+      row.getCell(18).value = toNum(r.foodCost);
+      row.getCell(19).value = toNum(r.accommodationCost);
+      row.getCell(20).value = toNum(r.foodCost) + toNum(r.accommodationCost);
 
       if (firstPersonRow == null) firstPersonRow = rowIdx;
       lastPersonRow = rowIdx;
@@ -529,7 +533,7 @@ export function addCombinedSheet(wb, opts) {
   if (includeTransfer) {
     rowIdx += 1; // gap
     const tHeaderRow = rowIdx;
-    ws.mergeCells(`B${tHeaderRow}:G${tHeaderRow}`);
+    ws.mergeCells(`B${tHeaderRow}:H${tHeaderRow}`);
     const tHdr = ws.getCell(`B${tHeaderRow}`);
     tHdr.value = "Трансфер";
     tHdr.font = { name: "Calibri", size: 12, bold: true };
@@ -549,10 +553,10 @@ export function addCombinedSheet(wb, opts) {
       aRow.getCell(3).value = aFirstType;
       if (arrival?.plan?.plannedAt) {
         const dt = toExcelLocal(new Date(arrival.plan.plannedAt));
-        aRow.getCell(4).value = dt; aRow.getCell(4).numFmt = fmtDate;
-        aRow.getCell(5).value = dt; aRow.getCell(5).numFmt = fmtTime;
+        aRow.getCell(5).value = dt; aRow.getCell(5).numFmt = fmtDate;
+        aRow.getCell(6).value = dt; aRow.getCell(6).numFmt = fmtTime;
       }
-      if (aCost != null) aRow.getCell(19).value = aCost;
+      if (aCost != null) aRow.getCell(20).value = aCost;
       lastTransferRow = rowIdx;
       rowIdx += 1;
     }
@@ -570,10 +574,10 @@ export function addCombinedSheet(wb, opts) {
       dRow.getCell(3).value = dFirstType;
       if (departure?.plan?.plannedAt) {
         const dt = toExcelLocal(new Date(departure.plan.plannedAt));
-        dRow.getCell(4).value = dt; dRow.getCell(4).numFmt = fmtDate;
-        dRow.getCell(5).value = dt; dRow.getCell(5).numFmt = fmtTime;
+        dRow.getCell(5).value = dt; dRow.getCell(5).numFmt = fmtDate;
+        dRow.getCell(6).value = dt; dRow.getCell(6).numFmt = fmtTime;
       }
-      if (dCost != null) dRow.getCell(19).value = dCost;
+      if (dCost != null) dRow.getCell(20).value = dCost;
       lastTransferRow = rowIdx;
       rowIdx += 1;
     }
@@ -584,7 +588,6 @@ export function addCombinedSheet(wb, opts) {
   totalRow.getCell(1).value = "Итого:";
   totalRow.getCell(1).font = { name: "Calibri", size: 12, bold: true };
   if (firstPersonRow != null && lastPersonRow != null) {
-    totalRow.getCell(10).value = { formula: `SUM(J${firstPersonRow}:J${lastPersonRow})` };
     totalRow.getCell(11).value = { formula: `SUM(K${firstPersonRow}:K${lastPersonRow})` };
     totalRow.getCell(12).value = { formula: `SUM(L${firstPersonRow}:L${lastPersonRow})` };
     totalRow.getCell(13).value = { formula: `SUM(M${firstPersonRow}:M${lastPersonRow})` };
@@ -593,10 +596,11 @@ export function addCombinedSheet(wb, opts) {
     totalRow.getCell(16).value = { formula: `SUM(P${firstPersonRow}:P${lastPersonRow})` };
     totalRow.getCell(17).value = { formula: `SUM(Q${firstPersonRow}:Q${lastPersonRow})` };
     totalRow.getCell(18).value = { formula: `SUM(R${firstPersonRow}:R${lastPersonRow})` };
+    totalRow.getCell(19).value = { formula: `SUM(S${firstPersonRow}:S${lastPersonRow})` };
   }
   const sumStart = firstPersonRow ?? 5;
   const sumEnd = lastTransferRow ?? lastPersonRow ?? sumStart;
-  totalRow.getCell(19).value = { formula: `SUM(S${sumStart}:S${sumEnd})` };
+  totalRow.getCell(20).value = { formula: `SUM(T${sumStart}:T${sumEnd})` };
 
   applyHotelColumnWidths(ws);
   return ws;

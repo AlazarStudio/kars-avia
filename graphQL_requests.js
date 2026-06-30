@@ -3731,6 +3731,7 @@ export const GET_PASSENGER_REQUEST = gql`
             fullName
             phone
             personType
+            personCategory
             airlinePersonalId
           }
         }
@@ -3764,6 +3765,7 @@ export const GET_PASSENGER_REQUEST = gql`
             fullName
             phone
             personType
+            personCategory
             airlinePersonalId
           }
         }
@@ -3812,6 +3814,7 @@ export const GET_PASSENGER_REQUEST = gql`
           fullName
           issuedAt
           phone
+          personCategory
           seat
         }
       }
@@ -3844,6 +3847,7 @@ export const GET_PASSENGER_REQUEST = gql`
           fullName
           issuedAt
           phone
+          personCategory
           seat
         }
       }
