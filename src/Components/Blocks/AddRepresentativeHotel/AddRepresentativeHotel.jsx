@@ -14,7 +14,6 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import Button from "../../Standart/Button/Button.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
-import CityRegionPicker from "../CityRegionPicker/CityRegionPicker.jsx";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
 
@@ -411,25 +410,6 @@ function AddRepresentativeHotel({ show, onClose, request }) {
                         setQuickCreate((p) => ({ ...p, city: newValue?.city ?? "" }))
                       }
                     />
-                    {/* <label className={classes.quickCreateLabel}>
-                      Адрес (справочник)
-                    </label>
-                    <CityRegionPicker
-                      mode="cityOnly"
-                      allowEmpty={false}
-                      value={{
-                        cityId: quickCreate.locationCityId,
-                        region: quickCreate.locationRegion,
-                      }}
-                      onChange={({ cityId, region }) => {
-                        setIsEdited(true);
-                        setQuickCreate((prev) => ({
-                          ...prev,
-                          locationCityId: cityId || null,
-                          locationRegion: region || null,
-                        }));
-                      }}
-                    /> */}
                     <input
                       type="text"
                       placeholder="Улица"

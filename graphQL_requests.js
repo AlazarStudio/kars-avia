@@ -5300,6 +5300,11 @@ export const GET_AIRLINE_TARIFS = gql`
             city
             region
           }
+          regionId
+          regionRef {
+            id
+            name
+          }
         }
         id
         name
@@ -5307,6 +5312,8 @@ export const GET_AIRLINE_TARIFS = gql`
           priceApartment
           priceStudio
           priceLuxe
+          priceComfort
+          priceImprovedComfort
           priceOneCategory
           priceTwoCategory
           priceThreeCategory
@@ -5315,6 +5322,8 @@ export const GET_AIRLINE_TARIFS = gql`
           priceSixCategory
           priceSevenCategory
           priceEightCategory
+          priceNineCategory
+          priceTenCategory
         }
         mealPrice {
           breakfast
@@ -6490,48 +6499,78 @@ export const SYSTEM_UPDATE = gql`
     systemUpdate {
       version
       title
-      message
       enabled
       publishedAt
       shouldShow
+      audiences {
+        audience
+        sections {
+          new { title description }
+          updates { title description }
+          fixes { title description }
+        }
+      }
     }
   }
 `;
 
 // Закрытие модалки: пишет lastSeenAppVersion = version, shouldShow станет false.
-// Требует JWT авторизованного User.
+// Требует JWT авторизованного User. Отдаёт audiences для консистентности кэша.
 export const MARK_SYSTEM_UPDATE_SEEN = gql`
   mutation MarkSystemUpdateSeen {
     markSystemUpdateSeen {
       shouldShow
       version
+      audiences {
+        audience
+        sections {
+          new { title description }
+          updates { title description }
+          fixes { title description }
+        }
+      }
     }
   }
 `;
 
-// Live-публикация релиза: SuperAdmin сохраняет → событие у всех клиентов.
+// Live-публикация релиза: SuperAdmin сохраняет → персонализированное событие у клиентов.
 export const SYSTEM_UPDATE_PUBLISHED = gql`
   subscription SystemUpdatePublished {
     systemUpdatePublished {
       version
       title
-      message
       enabled
       publishedAt
       shouldShow
+      audiences {
+        audience
+        sections {
+          new { title description }
+          updates { title description }
+          fixes { title description }
+        }
+      }
     }
   }
 `;
 
 // Публикация/редактирование релиза — только SUPERADMIN (защищено на бэке).
+// input: { enabled, version, title, audiences: [{ audience, sections: { new, updates, fixes } }] }
 export const UPDATE_SYSTEM_UPDATE = gql`
   mutation UpdateSystemUpdate($input: UpdateSystemUpdateInput!) {
     updateSystemUpdate(input: $input) {
       version
       title
-      message
       enabled
       publishedAt
+      audiences {
+        audience
+        sections {
+          new { title description }
+          updates { title description }
+          fixes { title description }
+        }
+      }
     }
   }
 `;
@@ -7090,6 +7129,8 @@ export const GET_ALL_TARIFFS = gql`
           priceApartment
           priceStudio
           priceLuxe
+          priceComfort
+          priceImprovedComfort
           priceOneCategory
           priceTwoCategory
           priceThreeCategory
@@ -7098,11 +7139,29 @@ export const GET_ALL_TARIFFS = gql`
           priceSixCategory
           priceSevenCategory
           priceEightCategory
+          priceNineCategory
+          priceTenCategory
         }
         mealPrice {
           breakfast
           lunch
           dinner
+        }
+        geography {
+          country
+          region
+          city
+          cityId
+          cityRef {
+            id
+            city
+            region
+          }
+          regionId
+          regionRef {
+            id
+            name
+          }
         }
         name
         airports {
@@ -7247,6 +7306,29 @@ export const GET_CITIES_BY_REGION = gql`
       id
       city
       region
+    }
+  }
+`;
+
+export const GET_REGIONS = gql`
+  query Regions {
+    regions {
+      id
+      name
+    }
+  }
+`;
+
+export const GET_CITIES_BY_REGION_ID = gql`
+  query CitiesByRegionId($regionId: ID!) {
+    citiesByRegionId(regionId: $regionId) {
+      id
+      city
+      region
+      regionRef {
+        id
+        name
+      }
     }
   }
 `;

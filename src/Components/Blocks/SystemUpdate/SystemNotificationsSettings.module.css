@@ -330,128 +330,6 @@
     margin-top: 10px;
 }
 
-/* modal preview (two-column, mirrors SystemUpdateModal) */
-.pvModal {
-    display: flex;
-    width: 100%;
-    max-width: 440px;
-    background: #fff;
-    border-radius: 16px;
-    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.22);
-    overflow: hidden;
-}
-
-.pvBrand {
-    position: relative;
-    flex: 0 0 150px;
-    min-height: 190px;
-    padding: 16px 15px;
-    display: flex;
-    flex-direction: column;
-    color: #fff;
-    background: linear-gradient(155deg, #0a59cf 0%, #2f86ef 100%);
-    overflow: hidden;
-}
-
-.pvIcon {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    background: rgba(255, 255, 255, 0.18);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 14px;
-    color: #fff;
-}
-
-.pvBrandTitle {
-    font-size: 16px;
-    line-height: 1.2;
-    font-weight: 700;
-}
-
-.pvBrandSpacer {
-    flex: 1;
-    min-height: 14px;
-}
-
-.pvBrandVersion {
-    font-size: 18px;
-    font-weight: 700;
-}
-
-.pvChanges {
-    flex: 1;
-    min-width: 0;
-    padding: 16px 16px 13px;
-    display: flex;
-    flex-direction: column;
-    background: #fff;
-}
-
-.pvChangesLabel {
-    text-transform: uppercase;
-    font-size: 10px;
-    letter-spacing: 0.06em;
-    font-weight: 700;
-    color: #9aa0b5;
-    margin-bottom: 8px;
-}
-
-.pvChangesList {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-}
-
-.pvChangeRow {
-    display: flex;
-    align-items: flex-start;
-    gap: 8px;
-    padding: 6px 0;
-    border-bottom: 1px solid #f3f5f9;
-    font-size: 12px;
-    line-height: 1.35;
-    color: #2d3147;
-}
-
-.pvChangeRow:last-child {
-    border-bottom: none;
-}
-
-.pvCheck {
-    flex: none;
-    width: 15px;
-    height: 15px;
-    border-radius: 50%;
-    background: #e6f0fb;
-    color: #0057c3;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-top: 1px;
-}
-
-.pvModalActions {
-    display: flex;
-    justify-content: flex-end;
-    padding-top: 10px;
-}
-
-.pvBtn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    height: 30px;
-    padding: 0 18px;
-    background: var(--dark-blue);
-    color: #fff;
-    border-radius: 8px;
-    font-size: 12px;
-    font-weight: 600;
-}
-
 /* banner preview */
 .pvBanner {
     position: relative;
@@ -543,4 +421,75 @@
     .previewCol {
         position: static;
     }
+}
+
+/* под-табы аудитории в редакторе */
+.audPills {
+  display: flex;
+  gap: 8px;
+  margin: 10px 0 4px;
+  flex-wrap: wrap;
+}
+.audPill {
+  padding: 5px 14px;
+  border-radius: 999px;
+  background: #eef0f4;
+  border: none;
+  font-size: 13px;
+  cursor: pointer;
+  color: #4a4f57;
+}
+.audPillOn {
+  background: #2563eb;
+  color: #fff;
+}
+
+/* секция-список в редакторе */
+.editSec {
+  margin-top: 14px;
+}
+.editSecLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #1c1c1e;
+  margin-bottom: 8px;
+}
+.editSecDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 auto;
+}
+.editItem {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.editRemove {
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 8px;
+  background: #f3f4f6;
+  color: #c0392b;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+.editAdd {
+  display: inline-block;
+  padding: 5px 12px;
+  border: 1px dashed #c7cad1;
+  border-radius: 8px;
+  background: transparent;
+  color: #2563eb;
+  font-size: 13px;
+  cursor: pointer;
 }

@@ -4,7 +4,19 @@ import classes from "./SystemNotificationsSettings.module.css";
 import Button from "../../Standart/Button/Button";
 import MUISwitch from "../MUISwitch/MUISwitch";
 import MUILoader from "../MUILoader/MUILoader";
+import SystemUpdateCard from "./SystemUpdateCard";
 import { useToast } from "../../../contexts/ToastContext";
+import {
+  AUDIENCE_ORDER,
+  AUDIENCE_LABELS,
+  SECTION_KEYS,
+  SECTION_LABELS,
+  SECTION_COLORS,
+  audiencesArrayToState,
+  stateToAudiencesArray,
+  makeItem,
+  countItems,
+} from "./systemUpdateConstants";
 import {
   SYSTEM_UPDATE,
   UPDATE_SYSTEM_UPDATE,
@@ -14,6 +26,8 @@ import {
 
 const VERSION_RE = /^\d+\.\d+\.\d+$/;
 
+const emptyState = () => audiencesArrayToState([]);
+
 function SystemUpdateSettings() {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
@@ -21,7 +35,8 @@ function SystemUpdateSettings() {
   const [enabled, setEnabled] = useState(false);
   const [version, setVersion] = useState("");
   const [title, setTitle] = useState("");
-  const [message, setMessage] = useState("");
+  const [audiencesState, setAudiencesState] = useState(emptyState);
+  const [activeAud, setActiveAud] = useState(AUDIENCE_ORDER[0]);
 
   const { loading, error, data } = useQuery(SYSTEM_UPDATE, {
     fetchPolicy: "cache-and-network",
@@ -33,7 +48,7 @@ function SystemUpdateSettings() {
     setEnabled(su.enabled === true);
     setVersion(su.version || "");
     setTitle(su.title || "");
-    setMessage(su.message || "");
+    setAudiencesState(audiencesArrayToState(su.audiences));
   }, [data]);
 
   const [updateSystemUpdate, { loading: saving }] = useMutation(
@@ -44,14 +59,52 @@ function SystemUpdateSettings() {
     }
   );
 
+  // --- мутаторы стейта пунктов ---
+  const addItem = (sectionKey) => {
+    setAudiencesState((prev) => ({
+      ...prev,
+      [activeAud]: {
+        ...prev[activeAud],
+        [sectionKey]: [...prev[activeAud][sectionKey], makeItem()],
+      },
+    }));
+  };
+
+  const removeItem = (sectionKey, key) => {
+    setAudiencesState((prev) => ({
+      ...prev,
+      [activeAud]: {
+        ...prev[activeAud],
+        [sectionKey]: prev[activeAud][sectionKey].filter((it) => it._key !== key),
+      },
+    }));
+  };
+
+  const editItem = (sectionKey, key, field, value) => {
+    setAudiencesState((prev) => ({
+      ...prev,
+      [activeAud]: {
+        ...prev[activeAud],
+        [sectionKey]: prev[activeAud][sectionKey].map((it) =>
+          it._key === key ? { ...it, [field]: value } : it
+        ),
+      },
+    }));
+  };
+
   const handleSave = async () => {
+    const audiencesArray = stateToAudiencesArray(audiencesState);
     if (enabled) {
       if (!VERSION_RE.test(version.trim())) {
         notifyError("Версия должна быть в формате X.Y.Z");
         return;
       }
-      if (!title.trim() || !message.trim()) {
-        notifyError("Заполните заголовок и текст");
+      if (!title.trim()) {
+        notifyError("Заполните заголовок");
+        return;
+      }
+      if (countItems(audiencesArray) < 1) {
+        notifyError("Добавьте хотя бы один пункт");
         return;
       }
     }
@@ -63,7 +116,7 @@ function SystemUpdateSettings() {
             enabled,
             version: version.trim() || null,
             title: title.trim() || null,
-            message: message.trim() || null,
+            audiences: audiencesArray,
           },
         },
       });
@@ -71,7 +124,7 @@ function SystemUpdateSettings() {
     } catch (err) {
       const code = err?.graphQLErrors?.[0]?.extensions?.code;
       if (code === "BAD_USER_INPUT") {
-        notifyError("Проверьте версию, заголовок и текст");
+        notifyError("Проверьте версию, заголовок и пункты");
       } else if (code === "FORBIDDEN" || code === "UNAUTHORIZED") {
         notifyError("Нет доступа");
       } else {
@@ -80,11 +133,18 @@ function SystemUpdateSettings() {
     }
   };
 
+  // --- превью выбранной аудитории по локальному стейту ---
+  const previewSections = {};
+  SECTION_KEYS.forEach((key) => {
+    previewSections[key] = (audiencesState[activeAud]?.[key] || [])
+      .filter((it) => (it.title || "").trim())
+      .map((it) => ({ title: it.title.trim(), description: (it.description || "").trim() }));
+  });
+  const previewHasItems = SECTION_KEYS.some((k) => previewSections[k].length);
   const previewTitle = title.trim();
   const previewVersion = version.trim();
-  const previewLines = message.split("\n");
   const publishedAt = data?.systemUpdate?.publishedAt;
-  const showPreview = enabled && previewTitle;
+  const showPreview = enabled && previewTitle && previewHasItems;
 
   return (
     <>
@@ -118,7 +178,7 @@ function SystemUpdateSettings() {
               className={`${classes.input} ${classes.inputNarrow}`}
               value={version}
               onChange={(e) => setVersion(e.target.value)}
-              placeholder="3.5.0"
+              placeholder="3.6.0"
             />
             <span className={classes.hint}>
               Формат X.Y.Z. Показывается один раз тем, у кого версия отличается.
@@ -132,28 +192,74 @@ function SystemUpdateSettings() {
               className={classes.input}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Что нового в версии 3.5.0"
+              placeholder="Что нового в версии 3.6.0"
             />
           </label>
 
-          <label className={classes.field}>
-            <span className={classes.label}>Текст</span>
-            <div className={classes.textareaShell}>
-              <textarea
-                className={classes.textareaField}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                rows={6}
-                placeholder={"• Улучшены заявки\n• Новые фильтры отелей\n• Исправления в чатах"}
-              />
-              <div className={classes.textareaFooter}>
-                <span className={classes.textareaFooterHint}>
-                  Каждая строка — отдельный абзац
-                </span>
-                <span className={classes.textareaCount}>{message.length} симв.</span>
+          {/* под-табы аудитории */}
+          <div className={classes.audPills} role="tablist">
+            {AUDIENCE_ORDER.map((aud) => (
+              <button
+                key={aud}
+                type="button"
+                role="tab"
+                aria-selected={activeAud === aud}
+                className={`${classes.audPill} ${activeAud === aud ? classes.audPillOn : ""}`}
+                onClick={() => setActiveAud(aud)}
+              >
+                {AUDIENCE_LABELS[aud]}
+              </button>
+            ))}
+          </div>
+
+          {/* секции активной аудитории */}
+          {SECTION_KEYS.map((sectionKey) => {
+            const items = audiencesState[activeAud]?.[sectionKey] || [];
+            return (
+              <div key={sectionKey} className={classes.editSec}>
+                <div className={classes.editSecLabel}>
+                  <span
+                    className={classes.editSecDot}
+                    style={{ background: SECTION_COLORS[sectionKey] }}
+                  />
+                  {SECTION_LABELS[sectionKey]}
+                </div>
+                {items.map((item) => (
+                  <div key={item._key} className={classes.editItem}>
+                    <input
+                      type="text"
+                      className={classes.input}
+                      value={item.title}
+                      onChange={(e) => editItem(sectionKey, item._key, "title", e.target.value)}
+                      placeholder="Заголовок пункта"
+                    />
+                    <input
+                      type="text"
+                      className={classes.input}
+                      value={item.description}
+                      onChange={(e) => editItem(sectionKey, item._key, "description", e.target.value)}
+                      placeholder="Описание (необязательно)"
+                    />
+                    <button
+                      type="button"
+                      className={classes.editRemove}
+                      onClick={() => removeItem(sectionKey, item._key)}
+                      aria-label="Удалить пункт"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className={classes.editAdd}
+                  onClick={() => addItem(sectionKey)}
+                >
+                  + добавить пункт
+                </button>
               </div>
-            </div>
-          </label>
+            );
+          })}
 
           <div className={classes.actions}>
             <Button onClick={handleSave} disabled={saving} padding="0 28px">
@@ -170,7 +276,9 @@ function SystemUpdateSettings() {
         {/* RIGHT: живое превью */}
         <div className={classes.previewCol}>
           <span className={classes.sectionLabel}>Предпросмотр</span>
-          <div className={classes.previewSub}>Как увидит пользователь</div>
+          <div className={classes.previewSub}>
+            Аудитория: {AUDIENCE_LABELS[activeAud]}
+          </div>
 
           <div className={classes.screen}>
             {showPreview ? (
@@ -180,71 +288,23 @@ function SystemUpdateSettings() {
                   <span className={classes.screenDotMini} />
                 </div>
                 <div className={classes.screenDim}>
-                  <div className={classes.pvModal}>
-                    <div className={classes.pvBrand}>
-                      <div className={classes.pvIcon}>
-                        <svg
-                          width="18"
-                          height="18"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="1.8"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        >
-                          <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z" />
-                          <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z" />
-                          <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0" />
-                          <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5" />
-                        </svg>
-                      </div>
-                      <div className={classes.pvBrandTitle}>{previewTitle}</div>
-                      <div className={classes.pvBrandSpacer} />
-                      {previewVersion && (
-                        <div className={classes.pvBrandVersion}>{previewVersion}</div>
-                      )}
-                    </div>
-                    <div className={classes.pvChanges}>
-                      <div className={classes.pvChangesLabel}>Изменения</div>
-                      <div className={classes.pvChangesList}>
-                        {previewLines.map((line, i) =>
-                          line.trim() ? (
-                            <div key={i} className={classes.pvChangeRow}>
-                              <span className={classes.pvCheck}>
-                                <svg
-                                  width="9"
-                                  height="9"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="3.5"
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                >
-                                  <path d="M20 6L9 17l-5-5" />
-                                </svg>
-                              </span>
-                              <span>{line}</span>
-                            </div>
-                          ) : null
-                        )}
-                      </div>
-                      <div className={classes.pvModalActions}>
-                        <span className={classes.pvBtn}>Понятно</span>
-                      </div>
-                    </div>
-                  </div>
+                  <SystemUpdateCard
+                    title={previewTitle}
+                    version={previewVersion}
+                    audiences={[{ audience: activeAud, sections: previewSections }]}
+                    isSuperAdmin={false}
+                    preview
+                  />
                 </div>
               </>
             ) : (
               <div className={classes.previewEmpty}>
-                Модалка скрыта (выключена или пустой заголовок).
+                Модалка скрыта (выключена, пустой заголовок или нет пунктов).
               </div>
             )}
           </div>
           <div className={classes.caption}>
-            Обновляется на лету при вводе. «Понятно» помечает версию просмотренной.
+            Обновляется на лету. Превью показывает выбранную аудиторию.
           </div>
         </div>
       </div>

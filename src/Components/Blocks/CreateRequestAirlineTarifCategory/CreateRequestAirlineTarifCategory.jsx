@@ -62,6 +62,10 @@ function CreateRequestAirlineTarifCategory({
     priceLuxe: null,
     priceApartment: null,
     priceStudio: null,
+    priceComfort: null,
+    priceImprovedComfort: null,
+    priceNineCategory: null,
+    priceTenCategory: null,
     breakfast: null,
     dinner: null,
     lunch: null,
@@ -122,6 +126,10 @@ function CreateRequestAirlineTarifCategory({
       priceLuxe: null,
       priceApartment: null,
       priceStudio: null,
+      priceComfort: null,
+      priceImprovedComfort: null,
+      priceNineCategory: null,
+      priceTenCategory: null,
       breakfast: null,
       dinner: null,
       lunch: null,
@@ -186,11 +194,11 @@ function CreateRequestAirlineTarifCategory({
       return;
     }
 
-    // const geographyInput = rowsToGeographyInput(formData.geography);
-    // if (geographyInput.length === 0 && (formData.airportIds?.length || 0) === 0) {
-    //   showAlert("Укажите хотя бы один город/регион или аэропорт — иначе тариф не будет применяться.");
-    //   return;
-    // }
+    const geographyInput = rowsToGeographyInput(formData.geography);
+    if (geographyInput.length === 0 && (formData.airportIds?.length || 0) === 0) {
+      showAlert("Укажите хотя бы один город/регион или аэропорт — иначе тариф не будет применяться.");
+      return;
+    }
 
     setIsLoading(true);
 
@@ -203,7 +211,7 @@ function CreateRequestAirlineTarifCategory({
               {
                 name: formData.name,
                 airportIds: formData.airportIds,
-                // geography: geographyInput,
+                geography: geographyInput,
                 prices: {
                   priceOneCategory: parseFloat(formData.priceOneCategory) || 0,
                   priceTwoCategory: parseFloat(formData.priceTwoCategory) || 0,
@@ -216,6 +224,10 @@ function CreateRequestAirlineTarifCategory({
                   priceLuxe: parseFloat(formData.priceLuxe) || 0,
                   priceApartment: parseFloat(formData.priceApartment) || 0,
                   priceStudio: parseFloat(formData.priceStudio) || 0,
+                  priceComfort: parseFloat(formData.priceComfort) || 0,
+                  priceImprovedComfort: parseFloat(formData.priceImprovedComfort) || 0,
+                  priceNineCategory: parseFloat(formData.priceNineCategory) || 0,
+                  priceTenCategory: parseFloat(formData.priceTenCategory) || 0,
                 },
                 mealPrice: {
                   breakfast: parseFloat(formData.breakfast) || 0,
@@ -409,13 +421,13 @@ function CreateRequestAirlineTarifCategory({
                   }));
                 }}
               />
-              {/* <TariffGeographyList
+              <TariffGeographyList
                 value={formData.geography}
                 onChange={(rows) => {
                   setIsEdited(true);
                   setFormData((prev) => ({ ...prev, geography: rows }));
                 }}
-              /> */}
+              />
 
               <label>Стоимость одноместного</label>
               <input
@@ -483,11 +495,43 @@ function CreateRequestAirlineTarifCategory({
                 onChange={handleChange}
                 placeholder="Введите стоимость"
               />
+              <label>Стоимость девятиместного</label>
+              <input
+                type="number"
+                name="priceNineCategory"
+                value={formData.priceNineCategory}
+                onChange={handleChange}
+                placeholder="Введите стоимость"
+              />
+              <label>Стоимость десятиместного</label>
+              <input
+                type="number"
+                name="priceTenCategory"
+                value={formData.priceTenCategory}
+                onChange={handleChange}
+                placeholder="Введите стоимость"
+              />
               <label>Стоимость люкса</label>
               <input
                 type="number"
                 name="priceLuxe"
                 value={formData.priceLuxe}
+                onChange={handleChange}
+                placeholder="Введите стоимость"
+              />
+              <label>Стоимость комфорт</label>
+              <input
+                type="number"
+                name="priceComfort"
+                value={formData.priceComfort}
+                onChange={handleChange}
+                placeholder="Введите стоимость"
+              />
+              <label>Стоимость улучшенный комфорт</label>
+              <input
+                type="number"
+                name="priceImprovedComfort"
+                value={formData.priceImprovedComfort}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
               />

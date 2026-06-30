@@ -35,12 +35,21 @@ function TariffGeographyList({ value = [], onChange, disabled = false }) {
         <div className={classes.row} key={row.key}>
           <div className={classes.picker}>
             <CityRegionPicker
-              mode="both"
               allowEmpty
               disabled={disabled}
-              value={{ cityId: row.cityId, region: row.region }}
-              onChange={({ cityId, region }) =>
-                updateRow(index, { cityId: cityId || null, region: region || null })
+              value={{
+                regionId: row.regionId,
+                region: row.region,
+                cityId: row.cityId,
+                city: row.city,
+              }}
+              onChange={({ regionId, region, cityId, city }) =>
+                updateRow(index, {
+                  regionId: regionId || null,
+                  region: region || null,
+                  cityId: cityId || null,
+                  city: city || null,
+                })
               }
             />
           </div>

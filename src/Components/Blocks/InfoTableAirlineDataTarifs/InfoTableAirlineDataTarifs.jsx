@@ -123,6 +123,8 @@ function InfoTableAirlineDataTarifs({
                       { label: "Апартаменты",    value: item.prices?.priceApartment },
                       { label: "Студия",          value: item.prices?.priceStudio },
                       { label: "Люкс",            value: item.prices?.priceLuxe },
+                      { label: "Комфорт",          value: item.prices?.priceComfort },
+                      { label: "Улучшенный комфорт", value: item.prices?.priceImprovedComfort },
                       { label: "Одноместный",     value: item.prices?.priceOneCategory },
                       { label: "Двухместный",     value: item.prices?.priceTwoCategory },
                       { label: "Трёхместный",     value: item.prices?.priceThreeCategory },
@@ -131,6 +133,8 @@ function InfoTableAirlineDataTarifs({
                       { label: "Шестиместный",    value: item.prices?.priceSixCategory },
                       { label: "Семиместный",     value: item.prices?.priceSevenCategory },
                       { label: "Восьмиместный",   value: item.prices?.priceEightCategory },
+                      { label: "Девятиместный",   value: item.prices?.priceNineCategory },
+                      { label: "Десятиместный",   value: item.prices?.priceTenCategory },
                     ]
                       .filter(({ value }) => value !== undefined)
                       .sort((a, b) => (b.value > 0 ? 1 : 0) - (a.value > 0 ? 1 : 0))
@@ -172,12 +176,13 @@ function InfoTableAirlineDataTarifs({
                       items={item.geography}
                       renderChip={(geo, i) => {
                         const city = geo.cityRef?.city || geo.city;
-                        const region = geo.cityRef?.region || geo.region;
+                        const region =
+                          geo.regionRef?.name || geo.cityRef?.region || geo.region;
                         const label = city
                           ? region ? `${city} (${region})` : city
                           : region || geo.country || "—";
                         return (
-                          <div key={geo.cityId || region || geo.country || i} className={classes.airportChip}>
+                          <div key={geo.cityId || geo.regionId || region || geo.country || i} className={classes.airportChip}>
                             <div className={classes.airportInfo}>
                               <span className={classes.airportCity}>{label}</span>
                             </div>

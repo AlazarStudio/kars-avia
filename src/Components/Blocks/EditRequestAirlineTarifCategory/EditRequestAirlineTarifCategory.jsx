@@ -70,6 +70,10 @@ function EditRequestAirlineTarifCategory({
       priceLuxe: tarif?.prices?.priceLuxe ?? 0,
       priceApartment: tarif?.prices?.priceApartment ?? 0,
       priceStudio: tarif?.prices?.priceStudio ?? 0,
+      priceComfort: tarif?.prices?.priceComfort ?? 0,
+      priceImprovedComfort: tarif?.prices?.priceImprovedComfort ?? 0,
+      priceNineCategory: tarif?.prices?.priceNineCategory ?? 0,
+      priceTenCategory: tarif?.prices?.priceTenCategory ?? 0,
       breakfast: tarif?.mealPrice?.breakfast ?? 0,
       dinner: tarif?.mealPrice?.dinner ?? 0,
       lunch: tarif?.mealPrice?.lunch ?? 0,
@@ -91,6 +95,10 @@ function EditRequestAirlineTarifCategory({
     priceLuxe: 0,
     priceApartment: 0,
     priceStudio: 0,
+    priceComfort: 0,
+    priceImprovedComfort: 0,
+    priceNineCategory: 0,
+    priceTenCategory: 0,
     breakfast: 0,
     dinner: 0,
     lunch: 0,
@@ -214,11 +222,11 @@ function EditRequestAirlineTarifCategory({
   const handleSubmit = async (e) => {
     if (isEditing) {
       e.preventDefault();
-      // const geographyInput = rowsToGeographyInput(formData.geography);
-      // if (geographyInput.length === 0 && (formData.airportIds?.length || 0) === 0) {
-      //   showAlert("Укажите хотя бы один город/регион или аэропорт — иначе тариф не будет применяться.");
-      //   return;
-      // }
+      const geographyInput = rowsToGeographyInput(formData.geography);
+      if (geographyInput.length === 0 && (formData.airportIds?.length || 0) === 0) {
+        showAlert("Укажите хотя бы один город/регион или аэропорт — иначе тариф не будет применяться.");
+        return;
+      }
       setIsLoading(true);
 
       try {
@@ -231,7 +239,7 @@ function EditRequestAirlineTarifCategory({
                   id: tarif?.id,
                   name: formData.name,
                   airportIds: formData.airportIds,
-                  // geography: geographyInput,
+                  geography: geographyInput,
                   prices: {
                     priceOneCategory: parseFloat(formData.priceOneCategory),
                     priceTwoCategory: parseFloat(formData.priceTwoCategory),
@@ -244,6 +252,10 @@ function EditRequestAirlineTarifCategory({
                     priceLuxe: parseFloat(formData.priceLuxe),
                     priceApartment: parseFloat(formData.priceApartment),
                     priceStudio: parseFloat(formData.priceStudio),
+                    priceComfort: parseFloat(formData.priceComfort),
+                    priceImprovedComfort: parseFloat(formData.priceImprovedComfort),
+                    priceNineCategory: parseFloat(formData.priceNineCategory),
+                    priceTenCategory: parseFloat(formData.priceTenCategory),
                   },
                   mealPrice: {
                     breakfast: parseFloat(formData.breakfast),
@@ -450,13 +462,13 @@ function EditRequestAirlineTarifCategory({
                 )}
               </div>
 
-              {/* <TariffGeographyList
+              <TariffGeographyList
                 value={formData.geography}
                 onChange={(rows) => {
                   setIsEdited(true);
                   setFormData((prev) => ({ ...prev, geography: rows }));
                 }}
-              /> */}
+              />
 
               {[
                 { key: "priceOneCategory", title: "Стоимость одноместного" },
@@ -473,7 +485,11 @@ function EditRequestAirlineTarifCategory({
                   key: "priceEightCategory",
                   title: "Стоимость восьмиместного",
                 },
+                { key: "priceNineCategory", title: "Стоимость девятиместного" },
+                { key: "priceTenCategory", title: "Стоимость десятиместного" },
                 { key: "priceLuxe", title: "Стоимость люкса" },
+                { key: "priceComfort", title: "Стоимость комфорт" },
+                { key: "priceImprovedComfort", title: "Стоимость улучшенный комфорт" },
                 { key: "priceApartment", title: "Стоимость апартаментов" },
                 { key: "priceStudio", title: "Стоимость студии" },
                 { key: "breakfast", title: "Завтрак" },
