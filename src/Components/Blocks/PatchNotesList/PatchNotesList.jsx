@@ -1,9 +1,10 @@
 import { useState, useEffect, useMemo } from "react";
 import classes from "./PatchNotesList.module.css";
 import Header from "../Header/Header";
-import { useQuery } from "@apollo/client";
+import { useQuery, useMutation } from "@apollo/client";
 import {
   convertToDate,
+  CREATE_PATCH_NOTE,
   GET_ALL_PATCH_NOTES,
   getCookie,
 } from "../../../../graphQL_requests";
@@ -15,12 +16,26 @@ import CreateRequestPatchNote from "../CreateRequestPatchNote/CreateRequestPatch
 import EditRequestPatchNote from "../EditRequestPatchNote/EditRequestPatchNote";
 import DateRangeModalSelector from "../DateRangeModalSelector/DateRangeModalSelector";
 import Button from "../../Standart/Button/Button";
+import { useToast } from "../../../contexts/ToastContext";
+import { useDialog } from "../../../contexts/DialogContext";
+import patchNotesSeed from "../../../../scripts/patchNotes.data.mjs";
 
 function PatchNotesList({ user }) {
   const token = getCookie("token");
+  const { success, error: notifyError, info } = useToast();
+  const { confirm: confirmDialog } = useDialog();
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [companyData, setCompanyData] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
+  const [importing, setImporting] = useState(false);
+
+  const [importPatchNote] = useMutation(CREATE_PATCH_NOTE, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
 
   const [dateRange, setDateRange] = useState({
     startDate: null,
@@ -60,6 +75,51 @@ function PatchNotesList({ user }) {
     setShowCreateSidebar(!showCreateSidebar);
   };
 
+  // Массовый импорт патч-нот из seed-файла (только суперадмин).
+  // Токен берётся из cookie, существующие по названию пропускаются.
+  const handleImportAll = async () => {
+    const existingNames = new Set(companyData.map((p) => p.name));
+    const toCreate = patchNotesSeed.filter((n) => !existingNames.has(n.name));
+
+    if (toCreate.length === 0) {
+      info("Все патч-ноты уже добавлены.");
+      return;
+    }
+
+    const ok = await confirmDialog(
+      `Создать ${toCreate.length} патч-нот? Существующие по названию будут пропущены.`
+    );
+    if (!ok) return;
+
+    setImporting(true);
+    let created = 0;
+    let failed = 0;
+    for (const note of toCreate) {
+      try {
+        await importPatchNote({
+          variables: {
+            data: {
+              name: note.name,
+              description: note.description,
+              date: note.date,
+            },
+          },
+        });
+        created += 1;
+      } catch {
+        failed += 1;
+      }
+    }
+    setImporting(false);
+    refetch();
+
+    if (failed === 0) {
+      success(`Импортировано патч-нот: ${created}.`);
+    } else {
+      notifyError(`Импортировано ${created}, ошибок ${failed}.`);
+    }
+  };
+
   const handleSearch = (e) => {
     const query = e.target.value;
     setSearchQuery(query);
@@ -91,6 +151,8 @@ function PatchNotesList({ user }) {
       return matchesSearch && matchesDate;
     });
   }, [companyData, dateRange, searchQuery]);
+
+  console.log("filteredRequests", filteredRequests);
 
   const activeFiltersCount = useMemo(() => {
     let count = 0;
@@ -126,6 +188,16 @@ function PatchNotesList({ user }) {
           />
           {user.role === roles.superAdmin && (
             <div className={classes.searchActions}>
+              <Button
+                onClick={handleImportAll}
+                padding="0 18px"
+                backgroundcolor="#fff"
+                color="#0057C3"
+                border="1px solid #0057C3"
+                disabled={importing}
+              >
+                {importing ? "Импорт…" : "Импортировать всё"}
+              </Button>
               <Button onClick={toggleCreateSidebar} padding="0 18px">
                 Добавить патч
               </Button>

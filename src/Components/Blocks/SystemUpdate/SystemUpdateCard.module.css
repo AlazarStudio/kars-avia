@@ -89,6 +89,19 @@
 /* список */
 .list {
   padding: 14px 28px 8px;
+  max-height: 46vh;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.list::-webkit-scrollbar {
+  width: 6px;
+}
+.list::-webkit-scrollbar-thumb {
+  background: #d5dbe8;
+  border-radius: 999px;
+}
+.list::-webkit-scrollbar-track {
+  background: transparent;
 }
 .row {
   display: flex;

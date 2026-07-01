@@ -167,7 +167,15 @@ function InfoTableAllDataTarifs({
                                     style={{width:"fit-content", height:"fit-content"}}
                                     onClick={() => onEditRow ? onEditRow(item.id) : handleObject(item.id)}
                                 />
-                                {item.isExpired && onArchiveContract && (
+                                {/* {item.isExpired && onArchiveContract && (
+                                  <span title="Перенести в архив" style={{ display: "flex" }}>
+                                    <ArchiveIcon
+                                        cursor="pointer"
+                                        onClick={() => onArchiveContract(item)}
+                                    />
+                                  </span>
+                                )} */}
+                                {onArchiveContract && (
                                   <span title="Перенести в архив" style={{ display: "flex" }}>
                                     <ArchiveIcon
                                         cursor="pointer"
