@@ -25,6 +25,7 @@ import { useWindowSize } from "../../hooks/useWindowSize";
 import { roles } from "../../roles";
 import {
   canCreateRequest as canCreateRequestAccess,
+  canAccessMenu,
   getDispatcherAccess,
   hasAccessMenu,
 } from "../../utils/access";
@@ -59,6 +60,8 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
     user
   );
   const canCreateRequest = canCreateRequestAccess(user, accessMenu);
+  // Просмотр карточки заявки по requestMenu; суперадмин — полный доступ
+  // const canViewRequest = canAccessMenu(accessMenu, "requestMenu", user);
 
   const [checkRoomsType, setCheckRoomsType] = useState(false);
   const [hasInitialLoadCompleted, setHasInitialLoadCompleted] = useState(false);
@@ -1614,7 +1617,7 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
         onConfirm={confirmBooking}
         request={selectedRequest}
       />
-      {hasAccessMenu(accessMenu, "requestMenu") && (
+      {canAccessMenu(accessMenu, "requestMenu", user) && (
         <ExistRequest
           show={showRequestSidebar}
           onClose={() => setShowRequestSidebar(false)}

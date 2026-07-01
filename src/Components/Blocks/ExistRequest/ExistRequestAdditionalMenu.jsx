@@ -38,7 +38,6 @@ function ExistRequestAdditionalMenu({
   const showCancel =
     canUpdateActions &&
     formData.status !== "canceled" &&
-    formData.status !== "archived" &&
     activeTab !== "Комментарии" &&
     activeTab !== "История";
 

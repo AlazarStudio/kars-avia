@@ -65,7 +65,7 @@ const SuperAdminHotelContent = ({
 
         <TabPanel className={classes.tabPanel} forceRender={false}>
           <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
-            <HotelShahmatkaTab id={id} />
+            <HotelShahmatkaTab id={id} user={user} />
           </Suspense>
         </TabPanel>
 

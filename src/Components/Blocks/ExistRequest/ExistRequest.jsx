@@ -1099,7 +1099,7 @@ function ExistRequest({
                 )} */}
             </div>
             <div className={classes.requestTitle_close}>
-              {formData.status !== 'canceled' && formData.status !== "archived" && (
+              {formData.status !== 'canceled' && (
                 <ExistRequestAdditionalMenu
                   anchorEl={anchorEl}
                   onOpen={handleMenuOpen}

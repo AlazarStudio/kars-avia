@@ -22,7 +22,7 @@
 import patchNotes from "./patchNotes.data.mjs";
 
 const ENDPOINT = process.env.KARS_GRAPHQL || "https://devbackend.karsavia.ru:443/graphql";
-const TOKEN = process.env.KARS_TOKEN || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWJqZWN0VHlwZSI6IlVTRVIiLCJ1c2VySWQiOiI2N2I1ZDQyM2Y0NzE2MGQxZjM3Zjc0OGIiLCJyb2xlIjoiU1VQRVJBRE1JTiIsImhvdGVsSWQiOm51bGwsImFpcmxpbmVJZCI6bnVsbCwiYWlybGluZURlcGFydG1lbnRJZCI6bnVsbCwiZGlzcGF0Y2hlckRlcGFydG1lbnRJZCI6bnVsbCwicmVwcmVzZW50YXRpdmVEZXBhcnRtZW50SWQiOm51bGwsInNlc3Npb25Ub2tlbiI6IjJhNDE5ZTdkLTc0ZDAtNGY5NS1iMGYzLWVkYTViNWJkMzIxMCIsImlhdCI6MTc4Mjg5NzUyNCwiZXhwIjoxNzgyOTgzOTI0fQ.nr5xfS6aR84gDQD0X-PopHiMSlpBi9tZ5TjgY_TRW18";
+const TOKEN = process.env.KARS_TOKEN || "";
 
 const args = process.argv.slice(2);
 const DRY_RUN = args.includes("--dry-run");

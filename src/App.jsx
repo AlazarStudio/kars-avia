@@ -214,7 +214,7 @@ function App() {
               }
             /> */}
 
-            <Route path="/newPlacement/:idHotel" element={<NewPlacement />} />
+            {/* <Route path="/newPlacement/:idHotel" element={<NewPlacement />} /> */}
             <Route path="/newPlacementV2/:idHotel" element={<NewPlacementV2 />} />
             <Route path="/hotel-pms" element={<HotelPMS />} />
             <Route
