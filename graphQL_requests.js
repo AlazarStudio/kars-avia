@@ -5308,6 +5308,7 @@ export const GET_AIRLINE_TARIFS = gql`
         }
         id
         name
+        individual
         prices {
           priceApartment
           priceStudio
@@ -7125,6 +7126,7 @@ export const GET_ALL_TARIFFS = gql`
       name
       airlinePrices {
         id
+        individual
         prices {
           priceApartment
           priceStudio

@@ -287,6 +287,27 @@
     color: #0057C3;
 }
 
+.typeBadge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+}
+
+.typeBadgeIndividual {
+    background: #e6f1fb;
+    color: #0057c3;
+}
+
+.typeBadgeShared {
+    background: #efedfb;
+    color: #5b4cc4;
+}
+
 .expandButton {
     display: flex;
     align-items: center;

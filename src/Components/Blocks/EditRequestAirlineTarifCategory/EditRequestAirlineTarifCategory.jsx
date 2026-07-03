@@ -14,7 +14,8 @@ import { useMutation, useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import TariffGeographyList from "../TariffGeographyList/TariffGeographyList.jsx";
-import { geographyToRows, rowsToGeographyInput, findDuplicateGeoRow } from "../../../utils/airlineTariffGeography.js";
+import ContractTypeToggle from "../ContractTypeToggle/ContractTypeToggle.jsx";
+import { geographyToRows, rowsToGeographyInput, findDuplicateGeoRow, getContractType, extractGeoConflictMessage } from "../../../utils/airlineTariffGeography.js";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
@@ -104,6 +105,8 @@ function EditRequestAirlineTarifCategory({
   }));
   const [isEdited, setIsEdited] = useState(false);
 
+  const [contractType, setContractType] = useState("individual");
+
   const [airports, setAirports] = useState([]); // Список аэропортов
   const sidebarRef = useRef();
   const menuRef = useRef(null);
@@ -142,6 +145,21 @@ function EditRequestAirlineTarifCategory({
     return set;
   }, [addTarif, tarif?.id]);
 
+  const usedGeo = useMemo(() => {
+    const regionIds = new Set();
+    const cityIds = new Set();
+    (addTarif || []).forEach((contract) => {
+      if (contract?.id === tarif?.id) return; // свой договор — не блокируем
+      (contract?.geography || []).forEach((g) => {
+        const cityId = g?.cityId || g?.cityRef?.id;
+        const regionId = g?.regionId || g?.regionRef?.id;
+        if (cityId) cityIds.add(String(cityId));
+        else if (regionId) regionIds.add(String(regionId));
+      });
+    });
+    return { regionIds: [...regionIds], cityIds: [...cityIds] };
+  }, [addTarif, tarif?.id]);
+
   const [skippedAirports, setSkippedAirports] = useState([]);
 
   const [isEditing, setIsEditing] = useState(false);
@@ -149,6 +167,7 @@ function EditRequestAirlineTarifCategory({
   useEffect(() => {
     if (show && tarif) {
       setFormData(getInitialFormData());
+      setContractType(getContractType(tarif));
       setIsEdited(false);
       setIsEditing(initialEditMode);
       setSkippedAirports([]);
@@ -157,8 +176,9 @@ function EditRequestAirlineTarifCategory({
 
   const resetForm = useCallback(() => {
     setFormData(getInitialFormData());
+    setContractType(getContractType(tarif));
     setIsEdited(false);
-  }, [getInitialFormData]);
+  }, [getInitialFormData, tarif]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
@@ -230,20 +250,28 @@ function EditRequestAirlineTarifCategory({
     if (isEditing) {
       e.preventDefault();
       const geographyInput = rowsToGeographyInput(formData.geography);
-      if (geographyInput.length === 0 && (formData.airportIds?.length || 0) === 0) {
-        showAlert("Укажите хотя бы один город/регион или аэропорт — иначе тариф не будет применяться.");
-        return;
-      }
+      const isIndividual = contractType === "individual";
 
-      const duplicateGeo = findDuplicateGeoRow(formData.geography);
-      if (duplicateGeo) {
-        const what = duplicateGeo.kind === "city" ? "Город" : "Регион";
-        showAlert(
-          duplicateGeo.label
-            ? `${what} «${duplicateGeo.label}» уже добавлен в тариф.`
-            : `${what} уже добавлен в тариф.`
-        );
-        return;
+      if (isIndividual) {
+        if ((formData.airportIds?.length || 0) === 0) {
+          showAlert("Выберите хотя бы один аэропорт.");
+          return;
+        }
+      } else {
+        if (geographyInput.length === 0) {
+          showAlert("Выберите хотя бы один регион или город.");
+          return;
+        }
+        const duplicateGeo = findDuplicateGeoRow(formData.geography);
+        if (duplicateGeo) {
+          const what = duplicateGeo.kind === "city" ? "Город" : "Регион";
+          showAlert(
+            duplicateGeo.label
+              ? `${what} «${duplicateGeo.label}» уже добавлен в тариф.`
+              : `${what} уже добавлен в тариф.`
+          );
+          return;
+        }
       }
 
       setIsLoading(true);
@@ -257,8 +285,9 @@ function EditRequestAirlineTarifCategory({
                 {
                   id: tarif?.id,
                   name: formData.name,
-                  airportIds: formData.airportIds,
-                  geography: geographyInput,
+                  individual: isIndividual,
+                  airportIds: isIndividual ? formData.airportIds : [],
+                  geography: isIndividual ? [] : geographyInput,
                   prices: {
                     priceOneCategory: parseFloat(formData.priceOneCategory),
                     priceTwoCategory: parseFloat(formData.priceTwoCategory),
@@ -294,7 +323,8 @@ function EditRequestAirlineTarifCategory({
         success("Изменение соглашения прошло успешно.");
       } catch (error) {
         setIsLoading(false);
-        notifyError("Произошла ошибка при изменении соглашения.");
+        const geoConflict = extractGeoConflictMessage(error);
+        notifyError(geoConflict || "Произошла ошибка при изменении соглашения.");
         console.error("Произошла ошибка при выполнении запроса:", error);
       }
     }
@@ -379,6 +409,18 @@ function EditRequestAirlineTarifCategory({
   //   formData.airportIds.includes(option.value)
   // ));
 
+  const geoHasData = rowsToGeographyInput(formData.geography).length > 0;
+  const airportsHasData = (formData.airportIds?.length || 0) > 0;
+  const inactiveHasData = contractType === "individual" ? geoHasData : airportsHasData;
+  const switchHint =
+    contractType === "individual"
+      ? "При сохранении договор станет только по аэропортам; регионы и города будут очищены."
+      : "При сохранении договор станет только по регионам/городам; аэропорты будут очищены.";
+
+  const allAirportsUsed =
+    airportOptions.length > 0 &&
+    airportOptions.every((o) => usedAirportIds.has(String(o.value)));
+
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
       <div className={classes.requestTitle}>
@@ -430,10 +472,41 @@ function EditRequestAirlineTarifCategory({
                 )}
               </div>
 
+              {isEditing ? (
+                <div className={classes.requestDataInfo_block}>
+                  <div className={classes.requestDataInfo_title}>Тип договора</div>
+                  <ContractTypeToggle
+                    value={contractType}
+                    onChange={(t) => {
+                      setIsEdited(true);
+                      setContractType(t);
+                    }}
+                  />
+                  {inactiveHasData && (
+                    <div className={classes.airportHint}>{switchHint}</div>
+                  )}
+                </div>
+              ) : (
+                <div className={classes.requestDataInfo}>
+                  <div className={classes.requestDataInfo_title}>Тип договора</div>
+                  <div className={classes.requestDataInfo_desc}>
+                    {contractType === "individual"
+                      ? "Индивидуальный (по аэропортам)"
+                      : "Общий (регионы и города)"}
+                  </div>
+                </div>
+              )}
+
+              {contractType === "individual" && (
               <div className={classes.requestDataInfo_block}>
                 <div className={classes.requestDataInfo_title}>Аэропорты</div>
                 {isEditing ? (
                   <div className={classes.dropdown}>
+                    {allAirportsUsed && (
+                      <div className={classes.airportHint}>
+                        Все аэропорты уже используются в других договорах — свободных нет.
+                      </div>
+                    )}
                     {skippedAirports.length > 0 && (
                       <div className={classes.airportHint}>
                         Не выбраны:{" "}
@@ -496,14 +569,20 @@ function EditRequestAirlineTarifCategory({
                   </div>
                 )}
               </div>
+              )}
 
-              <TariffGeographyList
-                value={formData.geography}
-                onChange={(rows) => {
-                  setIsEdited(true);
-                  setFormData((prev) => ({ ...prev, geography: rows }));
-                }}
-              />
+              {contractType === "shared" && (
+                <TariffGeographyList
+                  value={formData.geography}
+                  disabled={!isEditing}
+                  usedRegionIds={usedGeo.regionIds}
+                  usedCityIds={usedGeo.cityIds}
+                  onChange={(rows) => {
+                    setIsEdited(true);
+                    setFormData((prev) => ({ ...prev, geography: rows }));
+                  }}
+                />
+              )}
 
               {[
                 { key: "priceOneCategory", title: "Стоимость одноместного" },

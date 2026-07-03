@@ -165,6 +165,7 @@ export default function FapHotelPage({
   canEdit = true,
   showLinks = true,
   isExtHotel = false,
+  showTariffs = true,
 }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
@@ -259,19 +260,28 @@ export default function FapHotelPage({
   const hotelTariffs = useMemo(() => {
     const h = hotelTariffData?.hotel;
     if (!h || !Array.isArray(h.roomKind)) return [];
-    const meals = h.mealPriceForAirReq ? h.mealPriceForAir : h.mealPrice;
-    const b = toNum(meals?.breakfast), l = toNum(meals?.lunch), d = toNum(meals?.dinner);
-    return h.roomKind.map((rk) => ({
-      id: rk.id,
-      name: rk.name || "Без названия",
-      source: "hotel",
-      draft: false,
-      breakfast: b,
-      lunch: l,
-      dinner: d,
-      foodCost: b + l + d,
-      accommodationCost: rk.priceForAirReq ? toNum(rk.priceForAirline ?? rk.price) : toNum(rk.price),
-    }));
+    // Тарифы гостиницы берём только по ценам для авиакомпании (АК).
+    // Питание входит в каждый тариф, поэтому если АК-цены питания не заполнены
+    // (стоят «по запросу» или отсутствуют) — тарифов из гостиницы нет вообще.
+    if (h.mealPriceForAirReq || !h.mealPriceForAir) return [];
+    const b = toNum(h.mealPriceForAir.breakfast);
+    const l = toNum(h.mealPriceForAir.lunch);
+    const d = toNum(h.mealPriceForAir.dinner);
+    return h.roomKind
+      // Показываем тариф только с заполненной АК-ценой проживания
+      // (не «по запросу» и больше нуля). Иначе тариф неполный — пропускаем.
+      .filter((rk) => !rk.priceForAirReq && toNum(rk.priceForAirline) > 0)
+      .map((rk) => ({
+        id: rk.id,
+        name: rk.name || "Без названия",
+        source: "hotel",
+        draft: false,
+        breakfast: b,
+        lunch: l,
+        dinner: d,
+        foodCost: b + l + d,
+        accommodationCost: toNum(rk.priceForAirline),
+      }));
   }, [hotelTariffData]);
 
   const hotelTariffsReady = !hotel?.hotelId || !hotelTariffLoading;
@@ -1595,14 +1605,16 @@ export default function FapHotelPage({
           Гости
           <span className={classes.tabBadge}>{placed}</span>
         </button>
-        <button
-          type="button"
-          className={`${classes.tab} ${activeTab === "tariffs" ? classes.tabActive : ""}`}
-          onClick={() => setActiveTab("tariffs")}
-        >
-          Тарифы
-          <span className={classes.tabBadge}>{tariffs.filter((t) => !t.draft).length}</span>
-        </button>
+        {showTariffs && (
+          <button
+            type="button"
+            className={`${classes.tab} ${activeTab === "tariffs" ? classes.tabActive : ""}`}
+            onClick={() => setActiveTab("tariffs")}
+          >
+            Тарифы
+            <span className={classes.tabBadge}>{tariffs.filter((t) => !t.draft).length}</span>
+          </button>
+        )}
         <button
           type="button"
           className={`${classes.tab} ${activeTab === "report" ? classes.tabActive : ""}`}
@@ -1702,7 +1714,7 @@ export default function FapHotelPage({
           </div>
         )}
 
-        {activeTab === "tariffs" && (
+        {showTariffs && activeTab === "tariffs" && (
           <div className={classes.tariffsPane}>
             <div className={classes.tariffsHead}>
               <p className={classes.tariffsHint}>

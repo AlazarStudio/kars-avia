@@ -4,6 +4,7 @@ import InfoTable from "../InfoTable/InfoTable";
 import { roles } from "../../../roles";
 import DeleteIcon from "../../../shared/icons/DeleteIcon";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
+import { getContractType } from "../../../utils/airlineTariffGeography.js";
 
 const SHOW_LIMIT = 20;
 
@@ -65,7 +66,9 @@ function InfoTableAirlineDataTarifs({
   return (
     <div className={classes.tarifsWrapper}>
       <div className={classes.contractsContainer}>
-        {requests.map((item, index) => (
+        {requests.map((item, index) => {
+          const type = getContractType(item);
+          return (
           <div className={classes.contractRow} key={index}>
             {/* Заголовок договора и иконки действий */}
             <div className={classes.contractRowHeader}>
@@ -95,6 +98,15 @@ function InfoTableAirlineDataTarifs({
                   onClick={() => toggleRow(index)}
                 >
                   {item.name}
+                </span>
+                <span
+                  className={`${classes.typeBadge} ${
+                    type === "individual"
+                      ? classes.typeBadgeIndividual
+                      : classes.typeBadgeShared
+                  }`}
+                >
+                  {type === "individual" ? "Индивидуальный" : "Общий"}
                 </span>
               </div>
               <div className={classes.contractRowActions}>
@@ -169,7 +181,7 @@ function InfoTableAirlineDataTarifs({
                 </div>
 
                 {/* Блок географии (если есть) */}
-                {Array.isArray(item.geography) && item.geography.length > 0 && (
+                {type === "shared" && Array.isArray(item.geography) && item.geography.length > 0 && (
                   <>
                     <div className={classes.airportListTitle}>География</div>
                     <ChipsList
@@ -193,7 +205,7 @@ function InfoTableAirlineDataTarifs({
                   </>
                 )}
                 {/* Блок аэропортов (если есть) */}
-                {item.airports && item.airports.length > 0 && (
+                {type === "individual" && item.airports && item.airports.length > 0 && (
                   <>
                     <div className={classes.airportListTitle}>Аэропорты</div>
                     <ChipsList
@@ -221,7 +233,8 @@ function InfoTableAirlineDataTarifs({
               </>
             )}
           </div>
-        ))}
+          );
+        })}
       </div>
 
       {/* <InfoTable isScroll={true}>

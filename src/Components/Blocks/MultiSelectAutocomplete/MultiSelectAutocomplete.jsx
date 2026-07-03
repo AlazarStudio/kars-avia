@@ -52,12 +52,14 @@ function MultiSelectAutocomplete({
   );
 
   const baseOptions = options ?? [];
-  const resolvedGetOptionDisabled = getOptionDisabled
-    ? (option) => (option?.isSelectAll ? false : getOptionDisabled(option))
-    : undefined;
-  const enabledBaseOptions = resolvedGetOptionDisabled
-    ? baseOptions.filter((opt) => !resolvedGetOptionDisabled(opt))
+  const enabledBaseOptions = getOptionDisabled
+    ? baseOptions.filter((opt) => !getOptionDisabled(opt))
     : baseOptions;
+  // «Выбрать всё» блокируем, когда выбирать нечего (все опции заблокированы).
+  const noneSelectable = !!getOptionDisabled && enabledBaseOptions.length === 0;
+  const resolvedGetOptionDisabled = getOptionDisabled
+    ? (option) => (option?.isSelectAll ? noneSelectable : getOptionDisabled(option))
+    : undefined;
   const hasObjectOptions =
     baseOptions.length > 0 &&
     typeof baseOptions[0] === "object" &&

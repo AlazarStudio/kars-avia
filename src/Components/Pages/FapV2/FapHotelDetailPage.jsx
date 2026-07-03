@@ -80,6 +80,7 @@ export default function FapHotelDetailPage({ user }) {
               canEdit={canEdit}
               showLinks={!isAirlineRole && !isExtHotel}
               isExtHotel={isExtHotel}
+              showTariffs={!isAirlineRole}
             />
           </div>
         </div>

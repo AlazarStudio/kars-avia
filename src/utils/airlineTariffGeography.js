@@ -157,3 +157,78 @@ export function selectionToGeographyRows(regions = [], cities = []) {
   }
   return rows;
 }
+
+/**
+ * Тип договора авиакомпании: "individual" (по аэропортам) | "shared" (регионы/города).
+ * Явный флаг individual===true -> individual; иначе выводим из данных:
+ * только гео -> shared; аэропорты / смешанные / пусто -> individual (аэропорт приоритетнее).
+ * Устойчиво к legacy (у которых individual по умолчанию false): опираемся на массивы.
+ * @param {object} price AirlinePrice ({ airports?, geography?, individual? })
+ * @returns {"individual"|"shared"}
+ */
+export function getContractType(price) {
+  if (price?.individual === true) return "individual";
+  const hasAirports = Array.isArray(price?.airports) && price.airports.length > 0;
+  const hasGeo = Array.isArray(price?.geography) && price.geography.length > 0;
+  if (hasGeo && !hasAirports) return "shared";
+  return "individual";
+}
+
+/**
+ * Достаёт из ApolloError понятное сообщение гео-конфликта, если бэкенд его
+ * вернул (сообщение начинается с «Регион» или «Город», напр.
+ * «Регион «Ставропольский край» уже используется в другом тарифе»).
+ * Иначе null — тогда показываем общий текст ошибки.
+ * @param {*} error
+ * @returns {string|null}
+ */
+export function extractGeoConflictMessage(error) {
+  const msg = (
+    error?.graphQLErrors?.[0]?.message ||
+    error?.message ||
+    ""
+  ).trim();
+  return /^(Регион|Город)/.test(msg) ? msg : null;
+}
+
+/**
+ * Id регионов, недоступных для выбора. Регион недоступен, если он занят
+ * ЦЕЛИКОМ в другом договоре (usedRegionIds) ЛИБО все его города заняты
+ * (usedCityIds). Пока свободен хоть один город региона — регион доступен.
+ * Города к региону сопоставляются по имени (city.region == region.name).
+ * @param {Array} regionOptions [{id,name}]
+ * @param {Array} cityOptions [{id,region}]
+ * @param {Array} usedRegionIds
+ * @param {Array} usedCityIds
+ * @returns {Set<string>}
+ */
+export function computeDisabledRegionIds(
+  regionOptions = [],
+  cityOptions = [],
+  usedRegionIds = [],
+  usedCityIds = []
+) {
+  const usedRegionSet = new Set((usedRegionIds || []).map(String));
+  const usedCitySet = new Set((usedCityIds || []).map(String));
+
+  const cityIdsByRegion = new Map();
+  (cityOptions || []).forEach((c) => {
+    const k = geoNorm(c.region);
+    if (!cityIdsByRegion.has(k)) cityIdsByRegion.set(k, []);
+    cityIdsByRegion.get(k).push(String(c.id));
+  });
+
+  const disabled = new Set();
+  (regionOptions || []).forEach((r) => {
+    const id = String(r.id);
+    if (usedRegionSet.has(id)) {
+      disabled.add(id);
+      return;
+    }
+    const ids = cityIdsByRegion.get(geoNorm(r.name)) || [];
+    if (ids.length > 0 && ids.every((cid) => usedCitySet.has(cid))) {
+      disabled.add(id);
+    }
+  });
+  return disabled;
+}
