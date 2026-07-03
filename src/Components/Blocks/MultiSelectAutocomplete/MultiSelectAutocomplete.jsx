@@ -31,6 +31,7 @@ function MultiSelectAutocomplete({
   children,
   showSelectAll = false,
   scriptRunnerId,
+  getOptionDisabled,
   ...props
 }) {
   const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
@@ -51,6 +52,12 @@ function MultiSelectAutocomplete({
   );
 
   const baseOptions = options ?? [];
+  const resolvedGetOptionDisabled = getOptionDisabled
+    ? (option) => (option?.isSelectAll ? false : getOptionDisabled(option))
+    : undefined;
+  const enabledBaseOptions = resolvedGetOptionDisabled
+    ? baseOptions.filter((opt) => !resolvedGetOptionDisabled(opt))
+    : baseOptions;
   const hasObjectOptions =
     baseOptions.length > 0 &&
     typeof baseOptions[0] === "object" &&
@@ -70,8 +77,14 @@ function MultiSelectAutocomplete({
   const handleChange = (event, newValue, reason, details) => {
     if (details?.option?.isSelectAll) {
       const allSelected =
-        (value?.length ?? 0) === baseOptions.length && baseOptions.length > 0;
-      onChange?.(event, allSelected ? [] : [...baseOptions], reason, details);
+        enabledBaseOptions.length > 0 &&
+        (value?.length ?? 0) === enabledBaseOptions.length;
+      onChange?.(
+        event,
+        allSelected ? [] : [...enabledBaseOptions],
+        reason,
+        details
+      );
       return;
     }
     const cleanedValue = Array.isArray(newValue)
@@ -102,6 +115,7 @@ function MultiSelectAutocomplete({
       {...{ [SCRIPT_RUNNER_ID_ATTR]: runnerIds.rootId }}
       multiple={isMultiple || false}
       options={baseOptions}
+      getOptionDisabled={resolvedGetOptionDisabled}
       filterOptions={filterOptions}
       getOptionLabel={getOptionLabel}
       isOptionEqualToValue={isOptionEqualToValue}
@@ -237,8 +251,8 @@ function MultiSelectAutocomplete({
           ? (optionProps, option, { selected }) => {
               const isSelectAllOption = option?.isSelectAll;
               const checked = isSelectAllOption
-                ? (value?.length ?? 0) === baseOptions.length &&
-                  baseOptions.length > 0
+                ? (value?.length ?? 0) === enabledBaseOptions.length &&
+                  enabledBaseOptions.length > 0
                 : selected;
               const label =
                 typeof option === "string" ? option : option?.label ?? "";

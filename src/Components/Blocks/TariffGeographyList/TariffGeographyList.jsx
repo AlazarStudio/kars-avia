@@ -1,72 +1,104 @@
+import { useMemo } from "react";
 import PropTypes from "prop-types";
+import { useQuery } from "@apollo/client";
+import { createFilterOptions } from "@mui/material/Autocomplete";
 import classes from "./TariffGeographyList.module.css";
-import CityRegionPicker from "../CityRegionPicker/CityRegionPicker.jsx";
-import { createEmptyGeoRow } from "../../../utils/airlineTariffGeography.js";
-import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
+import { GET_REGIONS, GET_CITIES, getCookie } from "../../../../graphQL_requests.js";
+import {
+  geographyRowsToSelection,
+  selectionToGeographyRows,
+} from "../../../utils/airlineTariffGeography.js";
+
+// Список всех городов может быть большим — ограничиваем выдачу дропдауна.
+const cityFilter = createFilterOptions({ limit: 100 });
 
 /**
- * Редактирование списка гео-привязок тарифа (город или регион в каждой строке).
- * value: Array<{key,cityId,region,country,city}>
- * onChange: (nextRows) => void
+ * Гео-привязка тарифа авиакомпании: два независимых мультиселекта —
+ * «Регионы» (все регионы) и «Города» (все города; выбор не требует региона).
+ * Правило записей (1:1 с rowsToGeographyInput): регион -> {regionId},
+ * город -> {cityId}.
+ *
+ * Контракт пропсов не меняется:
+ *   value: Array<{key,cityId,city,regionId,region,country}>
+ *   onChange: (nextRows) => void
  */
 function TariffGeographyList({ value = [], onChange, disabled = false }) {
-  const updateRow = (index, patch) => {
-    const next = value.map((row, i) => (i === index ? { ...row, ...patch } : row));
-    onChange(next);
-  };
+  const token = getCookie("token");
 
-  const removeRow = (index) => {
-    onChange(value.filter((_, i) => i !== index));
-  };
+  const regionsQuery = useQuery(GET_REGIONS, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const citiesQuery = useQuery(GET_CITIES, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
 
-  const addRow = () => {
-    onChange([...value, createEmptyGeoRow()]);
-  };
+  const regionOptions = useMemo(
+    () =>
+      (regionsQuery.data?.regions || []).map((r) => ({
+        id: r.id,
+        label: r.name,
+        name: r.name,
+      })),
+    [regionsQuery.data]
+  );
+
+  const cityOptions = useMemo(
+    () =>
+      (citiesQuery.data?.citys || []).map((c) => ({
+        id: c.id,
+        label: c.region ? `${c.city} (${c.region})` : c.city,
+        city: c.city,
+        region: c.region || "",
+      })),
+    [citiesQuery.data]
+  );
+
+  const { selectedRegions, selectedCities } = useMemo(
+    () => geographyRowsToSelection(value, regionOptions, cityOptions),
+    [value, regionOptions, cityOptions]
+  );
+
+  const emit = (regions, cities) => onChange(selectionToGeographyRows(regions, cities));
+
+  const hasSelection = selectedRegions.length > 0 || selectedCities.length > 0;
 
   return (
     <div className={classes.wrapper}>
       <label>Географическая привязка</label>
-      {value.length === 0 && (
+      {!hasSelection && (
         <div className={classes.empty}>
           Не задана — тариф сработает только по аэропортам.
         </div>
       )}
-      {value.map((row, index) => (
-        <div className={classes.row} key={row.key}>
-          <div className={classes.picker}>
-            <CityRegionPicker
-              allowEmpty
-              disabled={disabled}
-              value={{
-                regionId: row.regionId,
-                region: row.region,
-                cityId: row.cityId,
-                city: row.city,
-              }}
-              onChange={({ regionId, region, cityId, city }) =>
-                updateRow(index, {
-                  regionId: regionId || null,
-                  region: region || null,
-                  cityId: cityId || null,
-                  city: city || null,
-                })
-              }
-            />
-          </div>
-          <button
-            type="button"
-            className={classes.removeBtn}
-            onClick={() => removeRow(index)}
-            disabled={disabled}
-            title="Удалить"
-          >
-            <CloseIcon />
-          </button>
-        </div>
-      ))}
-      <button type="button" className={classes.addBtn} onClick={addRow} disabled={disabled}>
-        + Добавить город/регион
-      </button>
+
+      <MultiSelectAutocomplete
+        isMultiple
+        showSelectAll
+        dropdownWidth="100%"
+        label="Регионы"
+        options={regionOptions}
+        value={selectedRegions}
+        onChange={(_e, newRegions) => emit(newRegions || [], selectedCities)}
+        isDisabled={disabled || regionsQuery.loading}
+      />
+
+      <MultiSelectAutocomplete
+        isMultiple
+        showSelectAll
+        dropdownWidth="100%"
+        label="Города"
+        options={cityOptions}
+        value={selectedCities}
+        filterOptions={cityFilter}
+        onChange={(_e, newCities) => emit(selectedRegions, newCities || [])}
+        isDisabled={disabled || citiesQuery.loading}
+      />
+
+      <div className={classes.hint}>
+        Регион — тариф на весь регион. Города можно выбирать отдельно, регион для
+        этого выбирать не нужно.
+      </div>
     </div>
   );
 }

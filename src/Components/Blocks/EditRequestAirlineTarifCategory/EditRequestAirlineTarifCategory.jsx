@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import classes from "./EditRequestAirlineTarifCategory.module.css";
 import Button from "../../Standart/Button/Button.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
@@ -9,13 +9,12 @@ import {
   getCookie,
   UPDATE_AIRLINE_TARIF,
   UPDATE_HOTEL_TARIF,
-  UPDATE_PRICE_TARIFFS,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import TariffGeographyList from "../TariffGeographyList/TariffGeographyList.jsx";
-import { geographyToRows, rowsToGeographyInput } from "../../../utils/airlineTariffGeography.js";
+import { geographyToRows, rowsToGeographyInput, findDuplicateGeoRow } from "../../../utils/airlineTariffGeography.js";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
@@ -118,14 +117,6 @@ function EditRequestAirlineTarifCategory({
     },
   });
 
-  const [updateTariffCategory] = useMutation(UPDATE_PRICE_TARIFFS, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
-
   useEffect(() => {
     if (infoAirports.data) {
       setAirports(infoAirports.data.airports || []);
@@ -135,8 +126,23 @@ function EditRequestAirlineTarifCategory({
   const airportOptions = airports.map((airport) => ({
     value: String(airport.id), // используем value вместо id
     label: `${airport.code} ${airport.name}, город: ${airport.city}`,
+    code: airport.code,
     city: airport.city,
   }));
+
+  const usedAirportIds = useMemo(() => {
+    const set = new Set();
+    (addTarif || []).forEach((contract) => {
+      if (contract?.id === tarif?.id) return; // свой договор — не блокируем
+      (contract?.airports || []).forEach((a) => {
+        const airportId = a?.airport?.id ?? a?.id;
+        if (airportId != null) set.add(String(airportId));
+      });
+    });
+    return set;
+  }, [addTarif, tarif?.id]);
+
+  const [skippedAirports, setSkippedAirports] = useState([]);
 
   const [isEditing, setIsEditing] = useState(false);
 
@@ -145,6 +151,7 @@ function EditRequestAirlineTarifCategory({
       setFormData(getInitialFormData());
       setIsEdited(false);
       setIsEditing(initialEditMode);
+      setSkippedAirports([]);
     }
   }, [show, tarif?.id, getInitialFormData]);
 
@@ -227,10 +234,22 @@ function EditRequestAirlineTarifCategory({
         showAlert("Укажите хотя бы один город/регион или аэропорт — иначе тариф не будет применяться.");
         return;
       }
+
+      const duplicateGeo = findDuplicateGeoRow(formData.geography);
+      if (duplicateGeo) {
+        const what = duplicateGeo.kind === "city" ? "Город" : "Регион";
+        showAlert(
+          duplicateGeo.label
+            ? `${what} «${duplicateGeo.label}» уже добавлен в тариф.`
+            : `${what} уже добавлен в тариф.`
+        );
+        return;
+      }
+
       setIsLoading(true);
 
       try {
-        let response_update_tariff = await updateAirlineTariff({
+        await updateAirlineTariff({
           variables: {
             updateAirlineId: id,
             input: {
@@ -268,14 +287,6 @@ function EditRequestAirlineTarifCategory({
           },
         });
 
-        // await updateTariffCategory({
-        //   variables: {
-        //     input: {
-        //       id: selectedContract.id,
-        //     },
-        //   },
-        // });
-        // onSubmit();
         resetForm();
         onClose();
         setIsLoading(false);
@@ -423,21 +434,45 @@ function EditRequestAirlineTarifCategory({
                 <div className={classes.requestDataInfo_title}>Аэропорты</div>
                 {isEditing ? (
                   <div className={classes.dropdown}>
+                    {skippedAirports.length > 0 && (
+                      <div className={classes.airportHint}>
+                        Не выбраны:{" "}
+                        {skippedAirports
+                          .map((a) => `${a.code} ${a.city}`)
+                          .join(", ")}{" "}
+                        — уже используются в других договорах
+                      </div>
+                    )}
                     <MultiSelectAutocomplete
                       isMultiple={true}
                       showSelectAll={true}
                       dropdownWidth={"100%"}
                       label={"Выберите аэропорты"}
                       options={airportOptions}
+                      getOptionDisabled={(opt) =>
+                        usedAirportIds.has(String(opt.value))
+                      }
                       value={airportOptions.filter((opt) =>
                         formData.airportIds.includes(opt.value),
                       )}
-                      onChange={(event, newValue) => {
+                      onChange={(event, newValue, reason, details) => {
                         setIsEdited(true);
                         setFormData((prev) => ({
                           ...prev,
                           airportIds: (newValue || []).map((opt) => opt.value),
                         }));
+                        if (
+                          details?.option?.isSelectAll &&
+                          (newValue || []).length > 0
+                        ) {
+                          setSkippedAirports(
+                            airportOptions.filter((o) =>
+                              usedAirportIds.has(String(o.value))
+                            )
+                          );
+                        } else {
+                          setSkippedAirports([]);
+                        }
                       }}
                     />
                   </div>

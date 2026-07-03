@@ -9,18 +9,6 @@
 let _geoRowSeq = 0;
 const nextGeoRowKey = () => `geo_row_${++_geoRowSeq}`;
 
-/** Пустая строка для добавления в форму. */
-export function createEmptyGeoRow() {
-  return {
-    key: nextGeoRowKey(),
-    cityId: null,
-    city: null,
-    regionId: null,
-    region: null,
-    country: null,
-  };
-}
-
 /**
  * API geography (массив) -> строки формы.
  * @param {Array|undefined|null} apiGeography
@@ -54,4 +42,118 @@ export function rowsToGeographyInput(rows) {
       return null;
     })
     .filter(Boolean);
+}
+
+/**
+ * Ищет первый дубль в списке гео-строк — для валидации перед сохранением.
+ * Правила 1:1 с бэком (assertNoDuplicateGeography): дубль — это повтор
+ * cityId, либо regionId, либо legacy-имени региона. Город внутри региона и
+ * сам регион дублями НЕ считаются (в input это разные поля).
+ * @param {Array} rows
+ * @returns {{ kind: "city"|"region", label: string|null } | null}
+ */
+export function findDuplicateGeoRow(rows) {
+  if (!Array.isArray(rows)) return null;
+  const seen = new Set();
+  for (const r of rows) {
+    let key;
+    let kind;
+    let label;
+    if (r?.cityId) {
+      key = `c:${r.cityId}`;
+      kind = "city";
+      label = r.city;
+    } else if (r?.regionId) {
+      key = `r:${r.regionId}`;
+      kind = "region";
+      label = r.region;
+    } else if (r?.region) {
+      key = `rn:${r.region.trim().toLowerCase()}`;
+      kind = "region";
+      label = r.region;
+    } else {
+      continue;
+    }
+    if (seen.has(key)) return { kind, label: label || null };
+    seen.add(key);
+  }
+  return null;
+}
+
+const geoNorm = (s) => (s || "").trim().toLowerCase();
+
+/**
+ * Строки value -> выбранные регионы/города для мультиселектов.
+ * Регионы и города НЕЗАВИСИМЫ: строка с cityId/city -> город;
+ * строка с regionId/region (без города) -> регион.
+ * @param {Array} rows
+ * @param {Array} regionOptions [{id,name,...}]
+ * @param {Array} cityOptions [{id,city,region,...}]
+ * @returns {{ selectedRegions: Array, selectedCities: Array }}
+ */
+export function geographyRowsToSelection(rows, regionOptions = [], cityOptions = []) {
+  const regionById = new Map(regionOptions.map((r) => [String(r.id), r]));
+  const regionByName = new Map(regionOptions.map((r) => [geoNorm(r.name), r]));
+  const cityById = new Map(cityOptions.map((c) => [String(c.id), c]));
+  const cityByName = new Map(
+    cityOptions.map((c) => [`${geoNorm(c.city)}|${geoNorm(c.region)}`, c])
+  );
+
+  const regions = [];
+  const regionSeen = new Set();
+  const cities = [];
+  const citySeen = new Set();
+
+  for (const r of rows || []) {
+    if (r?.cityId || r?.city) {
+      let opt = r?.cityId ? cityById.get(String(r.cityId)) : null;
+      if (!opt && r?.city) opt = cityByName.get(`${geoNorm(r.city)}|${geoNorm(r.region)}`);
+      if (opt && !citySeen.has(opt.id)) {
+        cities.push(opt);
+        citySeen.add(opt.id);
+      }
+    } else if (r?.regionId || r?.region) {
+      const opt = r?.regionId
+        ? regionById.get(String(r.regionId))
+        : regionByName.get(geoNorm(r.region));
+      if (opt && !regionSeen.has(opt.id)) {
+        regions.push(opt);
+        regionSeen.add(opt.id);
+      }
+    }
+  }
+
+  return { selectedRegions: regions, selectedCities: cities };
+}
+
+/**
+ * Выбранные регионы/города -> строки value (независимо).
+ * Регион -> строка-регион ({regionId}); город -> строка-город ({cityId}).
+ * @param {Array} regions [{id,name,...}]
+ * @param {Array} cities [{id,city,region,...}]
+ * @returns {Array} rows
+ */
+export function selectionToGeographyRows(regions = [], cities = []) {
+  const rows = [];
+  for (const R of regions) {
+    rows.push({
+      key: `region:${R.id}`,
+      cityId: null,
+      city: null,
+      regionId: R.id,
+      region: R.name,
+      country: null,
+    });
+  }
+  for (const c of cities) {
+    rows.push({
+      key: `city:${c.id}`,
+      cityId: c.id,
+      city: c.city,
+      regionId: null,
+      region: c.region,
+      country: null,
+    });
+  }
+  return rows;
 }
