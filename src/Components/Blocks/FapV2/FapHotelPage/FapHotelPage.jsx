@@ -356,6 +356,7 @@ export default function FapHotelPage({
             phone: p.phone || null,
             roomNumber: null,
             personType: "PASSENGER",
+            personCategory: normalizeCategory(p.personCategory),
             airlinePersonalId: null,
           })),
         },
@@ -413,6 +414,39 @@ export default function FapHotelPage({
     [request?.livingService?.hotels]
   );
   const availableCrew = crewRoster.filter((m) => !assignedCrewIds.has(m.airlinePersonalId));
+
+  const crewPickerItems = availableCrew.map((m) => ({
+    personId: m.airlinePersonalId,
+    fullName: m.fullName,
+    phone: m.phone || null,
+  }));
+
+  const handleCrewCatalogConfirm = async (selected) => {
+    try {
+      setSaving(true);
+      await addPeople({
+        variables: {
+          requestId: request.id,
+          hotelIndex: Number(hotelIndex),
+          people: selected.map((p) => ({
+            fullName: p.fullName,
+            phone: p.phone || null,
+            roomNumber: null,
+            personType: "CREW",
+            airlinePersonalId: p.personId,
+            personCategory: "ADULT",
+          })),
+        },
+      });
+      success(`Добавлено ${selected.length}`);
+      setCatalogOpen(false);
+      onRefetch?.();
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при добавлении");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const otherHotels = useMemo(
     () =>
@@ -1656,6 +1690,16 @@ export default function FapHotelPage({
                   <PlusSvg color="#0057C3" /> Из каталога
                 </button>
               )}
+              {canAdd && personMode === "CREW" && availableCrew.length > 0 && (
+                <button
+                  type="button"
+                  className={classes.primaryBtn}
+                  style={{ background: "#fff", color: "#0057C3", border: "1px solid #0057C3" }}
+                  onClick={() => setCatalogOpen(true)}
+                >
+                  <PlusSvg color="#0057C3" /> Из экипажа
+                </button>
+              )}
             </div>
 
             {selected.length > 0 && (
@@ -2068,11 +2112,12 @@ export default function FapHotelPage({
       <CatalogPickerModal
         open={catalogOpen}
         onClose={() => setCatalogOpen(false)}
-        savedPassengers={savedPassengers}
-        excludeKeys={excludeKeys}
+        savedPassengers={personMode === "CREW" ? crewPickerItems : savedPassengers}
+        excludeKeys={personMode === "CREW" ? undefined : excludeKeys}
         maxSelectable={totalCap > 0 ? Math.max(0, totalCap - placed) : undefined}
         loading={saving}
-        onConfirm={handleCatalogConfirm}
+        onConfirm={personMode === "CREW" ? handleCrewCatalogConfirm : handleCatalogConfirm}
+        title={personMode === "CREW" ? "Выбрать из экипажа заявки" : undefined}
       />
 
       <Dialog

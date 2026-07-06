@@ -3624,6 +3624,7 @@ export const GET_PASSENGER_REQUEST = gql`
         phone
         seat
         personType
+        personCategory
         airlinePersonalId
         addedAt
       }

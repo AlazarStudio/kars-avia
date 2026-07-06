@@ -241,7 +241,7 @@ export default function FapDriverPage({
             fullName: p.fullName,
             phone: p.phone || undefined,
             personType: "PASSENGER",
-            personCategory: "ADULT",
+            personCategory: normalizeCategory(p.personCategory),
           })),
         },
       });
@@ -272,6 +272,39 @@ export default function FapDriverPage({
   const availableCrew = crewRoster.filter(
     (m) => !allAssignedCrewIds.has(m.airlinePersonalId)
   );
+
+  const crewPickerItems = availableCrew.map((m) => ({
+    personId: m.airlinePersonalId,
+    fullName: m.fullName,
+    phone: m.phone || null,
+  }));
+
+  const handleCrewCatalogConfirm = async (selected) => {
+    try {
+      setSaving(true);
+      await addPeople({
+        variables: {
+          requestId: request.id,
+          driverIndex: Number(driverIndex),
+          direction,
+          people: selected.map((p) => ({
+            fullName: p.fullName,
+            phone: p.phone || undefined,
+            personType: "CREW",
+            airlinePersonalId: p.personId,
+            personCategory: "ADULT",
+          })),
+        },
+      });
+      success(`Добавлено ${selected.length}`);
+      setCatalogOpen(false);
+      onRefetch?.();
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при добавлении");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const cap = driver?.peopleCount || 0;
   const placed = people.length;
@@ -1048,6 +1081,16 @@ export default function FapDriverPage({
                   <PlusSvg color={color} /> Из каталога
                 </button>
               )}
+              {canEdit && !isCompleted && personMode === "CREW" && availableCrew.length > 0 && (
+                <button
+                  type="button"
+                  className={classes.primaryBtn}
+                  style={{ background: "#fff", color, border: `1px solid ${color}` }}
+                  onClick={() => setCatalogOpen(true)}
+                >
+                  <PlusSvg color={color} /> Из экипажа
+                </button>
+              )}
             </div>
 
             {canEdit && selected.length > 0 && (
@@ -1174,11 +1217,12 @@ export default function FapDriverPage({
       <CatalogPickerModal
         open={catalogOpen}
         onClose={() => setCatalogOpen(false)}
-        savedPassengers={savedPassengers}
-        excludeKeys={excludeKeys}
+        savedPassengers={personMode === "CREW" ? crewPickerItems : savedPassengers}
+        excludeKeys={personMode === "CREW" ? undefined : excludeKeys}
         maxSelectable={remainingSlots ?? undefined}
         loading={saving}
-        onConfirm={handleCatalogConfirm}
+        onConfirm={personMode === "CREW" ? handleCrewCatalogConfirm : handleCatalogConfirm}
+        title={personMode === "CREW" ? "Выбрать из экипажа заявки" : undefined}
       />
     </div>
   );

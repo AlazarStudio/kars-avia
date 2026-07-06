@@ -27,6 +27,7 @@ export default function CatalogPickerModal({
   maxSelectable,
   loading = false,
   onConfirm,
+  title = "Выбрать из каталога заявки",
 }) {
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState(() => new Set());
@@ -111,7 +112,7 @@ export default function CatalogPickerModal({
   return (
     <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth>
       <DialogTitle className={classes.title}>
-        Выбрать из каталога заявки
+        {title}
         <span className={classes.count}> · {savedPassengers.length} чел.</span>
       </DialogTitle>
       <DialogContent dividers className={classes.content}>

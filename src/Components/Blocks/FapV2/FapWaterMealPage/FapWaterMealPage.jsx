@@ -148,7 +148,7 @@ export default function FapWaterMealPage({
             fullName: p.fullName,
             phone: p.phone || null,
             seat: p.seat || null,
-            personCategory: "ADULT",
+            personCategory: p.personCategory || "ADULT",
             issuedAt,
           })),
         },
