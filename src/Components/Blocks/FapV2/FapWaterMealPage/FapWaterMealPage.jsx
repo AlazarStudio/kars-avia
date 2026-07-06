@@ -518,7 +518,7 @@ export default function FapWaterMealPage({
                 onClick={() => setCatalogOpen(true)}
                 disabled={saving}
               >
-                Из каталога
+                Из реестра
               </button>
             )}
           </form>

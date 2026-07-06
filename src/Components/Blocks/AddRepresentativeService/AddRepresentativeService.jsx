@@ -4,6 +4,7 @@ import classes from "./AddRepresentativeService.module.css";
 import Button from "../../Standart/Button/Button.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
 import {
+  ADD_PASSENGER_REQUEST_SAVED_PEOPLE,
   CREATE_PASSENGER_REQUEST,
   GET_AIRLINE_POSITIONS,
   GET_AIRLINES_RELAY,
@@ -16,6 +17,8 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import ManifestUploadField from "../FapV2/ManifestUploadField/ManifestUploadField.jsx";
+import { manifestNameKey } from "../../../utils/parseManifestXlsx.js";
 
 function AddRepresentativeService({
   show,
@@ -34,6 +37,9 @@ function AddRepresentativeService({
   const [positions, setPositions] = useState([]);
   const [showAddStaff, setShowAddStaff] = useState(false);
   const [newStaffData, setNewStaffData] = useState(null);
+
+  // Распарсенный манифест: { people, flightNumber, fileName } | null
+  const [manifest, setManifest] = useState(null);
 
   const { data: airlinesData, refetch: refetchAirlines } = useQuery(GET_AIRLINES_RELAY, {
     context: { headers: { Authorization: `Bearer ${token}` } },
@@ -227,6 +233,32 @@ function AddRepresentativeService({
     awaitRefetchQueries: true,
   });
 
+  const [addSavedPeople] = useMutation(ADD_PASSENGER_REQUEST_SAVED_PEOPLE, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+    refetchQueries: [{ query: GET_PASSENGER_REQUEST, variables: { passengerRequestId: request?.id } }],
+    awaitRefetchQueries: true,
+  });
+
+  // Локальный подсчёт «добавлено/пропущено» — зеркалит жадный 1:1 матчинг бэка
+  // (mergeManifestPeopleIntoRoster) по manifestNameKey
+  const countManifestImport = (people, roster) => {
+    const consumed = new Set();
+    let added = 0;
+    for (const p of people) {
+      const key = manifestNameKey(p.fullName);
+      const index = (roster || []).findIndex(
+        (item, i) => !consumed.has(i) && manifestNameKey(item?.fullName) === key
+      );
+      if (index === -1) added += 1;
+      else consumed.add(index);
+    }
+    return { added, skipped: people.length - added };
+  };
+
   const resetForm = useCallback(() => {
     setFormData({
       waterSupply: false,
@@ -255,6 +287,7 @@ function AddRepresentativeService({
       baggageDeliveryPlannedDate: "",
       baggageDeliveryPlannedAt: "",
     });
+    setManifest(null);
     setIsEdited(false);
   }, []);
 
@@ -507,20 +540,51 @@ function AddRepresentativeService({
       input.includesCrew = crewMembers.length > 0;
     }
 
+    const hasManifest = !!manifest?.people?.length;
+
     // Если нет изменений
-    if (Object.keys(input).length === 0) {
+    if (Object.keys(input).length === 0 && !hasManifest) {
       alert("Нет изменений для сохранения.");
       setIsLoading(false);
       return;
     }
 
     try {
-      await updatePassengerRequest({
-        variables: { updatePassengerRequestId: request?.id, input },
-      });
+      if (Object.keys(input).length > 0) {
+        await updatePassengerRequest({
+          variables: { updatePassengerRequestId: request?.id, input },
+        });
+      }
+
+      if (hasManifest) {
+        const { added, skipped } = countManifestImport(
+          manifest.people,
+          request?.savedPassengers
+        );
+        await addSavedPeople({
+          variables: {
+            requestId: request?.id,
+            people: manifest.people.map((p) => ({
+              fullName: p.fullName,
+              seat: p.seat,
+              personCategory: p.personCategory,
+              personType: "PASSENGER",
+            })),
+          },
+        });
+        if (addNotification) {
+          addNotification(
+            skipped > 0
+              ? `Реестр: добавлено ${added}, пропущено ${skipped} (уже в реестре).`
+              : `Реестр: добавлено ${added} пассажиров из манифеста.`,
+            "success"
+          );
+        }
+      }
+
       resetForm();
       onClose();
-      if (addNotification) {
+      if (Object.keys(input).length > 0 && addNotification) {
         addNotification("Заявка обновлена.", "success");
       }
     } catch (error) {
@@ -586,6 +650,20 @@ function AddRepresentativeService({
                     setIsEdited(true);
                   }}
                 />
+
+                {request?.includesPassengers && (
+                  <>
+                    <div className={classes.typeServices}>Манифест</div>
+                    <ManifestUploadField
+                      parsed={manifest}
+                      onParsed={(result) => {
+                        setManifest(result);
+                        setIsEdited(true);
+                      }}
+                      onClear={() => setManifest(null)}
+                    />
+                  </>
+                )}
 
                 <div className={classes.typeServices}>Вид услуг</div>
 

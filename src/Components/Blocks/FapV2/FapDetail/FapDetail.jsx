@@ -675,6 +675,9 @@ export default function FapDetail({ user, canEdit = true }) {
             refetch();
           }}
           request={request}
+          addNotification={(text, status) =>
+            status === "error" ? notifyError(text) : success(text)
+          }
         />
       )}
 

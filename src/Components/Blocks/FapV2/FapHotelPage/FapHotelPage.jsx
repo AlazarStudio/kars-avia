@@ -1687,7 +1687,7 @@ export default function FapHotelPage({
                   style={{ background: "#fff", color: "#0057C3", border: "1px solid #0057C3" }}
                   onClick={() => setCatalogOpen(true)}
                 >
-                  <PlusSvg color="#0057C3" /> Из каталога
+                  <PlusSvg color="#0057C3" /> Из реестра
                 </button>
               )}
               {canAdd && personMode === "CREW" && availableCrew.length > 0 && (

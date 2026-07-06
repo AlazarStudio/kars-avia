@@ -27,7 +27,7 @@ export default function CatalogPickerModal({
   maxSelectable,
   loading = false,
   onConfirm,
-  title = "Выбрать из каталога заявки",
+  title = "Выбрать из реестра заявки",
 }) {
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState(() => new Set());

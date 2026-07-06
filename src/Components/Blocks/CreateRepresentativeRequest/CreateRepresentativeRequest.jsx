@@ -4,6 +4,7 @@ import classes from "./CreateRepresentativeRequest.module.css";
 import Button from "../../Standart/Button/Button.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
 import {
+  ADD_PASSENGER_REQUEST_SAVED_PEOPLE,
   CREATE_PASSENGER_REQUEST,
   CREATE_REQUEST_MUTATION,
   GET_AIRLINE_POSITIONS,
@@ -20,6 +21,7 @@ import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.j
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import ManifestUploadField from "../FapV2/ManifestUploadField/ManifestUploadField.jsx";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
 
@@ -32,7 +34,7 @@ function CreateRepresentativeRequest({
 }) {
   const token = getCookie("token");
   const { showAlert, confirm, isDialogOpen } = useDialog();
-  const { success } = useToast();
+  const { success, error: toastError } = useToast();
   const [isEdited, setIsEdited] = useState(false); // Флаг изменений формы
   const [airlines, setAirlines] = useState([]); // Список авиакомпаний
   const [selectedAirline, setSelectedAirline] = useState(null); // Выбранная авиакомпания
@@ -80,6 +82,9 @@ function CreateRepresentativeRequest({
     baggageDeliveryPlannedAt: "",
     city: "",
   });
+
+  // Распарсенный манифест: { people, flightNumber, fileName } | null
+  const [manifest, setManifest] = useState(null);
 
   // Опции экипажа из staff выбранной авиакомпании
   const crewOptions = (selectedAirline?.staff || []).map((s) => ({
@@ -241,6 +246,14 @@ function CreateRepresentativeRequest({
     // awaitRefetchQueries: false,
   });
 
+  const [addSavedPeople] = useMutation(ADD_PASSENGER_REQUEST_SAVED_PEOPLE, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
   const airlineForAirlineAdmin = data?.airlines?.airlines.find(
     (airline) => airline.id === user?.airlineId
   );
@@ -284,9 +297,25 @@ function CreateRepresentativeRequest({
       baggageDeliveryPlannedAt: "",
       city: "",
     });
+    setManifest(null);
     setIsEdited(false);
     setWarningMessage("");
   }, [user, airlineForAirlineAdmin]);
+
+  const handleManifestParsed = useCallback((result) => {
+    setManifest(result);
+    setIsEdited(true);
+    // № рейса из шапки манифеста — только в пустое поле
+    if (result.flightNumber) {
+      setFormData((prev) =>
+        prev.flightNumber.trim()
+          ? prev
+          : { ...prev, flightNumber: result.flightNumber }
+      );
+    }
+  }, []);
+
+  const handleManifestClear = useCallback(() => setManifest(null), []);
 
   // Закрытие формы с проверкой несохранённых изменений
   const closeButton = useCallback(async () => {
@@ -352,6 +381,9 @@ function CreateRepresentativeRequest({
     if (type === "checkbox") {
       if (name === "includesCrew" && !checked) {
         setSelectedCrew([]);
+      }
+      if (name === "includesPassengers" && !checked) {
+        setManifest(null);
       }
       setFormData((prev) => {
         // независимые чекбоксы: при снятии сбрасываем только свои поля
@@ -572,10 +604,33 @@ function CreateRepresentativeRequest({
 
     try {
       const response = await createRequest({ variables: { input } });
+      const newRequestId = response?.data?.createPassengerRequest?.id;
+
+      if (formData.includesPassengers && manifest?.people?.length && newRequestId) {
+        try {
+          await addSavedPeople({
+            variables: {
+              requestId: newRequestId,
+              people: manifest.people.map((p) => ({
+                fullName: p.fullName,
+                seat: p.seat,
+                personCategory: p.personCategory,
+                personType: "PASSENGER",
+              })),
+            },
+          });
+          success(`Реестр: добавлено ${manifest.people.length} пассажиров из манифеста.`);
+        } catch (importError) {
+          console.error(importError);
+          toastError(
+            "Заявка создана, но манифест не импортирован — откройте «Редактировать» и загрузите файл снова."
+          );
+        }
+      }
+
       resetForm();
       onClose();
       success("Создание заявки для экипажа прошло успешно.");
-      // console.log(response);
     } catch (error) {
       console.error(error);
       if (error.message.startsWith("Request already exists with id:")) {
@@ -803,6 +858,17 @@ function CreateRepresentativeRequest({
                         setSelectedCrew(newValue || []);
                         setIsEdited(true);
                       }}
+                    />
+                  </>
+                )}
+
+                {formData.includesPassengers && (
+                  <>
+                    <div className={classes.typeServices}>Манифест</div>
+                    <ManifestUploadField
+                      parsed={manifest}
+                      onParsed={handleManifestParsed}
+                      onClear={handleManifestClear}
                     />
                   </>
                 )}

@@ -1078,7 +1078,7 @@ export default function FapDriverPage({
                   style={{ background: "#fff", color, border: `1px solid ${color}` }}
                   onClick={() => setCatalogOpen(true)}
                 >
-                  <PlusSvg color={color} /> Из каталога
+                  <PlusSvg color={color} /> Из реестра
                 </button>
               )}
               {canEdit && !isCompleted && personMode === "CREW" && availableCrew.length > 0 && (

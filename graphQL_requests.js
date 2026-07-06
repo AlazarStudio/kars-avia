@@ -2191,6 +2191,14 @@ export const ADD_PASSENGER_REQUEST_DRIVER_PEOPLE = gql`
   }
 `;
 
+export const ADD_PASSENGER_REQUEST_SAVED_PEOPLE = gql`
+  mutation AddPassengerRequestSavedPeople($requestId: ID!, $people: [PassengerRequestSavedPersonInput!]!) {
+    addPassengerRequestSavedPeople(requestId: $requestId, people: $people) {
+      id
+    }
+  }
+`;
+
 export const UPDATE_PASSENGER_REQUEST_PERSON = gql`
   mutation UpdatePassengerRequestPerson(
     $requestId: ID!

@@ -1,0 +1,88 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.uploadButton {
+    height: 40px;
+    border: 1px dashed #54587380;
+    border-radius: 4px;
+    background: none;
+    cursor: pointer;
+    font-family: Nunito Sans;
+    font-size: 15px;
+    color: var(--text);
+}
+
+.uploadButton:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.fileRow {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.fileName {
+    font-size: 14px;
+    font-weight: 600;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.clear {
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+}
+
+.summary {
+    font-size: 13px;
+    color: var(--main-gray);
+}
+
+.list {
+    max-height: 180px;
+    overflow-y: auto;
+    border: 1px solid #54587340;
+    border-radius: 4px;
+}
+
+.personRow {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 10px;
+    font-size: 13px;
+    border-bottom: 1px solid #5458731a;
+}
+
+.personRow:last-child {
+    border-bottom: none;
+}
+
+.personName {
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.personSeat {
+    color: var(--main-gray);
+    flex-shrink: 0;
+}
+
+.error {
+    font-size: 13px;
+    color: #d32f2f;
+}
