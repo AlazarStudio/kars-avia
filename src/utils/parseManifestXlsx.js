@@ -27,19 +27,40 @@ export const manifestNameKey = (fullName) =>
     .toLowerCase()
     .replace(/\s+/g, " ");
 
-// Строка-заголовок таблицы пассажиров содержит ячейки SEC и Surname;
-// из неё берём индексы колонок (позиции могут отличаться между ДКС-системами)
+// Синонимы заголовков колонок (английские/русские варианты формы ПМ).
+// Матчинг — ТОЧНОЕ совпадение нормализованной ячейки (см. normHeader), а не
+// подстрока: иначе «№Места» (место) спутается с «Мест» (кол-во мест багажа).
+const HEADER_SYNONYMS = {
+  sec: ["SEC", "РЕГ"],
+  surname: [
+    "SURNAME", "NAME", "PASSENGER",
+    "ФИО", "ФАМИЛИЯ", "ФАМИЛИЯИМЯ", "ФАМИЛИЯИМЯОТЧЕСТВО", "ИМЯ", "ПАССАЖИР",
+  ],
+  seat: ["SEATNO", "SEAT", "SEATNUMBER", "МЕСТО", "МЕСТА", "НОМЕРМЕСТА"],
+  chd: ["CHD", "CHILD", "РБ", "РЕБЕНОК", "РЕБЁНОК"],
+  inf: ["INF", "INFANT", "РМ", "ИНФАНТ", "МЛАДЕНЕЦ"],
+};
+
+// Нормализация ячейки заголовка: верхний регистр, без пробелов и пунктуации
+// («Seat No» → «SEATNO», «№Места» → «МЕСТА», «Фамилия, имя» → «ФАМИЛИЯИМЯ»).
+const normHeader = (v) =>
+  String(v ?? "").toUpperCase().replace(/[\s.,;№/\\-]/g, "");
+
+// Строка-заголовок таблицы пассажиров содержит ячейки SEC и Surname (или их
+// синонимы); из неё берём индексы колонок. Позиции и язык могут отличаться
+// между ДКС-системами — ищем по названию, первое совпадение на строку.
 const findHeader = (rows) => {
   for (let r = 0; r < rows.length; r++) {
     const row = rows[r] || [];
     const cols = { sec: -1, surname: -1, seat: -1, chd: -1, inf: -1 };
     for (let c = 0; c < row.length; c++) {
-      const cell = s(row[c]).toUpperCase();
-      if (cell === "SEC") cols.sec = c;
-      else if (cell === "SURNAME") cols.surname = c;
-      else if (cell === "SEAT NO") cols.seat = c;
-      else if (cell === "CHD") cols.chd = c;
-      else if (cell === "INF") cols.inf = c;
+      const cell = normHeader(row[c]);
+      if (!cell) continue;
+      for (const key in cols) {
+        if (cols[key] === -1 && HEADER_SYNONYMS[key].includes(cell)) {
+          cols[key] = c;
+        }
+      }
     }
     if (cols.sec !== -1 && cols.surname !== -1) return cols;
   }
