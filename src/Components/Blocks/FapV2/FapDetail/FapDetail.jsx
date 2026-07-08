@@ -637,7 +637,7 @@ export default function FapDetail({ user, canEdit = true }) {
               <ScheduleIcon color={showLogs ? "#fff" : "#545873"} />
               История
             </FapActionButton>
-            {canEdit && !isAirlineRole(user) && (
+            {!isExternalUser(user) && (
               <FapActionButton
                 variant="secondary"
                 onClick={async () => {

@@ -18,20 +18,15 @@ import Header from "../../Blocks/Header/Header";
 import Sidebar from "../../Blocks/Sidebar/Sidebar";
 import Button from "../../Standart/Button/Button";
 import { useCookies } from "../../../hooks/useCookies";
+import { useEffectiveAccessMenu } from "../../../hooks/useEffectiveAccessMenu";
 import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice";
 import {
   GET_PASSENGER_REQUEST,
-  GET_AIRLINE_DEPARTMENT,
-  GET_DISPATCHER_DEPARTMENTS,
   getCookie,
   ADD_PASSENGER_REQUEST_DRIVER_PERSON,
   UPDATE_PASSENGER_REQUEST_DRIVER_PERSON,
   REMOVE_PASSENGER_REQUEST_DRIVER_PERSON,
 } from "../../../../graphQL_requests";
-import {
-  isAirlineRole as isAirlineRoleCheck,
-  isDispatcherRole as isDispatcherRoleCheck,
-} from "../../../utils/access";
 import MUITextField from "../../Blocks/MUITextField/MUITextField";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import CloseIcon from "../../../shared/icons/CloseIcon";
@@ -58,10 +53,7 @@ function RepresentativeDriverDetailPage({ user }) {
   });
   const [notifications, setNotifications] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [accessMenu, setAccessMenu] = useState({});
-  const isDispatcherRole = isDispatcherRoleCheck(user);
-  const isAirlineRole = isAirlineRoleCheck(user);
-  const dispatcherDepartmentId = user?.dispatcherDepartmentId;
+  const accessMenu = useEffectiveAccessMenu(user);
 
   const addNotification = useCallback((text, status) => {
     const id = Date.now();
@@ -83,51 +75,6 @@ function RepresentativeDriverDetailPage({ user }) {
     refetch();
   }, 10000);
 
-
-  const { data: airlineDepartmentData } = useQuery(GET_AIRLINE_DEPARTMENT, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    variables: {
-      airlineDepartmentId: user?.airlineDepartmentId,
-    },
-    skip: !isAirlineRole || !user?.airlineDepartmentId,
-  });
-
-  const { data: dispatcherDepartmentsData } = useQuery(GET_DISPATCHER_DEPARTMENTS, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    variables: {
-      pagination: { all: true },
-    },
-  });
-
-  useEffect(() => {
-    if (isDispatcherRole) {
-      const department =
-        dispatcherDepartmentsData?.dispatcherDepartments?.departments?.find(
-          (item) => item.id === dispatcherDepartmentId
-        );
-      setAccessMenu(department?.accessMenu || {});
-      return;
-    }
-    if (isAirlineRole) {
-      setAccessMenu(airlineDepartmentData?.airlineDepartment?.accessMenu || {});
-      return;
-    }
-    setAccessMenu({});
-  }, [
-    isDispatcherRole,
-    isAirlineRole,
-    dispatcherDepartmentId,
-    dispatcherDepartmentsData,
-    airlineDepartmentData,
-  ]);
 
   const request = data?.passengerRequest ?? null;
   const idx = driverIndex !== undefined ? Number(driverIndex) : -1;

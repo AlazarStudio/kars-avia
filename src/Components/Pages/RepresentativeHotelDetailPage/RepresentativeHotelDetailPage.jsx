@@ -9,11 +9,10 @@ import classes from "../ReservePlacementRepresentative/ReservePlacementRepresent
 import MenuDispetcher from "../../Blocks/MenuDispetcher/MenuDispetcher";
 import Header from "../../Blocks/Header/Header";
 import { useCookies } from "../../../hooks/useCookies";
+import { useEffectiveAccessMenu } from "../../../hooks/useEffectiveAccessMenu";
 import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice";
 import {
   GET_PASSENGER_REQUEST,
-  GET_AIRLINE_DEPARTMENT,
-  GET_DISPATCHER_DEPARTMENTS,
   getCookie,
   CREATE_EXTERNAL_AUTH_LINK,
   PASSENGER_REQUEST_UPDATED_SUBSCRIPTION,
@@ -27,7 +26,6 @@ import Button from "../../Standart/Button/Button";
 import {
   isExternalPassengerRequestUser,
   isAirlineRole as isAirlineRoleCheck,
-  isDispatcherRole as isDispatcherRoleCheck,
 } from "../../../utils/access";
 import { getExternalAuthErrorMessage } from "../../../constants/externalAuthErrors";
 
@@ -67,55 +65,8 @@ function RepresentativeHotelDetailPage({ user }) {
   const request = data?.passengerRequest ?? null;
   const decodedHotelId = hotelId ? decodeURIComponent(hotelId) : "";
 
-  const [accessMenu, setAccessMenu] = useState({});
-  const isDispatcherRole = isDispatcherRoleCheck(user);
+  const accessMenu = useEffectiveAccessMenu(user);
   const isAirlineRole = isAirlineRoleCheck(user);
-  const dispatcherDepartmentId = user?.dispatcherDepartmentId;
-
-  const { data: airlineDepartmentData } = useQuery(GET_AIRLINE_DEPARTMENT, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    variables: {
-      airlineDepartmentId: user?.airlineDepartmentId,
-    },
-    skip: !isAirlineRole || !user?.airlineDepartmentId,
-  });
-
-  const { data: dispatcherDepartmentsData } = useQuery(GET_DISPATCHER_DEPARTMENTS, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    variables: {
-      pagination: { all: true },
-    },
-  });
-
-  useEffect(() => {
-    if (isDispatcherRole) {
-      const department =
-        dispatcherDepartmentsData?.dispatcherDepartments?.departments?.find(
-          (item) => item.id === dispatcherDepartmentId
-        );
-      setAccessMenu(department?.accessMenu || {});
-      return;
-    }
-    if (isAirlineRole) {
-      setAccessMenu(airlineDepartmentData?.airlineDepartment?.accessMenu || {});
-      return;
-    }
-    setAccessMenu({});
-  }, [
-    isDispatcherRole,
-    isAirlineRole,
-    dispatcherDepartmentId,
-    dispatcherDepartmentsData,
-    airlineDepartmentData,
-  ]);
 
   const { hotel, hotelIndex } = useMemo(() => {
     const hotels = request?.livingService?.hotels ?? [];

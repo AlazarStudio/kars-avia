@@ -531,7 +531,9 @@ export default function FapHotelPage({
         const k = priceKey(row);
         const t = matchHotelTariff(row) || restored.find((tt) => priceKey(tt) === k);
         data[idx] = {
-          roomNumber: row.roomNumber ?? "",
+          // Номер в отчёте развязан с гостем (см. коммент выше). Но если в отчёте
+          // он пуст — дозаполняем текущей комнатой гостя из вкладки «Гости».
+          roomNumber: (row.roomNumber ?? "").toString().trim() || (people[idx]?.roomNumber ?? ""),
           daysCount: toNum(row.daysCount),
           tariffId: t?.id ?? null,
           breakfast: toNum(row.breakfast),
@@ -929,6 +931,56 @@ export default function FapHotelPage({
     },
     [findTariff, scheduleSave, people, hotelIndex, plan]
   );
+  // Жёсткая привязка номера комнаты: person.roomNumber — единственный источник.
+  // Правка во вкладке «Гости» (мутация → refetch → people) сразу отражается в
+  // «Отчёте»: синхронизируем pd.roomNumber с person.roomNumber на каждое
+  // изменение people (в т.ч. очистку номера).
+  useEffect(() => {
+    setPersonData((prev) => {
+      let changed = false;
+      const next = { ...prev };
+      people.forEach((person, i) => {
+        const rn = person.roomNumber ?? "";
+        if (next[i] && (next[i].roomNumber ?? "") !== rn) {
+          next[i] = { ...next[i], roomNumber: rn };
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [people]);
+
+  // Правка номера в «Отчёте» пишет person.roomNumber той же мутацией, что «Гости»
+  // → refetch → синхронизация выше отражает номер в обеих вкладках.
+  const commitPersonRoom = useCallback(async (personIndex, value) => {
+    const person = people[personIndex];
+    if (!person || !request?.id) return;
+    const roomNumber = (value ?? "").trim() || null;
+    if ((person.roomNumber ?? "") === (roomNumber ?? "")) return;
+    try {
+      await updatePerson({
+        variables: {
+          requestId: request.id,
+          hotelIndex: Number(hotelIndex),
+          personIndex,
+          person: {
+            fullName: person.fullName ?? "",
+            phone: person.phone ?? null,
+            roomNumber,
+            personType: person.personType === "CREW" ? "CREW" : "PASSENGER",
+            airlinePersonalId: person.airlinePersonalId ?? null,
+            personCategory:
+              person.personType === "CREW" ? "ADULT" : normalizeCategory(person.personCategory),
+          },
+        },
+      });
+      onRefetch?.();
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Не удалось сохранить номер");
+    }
+  }, [people, request?.id, hotelIndex, updatePerson, onRefetch, notifyError]);
+
   const updatePersonReport = useCallback((personIndex, field, value) => {
     const prev = personDataRef.current;
     const cur =
@@ -1728,7 +1780,7 @@ export default function FapHotelPage({
               </div>
             )}
 
-            <div className={classes.guestTable}>
+            <div className={`${classes.guestTable}${canMutateGuests ? "" : " " + classes.guestTableReadonly}`}>
               <div className={classes.tableHead}>
                 {canMutateGuests && (
                   <div className={classes.colCheck}>
@@ -2014,7 +2066,7 @@ export default function FapHotelPage({
                                 <RoomNumberCell
                                   value={pd.roomNumber}
                                   canEdit={canEdit}
-                                  onCommit={(v) => updatePersonReport(i, "roomNumber", v)}
+                                  onCommit={(v) => commitPersonRoom(i, v)}
                                 />
                               </div>
                               <div>

@@ -7,11 +7,10 @@ import reportClasses from "./RepresentativeHotelReportPage.module.css";
 import MenuDispetcher from "../../Blocks/MenuDispetcher/MenuDispetcher";
 import Header from "../../Blocks/Header/Header";
 import { useCookies } from "../../../hooks/useCookies";
+import { useEffectiveAccessMenu } from "../../../hooks/useEffectiveAccessMenu";
 import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice";
 import {
   GET_PASSENGER_REQUEST,
-  GET_AIRLINE_DEPARTMENT,
-  GET_DISPATCHER_DEPARTMENTS,
   SAVE_PASSENGER_REQUEST_HOTEL_REPORT,
   getCookie,
 } from "../../../../graphQL_requests";
@@ -22,7 +21,6 @@ import MUIAutocompleteColor from "../../Blocks/MUIAutocompleteColor/MUIAutocompl
 import Button from "../../Standart/Button/Button";
 import {
   isAirlineRole as isAirlineRoleCheck,
-  isDispatcherRole as isDispatcherRoleCheck,
   isExternalPassengerRequestUser,
 } from "../../../utils/access";
 import { useToast } from "../../../contexts/ToastContext";
@@ -101,58 +99,10 @@ function RepresentativeHotelReportPage({ user }) {
     return { hotel: found ?? null, hotelIndex: idx >= 0 ? idx : 0 };
   }, [request?.livingService?.hotels, decodedHotelId]);
 
-  const [accessMenu, setAccessMenu] = useState({});
-  const isDispatcherRole = isDispatcherRoleCheck(user);
+  const accessMenu = useEffectiveAccessMenu(user);
   const isAirlineRole = isAirlineRoleCheck(user);
-  const dispatcherDepartmentId = user?.dispatcherDepartmentId;
 
   const isExternalUser = isExternalPassengerRequestUser(user);
-
-
-  const { data: airlineDepartmentData } = useQuery(GET_AIRLINE_DEPARTMENT, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    variables: {
-      airlineDepartmentId: user?.airlineDepartmentId,
-    },
-    skip: !isAirlineRole || !user?.airlineDepartmentId,
-  });
-
-  const { data: dispatcherDepartmentsData } = useQuery(GET_DISPATCHER_DEPARTMENTS, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    variables: {
-      pagination: { all: true },
-    },
-  });
-
-  useEffect(() => {
-    if (isDispatcherRole) {
-      const department =
-        dispatcherDepartmentsData?.dispatcherDepartments?.departments?.find(
-          (item) => item.id === dispatcherDepartmentId
-        );
-      setAccessMenu(department?.accessMenu || {});
-      return;
-    }
-    if (isAirlineRole) {
-      setAccessMenu(airlineDepartmentData?.airlineDepartment?.accessMenu || {});
-      return;
-    }
-    setAccessMenu({});
-  }, [
-    isDispatcherRole,
-    isAirlineRole,
-    dispatcherDepartmentId,
-    dispatcherDepartmentsData,
-    airlineDepartmentData,
-  ]);
 
   const hotelDetailUrl = `/${id}/representativeRequestsPlacement/${idRequest}/hotel/${encodeURIComponent(hotelId)}`;
   const people = hotel?.people ?? [];

@@ -123,7 +123,7 @@ export default function FapReport({ request, hotelIndex, hotelName, canEdit = tr
           (t) => priceKey(t) === k
         );
         data[idx] = {
-          roomNumber: row.roomNumber ?? "",
+          roomNumber: (row.roomNumber ?? "").toString().trim() || (people[idx]?.roomNumber ?? ""),
           daysCount: toNum(row.daysCount),
           tariffId: tariff?.id ?? null,
           breakfast: toNum(row.breakfast),

@@ -513,6 +513,13 @@
   padding: 8px 16px;
 }
 
+/* Режим просмотра (без колонки-чекбокса): убираем 32px-трек, иначе колонки
+   съезжают влево и ФИО обрезается. */
+.guestTableReadonly .tableHead,
+.guestTableReadonly .row {
+  grid-template-columns: 1fr 150px 160px 110px 120px;
+}
+
 .tableHead {
   background: #F8FAFC;
   font-size: 11px;

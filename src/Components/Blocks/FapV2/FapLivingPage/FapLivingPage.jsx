@@ -14,7 +14,7 @@ import {
 } from "../../../../../graphQL_requests";
 import { SERVICE_STATUS_CONFIG, formatDate, formatDateTime } from "../fapConstants";
 import { calculateEffectiveCostDays } from "../../../../utils/effectiveCostDays";
-import { isExternalUser, isAirlineRole } from "../../../../utils/access";
+import { isExternalUser } from "../../../../utils/access";
 import { downloadLivingReport } from "../reports/buildReportSheets";
 import { useToast } from "../../../../contexts/ToastContext";
 import Button from "../../../Standart/Button/Button";
@@ -265,9 +265,7 @@ export default function FapLivingPage({
             <ScheduleIcon color={showLogs ? "#fff" : "#545873"} />
             История
           </FapActionButton>
-          {canEdit &&
-           !isAirlineRole(user) &&
-           !(isExternalUser(user) && user?.scope === "HOTEL") && (
+          {!isExternalUser(user) && (
             <FapActionButton
               variant="secondary"
               onClick={async () => {

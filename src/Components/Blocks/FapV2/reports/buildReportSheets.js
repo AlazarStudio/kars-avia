@@ -331,7 +331,7 @@ export function addHotelSheet(wb, opts) {
 }
 
 const TRANSFER_HEADERS = [
-  "№", "ФИО водителя", "Телефон", "Адрес откуда", "Адрес куда",
+  "№", "ФИО водителя", "Телефон", "Адрес отправления", "Адрес прибытия",
   "Дата подачи", "Время подачи", "Тип ТС", "Сумма",
 ];
 
@@ -363,8 +363,8 @@ export function addTransferSheet(wb, opts) {
   ws.getColumn(1).width = 6;      // №
   ws.getColumn(2).width = 26;     // ФИО водителя
   ws.getColumn(3).width = 16;     // Телефон
-  ws.getColumn(4).width = 30;     // Адрес откуда
-  ws.getColumn(5).width = 30;     // Адрес куда
+  ws.getColumn(4).width = 30;     // Адрес отправления
+  ws.getColumn(5).width = 30;     // Адрес прибытия
   ws.getColumn(6).width = 13;     // Дата подачи
   ws.getColumn(7).width = 11;     // Время подачи
   ws.getColumn(8).width = 22;     // Тип ТС

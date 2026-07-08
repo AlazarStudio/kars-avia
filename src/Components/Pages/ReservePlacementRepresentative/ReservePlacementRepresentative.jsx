@@ -17,9 +17,6 @@ import {
   CREATE_RESERVE_REPORT,
   DELETE_PASSENGER_FROM_HOTEL,
   DELETE_PERSON_FROM_HOTEL,
-  GET_AIRLINE_DEPARTMENT,
-  GET_AIRLINES_UPDATE_SUBSCRIPTION,
-  GET_DISPATCHER_DEPARTMENTS,
   GET_HOTELS_RELAY,
   GET_PASSENGER_REQUEST,
   GET_RESERVE_REQUEST,
@@ -32,7 +29,6 @@ import {
 } from "../../../../graphQL_requests";
 import {
   isAirlineRole as isAirlineRoleCheck,
-  isDispatcherRole as isDispatcherRoleCheck,
   isExternalPassengerRequestUser,
   canAccessMenu,
 } from "../../../utils/access";
@@ -53,6 +49,7 @@ import HabitationTab from "../../Blocks/HabitationTab/HabitationTab";
 import Message from "../../Blocks/Message/Message";
 import CookiesNotice from "../../Blocks/CookiesNotice/CookiesNotice";
 import { useCookies } from "../../../hooks/useCookies";
+import { useEffectiveAccessMenu } from "../../../hooks/useEffectiveAccessMenu";
 import AddRepresentativeService from "../../Blocks/AddRepresentativeService/AddRepresentativeService";
 import EditRepresentativeRequest from "../../Blocks/EditRepresentativeRequest/EditRepresentativeRequest";
 import AddRepresentativeHotel from "../../Blocks/AddRepresentativeHotel/AddRepresentativeHotel";
@@ -226,13 +223,11 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     }
   };
 
-  const [accessMenu, setAccessMenu] = useState({});
+  const accessMenu = useEffectiveAccessMenu(user);
 
-  const isDispatcherRole = isDispatcherRoleCheck(user);
   const isAirlineRole = isAirlineRoleCheck(user);
   const isExternalUser = isExternalPassengerRequestUser(user);
   const restrictedToHotelId = user?.scope === "HOTEL" ? user?.hotelId : null;
-  const dispatcherDepartmentId = user?.dispatcherDepartmentId;
 
   const habitationRequest = useMemo(() => {
     if (!request || !isExternalUser || restrictedToHotelId == null)
@@ -248,50 +243,6 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
     };
   }, [request, isExternalUser, restrictedToHotelId]);
 
-  const { data: airlineDepartmentData, refetch: refetchAirlineDepartment } =
-    useQuery(GET_AIRLINE_DEPARTMENT, {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-      variables: {
-        airlineDepartmentId: user?.airlineDepartmentId,
-      },
-      skip: !isAirlineRole || !user?.airlineDepartmentId,
-    });
-
-  const { data: dispatcherDepartmentsData } = useQuery(
-    GET_DISPATCHER_DEPARTMENTS,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      },
-      variables: {
-        pagination: { all: true },
-      },
-      // skip: !isDispatcherRole || !dispatcherDepartmentId,
-    },
-  );
-
-  //   console.log(user);
-  //   console.log(isDispatcherRole)
-  // console.log(isAirlineRole)
-  // console.log(dispatcherDepartmentId)
-  useSubscription(GET_AIRLINES_UPDATE_SUBSCRIPTION, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-    skip: !isAirlineRole || !user?.airlineDepartmentId,
-    onData: () => {
-      refetchAirlineDepartment();
-    },
-  });
-
   useEffect(() => {
     if (location.state?.tab === "habitation") {
       setFilter("habitation");
@@ -300,30 +251,6 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
       setFilter("transferAccommodation");
     }
   }, [location.state?.tab]);
-
-  useEffect(() => {
-    if (isDispatcherRole) {
-      const department =
-        dispatcherDepartmentsData?.dispatcherDepartments?.departments?.find(
-          (item) => item.id === dispatcherDepartmentId,
-        );
-      setAccessMenu(department?.accessMenu || {});
-      return;
-    }
-
-    if (isAirlineRole) {
-      setAccessMenu(airlineDepartmentData?.airlineDepartment?.accessMenu || {});
-      return;
-    }
-
-    setAccessMenu({});
-  }, [
-    isDispatcherRole,
-    isAirlineRole,
-    dispatcherDepartmentId,
-    dispatcherDepartmentsData,
-    airlineDepartmentData,
-  ]);
 
   useEffect(() => {
     if (!request || !isExternalUser) return;
