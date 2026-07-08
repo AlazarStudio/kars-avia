@@ -24,7 +24,7 @@ import {
   getCookie,
 } from "../../../../graphQL_requests";
 
-const VERSION_RE = /^\d+\.\d+\.\d+$/;
+const VERSION_RE = /^\d+\.\d+\.\d+(?:-\d+)?$/;
 
 const emptyState = () => audiencesArrayToState([]);
 
@@ -95,10 +95,10 @@ function SystemUpdateSettings() {
   const handleSave = async () => {
     const audiencesArray = stateToAudiencesArray(audiencesState);
     if (enabled) {
-      if (!VERSION_RE.test(version.trim())) {
-        notifyError("Версия должна быть в формате X.Y.Z");
-        return;
-      }
+      // if (!VERSION_RE.test(version.trim())) {
+      //   notifyError("Версия должна быть в формате X.Y.Z");
+      //   return;
+      // }
       if (!title.trim()) {
         notifyError("Заполните заголовок");
         return;
@@ -122,6 +122,7 @@ function SystemUpdateSettings() {
       });
       success("Релиз сохранён");
     } catch (err) {
+      console.error("Ошибка сохранения релиза", err);
       const code = err?.graphQLErrors?.[0]?.extensions?.code;
       if (code === "BAD_USER_INPUT") {
         notifyError("Проверьте версию, заголовок и пункты");
@@ -181,7 +182,8 @@ function SystemUpdateSettings() {
               placeholder="3.6.0"
             />
             <span className={classes.hint}>
-              Формат X.Y.Z. Показывается один раз тем, у кого версия отличается.
+              Формат X.Y.Z или X.Y.Z-N. Показывается один раз тем, у кого версия
+              отличается.
             </span>
           </label>
 

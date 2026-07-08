@@ -279,7 +279,8 @@
 
 .screen {
     position: relative;
-    height: 520px;
+    /* 560px карточка + 30px бар + 28px паддинги screenDim */
+    height: 620px;
     border-radius: 12px;
     background: #e9edf6;
     overflow: hidden;

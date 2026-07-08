@@ -26,7 +26,7 @@ export default function SystemUpdateModal({
           boxShadow: "none",
           borderRadius: "20px",
           overflow: "visible",
-          maxWidth: 460,
+          maxWidth: 620,
           width: "92vw",
           margin: 2,
         },

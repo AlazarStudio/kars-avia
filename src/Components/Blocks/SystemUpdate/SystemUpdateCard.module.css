@@ -4,6 +4,11 @@
   box-shadow: 0 25px 80px rgba(10, 15, 40, 0.3);
   overflow: hidden;
   width: 100%;
+  /* фиксированная высота баннера: не больше и не меньше */
+  height: 560px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
 }
 
 /* под-табы аудиторий (SuperAdmin) */
@@ -89,7 +94,8 @@
 /* список */
 .list {
   padding: 14px 28px 8px;
-  max-height: 46vh;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow-y: auto;
   overscroll-behavior: contain;
 }
