@@ -1,10 +1,11 @@
 import React from "react";
 
-export default function RestoreIcon({
+// Иконка пролонгации (круговая стрелка обновления).
+export default function ProlongIcon({
   onClick,
   color = "#545873",
-  width = 19,
-  height = 19,
+  width = 20,
+  height = 20,
   strokeWidth = "var(--svg-stroke-width)",
   ...props
 }) {
@@ -12,21 +13,20 @@ export default function RestoreIcon({
     <svg
       width={width}
       height={height}
-      viewBox="0 0 19 19"
+      viewBox="0 0 20 20"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       onClick={onClick ?? null}
       cursor={props.cursor ?? "default"}
     >
       <path
-        d="M3.5 9.5C3.5 6.04822 6.29822 3.25 9.75 3.25C13.2018 3.25 16 6.04822 16 9.5C16 12.9518 13.2018 15.75 9.75 15.75C7.4 15.75 5.35 14.46 4.27 12.55"
+        d="M15.6 6.3A6.5 6.5 0 1 0 16.9 12.4"
         stroke={color}
         strokeWidth={strokeWidth}
         strokeLinecap="round"
-        strokeLinejoin="round"
       />
       <path
-        d="M2 6.5L3.5 9.75L6.75 8.25"
+        d="M15.9 3v3.6h-3.6"
         stroke={color}
         strokeWidth={strokeWidth}
         strokeLinecap="round"

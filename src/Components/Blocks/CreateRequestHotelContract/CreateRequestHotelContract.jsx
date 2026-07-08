@@ -28,6 +28,7 @@ import { action } from "../../../roles.js";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import AttachIcon from "../../../shared/icons/AttachIcon.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import PickedFilesEditor from "../PickedFilesEditor/PickedFilesEditor.jsx";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
 function CreateRequestHotelContract({
@@ -214,6 +215,7 @@ function CreateRequestHotelContract({
           itemAgreement: "",
           notesAA: "",
           filesAA: [],
+          fileNamesAA: [],
         },
       ],
     }));
@@ -274,6 +276,15 @@ function CreateRequestHotelContract({
     }
   };
 
+  // Убрать один выбранный (ещё не сохранённый) root-файл до сохранения
+  const removeRootFile = (index) => {
+    setFileName((prev) => prev.filter((_, i) => i !== index));
+    setFormData((prev) => ({
+      ...prev,
+      files: Array.from(prev.files || []).filter((_, i) => i !== index),
+    }));
+  };
+
   const handleAgreementChange = (index, field, value) => {
     const updatedAgreements = formData.aaContracts.map((agreement, i) =>
       i === index ? { ...agreement, [field]: value } : agreement
@@ -303,7 +314,9 @@ function CreateRequestHotelContract({
 
     setFormData((prev) => {
       const aaContracts = prev.aaContracts.map((a, i) =>
-        i === index ? { ...a, filesAA: files } : a
+        i === index
+          ? { ...a, filesAA: files, fileNamesAA: files.map((f) => f.name) }
+          : a
       );
       return { ...prev, aaContracts };
     });
@@ -314,12 +327,34 @@ function CreateRequestHotelContract({
     const files = Array.from(e.target.files || []);
     setFormData((prev) => {
       const aaContracts = prev.aaContracts.map((a, i) =>
-        i === index ? { ...a, filesAA: files } : a
+        i === index
+          ? { ...a, filesAA: files, fileNamesAA: files.map((f) => f.name) }
+          : a
       );
       return { ...prev, aaContracts };
     });
     // если надо разрешить выбрать те же файлы повторно:
     // e.target.value = null;
+  };
+
+  // Убрать один выбранный (ещё не сохранённый) файл из ДС до сохранения
+  const removeAgreementFile = (index, fileIndex) => {
+    setFormData((prev) => {
+      const aaContracts = prev.aaContracts.map((a, i) =>
+        i === index
+          ? {
+              ...a,
+              filesAA: Array.from(a.filesAA || []).filter(
+                (_, fi) => fi !== fileIndex
+              ),
+              fileNamesAA: (a.fileNamesAA || []).filter(
+                (_, fi) => fi !== fileIndex
+              ),
+            }
+          : a
+      );
+      return { ...prev, aaContracts };
+    });
   };
   const [isLoading, setIsLoading] = useState(false);
 
@@ -430,10 +465,15 @@ function CreateRequestHotelContract({
           variables: {
             input: hotelPayload,
             files: formData.files,
+            fileNames: fileName.length
+              ? fileName
+              : (formData.files || []).map((f) => f.name),
           },
         });
 
-        for (const agreement of aaContracts) {
+        for (let ai = 0; ai < aaContracts.length; ai++) {
+          const agreement = aaContracts[ai];
+          const namesAA = filledAgreements[ai]?.fileNamesAA;
           await createAdditionalAgreement({
             variables: {
               input: {
@@ -442,6 +482,9 @@ function CreateRequestHotelContract({
                   response_update_tariff.data.createHotelContract.id,
               },
               files: agreement.files,
+              fileNames: namesAA?.length
+                ? namesAA
+                : (agreement.files || []).map((f) => f.name),
             },
           });
         }
@@ -452,9 +495,14 @@ function CreateRequestHotelContract({
           variables: {
             input: transferPayload,
             files: formData.files,
+            fileNames: fileName.length
+              ? fileName
+              : (formData.files || []).map((f) => f.name),
           },
         });
-        for (const agreement of aaContracts) {
+        for (let ai = 0; ai < aaContracts.length; ai++) {
+          const agreement = aaContracts[ai];
+          const namesAA = filledAgreements[ai]?.fileNamesAA;
           await createAdditionalAgreement({
             variables: {
               input: {
@@ -463,6 +511,9 @@ function CreateRequestHotelContract({
                   response_update_tariff.data.createOrganizationContract.id,
               },
               files: agreement.files,
+              fileNames: namesAA?.length
+                ? namesAA
+                : (agreement.files || []).map((f) => f.name),
             },
           });
         }
@@ -845,6 +896,12 @@ function CreateRequestHotelContract({
                     </span>
                   </label>
                 </div>
+
+                <PickedFilesEditor
+                  names={fileName}
+                  onChange={setFileName}
+                  onRemove={removeRootFile}
+                />
               </div>
             </div>
           ) : (
@@ -935,6 +992,14 @@ function CreateRequestHotelContract({
                         </span>
                       </label>
                     </div>
+
+                    <PickedFilesEditor
+                      names={agreement.fileNamesAA || []}
+                      onChange={(names) =>
+                        handleAgreementChange(index, "fileNamesAA", names)
+                      }
+                      onRemove={(fi) => removeAgreementFile(index, fi)}
+                    />
                   </div>
                 ))}
               </div>

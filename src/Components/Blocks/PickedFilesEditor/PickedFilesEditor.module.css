@@ -1,0 +1,54 @@
+.list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.field {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    height: 40px;
+    padding: 0 10px;
+    border: 1px solid rgba(84, 88, 115, 0.62);
+    border-radius: 10px;
+    background-color: var(--white);
+    overflow: hidden;
+}
+
+.input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    border: none;
+    outline: none;
+    padding: 0;
+    background: transparent;
+    font-size: 14px;
+    font-weight: 600;
+    color: #545873;
+}
+
+.input:disabled {
+    color: #545873;
+}
+
+.ext {
+    flex-shrink: 0;
+    font-size: 14px;
+    font-weight: 600;
+    color: #8a90a6;
+}
+
+.remove {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+}

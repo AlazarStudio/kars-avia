@@ -619,7 +619,7 @@ function RegisterOfContracts({
             />
             <MUIAutocomplete
               dropdownWidth={"100%"}
-              label={"Вид приложения"}
+              label={"Предмет договора"}
               hideLabelOnFocus={false}
               options={["Все", ...action]}
               value={selectedType ? selectedType : ""}

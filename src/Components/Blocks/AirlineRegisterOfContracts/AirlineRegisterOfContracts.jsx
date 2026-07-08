@@ -423,7 +423,7 @@ function AirlineRegisterOfContracts({ children, id, user, accessMenu = {}, ...pr
           <MUIAutocomplete
             dropdownWidth={"100%"}
             hideLabelOnFocus={false}
-            label={"Вид приложения"}
+            label={"Предмет договора"}
             options={["Все", ...action]}
             value={selectedType ? selectedType : ""}
             onChange={(event, newValue) => {

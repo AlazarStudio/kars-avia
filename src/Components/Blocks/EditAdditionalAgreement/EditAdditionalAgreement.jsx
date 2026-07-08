@@ -8,13 +8,21 @@ import {
   convertToDate,
   CREATE_AIRLINE_AA,
   getMediaUrl,
+  REMOVE_ADDITIONAL_AGREEMENT_FILE,
   UPDATE_AIRLINE_CONTRACT_AA,
 } from "../../../../graphQL_requests.js";
+import { useDialog } from "../../../contexts/DialogContext.jsx";
 import AttachIcon from "../../../shared/icons/AttachIcon.jsx";
 import DocIcon from "../../../shared/icons/DocIcon.jsx";
+import FileIcon from "../../../shared/icons/FileIcon.jsx";
+import DeleteIcon from "../../../shared/icons/DeleteIcon.jsx";
+import PickedFilesEditor from "../PickedFilesEditor/PickedFilesEditor.jsx";
+import { fileNameWithoutExt } from "../../../utils/fileName.js";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import EditContractAdditionalMenu from "../EditContractAdditionalMenu/EditContractAdditionalMenu.jsx";
+import MUISwitch from "../MUISwitch/MUISwitch.jsx";
+import { getExpirationBadge } from "../../../utils/contractExpiration.js";
 
 function EditAdditionalAgreement({
   show,
@@ -33,13 +41,17 @@ function EditAdditionalAgreement({
     id: undefined,
     contractNumber: "",
     date: "",
+    agreementEndDate: "",
+    isProlongationEnabled: false,
     itemAgreement: "",
     notes: "",
     files: [],
   });
   const [isEditing, setIsEditing] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
+  const [agFiles, setAgFiles] = useState([]);
   const menuRef = useRef(null);
+  const { confirm } = useDialog();
 
   // console.log(agreement);
 
@@ -61,8 +73,24 @@ function EditAdditionalAgreement({
     },
   });
 
+  const [removeAdditionalAgreementFile] = useMutation(
+    REMOVE_ADDITIONAL_AGREEMENT_FILE,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Apollo-Require-Preflight": "true",
+        },
+      },
+    }
+  );
+
   useEffect(() => {
     if (agreement) setLocal({ ...agreement, files: "" });
+  }, [agreement]);
+
+  useEffect(() => {
+    setAgFiles(Array.isArray(agreement?.files) ? agreement.files : []);
   }, [agreement]);
 
   useEffect(() => {
@@ -122,6 +150,16 @@ function EditAdditionalAgreement({
       setLocal((prev) => ({ ...prev, files: file }));
     }
   };
+
+  // Убрать один выбранный (ещё не сохранённый) файл до сохранения
+  const removeFile = (index) => {
+    setFileName((prev) => prev.filter((_, i) => i !== index));
+    setLocal((prev) => ({
+      ...prev,
+      files: Array.from(prev.files || []).filter((_, i) => i !== index),
+    }));
+  };
+
   const [isLoading, setIsLoading] = useState(false);
 
   const save = async () => {
@@ -137,10 +175,21 @@ function EditAdditionalAgreement({
         input: {
           contractNumber: local.contractNumber,
           date: new Date(local.date).toISOString(),
+          agreementEndDate: local.agreementEndDate
+            ? new Date(local.agreementEndDate).toISOString()
+            : null,
+          isProlongationEnabled: !!local.isProlongationEnabled,
           itemAgreement: local.itemAgreement,
           notes: local.notes,
         },
-        ...(local.files && { files: local.files }),
+        ...(local.files && local.files.length
+          ? {
+              files: local.files,
+              fileNames: fileName.length
+                ? fileName
+                : local.files.map((f) => f.name),
+            }
+          : {}),
       },
     });
     // : await createAirlineAA({
@@ -183,6 +232,17 @@ function EditAdditionalAgreement({
   const handleClose = () => {
     onClose?.();
     setIsEditing(false);
+  };
+
+  const handleRemoveFile = async (fileUrl) => {
+    if (!(await confirm("Удалить файл?"))) return;
+    const { data } = await removeAdditionalAgreementFile({
+      variables: { agreementId: agreement.id, fileUrl },
+    });
+    if (data?.removeAdditionalAgreementFile) {
+      setAgFiles(data.removeAdditionalAgreementFile.files);
+      refetch();
+    }
   };
 
   return (
@@ -270,6 +330,57 @@ function EditAdditionalAgreement({
               <div className={agreement?.id && !isEditing ? classes.requestDataInfo : classes.requestDataItem}>
                 {agreement?.id && !isEditing ? (
                   <>
+                    <div className={classes.requestDataInfo_title}>Дата окончания срока действия</div>
+                    <div className={classes.requestDataInfo_desc}>
+                      {local.agreementEndDate ? convertToDate(local.agreementEndDate) : "—"}
+                      {(() => {
+                        const exp = getExpirationBadge({
+                          endDate: agreement?.agreementEndDate,
+                          isExpired: agreement?.isExpired,
+                          daysUntilEnd: agreement?.daysUntilEnd,
+                        });
+                        return exp ? (
+                          <span style={{ marginLeft: 8, fontSize: 11, color: exp.color }}>{exp.label}</span>
+                        ) : null;
+                      })()}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <label>Дата окончания срока действия</label>
+                    <input
+                      type="date"
+                      name="agreementEndDate"
+                      value={local.agreementEndDate ? local.agreementEndDate.slice(0, 10) : ""}
+                      onChange={handleChange}
+                      placeholder="Дата"
+                      disabled={!agreement?.id ? false : !isEditing}
+                    />
+                  </>
+                )}
+              </div>
+
+              <div className={agreement?.id && !isEditing ? classes.requestDataInfo : null}>
+                {agreement?.id && !isEditing ? (
+                  <>
+                    <div className={classes.requestDataInfo_title}>Пролонгация</div>
+                    <div className={classes.requestDataInfo_desc}>{local.isProlongationEnabled ? "Да" : "Нет"}</div>
+                  </>
+                ) : (
+                  <MUISwitch
+                    width={"100%"}
+                    label={"Пролонгация"}
+                    checked={local.isProlongationEnabled}
+                    onChange={(e) =>
+                      setLocal((p) => ({ ...p, isProlongationEnabled: e.target.checked }))
+                    }
+                  />
+                )}
+              </div>
+
+              <div className={agreement?.id && !isEditing ? classes.requestDataInfo : classes.requestDataItem}>
+                {agreement?.id && !isEditing ? (
+                  <>
                     <div className={classes.requestDataInfo_title}>Предмет ДС</div>
                     <div className={classes.requestDataInfo_desc}>{local.itemAgreement || "—"}</div>
                   </>
@@ -319,20 +430,32 @@ function EditAdditionalAgreement({
 
               <label>Файлы ДС</label>
               {/* {console.log(local.files)} */}
-              {agreement?.files?.map((i, index) => (
-                <a
+              {agFiles?.map((i, index) => (
+                <div
                   key={index}
-                  href={getMediaUrl(i)}
-                  target="_blank"
-                  className={classes.downloadsButton}
-                  rel="noopener noreferrer"
-                  disabled={!agreement?.id ? false : !isEditing}
+                  style={{ display: "flex", alignItems: "center", gap: 8 }}
                 >
-                  {/* <img src="/downloadManifest.png" alt="Скачать" /> */}
-                  <DocIcon width={32} height={35} />
-                  {local.contractNumber} файл №{index + 1}
-                  {/* Скачать */}
-                </a>
+                  <a
+                    href={getMediaUrl(i.url)}
+                    target="_blank"
+                    className={classes.downloadsButton}
+                    rel="noopener noreferrer"
+                    disabled={!agreement?.id ? false : !isEditing}
+                    style={{ flex: 1 }}
+                  >
+                    <FileIcon name={i.name} width={38} height={43} style={{ flexShrink: 0 }} />
+                    {fileNameWithoutExt(i.name) || `файл №${index + 1}`}
+                  </a>
+                  {canEdit && (
+                    <div
+                      onClick={() => handleRemoveFile(i.url)}
+                      style={{ cursor: "pointer", display: "flex" }}
+                      title="Удалить файл"
+                    >
+                      <DeleteIcon cursor="pointer" />
+                    </div>
+                  )}
+                </div>
               ))}
               {/* <input type="file" onChange={handleFiles} multiple /> */}
               {(canEdit && isEditing) && (
@@ -362,6 +485,14 @@ function EditAdditionalAgreement({
                     </span>
                   </label>
                 </div>
+              )}
+
+              {canEdit && isEditing && (
+                <PickedFilesEditor
+                  names={fileName}
+                  onChange={setFileName}
+                  onRemove={removeFile}
+                />
               )}
             </div>
           </div>

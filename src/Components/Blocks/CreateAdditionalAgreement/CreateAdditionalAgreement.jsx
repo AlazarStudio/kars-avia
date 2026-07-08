@@ -10,7 +10,9 @@ import {
   UPDATE_AIRLINE_CONTRACT_AA,
 } from "../../../../graphQL_requests.js";
 import AttachIcon from "../../../shared/icons/AttachIcon.jsx";
+import PickedFilesEditor from "../PickedFilesEditor/PickedFilesEditor.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
+import MUISwitch from "../MUISwitch/MUISwitch.jsx";
 
 function CreateAdditionalAgreement({
   show,
@@ -27,6 +29,8 @@ function CreateAdditionalAgreement({
     id: undefined,
     contractNumber: "",
     date: "",
+    agreementEndDate: "",
+    isProlongationEnabled: false,
     itemAgreement: "",
     notes: "",
     files: [],
@@ -52,6 +56,8 @@ function CreateAdditionalAgreement({
         id: undefined,
         contractNumber: "",
         date: "",
+        agreementEndDate: "",
+        isProlongationEnabled: false,
         itemAgreement: "",
         notes: "",
         files: [],
@@ -109,6 +115,16 @@ function CreateAdditionalAgreement({
       setLocal((prev) => ({ ...prev, files: file }));
     }
   };
+
+  // Убрать один выбранный (ещё не сохранённый) файл до сохранения
+  const removeFile = (index) => {
+    setFileName((prev) => prev.filter((_, i) => i !== index));
+    setLocal((prev) => ({
+      ...prev,
+      files: Array.from(prev.files || []).filter((_, i) => i !== index),
+    }));
+  };
+
   const [isLoading, setIsLoading] = useState(false);
 
   const typeId = activeFilterTab === "hotels" ? "hotelContractId": activeFilterTab === "airlines" ? "airlineContractId" : "organizationContractId"
@@ -120,10 +136,17 @@ function CreateAdditionalAgreement({
           [typeId]: updId,
           contractNumber: local.contractNumber,
           date: new Date(local.date).toISOString(),
+          agreementEndDate: local.agreementEndDate
+            ? new Date(local.agreementEndDate).toISOString()
+            : null,
+          isProlongationEnabled: !!local.isProlongationEnabled,
           itemAgreement: local.itemAgreement,
           notes: local.notes,
         },
         files: local.files,
+        fileNames: fileName.length
+          ? fileName
+          : (local.files || []).map((f) => f.name),
       },
     });
     refetch();
@@ -133,6 +156,8 @@ function CreateAdditionalAgreement({
       id: undefined,
       contractNumber: "",
       date: "",
+      agreementEndDate: "",
+      isProlongationEnabled: false,
       itemAgreement: "",
       notes: "",
       files: [],
@@ -175,6 +200,24 @@ function CreateAdditionalAgreement({
                 placeholder="Дата"
               />
 
+              <label>Дата окончания срока действия</label>
+              <input
+                type="date"
+                name="agreementEndDate"
+                value={local.agreementEndDate ? local.agreementEndDate.slice(0, 10) : ""}
+                onChange={handleChange}
+                placeholder="Дата"
+              />
+
+              <MUISwitch
+                width={"100%"}
+                label={"Пролонгация"}
+                checked={local.isProlongationEnabled}
+                onChange={(e) =>
+                  setLocal((p) => ({ ...p, isProlongationEnabled: e.target.checked }))
+                }
+              />
+
               <label>Предмет ДС</label>
               <input
                 type="text"
@@ -197,13 +240,13 @@ function CreateAdditionalAgreement({
               {agreement?.files?.map((i, index) => (
                 <a
                   key={index}
-                  href={getMediaUrl(i)}
+                  href={getMediaUrl(i.url)}
                   target="_blank"
                   className={classes.downloadsButton}
                   rel="noopener noreferrer"
                 >
                   <img src="/downloadManifest.png" alt="Скачать" />
-                  {local.contractNumber} файл №{index + 1}
+                  {i.name || `файл №${index + 1}`}
                   {/* Скачать */}
                 </a>
               ))}
@@ -233,6 +276,12 @@ function CreateAdditionalAgreement({
                   </span>
                 </label>
               </div>
+
+              <PickedFilesEditor
+                names={fileName}
+                onChange={setFileName}
+                onRemove={removeFile}
+              />
             </div>
           </div>
 

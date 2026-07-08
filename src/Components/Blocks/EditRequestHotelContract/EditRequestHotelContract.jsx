@@ -4,6 +4,7 @@ import Button from "../../Standart/Button/Button.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
 
 import {
+  ARCHIVE_ADDITIONAL_AGREEMENT,
   convertToDate,
   DELETE_AIRLINE_CONTRACT_AA,
   GET_ALL_DISPATCHERS,
@@ -12,6 +13,9 @@ import {
   getCookie,
   getMediaUrl,
   normalize,
+  REMOVE_HOTEL_CONTRACT_FILE,
+  REMOVE_ORGANIZATION_CONTRACT_FILE,
+  RESTORE_ADDITIONAL_AGREEMENT,
   UPDATE_HOTEL_CONTRACT,
   UPDATE_ORGANIZATION_CONTRACT,
 } from "../../../../graphQL_requests.js";
@@ -26,12 +30,19 @@ import CreateAdditionalAgreement from "../CreateAdditionalAgreement/CreateAdditi
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import AttachIcon from "../../../shared/icons/AttachIcon.jsx";
 import DocIcon from "../../../shared/icons/DocIcon.jsx";
+import FileIcon from "../../../shared/icons/FileIcon.jsx";
+import { fileNameWithoutExt } from "../../../utils/fileName.js";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import EditContractAdditionalMenu from "../EditContractAdditionalMenu/EditContractAdditionalMenu.jsx";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon.jsx";
 import DeleteIcon from "../../../shared/icons/DeleteIcon.jsx";
+import PickedFilesEditor from "../PickedFilesEditor/PickedFilesEditor.jsx";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
+import ArchiveIcon from "../../../shared/icons/ArchiveIcon.jsx";
+import RestoreIcon from "../../../shared/icons/RestoreIcon.jsx";
+import ArchiveContractModal from "../ArchiveContractModal/ArchiveContractModal.jsx";
+import { getExpirationBadge } from "../../../utils/contractExpiration.js";
 
 function EditRequestHotelContract({
   show,
@@ -121,6 +132,27 @@ function EditRequestHotelContract({
     }
   );
 
+  const [removeHotelContractFile] = useMutation(REMOVE_HOTEL_CONTRACT_FILE, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Apollo-Require-Preflight": "true",
+      },
+    },
+  });
+
+  const [removeOrganizationContractFile] = useMutation(
+    REMOVE_ORGANIZATION_CONTRACT_FILE,
+    {
+      context: {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Apollo-Require-Preflight": "true",
+        },
+      },
+    }
+  );
+
   const [deleteAirlineContractAA] = useMutation(DELETE_AIRLINE_CONTRACT_AA, {
     context: {
       headers: {
@@ -129,6 +161,129 @@ function EditRequestHotelContract({
       },
     },
   });
+
+  const [archiveAdditionalAgreement] = useMutation(ARCHIVE_ADDITIONAL_AGREEMENT, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const [restoreAdditionalAgreement] = useMutation(RESTORE_ADDITIONAL_AGREEMENT, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const [archiveAgreementTarget, setArchiveAgreementTarget] = useState(null);
+
+  const handleArchiveAgreement = (ag) => {
+    if (!ag?.id) return;
+    setArchiveAgreementTarget(ag);
+  };
+
+  const confirmArchiveAgreement = async () => {
+    const ag = archiveAgreementTarget;
+    if (!ag?.id) return;
+    try {
+      await archiveAdditionalAgreement({ variables: { id: ag.id } });
+      await refetch();
+      success("Дополнительное соглашение перенесено в архив.");
+    } catch (err) {
+      notifyError("Произошла ошибка при переносе ДС в архив.");
+    } finally {
+      setArchiveAgreementTarget(null);
+    }
+  };
+
+  const handleRestoreAgreement = async (ag) => {
+    if (!ag?.id) return;
+    try {
+      await restoreAdditionalAgreement({ variables: { id: ag.id } });
+      await refetch();
+      success("Дополнительное соглашение восстановлено из архива.");
+    } catch (err) {
+      notifyError("Произошла ошибка при восстановлении ДС.");
+    }
+  };
+
+  const handleRemoveFile = async (i) => {
+    const ok = await confirm("Удалить файл?");
+    if (!ok) return;
+    try {
+      const { data } =
+        activeFilterTab === "hotels"
+          ? await removeHotelContractFile({
+              variables: { contractId: tarif, fileUrl: i.url },
+            })
+          : await removeOrganizationContractFile({
+              variables: { contractId: tarif, fileUrl: i.url },
+            });
+      const nextFiles =
+        data?.removeHotelContractFile?.files ||
+        data?.removeOrganizationContractFile?.files ||
+        [];
+      setFiles(nextFiles);
+      await refetch();
+      success("Файл удалён.");
+    } catch (err) {
+      notifyError("Произошла ошибка при удалении файла.");
+    }
+  };
+
+  const renderAgreementRow = (ag, index, { archived }) => {
+    const exp = getExpirationBadge({
+      endDate: ag.agreementEndDate,
+      isExpired: ag.isExpired,
+      daysUntilEnd: ag.daysUntilEnd,
+    });
+    return (
+      <div
+        key={ag.id || index}
+        className={classes.requestData}
+        style={{
+          padding: "12px",
+          border: "1px solid #E5E7EB",
+          borderRadius: 10,
+          display: "grid",
+          gridTemplateColumns: "1fr auto",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: 10,
+        }}
+      >
+        <div
+          onClick={() => openAgreement(ag, index)}
+          style={{ cursor: "pointer", display: "flex", flexDirection: "column", gap: 6 }}
+        >
+          <div>{ag.contractNumber || "—"}</div>
+          <div style={{ color: "var(--main-gray)" }}>
+            {ag.agreementEndDate ? convertToDate(ag.agreementEndDate) : "—"}
+          </div>
+          <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+            {exp && <span style={{ fontSize: 11, color: exp.color }}>{exp.label}</span>}
+            {ag.isProlongationEnabled && (
+              <span style={{ fontSize: 11, color: "#0057C3", background: "rgba(0,87,195,0.1)", borderRadius: 6, padding: "1px 6px", whiteSpace: "nowrap" }}>
+                ⟳ Пролонгация
+              </span>
+            )}
+          </div>
+        </div>
+        {canEdit && (
+          <div style={{ display: "flex", gap: 12, alignItems: "center" }} onClick={(e) => e.stopPropagation()}>
+            {archived ? (
+              <span title="Восстановить из архива" style={{ display: "flex" }}>
+                <RestoreIcon cursor="pointer" onClick={() => handleRestoreAgreement(ag)} />
+              </span>
+            ) : (
+              <>
+                <EditPencilIcon cursor="pointer" onClick={() => openAgreement(ag, index)} />
+                <span title="Перенести ДС в архив" style={{ display: "flex" }}>
+                  <ArchiveIcon cursor="pointer" onClick={() => handleArchiveAgreement(ag)} />
+                </span>
+                <DeleteIcon cursor="pointer" onClick={() => deleteAgreement(ag, index)} />
+              </>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
 
   // Управление режимом редактирования (как в исходнике)
   const [isEditing, setIsEditing] = useState(false);
@@ -190,6 +345,11 @@ function EditRequestHotelContract({
             id: a.id,
             contractNumber: a.contractNumber || "",
             date: a.date || "",
+            agreementEndDate: a.agreementEndDate || "",
+            isProlongationEnabled: !!a.isProlongationEnabled,
+            isExpired: !!a.isExpired,
+            daysUntilEnd: a.daysUntilEnd,
+            isArchived: !!a.isArchived,
             itemAgreement: a.itemAgreement || "",
             notes: a.notes || "",
             files: Array.isArray(a.files) ? a.files : [],
@@ -216,6 +376,11 @@ function EditRequestHotelContract({
             id: a.id,
             contractNumber: a.contractNumber || "",
             date: a.date || "",
+            agreementEndDate: a.agreementEndDate || "",
+            isProlongationEnabled: !!a.isProlongationEnabled,
+            isExpired: !!a.isExpired,
+            daysUntilEnd: a.daysUntilEnd,
+            isArchived: !!a.isArchived,
             itemAgreement: a.itemAgreement || "",
             notes: a.notes || "",
             files: Array.isArray(a.files) ? a.files : [],
@@ -310,6 +475,15 @@ function EditRequestHotelContract({
       setFileName(file.map((i) => i.name));
       setFormData((prev) => ({ ...prev, files: file }));
     }
+  };
+
+  // Убрать один выбранный (ещё не сохранённый) файл до сохранения
+  const removeRootFile = (index) => {
+    setFileName((prev) => prev.filter((_, i) => i !== index));
+    setFormData((prev) => ({
+      ...prev,
+      files: Array.from(prev.files || []).filter((_, i) => i !== index),
+    }));
   };
 
   // Файлы договора
@@ -438,7 +612,6 @@ function EditRequestHotelContract({
         // executor: formData.executor,
         legalEntity: formData.legalEntity,
         normativeAct: formData.normativeAct,
-        files: formData.files,
       };
 
       const transferPayload = {
@@ -453,7 +626,6 @@ function EditRequestHotelContract({
         cityId: formData.cityId,
         companyId: formData.companyId,
         organizationId: formData.hotelId,
-        files: formData.files,
       };
 
       if (activeFilterTab === "hotels") {
@@ -462,6 +634,9 @@ function EditRequestHotelContract({
             updateHotelContractId: tarif,
             input: hotelPayload,
             files: formData.files,
+            fileNames: fileName.length
+              ? fileName
+              : (formData.files || []).map((f) => f.name),
           },
         });
       }
@@ -472,6 +647,9 @@ function EditRequestHotelContract({
             updateOrganizationContractId: tarif,
             input: transferPayload,
             files: formData.files,
+            fileNames: fileName.length
+              ? fileName
+              : (formData.files || []).map((f) => f.name),
           },
         });
       }
@@ -499,6 +677,7 @@ function EditRequestHotelContract({
     const handleClickOutside = (event) => {
       if (isDialogOpen) return;
       if (event.target.closest(".MuiSnackbar-root")) return;
+      if (event.target.closest("[data-archive-modal]")) return;
 
       const clickedOutsideMain =
         sidebarRef.current && !sidebarRef.current.contains(event.target);
@@ -563,6 +742,13 @@ function EditRequestHotelContract({
             onClick={() => handleTabChange("Файлы")}
           >
             Файлы
+          </div>
+          <div
+            className={`${classes.tab} ${activeTab === "Архив ДС" ? classes.activeTab : ""
+              }`}
+            onClick={() => handleTabChange("Архив ДС")}
+          >
+            Архив ДС
           </div>
         </div>
 
@@ -1050,6 +1236,14 @@ function EditRequestHotelContract({
                       </label>
                     </div>
                   )}
+
+                  {canEdit && isEditing && (
+                    <PickedFilesEditor
+                      names={fileName}
+                      onChange={setFileName}
+                      onRemove={removeRootFile}
+                    />
+                  )}
                 </div>
               </div>
             ) : activeTab === "ДС" ? (
@@ -1063,52 +1257,24 @@ function EditRequestHotelContract({
                       + Добавить ДС
                     </Button>
                   )}
-                  {formData.additionalAgreements.map((ag, index) => (
-                    <div
-                      key={ag.id || index}
-                      className={classes.requestData}
-                      style={{
-                        padding: "12px",
-                        border: "1px solid #E5E7EB",
-                        borderRadius: 10,
-                        display: "grid",
-                        gridTemplateColumns: "1fr auto auto",
-                        alignItems: "center",
-                        gap: 8,
-                        marginBottom: 10,
-                      }}
-                    >
-                      <div
-                        onClick={() => openAgreement(ag, index)}
-                        style={{
-                          cursor: "pointer",
-                          display: "flex",
-                          flexDirection: "column",
-                          gap: 10,
-                        }}
-                      >
-                        <div>{ag.contractNumber || "—"}</div>
-                        <div style={{ color: "var(--main-gray)" }}>
-                          {ag.date ? convertToDate(ag.date) : "—"}
-                        </div>
-                      </div>
-
-                      {canEdit && (
-                        <>
-                          <EditPencilIcon
-                            cursor="pointer"
-                            onClick={() => openAgreement(ag, index)}
-                            style={{ justifySelf: "end", cursor: "pointer" }}
-                          />
-                          <DeleteIcon
-                            cursor="pointer"
-                            onClick={() => deleteAgreement(ag, index)}
-                            style={{ cursor: "pointer" }}
-                          />
-                        </>
-                      )}
-                    </div>
-                  ))}
+                  {formData.additionalAgreements.map((ag, index) =>
+                    ag.isArchived ? null : renderAgreementRow(ag, index, { archived: false })
+                  )}
+                </div>
+              </div>
+            ) : activeTab === "Архив ДС" ? (
+              <div
+                className={classes.requestMiddle}
+                style={!canEdit ? { height: "calc(100% - 148px)" } : {}}
+              >
+                <div className={classes.requestData}>
+                  {formData.additionalAgreements.filter((ag) => ag.isArchived).length === 0 ? (
+                    <div style={{ color: "var(--main-gray)" }}>Нет архивных ДС</div>
+                  ) : (
+                    formData.additionalAgreements.map((ag, index) =>
+                      ag.isArchived ? renderAgreementRow(ag, index, { archived: true }) : null
+                    )
+                  )}
                 </div>
               </div>
             ) : (
@@ -1118,17 +1284,29 @@ function EditRequestHotelContract({
               >
                 <div className={classes.requestData}>
                   {files?.map((i, index) => (
-                    <a
+                    <div
                       key={index}
-                      href={getMediaUrl(i)}
-                      target="_blank"
-                      className={classes.downloadsButton}
-                      rel="noopener noreferrer"
+                      style={{ display: "flex", alignItems: "center", gap: 8 }}
                     >
-                      <DocIcon width={32} height={35} />
-                      {formData.contractNumber} файл №{index + 1}
-                      {/* Скачать */}
-                    </a>
+                      <a
+                        href={getMediaUrl(i.url)}
+                        target="_blank"
+                        className={classes.downloadsButton}
+                        rel="noopener noreferrer"
+                      >
+                        <FileIcon name={i.name} width={38} height={43} style={{ flexShrink: 0 }} />
+                        {fileNameWithoutExt(i.name) || `файл №${index + 1}`}
+                      </a>
+                      {canEdit && (
+                        <span
+                          title="Удалить файл"
+                          style={{ display: "flex", cursor: "pointer" }}
+                          onClick={() => handleRemoveFile(i)}
+                        >
+                          <DeleteIcon cursor="pointer" />
+                        </span>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>
@@ -1190,6 +1368,16 @@ function EditRequestHotelContract({
         token={token}
         agreementSidebarRef={agreementSidebarRef} // Pass the ref here
       />
+
+      {archiveAgreementTarget && (
+        <ArchiveContractModal
+          title="Перенести ДС в архив?"
+          entityLabel="ДС"
+          number={archiveAgreementTarget.contractNumber}
+          onCancel={() => setArchiveAgreementTarget(null)}
+          onConfirm={confirmArchiveAgreement}
+        />
+      )}
     </>
   );
 }

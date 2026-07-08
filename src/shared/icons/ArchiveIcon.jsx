@@ -1,11 +1,17 @@
 import React from "react";
 
-export default function ArchiveIcon({ onClick, ...props }) {
-  const strokeWidth = props.strokeWidth ?? "var(--svg-stroke-width)";
+export default function ArchiveIcon({
+  onClick,
+  color = "#545873",
+  width = 19,
+  height = 19,
+  strokeWidth = "var(--svg-stroke-width)",
+  ...props
+}) {
   return (
     <svg
-      width="19"
-      height="19"
+      width={width}
+      height={height}
       viewBox="0 0 19 19"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
@@ -18,19 +24,19 @@ export default function ArchiveIcon({ onClick, ...props }) {
         width="15.5"
         height="4"
         rx="1.25"
-        stroke="#545873"
+        stroke={color}
         strokeWidth={strokeWidth}
       />
       <path
         d="M3.25 6.25V14.25C3.25 15.6307 4.36929 16.75 5.75 16.75H13.25C14.6307 16.75 15.75 15.6307 15.75 14.25V6.25"
-        stroke="#545873"
+        stroke={color}
         strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
       <path
         d="M7.5 9.75H11.5"
-        stroke="#545873"
+        stroke={color}
         strokeWidth={strokeWidth}
         strokeLinecap="round"
       />

@@ -1,22 +1,14 @@
-import React, { useEffect, useMemo, useRef } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import classes from "./InfoTableAllDataTarifs.module.css";
-import InfoTable from "../InfoTable/InfoTable";
 import { convertToDate, getMediaUrl } from "../../../../graphQL_requests";
-import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
-import DeleteIcon from "../../../shared/icons/DeleteIcon";
-import ArchiveIcon from "../../../shared/icons/ArchiveIcon";
-import RestoreIcon from "../../../shared/icons/RestoreIcon";
-
-const getExpirationInfo = (item) => {
-  if (!item?.contractEndDate) return null;
-  const now = new Date();
-  const end = new Date(item.contractEndDate);
-  const diffMs = end - now;
-  const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
-  if (item.isExpired || diffMs <= 0) return { label: "Истёк", color: "var(--red)" };
-  if (diffDays <= 90) return { label: `Истекает (${diffDays} дн.)`, color: "#E8A33D" };
-  return null;
-};
+import { getExpirationBadge } from "../../../utils/contractExpiration.js";
+import AdditionalAgreementsPopover from "../AdditionalAgreementsPopover/AdditionalAgreementsPopover.jsx";
+import ArchiveContractModal from "../ArchiveContractModal/ArchiveContractModal.jsx";
+import EditPencilIcon from "../../../shared/icons/EditPencilIcon.jsx";
+import ArchiveIcon from "../../../shared/icons/ArchiveIcon.jsx";
+import RestoreIcon from "../../../shared/icons/RestoreIcon.jsx";
+import DeleteIcon from "../../../shared/icons/DeleteIcon.jsx";
+import ProlongIcon from "../../../shared/icons/ProlongIcon.jsx";
 
 function InfoTableAllDataTarifs({
   id,
@@ -36,167 +28,205 @@ function InfoTableAllDataTarifs({
   onRestoreContract,
   ...props
 }) {
-    const handleObject = (id) => {
-        toggleRequestSidebar(id);
+  const handleObject = (rowId) => {
+    toggleRequestSidebar(rowId);
+  };
+
+  const [archiveTarget, setArchiveTarget] = useState(null);
+
+  const sortedRequests = useMemo(() => {
+    if (!requests?.length) return requests;
+    const now = new Date();
+    const getPriority = (item) => {
+      if (!item.contractEndDate) return 2;
+      const end = new Date(item.contractEndDate);
+      if (item.isExpired || end <= now) return 0;
+      const diffDays = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+      if (diffDays <= 90) return 1;
+      return 2;
     };
-
-    const sortedRequests = useMemo(() => {
-      if (!requests?.length) return requests;
-      const now = new Date();
-      const getPriority = (item) => {
-        if (!item.contractEndDate) return 2;
-        const end = new Date(item.contractEndDate);
-        if (item.isExpired || end <= now) return 0;
-        const diffDays = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
-        if (diffDays <= 90) return 1;
-        return 2;
-      };
-      return [...requests].sort((a, b) => {
-        const pa = getPriority(a);
-        const pb = getPriority(b);
-        if (pa !== pb) return pa - pb;
-        if (a.contractEndDate && b.contractEndDate) {
-          return new Date(a.contractEndDate) - new Date(b.contractEndDate);
-        }
-        return 0;
-      });
-    }, [requests]);
-
-    const listContainerRef = useRef(null);
-
-    useEffect(() => {
-      if (listContainerRef.current) {
-          listContainerRef.current.scrollTo({ top: 0, behavior: "instant" });
+    return [...requests].sort((a, b) => {
+      const pa = getPriority(a);
+      const pb = getPriority(b);
+      if (pa !== pb) return pa - pb;
+      if (a.contractEndDate && b.contractEndDate) {
+        return new Date(a.contractEndDate) - new Date(b.contractEndDate);
       }
-    }, [pageInfo]);
+      return 0;
+    });
+  }, [requests]);
 
-    return (
-        <InfoTable>
-            <div className={classes.InfoTable_title}>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w10}`} style={{justifyContent:'flex-start', padding:'0 10px'}}>№Договора</div>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w12}`}>Дата заключения</div>
-                {id ? null : (<div className={`${classes.InfoTable_title_elem} ${classes.w18}`} style={{justifyContent:'flex-start', padding:'0 10px 0 50px'}}>{activeTab === "airlines" && !id ? "Авиакомпания" : activeTab === "hotels" && !id ? "Гостиница" : "Организация"}</div>)}
-                <div className={`${classes.InfoTable_title_elem} ${!id ? classes.w12 : classes.w18}`} style={{justifyContent:'flex-start', padding:'0 10px'}}>{activeTab === "airlines" ? "Вид приложения" : "Вид услуги"}</div>
-                <div className={`${classes.InfoTable_title_elem} ${!id ? classes.w12 : classes.w18}`} style={{justifyContent:'flex-start', padding:'0 10px 0 20px'}}>ГК КАРС</div>
-                <div className={`${classes.InfoTable_title_elem} ${!id ? classes.w12 : classes.w18}`} style={{justifyContent:'flex-start', padding:'0 10px 0 20px'}}>{activeTab === "airlines" ? "Регион" : "Город"}</div>
-                <div className={`${classes.InfoTable_title_elem} ${classes.w13}`} style={{justifyContent:'flex-start', padding:'0 10px'}}>Дата окончания</div>
+  const listContainerRef = useRef(null);
+
+  useEffect(() => {
+    if (listContainerRef.current) {
+      listContainerRef.current.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }, [pageInfo]);
+
+  return (
+    <>
+      <div className={classes.card}>
+        <div className={classes.InfoTable_title}>
+          <div className={`${classes.InfoTable_title_elem} ${classes.w10}`} style={{ paddingLeft: 22 }}>
+            № Договора
+          </div>
+          <div className={`${classes.InfoTable_title_elem} ${classes.w12}`}>Дата заключения</div>
+          {id ? null : (
+            <div className={`${classes.InfoTable_title_elem} ${classes.w18}`}>
+              {activeTab === "airlines" ? "Авиакомпания" : activeTab === "hotels" ? "Гостиница" : "Организация"}
             </div>
+          )}
+          <div className={`${classes.InfoTable_title_elem} ${!id ? classes.w12 : classes.w18}`}>
+            {activeTab === "airlines" ? "Предмет договора" : "Вид услуги"}
+          </div>
+          <div className={`${classes.InfoTable_title_elem} ${!id ? classes.w12 : classes.w18}`}>ГК КАРС</div>
+          <div className={`${classes.InfoTable_title_elem} ${!id ? classes.w12 : classes.w18}`}>
+            {activeTab === "airlines" ? "Регион" : "Город"}
+          </div>
+          <div className={`${classes.InfoTable_title_elem} ${classes.w13}`}>Дата окончания</div>
+        </div>
 
-            <div className={classes.bottom} style={(user?.airlineId || user?.hotelId) && {height:"calc(100vh - 335px)"}} ref={listContainerRef}>
-                {sortedRequests.map((item) => {
-                    const exp = getExpirationInfo(item);
-                    return (
-                    <div
-                        className={`${classes.InfoTable_data}`}
-                        onClick={() => handleObject(item.id)}
-                        key={item.id}
-                        style={exp ? { borderLeft: `3px solid ${exp.color}` } : undefined}
-                    >
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w10}`} style={{justifyContent:'flex-start', padding:'0 10px'}}>{item.contractNumber}</div>
-                        <div className={`${classes.InfoTable_data_elem} ${classes.w12}`} style={{justifyContent:'center'}}>
-                            <span>{convertToDate(item.date)}</span>
+        <div
+          className={classes.body}
+          style={(user?.airlineId || user?.hotelId) ? { height: "calc(100vh - 335px)" } : undefined}
+          ref={listContainerRef}
+        >
+          {sortedRequests?.map((item) => {
+            const exp = getExpirationBadge({
+              endDate: item.contractEndDate,
+              isExpired: item.isExpired,
+              daysUntilEnd: item.daysUntilEnd,
+            });
+
+            const isHotel = activeTab === "hotels";
+            const isTransfer = activeTab === "transfer";
+            const entityName = isHotel ? item?.hotel?.name : isTransfer ? item?.organization?.name : item?.airline?.name;
+            const entityImg = isHotel ? item?.hotel?.images?.[0] : isTransfer ? item?.organization?.images?.[0] : item?.airline?.images?.[0];
+
+            return (
+              <div className={classes.row} onClick={() => handleObject(item.id)} key={item.id}>
+                {exp && <span className={classes.bar} style={{ background: exp.color }} />}
+
+                <div className={`${classes.cell} ${classes.cellNum} ${classes.w10}`}>
+                  <span className={classes.num}>{item.contractNumber}</span>
+                  <AdditionalAgreementsPopover agreements={item.additionalAgreements} />
+                </div>
+
+                <div className={`${classes.cell} ${classes.w12}`}>
+                  <span className={classes.muted}>{convertToDate(item.date)}</span>
+                </div>
+
+                {id ? null : (
+                  <div className={`${classes.cell} ${classes.entity} ${classes.w18}`}>
+                    {entityName ? (
+                      <>
+                        <div className={classes.avatar}>
+                          {entityImg ? (
+                            <img src={getMediaUrl(entityImg)} alt={entityName} />
+                          ) : (
+                            (entityName[0] || "").toUpperCase()
+                          )}
                         </div>
-                        {id ? null : (
-                            <div
-                                className={`${classes.InfoTable_data_elem} ${classes.w18}`}
-                                style={{ justifyContent:'flex-start', textAlign:'left', padding:'0 10px 0 10px' }}
-                            >
-                                {(() => {
-                                    const isHotel = activeTab === "hotels";
-                                    const isTransfer = activeTab === "transfer";
-                                    const name = isHotel ? item?.hotel?.name : isTransfer ? item?.organization?.name : item?.airline?.name;
-                                    const img  = isHotel ? item?.hotel?.images?.[0] : isTransfer ? item?.organization?.images[0] : item?.airline?.images?.[0];
+                        <span className={classes.entityName}>{entityName}</span>
+                      </>
+                    ) : null}
+                  </div>
+                )}
 
-                                    if (!name) return <></>;
+                <div className={`${classes.cell} ${!id ? classes.w12 : classes.w18}`}>
+                  {item.applicationType}
+                </div>
 
-                                    return (
-                                    <>
-                                        {img && (
-                                        <div className={classes.InfoTable_data_elem_img}>
-                                            <img src={getMediaUrl(img)} alt={name} />
-                                        </div>
-                                        )}
-                                        {name}
-                                    </>
-                                    );
-                                })()}
-                            </div>
-                        )}
-                        <div className={`${classes.InfoTable_data_elem} ${!id ? classes.w12 : classes.w18}`} style={{justifyContent:'flex-start',textAlign:'left'}}>
-                            {item.applicationType}
-                        </div>
-                        <div className={`${classes.InfoTable_data_elem} ${!id ? classes.w12 : classes.w18}`} style={{justifyContent:'flex-start',textAlign:'left', padding:'0 10px 0 20px'}}>{item?.company?.name}</div>
-                        <div
-                            className={`${classes.InfoTable_data_elem} ${!id ? classes.w12 : classes.w18}`}
-                            style={{justifyContent:'flex-start',textAlign:'left', padding:'0 10px 0 20px'}}
+                <div className={`${classes.cell} ${!id ? classes.w12 : classes.w18}`}>
+                  {item?.company?.name}
+                </div>
+
+                <div className={`${classes.cell} ${!id ? classes.w12 : classes.w18}`}>
+                  {item?.region?.city ? item.region.city : item.region}
+                </div>
+
+                <div className={`${classes.cell} ${classes.cellEnd} ${classes.w13}`}>
+                  {item.contractEndDate ? (
+                    <span className={classes.endDate}>{convertToDate(item.contractEndDate)}</span>
+                  ) : (
+                    <span className={classes.dash}>—</span>
+                  )}
+                  {exp && (
+                    <span className={classes.expPill} style={{ background: exp.bg, color: exp.textColor }}>
+                      <span className={classes.expDot} style={{ background: exp.color }} />
+                      {exp.label}
+                    </span>
+                  )}
+                  {item.isProlongationEnabled && (
+                    <span className={classes.prolong}>
+                      <ProlongIcon width={12} height={12} strokeWidth={1.8} color="currentColor" cursor="pointer" />
+                      Пролонгация
+                    </span>
+                  )}
+                </div>
+
+                {canEdit && (
+                  <div className={`${classes.actions} ${classes.w10}`} onClick={(e) => e.stopPropagation()}>
+                    {archived ? (
+                      <button
+                        type="button"
+                        title="Восстановить из архива"
+                        className={classes.actBtn}
+                        onClick={() => onRestoreContract && onRestoreContract(item)}
+                      >
+                        <RestoreIcon width={17} height={17} strokeWidth={1.4} color="currentColor" cursor="pointer" />
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          title="Редактировать"
+                          className={classes.actBtn}
+                          onClick={() => (onEditRow ? onEditRow(item.id) : handleObject(item.id))}
                         >
-                            {item?.region?.city ? item.region.city : item.region}
-                        </div>
-                        <div
-                            className={`${classes.InfoTable_data_elem} ${classes.w13}`}
-                            style={{flexDirection:'column', gap:2, alignItems:'flex-start', padding:'0 10px'}}
-                        >
-                            {item.contractEndDate ? (
-                                <>
-                                    <span>{convertToDate(item.contractEndDate)}</span>
-                                    {exp && (
-                                        <span style={{ fontSize: 11, color: exp.color }}>{exp.label}</span>
-                                    )}
-                                </>
-                            ) : (
-                                <span style={{ opacity: 0.4 }}>—</span>
-                            )}
-                        </div>
-                        {canEdit && (
-                          <div
-                            className={`${classes.buttonsWrapper} ${classes.w10}`}
-                            style={{ gap: 12, padding: "0 12px 0 0" }}
-                            onClick={(e) => e.stopPropagation()}
+                          <EditPencilIcon width={17} height={18} strokeWidth={1.4} color="currentColor" cursor="pointer" />
+                        </button>
+                        {onArchiveContract && (
+                          <button
+                            type="button"
+                            title="Перенести в архив"
+                            className={classes.actBtn}
+                            onClick={() => setArchiveTarget(item)}
                           >
-                            {archived ? (
-                              <span title="Восстановить из архива" style={{ display: "flex" }}>
-                                <RestoreIcon
-                                    cursor="pointer"
-                                    onClick={() => onRestoreContract && onRestoreContract(item)}
-                                />
-                              </span>
-                            ) : (
-                              <>
-                                <EditPencilIcon
-                                    cursor="pointer"
-                                    style={{width:"fit-content", height:"fit-content"}}
-                                    onClick={() => onEditRow ? onEditRow(item.id) : handleObject(item.id)}
-                                />
-                                {/* {item.isExpired && onArchiveContract && (
-                                  <span title="Перенести в архив" style={{ display: "flex" }}>
-                                    <ArchiveIcon
-                                        cursor="pointer"
-                                        onClick={() => onArchiveContract(item)}
-                                    />
-                                  </span>
-                                )} */}
-                                {onArchiveContract && (
-                                  <span title="Перенести в архив" style={{ display: "flex" }}>
-                                    <ArchiveIcon
-                                        cursor="pointer"
-                                        onClick={() => onArchiveContract(item)}
-                                    />
-                                  </span>
-                                )}
-                              </>
-                            )}
-                            <DeleteIcon
-                                cursor="pointer"
-                                onClick={() => {openDeleteContract(item)}}
-                            />
-                        </div>
+                            <ArchiveIcon width={17} height={17} strokeWidth={1.4} color="currentColor" cursor="pointer" />
+                          </button>
                         )}
-                    </div>
-                    );
-                })}
-            </div>
-        </InfoTable>
-    );
+                      </>
+                    )}
+                    <button
+                      type="button"
+                      title="Удалить"
+                      className={`${classes.actBtn} ${classes.actBtnDanger}`}
+                      onClick={() => openDeleteContract(item)}
+                    >
+                      <DeleteIcon width={17} height={17} strokeWidth={1.4} color="currentColor" cursor="pointer" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {archiveTarget && (
+        <ArchiveContractModal
+          number={archiveTarget.contractNumber}
+          onCancel={() => setArchiveTarget(null)}
+          onConfirm={() => {
+            onArchiveContract && onArchiveContract(archiveTarget);
+            setArchiveTarget(null);
+          }}
+        />
+      )}
+    </>
+  );
 }
 
 export default InfoTableAllDataTarifs;

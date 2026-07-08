@@ -1,0 +1,96 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px 3px 7px;
+  border-radius: 8px;
+  background: rgba(0, 87, 195, 0.09);
+  color: #0057c3;
+  border: 1px solid rgba(0, 87, 195, 0.24);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background 0.12s ease;
+}
+
+.badge:hover {
+  background: rgba(0, 87, 195, 0.16);
+}
+
+.panel {
+  min-width: 248px;
+  max-height: 340px;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 11px 14px;
+  border-bottom: 1px solid #eef0f5;
+}
+
+.headerTitle {
+  font-size: 13px;
+  font-weight: 700;
+  color: #191919;
+}
+
+.headerCount {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8a90a6;
+  white-space: nowrap;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+}
+
+.num {
+  font-size: 13px;
+  font-weight: 600;
+  color: #191919;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.date {
+  font-size: 13px;
+  color: #6b7186;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.dash {
+  font-size: 13px;
+  color: #afb4ba;
+}
+
+.exp {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px 3px 8px;
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.expDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}

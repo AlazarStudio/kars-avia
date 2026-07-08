@@ -931,7 +931,10 @@ export const GET_ORGANIZATION_CONTRACTS = gql`
         contractNumber
         notes
         applicationType
-        files
+        files {
+          name
+          url
+        }
         contractEndDate
         isProlongationEnabled
         isArchived
@@ -940,6 +943,14 @@ export const GET_ORGANIZATION_CONTRACTS = gql`
         isExpiringSoon
         isExpired
         expirationPriority
+        additionalAgreements {
+          id
+          contractNumber
+          agreementEndDate
+          isExpired
+          daysUntilEnd
+          isArchived
+        }
       }
     }
   }
@@ -969,7 +980,10 @@ export const GET_ORGANIZATION_CONTRACT = gql`
       contractNumber
       notes
       applicationType
-      files
+      files {
+        name
+        url
+      }
       contractEndDate
       isProlongationEnabled
       isArchived
@@ -982,25 +996,34 @@ export const GET_ORGANIZATION_CONTRACT = gql`
         itemAgreement
         date
         contractNumber
-        files
+        files {
+          name
+          url
+        }
         notes
         organizationContractId
+        agreementEndDate
+        isProlongationEnabled
+        isExpired
+        isExpiringSoon
+        daysUntilEnd
+        isArchived
       }
     }
   }
 `;
 
 export const CREATE_ORGANIZATION_CONTRACT = gql`
-  mutation CreateOrganizationContract($input: OrganizationContractCreateInput!, $files: [Upload!]) {
-    createOrganizationContract(input: $input, files: $files) {
+  mutation CreateOrganizationContract($input: OrganizationContractCreateInput!, $files: [Upload!], $fileNames: [String!]) {
+    createOrganizationContract(input: $input, files: $files, fileNames: $fileNames) {
       id
     }
   }
 `;
 
 export const UPDATE_ORGANIZATION_CONTRACT = gql`
-  mutation UpdateOrganizationContract($updateOrganizationContractId: ID!, $input: OrganizationContractUpdateInput!, $files: [Upload!]) {
-    updateOrganizationContract(id: $updateOrganizationContractId, input: $input, files: $files) {
+  mutation UpdateOrganizationContract($updateOrganizationContractId: ID!, $input: OrganizationContractUpdateInput!, $files: [Upload!], $fileNames: [String!]) {
+    updateOrganizationContract(id: $updateOrganizationContractId, input: $input, files: $files, fileNames: $fileNames) {
       id
     }
   }
@@ -6847,16 +6870,16 @@ export const UPDATE_COMPANY = gql`
 `;
 
 export const CREATE_AIRLINE_CONTRACT = gql`
-  mutation CreateAirlineContract($input: AirlineContractCreateInput!, $files: [Upload!]) {
-    createAirlineContract(input: $input, files: $files) {
+  mutation CreateAirlineContract($input: AirlineContractCreateInput!, $files: [Upload!], $fileNames: [String!]) {
+    createAirlineContract(input: $input, files: $files, fileNames: $fileNames) {
       id
     }
   }
 `;
 
 export const CREATE_AIRLINE_AA = gql`
-  mutation CreateAdditionalAgreement($input: AdditionalAgreementInput!, $files: [Upload!]) {
-    createAdditionalAgreement(input: $input, files: $files) {
+  mutation CreateAdditionalAgreement($input: AdditionalAgreementInput!, $files: [Upload!], $fileNames: [String!]) {
+    createAdditionalAgreement(input: $input, files: $files, fileNames: $fileNames) {
       id
     }
   }
@@ -6883,7 +6906,10 @@ export const GET_AIRLINE_CONTRACTS = gql`
         region
         applicationType
         notes
-        files
+        files {
+          name
+          url
+        }
         contractEndDate
         isProlongationEnabled
         isArchived
@@ -6894,8 +6920,11 @@ export const GET_AIRLINE_CONTRACTS = gql`
         expirationPriority
         additionalAgreements {
           id
-          notes
           contractNumber
+          agreementEndDate
+          isExpired
+          daysUntilEnd
+          isArchived
         }
       }
     }
@@ -6919,7 +6948,10 @@ export const GET_AIRLINE_CONTRACT = gql`
       region
       applicationType
       notes
-      files
+      files {
+        name
+        url
+      }
       contractEndDate
       isProlongationEnabled
       isArchived
@@ -6931,9 +6963,18 @@ export const GET_AIRLINE_CONTRACT = gql`
         id
         contractNumber
         date
+        agreementEndDate
+        isProlongationEnabled
+        isExpired
+        isExpiringSoon
+        daysUntilEnd
+        isArchived
         itemAgreement
         notes
-        files
+        files {
+          name
+          url
+        }
       }
     }
   }
@@ -6945,7 +6986,10 @@ export const GET_AIRLINE_CONTRACT_AA = gql`
       id
       itemAgreement
       notes
-      files
+      files {
+        name
+        url
+      }
       date
       contractNumber
     }
@@ -6953,16 +6997,16 @@ export const GET_AIRLINE_CONTRACT_AA = gql`
 `;
 
 export const UPDATE_AIRLINE_CONTRACT = gql`
-  mutation UpdateAirlineContract($updateAirlineContractId: ID!, $input: AirlineContractUpdateInput!, $files: [Upload!]) {
-    updateAirlineContract(id: $updateAirlineContractId, input: $input, files: $files) {
+  mutation UpdateAirlineContract($updateAirlineContractId: ID!, $input: AirlineContractUpdateInput!, $files: [Upload!], $fileNames: [String!]) {
+    updateAirlineContract(id: $updateAirlineContractId, input: $input, files: $files, fileNames: $fileNames) {
       id
     }
   }
 `;
 
 export const UPDATE_AIRLINE_CONTRACT_AA = gql`
-  mutation UpdateAdditionalAgreement($updateAdditionalAgreementId: ID!, $input: AdditionalAgreementInput!, $files: [Upload!]) {
-    updateAdditionalAgreement(id: $updateAdditionalAgreementId, input: $input, files: $files) {
+  mutation UpdateAdditionalAgreement($updateAdditionalAgreementId: ID!, $input: AdditionalAgreementInput!, $files: [Upload!], $fileNames: [String!]) {
+    updateAdditionalAgreement(id: $updateAdditionalAgreementId, input: $input, files: $files, fileNames: $fileNames) {
       id
     }
   }
@@ -6971,6 +7015,25 @@ export const UPDATE_AIRLINE_CONTRACT_AA = gql`
 export const DELETE_AIRLINE_CONTRACT_AA = gql`
   mutation DeleteAdditionalAgreement($deleteAdditionalAgreementId: ID!) {
     deleteAdditionalAgreement(id: $deleteAdditionalAgreementId)
+  }
+`;
+
+export const ARCHIVE_ADDITIONAL_AGREEMENT = gql`
+  mutation ArchiveAdditionalAgreement($id: ID!) {
+    archiveAdditionalAgreement(id: $id) {
+      id
+      isArchived
+      archivedAt
+    }
+  }
+`;
+
+export const RESTORE_ADDITIONAL_AGREEMENT = gql`
+  mutation RestoreAdditionalAgreement($id: ID!) {
+    restoreAdditionalAgreement(id: $id) {
+      id
+      isArchived
+    }
   }
 `;
 
@@ -6987,8 +7050,8 @@ export const DELETE_HOTEL_CONTRACT = gql`
 `;
 
 export const CREATE_HOTEL_CONTRACT = gql`
-  mutation CreateHotelContract($input: HotelContractCreateInput!, $files: [Upload!]) {
-    createHotelContract(input: $input, files: $files) {
+  mutation CreateHotelContract($input: HotelContractCreateInput!, $files: [Upload!], $fileNames: [String!]) {
+    createHotelContract(input: $input, files: $files, fileNames: $fileNames) {
       id
     }
   }
@@ -7026,7 +7089,10 @@ export const GET_HOTEL_CONTRACTS = gql`
         normativeAct
         applicationType
         executor
-        files
+        files {
+          name
+          url
+        }
         contractEndDate
         isProlongationEnabled
         isArchived
@@ -7035,6 +7101,14 @@ export const GET_HOTEL_CONTRACTS = gql`
         isExpiringSoon
         isExpired
         expirationPriority
+        additionalAgreements {
+          id
+          contractNumber
+          agreementEndDate
+          isExpired
+          daysUntilEnd
+          isArchived
+        }
       }
     }
   }
@@ -7067,7 +7141,10 @@ export const GET_HOTEL_CONTRACT = gql`
       normativeAct
       applicationType
       executor
-      files
+      files {
+        name
+        url
+      }
       contractEndDate
       isProlongationEnabled
       isArchived
@@ -7079,18 +7156,75 @@ export const GET_HOTEL_CONTRACT = gql`
         id
         contractNumber
         date
+        agreementEndDate
+        isProlongationEnabled
+        isExpired
+        isExpiringSoon
+        daysUntilEnd
+        isArchived
         itemAgreement
         notes
-        files
+        files {
+          name
+          url
+        }
       }
     }
   }
 `;
 
 export const UPDATE_HOTEL_CONTRACT = gql`
-  mutation UpdateHotelContract($updateHotelContractId: ID!, $input: HotelContractUpdateInput!, $files: [Upload!]) {
-    updateHotelContract(id: $updateHotelContractId, input: $input, files: $files) {
+  mutation UpdateHotelContract($updateHotelContractId: ID!, $input: HotelContractUpdateInput!, $files: [Upload!], $fileNames: [String!]) {
+    updateHotelContract(id: $updateHotelContractId, input: $input, files: $files, fileNames: $fileNames) {
       id
+    }
+  }
+`;
+
+export const REMOVE_AIRLINE_CONTRACT_FILE = gql`
+  mutation RemoveAirlineContractFile($contractId: ID!, $fileUrl: String!) {
+    removeAirlineContractFile(contractId: $contractId, fileUrl: $fileUrl) {
+      id
+      files {
+        name
+        url
+      }
+    }
+  }
+`;
+
+export const REMOVE_HOTEL_CONTRACT_FILE = gql`
+  mutation RemoveHotelContractFile($contractId: ID!, $fileUrl: String!) {
+    removeHotelContractFile(contractId: $contractId, fileUrl: $fileUrl) {
+      id
+      files {
+        name
+        url
+      }
+    }
+  }
+`;
+
+export const REMOVE_ORGANIZATION_CONTRACT_FILE = gql`
+  mutation RemoveOrganizationContractFile($contractId: ID!, $fileUrl: String!) {
+    removeOrganizationContractFile(contractId: $contractId, fileUrl: $fileUrl) {
+      id
+      files {
+        name
+        url
+      }
+    }
+  }
+`;
+
+export const REMOVE_ADDITIONAL_AGREEMENT_FILE = gql`
+  mutation RemoveAdditionalAgreementFile($agreementId: ID!, $fileUrl: String!) {
+    removeAdditionalAgreementFile(agreementId: $agreementId, fileUrl: $fileUrl) {
+      id
+      files {
+        name
+        url
+      }
     }
   }
 `;
