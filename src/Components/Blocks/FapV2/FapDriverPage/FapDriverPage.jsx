@@ -1125,6 +1125,8 @@ export default function FapDriverPage({
                 <span className={classes.colActions}>Действия</span>
               </div>
 
+              {adding && renderAddRow()}
+
               {visible.length === 0 && !adding && (
                 <div className={classes.listEmpty}>
                   {search.trim()
@@ -1136,8 +1138,6 @@ export default function FapDriverPage({
               )}
 
               {visible.map(renderRow)}
-
-              {adding && renderAddRow()}
             </div>
           </div>
         )}

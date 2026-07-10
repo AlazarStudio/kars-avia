@@ -75,9 +75,7 @@ function Header({ children, isExternalUser = false }) {
 
   const handleNotificationClick = (notificationData) => {
     if (notificationData.passengerRequestId) {
-      navigate(
-        `/representativeRequests/representativeRequestsPlacement/${notificationData.passengerRequestId}`
-      );
+      navigate(`/far/${notificationData.passengerRequestId}`);
       setIsNotificationsOpen(false);
       return;
     }

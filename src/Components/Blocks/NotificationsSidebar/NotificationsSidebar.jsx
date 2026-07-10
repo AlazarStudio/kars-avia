@@ -173,7 +173,7 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
                       notify.passengerRequestId != null;
                     const isReserve =
                       notify.reserveId != null && !isPassengerRequest;
-                    const passengerRequestLink = `/representativeRequests/representativeRequestsPlacement/${notify.passengerRequestId}`;
+                    const passengerRequestLink = `/far/${notify.passengerRequestId}`;
                     const reserveLink = `/reserve/reservePlacement/${notify.reserveId}`;
                     return (
                       <div
