@@ -4,49 +4,53 @@
   gap: 15px;
 }
 
-.addressFieldHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
 .addressLabel {
   font-size: 16px;
-  /* font-weight: 500; */
-  /* color: #4f4f4f; */
-}
-
-.addressModeSwitch {
-  display: flex;
-  gap: 4px;
-}
-
-.modeBtn {
-  border: none;
-  background: transparent;
-  font-size: 11px;
-  padding: 4px 8px;
-  border-radius: 12px;
-  cursor: pointer;
-  color: #828282;
-}
-
-.modeBtnActive {
-  background: #e3f2ff;
-  color: #0065ff;
 }
 
 .addressSearch {
   position: relative;
 }
 
+.inputRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .addressInput {
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   padding: 10px 12px;
   border-radius: 10px;
   border: 1px solid #e0e0e0;
   font-size: 14px;
   background: #fff;
+  box-sizing: border-box;
+  outline: none;
+}
+
+.addressInput:focus {
+  border-color: #0065ff;
+}
+
+.mapIconBtn {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid #e0e0e0;
+  background: #f2f4ff;
+  color: #0065ff;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.mapIconBtn:hover {
+  background: #e3f2ff;
 }
 
 .suggestionsList {
@@ -61,6 +65,7 @@
   padding: 4px 0;
   max-height: 200px;
   overflow-y: auto;
+  list-style: none;
   z-index: 20;
 }
 
@@ -74,77 +79,10 @@
   background: #f2f4f7;
 }
 
-.addressMapBlock {
-  display: flex;
-  flex-direction: column;
-}
-
-.mapBtn {
-  width: 100%;
-  height: 40px;
-  /* padding: 10px 12px; */
-  border-radius: 10px;
-  border: 1px solid #e0e0e0;
-  background: #f2f4ff;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.mapModal {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.35);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 999;
-}
-
-.mapModalContent {
-  width: 640px;
-  max-width: 95vw;
-  background: #fff;
-  border-radius: 16px;
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.mapModalHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-weight: 500;
-}
-
-.mapModalClose {
-  border: none;
-  background: transparent;
-  cursor: pointer;
-  font-size: 18px;
-}
-
-.mapPlaceholder {
-  height: 320px;
-  border-radius: 12px;
-  border: 1px dashed #bdbdbd;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: 13px;
-  gap: 8px;
-}
-
-.mapSelectFake {
-  padding: 8px 12px;
-  border-radius: 999px;
-  border: none;
-  background: #0065ff;
-  color: #fff;
-  cursor: pointer;
-  font-size: 13px;
+.hint {
+  margin-top: 6px;
+  font-size: 12px;
+  color: #828282;
 }
 
 @media (min-width: 0px) and (max-width: 1399px) {

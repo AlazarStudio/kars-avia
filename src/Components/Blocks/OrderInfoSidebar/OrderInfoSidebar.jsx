@@ -108,6 +108,7 @@ function OrderInfoSidebar({
                       </div>
                     ) : (
                       <AddressField
+                        label="Адрес отправления"
                         placeholder="г. Черкесск, Ленина, 57Б"
                         value={formData.fromAddress}
                         onChange={(addr) =>
@@ -127,6 +128,7 @@ function OrderInfoSidebar({
                       <div className={classes.routeText}>{info.toAddress}</div>
                     ) : (
                       <AddressField
+                        label="Адрес прибытия"
                         placeholder="г. Минеральные Воды, Ленина, 10К1"
                         value={formData.toAddress}
                         onChange={(addr) =>

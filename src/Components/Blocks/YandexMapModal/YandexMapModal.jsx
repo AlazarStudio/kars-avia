@@ -2,8 +2,10 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { createPortal } from "react-dom";
 import classes from "./YandexMapModal.module.css";
 import Button from "../../Standart/Button/Button.jsx";
-import { DEFAULT_CENTER, reverseGeocodeByCoordsWithYmaps, YMAPS_KEY, geocodeByTextRU, geocodeAddressToCoords } from "../../../../graphQL_requests.js";
+import { DEFAULT_CENTER, YMAPS_KEY, geocodeAddressToCoords } from "../../../../graphQL_requests.js";
 import { YMaps, Map, Placemark } from "@pbe/react-yandex-maps";
+import { useReverseGeocode } from "../../../hooks/useReverseGeocode";
+import { useAddressSuggestions } from "../../../hooks/useAddressSuggestions";
 
 export const YandexMapModal = ({ open, onClose, onSelect, initialCenter }) => {
   const effectiveCenter = useMemo(() => {
@@ -12,14 +14,19 @@ export const YandexMapModal = ({ open, onClose, onSelect, initialCenter }) => {
   }, [initialCenter]);
 
   const [coords, setCoords] = useState(effectiveCenter);
-  const [address, setAddress] = useState("");
-  const [loading, setLoading] = useState(false);
+  // якорь поиска — координаты подтверждённого места; клики по карте его НЕ меняют
+  const [searchAnchor, setSearchAnchor] = useState(effectiveCenter);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchSuggestions, setSearchSuggestions] = useState([]);
+  const [ymaps, setYmaps] = useState(null);
 
-  const ymapsRef = useRef(null);
+  const {
+    suggestions: searchSuggestions,
+    accept: acceptSearch,
+  } = useAddressSuggestions(searchQuery, searchAnchor);
+
+  const { address, approximate, loading, resolve, reset } = useReverseGeocode(ymaps);
+
   const mapInstanceRef = useRef(null);
-  const pendingCoordsRef = useRef(null);
   const modalRootRef = useRef(null);
 
   useEffect(() => {
@@ -31,74 +38,41 @@ export const YandexMapModal = ({ open, onClose, onSelect, initialCenter }) => {
   }, [open]);
 
   useEffect(() => {
-    if (open) {
-      setCoords(effectiveCenter);
-      setAddress("");
-      setLoading(false);
-      setSearchQuery("");
-      setSearchSuggestions([]);
-      pendingCoordsRef.current = effectiveCenter;
-    }
-  }, [effectiveCenter, open]);
+    if (!open) return;
+    setCoords(effectiveCenter);
+    setSearchAnchor(effectiveCenter);
+    setSearchQuery("");
+    reset();
+    resolve(effectiveCenter); // адрес центра доиграется, когда ymaps загрузится
+  }, [effectiveCenter, open, reset, resolve]);
 
   if (!open) return null;
 
-  const updateByCoords = async (newCoords) => {
+  // единственная точка смены выбранной точки: маркер + запрос адреса
+  const selectCoords = (newCoords) => {
     setCoords(newCoords);
-
-    // если API ещё не готов — запоминаем координаты и выходим
-    if (!ymapsRef.current) {
-      pendingCoordsRef.current = newCoords;
-      setLoading(true);
-      setAddress("Загрузка карты...");
-      return;
-    }
-
-    try {
-      setLoading(true);
-      setAddress("Поиск адреса...");
-      const addr = await reverseGeocodeByCoordsWithYmaps(ymapsRef.current, newCoords);
-      setAddress(addr || "");
-    } catch (e) {
-      console.error(e);
-      setAddress("");
-    } finally {
-      setLoading(false);
-    }
+    resolve(newCoords);
   };
 
   const handleMapClick = (e) => {
-    const newCoords = e.get("coords");
-    updateByCoords(newCoords);
+    selectCoords(e.get("coords"));
   };
 
   const handlePlacemarkDragEnd = (e) => {
-    const newCoords = e.get("target").geometry.getCoordinates();
-    updateByCoords(newCoords);
-  };
-
-  const handleSearchChange = async (e) => {
-    const val = e.target.value;
-    setSearchQuery(val);
-    if (val.length < 3) { setSearchSuggestions([]); return; }
-    try {
-      const list = await geocodeByTextRU(val, { center: coords, initialRadiusKm: 20, maxRadiusKm: 80, stepKm: 20 });
-      setSearchSuggestions(list);
-    } catch (e) {
-      console.error(e);
-    }
+    selectCoords(e.get("target").geometry.getCoordinates());
   };
 
   const handleSearchSelect = async (addr) => {
     setSearchQuery(addr);
-    setSearchSuggestions([]);
+    acceptSearch(addr);
     try {
       const newCoords = await geocodeAddressToCoords(addr);
       if (newCoords) {
         if (mapInstanceRef.current) {
           mapInstanceRef.current.setCenter(newCoords, 16, { duration: 300 });
         }
-        updateByCoords(newCoords);
+        setSearchAnchor(newCoords); // следующий поиск — вокруг выбранного места
+        selectCoords(newCoords);
       }
     } catch (e) {
       console.error(e);
@@ -107,7 +81,7 @@ export const YandexMapModal = ({ open, onClose, onSelect, initialCenter }) => {
 
   const handleApply = () => {
     if (!address || loading) return;
-    onSelect(address);
+    onSelect(address, coords);
   };
 
   const handleOverlayClick = (e) => {
@@ -126,13 +100,19 @@ export const YandexMapModal = ({ open, onClose, onSelect, initialCenter }) => {
           <input
             className={classes.mapSearchInput}
             value={searchQuery}
-            onChange={handleSearchChange}
+            onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="Поиск адреса..."
           />
           {!!searchSuggestions.length && (
             <ul className={classes.mapSearchSuggestions}>
-              {searchSuggestions.map((s) => (
-                <li key={s} className={classes.mapSearchItem} onClick={() => handleSearchSelect(s)}>{s}</li>
+              {searchSuggestions.map((s, i) => (
+                <li
+                  key={`${s}-${i}`}
+                  className={classes.mapSearchItem}
+                  onClick={() => handleSearchSelect(s)}
+                >
+                  {s}
+                </li>
               ))}
             </ul>
           )}
@@ -150,15 +130,7 @@ export const YandexMapModal = ({ open, onClose, onSelect, initialCenter }) => {
             height="320px"
             instanceRef={mapInstanceRef}
             onClick={handleMapClick}
-            onLoad={(ymaps) => {
-              ymapsRef.current = ymaps;
-
-              if (pendingCoordsRef.current) {
-                const c = pendingCoordsRef.current;
-                pendingCoordsRef.current = null;
-                updateByCoords(c);
-              }
-            }}
+            onLoad={(ymapsApi) => setYmaps(ymapsApi)}
             options={{
               suppressMapOpenBlock: true,
               yandexMapDisablePoiInteractivity: true,
@@ -175,9 +147,16 @@ export const YandexMapModal = ({ open, onClose, onSelect, initialCenter }) => {
           </Map>
         </YMaps>
 
-        <div style={{ marginTop: 8, fontSize: 13 }}>
-          Выбранный адрес: {address || "кликните по карте"}
+        <div className={classes.selectedAddress}>
+          Выбранный адрес:{" "}
+          {loading ? "Определяем адрес…" : address || "кликните по карте"}
         </div>
+
+        {approximate && !loading && (
+          <div className={classes.approximateHint}>
+            ⚠ Приблизительно — точный дом не найден
+          </div>
+        )}
 
         <div className={classes.mapButtons}>
           <Button onClick={onClose} variant="secondary">Отмена</Button>

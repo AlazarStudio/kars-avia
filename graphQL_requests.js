@@ -402,16 +402,18 @@ export const reverseGeocodeByCoords = async ([lat, lon]) => {
  * 
  * @param {object} ymaps - экземпляр ymaps из @pbe/react-yandex-maps
  * @param {[number, number]} coords - [lat, lon] (в JS API порядок lat,lon)
- * @returns {Promise<string>} - адрес или пустая строка
+ * @returns {Promise<{address: string, approximate: boolean}>} - адрес всегда без пометок; approximate=true, если точный дом не найден
  */
 export const reverseGeocodeByCoordsWithYmaps = async (ymaps, coords) => {
-  if (!ymaps || typeof ymaps.geocode !== "function") return "";
+  if (!ymaps || typeof ymaps.geocode !== "function") {
+    return { address: "", approximate: false };
+  }
 
   const pick = (geoObjects) => {
     const count = geoObjects.getLength();
-    if (!count) return "";
+    if (!count) return null;
 
-    // пробуем найти результат с домом/номером
+    // ищем результат с домом/номером — это точный адрес
     for (let i = 0; i < count; i++) {
       const obj = geoObjects.get(i);
       const md = obj.properties.get("metaDataProperty")?.GeocoderMetaData;
@@ -420,23 +422,23 @@ export const reverseGeocodeByCoordsWithYmaps = async (ymaps, coords) => {
       const hasHouse = comps.some((c) => c.kind === "house" && c.name);
       if (kind === "house" || hasHouse) {
         const line = obj.getAddressLine();
-        if (line) return line;
+        if (line) return { address: line, approximate: false };
       }
     }
 
-    // иначе — что есть (улица/площадь/район/POI), помечаем как приблизительно
+    // иначе — улица/площадь/район/POI: адрес приблизительный
     const line = geoObjects.get(0).getAddressLine();
-    return line ? `≈ ${line}` : "";
+    return line ? { address: line, approximate: true } : null;
   };
 
   // 1) сначала просим именно "house"
   const resHouse = await ymaps.geocode(coords, { kind: "house", results: 10 });
-  const a1 = pick(resHouse.geoObjects);
-  if (a1 && !a1.startsWith("≈")) return a1; // нашли “нормальный” дом
+  const fromHouse = pick(resHouse.geoObjects);
+  if (fromHouse && !fromHouse.approximate) return fromHouse;
 
   // 2) иначе — общий поиск (улица/площадь/POI)
   const resAny = await ymaps.geocode(coords, { results: 10 });
-  return pick(resAny.geoObjects);
+  return pick(resAny.geoObjects) || fromHouse || { address: "", approximate: false };
 };
 
 

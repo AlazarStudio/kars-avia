@@ -1,171 +1,107 @@
-import { useState, useEffect, useCallback } from "react";
+import { useEffect, useRef, useState } from "react";
 import classes from "./AddressField.module.css";
-import { DEFAULT_CENTER, geocodeAddressToCoords, geocodeByTextRU } from "../../../../graphQL_requests";
+import {
+  DEFAULT_CENTER,
+  geocodeAddressToCoords,
+} from "../../../../graphQL_requests";
 import { YandexMapModal } from "../YandexMapModal/YandexMapModal";
+import { useAddressSuggestions } from "../../../hooks/useAddressSuggestions";
+import PinIcon from "../../../shared/icons/PinIcon";
 
 export const AddressField = ({ label, value, onChange, placeholder }) => {
-  const [mode, setMode] = useState("map"); // 'search' | 'map'
   const [query, setQuery] = useState(value || "");
-  const [suggestions, setSuggestions] = useState([]);
+  const [anchor, setAnchor] = useState(null); // координаты ПОДТВЕРЖДЁННОГО адреса
   const [mapOpen, setMapOpen] = useState(false);
+  const [mapCenter, setMapCenter] = useState(null); // снимок центра на момент открытия карты
 
-  const [center, setCenter] = useState(null); // пока нет координат
-  const [geoStatus, setGeoStatus] = useState("idle"); // idle | loading | success | denied | error
+  const lastEmittedRef = useRef(null);
+  const containerRef = useRef(null);
 
+  const { suggestions, loading, notFound, accept } = useAddressSuggestions(
+    query,
+    anchor
+  );
+
+  // единственная точка выхода наружу: всё, что мы отдали, помечается как «наше»
+  const emit = (val) => {
+    lastEmittedRef.current = val;
+    setQuery(val);
+    onChange(val);
+  };
+
+  // value пришёл извне (загрузилась заявка / сброс формы) → геокодим ОДИН раз.
+  // Собственные изменения опознаются по lastEmittedRef и игнорируются — иначе печать
+  // защёлкивала бы anchor на огрызке вроде «г. Ми».
   useEffect(() => {
     setQuery(value || "");
-  }, [value]);
+    if (!value) {
+      setAnchor(null); // поле очистили — якорь больше не действителен
+      return;
+    }
+    if (value === lastEmittedRef.current) return;
 
-  // если пришла заявка с готовым адресом, пробуем один раз геокодировать его в центр
-  useEffect(() => {
-    if (!value || center) return; // уже есть центр или нет строки
+    // внешний адрес считается уже принятым: подсказки по нему искать не надо
+    accept(value);
 
     let cancelled = false;
-    (async () => {
-      try {
-        const coords = await geocodeAddressToCoords(value);
-        if (!cancelled && coords) {
-          setCenter(coords);
-        }
-      } catch (e) {
-        console.error(e);
-      }
-    })();
+    geocodeAddressToCoords(value)
+      .then((coords) => {
+        if (!cancelled && coords) setAnchor(coords);
+      })
+      .catch((e) => console.error(e));
 
     return () => {
       cancelled = true;
     };
-  }, [value, center]);
+  }, [value, accept]);
 
-  // --- подсказки вокруг центра ---
-  const loadSuggestions = useCallback(
-    async (val) => {
-      if (!val || val.length < 3) {
-        setSuggestions([]);
-        return;
+  // клик мимо поля закрывает выпадашку. Слушатель нужен и пока запрос ещё летит:
+  // иначе ответ, пришедший после ухода фокуса, раскрыл бы список поверх формы.
+  useEffect(() => {
+    if (!suggestions.length && !loading) return;
+
+    const onDocMouseDown = (e) => {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        accept(query);
       }
+    };
 
-      const effectiveCenter =
-        center && center.length === 2 ? center : DEFAULT_CENTER;
+    document.addEventListener("mousedown", onDocMouseDown);
+    return () => document.removeEventListener("mousedown", onDocMouseDown);
+  }, [suggestions.length, loading, accept, query]);
 
-      try {
-        const list = await geocodeByTextRU(val, {
-          center: effectiveCenter,
-          initialRadiusKm: 20,
-          maxRadiusKm: 80,
-          stepKm: 20,
-        });
-        setSuggestions(list);
-      } catch (e) {
-        console.error(e);
-        setSuggestions([]);
-      }
-    },
-    [center]
-  );
+  const handleInputChange = (e) => emit(e.target.value);
 
-  const handleInputChange = async (e) => {
-    const val = e.target.value;
-    setQuery(val);
-    onChange(val);
-    await loadSuggestions(val);
+  // центр снимается снимком: пока карта открыта, догрузившийся anchor её не сбросит
+  const handleOpenMap = () => {
+    setMapCenter(anchor || DEFAULT_CENTER);
+    setMapOpen(true);
   };
 
   const handleSuggestionClick = async (addr) => {
-    onChange(addr);
-    setQuery(addr);
-    setSuggestions([]);
-
-    // заодно ставим центр по выбранной подсказке
+    emit(addr);
+    accept(addr);
     try {
       const coords = await geocodeAddressToCoords(addr);
-      if (coords) setCenter(coords);
+      if (coords) setAnchor(coords);
     } catch (e) {
       console.error(e);
     }
   };
 
-  // --- геолокация и открытие карты ---
-  const requestGeolocation = () => {
-    if (!("geolocation" in navigator)) {
-      setGeoStatus("error");
-      setCenter(DEFAULT_CENTER);
-      setMapOpen(true);
-      return;
-    }
-
-    setGeoStatus("loading");
-
-    navigator.geolocation.getCurrentPosition(
-      (pos) => {
-        const lat = pos.coords.latitude; // без округлений
-        const lon = pos.coords.longitude; // без округлений
-        setCenter([lat, lon]);
-        setGeoStatus("success");
-        setMapOpen(true);
-      },
-      (err) => {
-        console.warn("Geolocation error", err);
-        if (err.code === 1) setGeoStatus("denied");
-        else setGeoStatus("error");
-        setCenter(DEFAULT_CENTER); // fallback
-        setMapOpen(true);
-      },
-      {
-        enableHighAccuracy: true,
-        timeout: 7000,
-        maximumAge: 60_000,
-      }
-    );
-  };
-
-  const handleOpenMap = () => {
-    if (!center) {
-      requestGeolocation();
-    } else {
-      setMapOpen(true);
-    }
-  };
-
-  const handleSelectFromMap = (addr) => {
-    onChange(addr);
-    setQuery(addr);
-    setSuggestions([]);
-    setMode("search");
+  const handleSelectFromMap = (addr, coords) => {
+    emit(addr);
+    accept(addr);
+    if (coords) setAnchor(coords); // координаты уже известны — геокодить не нужно
     setMapOpen(false);
   };
 
   return (
-    <div className={classes.addressField}>
-      <div className={classes.addressFieldHeader}>
-        <span className={classes.addressLabel}>{label}</span>
-        <div className={classes.addressModeSwitch}>
-          <button
-            type="button"
-            className={`${classes.modeBtn} ${
-              mode === "search" ? classes.modeBtnActive : ""
-            }`}
-            onClick={() => setMode("search")}
-          >
-            Поиск
-          </button>
-          <button
-            type="button"
-            className={`${classes.modeBtn} ${
-              mode === "map" ? classes.modeBtnActive : ""
-            }`}
-            onClick={() => {
-              setMode("map");
-              setSuggestions([]);
-            }}
-          >
-            На карте
-          </button>
-        </div>
-      </div>
+    <div className={classes.addressField} ref={containerRef}>
+      {label && <span className={classes.addressLabel}>{label}</span>}
 
-      {mode === "search" && (
-        <div className={classes.addressSearch}>
+      <div className={classes.addressSearch}>
+        <div className={classes.inputRow}>
           <input
             type="text"
             className={classes.addressInput}
@@ -173,51 +109,41 @@ export const AddressField = ({ label, value, onChange, placeholder }) => {
             onChange={handleInputChange}
             placeholder={placeholder}
           />
-          {!!suggestions.length && (
-            <ul className={classes.suggestionsList}>
-              {suggestions.map((s) => (
-                <li
-                  key={s}
-                  className={classes.suggestionItem}
-                  onClick={() => handleSuggestionClick(s)}
-                >
-                  {s}
-                </li>
-              ))}
-            </ul>
-          )}
-          {geoStatus === "denied" && (
-            <div className={classes.geoHint}>
-              Доступ к геолокации запрещён. Поиск идёт от стандартного центра.
-            </div>
-          )}
-        </div>
-      )}
-
-      {mode === "map" && (
-        <>
           <button
             type="button"
-            className={classes.mapBtn}
+            className={classes.mapIconBtn}
             onClick={handleOpenMap}
+            title="Выбрать на карте"
           >
-            {geoStatus === "loading"
-              ? "Определяем местоположение…"
-              : "Выбрать на карте"}
+            <PinIcon />
           </button>
+        </div>
 
-          {/* Рендерим модалку только когда центр уже известен */}
-          {mapOpen && (center || DEFAULT_CENTER) && (
-            <YandexMapModal
-              open={mapOpen}
-              onClose={() => setMapOpen(false)}
-              onSelect={handleSelectFromMap}
-              initialCenter={
-                center && center.length === 2 ? center : DEFAULT_CENTER
-              }
-            />
-          )}
-        </>
+        {!!suggestions.length && (
+          <ul className={classes.suggestionsList}>
+            {suggestions.map((s, i) => (
+              <li
+                key={`${s}-${i}`}
+                className={classes.suggestionItem}
+                onClick={() => handleSuggestionClick(s)}
+              >
+                {s}
+              </li>
+            ))}
+          </ul>
+        )}
+
+        {loading && <div className={classes.hint}>Ищем адрес…</div>}
+        {notFound && <div className={classes.hint}>Ничего не найдено</div>}
+      </div>
+
+      {mapOpen && (
+        <YandexMapModal
+          open={mapOpen}
+          onClose={() => setMapOpen(false)}
+          onSelect={handleSelectFromMap}
+          initialCenter={mapCenter}
+        />
       )}
     </div>
   );
