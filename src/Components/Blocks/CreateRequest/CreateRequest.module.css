@@ -79,7 +79,7 @@ select {
 }
 
 .requestMiddle {
-    height: calc(100vh - 160px);
+    height: calc(100vh - 193px);
     overflow: hidden;
     overflow-y: auto;
 }

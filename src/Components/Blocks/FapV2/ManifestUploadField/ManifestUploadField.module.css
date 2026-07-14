@@ -4,70 +4,62 @@
     gap: 8px;
 }
 
-.uploadButton {
-    height: 40px;
-    border: 1px dashed #54587380;
-    border-radius: 4px;
-    background: none;
-    cursor: pointer;
-    font-family: Nunito Sans;
-    font-size: 15px;
-    color: var(--text);
-}
-
-.uploadButton:disabled {
-    opacity: 0.55;
-    cursor: default;
-}
-
-.fileRow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-}
-
-.fileName {
-    font-size: 14px;
-    font-weight: 600;
-    overflow: hidden;
-    text-overflow: ellipsis;
+.chip {
+    padding: 1px 8px;
+    border-radius: 8px;
+    background: var(--gray);
+    font-size: 11px;
+    color: var(--main-gray);
     white-space: nowrap;
 }
 
-.clear {
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
+.toggle {
+    align-self: flex-start;
     display: flex;
     align-items: center;
-    flex-shrink: 0;
+    gap: 4px;
+    padding: 0;
+    border: none;
+    background: none;
+    font-size: 13px;
+    color: var(--blue);
 }
 
-.summary {
-    font-size: 13px;
-    color: var(--main-gray);
+.chevron,
+.chevronUp {
+    transition: transform 0.2s ease;
+}
+
+.chevronUp {
+    transform: rotate(180deg);
 }
 
 .list {
     max-height: 180px;
     overflow-y: auto;
-    border: 1px solid #54587340;
-    border-radius: 4px;
+    border: 1px solid #5458732e;
+    border-radius: 8px;
 }
 
 .personRow {
     display: flex;
     align-items: center;
     gap: 8px;
-    padding: 5px 10px;
+    padding: 6px 10px;
     font-size: 13px;
     border-bottom: 1px solid #5458731a;
 }
 
 .personRow:last-child {
     border-bottom: none;
+}
+
+.personIndex {
+    flex-shrink: 0;
+    min-width: 18px;
+    color: var(--text-gray);
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
 }
 
 .personName {
@@ -80,9 +72,4 @@
 .personSeat {
     color: var(--main-gray);
     flex-shrink: 0;
-}
-
-.error {
-    font-size: 13px;
-    color: #d32f2f;
 }

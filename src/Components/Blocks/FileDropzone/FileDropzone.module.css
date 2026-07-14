@@ -1,0 +1,171 @@
+.wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* --- пустое состояние: зона перетаскивания --- */
+
+.dropzone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    min-height: 116px;
+    padding: 16px;
+    border: 1px dashed #54587359;
+    border-radius: 8px;
+    background: #f8f9fc;
+    cursor: pointer;
+    text-align: center;
+    transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.dropzone:hover {
+    border-color: var(--blue);
+    background: var(--hover-gray);
+}
+
+.dropzone:focus-visible {
+    outline: 2px solid var(--blue);
+    outline-offset: 2px;
+}
+
+.dragging {
+    border-color: var(--blue);
+    border-style: solid;
+    background: #e8f1ff;
+}
+
+.invalid {
+    border-color: var(--red);
+}
+
+.busy {
+    cursor: default;
+    background: #f8f9fc;
+}
+
+.title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.link {
+    color: var(--blue);
+}
+
+.hint {
+    font-size: 12px;
+    color: var(--text-gray);
+}
+
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid #54587340;
+    border-top-color: var(--blue);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .spinner {
+        animation-duration: 2s;
+    }
+
+    .dropzone {
+        transition: none;
+    }
+}
+
+/* --- заполненное состояние: карточка файла --- */
+
+.card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border: 1px solid #5458732e;
+    border-radius: 8px;
+    background: var(--white);
+}
+
+.cardMain {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.fileName {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.metaRow {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--main-gray);
+}
+
+.replace {
+    flex-shrink: 0;
+    padding: 6px 10px;
+    border: 1px solid #5458733d;
+    border-radius: 6px;
+    background: none;
+    font-size: 13px;
+    color: var(--main-gray);
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.replace:hover:not(:disabled) {
+    border-color: var(--blue);
+    color: var(--blue);
+    background: var(--hover-gray);
+}
+
+.replace:disabled {
+    opacity: 0.55;
+    cursor: default;
+}
+
+.clear {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    transition: background-color 0.2s ease;
+}
+
+.clear:hover {
+    background: var(--hover-gray);
+}
+
+.error {
+    font-size: 13px;
+    color: var(--red);
+}

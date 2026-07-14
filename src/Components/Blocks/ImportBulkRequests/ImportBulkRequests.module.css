@@ -32,8 +32,25 @@
 }
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field label { font-size: 14px; color: var(--text, #2c2c2a); }
-.fileInfo { font-size: 13px; color: #5d5d5d; }
 .summary { font-weight: 600; font-size: 14px; }
+
+.chip {
+  padding: 1px 8px;
+  border-radius: 8px;
+  background: var(--gray);
+  font-size: 11px;
+  color: var(--main-gray);
+  white-space: nowrap;
+}
+
+.chipWarn {
+  padding: 1px 8px;
+  border-radius: 8px;
+  background: #fdecea;
+  font-size: 11px;
+  color: var(--red);
+  white-space: nowrap;
+}
 
 .preview { width: 100%; border-collapse: collapse; font-size: 12px; }
 .preview th, .preview td {

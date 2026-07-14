@@ -6,6 +6,7 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import MUILoader from "../MUILoader/MUILoader";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import FileDropzone from "../FileDropzone/FileDropzone.jsx";
 import { useMutation, useQuery } from "@apollo/client";
 import {
   IMPORT_BULK_REQUESTS,
@@ -34,6 +35,8 @@ function ImportBulkRequests({ show, onClose, user, onImported, embedded = false,
   const [file, setFile] = useState(null);
   const [parsed, setParsed] = useState(null);
   const [serverErrors, setServerErrors] = useState([]);
+  const [fileError, setFileError] = useState(null);
+  const [parsing, setParsing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isEdited, setIsEdited] = useState(false);
 
@@ -56,6 +59,7 @@ function ImportBulkRequests({ show, onClose, user, onImported, embedded = false,
     setFile(null);
     setParsed(null);
     setServerErrors([]);
+    setFileError(null);
     setSelectedAirline(null);
     setAirportId("");
     setReserve(false);
@@ -100,19 +104,29 @@ function ImportBulkRequests({ show, onClose, user, onImported, embedded = false,
     if (embedded) registerClose?.(closeButton);
   }, [embedded, registerClose, closeButton]);
 
-  const handleFile = async (e) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
-    setFile(f);
+  const handleFile = async (f) => {
     setServerErrors([]);
+    setFileError(null);
     setIsEdited(true);
+    setParsing(true);
     try {
       setParsed(await parseBulkXlsx(f));
+      setFile(f);
     } catch (err) {
       console.error(err);
+      setFile(null);
       setParsed(null);
-      showAlert("Не удалось прочитать файл. Проверьте формат XLSX.");
+      setFileError("Не удалось прочитать файл. Проверьте формат XLSX.");
+    } finally {
+      setParsing(false);
     }
+  };
+
+  const handleFileClear = () => {
+    setFile(null);
+    setParsed(null);
+    setFileError(null);
+    setServerErrors([]);
   };
 
   const canSubmit =
@@ -166,13 +180,30 @@ function ImportBulkRequests({ show, onClose, user, onImported, embedded = false,
           <div className={classes.requestMiddle}>
             <div className={classes.field}>
               <label>Файл XLSX</label>
-              <input type="file" accept=".xlsx" onChange={handleFile} />
-              {file && (
-                <div className={classes.fileInfo}>
-                  {file.name}
-                  {parsed && !parsed.headerError ? ` · строк: ${parsed.rows.length}` : ""}
-                </div>
-              )}
+              <FileDropzone
+                accept=".xlsx"
+                hint="Таблица заявок в формате XLSX"
+                fileName={file?.name}
+                parsing={parsing}
+                error={fileError || parsed?.headerError}
+                onFile={handleFile}
+                onClear={handleFileClear}
+                meta={
+                  parsed && !parsed.headerError ? (
+                    <>
+                      <span>строк: {parsed.rows.length}</span>
+                      <span className={classes.chip}>
+                        заявок: {parsed.totalRequests}
+                      </span>
+                      {parsed.rowIssues.length > 0 && (
+                        <span className={classes.chipWarn}>
+                          с замечаниями: {parsed.rowIssues.length}
+                        </span>
+                      )}
+                    </>
+                  ) : null
+                }
+              />
             </div>
 
             {user?.airlineId ? null : (
@@ -238,7 +269,6 @@ function ImportBulkRequests({ show, onClose, user, onImported, embedded = false,
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Тип заявки"}
-                hideLabelOnFocus={false}
                 options={["Квота", "Резерв"]}
                 value={reserve ? "Резерв" : "Квота"}
                 onChange={(e, newValue) => {
@@ -247,8 +277,6 @@ function ImportBulkRequests({ show, onClose, user, onImported, embedded = false,
                 }}
               />
             </div>
-
-            {parsed?.headerError && <div className={classes.errorBox}>{parsed.headerError}</div>}
 
             {parsed && !parsed.headerError && (
               <>
