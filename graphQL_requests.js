@@ -8043,20 +8043,6 @@ export const TL_EXTRA_STAYS_FOR_AMEND = gql`
   }
 `;
 
-export const TL_VERIFY_BOOKING = gql`
-  mutation TlVerifyBooking($input: TlVerifyInput!) {
-    tlVerifyBooking(input: $input) {
-      ok
-      conditionChange
-      newChecksum
-      newPriceBeforeTax
-      newTotalPrice
-      newTax
-      message
-    }
-  }
-`;
-
 export const TL_CANCELLATION_PENALTY = gql`
   query TlCancellationPenalty($bookingId: String!) {
     tlCancellationPenalty(bookingId: $bookingId) {
