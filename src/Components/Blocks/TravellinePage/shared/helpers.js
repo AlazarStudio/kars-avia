@@ -43,6 +43,17 @@ export function fmtTimeWithTz(value, timezone) {
   return `${fmtDateTime(value)} (${tzLabel(timezone)})`
 }
 
+// Пояс отеля из политики отмены, сохранённой при создании брони (требование №1)
+export function reservationTimezone(r) {
+  try {
+    const parsed = JSON.parse(r?.cancellationPoliciesJson ?? "null")
+    const cp = Array.isArray(parsed) ? parsed[0] : parsed
+    return cp?.timezone ?? null
+  } catch {
+    return null
+  }
+}
+
 // Полная строка правил отмены: сумма + дедлайн (дата, время) + пояс (требование №2).
 // cp: { amount, deadline, deadlineUtc, timezone }
 export function fmtCancellationPolicy(cp, currency) {

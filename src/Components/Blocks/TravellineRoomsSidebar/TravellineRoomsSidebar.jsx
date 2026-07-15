@@ -279,6 +279,9 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
             checkOutTime: selectedRate.checkOutTime ?? null,
             earlyCheckInDateTime,
             lateCheckOutDateTime,
+            cancellationPoliciesJson: selectedRate.cancellationPolicies?.length
+              ? JSON.stringify(selectedRate.cancellationPolicies)
+              : null,
           },
         },
       });

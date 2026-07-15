@@ -898,8 +898,8 @@ function BookView({
             <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 8 }}>Загрузка опций РЗПВ...</p>
           )}
 
-          {(extraStays?.earlyCheckIn?.length > 0 || extraStays?.lateCheckOut?.length > 0) && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12, marginBottom: 0, alignItems: "start" }}>
+          <div style={{ display: "grid", gridTemplateColumns: (extraStays?.earlyCheckIn?.length > 0 || extraStays?.lateCheckOut?.length > 0) ? "1fr auto" : "1fr", gap: 12, marginBottom: 0, alignItems: "start" }}>
+            {(extraStays?.earlyCheckIn?.length > 0 || extraStays?.lateCheckOut?.length > 0) && (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {extraStays?.earlyCheckIn?.length > 0 && (
                   <div>
@@ -944,6 +944,7 @@ function BookView({
                   </div>
                 )}
               </div>
+            )}
 
               <div style={{
                 background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8,
@@ -980,8 +981,7 @@ function BookView({
                   )}
                 </div>
               </div>
-            </div>
-          )}
+          </div>
 
           {(selectedEarlyCheckIn || selectedLateCheckOut) && (
             <p style={{ fontSize: 12, color: "#c2410c", margin: "8px 0 0" }}>
