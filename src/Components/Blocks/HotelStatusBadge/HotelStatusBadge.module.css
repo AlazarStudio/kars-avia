@@ -1,0 +1,26 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+  padding: 3px 9px;
+  border-radius: 20px;
+  font-family: Inter, sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  width: fit-content;
+}
+
+.amber { background: #fff0cc; color: #8a5a00; }
+.red   { background: #ffe0e0; color: #b91c1c; }
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.amber .dot { background: #f59e0b; }
+.red .dot   { background: #ef4444; }

@@ -1,0 +1,60 @@
+.field {
+  position: relative;
+  box-sizing: border-box;
+  border: 1px solid rgba(0, 0, 0, 0.23);
+  border-radius: 12px;
+  padding: 4px;
+}
+
+/* Плавающий лейбл — как в StarRatingFilter (наверху на рамке) */
+.floatLabel {
+  position: absolute;
+  top: -8px;
+  left: 12px;
+  padding: 0 5px;
+  font-family: Inter, sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  color: rgba(0, 0, 0, 0.6);
+  background: #fff;
+}
+
+.toggle {
+  display: flex;
+  gap: 4px;
+  width: 100%;
+}
+
+.segment {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  padding: 7px 6px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: #6b7280;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.segment:hover {
+  color: #374151;
+}
+
+.active,
+.active:hover {
+  background: #eaf2ff;
+  color: #0057c3;
+  font-weight: 500;
+  cursor: default;
+}
+
+.disabled {
+  opacity: 0.55;
+  pointer-events: none;
+}

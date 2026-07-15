@@ -4202,6 +4202,8 @@ export const GET_HOTELS = gql`
         usStars
         airportDistance
         externalSource
+        active
+        show
         roomKind {
           id
           price

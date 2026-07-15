@@ -8,6 +8,7 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 import FilterPopoverButton from "../FilterPopoverButton/FilterPopoverButton";
 import StarRatingFilter from "../StarRatingFilter/StarRatingFilter";
+import SegmentedToggle from "../SegmentedToggle/SegmentedToggle";
 import { useQuery, useSubscription } from "@apollo/client";
 import {
   GET_HOTELS,
@@ -18,6 +19,7 @@ import {
   getCookie,
 } from "../../../../graphQL_requests";
 import { roles } from "../../../roles";
+import { isSuperAdmin, isDispatcherRole } from "../../../utils/access";
 import ReactPaginate from "react-paginate";
 import { useLocation, useNavigate } from "react-router-dom";
 import MUILoader from "../MUILoader/MUILoader";
@@ -46,6 +48,13 @@ function HotelsList({ children, user, ...props }) {
   const urlStars = urlParams.get("stars") || "";
   const urlUsStars = urlParams.get("usStars") || "";
   const urlSearch = urlParams.get("search") || "";
+  const urlVisibility = urlParams.get("visibility") || "all";
+  const urlStatus = urlParams.get("status") || "active";
+
+  // Права на новые фильтры (вариант B — по роли, без доп. запроса).
+  // show: супер-админ + диспетчеры; active: только супер-админ.
+  const canFilterShow = isSuperAdmin(user) || isDispatcherRole(user);
+  const canFilterActive = isSuperAdmin(user);
 
   const [filterData, setFilterData] = useState({
     filterStars: urlStars,
@@ -57,6 +66,8 @@ function HotelsList({ children, user, ...props }) {
   const [selectedAirport, setSelectedAirport] = useState(null);
   const [searchQuery, setSearchQuery] = useState(urlSearch);
   const debouncedSearch = useDebounce(searchQuery, 400);
+  const [visibilityFilter, setVisibilityFilter] = useState(urlVisibility);
+  const [statusFilter, setStatusFilter] = useState(urlStatus);
 
   const updateUrlParams = (updates) => {
     const params = new URLSearchParams(location.search);
@@ -90,6 +101,10 @@ function HotelsList({ children, user, ...props }) {
       ...(filterData.filterStars && { stars: filterData.filterStars }),
       ...(filterData.filterUsStars && { usStars: filterData.filterUsStars }),
       ...(debouncedSearch.trim() && { search: debouncedSearch.trim() }),
+      // fail-closed: поле уходит в фильтр только при наличии прав
+      ...(canFilterShow && visibilityFilter === "visible" && { show: true }),
+      ...(canFilterShow && visibilityFilter === "hidden" && { show: false }),
+      ...(canFilterActive && statusFilter === "inactive" && { active: false }),
     }),
     [
       selectedCity?.id,
@@ -97,6 +112,10 @@ function HotelsList({ children, user, ...props }) {
       filterData.filterStars,
       filterData.filterUsStars,
       debouncedSearch,
+      canFilterShow,
+      canFilterActive,
+      visibilityFilter,
+      statusFilter,
     ],
   );
 
@@ -161,6 +180,14 @@ function HotelsList({ children, user, ...props }) {
         : { filterStars: urlStars, filterUsStars: urlUsStars },
     );
   }, [urlStars, urlUsStars]);
+
+  useEffect(() => {
+    setVisibilityFilter((prev) => (prev === urlVisibility ? prev : urlVisibility));
+  }, [urlVisibility]);
+
+  useEffect(() => {
+    setStatusFilter((prev) => (prev === urlStatus ? prev : urlStatus));
+  }, [urlStatus]);
 
   useEffect(() => {
     setPageInfo((prev) =>
@@ -278,6 +305,20 @@ function HotelsList({ children, user, ...props }) {
     updateUrlParams({ airport: newValue?.id || "", page: "1" });
   };
 
+  const handleVisibilityChange = (value) => {
+    setVisibilityFilter(value);
+    setPageInfo((prev) => ({ ...prev, skip: 0 }));
+    // "all" — дефолт: убираем параметр из URL
+    updateUrlParams({ visibility: value === "all" ? "" : value, page: "1" });
+  };
+
+  const handleStatusChange = (value) => {
+    setStatusFilter(value);
+    setPageInfo((prev) => ({ ...prev, skip: 0 }));
+    // "active" — дефолт: убираем параметр из URL
+    updateUrlParams({ status: value === "active" ? "" : value, page: "1" });
+  };
+
   const handleSearch = (e) => {
     setSearchQuery(e.target.value);
   };
@@ -307,18 +348,24 @@ function HotelsList({ children, user, ...props }) {
     (selectedCity ? 1 : 0) +
     (selectedAirport ? 1 : 0) +
     (filterData.filterStars ? 1 : 0) +
-    (filterData.filterUsStars ? 1 : 0);
+    (filterData.filterUsStars ? 1 : 0) +
+    (canFilterShow && visibilityFilter !== "all" ? 1 : 0) +
+    (canFilterActive && statusFilter !== "active" ? 1 : 0);
 
   const handleResetFilters = () => {
     setSelectedCity(null);
     setSelectedAirport(null);
     setFilterData({ filterStars: "", filterUsStars: "" });
+    setVisibilityFilter("all");
+    setStatusFilter("active");
     setPageInfo((prev) => ({ ...prev, skip: 0 }));
     updateUrlParams({
       city: "",
       airport: "",
       stars: "",
       usStars: "",
+      visibility: "",
+      status: "",
       page: "1",
     });
   };
@@ -390,6 +437,29 @@ function HotelsList({ children, user, ...props }) {
               value={filterData.filterUsStars}
               onChange={(v) => handleFilterChange("filterUsStars", v)}
             />
+            {canFilterShow && (
+              <SegmentedToggle
+                label="Видимость"
+                value={visibilityFilter}
+                onChange={handleVisibilityChange}
+                options={[
+                  { key: "all", label: "Все" },
+                  { key: "visible", label: "Видимые" },
+                  { key: "hidden", label: "Скрытые" },
+                ]}
+              />
+            )}
+            {canFilterActive && (
+              <SegmentedToggle
+                label="Статус"
+                value={statusFilter}
+                onChange={handleStatusChange}
+                options={[
+                  { key: "active", label: "Активные" },
+                  { key: "inactive", label: "Неактивные" },
+                ]}
+              />
+            )}
           </FilterPopoverButton>
           <MUITextField
             label={"Поиск"}

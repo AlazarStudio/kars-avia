@@ -4,6 +4,7 @@ import InfoTable from "../InfoTable/InfoTable";
 import { Link } from "react-router-dom";
 import { getMediaUrl, GET_HOTEL_USERS, getCookie } from "../../../../graphQL_requests";
 import HotelReadinessIndicator from "../HotelReadinessIndicator/HotelReadinessIndicator";
+import HotelStatusBadge from "../HotelStatusBadge/HotelStatusBadge";
 import { useQuery } from "@apollo/client";
 import { isSuperAdmin, isDispatcherAdmin, isAirlineRole } from "../../../utils/access";
 
@@ -52,6 +53,7 @@ function HotelListRow({ item, user, onClick }) {
         <div className={classes.InfoTable_data_elem_title}>
           {item.name}
         </div>
+        <HotelStatusBadge hotel={item} />
         {item.stars ? (
           <div className={classes.InfoTable_data_elem_title}>
             <>
