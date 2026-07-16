@@ -787,7 +787,7 @@ function BookView({
               <div className={classes.flexBetween}>
                 <span style={{ fontSize: 12, color: "#475569" }}>Стоимость проживания</span>
                 <span style={{ fontWeight: 600 }}>
-                  {(conditionChange.newPriceBeforeTax * nights).toLocaleString("ru-RU")} {bookingRate?.currency}
+                  {conditionChange.newPriceBeforeTax.toLocaleString("ru-RU")} {bookingRate?.currency}
                 </span>
               </div>
               {conditionChange.newTax != null && conditionChange.newTax > 0 && (
