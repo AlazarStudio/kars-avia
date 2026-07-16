@@ -218,7 +218,8 @@ function CreateRequestAirlineStaff({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>Фамилия И.О.</label>
+              <span className={classes.hint}>* — обязательные поля</span>
+              <label className={classes.required}>Фамилия И.О.</label>
               <input
                 type="text"
                 name="name"
@@ -228,7 +229,7 @@ function CreateRequestAirlineStaff({
                 autoComplete="new-password"
               />
 
-              <label>Номер телефона</label>
+              <label className={classes.required}>Номер телефона</label>
               <InputMask
                 type="text"
                 mask="+7 (___) ___-__-__"
@@ -255,7 +256,7 @@ function CreateRequestAirlineStaff({
                 }}
               />
 
-              <label>Пол</label>
+              <label className={classes.required}>Пол</label>
 
               <MUIAutocomplete
                 dropdownWidth={"100%"}
