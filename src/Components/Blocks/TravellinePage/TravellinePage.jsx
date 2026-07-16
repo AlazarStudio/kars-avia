@@ -26,10 +26,12 @@ import SettingsTab from "./sections/SettingsTab"
 import HotelsTab from "./sections/HotelsTab"
 import SearchBookingTab from "./sections/SearchBookingTab"
 import RawConsoleTab from "./sections/RawConsoleTab"
+import CorporatesTab from "./sections/CorporatesTab"
 
 const TABS = [
   { id: "hotels", label: "Все отели" },
-  { id: "booking", label: "Поиск и бронирование" }
+  { id: "booking", label: "Поиск и бронирование" },
+  { id: "corporates", label: "Корп. клиенты" }
 ]
 
 export default function TravellinePage() {
@@ -225,6 +227,7 @@ export default function TravellinePage() {
           )}
           {tab === "hotels" && <HotelsTab />}
           {tab === "booking" && <SearchBookingTab />}
+          {tab === "corporates" && <CorporatesTab />}
           {tab === "console" && <RawConsoleTab />}
         </div>
       </div>

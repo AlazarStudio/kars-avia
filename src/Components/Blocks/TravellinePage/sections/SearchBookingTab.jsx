@@ -16,7 +16,7 @@ import {
 } from "../../../../../graphQL_requests"
 import classes from "../TravellinePage.module.css"
 import { Badge, Btn, SectionCard, Spinner, StarRow, EmptyState } from "../shared/ui"
-import { cn, fmtDateTime, nightWord, nightsBetween, tlImg } from "../shared/helpers"
+import { cn, fmtDateTime, nightWord, nightsBetween, reservationTimezone, tlImg, tzLabel } from "../shared/helpers"
 import PropertyModal from "../modals/PropertyModal"
 import ReservationDetailModal from "../modals/ReservationDetailModal"
 
@@ -301,9 +301,21 @@ export default function SearchBookingTab() {
                     </p>
                     {penalty.penaltyType && <p style={{ color: "#dc2626", fontSize: 12 }}>Тип: {penalty.penaltyType}</p>}
                     {penalty.description && <p style={{ fontSize: 12, color: "#94a3b8" }}>{penalty.description}</p>}
+                    {penalty.deadline && (
+                      <p style={{ fontSize: 12, color: "#9a3412" }}>
+                        Бесплатная отмена была доступна до {fmtDateTime(penalty.deadline)} ({tzLabel(penalty.timezone)})
+                      </p>
+                    )}
                   </>
                 ) : (
-                  <p style={{ color: "#15803d", fontWeight: 600, margin: 0 }}>Бесплатная отмена</p>
+                  <>
+                    <p style={{ color: "#15803d", fontWeight: 600, margin: 0 }}>Бесплатная отмена</p>
+                    {penalty.deadline && (
+                      <p style={{ fontSize: 12, color: "#15803d" }}>
+                        Доступна до {fmtDateTime(penalty.deadline)} ({tzLabel(penalty.timezone)})
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
             ) : (
@@ -684,7 +696,7 @@ export default function SearchBookingTab() {
                       {r.propertyName ?? r.propertyId}
                     </p>
                     <p className={classes.smallText} style={{ marginTop: 4 }}>
-                      {fmtDateTime(r.arrival)} → {fmtDateTime(r.departure)}
+                      {fmtDateTime(r.arrival)} → {fmtDateTime(r.departure)} ({tzLabel(reservationTimezone(r))})
                       {r.roomTypeName ? ` · ${r.roomTypeName}` : ""}
                       {r.adults > 0 && <span style={{ marginLeft: 8 }}>{r.adults} взр.{r.children > 0 ? ` · ${r.children} дет.` : ""}</span>}
                     </p>

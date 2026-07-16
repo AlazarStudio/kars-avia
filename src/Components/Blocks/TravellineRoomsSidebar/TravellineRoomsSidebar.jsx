@@ -279,6 +279,9 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
             checkOutTime: selectedRate.checkOutTime ?? null,
             earlyCheckInDateTime,
             lateCheckOutDateTime,
+            cancellationPoliciesJson: selectedRate.cancellationPolicies?.length
+              ? JSON.stringify(selectedRate.cancellationPolicies)
+              : null,
           },
         },
       });
@@ -505,6 +508,8 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
                     {conditionChange.newPenaltyAmount != null && (
                       <p style={{ fontSize: 12, color: "#c2410c", margin: "4px 0 0" }}>
                         Новый штраф за отмену: {Number(conditionChange.newPenaltyAmount).toLocaleString("ru-RU")} {selectedRate?.currency}
+                        {extraCost > 0 && Number(conditionChange.newPenaltyAmount) >= extraCost &&
+                          ` (${(Number(conditionChange.newPenaltyAmount) - extraCost).toLocaleString("ru-RU")} по тарифу + ${extraCost.toLocaleString("ru-RU")} за ранний заезд/поздний выезд)`}
                       </p>
                     )}
                     <div className={classes.conditionChangeActions}>
@@ -660,7 +665,10 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
 
                     {(selectedEarlyCheckIn || selectedLateCheckOut) && (
                       <p style={{ fontSize: 12, color: "#c2410c", margin: "8px 0 0" }}>
-                        ⚠ Ранний заезд / поздний выезд увеличивает размер штрафа за отмену.
+                        ⚠ Ранний заезд / поздний выезд увеличивает размер штрафа за отмену
+                        {selectedRate?.cancellationPolicies?.[0]?.amount != null
+                          ? ` — штраф составит ${(selectedRate.cancellationPolicies[0].amount + extraCost).toLocaleString("ru-RU")} ${selectedRate.currency} (${selectedRate.cancellationPolicies[0].amount.toLocaleString("ru-RU")} по тарифу + ${extraCost.toLocaleString("ru-RU")} за услуги).`
+                          : "."}
                       </p>
                     )}
 

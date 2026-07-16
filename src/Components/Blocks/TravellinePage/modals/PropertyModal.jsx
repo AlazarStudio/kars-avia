@@ -787,7 +787,7 @@ function BookView({
               <div className={classes.flexBetween}>
                 <span style={{ fontSize: 12, color: "#475569" }}>Стоимость проживания</span>
                 <span style={{ fontWeight: 600 }}>
-                  {(conditionChange.newPriceBeforeTax * nights).toLocaleString("ru-RU")} {bookingRate?.currency}
+                  {conditionChange.newPriceBeforeTax.toLocaleString("ru-RU")} {bookingRate?.currency}
                 </span>
               </div>
               {conditionChange.newTax != null && conditionChange.newTax > 0 && (
@@ -807,6 +807,8 @@ function BookView({
               {conditionChange.newPenaltyAmount != null && (
                 <p style={{ fontSize: 12, color: "#c2410c", margin: "4px 0 0" }}>
                   Новый штраф за отмену: {Number(conditionChange.newPenaltyAmount).toLocaleString("ru-RU")} {bookingRate?.currency}
+                  {extraCost > 0 && Number(conditionChange.newPenaltyAmount) >= extraCost &&
+                    ` (${(Number(conditionChange.newPenaltyAmount) - extraCost).toLocaleString("ru-RU")} по тарифу + ${extraCost.toLocaleString("ru-RU")} за ранний заезд/поздний выезд)`}
                 </p>
               )}
             </div>
@@ -898,8 +900,8 @@ function BookView({
             <p style={{ fontSize: 12, color: "#94a3b8", marginBottom: 8 }}>Загрузка опций РЗПВ...</p>
           )}
 
-          {(extraStays?.earlyCheckIn?.length > 0 || extraStays?.lateCheckOut?.length > 0) && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 12, marginBottom: 0, alignItems: "start" }}>
+          <div style={{ display: "grid", gridTemplateColumns: (extraStays?.earlyCheckIn?.length > 0 || extraStays?.lateCheckOut?.length > 0) ? "1fr auto" : "1fr", gap: 12, marginBottom: 0, alignItems: "start" }}>
+            {(extraStays?.earlyCheckIn?.length > 0 || extraStays?.lateCheckOut?.length > 0) && (
               <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
                 {extraStays?.earlyCheckIn?.length > 0 && (
                   <div>
@@ -944,6 +946,7 @@ function BookView({
                   </div>
                 )}
               </div>
+            )}
 
               <div style={{
                 background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: 8,
@@ -980,12 +983,14 @@ function BookView({
                   )}
                 </div>
               </div>
-            </div>
-          )}
+          </div>
 
           {(selectedEarlyCheckIn || selectedLateCheckOut) && (
             <p style={{ fontSize: 12, color: "#c2410c", margin: "8px 0 0" }}>
-              ⚠ Ранний заезд / поздний выезд увеличивает размер штрафа за отмену.
+              ⚠ Ранний заезд / поздний выезд увеличивает размер штрафа за отмену
+              {bookingRate?.cancellationPolicies?.[0]?.amount != null
+                ? ` — штраф составит ${(bookingRate.cancellationPolicies[0].amount + extraCost).toLocaleString("ru-RU")} ${bookingRate.currency} (${bookingRate.cancellationPolicies[0].amount.toLocaleString("ru-RU")} по тарифу + ${extraCost.toLocaleString("ru-RU")} за услуги).`
+                : "."}
             </p>
           )}
 

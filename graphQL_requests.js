@@ -8052,6 +8052,9 @@ export const TL_CANCELLATION_PENALTY = gql`
       currency
       penaltyType
       description
+      deadline
+      deadlineUtc
+      timezone
     }
   }
 `;
