@@ -807,6 +807,8 @@ function BookView({
               {conditionChange.newPenaltyAmount != null && (
                 <p style={{ fontSize: 12, color: "#c2410c", margin: "4px 0 0" }}>
                   Новый штраф за отмену: {Number(conditionChange.newPenaltyAmount).toLocaleString("ru-RU")} {bookingRate?.currency}
+                  {extraCost > 0 && Number(conditionChange.newPenaltyAmount) >= extraCost &&
+                    ` (${(Number(conditionChange.newPenaltyAmount) - extraCost).toLocaleString("ru-RU")} по тарифу + ${extraCost.toLocaleString("ru-RU")} за ранний заезд/поздний выезд)`}
                 </p>
               )}
             </div>
@@ -985,7 +987,10 @@ function BookView({
 
           {(selectedEarlyCheckIn || selectedLateCheckOut) && (
             <p style={{ fontSize: 12, color: "#c2410c", margin: "8px 0 0" }}>
-              ⚠ Ранний заезд / поздний выезд увеличивает размер штрафа за отмену.
+              ⚠ Ранний заезд / поздний выезд увеличивает размер штрафа за отмену
+              {bookingRate?.cancellationPolicies?.[0]?.amount != null
+                ? ` — штраф составит ${(bookingRate.cancellationPolicies[0].amount + extraCost).toLocaleString("ru-RU")} ${bookingRate.currency} (${bookingRate.cancellationPolicies[0].amount.toLocaleString("ru-RU")} по тарифу + ${extraCost.toLocaleString("ru-RU")} за услуги).`
+                : "."}
             </p>
           )}
 
