@@ -212,7 +212,7 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
   if (error) return <p>Ошибка: {error.message}</p>;
   if (!data?.organization) return null;
 
-  console.log(accessMenu, "\n", user);
+  // console.log(accessMenu, "\n", user);
   
 
   return (
