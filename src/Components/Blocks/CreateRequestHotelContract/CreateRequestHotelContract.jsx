@@ -222,6 +222,7 @@ function CreateRequestHotelContract({
         {
           contractNumberAA: "",
           dateAA: "",
+          agreementEndDate: "",
           itemAgreement: "",
           notesAA: "",
           filesAA: [],
@@ -440,6 +441,9 @@ function CreateRequestHotelContract({
       const aaContracts = filledAgreements.map((agreement) => ({
         contractNumber: agreement.contractNumberAA,
         date: new Date(agreement.dateAA).toISOString(),
+        agreementEndDate: agreement.agreementEndDate
+          ? new Date(agreement.agreementEndDate).toISOString()
+          : null,
         itemAgreement: agreement.itemAgreement,
         notes: agreement.notesAA,
         files: agreement.filesAA,
@@ -962,6 +966,21 @@ function CreateRequestHotelContract({
                       value={agreement.dateAA}
                       onChange={(e) =>
                         handleAgreementChange(index, "dateAA", e.target.value)
+                      }
+                      placeholder="Дата"
+                    />
+
+                    <label>Дата окончания срока действия</label>
+                    <input
+                      type="date"
+                      name={`agreementEndDate-${index}`}
+                      value={agreement.agreementEndDate || ""}
+                      onChange={(e) =>
+                        handleAgreementChange(
+                          index,
+                          "agreementEndDate",
+                          e.target.value
+                        )
                       }
                       placeholder="Дата"
                     />

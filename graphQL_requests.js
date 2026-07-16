@@ -815,6 +815,8 @@ export const GET_ORGANIZATION = gql`
       threeSeater { intercity city }
       fiveSeater { intercity city }
       sevenSeater { intercity city }
+      twentySeater { intercity city }
+      fiftySeater { intercity city }
     }
     airports { id name code city }
     cities { id city region }
@@ -5279,6 +5281,8 @@ export const GET_AIRLINE_TRANSFER_PRICES = gql`
       threeSeater { intercity city }
       fiveSeater { intercity city }
       sevenSeater { intercity city }
+      twentySeater { intercity city }
+      fiftySeater { intercity city }
     }
     airports { id name code city }
     cities { id city region }

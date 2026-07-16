@@ -3,9 +3,11 @@
  * Used when adding a new transfer price record.
  */
 export const DEFAULT_TRANSFER_PRICES = {
-  threeSeater: { intercity: 0, city: 0 },
-  fiveSeater: { intercity: 0, city: 0 },
-  sevenSeater: { intercity: 0, city: 0 },
+  threeSeater: { intercity: null, city: null },
+  fiveSeater: { intercity: null, city: null },
+  sevenSeater: { intercity: null, city: null },
+  twentySeater: { intercity: null, city: null },
+  fiftySeater: { intercity: null, city: null },
 };
 
 /**
@@ -35,6 +37,8 @@ export function transferPriceToInput(tp) {
       threeSeater: tp.prices?.threeSeater ?? null,
       fiveSeater: tp.prices?.fiveSeater ?? null,
       sevenSeater: tp.prices?.sevenSeater ?? null,
+      twentySeater: tp.prices?.twentySeater ?? null,
+      fiftySeater: tp.prices?.fiftySeater ?? null,
     },
     airportIds: (tp.airports || []).map((a) => a.id),
     cityIds: (tp.cities || []).map((c) => c.id),
@@ -43,15 +47,16 @@ export function transferPriceToInput(tp) {
 
 /**
  * Plain object for route prices (no __typename) for GraphQL input.
+ * Пустое/незаполненное поле уходит нулём (как в обычных ценах: parseFloat || 0).
  * @param {object} src - { intercity?, city? } possibly with __typename
- * @returns {{ intercity?: number, city?: number } | null}
+ * @returns {{ intercity: number, city: number }}
  */
 function toRoutePricesInput(src) {
-  if (src == null) return null;
-  const out = {};
-  if (src.intercity != null) out.intercity = Number(src.intercity);
-  if (src.city != null) out.city = Number(src.city);
-  return Object.keys(out).length ? out : null;
+  const num = (v) => parseFloat(v) || 0;
+  return {
+    intercity: num(src?.intercity),
+    city: num(src?.city),
+  };
 }
 
 /**
@@ -69,6 +74,8 @@ export function transferPriceInputsToPayload(list) {
         threeSeater: toRoutePricesInput(item.prices?.threeSeater),
         fiveSeater: toRoutePricesInput(item.prices?.fiveSeater),
         sevenSeater: toRoutePricesInput(item.prices?.sevenSeater),
+        twentySeater: toRoutePricesInput(item.prices?.twentySeater),
+        fiftySeater: toRoutePricesInput(item.prices?.fiftySeater),
       },
       airportIds: item.airportIds || [],
       cityIds: item.cityIds || [],

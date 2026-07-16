@@ -111,8 +111,11 @@ function InfoTableOrganizationTransferPrices({
                       { key: "fiveSeater",  label: "5-местный (город)",    field: "city" },
                       { key: "sevenSeater", label: "7-местный (межгород)", field: "intercity" },
                       { key: "sevenSeater", label: "7-местный (город)",    field: "city" },
+                      { key: "twentySeater", label: "20-местный (межгород)", field: "intercity" },
+                      { key: "twentySeater", label: "20-местный (город)",    field: "city" },
+                      { key: "fiftySeater", label: "50-местный (межгород)", field: "intercity" },
+                      { key: "fiftySeater", label: "50-местный (город)",    field: "city" },
                     ]
-                      .filter(({ key, field }) => item.prices?.[key]?.[field] != null)
                       .sort((a, b) => {
                         const va = Number(item.prices?.[a.key]?.[a.field] ?? 0);
                         const vb = Number(item.prices?.[b.key]?.[b.field] ?? 0);
@@ -134,7 +137,7 @@ function InfoTableOrganizationTransferPrices({
                               >
                                 <span className={classes.priceChipLabel}>{label}</span>
                                 <span className={classes.priceChipValue}>
-                                  {isEmpty ? "—" : `${val.toLocaleString()} ₽`}
+                                  {`${val.toLocaleString()} ₽`}
                                 </span>
                               </div>
                             );

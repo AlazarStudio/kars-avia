@@ -38,6 +38,8 @@ function TransferPriceSidebarForm({
         threeSeater: initialValue.prices?.threeSeater ? { ...initialValue.prices.threeSeater } : { ...DEFAULT_TRANSFER_PRICES.threeSeater },
         fiveSeater: initialValue.prices?.fiveSeater ? { ...initialValue.prices.fiveSeater } : { ...DEFAULT_TRANSFER_PRICES.fiveSeater },
         sevenSeater: initialValue.prices?.sevenSeater ? { ...initialValue.prices.sevenSeater } : { ...DEFAULT_TRANSFER_PRICES.sevenSeater },
+        twentySeater: initialValue.prices?.twentySeater ? { ...initialValue.prices.twentySeater } : { ...DEFAULT_TRANSFER_PRICES.twentySeater },
+        fiftySeater: initialValue.prices?.fiftySeater ? { ...initialValue.prices.fiftySeater } : { ...DEFAULT_TRANSFER_PRICES.fiftySeater },
       },
       airportIds: initialValue.airportIds ? [...initialValue.airportIds] : [],
       cityIds: initialValue.cityIds ? [...initialValue.cityIds] : [],
@@ -164,6 +166,10 @@ function TransferPriceSidebarForm({
     { seatKey: "fiveSeater", routeKey: "city", title: "Город (5-местный), ₽" },
     { seatKey: "sevenSeater", routeKey: "intercity", title: "Межгород (7-местный), ₽" },
     { seatKey: "sevenSeater", routeKey: "city", title: "Город (7-местный), ₽" },
+    { seatKey: "twentySeater", routeKey: "intercity", title: "Межгород (20-местный), ₽" },
+    { seatKey: "twentySeater", routeKey: "city", title: "Город (20-местный), ₽" },
+    { seatKey: "fiftySeater", routeKey: "intercity", title: "Межгород (50-местный), ₽" },
+    { seatKey: "fiftySeater", routeKey: "city", title: "Город (50-местный), ₽" },
   ];
 
   const canEdit = !isEditMode || isEditing;
