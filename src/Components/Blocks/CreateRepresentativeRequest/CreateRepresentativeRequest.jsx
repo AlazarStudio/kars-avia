@@ -701,6 +701,7 @@ function CreateRepresentativeRequest({
           <>
             <div className={classes.requestMiddle}>
               <div className={classes.requestData}>
+                <span className={classes.hint}>* — обязательные поля</span>
                 {warningMessage && (
                   <div className={classes.warningMessage}>{warningMessage}</div>
                 )}
@@ -722,7 +723,7 @@ function CreateRepresentativeRequest({
 
                 {!user?.airlineId && (
                   <>
-                    <label>Введите авиакомпанию</label>
+                    <label className={classes.required}>Введите авиакомпанию</label>
                     <MUIAutocomplete
                       dropdownWidth={"100%"}
                       label={"Введите авиакомпанию"}
@@ -744,7 +745,7 @@ function CreateRepresentativeRequest({
                   </>
                 )}
 
-                <label>Выберите аэропорт</label>
+                <label className={classes.required}>Выберите аэропорт</label>
                 <MUIAutocompleteColor
                   dropdownWidth="100%"
                   label={"Введите аэропорт"}
@@ -795,7 +796,7 @@ function CreateRepresentativeRequest({
                   }}
                 />
 
-                <label>Введите рейс</label>
+                <label className={classes.required}>Введите рейс</label>
                 <input
                   type="text"
                   name="flightNumber"
@@ -804,7 +805,8 @@ function CreateRepresentativeRequest({
                   onChange={handleChange}
                 />
 
-                <div className={classes.typeServices}>Состав заявки</div>
+                <div className={`${classes.typeServices} ${classes.required}`}>Состав заявки</div>
+                <span className={classes.hintCenter}>хотя бы один вариант</span>
 
                 <label className={classes.checkBoxWrapper}>
                   <input
@@ -873,7 +875,8 @@ function CreateRepresentativeRequest({
                   </>
                 )}
 
-                <div className={classes.typeServices}>Вид услуг</div>
+                <div className={`${classes.typeServices} ${classes.required}`}>Вид услуг</div>
+                <span className={classes.hintCenter}>хотя бы одна услуга</span>
 
                 <label className={classes.checkBoxWrapper}>
                   <input
@@ -887,7 +890,7 @@ function CreateRepresentativeRequest({
 
                 {formData.waterSupply && (
                   <>
-                    <label>Введите количество человек</label>
+                    <label className={classes.required}>Введите количество человек</label>
                     <input
                       type="number"
                       name="waterPeopleCount"
@@ -895,7 +898,7 @@ function CreateRepresentativeRequest({
                       onChange={handleChange}
                     />
 
-                    <label>Дата и время подачи в аэропорт</label>
+                    <label className={classes.required}>Дата и время подачи в аэропорт</label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
@@ -926,7 +929,7 @@ function CreateRepresentativeRequest({
 
                 {formData.foodSupply && (
                   <>
-                    <label>Введите количество человек</label>
+                    <label className={classes.required}>Введите количество человек</label>
                     <input
                       type="number"
                       name="foodPeopleCount"
@@ -934,7 +937,7 @@ function CreateRepresentativeRequest({
                       onChange={handleChange}
                     />
 
-                    <label>Дата и время подачи в аэропорт</label>
+                    <label className={classes.required}>Дата и время подачи в аэропорт</label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
@@ -965,7 +968,7 @@ function CreateRepresentativeRequest({
 
                 {formData.habitation && (
                   <>
-                    <label>Введите количество человек</label>
+                    <label className={classes.required}>Введите количество человек</label>
                     <input
                       type="number"
                       name="habitationPeopleCount"
@@ -973,7 +976,7 @@ function CreateRepresentativeRequest({
                       onChange={handleChange}
                     />
 
-                    <label>Дата и время заезда</label>
+                    <label className={classes.required}>Дата и время заезда</label>
                     <input
                       type="date"
                       name="habitationPlannedFromDate"
@@ -987,7 +990,7 @@ function CreateRepresentativeRequest({
                       onChange={handleChange}
                     />
 
-                    <label>Дата и время выезда</label>
+                    <label className={classes.required}>Дата и время выезда</label>
                     <input
                       type="date"
                       name="habitationPlannedToDate"
@@ -1015,7 +1018,7 @@ function CreateRepresentativeRequest({
 
                 {formData.transferArrival && (
                   <>
-                    <label>Введите количество человек</label>
+                    <label className={classes.required}>Введите количество человек</label>
                     <input
                       type="number"
                       name="transferArrivalPeopleCount"
@@ -1023,7 +1026,7 @@ function CreateRepresentativeRequest({
                       onChange={handleChange}
                     />
 
-                    <label>Дата и время подачи в аэропорт</label>
+                    <label className={classes.required}>Дата и время подачи в аэропорт</label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
@@ -1054,7 +1057,7 @@ function CreateRepresentativeRequest({
 
                 {formData.transferDeparture && (
                   <>
-                    <label>Введите количество человек</label>
+                    <label className={classes.required}>Введите количество человек</label>
                     <input
                       type="number"
                       name="transferDeparturePeopleCount"
@@ -1062,7 +1065,7 @@ function CreateRepresentativeRequest({
                       onChange={handleChange}
                     />
 
-                    <label>Дата и время прибытия пассажиров в аэропорт</label>
+                    <label className={classes.required}>Дата и время прибытия пассажиров в аэропорт</label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
@@ -1093,7 +1096,7 @@ function CreateRepresentativeRequest({
 
                 {formData.baggageDelivery && (
                   <>
-                    <label>Дата и время</label>
+                    <label className={classes.required}>Дата и время</label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"

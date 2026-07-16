@@ -184,7 +184,8 @@ function CreateRequestDispatcherDepartment({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>Название</label>
+              <span className={classes.hint}>* — обязательные поля</span>
+              <label className={classes.required}>Название</label>
               <input
                 type="text"
                 name="name"

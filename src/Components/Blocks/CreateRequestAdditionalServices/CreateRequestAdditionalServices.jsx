@@ -199,7 +199,8 @@ function CreateRequestAdditionalServices({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>Название доп услуги</label>
+              <span className={classes.hint}>* — обязательные поля</span>
+              <label className={classes.required}>Название доп услуги</label>
               <input
                 type="text"
                 name="name"
@@ -208,7 +209,7 @@ function CreateRequestAdditionalServices({
                 placeholder=""
               />
 
-              <label>Стоимость</label>
+              <label className={classes.required}>Стоимость</label>
               <input
                 type="number"
                 name="price"
@@ -218,7 +219,7 @@ function CreateRequestAdditionalServices({
               />
               {!user?.hotelId && (
                 <>
-                  <label>Стоимость для авиакомпании</label>
+                  <label className={!formData.priceForAirReq ? classes.required : undefined}>Стоимость для авиакомпании</label>
                   <input
                     type="number"
                     name="priceForAirline"

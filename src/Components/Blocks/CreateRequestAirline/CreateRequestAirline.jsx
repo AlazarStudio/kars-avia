@@ -309,7 +309,8 @@ function CreateRequestAirline({
                 </>
               ) : (
                 <>
-                  <label>Название</label>
+                  <span className={classes.hint}>* — обязательные поля</span>
+                  <label className={classes.required}>Название</label>
                   <input
                     type="text"
                     name="name"
@@ -327,7 +328,7 @@ function CreateRequestAirline({
                 onChange={handleChange}
               /> */}
 
-                  <label>Картинка</label>
+                  <label className={classes.required}>Картинка</label>
                   <input
                     type="file"
                     name="images"

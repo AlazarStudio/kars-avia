@@ -39,23 +39,6 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
     variables: { airlineId: id },
   });
 
-  // const { loading, error, data, refetch } = useQuery(GET_ALL_TARIFFS, {
-  //   context: {
-  //     headers: {
-  //       Authorization: `Bearer ${token}`,
-  //     },
-  //   },
-  //   variables: { filter: { airlineId: id } },
-  // });
-
-  // const {
-  //   loading: mealPriceLoading,
-  //   error: mealPriceError,
-  //   data: mealPriceData,
-  // } = useQuery(GET_AIRLINE_MEAL_PRICE, {
-  //   variables: { airlineId: id },
-  // });
-
   const { data: dataSubscriptionAirUpd } = useSubscription(
     GET_AIRLINES_UPDATE_SUBSCRIPTION,
     {
@@ -193,25 +176,6 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
     }
   }, [data]);
 
-  // useEffect(() => {
-  //   if (dataSubscriptionUpd) {
-  //     // console.log(dataSubscriptionUpd);
-
-  //     // setAddTarif(dataSubscriptionUpd.priceCategoryChanged);
-  //     setSelectedContract(dataSubscriptionUpd.priceCategoryChanged);
-  //   }
-  // }, [dataSubscriptionUpd]);
-
-  // useEffect(() => {
-  //   if (mealPriceData) {
-  //     setMealPrices({
-  //       breakfast: mealPriceData.airline.mealPrice?.breakfast,
-  //       lunch: mealPriceData.airline.mealPrice?.lunch,
-  //       dinner: mealPriceData.airline.mealPrice?.dinner,
-  //     });
-  //   }
-  // }, [mealPriceData]);
-
   const handleSearchTarif = (e) => {
     setSearchTarif(e.target.value);
   };
@@ -256,76 +220,6 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
     setEditShowAddTarif(false);
     setSelectedTarif(null);
   };
-
-  // const handleEditTarifCategory = (updatedCategory) => {
-  //   const { tarif: currentTarif, category: currentCategory } =
-  //     selectedTarif.data;
-  //   const newTarifName = updatedCategory.tarifName;
-
-  //   let updatedTarifs = addTarif.map((tarif) => {
-  //     if (tarif.tarifName === currentTarif && currentTarif === newTarifName) {
-  //       const updatedCategories = tarif.categories.map((category) => {
-  //         if (
-  //           category.type === currentCategory.type &&
-  //           category.price === currentCategory.price &&
-  //           category.price_airline === currentCategory.price_airline
-  //         ) {
-  //           return { ...updatedCategory.categories };
-  //         }
-  //         return { ...category };
-  //       });
-  //       return {
-  //         ...tarif,
-  //         categories: [...updatedCategories],
-  //       };
-  //     }
-
-  //     if (tarif.tarifName === currentTarif) {
-  //       const updatedCategories = tarif.categories.filter(
-  //         (category) =>
-  //           !(
-  //             category.type === currentCategory.type &&
-  //             category.price === currentCategory.price &&
-  //             category.price_airline === currentCategory.price_airline
-  //           )
-  //       );
-  //       return {
-  //         ...tarif,
-  //         categories: [...updatedCategories],
-  //       };
-  //     }
-  //     return { ...tarif };
-  //   });
-
-  //   if (currentTarif !== newTarifName) {
-  //     let newTarifFound = false;
-  //     updatedTarifs = updatedTarifs.map((tarif) => {
-  //       if (tarif.tarifName === newTarifName) {
-  //         newTarifFound = true;
-  //         return {
-  //           ...tarif,
-  //           categories: [
-  //             ...tarif.categories,
-  //             { ...updatedCategory.categories },
-  //           ],
-  //         };
-  //       }
-  //       return { ...tarif };
-  //     });
-
-  //     if (!newTarifFound) {
-  //       const newTarif = {
-  //         tarifName: newTarifName,
-  //         categories: [{ ...updatedCategory.categories }],
-  //       };
-  //       updatedTarifs = [...updatedTarifs, newTarif];
-  //     }
-  //   }
-
-  //   setAddTarif(updatedTarifs);
-  //   setEditShowAddTarifCategory(false);
-  //   setSelectedTarif(null);
-  // };
 
   const deleteTarif = async (index, tarifID) => {
     try {
@@ -432,15 +326,6 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
     }
   };
 
-  // const handleEditMealPrices = (updatedPrices) => {
-  //   setMealPrices(updatedPrices);
-  //   setShowEditMealPrices(false);
-  // };
-
-  // const toggleEditMealPrices = () => {
-  //   setShowEditMealPrices(!showEditMealPrices);
-  // };
-
   const filteredRequestsTarif = addTarif?.filter((request) => {
     // console.log(request);
 
@@ -500,15 +385,6 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
     );
   });
 
-  // const filteredRequestsMealTarif = [
-  //   { name: "Завтрак", price: 0 },
-  //   { name: "Обед", price: 0 },
-  //   { name: "Ужин", price: 0 },
-  // ];
-
-  // const onOpenContract = (contract) => setSelectedContract(contract);
-  // const onBackFromDetails = () => setSelectedContract(null);
-
   return (
     <div className={classes.tariffsWrapper}>
       <div className={classes.section_searchAndFilter}>
@@ -520,11 +396,6 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         />
 
         <div className={classes.section_searchAndFilter_filter}>
-          {/* <Filter
-                        toggleSidebar={toggleTarifs}
-                        handleChange={''}
-                        buttonTitle={'Добавить тариф'}
-                    /> */}
           <Filter
             toggleSidebar={toggleTarifs}
             handleChange={""}

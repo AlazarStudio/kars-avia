@@ -526,7 +526,8 @@ function CreateRequestContract({
           {activeTab === "Общая" ? (
             <div className={classes.requestMiddle}>
               <div className={classes.requestData}>
-                <label>№ Договора</label>
+                <span className={classes.hint}>* — обязательные поля</span>
+                <label className={classes.required}>№ Договора</label>
                 <input
                   type="text"
                   name="contractNumber"
@@ -535,7 +536,7 @@ function CreateRequestContract({
                   placeholder="Например: Договор №1"
                 />
 
-                <label>Дата заключения</label>
+                <label className={classes.required}>Дата заключения</label>
                 <input
                   type="date"
                   name="date"
@@ -566,7 +567,7 @@ function CreateRequestContract({
                   }}
                 />
 
-                <label>ГК КАРС</label>
+                <label className={classes.required}>ГК КАРС</label>
                 <MUIAutocomplete
                   dropdownWidth={"100%"}
                   label={"Выберите компанию"}
@@ -585,7 +586,7 @@ function CreateRequestContract({
                   }}
                 />
 
-                <label>Авиакомпания</label>
+                <label className={classes.required}>Авиакомпания</label>
                 <MUIAutocomplete
                   dropdownWidth={"100%"}
                   label={"Выберите авиакомпанию"}
@@ -639,7 +640,7 @@ function CreateRequestContract({
                 }}
               /> */}
 
-                <label>Предмет договора</label>
+                <label className={classes.required}>Предмет договора</label>
                 <MUIAutocomplete
                   dropdownWidth={"100%"}
                   label={"Выберите предмет договора"}
@@ -715,7 +716,7 @@ function CreateRequestContract({
                     className={classes.requestData}
                     style={{ padding: 0 }}
                   >
-                    <label>№ ДС</label>
+                    <label className={classes.required}>№ ДС</label>
                     <input
                       type="text"
                       name={`contractNumberAA-${index}`}
@@ -730,7 +731,7 @@ function CreateRequestContract({
                       placeholder="Например: ДС №1"
                     />
 
-                    <label>Дата заключения</label>
+                    <label className={classes.required}>Дата заключения</label>
                     <input
                       type="date"
                       name={`dateAA-${index}`}

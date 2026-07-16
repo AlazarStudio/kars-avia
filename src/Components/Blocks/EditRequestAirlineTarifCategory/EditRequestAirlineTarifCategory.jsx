@@ -263,62 +263,6 @@ function EditRequestAirlineTarifCategory({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [show, closeButton, anchorEl, isDialogOpen]);
 
-  // useEffect(() => {
-  //   const names = addTarif.map((tarif) => ({
-  //     id: tarif.id,
-  //     name: tarif.name,
-  //   }));
-  //   setTarifNames(names);
-  // }, [addTarif]);
-
-  // const categories = [
-  //   {
-  //     value: "onePlace",
-  //     label: "Одноместный",
-  //   },
-  //   {
-  //     value: "twoPlace",
-  //     label: "Двухместный",
-  //   },
-  //   {
-  //     value: "threePlace",
-  //     label: "Трехместный",
-  //   },
-  //   {
-  //     value: "fourPlace",
-  //     label: "Четырехместный",
-  //   },
-  //   {
-  //     value: "fivePlace",
-  //     label: "Пятиместный",
-  //   },
-  //   {
-  //     value: "sixPlace",
-  //     label: "Шестиместный",
-  //   },
-  //   {
-  //     value: "sevenPlace",
-  //     label: "Семиместный",
-  //   },
-  //   {
-  //     value: "eightPlace",
-  //     label: "Восьмиместный",
-  //   },
-  // ];
-
-  // const apartmentCategories = [
-  //   {
-  //     value: "apartment",
-  //     label: "Апартаменты",
-  //   },
-  //   {
-  //     value: "studio",
-  //     label: "Студия",
-  //   },
-  // ];
-
-  // const useCategories = type === "apartment" ? apartmentCategories : categories;
-
   // console.log("formData.airportIds:", formData.airportIds);
   // console.log("airportOptions:", airportOptions);
   // console.log("Фильтрация:", airportOptions.filter((option) =>

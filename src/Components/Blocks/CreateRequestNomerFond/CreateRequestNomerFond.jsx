@@ -446,6 +446,7 @@ function CreateRequestNomerFond({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
+              <span className={classes.hint}>* — обязательные поля</span>
               {/* Checkbox для выбора множества комнат */}
               <label className={classes.checkBox}>
                 <input
@@ -475,7 +476,7 @@ function CreateRequestNomerFond({
                     }}
                   />
 
-                  <label>Тариф</label>
+                  <label className={classes.required}>Тариф</label>
                   <MUIAutocomplete
                     dropdownWidth={"100%"}
                     label={"Выберите тариф"}
@@ -498,7 +499,7 @@ function CreateRequestNomerFond({
                 </>
               )}
 
-              <label>Название номера</label>
+              <label className={classes.required}>Название номера</label>
               <input
                 type={isMultipleRooms ? "number" : "text"}
                 name="nomerName"

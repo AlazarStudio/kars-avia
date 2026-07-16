@@ -306,6 +306,8 @@ function CreateRequestReport({ show, onClose, positions, airports, isAirline }) 
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
 
+              <span className={classes.hint}>* — обязательные поля</span>
+
               {/* Тип отчёта — только для диспетчеров без привязки */}
               {!user.airlineId && !user.hotelId && (
                 <>
@@ -340,7 +342,7 @@ function CreateRequestReport({ show, onClose, positions, airports, isAirline }) 
                   <label>Гостиница</label>
                   {hotelAutocomplete}
 
-                  {(selectedAirline?.staff || user.airlineId) && (
+                  {(selectedAirline || user.airlineId) && (
                     <>
                       <label className={classes.required}>Аэропорт</label>
                       <MUIAutocompleteColor
@@ -486,8 +488,6 @@ function CreateRequestReport({ show, onClose, positions, airports, isAirline }) 
                 value={formData.endDate}
                 onChange={handleChange}
               />
-
-              <span className={classes.hint}>* — обязательные поля</span>
             </div>
           </div>
 

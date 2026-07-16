@@ -114,7 +114,7 @@ function TariffGeographyList({
 
   return (
     <div className={classes.wrapper}>
-      <label>Географическая привязка</label>
+      <label className={classes.required}>Географическая привязка</label>
       {!hasSelection && (
         <div className={classes.empty}>
           Не задана — тариф сработает только по аэропортам.

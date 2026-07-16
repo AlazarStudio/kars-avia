@@ -65,7 +65,7 @@
 }
 
 .required::after {
-    content: " *";
+    content: "*";
     color: #e53935;
 }
 

@@ -614,7 +614,8 @@ function CreateRequestHotelContract({
           {activeTab === "Общая" ? (
             <div className={classes.requestMiddle}>
               <div className={classes.requestData}>
-                <label>№ Договора</label>
+                <span className={classes.hint}>* — обязательные поля</span>
+                <label className={classes.required}>№ Договора</label>
                 <input
                   type="text"
                   name="contractNumber"
@@ -623,7 +624,7 @@ function CreateRequestHotelContract({
                   placeholder="Например: Договор №1"
                 />
 
-                <label>Дата заключения</label>
+                <label className={classes.required}>Дата заключения</label>
                 <input
                   type="date"
                   name="date"
@@ -654,7 +655,7 @@ function CreateRequestHotelContract({
                   }}
                 />
 
-                <label>ГК КАРС</label>
+                <label className={classes.required}>ГК КАРС</label>
                 <MUIAutocomplete
                   dropdownWidth={"100%"}
                   label={"Выберите компанию"}
@@ -673,7 +674,7 @@ function CreateRequestHotelContract({
                   }}
                 />
 
-                <label>
+                <label className={classes.required}>
                   {activeFilterTab === "hotels" ? "Гостиница" : "Организация"}
                 </label>
                 <MUIAutocompleteColor
@@ -749,7 +750,7 @@ function CreateRequestHotelContract({
                   }}
                 />
 
-                <label>Город</label>
+                <label className={classes.required}>Город</label>
                 <MUIAutocompleteColor
                   dropdownWidth="100%"
                   label={"Выберите город"}
@@ -863,7 +864,7 @@ function CreateRequestHotelContract({
                   </>
                 )}
 
-                <label>Вид услуги</label>
+                <label className={classes.required}>Вид услуги</label>
                 <input
                   type="text"
                   name="applicationType"
@@ -939,7 +940,7 @@ function CreateRequestHotelContract({
                     className={classes.requestData}
                     style={{ padding: 0 }}
                   >
-                    <label>№ ДС</label>
+                    <label className={classes.required}>№ ДС</label>
                     <input
                       type="text"
                       name={`contractNumberAA-${index}`}
@@ -954,7 +955,7 @@ function CreateRequestHotelContract({
                       placeholder="Например: ДС №1"
                     />
 
-                    <label>Дата заключения</label>
+                    <label className={classes.required}>Дата заключения</label>
                     <input
                       type="date"
                       name={`dateAA-${index}`}

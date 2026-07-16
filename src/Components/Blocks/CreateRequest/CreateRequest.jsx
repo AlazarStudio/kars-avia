@@ -725,6 +725,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, re
               {/* Вкладка "Общая" */}
               {activeTab === "Общая" && (
                 <div className={classes.requestData}>
+                  <span className={classes.hint}>* — обязательные поля</span>
                   {warningMessage && (
                     <div className={classes.warningMessage}>
                       {warningMessage}
@@ -762,7 +763,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, re
 
                   {user?.airlineId ? null : (
                     <>
-                      <label>Авиакомпания</label>
+                      <label className={classes.required}>Авиакомпания</label>
                       <MUIAutocomplete
                         dropdownWidth={"100%"}
                         label={"Введите авиакомпанию"}
@@ -904,7 +905,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, re
                   }}
                 /> */}
 
-                  <label>Аэропорт</label>
+                  <label className={classes.required}>Аэропорт</label>
                   <MUIAutocompleteColor
                     dropdownWidth="100%"
                     label={"Введите аэропорт"}
@@ -958,7 +959,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, re
                   {/* </>
                 )} */}
 
-                  <label>Прибытие</label>
+                  <label className={classes.required}>Прибытие</label>
                   {/* <input type="text" name="arrivalRoute" placeholder="Рейс" value={formData.arrivalRoute} onChange={handleChange} /> */}
                   <div className={classes.reis_info}>
                     {/* <input type="date" name="arrivalDate" value={formData.arrivalDate} min={today} onChange={handleChange} placeholder="Дата" /> */}
@@ -979,7 +980,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, re
                     />
                   </div>
 
-                  <label>Отъезд</label>
+                  <label className={classes.required}>Отъезд</label>
                   {/* <input type="text" name="departureRoute" placeholder="Рейс" value={formData.departureRoute} onChange={handleChange} /> */}
                   <div className={classes.reis_info}>
                     <input

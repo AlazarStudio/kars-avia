@@ -194,8 +194,11 @@ function TransferPriceSidebarForm({
       <>
         <div className={classes.requestMiddle}>
           <div className={classes.requestData}>
+            {canEdit && (
+              <div className={classes.hint}>* — обязательные поля</div>
+            )}
             <div className={classes.requestDataInfo}>
-              <div className={classes.requestDataInfo_title}>Название</div>
+              <div className={`${classes.requestDataInfo_title} ${canEdit ? classes.required : ""}`}>Название</div>
               {canEdit ? (
                 <input
                   type="text"

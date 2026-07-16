@@ -220,13 +220,6 @@ function CreateRequestAirlineTarifCategory({
     };
   }, [show, closeButton, isDialogOpen]);
 
-  // useEffect(() => {
-  //   const names = addTarif.map((tarif) => ({
-  //     id: tarif.id,
-  //     name: tarif.name,
-  //   }));
-  //   setTarifNames(names);
-  // }, [addTarif]);
 
   const categories = [
     {
@@ -325,7 +318,8 @@ function CreateRequestAirlineTarifCategory({
                 }}
               /> */}
 
-              <label>Название договора</label>
+              <span className={classes.hint}>* — обязательные поля</span>
+              <label className={classes.required}>Название договора</label>
               <input
                 type="text"
                 name="name"
@@ -348,7 +342,7 @@ function CreateRequestAirlineTarifCategory({
 
               {contractType === "individual" ? (
                 <>
-                  <label>Аэропорты</label>
+                  <label className={classes.required}>Аэропорты</label>
                   {allAirportsUsed && (
                     <div className={classes.airportHint}>
                       Все аэропорты уже используются в других договорах — свободных нет.

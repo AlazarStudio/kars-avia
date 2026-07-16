@@ -315,7 +315,8 @@ function CreateRequestTarifCategory({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>Выберите категорию</label>
+              <span className={classes.hint}>* — обязательные поля</span>
+              <label className={classes.required}>Выберите категорию</label>
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите категорию"}
@@ -337,7 +338,7 @@ function CreateRequestTarifCategory({
                 }}
               />
 
-              <label>Название тарифа</label>
+              <label className={classes.required}>Название тарифа</label>
               <input
                 type="text"
                 name="name"
@@ -346,7 +347,7 @@ function CreateRequestTarifCategory({
                 placeholder="Например: Стандарт, Люкс"
               />
 
-              <label>Стоимость</label>
+              <label className={classes.required}>Стоимость</label>
               <input
                 type="number"
                 name="price"
@@ -356,7 +357,7 @@ function CreateRequestTarifCategory({
               />
               {!user?.hotelId && (
                 <>
-                  <label>Стоимость для авиакомпании</label>
+                  <label className={!formData.priceForAirReq ? classes.required : undefined}>Стоимость для авиакомпании</label>
                   <input
                     type="number"
                     name="priceForAirline"

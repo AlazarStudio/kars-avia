@@ -351,6 +351,7 @@ function CreateTransferRequest({ show, onClose, user }) {
               {/* Вкладка "Общая" */}
               {activeTab === "Общая" && (
                 <div className={classes.requestData}>
+                  <span className={classes.hint}>* — обязательные поля</span>
                   {user?.airlineId ? (
                     <>
                       {/* Для airlineAdmin показываем только выбор сотрудников своей авиакомпании */}
@@ -379,7 +380,7 @@ function CreateTransferRequest({ show, onClose, user }) {
                     </>
                   ) : (
                     <>
-                      <label>Авиакомпания</label>
+                      <label className={classes.required}>Авиакомпания</label>
                       <MUIAutocomplete
                         dropdownWidth={"100%"}
                         label={"Введите авиакомпанию"}
@@ -447,7 +448,7 @@ function CreateTransferRequest({ show, onClose, user }) {
                     }}
                   />
 
-                  <label>Дата и время заказа</label>
+                  <label className={classes.required}>Дата и время заказа</label>
                   <div className={classes.reis_info}>
                     <input
                       type="date"

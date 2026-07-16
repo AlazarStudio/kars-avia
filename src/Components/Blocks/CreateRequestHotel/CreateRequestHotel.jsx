@@ -127,7 +127,6 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
       !formData.address.trim() ||
       !formData.stars.trim() ||
       !formData.usStars.trim() ||
-      !formData.airportDistance.trim() ||
       !formData.images ||
       !formData.airportId ||
       !formData.capacity
@@ -178,28 +177,6 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
       // addNotification("Гостиница создана успешно.", "success");
     }
   };
-
-  // useEffect(() => {
-  //   const handleClickOutside = (event) => {
-  //     if (
-  //       sidebarRef.current?.contains(event.target) // Клик в боковой панели
-  //     ) {
-  //       return; // Если клик внутри, ничего не делаем
-  //     }
-
-  //     closeButton();
-  //   };
-
-  //   if (show) {
-  //     document.addEventListener("mousedown", handleClickOutside);
-  //   } else {
-  //     document.removeEventListener("mousedown", handleClickOutside);
-  //   }
-
-  //   return () => {
-  //     document.removeEventListener("mousedown", handleClickOutside);
-  //   };
-  // }, [show, closeButton]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -275,7 +252,8 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>Название</label>
+              <span className={classes.hint}>* — обязательные поля</span>
+              <label className={classes.required}>Название</label>
               <input
                 type="text"
                 name="name"
@@ -284,25 +262,7 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
                 onChange={handleChange}
               />
 
-              <label>Город</label>
-              {/* <MUIAutocomplete
-                dropdownWidth={"100%"}
-                label={"Выберите город"}
-                options={cities}
-                getOptionLabel={(option) => option.label} // показываем label (город и регион)
-                value={
-                  cities.find((option) => option.value === formData.city) ||
-                  null
-                }
-                onChange={(event, newValue) => {
-                  setIsEdited(true);
-                  setFormData((prevData) => ({
-                    ...prevData,
-                    city: newValue ? newValue.value : "",
-                  }));
-                }}
-              /> */}
-
+              <label className={classes.required}>Город</label>
               <MUIAutocompleteColor
                 dropdownWidth={"100%"}
                 label={"Выберите город"}
@@ -343,43 +303,7 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
                 }}
               />
 
-              <label>Адрес</label>
-              <input
-                type="text"
-                name="address"
-                value={formData.address}
-                placeholder="ул. Лесная  147"
-                onChange={handleChange}
-              />
-
-              <label>Мощность</label>
-              <input
-                type="number"
-                name="capacity"
-                value={formData.capacity}
-                placeholder="Например: 5"
-                onChange={handleChange}
-              />
-
-              <label>Оценка</label>
-              <StarRatingFilter
-                integer
-                value={formData.stars}
-                onChange={(val) =>
-                  handleChange({ target: { name: "stars", value: val } })
-                }
-              />
-
-              <label>Звёздность</label>
-              <StarRatingFilter
-                integer
-                value={formData.usStars}
-                onChange={(val) =>
-                  handleChange({ target: { name: "usStars", value: val } })
-                }
-              />
-
-              <label>Аэропорт</label>
+              <label className={classes.required}>Аэропорт</label>
               <MUIAutocompleteColor
                 dropdownWidth={"100%"}
                 label={"Выберите аэропорт"}
@@ -424,6 +348,42 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
                 }}
               />
 
+              <label className={classes.required}>Адрес</label>
+              <input
+                type="text"
+                name="address"
+                value={formData.address}
+                placeholder="ул. Лесная  147"
+                onChange={handleChange}
+              />
+
+              <label className={classes.required}>Мощность</label>
+              <input
+                type="number"
+                name="capacity"
+                value={formData.capacity}
+                placeholder="Например: 5"
+                onChange={handleChange}
+              />
+
+              <label className={classes.required}>Оценка</label>
+              <StarRatingFilter
+                integer
+                value={formData.stars}
+                onChange={(val) =>
+                  handleChange({ target: { name: "stars", value: val } })
+                }
+              />
+
+              <label className={classes.required}>Звёздность</label>
+              <StarRatingFilter
+                integer
+                value={formData.usStars}
+                onChange={(val) =>
+                  handleChange({ target: { name: "usStars", value: val } })
+                }
+              />
+
               <label>Удалённость от аэропорта (мин)</label>
               <input
                 type="number"
@@ -434,7 +394,7 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
                 onChange={handleChange}
               />
 
-              <label>Картинка</label>
+              <label className={classes.required}>Картинка</label>
               <input
                 type="file"
                 name="images"
