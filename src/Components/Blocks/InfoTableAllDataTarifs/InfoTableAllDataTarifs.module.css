@@ -215,7 +215,7 @@
   transition: all 0.12s ease;
 }
 
-.actBtn:hover {
+/* .actBtn:hover {
   background: #edf1f8;
   color: #3b4256;
 }
@@ -223,7 +223,7 @@
 .actBtnDanger:hover {
   background: #fbecea;
   color: #c03b28;
-}
+} */
 
 /* ---- Ширины колонок (без изменений — «колонки прежние») ---- */
 .w18 {

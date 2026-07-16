@@ -27,6 +27,7 @@ function ExistRequestMyCompany({
   onClose,
   chooseObject,
   updateDispatcher,
+  initialEditMode = false,
 }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
@@ -135,6 +136,10 @@ function ExistRequestMyCompany({
 
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+
+  useEffect(() => {
+    if (show) setIsEditing(initialEditMode);
+  }, [show]);
 
   const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);

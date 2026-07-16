@@ -242,7 +242,10 @@ function EditRequestAirlineContract({
   const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
-    if (show) setIsEditing(initialEditMode);
+    if (show) {
+      setIsEditing(initialEditMode);
+      setIsEdited(false);
+    }
   }, [show]);
   const [activeTab, setActiveTab] = useState("Общая");
   const [anchorEl, setAnchorEl] = useState(null);
@@ -325,7 +328,7 @@ function EditRequestAirlineContract({
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
 
-    if (isEditing) {
+    if (isEditing && isEdited) {
       const ok = await confirm(
         "Вы уверены, все несохраненные данные будут удалены?",
       );
@@ -335,7 +338,7 @@ function EditRequestAirlineContract({
     setIsEditing(false);
     setIsEdited(false);
     setActiveTab("Общая");
-  }, [isEditing, onClose, isDialogOpen, confirm]);
+  }, [isEditing, isEdited, onClose, isDialogOpen, confirm]);
   // console.log(isEdited);
 
   useEffect(() => {
@@ -372,6 +375,7 @@ function EditRequestAirlineContract({
     if (file) {
       setFileName(file.map((i) => i.name));
       setFormData((prev) => ({ ...prev, files: file }));
+      setIsEdited(true);
     }
   };
 
@@ -390,6 +394,7 @@ function EditRequestAirlineContract({
     if (file) {
       setFileName(file.map((i) => i.name));
       setFormData((prev) => ({ ...prev, files: file }));
+      setIsEdited(true);
     }
   };
 
@@ -400,6 +405,7 @@ function EditRequestAirlineContract({
       ...prev,
       files: Array.from(prev.files || []).filter((_, i) => i !== index),
     }));
+    setIsEdited(true);
   };
 
   // Файлы договора
@@ -1142,7 +1148,10 @@ function EditRequestAirlineContract({
             {activeTab === "Общая" && canEdit && isEditing && (
               <div className={classes.requestButton}>
                 <Button
-                  onClick={() => setIsEditing(false)}
+                  onClick={() => {
+                    setIsEditing(false);
+                    setIsEdited(false);
+                  }}
                   backgroundcolor="var(--hover-gray)"
                   color="#000"
                 >

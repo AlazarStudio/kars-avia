@@ -6,10 +6,17 @@ import { server } from '../../../../graphQL_requests.js';
 import { roles } from "../../../roles.js";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon.jsx";
 
-function InfoTableDataMyCompany({ children, user, toggleRequestSidebar, openDeleteComponent, requests, setChooseObject, id, ...props }) {
+function InfoTableDataMyCompany({ children, user, toggleRequestSidebar, onEditRow, openDeleteComponent, requests, setChooseObject, id, ...props }) {
     const handleObject = (item, index) => {
         setChooseObject({ ...item, index });
         toggleRequestSidebar();
+    };
+
+    // Клик по карандашу — открыть сайдбар сразу в режиме редактирования
+    const handleEdit = (e, item, index) => {
+        e.stopPropagation();
+        setChooseObject({ ...item, index });
+        (onEditRow || toggleRequestSidebar)();
     };
 
 
@@ -50,7 +57,7 @@ function InfoTableDataMyCompany({ children, user, toggleRequestSidebar, openDele
                             <EditPencilIcon
                                 cursor="pointer"
                                 style={{width:"fit-content", height:"fit-content"}}
-                                onClick={() => handleObject(item, index)}
+                                onClick={(e) => handleEdit(e, item, index)}
                             />
                             {/* <img src="/deleteReport.png" alt="" 
                             onClick={() => {openDeleteComponent(index, item.id)}}

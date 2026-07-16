@@ -11,8 +11,10 @@ import {
   PRICE_CATEGORY_CHANGE_SUBSCRIPTION,
   GET_AIRLINES_UPDATE_SUBSCRIPTION,
   GET_AIRLINE_TARIFS,
+  UPDATE_AIRLINE_TARIF,
 } from "../../../../graphQL_requests.js";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
+import { extractGeoConflictMessage } from "../../../utils/airlineTariffGeography.js";
 
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import InfoTableAirlineDataTarifs from "../InfoTableAirlineDataTarifs/InfoTableAirlineDataTarifs.jsx";
@@ -126,6 +128,64 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
       headers: { Authorization: `Bearer ${token}` },
     },
   });
+
+  const [updateAirlineTariff] = useMutation(UPDATE_AIRLINE_TARIF, {
+    context: {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  });
+
+  // Персист тарифа: формы (create/edit) отдают готовую запись (record) + display-
+  // элемент (displayItem) для оптимистичного показа. Родитель шлёт ту же мутацию
+  // UPDATE_AIRLINE_TARIF (одна запись в input.prices — upsert).
+  // Оптимистично обновляем список сразу; при ошибке — откат к prevList, сайдбар
+  // остаётся открытым с введёнными данными (вариант B). При успехе — закрытие +
+  // refetch (сверка с сервером).
+  const handleTariffSubmit = async (record, displayItem) => {
+    const isEdit = Boolean(record?.id);
+    const prevList = addTarif;
+
+    if (displayItem) {
+      setAddTarif((list) =>
+        isEdit
+          ? (list || []).map((it) =>
+              it.id === record.id ? { ...it, ...displayItem } : it
+            )
+          : [displayItem, ...(list || [])]
+      );
+    }
+
+    try {
+      await updateAirlineTariff({
+        variables: {
+          updateAirlineId: id,
+          input: { prices: [record] },
+        },
+      });
+      if (isEdit) {
+        setEditShowAddTarif(false);
+        setSelectedTarif(null);
+      } else {
+        setShowAddTarif(false);
+      }
+      success(
+        isEdit
+          ? "Изменение соглашения прошло успешно."
+          : "Добавление договора прошло успешно."
+      );
+      refetch();
+    } catch (error) {
+      setAddTarif(prevList); // откат оптимистичного обновления
+      const geoConflict = extractGeoConflictMessage(error);
+      notifyError(
+        geoConflict ||
+          (isEdit
+            ? "Произошла ошибка при изменении соглашения."
+            : "Произошла ошибка при добавлении тарифа.")
+      );
+      console.error("Произошла ошибка при выполнении запроса:", error);
+    }
+  };
 
   useEffect(() => {
     if (data) {
@@ -505,6 +565,7 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         id={id}
         show={showAddTarif}
         onClose={toggleTarifs}
+        onSubmit={handleTariffSubmit}
         addTarif={addTarif}
         selectedContract={selectedContract}
         setAddTarif={setAddTarif}
@@ -537,6 +598,7 @@ function AirlineTarifs_tabComponent({ children, id, user, ...props }) {
         setAddTarif={setAddTarif}
         show={showEditAddTarif}
         onClose={() => setEditShowAddTarif(false)}
+        onSubmit={handleTariffSubmit}
         addTarif={addTarif}
         selectedContract={selectedContract}
         tarif={selectedTarif}

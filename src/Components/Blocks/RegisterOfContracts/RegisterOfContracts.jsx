@@ -194,6 +194,7 @@ function RegisterOfContracts({
   const [typeFilter, setTypeFilter] = useState("ГК Карс");
 
   const [selectedContract, setSelectedContract] = useState(null);
+  const [editInitialMode, setEditInitialMode] = useState(false); // открыть edit-сайдбар сразу в режиме редактирования
 
   const [deleteAirlineContract] = useMutation(DELETE_AIRLINE_CONTRACT, {
     context: {
@@ -353,6 +354,14 @@ function RegisterOfContracts({
 
   const toggleEditTarifs = (tarif) => {
     setSelectedTarif(tarif);
+    setEditInitialMode(false);
+    setEditShowAddTarif(true);
+  };
+
+  // Открыть договор сразу в режиме редактирования (клик по карандашу)
+  const openEditTarifInEditMode = (tarif) => {
+    setSelectedTarif(tarif);
+    setEditInitialMode(true);
     setEditShowAddTarif(true);
   };
 
@@ -897,6 +906,7 @@ function RegisterOfContracts({
             canEdit={canEdit}
             archived={archived}
             toggleRequestSidebar={toggleEditTarifs}
+            onEditRow={openEditTarifInEditMode}
             toggleEditTarifsCategory={toggleEditTarifsCategory}
             requests={addTarif}
             openDeleteComponent={openDeleteComponent}
@@ -943,6 +953,7 @@ function RegisterOfContracts({
             user={user}
             id={id}
             canEdit={canEdit}
+            initialEditMode={editInitialMode}
             activeFilterTab={activeTab}
             setAddTarif={setAddTarif}
             show={showEditAddTarif}
@@ -983,6 +994,7 @@ function RegisterOfContracts({
             user={user}
             id={id}
             canEdit={canEdit}
+            initialEditMode={editInitialMode}
             activeFilterTab={activeTab}
             companiesData={companiesData}
             hotelsData={hotelsData}

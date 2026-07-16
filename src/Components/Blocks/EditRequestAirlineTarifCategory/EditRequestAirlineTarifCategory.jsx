@@ -7,19 +7,17 @@ import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu.jsx";
 import {
   GET_AIRPORTS_RELAY,
   getCookie,
-  UPDATE_AIRLINE_TARIF,
   UPDATE_HOTEL_TARIF,
 } from "../../../../graphQL_requests.js";
-import { useMutation, useQuery } from "@apollo/client";
+import { useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
-import MUILoader from "../MUILoader/MUILoader.jsx";
 import TariffGeographyList from "../TariffGeographyList/TariffGeographyList.jsx";
 import ContractTypeToggle from "../ContractTypeToggle/ContractTypeToggle.jsx";
-import { geographyToRows, rowsToGeographyInput, findDuplicateGeoRow, getContractType, extractGeoConflictMessage } from "../../../utils/airlineTariffGeography.js";
+import { rowsToGeographyInput, findDuplicateGeoRow, getContractType } from "../../../utils/airlineTariffGeography.js";
+import { airlineTariffToInput, tariffInputToPayload, tariffFormToDisplayItem } from "../../../utils/airlineTariffPrices.js";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
-import { useToast } from "../../../contexts/ToastContext";
 
 function EditRequestAirlineTarifCategory({
   show,
@@ -38,7 +36,6 @@ function EditRequestAirlineTarifCategory({
 }) {
   const token = getCookie("token");
   const { confirm, showAlert, isDialogOpen } = useDialog();
-  const { success, error: notifyError } = useToast();
   const infoAirports = useQuery(GET_AIRPORTS_RELAY, {
     context: {
       headers: {
@@ -49,36 +46,7 @@ function EditRequestAirlineTarifCategory({
 
   // console.log(tarif);
 
-  const getInitialFormData = useCallback(() => {
-    const airportIds = Array.isArray(tarif?.airports)
-      ? tarif.airports
-        .map((a) => String(a?.airport?.id ?? a?.id ?? a))
-        .filter(Boolean)
-      : [];
-    return {
-      name: tarif?.name || "",
-      airportIds,
-      geography: geographyToRows(tarif?.geography),
-      priceOneCategory: tarif?.prices?.priceOneCategory ?? 0,
-      priceTwoCategory: tarif?.prices?.priceTwoCategory ?? 0,
-      priceThreeCategory: tarif?.prices?.priceThreeCategory ?? 0,
-      priceFourCategory: tarif?.prices?.priceFourCategory ?? 0,
-      priceFiveCategory: tarif?.prices?.priceFiveCategory ?? 0,
-      priceSixCategory: tarif?.prices?.priceSixCategory ?? 0,
-      priceSevenCategory: tarif?.prices?.priceSevenCategory ?? 0,
-      priceEightCategory: tarif?.prices?.priceEightCategory ?? 0,
-      priceLuxe: tarif?.prices?.priceLuxe ?? 0,
-      priceApartment: tarif?.prices?.priceApartment ?? 0,
-      priceStudio: tarif?.prices?.priceStudio ?? 0,
-      priceComfort: tarif?.prices?.priceComfort ?? 0,
-      priceImprovedComfort: tarif?.prices?.priceImprovedComfort ?? 0,
-      priceNineCategory: tarif?.prices?.priceNineCategory ?? 0,
-      priceTenCategory: tarif?.prices?.priceTenCategory ?? 0,
-      breakfast: tarif?.mealPrice?.breakfast ?? 0,
-      dinner: tarif?.mealPrice?.dinner ?? 0,
-      lunch: tarif?.mealPrice?.lunch ?? 0,
-    };
-  }, [tarif]);
+  const getInitialFormData = useCallback(() => airlineTariffToInput(tarif), [tarif]);
 
   const [formData, setFormData] = useState(() => ({
     name: "",
@@ -111,14 +79,6 @@ function EditRequestAirlineTarifCategory({
   const sidebarRef = useRef();
   const menuRef = useRef(null);
   const [anchorEl, setAnchorEl] = useState(null);
-
-  const [updateAirlineTariff] = useMutation(UPDATE_AIRLINE_TARIF, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    },
-  });
 
   useEffect(() => {
     if (infoAirports.data) {
@@ -243,91 +203,47 @@ function EditRequestAirlineTarifCategory({
     }));
   };
 
-  const [isLoading, setIsLoading] = useState(false);
   // console.log(selectedContract?.id);
 
-  const handleSubmit = async (e) => {
-    if (isEditing) {
-      e.preventDefault();
-      const geographyInput = rowsToGeographyInput(formData.geography);
-      const isIndividual = contractType === "individual";
+  // Форма презентационная: валидирует и отдаёт готовую запись родителю (onSubmit).
+  // Мутацию/refetch/тосты/закрытие выполняет родитель (AirlineTarifs_tabComponent).
+  const handleSubmit = (e) => {
+    if (!isEditing) return;
+    e.preventDefault();
 
-      if (isIndividual) {
-        if ((formData.airportIds?.length || 0) === 0) {
-          showAlert("Выберите хотя бы один аэропорт.");
-          return;
-        }
-      } else {
-        if (geographyInput.length === 0) {
-          showAlert("Выберите хотя бы один регион или город.");
-          return;
-        }
-        const duplicateGeo = findDuplicateGeoRow(formData.geography);
-        if (duplicateGeo) {
-          const what = duplicateGeo.kind === "city" ? "Город" : "Регион";
-          showAlert(
-            duplicateGeo.label
-              ? `${what} «${duplicateGeo.label}» уже добавлен в тариф.`
-              : `${what} уже добавлен в тариф.`
-          );
-          return;
-        }
+    const geographyInput = rowsToGeographyInput(formData.geography);
+    const isIndividual = contractType === "individual";
+
+    if (isIndividual) {
+      if ((formData.airportIds?.length || 0) === 0) {
+        showAlert("Выберите хотя бы один аэропорт.");
+        return;
       }
-
-      setIsLoading(true);
-
-      try {
-        await updateAirlineTariff({
-          variables: {
-            updateAirlineId: id,
-            input: {
-              prices: [
-                {
-                  id: tarif?.id,
-                  name: formData.name,
-                  individual: isIndividual,
-                  airportIds: isIndividual ? formData.airportIds : [],
-                  geography: isIndividual ? [] : geographyInput,
-                  prices: {
-                    priceOneCategory: parseFloat(formData.priceOneCategory),
-                    priceTwoCategory: parseFloat(formData.priceTwoCategory),
-                    priceThreeCategory: parseFloat(formData.priceThreeCategory),
-                    priceFourCategory: parseFloat(formData.priceFourCategory),
-                    priceFiveCategory: parseFloat(formData.priceFiveCategory),
-                    priceSixCategory: parseFloat(formData.priceSixCategory),
-                    priceSevenCategory: parseFloat(formData.priceSevenCategory),
-                    priceEightCategory: parseFloat(formData.priceEightCategory),
-                    priceLuxe: parseFloat(formData.priceLuxe),
-                    priceApartment: parseFloat(formData.priceApartment),
-                    priceStudio: parseFloat(formData.priceStudio),
-                    priceComfort: parseFloat(formData.priceComfort),
-                    priceImprovedComfort: parseFloat(formData.priceImprovedComfort),
-                    priceNineCategory: parseFloat(formData.priceNineCategory),
-                    priceTenCategory: parseFloat(formData.priceTenCategory),
-                  },
-                  mealPrice: {
-                    breakfast: parseFloat(formData.breakfast),
-                    dinner: parseFloat(formData.dinner),
-                    lunch: parseFloat(formData.lunch),
-                  },
-                },
-              ],
-            },
-          },
-        });
-
-        resetForm();
-        onClose();
-        setIsLoading(false);
-        setIsEditing(false);
-        success("Изменение соглашения прошло успешно.");
-      } catch (error) {
-        setIsLoading(false);
-        const geoConflict = extractGeoConflictMessage(error);
-        notifyError(geoConflict || "Произошла ошибка при изменении соглашения.");
-        console.error("Произошла ошибка при выполнении запроса:", error);
+    } else {
+      if (geographyInput.length === 0) {
+        showAlert("Выберите хотя бы один регион или город.");
+        return;
+      }
+      const duplicateGeo = findDuplicateGeoRow(formData.geography);
+      if (duplicateGeo) {
+        const what = duplicateGeo.kind === "city" ? "Город" : "Регион";
+        showAlert(
+          duplicateGeo.label
+            ? `${what} «${duplicateGeo.label}» уже добавлен в тариф.`
+            : `${what} уже добавлен в тариф.`
+        );
+        return;
       }
     }
+
+    const record = tariffInputToPayload(formData, contractType, {
+      id: tarif?.id,
+    });
+    const displayItem = tariffFormToDisplayItem(formData, contractType, airports, {
+      id: tarif?.id,
+      prevCategory: tarif?.category || [],
+    });
+    onSubmit?.(record, displayItem);
   };
 
   useEffect(() => {
@@ -440,9 +356,7 @@ function EditRequestAirlineTarifCategory({
         </div>
       </div>
 
-      {isLoading ? (
-        <MUILoader loadSize={"50px"} fullHeight={"90vh"} />
-      ) : (
+      {(
         <>
           <div
             className={classes.requestMiddle}

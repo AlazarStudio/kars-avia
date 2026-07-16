@@ -81,6 +81,7 @@ function CreateRequestContract({
   const [airlines, setAirlines] = useState([]); // Список авиакомпаний
   const [selectedCompany, setSelectedCompany] = useState(null); // Выбранная авиакомпания
   const [selectedAirline, setSelectedAirline] = useState(null); // Выбранная авиакомпания
+  const [isEdited, setIsEdited] = useState(false); // Флаг «грязной» формы
 
   const [createAirlineContract] = useMutation(CREATE_AIRLINE_CONTRACT, {
     context: {
@@ -148,10 +149,18 @@ function CreateRequestContract({
     });
     setSelectedAirline(null);
     setSelectedCompany(null);
+    setFileName([]);
+    setIsEdited(false);
   };
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
+
+    if (!isEdited) {
+      resetForm();
+      onClose();
+      return;
+    }
 
     const isConfirmed = await confirm(
       "Вы уверены, все несохраненные данные будут удалены?"
@@ -160,8 +169,9 @@ function CreateRequestContract({
       resetForm();
       onClose();
     }
-  }, [confirm, isDialogOpen, onClose]);
+  }, [confirm, isDialogOpen, onClose, isEdited]);
   const addNewAgreement = () => {
+    setIsEdited(true);
     setFormData((prevData) => ({
       ...prevData,
       aaContracts: [
@@ -184,6 +194,7 @@ function CreateRequestContract({
       ...prevState,
       [name]: value,
     }));
+    setIsEdited(true);
   };
   const handleTabChange = useCallback((tab) => setActiveTab(tab), []);
 
@@ -213,6 +224,7 @@ function CreateRequestContract({
     if (file) {
       setFileName(file.map((i) => i.name));
       setFormData((prev) => ({ ...prev, files: file }));
+      setIsEdited(true);
     }
   };
 
@@ -231,6 +243,7 @@ function CreateRequestContract({
     if (file) {
       setFileName(file.map((i) => i.name));
       setFormData((prev) => ({ ...prev, files: file }));
+      setIsEdited(true);
     }
   };
 
@@ -241,6 +254,7 @@ function CreateRequestContract({
       ...prev,
       files: Array.from(prev.files || []).filter((_, i) => i !== index),
     }));
+    setIsEdited(true);
   };
 
   const [fileNameAA, setFileNameAA] = useState("");
@@ -253,6 +267,7 @@ function CreateRequestContract({
       ...prevData,
       aaContracts: updatedAgreements,
     }));
+    setIsEdited(true);
   };
 
   // Для dragover/leave используем сам таргет, без ref
@@ -280,6 +295,7 @@ function CreateRequestContract({
       );
       return { ...prev, aaContracts };
     });
+    setIsEdited(true);
   };
 
   // Выбор файлов через input -> в нужное ДС по индексу
@@ -293,6 +309,7 @@ function CreateRequestContract({
       );
       return { ...prev, aaContracts };
     });
+    setIsEdited(true);
     // если надо разрешить выбрать те же файлы повторно:
     // e.target.value = null;
   };
@@ -315,6 +332,7 @@ function CreateRequestContract({
       );
       return { ...prev, aaContracts };
     });
+    setIsEdited(true);
   };
 
   const [isLoading, setIsLoading] = useState(false);
@@ -539,12 +557,13 @@ function CreateRequestContract({
                   label="Пролонгация включена"
                   width="100%"
                   checked={formData.isProlongationEnabled}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setFormData((prev) => ({
                       ...prev,
                       isProlongationEnabled: e.target.checked,
-                    }))
-                  }
+                    }));
+                    setIsEdited(true);
+                  }}
                 />
 
                 <label>ГК КАРС</label>
@@ -562,6 +581,7 @@ function CreateRequestContract({
                       ...prevFormData,
                       companyId: selectedCompany?.id || "",
                     }));
+                    setIsEdited(true);
                   }}
                 />
 
@@ -580,6 +600,7 @@ function CreateRequestContract({
                       ...prevFormData,
                       airlineId: selectedAirline?.id || "",
                     }));
+                    setIsEdited(true);
                   }}
                 />
 
@@ -633,6 +654,7 @@ function CreateRequestContract({
                       ...prevFormData,
                       applicationType: newValue ? newValue : "",
                     }));
+                    setIsEdited(true);
                   }}
                 />
 

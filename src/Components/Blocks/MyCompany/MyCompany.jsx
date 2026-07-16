@@ -32,6 +32,7 @@ function MyCompany({ children, user, ...props }) {
   const [showCreateSidebar, setShowCreateSidebar] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [chooseObject, setChooseObject] = useState(null);
+  const [editInitialMode, setEditInitialMode] = useState(false); // открыть карточку сразу в режиме редактирования
   const [showDelete, setShowDelete] = useState(false);
   const [deleteIndex, setDeleteIndex] = useState(null);
 
@@ -113,6 +114,18 @@ function MyCompany({ children, user, ...props }) {
     setShowRequestSidebar(!showRequestSidebar);
   };
 
+  // Открыть карточку компании в режиме просмотра (клик по строке)
+  const openRequestSidebarView = () => {
+    setEditInitialMode(false);
+    setShowRequestSidebar(true);
+  };
+
+  // Открыть карточку компании сразу в режиме редактирования (клик по карандашу)
+  const openRequestSidebarEdit = () => {
+    setEditInitialMode(true);
+    setShowRequestSidebar(true);
+  };
+
   const openDeleteComponent = (index, userID) => {
     setShowDelete(true);
     setDeleteIndex({ index, userID });
@@ -178,7 +191,8 @@ function MyCompany({ children, user, ...props }) {
 
         {!loading && !error && (
           <InfoTableDataMyCompany
-            toggleRequestSidebar={toggleRequestSidebar}
+            toggleRequestSidebar={openRequestSidebarView}
+            onEditRow={openRequestSidebarEdit}
             requests={filteredRequests}
             setChooseObject={setChooseObject}
             openDeleteComponent={openDeleteComponent}
@@ -194,6 +208,7 @@ function MyCompany({ children, user, ...props }) {
         <ExistRequestMyCompany
           show={showRequestSidebar}
           onClose={toggleRequestSidebar}
+          initialEditMode={editInitialMode}
           chooseObject={chooseObject}
           updateDispatcher={updateDispatcher}
           openDeleteComponent={openDeleteComponent}

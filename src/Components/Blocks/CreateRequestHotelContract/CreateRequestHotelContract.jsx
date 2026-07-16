@@ -166,6 +166,7 @@ function CreateRequestHotelContract({
   }));
 
   const [tarifNames, setTarifNames] = useState([]);
+  const [isEdited, setIsEdited] = useState(false); // Флаг «грязной» формы
   const sidebarRef = useRef();
 
   const resetForm = () => {
@@ -190,10 +191,18 @@ function CreateRequestHotelContract({
     });
     setSelectedHotel(null);
     setSelectedCompany(null);
+    setFileName([]);
+    setIsEdited(false);
   };
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
+
+    if (!isEdited) {
+      resetForm();
+      onClose();
+      return;
+    }
 
     const isConfirmed = await confirm(
       "Вы уверены, все несохраненные данные будут удалены?"
@@ -202,9 +211,10 @@ function CreateRequestHotelContract({
       resetForm();
       onClose();
     }
-  }, [confirm, isDialogOpen, onClose]);
+  }, [confirm, isDialogOpen, onClose, isEdited]);
 
   const addNewAgreement = () => {
+    setIsEdited(true);
     setFormData((prevData) => ({
       ...prevData,
       aaContracts: [
@@ -227,6 +237,7 @@ function CreateRequestHotelContract({
       ...prevState,
       [name]: value,
     }));
+    setIsEdited(true);
   };
 
   const fileInputRef = useRef(null);
@@ -255,6 +266,7 @@ function CreateRequestHotelContract({
     if (file) {
       setFileName(file.map((i) => i.name));
       setFormData((prev) => ({ ...prev, files: file }));
+      setIsEdited(true);
     }
   };
 
@@ -273,6 +285,7 @@ function CreateRequestHotelContract({
     if (file) {
       setFileName(file.map((i) => i.name));
       setFormData((prev) => ({ ...prev, files: file }));
+      setIsEdited(true);
     }
   };
 
@@ -283,6 +296,7 @@ function CreateRequestHotelContract({
       ...prev,
       files: Array.from(prev.files || []).filter((_, i) => i !== index),
     }));
+    setIsEdited(true);
   };
 
   const handleAgreementChange = (index, field, value) => {
@@ -293,6 +307,7 @@ function CreateRequestHotelContract({
       ...prevData,
       aaContracts: updatedAgreements,
     }));
+    setIsEdited(true);
   };
 
   // Для dragover/leave используем сам таргет, без ref
@@ -320,6 +335,7 @@ function CreateRequestHotelContract({
       );
       return { ...prev, aaContracts };
     });
+    setIsEdited(true);
   };
 
   // Выбор файлов через input -> в нужное ДС по индексу
@@ -333,6 +349,7 @@ function CreateRequestHotelContract({
       );
       return { ...prev, aaContracts };
     });
+    setIsEdited(true);
     // если надо разрешить выбрать те же файлы повторно:
     // e.target.value = null;
   };
@@ -355,6 +372,7 @@ function CreateRequestHotelContract({
       );
       return { ...prev, aaContracts };
     });
+    setIsEdited(true);
   };
   const [isLoading, setIsLoading] = useState(false);
 
@@ -627,12 +645,13 @@ function CreateRequestHotelContract({
                   label="Пролонгация включена"
                   width="100%"
                   checked={formData.isProlongationEnabled}
-                  onChange={(e) =>
+                  onChange={(e) => {
                     setFormData((prev) => ({
                       ...prev,
                       isProlongationEnabled: e.target.checked,
-                    }))
-                  }
+                    }));
+                    setIsEdited(true);
+                  }}
                 />
 
                 <label>ГК КАРС</label>
@@ -650,6 +669,7 @@ function CreateRequestHotelContract({
                       ...prevFormData,
                       companyId: selectedCompany?.id || "",
                     }));
+                    setIsEdited(true);
                   }}
                 />
 
@@ -694,6 +714,7 @@ function CreateRequestHotelContract({
                   value={selectedHotel ? selectedHotel : ""}
                   onChange={(event, newValue) => {
                     // console.log(newValue);
+                    setIsEdited(true);
 
                     if (!newValue) {
                       setSelectedHotel(null);
@@ -771,6 +792,7 @@ function CreateRequestHotelContract({
                       ...prev,
                       cityId: newValue?.id,
                     }));
+                    setIsEdited(true);
                   }}
                 />
 
@@ -824,14 +846,15 @@ function CreateRequestHotelContract({
                       <input
                         type="checkbox"
                         checked={formData.completionMark === "Исполнено"}
-                        onChange={(e) =>
+                        onChange={(e) => {
                           setFormData((prev) => ({
                             ...prev,
                             completionMark: e.target.checked
                               ? "Исполнено"
                               : "Не исполнено",
-                          }))
-                        }
+                          }));
+                          setIsEdited(true);
+                        }}
                       />
                       <span style={{ marginLeft: 8 }}>
                         Отметка о исполнении: {formData.completionMark}

@@ -87,10 +87,14 @@ function AirlineTransferPrices_tabComponent({ id, user, accessMenu }) {
     }
   }, [data?.airline?.id, data?.airline?.transferPrices]);
 
-  const saveTransferPrices = async (newList) => {
+  // Сохранить ОДНУ запись (upsert по одной записи, а не весь массив — чтобы
+  // не затирать параллельные правки других пользователей). Список обновляем
+  // оптимистично ради мгновенного UI; при ошибке — откат к прежнему (prevList).
+  const saveTransferPrice = async (record, optimisticList, prevList) => {
+    setTransferPricesInput(optimisticList);
     setIsSaving(true);
     try {
-      const payload = transferPriceInputsToPayload(newList);
+      const payload = transferPriceInputsToPayload([record]);
       await updateAirline({
         variables: {
           updateAirlineId: id,
@@ -101,6 +105,7 @@ function AirlineTransferPrices_tabComponent({ id, user, accessMenu }) {
       success("Цены на трансфер сохранены.");
       refetch();
     } catch (err) {
+      setTransferPricesInput(prevList); // откат оптимистичного обновления
       console.error("Ошибка сохранения цен на трансфер:", err);
       notifyError(err?.message || "Не удалось сохранить цены на трансфер.");
     } finally {
@@ -109,18 +114,17 @@ function AirlineTransferPrices_tabComponent({ id, user, accessMenu }) {
   };
 
   const handleSidebarSubmit = (formRecord) => {
+    const prevList = transferPricesInput;
     if (showEditSidebar && editIndex !== null) {
-      const newList = transferPricesInput.map((r, i) =>
+      const optimisticList = transferPricesInput.map((r, i) =>
         i === editIndex ? formRecord : r
       );
-      setTransferPricesInput(newList);
-      saveTransferPrices(newList);
+      saveTransferPrice(formRecord, optimisticList, prevList);
       setShowEditSidebar(false);
       setEditIndex(null);
     } else {
-      const newList = [...transferPricesInput, formRecord];
-      setTransferPricesInput(newList);
-      saveTransferPrices(newList);
+      const optimisticList = [...transferPricesInput, formRecord];
+      saveTransferPrice(formRecord, optimisticList, prevList);
       setShowAddSidebar(false);
     }
   };

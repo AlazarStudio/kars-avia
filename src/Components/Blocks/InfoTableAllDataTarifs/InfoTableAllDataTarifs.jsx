@@ -175,7 +175,7 @@ function InfoTableAllDataTarifs({
                         className={classes.actBtn}
                         onClick={() => onRestoreContract && onRestoreContract(item)}
                       >
-                        <RestoreIcon width={17} height={17} strokeWidth={1.4} color="currentColor" cursor="pointer" />
+                        <RestoreIcon width={17} height={17} strokeWidth={1} color="currentColor" cursor="pointer" />
                       </button>
                     ) : (
                       <>
@@ -185,7 +185,7 @@ function InfoTableAllDataTarifs({
                           className={classes.actBtn}
                           onClick={() => (onEditRow ? onEditRow(item.id) : handleObject(item.id))}
                         >
-                          <EditPencilIcon width={17} height={18} strokeWidth={1.4} color="currentColor" cursor="pointer" />
+                          <EditPencilIcon width={17} height={18} strokeWidth={1} color="currentColor" cursor="pointer" />
                         </button>
                         {onArchiveContract && (
                           <button
@@ -194,7 +194,7 @@ function InfoTableAllDataTarifs({
                             className={classes.actBtn}
                             onClick={() => setArchiveTarget(item)}
                           >
-                            <ArchiveIcon width={17} height={17} strokeWidth={1.4} color="currentColor" cursor="pointer" />
+                            <ArchiveIcon width={17} height={17} strokeWidth={1} color="currentColor" cursor="pointer" />
                           </button>
                         )}
                       </>
@@ -205,7 +205,7 @@ function InfoTableAllDataTarifs({
                       className={`${classes.actBtn} ${classes.actBtnDanger}`}
                       onClick={() => openDeleteContract(item)}
                     >
-                      <DeleteIcon width={17} height={17} strokeWidth={1.4} color="currentColor" cursor="pointer" />
+                      <DeleteIcon width={17} height={17} strokeWidth={1} color="currentColor" cursor="pointer" />
                     </button>
                   </div>
                 )}

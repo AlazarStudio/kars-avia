@@ -56,6 +56,7 @@ function EditRequestHotelContract({
   tarif, // тут приходит airlineContractId
   canEdit = false, // Флаг для разрешения редактирования
   onRequestDelete, // колбэк: закрыть сайдбар и открыть модал удаления договора
+  initialEditMode = false, // открыть сразу в режиме редактирования
 }) {
   const token = getCookie("token");
   const { confirm, showAlert, isDialogOpen } = useDialog();
@@ -287,6 +288,7 @@ function EditRequestHotelContract({
 
   // Управление режимом редактирования (как в исходнике)
   const [isEditing, setIsEditing] = useState(false);
+  const [isEdited, setIsEdited] = useState(false); // Флаг «грязной» формы
   const [activeTab, setActiveTab] = useState("Общая");
   const [anchorEl, setAnchorEl] = useState(null);
   const menuRef = useRef(null);
@@ -398,14 +400,22 @@ function EditRequestHotelContract({
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
 
-    if (isEditing) {
+    if (isEditing && isEdited) {
       const ok = await confirm("Вы уверены, все несохраненные данные будут удалены?");
       if (!ok) return;
     }
     onClose?.();
     setIsEditing(false);
+    setIsEdited(false);
     setActiveTab("Общая");
-  }, [isEditing, onClose, isDialogOpen, confirm]);
+  }, [isEditing, isEdited, onClose, isDialogOpen, confirm]);
+
+  useEffect(() => {
+    if (show) {
+      setIsEditing(initialEditMode);
+      setIsEdited(false);
+    }
+  }, [show]);
 
   useEffect(() => {
     if (citiesData) {
@@ -446,6 +456,7 @@ function EditRequestHotelContract({
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((p) => ({ ...p, [name]: value }));
+    setIsEdited(true);
   };
 
   const [fileName, setFileName] = useState([]);
@@ -456,6 +467,7 @@ function EditRequestHotelContract({
     if (file) {
       setFileName(file.map((i) => i.name));
       setFormData((prev) => ({ ...prev, files: file }));
+      setIsEdited(true);
     }
   };
 
@@ -474,6 +486,7 @@ function EditRequestHotelContract({
     if (file) {
       setFileName(file.map((i) => i.name));
       setFormData((prev) => ({ ...prev, files: file }));
+      setIsEdited(true);
     }
   };
 
@@ -484,12 +497,14 @@ function EditRequestHotelContract({
       ...prev,
       files: Array.from(prev.files || []).filter((_, i) => i !== index),
     }));
+    setIsEdited(true);
   };
 
   // Файлы договора
   const handleRootFilesChange = (e) => {
     const files = Array.from(e.target.files || []);
     setFormData((p) => ({ ...p, files }));
+    setIsEdited(true);
   };
 
   // Работа с ДС
@@ -499,6 +514,7 @@ function EditRequestHotelContract({
       next[index] = { ...next[index], [field]: value };
       return { ...p, additionalAgreements: next };
     });
+    setIsEdited(true);
   };
   const handleTabChange = useCallback((tab) => setActiveTab(tab), []);
 
@@ -509,6 +525,7 @@ function EditRequestHotelContract({
       next[index] = { ...next[index], files };
       return { ...p, additionalAgreements: next };
     });
+    setIsEdited(true);
   };
 
   const [showAgreementEditor, setShowAgreementEditor] = useState(false);
@@ -663,6 +680,7 @@ function EditRequestHotelContract({
     } finally {
       setIsLoading(false);
       setFileName([]);
+      setIsEdited(false);
     }
   };
   // console.log(formData);
@@ -867,12 +885,13 @@ function EditRequestHotelContract({
                             width={"100%"}
                             label={"Пролонгация"}
                             checked={formData.isProlongationEnabled}
-                            onChange={(e) =>
+                            onChange={(e) => {
                               setFormData((prev) => ({
                                 ...prev,
                                 isProlongationEnabled: e.target.checked,
-                              }))
-                            }
+                              }));
+                              setIsEdited(true);
+                            }}
                           />
                         </div>
                       </>
@@ -908,6 +927,7 @@ function EditRequestHotelContract({
                               ...prevFormData,
                               companyId: selectedCompany?.id || "",
                             }));
+                            setIsEdited(true);
                           }}
                         />
                       </>
@@ -975,6 +995,7 @@ function EditRequestHotelContract({
                           }
                           onChange={(event, newValue) => {
                             if (!newValue) return;
+                            setIsEdited(true);
 
                             const selectedItem = hotels?.find(
                               (item) => item.id === newValue.id
@@ -1057,6 +1078,7 @@ function EditRequestHotelContract({
                               ...prev,
                               cityId: newValue?.id,
                             }));
+                            setIsEdited(true);
                           }}
                         />
                       </>
@@ -1137,14 +1159,15 @@ function EditRequestHotelContract({
                             <input
                               type="checkbox"
                               checked={formData.completionMark === "Исполнено"}
-                              onChange={(e) =>
+                              onChange={(e) => {
                                 setFormData((prev) => ({
                                   ...prev,
                                   completionMark: e.target.checked
                                     ? "Исполнено"
                                     : "Не исполнено",
-                                }))
-                              }
+                                }));
+                                setIsEdited(true);
+                              }}
                             />
                             <span style={{ marginLeft: 8 }}>
                               Отметка о исполнении: {formData.completionMark}
@@ -1314,7 +1337,10 @@ function EditRequestHotelContract({
             {activeTab === "Общая" && canEdit && isEditing && (
               <div className={classes.requestButton}>
                 <Button
-                  onClick={() => setIsEditing(false)}
+                  onClick={() => {
+                    setIsEditing(false);
+                    setIsEdited(false);
+                  }}
                   backgroundcolor="var(--hover-gray)"
                   color="#000"
                 >

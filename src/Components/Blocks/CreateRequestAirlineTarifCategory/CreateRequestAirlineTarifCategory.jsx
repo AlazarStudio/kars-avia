@@ -7,25 +7,24 @@ import {
   GET_AIRPORTS_RELAY,
   GET_ALL_TARIFFS,
   getCookie,
-  UPDATE_AIRLINE_TARIF,
   UPDATE_HOTEL_TARIF,
 } from "../../../../graphQL_requests.js";
-import { useMutation, useQuery } from "@apollo/client";
+import { useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
-import MUILoader from "../MUILoader/MUILoader.jsx";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import TariffGeographyList from "../TariffGeographyList/TariffGeographyList.jsx";
 import ContractTypeToggle from "../ContractTypeToggle/ContractTypeToggle.jsx";
-import { rowsToGeographyInput, findDuplicateGeoRow, extractGeoConflictMessage } from "../../../utils/airlineTariffGeography.js";
+import { rowsToGeographyInput, findDuplicateGeoRow } from "../../../utils/airlineTariffGeography.js";
+import { createEmptyTariffInput, tariffInputToPayload, tariffFormToDisplayItem } from "../../../utils/airlineTariffPrices.js";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
-import { useToast } from "../../../contexts/ToastContext";
 
 
 function CreateRequestAirlineTarifCategory({
   show,
   id,
   onClose,
+  onSubmit,
   addTarif,
   selectedContract,
   refetchAllCategories,
@@ -35,7 +34,6 @@ function CreateRequestAirlineTarifCategory({
 }) {
   const token = getCookie("token");
   const { confirm, showAlert, isDialogOpen } = useDialog();
-  const { success, error: notifyError } = useToast();
   const infoAirports = useQuery(GET_AIRPORTS_RELAY, {
     context: {
       headers: {
@@ -47,42 +45,11 @@ function CreateRequestAirlineTarifCategory({
 
   // console.log(show);
 
-  const [formData, setFormData] = useState({
-    name: "",
-    airportIds: [],
-    geography: [],
-    priceOneCategory: null,
-    priceTwoCategory: null,
-    priceThreeCategory: null,
-    priceFourCategory: null,
-    priceFiveCategory: null,
-    priceSixCategory: null,
-    priceSevenCategory: null,
-    priceEightCategory: null,
-    priceLuxe: null,
-    priceApartment: null,
-    priceStudio: null,
-    priceComfort: null,
-    priceImprovedComfort: null,
-    priceNineCategory: null,
-    priceTenCategory: null,
-    breakfast: null,
-    dinner: null,
-    lunch: null,
-  });
+  const [formData, setFormData] = useState(() => createEmptyTariffInput());
 
   const [airports, setAirports] = useState([]); // Список аэропортов
 
   const [contractType, setContractType] = useState("individual");
-
-  const [updateAirlineTariff] = useMutation(UPDATE_AIRLINE_TARIF, {
-    context: {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        // "Apollo-Require-Preflight": "true",
-      },
-    },
-  });
 
   useEffect(() => {
     if (infoAirports.data) {
@@ -131,29 +98,7 @@ function CreateRequestAirlineTarifCategory({
   const sidebarRef = useRef();
 
   const resetForm = useCallback(() => {
-    setFormData({
-      name: "",
-      airportIds: [],
-      geography: [],
-      priceOneCategory: null,
-      priceTwoCategory: null,
-      priceThreeCategory: null,
-      priceFourCategory: null,
-      priceFiveCategory: null,
-      priceSixCategory: null,
-      priceSevenCategory: null,
-      priceEightCategory: null,
-      priceLuxe: null,
-      priceApartment: null,
-      priceStudio: null,
-      priceComfort: null,
-      priceImprovedComfort: null,
-      priceNineCategory: null,
-      priceTenCategory: null,
-      breakfast: null,
-      dinner: null,
-      lunch: null,
-    });
+    setFormData(createEmptyTariffInput());
     setIsEdited(false);
     setSkippedAirports([]);
     setContractType("individual");
@@ -203,12 +148,12 @@ function CreateRequestAirlineTarifCategory({
     }));
   };
 
-  const [isLoading, setIsLoading] = useState(false);
-
   // console.log(selectedContract?.id);
   // console.log(id);
 
-  const handleSubmit = async (e) => {
+  // Форма презентационная: валидирует и отдаёт готовую запись родителю (onSubmit).
+  // Мутацию/refetch/тосты/закрытие выполняет родитель (AirlineTarifs_tabComponent).
+  const handleSubmit = (e) => {
     e.preventDefault();
 
     if (!formData.name?.trim()) {
@@ -241,57 +186,11 @@ function CreateRequestAirlineTarifCategory({
       }
     }
 
-    setIsLoading(true);
-
-    try {
-      await updateAirlineTariff({
-        variables: {
-          updateAirlineId: id,
-          input: {
-            prices: [
-              {
-                name: formData.name,
-                individual: isIndividual,
-                airportIds: isIndividual ? formData.airportIds : [],
-                geography: isIndividual ? [] : geographyInput,
-                prices: {
-                  priceOneCategory: parseFloat(formData.priceOneCategory) || 0,
-                  priceTwoCategory: parseFloat(formData.priceTwoCategory) || 0,
-                  priceThreeCategory: parseFloat(formData.priceThreeCategory) || 0,
-                  priceFourCategory: parseFloat(formData.priceFourCategory) || 0,
-                  priceFiveCategory: parseFloat(formData.priceFiveCategory) || 0,
-                  priceSixCategory: parseFloat(formData.priceSixCategory) || 0,
-                  priceSevenCategory: parseFloat(formData.priceSevenCategory) || 0,
-                  priceEightCategory: parseFloat(formData.priceEightCategory) || 0,
-                  priceLuxe: parseFloat(formData.priceLuxe) || 0,
-                  priceApartment: parseFloat(formData.priceApartment) || 0,
-                  priceStudio: parseFloat(formData.priceStudio) || 0,
-                  priceComfort: parseFloat(formData.priceComfort) || 0,
-                  priceImprovedComfort: parseFloat(formData.priceImprovedComfort) || 0,
-                  priceNineCategory: parseFloat(formData.priceNineCategory) || 0,
-                  priceTenCategory: parseFloat(formData.priceTenCategory) || 0,
-                },
-                mealPrice: {
-                  breakfast: parseFloat(formData.breakfast) || 0,
-                  dinner: parseFloat(formData.dinner) || 0,
-                  lunch: parseFloat(formData.lunch) || 0,
-                },
-              },
-            ],
-          },
-        },
-      });
-
-      resetForm();
-      onClose();
-      setIsLoading(false);
-      success("Добавление договора прошло успешно.");
-    } catch (error) {
-      setIsLoading(false);
-      const geoConflict = extractGeoConflictMessage(error);
-      notifyError(geoConflict || "Произошла ошибка при добавлении тарифа.");
-      console.error("Произошла ошибка при выполнении запроса:", error);
-    }
+    const record = tariffInputToPayload(formData, contractType, {
+      coerceZero: true,
+    });
+    const displayItem = tariffFormToDisplayItem(formData, contractType, airports);
+    onSubmit?.(record, displayItem);
   };
 
   useEffect(() => {
@@ -400,9 +299,7 @@ function CreateRequestAirlineTarifCategory({
         </div>
       </div>
 
-      {isLoading ? (
-        <MUILoader loadSize={"50px"} fullHeight={"90vh"} />
-      ) : (
+      {(
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
