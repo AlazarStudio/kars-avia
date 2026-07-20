@@ -119,6 +119,16 @@ export const PERSON_CATEGORY_BADGE = {
 // всё, кроме CHILD/INFANT (в т.ч. undefined у легаси), считаем взрослым
 export const normalizeCategory = (v) => (v === "CHILD" || v === "INFANT" ? v : "ADULT");
 
+// Возрастная скидка на ПРОЖИВАНИЕ (не на питание). Возвращает долю ОПЛАЧИВАЕМОЙ
+// стоимости койко-места: взрослый — 1, ребёнок (2–12) — 0.5, инфант (до 2) — 0.
+// Правило единое во всех договорах АК (согласовано на созвоне 08.07.2026).
+export const accommodationChargeFactor = (category) => {
+  const c = normalizeCategory(category);
+  if (c === "INFANT") return 0;
+  if (c === "CHILD") return 0.5;
+  return 1;
+};
+
 export const PERSON_CATEGORY_OPTIONS = [
   { value: "ADULT", label: "Взрослый" },
   { value: "CHILD", label: "Ребёнок" },

@@ -18,7 +18,7 @@ import {
   getCookie,
 } from "../../../../../graphQL_requests";
 import { calculateEffectiveCostDays } from "../../../../utils/effectiveCostDays";
-import { formatDateTime, normalizeCategory, PERSON_CATEGORY_OPTIONS } from "../fapConstants";
+import { formatDateTime, normalizeCategory, PERSON_CATEGORY_OPTIONS, accommodationChargeFactor } from "../fapConstants";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
@@ -392,17 +392,21 @@ export default function FapHotelPage({
         return { tariffName: tariff.name ?? "", placementKind: 0, pricePerDay: 0, accommodationCost: 0, warning: "укажите номер" };
       }
       if (price == null) {
-        return { tariffName: tariff.name ?? "", placementKind: places, pricePerDay: 0, accommodationCost: 0, warning: `нет цены для ${placementKindLabel(places)} размещения` };
+        return { tariffName: tariff.name ?? "", placementKind: places, pricePerDay: 0, accommodationCost: 0, warning: `нет цены (${placementKindLabel(places)})` };
       }
+      // Возрастная скидка на проживание: инфант — бесплатно, ребёнок — 50%.
+      // Питание НЕ трогаем. Применяется только к производной (тарифной) стоимости.
+      const chargeFactor = accommodationChargeFactor(people[personIndex]?.personCategory);
       return {
         tariffName: tariff.name ?? "",
         placementKind: places,
         pricePerDay: price,
-        accommodationCost: price * toNum(pd.daysCount),
+        accommodationCost: price * toNum(pd.daysCount) * chargeFactor,
+        chargeFactor,
         warning: null,
       };
     },
-    [findTariff, roomKindByIndex]
+    [findTariff, roomKindByIndex, people]
   );
 
   // Ref на getEffectiveRow: buildReportRows работает через refs (для флаш-сейва
@@ -1199,7 +1203,7 @@ export default function FapHotelPage({
       return;
     }
     if (!addForm.fullName.trim()) {
-      notifyError("Укажите ФИО гостя");
+      notifyError(addForm.personType === "CREW" ? "Укажите ФИО члена экипажа" : "Укажите ФИО пассажира");
       return;
     }
     try {
@@ -1219,7 +1223,7 @@ export default function FapHotelPage({
           },
         },
       });
-      success("Гость добавлен");
+      success(addForm.personType === "CREW" ? "Член экипажа добавлен" : "Пассажир добавлен");
       cancelAdd();
       onRefetch?.();
     } catch (e) {
@@ -1248,7 +1252,7 @@ export default function FapHotelPage({
   const handleSaveEdit = async () => {
     if (editing == null) return;
     if (!editForm.fullName.trim()) {
-      notifyError("Укажите ФИО гостя");
+      notifyError(editForm.personType === "CREW" ? "Укажите ФИО члена экипажа" : "Укажите ФИО пассажира");
       return;
     }
     try {
@@ -1280,7 +1284,8 @@ export default function FapHotelPage({
   };
 
   const handleDelete = async (personIndex) => {
-    const ok = await confirm("Удалить запись о госте?");
+    const isCrewPerson = people[personIndex]?.personType === "CREW";
+    const ok = await confirm(isCrewPerson ? "Удалить запись о члене экипажа?" : "Удалить запись о пассажире?");
     if (!ok) return;
     try {
       setSaving(true);
@@ -1352,7 +1357,13 @@ export default function FapHotelPage({
           },
         });
       }
-      success(relocateState.indices.length > 1 ? `Переселено: ${relocateState.indices.length}` : "Гость переселён");
+      success(
+        relocateState.indices.length > 1
+          ? `Переселено: ${relocateState.indices.length}`
+          : people[relocateState.indices[0]]?.personType === "CREW"
+          ? "Член экипажа переселён"
+          : "Пассажир переселён"
+      );
       setSelected([]);
       closeRelocate();
       onRefetch?.();
@@ -1379,7 +1390,13 @@ export default function FapHotelPage({
           },
         });
       }
-      success(evictState.indices.length > 1 ? `Выселено: ${evictState.indices.length}` : "Гость выселен");
+      success(
+        evictState.indices.length > 1
+          ? `Выселено: ${evictState.indices.length}`
+          : people[evictState.indices[0]]?.personType === "CREW"
+          ? "Член экипажа выселен"
+          : "Пассажир выселен"
+      );
       setSelected([]);
       setEvictState(null);
       onRefetch?.();
@@ -1792,7 +1809,7 @@ export default function FapHotelPage({
           className={`${classes.tab} ${activeTab === "guests" ? classes.tabActive : ""}`}
           onClick={() => setActiveTab("guests")}
         >
-          Гости
+          {request?.includesCrew ? "Пассажиры и экипаж" : "Пассажиры"}
           <span className={classes.tabBadge}>{placed}</span>
         </button>
         {showTariffs && (
@@ -1833,7 +1850,7 @@ export default function FapHotelPage({
               <span className={classes.spacer} />
               {canAdd && !adding && (
                 <button type="button" className={classes.primaryBtn} onClick={openAdd}>
-                  <PlusSvg /> Добавить гостя
+                  <PlusSvg /> {personMode === "CREW" ? "Добавить члена экипажа" : "Добавить пассажира"}
                 </button>
               )}
               {canAdd && personMode !== "CREW" && savedPassengers.length > 0 && (
@@ -1891,7 +1908,7 @@ export default function FapHotelPage({
                     <input type="checkbox" checked={allSelected} onChange={toggleAll} />
                   </div>
                 )}
-                <div>Гость</div>
+                <div>ФИО</div>
                 <div>Возрастная категория</div>
                 <div>Телефон</div>
                 <div>Номер</div>
@@ -1905,7 +1922,7 @@ export default function FapHotelPage({
                     ? "Ничего не найдено"
                     : personMode === "CREW"
                     ? "Экипаж ещё не добавлен"
-                    : "Гостей ещё нет"}
+                    : "Пассажиров ещё нет"}
                 </div>
               ) : (
                 filteredPeople.map((p) => renderGuestRow(p))
@@ -1918,7 +1935,7 @@ export default function FapHotelPage({
           <div className={classes.tariffsPane}>
             <div className={classes.tariffsHead}>
               <p className={classes.tariffsHint}>
-                Создайте тарифы с ценами — затем назначьте их гостям во вкладке «Отчёт».
+                Создайте тарифы с ценами — затем назначьте их пассажирам во вкладке «Отчёт».
               </p>
               <span className={classes.spacer} />
               {canEdit && (
@@ -1973,7 +1990,7 @@ export default function FapHotelPage({
                           type="button"
                           className={classes.applyAllBtn}
                           onClick={() => applyTariffToAll(t.id)}
-                          title="Применить этот тариф всем гостям"
+                          title="Применить этот тариф всем пассажирам"
                         >
                           <CheckSvg color="#0F7A52" /> Применить всем
                         </button>
@@ -2158,7 +2175,7 @@ export default function FapHotelPage({
             </div>
 
             {placed === 0 ? (
-              <div className={classes.emptyRow}>Гости ещё не добавлены</div>
+              <div className={classes.emptyRow}>Пассажиры ещё не добавлены</div>
             ) : (
               <div className={classes.reportTableWrap}>
                 <div className={classes.reportGroups}>
@@ -2179,7 +2196,7 @@ export default function FapHotelPage({
                           </span>
                         </div>
                         <div className={classes.memberColHead}>
-                          <span>Гость</span>
+                          <span>ФИО</span>
                           <span>Номер</span>
                           <span>Тариф</span>
                           <span className={classes.numRight}>Сут.</span>
@@ -2283,7 +2300,10 @@ export default function FapHotelPage({
                                   }
                                   return (
                                     <span className={classes.accFormula}>
-                                      {fmt(eff.pricePerDay)} × {toNum(pd.daysCount)} сут = <strong>{fmt(eff.accommodationCost)}</strong>
+                                      {fmt(eff.pricePerDay)} × {toNum(pd.daysCount)} сут
+                                      {eff.chargeFactor < 1 ? ` × ${Math.round(eff.chargeFactor * 100)}%` : ""}
+                                      {" = "}
+                                      <strong>{fmt(eff.accommodationCost)}</strong>
                                     </span>
                                   );
                                 })()}
@@ -2297,7 +2317,7 @@ export default function FapHotelPage({
                 </div>
                 <div className={classes.reportFooter}>
                   <span className={classes.footerLabel}>
-                    Гостей: <strong>{placed}</strong>
+                    Человек: <strong>{placed}</strong>
                   </span>
                   <span className={classes.spacer} />
                   <span className={classes.footerLabel}>Итого по отчёту</span>
@@ -2317,9 +2337,15 @@ export default function FapHotelPage({
         title={
           evictState && evictState.indices.length > 1
             ? `Выселить (${evictState.indices.length})`
-            : "Выселение гостя"
+            : people[evictState?.indices?.[0]]?.personType === "CREW"
+            ? "Выселение члена экипажа"
+            : "Выселение пассажира"
         }
-        description="Укажите причину выселения. Это действие изменит статус гостя."
+        description={
+          people[evictState?.indices?.[0]]?.personType === "CREW"
+            ? "Укажите причину выселения. Это действие изменит статус члена экипажа."
+            : "Укажите причину выселения. Это действие изменит статус пассажира."
+        }
         reasonLabel="Причина *"
         placeholder="Укажите причину выселения..."
         confirmText={
@@ -2359,7 +2385,9 @@ export default function FapHotelPage({
         >
           {relocateState && relocateState.indices.length > 1
             ? `Переселить (${relocateState.indices.length})`
-            : "Переселение гостя"}
+            : people[relocateState?.indices?.[0]]?.personType === "CREW"
+            ? "Переселение члена экипажа"
+            : "Переселение пассажира"}
         </DialogTitle>
         <DialogContent
           sx={{ pt: "16px !important", display: "flex", flexDirection: "column", gap: 2 }}

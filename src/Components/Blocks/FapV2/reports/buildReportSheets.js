@@ -69,25 +69,26 @@ function applyHotelColumnWidths(ws) {
   ws.getColumn(1).width = 6;      // A = ID
   ws.getColumn(2).width = 28;     // B = ФИО
   ws.getColumn(3).width = 12;     // C = Тип
-  ws.getColumn(4).width = 14;     // D = Возрастная категория
+  ws.getColumn(4).width = 15;     // D = Возрастная категория
   ws.getColumn(5).width = 13;     // E = Дата заезда
-  ws.getColumn(6).width = 11;     // F = Время заезда
+  ws.getColumn(6).width = 12;     // F = Время заезда
   ws.getColumn(7).width = 13;     // G = Дата выезда
-  ws.getColumn(8).width = 11;     // H = Время выезда
+  ws.getColumn(8).width = 12;     // H = Время выезда
   ws.getColumn(9).width = 12;     // I = Номер
-  ws.getColumn(10).width = 15;    // J = Вид размещения
+  ws.getColumn(10).width = 18;    // J = Вид размещения (вмещает «четырёхместное»)
   ws.getColumn(11).width = 20;    // K = Тариф
-  ws.getColumn(12).width = 13;    // L = Цена за сутки
-  ws.getColumn(13).width = 11;    // M = Кол-во суток
-  ws.getColumn(14).width = 11;    // N = Кол-во завтраков
-  ws.getColumn(15).width = 11;    // O = Завтрак
-  ws.getColumn(16).width = 11;    // P = Кол-во обедов
-  ws.getColumn(17).width = 11;    // Q = Обед
-  ws.getColumn(18).width = 11;    // R = Кол-во ужинов
-  ws.getColumn(19).width = 11;    // S = Ужин
-  ws.getColumn(20).width = 14;    // T = Стоимость питания
-  ws.getColumn(21).width = 14;    // U = Стоимость проживания
-  ws.getColumn(22).width = 12;    // V = Итого
+  ws.getColumn(12).width = 14;    // L = Цена за сутки
+  ws.getColumn(13).width = 15;    // M = Количество суток
+  ws.getColumn(14).width = 15;    // N = Количество завтраков
+  ws.getColumn(15).width = 12;    // O = Завтрак
+  ws.getColumn(16).width = 15;    // P = Количество обедов
+  ws.getColumn(17).width = 12;    // Q = Обед
+  ws.getColumn(18).width = 15;    // R = Количество ужинов
+  ws.getColumn(19).width = 12;    // S = Ужин
+  ws.getColumn(20).width = 15;    // T = Стоимость питания
+  ws.getColumn(21).width = 10;    // U = Скидка
+  ws.getColumn(22).width = 15;    // V = Стоимость проживания
+  ws.getColumn(23).width = 12;    // W = Итого
 }
 
 const HOTEL_HEADERS = [
@@ -95,8 +96,17 @@ const HOTEL_HEADERS = [
   "Дата выезда", "Время выезда", "Номер", "Вид размещения", "Тариф", "Цена за сутки",
   "Количество суток", "Количество завтраков", "Завтрак",
   "Количество обедов", "Обед", "Количество ужинов", "Ужин",
-  "Стоимость питания", "Стоимость проживания", "Итого",
+  "Стоимость питания", "Скидка", "Стоимость проживания", "Итого",
 ];
+
+// Процент возрастной скидки на проживание, выведенный из чисел строки:
+// 1 − факт/(цена за сутки × сутки). «—», если базы нет (ручной ввод / легаси).
+function accommodationDiscountLabel(pricePerDay, daysCount, accommodationCost) {
+  const base = toNum(pricePerDay) * toNum(daysCount);
+  if (base <= 0) return "—";
+  const disc = 1 - toNum(accommodationCost) / base;
+  return disc > 0.005 ? `${Math.round(disc * 100)}%` : "—";
+}
 
 // Извлечь даты заезда/выезда персоны (Date или null).
 // Приоритет: person.arrival/departure (явное переопределение per-person)
@@ -148,14 +158,14 @@ export function addHotelSheet(wb, opts) {
 
   // ── Шапка ──
   ws.getCell("A1").value = request?.airline?.name ?? "";
-  ws.getCell("V1").value = "Договор № или \"по согласованию\"";
-  ws.getCell("V1").alignment = { horizontal: "right" };
+  ws.getCell("W1").value = "Договор № или \"по согласованию\"";
+  ws.getCell("W1").alignment = { horizontal: "right" };
   const flightPart = request?.flightDate
     ? ` от ${new Date(request.flightDate).toLocaleDateString("ru-RU")}`
     : "";
   ws.getCell("C3").value =
     `Детализация оказанных услуг пассажиров задерженного рейса № ${request?.flightNumber ?? ""}${flightPart} г. ${city} гостиница ${hotelName}`;
-  [ws.getCell("A1"), ws.getCell("V1"), ws.getCell("C3")].forEach((c) => {
+  [ws.getCell("A1"), ws.getCell("W1"), ws.getCell("C3")].forEach((c) => {
     c.font = { name: "Calibri", size: 12, bold: true };
   });
 
@@ -242,9 +252,10 @@ export function addHotelSheet(wb, opts) {
     row.getCell(17).value = r.lunch;                            // Q
     row.getCell(18).value = r.dinner > 0 ? 1 : 0;              // R
     row.getCell(19).value = r.dinner;                           // S
-    row.getCell(20).value = r.foodCost;                         // T
-    row.getCell(21).value = r.accommodationCost;                // U
-    row.getCell(22).value = r.foodCost + r.accommodationCost;   // V Итого
+    row.getCell(20).value = r.foodCost;                         // T Стоимость питания
+    row.getCell(21).value = accommodationDiscountLabel(r.pricePerDay, r.daysCount, r.accommodationCost); // U Скидка
+    row.getCell(22).value = r.accommodationCost;                // V Стоимость проживания
+    row.getCell(23).value = r.foodCost + r.accommodationCost;   // W Итого
 
     rowIdx += 1;
   });
@@ -280,7 +291,7 @@ export function addHotelSheet(wb, opts) {
     aRow.getCell(6).value = dt;
     aRow.getCell(6).numFmt = fmtTime;
   }
-  if (aCost != null) aRow.getCell(22).value = aCost;
+  if (aCost != null) aRow.getCell(23).value = aCost;
   rowIdx += 1;
 
   // DEPARTURE
@@ -302,7 +313,7 @@ export function addHotelSheet(wb, opts) {
     dRow.getCell(6).value = dt;
     dRow.getCell(6).numFmt = fmtTime;
   }
-  if (dCost != null) dRow.getCell(22).value = dCost;
+  if (dCost != null) dRow.getCell(23).value = dCost;
   const lastTransferRow = rowIdx;
   rowIdx += 1;
 
@@ -319,10 +330,11 @@ export function addHotelSheet(wb, opts) {
     totalRow.getCell(18).value = { formula: `SUM(R5:R${lastPersonRow})` };
     totalRow.getCell(19).value = { formula: `SUM(S5:S${lastPersonRow})` };
     totalRow.getCell(20).value = { formula: `SUM(T5:T${lastPersonRow})` };
-    totalRow.getCell(21).value = { formula: `SUM(U5:U${lastPersonRow})` };
+    // U (Скидка) — не суммируется.
+    totalRow.getCell(22).value = { formula: `SUM(V5:V${lastPersonRow})` };
   }
-  totalRow.getCell(22).value = {
-    formula: `SUM(V5:V${lastTransferRow})`,
+  totalRow.getCell(23).value = {
+    formula: `SUM(W5:W${lastTransferRow})`,
   };
 
   applyHotelColumnWidths(ws);
@@ -433,14 +445,14 @@ export function addCombinedSheet(wb, opts) {
 
   // ── Шапка ──
   ws.getCell("A1").value = request?.airline?.name ?? "";
-  ws.getCell("V1").value = "Договор № или \"по согласованию\"";
-  ws.getCell("V1").alignment = { horizontal: "right" };
+  ws.getCell("W1").value = "Договор № или \"по согласованию\"";
+  ws.getCell("W1").alignment = { horizontal: "right" };
   const flightPart = request?.flightDate
     ? ` от ${new Date(request.flightDate).toLocaleDateString("ru-RU")}`
     : "";
   ws.getCell("C3").value =
     `Детализация оказанных услуг пассажиров задерженного рейса № ${request?.flightNumber ?? ""}${flightPart} г. ${city}`;
-  [ws.getCell("A1"), ws.getCell("V1"), ws.getCell("C3")].forEach((c) => {
+  [ws.getCell("A1"), ws.getCell("W1"), ws.getCell("C3")].forEach((c) => {
     c.font = { name: "Calibri", size: 12, bold: true };
   });
 
@@ -465,8 +477,8 @@ export function addCombinedSheet(wb, opts) {
     const people = hotel?.people ?? [];
     if (people.length === 0) return; // пустые гостиницы пропускаем в сводке
 
-    // Сабхедер гостиницы — merged A:V
-    ws.mergeCells(`A${rowIdx}:V${rowIdx}`);
+    // Сабхедер гостиницы — merged A:W
+    ws.mergeCells(`A${rowIdx}:W${rowIdx}`);
     const hdr = ws.getCell(`A${rowIdx}`);
     hdr.value = `Гостиница: ${pickHotelName(hotel)}${hotel?.address ? ` · ${hotel.address}` : ""}`;
     hdr.font = { name: "Calibri", size: 12, bold: true };
@@ -526,8 +538,9 @@ export function addCombinedSheet(wb, opts) {
       row.getCell(18).value = toNum(r.dinner) > 0 ? 1 : 0;                           // R
       row.getCell(19).value = toNum(r.dinner);                                       // S
       row.getCell(20).value = foodCost;                                             // T Ст-ть питания
-      row.getCell(21).value = accommodationCost;                                     // U Ст-ть проживания
-      row.getCell(22).value = foodCost + accommodationCost;                          // V Итого
+      row.getCell(21).value = accommodationDiscountLabel(pricePerDay, r.daysCount, accommodationCost); // U Скидка
+      row.getCell(22).value = accommodationCost;                                     // V Ст-ть проживания
+      row.getCell(23).value = foodCost + accommodationCost;                          // W Итого
 
       if (firstPersonRow == null) firstPersonRow = rowIdx;
       lastPersonRow = rowIdx;
@@ -563,7 +576,7 @@ export function addCombinedSheet(wb, opts) {
         aRow.getCell(5).value = dt; aRow.getCell(5).numFmt = fmtDate;
         aRow.getCell(6).value = dt; aRow.getCell(6).numFmt = fmtTime;
       }
-      if (aCost != null) aRow.getCell(22).value = aCost;
+      if (aCost != null) aRow.getCell(23).value = aCost;
       lastTransferRow = rowIdx;
       rowIdx += 1;
     }
@@ -584,7 +597,7 @@ export function addCombinedSheet(wb, opts) {
         dRow.getCell(5).value = dt; dRow.getCell(5).numFmt = fmtDate;
         dRow.getCell(6).value = dt; dRow.getCell(6).numFmt = fmtTime;
       }
-      if (dCost != null) dRow.getCell(22).value = dCost;
+      if (dCost != null) dRow.getCell(23).value = dCost;
       lastTransferRow = rowIdx;
       rowIdx += 1;
     }
@@ -603,11 +616,12 @@ export function addCombinedSheet(wb, opts) {
     totalRow.getCell(18).value = { formula: `SUM(R${firstPersonRow}:R${lastPersonRow})` };
     totalRow.getCell(19).value = { formula: `SUM(S${firstPersonRow}:S${lastPersonRow})` };
     totalRow.getCell(20).value = { formula: `SUM(T${firstPersonRow}:T${lastPersonRow})` };
-    totalRow.getCell(21).value = { formula: `SUM(U${firstPersonRow}:U${lastPersonRow})` };
+    // U (Скидка) — не суммируется.
+    totalRow.getCell(22).value = { formula: `SUM(V${firstPersonRow}:V${lastPersonRow})` };
   }
   const sumStart = firstPersonRow ?? 5;
   const sumEnd = lastTransferRow ?? lastPersonRow ?? sumStart;
-  totalRow.getCell(22).value = { formula: `SUM(V${sumStart}:V${sumEnd})` };
+  totalRow.getCell(23).value = { formula: `SUM(W${sumStart}:W${sumEnd})` };
 
   applyHotelColumnWidths(ws);
   return ws;

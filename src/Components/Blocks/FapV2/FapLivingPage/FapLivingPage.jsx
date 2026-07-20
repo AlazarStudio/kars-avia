@@ -159,7 +159,7 @@ export default function FapLivingPage({
     const currentPlaced = h?.people?.length || 0;
     if (newCount < currentPlaced) {
       notifyError(
-        `Нельзя задать меньше количества уже размещённых гостей (${currentPlaced})`
+        `Нельзя задать меньше количества уже размещённых человек (${currentPlaced})`
       );
       return;
     }
@@ -307,7 +307,7 @@ export default function FapLivingPage({
               <span className={classes.kpiValue}>{totalGuests}</span>
               <span className={classes.kpiTotal}>/ {totalCapacity || 0}</span>
             </div>
-            <div className={classes.kpiSub}>гостей по плану заявки</div>
+            <div className={classes.kpiSub}>чел. по плану заявки</div>
           </div>
 
           {/* Distribution bar */}
@@ -483,7 +483,7 @@ export default function FapLivingPage({
         onClose={() => setRemoveHotelIndex(null)}
         onConfirm={handleRemoveHotel}
         title="Удалить гостиницу"
-        description="Гостиница и все её гости будут удалены из заявки. Отчёт по этой гостинице также будет удалён. Это действие необратимо."
+        description="Гостиница и все её пассажиры будут удалены из заявки. Отчёт по этой гостинице также будет удалён. Это действие необратимо."
         confirmText="Удалить"
         cancelText="Отмена"
         saving={saving}
@@ -723,7 +723,7 @@ function HotelCard({
           <>
             <HotelBedIcon size={14} strokeWidth={1.8} />
             <span>
-              Гостей пока нет
+              Пассажиров пока нет
               {cap > 0 && (
                 <>
                   {" · "}
@@ -749,7 +749,7 @@ function HotelCard({
             )}
             <span className={classes.metaDot} />
             <span className={classes.stripHintText}>
-              работа с гостями, отчёт и тарифы — на странице гостиницы
+              работа с пассажирами, отчёт и тарифы — на странице гостиницы
             </span>
           </>
         )}

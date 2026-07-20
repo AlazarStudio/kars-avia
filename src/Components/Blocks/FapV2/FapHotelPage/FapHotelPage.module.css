@@ -1245,7 +1245,7 @@
 .memberFood { font-weight: 700; color: #10B981; }
 .accFormula { font-size: 12px; color: #545873; white-space: nowrap; text-align: right; }
 .accFormula strong { color: #10B981; font-weight: 800; }
-.accWarning { font-size: 12px; color: #b45309; white-space: nowrap; text-align: right; }
+.accWarning { font-size: 11px; line-height: 1.2; color: #b45309; white-space: normal; word-break: break-word; text-align: left; }
 
 /* Ряд «инпут + кнопка» в редакторе цен по видам размещения */
 .fieldInputRow { display: flex; align-items: center; gap: 6px; }

@@ -2226,6 +2226,30 @@ export const ADD_PASSENGER_REQUEST_SAVED_PEOPLE = gql`
   }
 `;
 
+export const ADD_PASSENGER_REQUEST_SAVED_PERSON = gql`
+  mutation AddPassengerRequestSavedPerson($requestId: ID!, $person: PassengerRequestSavedPersonInput!) {
+    addPassengerRequestSavedPerson(requestId: $requestId, person: $person) {
+      id
+    }
+  }
+`;
+
+export const UPDATE_PASSENGER_REQUEST_SAVED_PERSON = gql`
+  mutation UpdatePassengerRequestSavedPerson($requestId: ID!, $personId: ID!, $person: PassengerRequestSavedPersonInput!) {
+    updatePassengerRequestSavedPerson(requestId: $requestId, personId: $personId, person: $person) {
+      id
+    }
+  }
+`;
+
+export const REMOVE_PASSENGER_REQUEST_SAVED_PERSON = gql`
+  mutation RemovePassengerRequestSavedPerson($requestId: ID!, $personId: ID!) {
+    removePassengerRequestSavedPerson(requestId: $requestId, personId: $personId) {
+      id
+    }
+  }
+`;
+
 export const UPDATE_PASSENGER_REQUEST_PERSON = gql`
   mutation UpdatePassengerRequestPerson(
     $requestId: ID!

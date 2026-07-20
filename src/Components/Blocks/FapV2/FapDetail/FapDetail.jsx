@@ -630,6 +630,17 @@ export default function FapDetail({ user, canEdit = true }) {
                 Редактировать
               </FapActionButton>
             )}
+            {!isExternalUser(user) && (
+              <FapActionButton
+                variant="secondary"
+                onClick={() => navigate(`/far/${request.id}/registry`)}
+              >
+                Реестр
+                {(request.savedPassengers?.length ?? 0) > 0
+                  ? ` · ${request.savedPassengers.length}`
+                  : ""}
+              </FapActionButton>
+            )}
             <FapActionButton
               variant="secondary"
               active={showLogs}

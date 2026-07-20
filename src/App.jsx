@@ -45,6 +45,7 @@ import FapDetailPage from "./Components/Pages/FapV2/FapDetailPage";
 import FapServicePage from "./Components/Pages/FapV2/FapServicePage";
 import FapHotelDetailPage from "./Components/Pages/FapV2/FapHotelDetailPage";
 import FapDriverDetailPage from "./Components/Pages/FapV2/FapDriverDetailPage";
+import FapRegistryPage from "./Components/Pages/FapV2/FapRegistryPage";
 import HotelPMS from "./Components/HotelPMS/HotelPMS";
 import MaintenanceBannerBar from "./Components/Blocks/MaintenanceBanner/MaintenanceBannerBar";
 import AirlineSystemBanner from "./Components/Blocks/AirlineSystemBanner/AirlineSystemBanner";
@@ -193,6 +194,7 @@ function App() {
                 path="service/:serviceKey/driver/:driverIndex"
                 element={<FapDriverDetailPage user={user} />}
               />
+              <Route path="registry" element={<FapRegistryPage user={user} />} />
             </Route>
             {/* Шахматка */}
             {/* <Route
