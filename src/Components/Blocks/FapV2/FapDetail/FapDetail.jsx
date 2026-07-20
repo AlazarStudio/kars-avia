@@ -33,7 +33,6 @@ import CopyIcon from "../../../../shared/icons/CopyIcon";
 import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
 import CancelIcon from "../../../../shared/icons/CancelIcon";
 import ChevronIcon from "../../../../shared/icons/ChevronIcon";
-import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
 import WaterIcon from "../../../../shared/icons/WaterIcon";
 import MealIcon from "../../../../shared/icons/MealIcon";
 import HotelBedIcon from "../../../../shared/icons/HotelBedIcon";
@@ -41,6 +40,9 @@ import BusIcon from "../../../../shared/icons/BusIcon";
 import BusDownIcon from "../../../../shared/icons/BusDownIcon";
 import BaggageIcon from "../../../../shared/icons/BaggageIcon";
 import FapActionButton from "../FapActionButton/FapActionButton";
+import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
+import FapRegistryButton from "../FapRegistryButton/FapRegistryButton";
+import EditIcon from "../../../../shared/icons/EditIcon";
 import FapChat from "../FapChat/FapChat";
 import { isExternalUser, isAirlineRole } from "../../../../utils/access";
 import { downloadRequestReport } from "../reports/buildReportSheets";
@@ -624,34 +626,15 @@ export default function FapDetail({ user, canEdit = true }) {
           </div>
 
           <div className={classes.headerRight}>
-            {canEdit && !isFinal && (
-              <FapActionButton variant="secondary" onClick={() => setShowAddService(true)}>
-                <EditPencilIcon />
-                Редактировать
-              </FapActionButton>
-            )}
             {!isExternalUser(user) && (
-              <FapActionButton
-                variant="secondary"
+              <FapRegistryButton
+                count={request.savedPassengers?.length ?? 0}
                 onClick={() => navigate(`/far/${request.id}/registry`)}
-              >
-                Реестр
-                {(request.savedPassengers?.length ?? 0) > 0
-                  ? ` · ${request.savedPassengers.length}`
-                  : ""}
-              </FapActionButton>
+              />
             )}
-            <FapActionButton
-              variant="secondary"
-              active={showLogs}
-              onClick={() => setShowLogs((v) => !v)}
-            >
-              <ScheduleIcon color={showLogs ? "#fff" : "#545873"} />
-              История
-            </FapActionButton>
             {!isExternalUser(user) && (
               <FapActionButton
-                variant="secondary"
+                variant="primary"
                 onClick={async () => {
                   try { await downloadRequestReport(request, notifyError); }
                   catch (e) { notifyError("Ошибка экспорта"); console.error(e); }
@@ -660,6 +643,20 @@ export default function FapDetail({ user, canEdit = true }) {
                 Скачать отчёт
               </FapActionButton>
             )}
+            <FapOverflowMenu
+              items={
+                canChangeStatus
+                  ? [
+                      { label: "Редактировать", icon: EditIcon, onClick: () => setShowAddService(true), hidden: isFinal },
+                      { label: "История", icon: ScheduleIcon, onClick: () => setShowLogs((v) => !v) },
+                      { sep: true },
+                      { label: "Отменить заявку", icon: CancelIcon, tone: "danger", onClick: () => setShowCancelModal(true), hidden: isFinal },
+                    ]
+                  : isExternalUser(user)
+                  ? []
+                  : [{ label: "История", icon: ScheduleIcon, onClick: () => setShowLogs((v) => !v) }]
+              }
+            />
           </div>
         </div>
       </div>

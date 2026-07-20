@@ -11,6 +11,7 @@ import { SERVICE_STATUS_CONFIG, formatTime } from "../fapConstants";
 import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 import FapActionButton from "../FapActionButton/FapActionButton";
+import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import AddRepresentativeBaggageDriver from "../../AddRepresentativeBaggageDriver/AddRepresentativeBaggageDriver";
 import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
@@ -243,14 +244,6 @@ export default function FapBaggagePage({
           </div>
         </div>
         <div className={classes.headRight}>
-          <FapActionButton
-            variant="secondary"
-            active={showLogs}
-            onClick={() => setShowLogs((v) => !v)}
-          >
-            <ScheduleIcon color={showLogs ? "#fff" : "#545873"} />
-            История
-          </FapActionButton>
           {canEdit && !isCompleted && (
             <button
               type="button"
@@ -260,15 +253,11 @@ export default function FapBaggagePage({
               <PlusSvg /> Создать заявку
             </button>
           )}
-          {canEdit && !isCompleted && (
-            <button
-              type="button"
-              className={classes.finishBtn}
-              onClick={() => setShowEarlyModal(true)}
-            >
-              Завершить услугу
-            </button>
-          )}
+          <FapOverflowMenu items={[
+            { label: "История", icon: ScheduleIcon, onClick: () => setShowLogs((v) => !v) },
+            { sep: true },
+            { label: "Завершить услугу", tone: "danger", onClick: () => setShowEarlyModal(true), hidden: !(canEdit && !isCompleted) },
+          ]} />
         </div>
       </div>
 

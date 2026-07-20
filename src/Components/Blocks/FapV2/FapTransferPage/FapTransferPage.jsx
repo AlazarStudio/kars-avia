@@ -12,6 +12,8 @@ import { downloadTransferReport } from "../reports/buildReportSheets";
 import { SERVICE_STATUS_CONFIG, formatDateTime } from "../fapConstants";
 import { useToast } from "../../../../contexts/ToastContext";
 import FapActionButton from "../FapActionButton/FapActionButton";
+import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
+import DownloadIcon from "../../../../shared/icons/DownloadIcon";
 import FapSelect from "../FapSelect/FapSelect";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import AddRepresentativeDriver from "../../AddRepresentativeDriver/AddRepresentativeDriver";
@@ -237,26 +239,7 @@ export default function FapTransferPage({
           </div>
         </div>
         <div className={classes.headRight}>
-          {drivers.length > 0 && (
-            <FapActionButton
-              variant="secondary"
-              onClick={async () => {
-                try { await downloadTransferReport(request, direction); }
-                catch (e) { notifyError("Ошибка экспорта"); console.error(e); }
-              }}
-            >
-              Скачать отчёт
-            </FapActionButton>
-          )}
-          <FapActionButton
-            variant="secondary"
-            active={showLogs}
-            onClick={() => setShowLogs((v) => !v)}
-          >
-            <ScheduleIcon color={showLogs ? "#fff" : "#545873"} />
-            История
-          </FapActionButton>
-          {canEdit && !isCompleted && (
+          {canEdit && !isCompleted ? (
             <button
               type="button"
               className={classes.addBtn}
@@ -264,16 +247,25 @@ export default function FapTransferPage({
             >
               <PlusSvg /> Создать заявку
             </button>
+          ) : (
+            drivers.length > 0 && (
+              <FapActionButton
+                variant="primary"
+                onClick={async () => {
+                  try { await downloadTransferReport(request, direction); }
+                  catch (e) { notifyError("Ошибка экспорта"); console.error(e); }
+                }}
+              >
+                Скачать отчёт
+              </FapActionButton>
+            )
           )}
-          {canEdit && !isCompleted && (
-            <button
-              type="button"
-              className={classes.finishBtn}
-              onClick={() => setShowEarlyModal(true)}
-            >
-              Завершить услугу
-            </button>
-          )}
+          <FapOverflowMenu items={[
+            { label: "Скачать отчёт", icon: DownloadIcon, onClick: async () => { try { await downloadTransferReport(request, direction); } catch (e) { notifyError("Ошибка экспорта"); console.error(e); } }, hidden: !(drivers.length > 0) || !(canEdit && !isCompleted) },
+            { label: "История", icon: ScheduleIcon, onClick: () => setShowLogs((v) => !v) },
+            { sep: true },
+            { label: "Завершить услугу", tone: "danger", onClick: () => setShowEarlyModal(true), hidden: !(canEdit && !isCompleted) },
+          ]} />
         </div>
       </div>
 

@@ -33,7 +33,10 @@ import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 import CloseIcon from "../../../../shared/icons/CloseIcon";
 import CopyIcon from "../../../../shared/icons/CopyIcon";
 import DownloadIcon from "../../../../shared/icons/DownloadIcon";
+import EyeIcon from "../../../../shared/icons/EyeIcon";
 import { downloadHotelReport } from "../reports/buildReportSheets";
+import FapReportView from "../FapReportView/FapReportView";
+import FapModeToggle from "../FapModeToggle/FapModeToggle";
 
 const LIV = "#10B981";
 
@@ -220,6 +223,14 @@ export default function FapHotelPage({
   const [tariffs, setTariffs] = useState([]);
   const [personData, setPersonData] = useState({});
   const [reportSearch, setReportSearch] = useState("");
+  const [reportMode, setReportMode] = useState(() => {
+    try { return localStorage.getItem("fapReportMode") === "view" ? "view" : "edit"; } catch { return "edit"; }
+  });
+  const effectiveReportMode = canEdit ? reportMode : "view"; // авиакомпания всегда «Просмотр»
+  const setReportModePersist = (m) => {
+    setReportMode(m);
+    try { localStorage.setItem("fapReportMode", m); } catch { /* ignore */ }
+  };
 
   const [saving, setSaving] = useState(false);
 
@@ -1164,6 +1175,57 @@ export default function FapHotelPage({
   const grandTotal = useMemo(
     () => Object.values(groupTotals).reduce((s, gt) => s + toNum(gt.total), 0),
     [groupTotals]
+  );
+
+  // Эффективные плановые сутки — та же величина, что и метрика «Суток» в шапке.
+  const reportNights = useMemo(
+    () =>
+      plan?.plannedFromAt && plan?.plannedToAt
+        ? calculateEffectiveCostDays(plan.plannedFromAt, plan.plannedToAt)
+        : 0,
+    [plan]
+  );
+
+  // Сводка для read-only отчёта (переиспользует те же расчёты, без новых примитивов).
+  const reportSummary = useMemo(() => {
+    let living = 0, meal = 0, discounts = 0, count = 0;
+    reportGroups.forEach((g) => {
+      g.members.forEach((m) => {
+        const eff = getEffectiveRow(m.index, m.pd);
+        living += toNum(eff.accommodationCost);
+        meal += toNum(m.food);
+        const base = toNum(eff.pricePerDay) * toNum(m.pd.daysCount);
+        if (base > 0) discounts += base * (1 - (eff.chargeFactor ?? 1));
+        count += 1;
+      });
+    });
+    return { grand: grandTotal, living, meal, discounts, peopleCount: count, nights: reportNights };
+  }, [reportGroups, getEffectiveRow, grandTotal, reportNights]);
+
+  // View-model для FapReportView.
+  const reportViewGroups = useMemo(
+    () =>
+      reportGroups.map((g) => ({
+        key: g.key,
+        room: g.noRoom ? null : g.roomNumber,
+        kind: g.noRoom ? "" : placementKindLabel(g.members.length),
+        tariff: g.tariffName || "",
+        total: groupTotals[g.key]?.total ?? 0,
+        people: g.members.map((m) => {
+          const eff = getEffectiveRow(m.index, m.pd);
+          return {
+            name: m.person.fullName || "—",
+            category: normalizeCategory(m.person.personCategory),
+            meal: toNum(m.food),
+            living: eff.warning ? null : toNum(eff.accommodationCost),
+            rate: toNum(eff.pricePerDay),
+            nights: toNum(m.pd.daysCount),
+            factor: eff.chargeFactor ?? 1,
+            warning: eff.warning || null,
+          };
+        }),
+      })),
+    [reportGroups, groupTotals, getEffectiveRow]
   );
 
   const visibleGroups = useMemo(() => {
@@ -2143,17 +2205,42 @@ export default function FapHotelPage({
         {activeTab === "report" && (
           <div className={classes.reportPane}>
             <div className={classes.reportToolbar}>
-              <div className={classes.searchWrap}>
-                <input
-                  placeholder="Поиск по ФИО…"
-                  value={reportSearch}
-                  onChange={(e) => setReportSearch(e.target.value)}
-                />
-              </div>
-              <span className={classes.boundCount}>
-                Тариф назначен: <strong>{boundCount}</strong> из {placed}
-              </span>
+              {effectiveReportMode === "edit" && (
+                <>
+                  <div className={classes.searchWrap}>
+                    <input
+                      placeholder="Поиск по ФИО…"
+                      value={reportSearch}
+                      onChange={(e) => setReportSearch(e.target.value)}
+                    />
+                  </div>
+                  <span className={classes.boundCount}>
+                    Тариф назначен: <strong>{boundCount}</strong> из {placed}
+                  </span>
+                </>
+              )}
               <span className={classes.spacer} />
+              {canEdit ? (
+                <FapModeToggle mode={effectiveReportMode} onChange={setReportModePersist} />
+              ) : (
+                <span
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                    height: 34,
+                    padding: "0 12px",
+                    borderRadius: 999,
+                    background: "var(--gray, #F1F4FB)",
+                    border: "1px solid var(--border, #E4E4EF)",
+                    fontSize: 12.5,
+                    fontWeight: 700,
+                    color: "var(--main-gray)",
+                  }}
+                >
+                  <EyeIcon size={15} color="#545873" /> Только просмотр · авиакомпания
+                </span>
+              )}
                 <button
                   type="button"
                   className={classes.secondaryBtn}
@@ -2162,7 +2249,7 @@ export default function FapHotelPage({
                 >
                   <DownloadIcon /> Excel
                 </button>
-              {canEdit && (
+              {effectiveReportMode === "edit" && canEdit && (
                 <button
                   type="button"
                   className={classes.primaryBtn}
@@ -2176,6 +2263,8 @@ export default function FapHotelPage({
 
             {placed === 0 ? (
               <div className={classes.emptyRow}>Пассажиры ещё не добавлены</div>
+            ) : effectiveReportMode === "view" ? (
+              <FapReportView summary={reportSummary} groups={reportViewGroups} />
             ) : (
               <div className={classes.reportTableWrap}>
                 <div className={classes.reportGroups}>

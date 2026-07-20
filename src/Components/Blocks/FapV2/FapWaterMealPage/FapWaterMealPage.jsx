@@ -17,6 +17,8 @@ import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import FapActionButton from "../FapActionButton/FapActionButton";
+import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
+import EditIcon from "../../../../shared/icons/EditIcon";
 import CatalogPickerModal, { personKey } from "../CatalogPickerModal/CatalogPickerModal";
 import AddRepresentativeService from "../../AddRepresentativeService/AddRepresentativeService";
 import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
@@ -374,29 +376,12 @@ export default function FapWaterMealPage({
           </div>
         </div>
         <div className={classes.headRight}>
-          {canEdit && !isCancelled && (
-            <FapActionButton variant="secondary" onClick={() => setShowAddService(true)}>
-              <EditPencilIcon />
-              Редактировать
-            </FapActionButton>
-          )}
-          <FapActionButton
-            variant="secondary"
-            active={showLogs}
-            onClick={() => setShowLogs((v) => !v)}
-          >
-            <ScheduleIcon color={showLogs ? "#fff" : "#545873"} />
-            История
-          </FapActionButton>
-          {canEdit && !isCancelled && !isFinished && (
-            <button
-              type="button"
-              className={classes.finishBtn}
-              onClick={() => setShowEarlyModal(true)}
-            >
-              Завершить услугу
-            </button>
-          )}
+          <FapOverflowMenu items={[
+            { label: "Редактировать", icon: EditIcon, onClick: () => setShowAddService(true), hidden: !(canEdit && !isCancelled) },
+            { label: "История", icon: ScheduleIcon, onClick: () => setShowLogs((v) => !v) },
+            { sep: true },
+            { label: "Завершить услугу", tone: "danger", onClick: () => setShowEarlyModal(true), hidden: !(canEdit && !isCancelled && !isFinished) },
+          ]} />
         </div>
       </div>
 

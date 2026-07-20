@@ -1,0 +1,87 @@
+.root {
+  position: relative;
+  display: inline-flex;
+}
+
+/* ── Триггер ⋯ ── */
+.trigger {
+  width: 38px;
+  height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--border, #E4E4EF);
+  border-radius: 10px;
+  background: #fff;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+.trigger:hover {
+  background: var(--gray, #F1F4FB);
+}
+.triggerOpen,
+.triggerOpen:hover {
+  border-color: var(--dark-blue, #0057C3);
+  background: var(--dark-blue-soft, #EAF1FB);
+}
+
+/* ── Выпадающее меню ── */
+.dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 40;
+  width: 210px;
+  padding: 5px;
+  background: #fff;
+  border: 1px solid var(--border, #E4E4EF);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(20, 30, 60, 0.14);
+}
+
+.item {
+  width: 100%;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text, #191919);
+  font-family: Inter, sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.item:hover {
+  background: var(--gray, #F1F4FB);
+}
+/* Единый 16×16 слот под иконку: все пункты меню одного размера,
+   пропорции сохраняются (портретная иконка скачивания не растягивается). */
+.itemIcon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+.itemIcon svg {
+  display: block;
+  height: 16px;
+  width: auto;
+  max-width: 16px;
+}
+
+.danger {
+  color: var(--red, #C03B28);
+}
+
+.sep {
+  height: 1px;
+  margin: 5px 0;
+  background: var(--border, #E4E4EF);
+}

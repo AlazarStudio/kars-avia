@@ -19,6 +19,9 @@ import { downloadLivingReport } from "../reports/buildReportSheets";
 import { useToast } from "../../../../contexts/ToastContext";
 import Button from "../../../Standart/Button/Button";
 import FapActionButton from "../FapActionButton/FapActionButton";
+import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
+import DownloadIcon from "../../../../shared/icons/DownloadIcon";
+import EditIcon from "../../../../shared/icons/EditIcon";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import AddRepresentativeHotel from "../../AddRepresentativeHotel/AddRepresentativeHotel";
 import AddRepresentativeService from "../../AddRepresentativeService/AddRepresentativeService";
@@ -251,32 +254,7 @@ export default function FapLivingPage({
           </div>
         </div>
         <div className={classes.headRight}>
-          {canEdit && !isCompleted && !isExtHotel && (
-            <FapActionButton variant="secondary" onClick={() => setShowAddService(true)}>
-              <EditPencilIcon />
-              Редактировать
-            </FapActionButton>
-          )}
-          <FapActionButton
-            variant="secondary"
-            active={showLogs}
-            onClick={() => setShowLogs((v) => !v)}
-          >
-            <ScheduleIcon color={showLogs ? "#fff" : "#545873"} />
-            История
-          </FapActionButton>
-          {!isExternalUser(user) && (
-            <FapActionButton
-              variant="secondary"
-              onClick={async () => {
-                try { await downloadLivingReport(request); }
-                catch (e) { notifyError("Ошибка экспорта"); console.error(e); }
-              }}
-            >
-              Скачать отчёт
-            </FapActionButton>
-          )}
-          {canEdit && !isCompleted && !isExtHotel && (
+          {canEdit && !isCompleted && !isExtHotel ? (
             <button
               type="button"
               className={classes.addHotelBtn}
@@ -284,16 +262,26 @@ export default function FapLivingPage({
             >
               <PlusSvg /> Добавить гостиницу
             </button>
+          ) : (
+            !isExternalUser(user) && (
+              <FapActionButton
+                variant="primary"
+                onClick={async () => {
+                  try { await downloadLivingReport(request); }
+                  catch (e) { notifyError("Ошибка экспорта"); console.error(e); }
+                }}
+              >
+                Скачать отчёт
+              </FapActionButton>
+            )
           )}
-          {canEdit && !isCompleted && !isExtHotel && (
-            <button
-              type="button"
-              className={classes.finishBtn}
-              onClick={() => setShowEarlyModal(true)}
-            >
-              Завершить услугу
-            </button>
-          )}
+          <FapOverflowMenu items={[
+            { label: "Скачать отчёт", icon: DownloadIcon, onClick: async () => { try { await downloadLivingReport(request); } catch (e) { notifyError("Ошибка экспорта"); console.error(e); } }, hidden: !(canEdit && !isCompleted && !isExtHotel) || isExternalUser(user) },
+            { label: "Редактировать", icon: EditIcon, onClick: () => setShowAddService(true), hidden: !(canEdit && !isCompleted && !isExtHotel) },
+            { label: "История", icon: ScheduleIcon, onClick: () => setShowLogs((v) => !v) },
+            { sep: true },
+            { label: "Завершить услугу", tone: "danger", onClick: () => setShowEarlyModal(true), hidden: !(canEdit && !isCompleted && !isExtHotel) },
+          ]} />
         </div>
       </div>
 
