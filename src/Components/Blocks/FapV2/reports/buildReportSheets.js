@@ -8,6 +8,13 @@ const toNum = (v) => {
   return Number.isFinite(n) ? n : 0;
 };
 
+const placementKindLabel = (n) => {
+  const k = Number(n);
+  if (!Number.isFinite(k) || k <= 0) return "";
+  const names = { 1: "одноместное", 2: "двухместное", 3: "трёхместное", 4: "четырёхместное" };
+  return names[k] || `${k}-местное`;
+};
+
 const safeFilename = (s) =>
   String(s ?? "").replace(/[/\\?*[\]:]/g, "_").slice(0, 100);
 
@@ -68,22 +75,24 @@ function applyHotelColumnWidths(ws) {
   ws.getColumn(7).width = 13;     // G = Дата выезда
   ws.getColumn(8).width = 11;     // H = Время выезда
   ws.getColumn(9).width = 12;     // I = Номер
-  ws.getColumn(10).width = 20;    // J = Тариф
-  ws.getColumn(11).width = 11;    // K = Кол-во суток
-  ws.getColumn(12).width = 11;    // L
-  ws.getColumn(13).width = 11;    // M = Завтрак
-  ws.getColumn(14).width = 11;    // N
-  ws.getColumn(15).width = 11;    // O = Обед
-  ws.getColumn(16).width = 11;    // P
-  ws.getColumn(17).width = 11;    // Q = Ужин
-  ws.getColumn(18).width = 14;    // R = Стоимость питания
-  ws.getColumn(19).width = 14;    // S = Стоимость проживания
-  ws.getColumn(20).width = 12;    // T = Итого
+  ws.getColumn(10).width = 15;    // J = Вид размещения
+  ws.getColumn(11).width = 20;    // K = Тариф
+  ws.getColumn(12).width = 13;    // L = Цена за сутки
+  ws.getColumn(13).width = 11;    // M = Кол-во суток
+  ws.getColumn(14).width = 11;    // N = Кол-во завтраков
+  ws.getColumn(15).width = 11;    // O = Завтрак
+  ws.getColumn(16).width = 11;    // P = Кол-во обедов
+  ws.getColumn(17).width = 11;    // Q = Обед
+  ws.getColumn(18).width = 11;    // R = Кол-во ужинов
+  ws.getColumn(19).width = 11;    // S = Ужин
+  ws.getColumn(20).width = 14;    // T = Стоимость питания
+  ws.getColumn(21).width = 14;    // U = Стоимость проживания
+  ws.getColumn(22).width = 12;    // V = Итого
 }
 
 const HOTEL_HEADERS = [
   "ID", "ФИО", "Тип", "Возрастная категория", "Дата заезда", "Время заезда",
-  "Дата выезда", "Время выезда", "Номер", "Тариф",
+  "Дата выезда", "Время выезда", "Номер", "Вид размещения", "Тариф", "Цена за сутки",
   "Количество суток", "Количество завтраков", "Завтрак",
   "Количество обедов", "Обед", "Количество ужинов", "Ужин",
   "Стоимость питания", "Стоимость проживания", "Итого",
@@ -125,8 +134,8 @@ function getCheckInOut(person, hotelIndex, plan) {
 /**
  * Добавить лист «Проживание (отель N)».
  *
- * opts.mode === "current": берёт данные из переданных personData/tariffs (для FapReport).
- * opts.mode === "saved" (или иной): берёт данные из request.hotelReports[hotelIndex].
+ * opts.rows: готовый массив строк отчёта (формат reportRows из FapHotelPage).
+ * Иначе — берёт сохранённые строки из request.hotelReports[hotelIndex].
  */
 export function addHotelSheet(wb, opts) {
   const { request, hotelIndex, sheetNames } = opts;
@@ -139,11 +148,14 @@ export function addHotelSheet(wb, opts) {
 
   // ── Шапка ──
   ws.getCell("A1").value = request?.airline?.name ?? "";
-  ws.getCell("T1").value = "Договор № или \"по согласованию\"";
-  ws.getCell("T1").alignment = { horizontal: "right" };
+  ws.getCell("V1").value = "Договор № или \"по согласованию\"";
+  ws.getCell("V1").alignment = { horizontal: "right" };
+  const flightPart = request?.flightDate
+    ? ` от ${new Date(request.flightDate).toLocaleDateString("ru-RU")}`
+    : "";
   ws.getCell("C3").value =
-    `Детализация оказанных услуг пассажиров задерженного рейса № ${request?.flightNumber ?? ""} г. ${city} гостиница ${hotelName}`;
-  [ws.getCell("A1"), ws.getCell("T1"), ws.getCell("C3")].forEach((c) => {
+    `Детализация оказанных услуг пассажиров задерженного рейса № ${request?.flightNumber ?? ""}${flightPart} г. ${city} гостиница ${hotelName}`;
+  [ws.getCell("A1"), ws.getCell("V1"), ws.getCell("C3")].forEach((c) => {
     c.font = { name: "Calibri", size: 12, bold: true };
   });
 
@@ -160,55 +172,40 @@ export function addHotelSheet(wb, opts) {
   const people = hotel?.people ?? [];
   let rowIdx = 5;
 
-  // Выбор источника данных для тарифов/затрат
-  let rowsByPersonIdx;
-  if (opts.mode === "current") {
-    const { tariffs, personData } = opts;
-    rowsByPersonIdx = people.map((p, i) => {
-      const pd = personData?.[i] ?? {};
-      const tariff = tariffs?.find((t) => t.id === pd.tariffId);
-      return {
-        tariffName: tariff?.name ?? "",
-        roomNumber: pd.roomNumber ?? "",
-        daysCount: toNum(pd.daysCount),
-        breakfast: toNum(tariff?.breakfast ?? pd.breakfast),
-        lunch: toNum(tariff?.lunch ?? pd.lunch),
-        dinner: toNum(tariff?.dinner ?? pd.dinner),
-        foodCost: toNum(pd.foodCost),
-        accommodationCost: toNum(pd.accommodationCost),
-      };
-    });
+  // Источник строк: готовый opts.rows (из buildReportRows) ИЛИ сохранённый отчёт.
+  let sourceRows;
+  if (Array.isArray(opts.rows)) {
+    sourceRows = opts.rows;
   } else {
     const saved = (request?.hotelReports ?? []).find(
       (r) => r.hotelIndex === Number(hotelIndex)
     );
-    const savedRows = saved?.reportRows ?? [];
-    rowsByPersonIdx = people.map((p) => {
-      const matched = savedRows.find(
-        (r) =>
-          (r.fullName ?? "").trim() === (p.fullName ?? "").trim()
-      );
-      if (!matched) {
-        return {
-          tariffName: "",
-          roomNumber: "",
-          daysCount: 0,
-          breakfast: 0, lunch: 0, dinner: 0,
-          foodCost: 0, accommodationCost: 0,
-        };
-      }
-      return {
-        tariffName: matched.roomCategory ?? "",
-        roomNumber: matched.roomNumber ?? "",
-        daysCount: toNum(matched.daysCount),
-        breakfast: toNum(matched.breakfast),
-        lunch: toNum(matched.lunch),
-        dinner: toNum(matched.dinner),
-        foodCost: toNum(matched.foodCost),
-        accommodationCost: toNum(matched.accommodationCost),
-      };
-    });
+    sourceRows = saved?.reportRows ?? [];
   }
+  // Матч к гостям по ФИО с consumed-сетом (дубликаты ФИО получают разные строки).
+  const consumed = new Set();
+  const rowsByPersonIdx = people.map((p) => {
+    const idx = sourceRows.findIndex(
+      (r, ri) => !consumed.has(ri) && (r.fullName ?? "").trim() === (p.fullName ?? "").trim()
+    );
+    if (idx < 0) {
+      return { tariffName: "", pricePerDay: 0, placementKind: 0, roomNumber: "", daysCount: 0, breakfast: 0, lunch: 0, dinner: 0, foodCost: 0, accommodationCost: 0 };
+    }
+    consumed.add(idx);
+    const r = sourceRows[idx];
+    return {
+      tariffName: (r.tariffName ?? "").trim() || (r.roomCategory ?? ""), // legacy → roomCategory
+      pricePerDay: toNum(r.pricePerDay),
+      placementKind: Number(r.placementKind) || 0,
+      roomNumber: r.roomNumber ?? "",
+      daysCount: toNum(r.daysCount),
+      breakfast: toNum(r.breakfast),
+      lunch: toNum(r.lunch),
+      dinner: toNum(r.dinner),
+      foodCost: toNum(r.foodCost),
+      accommodationCost: toNum(r.accommodationCost),
+    };
+  });
 
   const livingPlan = request?.livingService?.plan;
   people.forEach((p, i) => {
@@ -234,18 +231,20 @@ export function addHotelSheet(wb, opts) {
       row.getCell(8).value = outLocal;
       row.getCell(8).numFmt = fmtTime;
     }
-    row.getCell(9).value = r.roomNumber; // I
-    row.getCell(10).value = r.tariffName; // J
-    row.getCell(11).value = r.daysCount; // K
-    row.getCell(12).value = r.breakfast > 0 ? 1 : 0; // L
-    row.getCell(13).value = r.breakfast; // M
-    row.getCell(14).value = r.lunch > 0 ? 1 : 0; // N
-    row.getCell(15).value = r.lunch; // O
-    row.getCell(16).value = r.dinner > 0 ? 1 : 0; // P
-    row.getCell(17).value = r.dinner; // Q
-    row.getCell(18).value = r.foodCost; // R
-    row.getCell(19).value = r.accommodationCost; // S
-    row.getCell(20).value = r.foodCost + r.accommodationCost; // T
+    row.getCell(9).value = r.roomNumber;                        // I Номер
+    row.getCell(10).value = placementKindLabel(r.placementKind); // J Вид размещения ("" для legacy)
+    row.getCell(11).value = r.tariffName;                       // K Тариф
+    if (r.pricePerDay > 0) row.getCell(12).value = r.pricePerDay; // L Цена за сутки
+    row.getCell(13).value = r.daysCount;                        // M Суток
+    row.getCell(14).value = r.breakfast > 0 ? 1 : 0;            // N (флаг — как раньше)
+    row.getCell(15).value = r.breakfast;                        // O
+    row.getCell(16).value = r.lunch > 0 ? 1 : 0;               // P
+    row.getCell(17).value = r.lunch;                            // Q
+    row.getCell(18).value = r.dinner > 0 ? 1 : 0;              // R
+    row.getCell(19).value = r.dinner;                           // S
+    row.getCell(20).value = r.foodCost;                         // T
+    row.getCell(21).value = r.accommodationCost;                // U
+    row.getCell(22).value = r.foodCost + r.accommodationCost;   // V Итого
 
     rowIdx += 1;
   });
@@ -281,7 +280,7 @@ export function addHotelSheet(wb, opts) {
     aRow.getCell(6).value = dt;
     aRow.getCell(6).numFmt = fmtTime;
   }
-  if (aCost != null) aRow.getCell(20).value = aCost;
+  if (aCost != null) aRow.getCell(22).value = aCost;
   rowIdx += 1;
 
   // DEPARTURE
@@ -303,7 +302,7 @@ export function addHotelSheet(wb, opts) {
     dRow.getCell(6).value = dt;
     dRow.getCell(6).numFmt = fmtTime;
   }
-  if (dCost != null) dRow.getCell(20).value = dCost;
+  if (dCost != null) dRow.getCell(22).value = dCost;
   const lastTransferRow = rowIdx;
   rowIdx += 1;
 
@@ -312,8 +311,6 @@ export function addHotelSheet(wb, opts) {
   totalRow.getCell(1).value = "Итого:";
   totalRow.getCell(1).font = { name: "Calibri", size: 12, bold: true };
   if (lastPersonRow >= 5) {
-    totalRow.getCell(11).value = { formula: `SUM(K5:K${lastPersonRow})` };
-    totalRow.getCell(12).value = { formula: `SUM(L5:L${lastPersonRow})` };
     totalRow.getCell(13).value = { formula: `SUM(M5:M${lastPersonRow})` };
     totalRow.getCell(14).value = { formula: `SUM(N5:N${lastPersonRow})` };
     totalRow.getCell(15).value = { formula: `SUM(O5:O${lastPersonRow})` };
@@ -321,9 +318,11 @@ export function addHotelSheet(wb, opts) {
     totalRow.getCell(17).value = { formula: `SUM(Q5:Q${lastPersonRow})` };
     totalRow.getCell(18).value = { formula: `SUM(R5:R${lastPersonRow})` };
     totalRow.getCell(19).value = { formula: `SUM(S5:S${lastPersonRow})` };
+    totalRow.getCell(20).value = { formula: `SUM(T5:T${lastPersonRow})` };
+    totalRow.getCell(21).value = { formula: `SUM(U5:U${lastPersonRow})` };
   }
-  totalRow.getCell(20).value = {
-    formula: `SUM(T5:T${lastTransferRow})`,
+  totalRow.getCell(22).value = {
+    formula: `SUM(V5:V${lastTransferRow})`,
   };
 
   applyHotelColumnWidths(ws);
@@ -434,11 +433,14 @@ export function addCombinedSheet(wb, opts) {
 
   // ── Шапка ──
   ws.getCell("A1").value = request?.airline?.name ?? "";
-  ws.getCell("T1").value = "Договор № или \"по согласованию\"";
-  ws.getCell("T1").alignment = { horizontal: "right" };
+  ws.getCell("V1").value = "Договор № или \"по согласованию\"";
+  ws.getCell("V1").alignment = { horizontal: "right" };
+  const flightPart = request?.flightDate
+    ? ` от ${new Date(request.flightDate).toLocaleDateString("ru-RU")}`
+    : "";
   ws.getCell("C3").value =
-    `Детализация оказанных услуг пассажиров задерженного рейса № ${request?.flightNumber ?? ""} г. ${city}`;
-  [ws.getCell("A1"), ws.getCell("T1"), ws.getCell("C3")].forEach((c) => {
+    `Детализация оказанных услуг пассажиров задерженного рейса № ${request?.flightNumber ?? ""}${flightPart} г. ${city}`;
+  [ws.getCell("A1"), ws.getCell("V1"), ws.getCell("C3")].forEach((c) => {
     c.font = { name: "Calibri", size: 12, bold: true };
   });
 
@@ -463,8 +465,8 @@ export function addCombinedSheet(wb, opts) {
     const people = hotel?.people ?? [];
     if (people.length === 0) return; // пустые гостиницы пропускаем в сводке
 
-    // Сабхедер гостиницы — merged A:T
-    ws.mergeCells(`A${rowIdx}:T${rowIdx}`);
+    // Сабхедер гостиницы — merged A:V
+    ws.mergeCells(`A${rowIdx}:V${rowIdx}`);
     const hdr = ws.getCell(`A${rowIdx}`);
     hdr.value = `Гостиница: ${pickHotelName(hotel)}${hotel?.address ? ` · ${hotel.address}` : ""}`;
     hdr.font = { name: "Calibri", size: 12, bold: true };
@@ -482,15 +484,17 @@ export function addCombinedSheet(wb, opts) {
     );
     const savedRows = saved?.reportRows ?? [];
 
+    // Матч к гостям по ФИО с consumed-сетом (дубликаты ФИО получают разные строки).
+    const consumed = new Set();
     people.forEach((p) => {
-      const matched = savedRows.find(
-        (r) => (r.fullName ?? "").trim() === (p.fullName ?? "").trim()
+      const idx = savedRows.findIndex(
+        (row, ri) => !consumed.has(ri) && (row.fullName ?? "").trim() === (p.fullName ?? "").trim()
       );
-      const r = matched ?? {
-        roomNumber: "", roomCategory: "", daysCount: 0,
-        breakfast: 0, lunch: 0, dinner: 0,
-        foodCost: 0, accommodationCost: 0,
-      };
+      const matched = idx >= 0 ? savedRows[idx] : null;
+      if (idx >= 0) consumed.add(idx);
+      const r = matched ?? {};
+      const foodCost = toNum(r.foodCost);
+      const accommodationCost = toNum(r.accommodationCost);
       const { inAt, outAt } = getCheckInOut(p, hotelIndex, request?.livingService?.plan);
       const row = ws.getRow(rowIdx);
 
@@ -509,18 +513,21 @@ export function addCombinedSheet(wb, opts) {
         row.getCell(7).value = outLocal; row.getCell(7).numFmt = fmtDate;
         row.getCell(8).value = outLocal; row.getCell(8).numFmt = fmtTime;
       }
-      row.getCell(9).value = r.roomNumber ?? "";
-      row.getCell(10).value = r.roomCategory ?? "";
-      row.getCell(11).value = toNum(r.daysCount);
-      row.getCell(12).value = toNum(r.breakfast) > 0 ? 1 : 0;
-      row.getCell(13).value = toNum(r.breakfast);
-      row.getCell(14).value = toNum(r.lunch) > 0 ? 1 : 0;
-      row.getCell(15).value = toNum(r.lunch);
-      row.getCell(16).value = toNum(r.dinner) > 0 ? 1 : 0;
-      row.getCell(17).value = toNum(r.dinner);
-      row.getCell(18).value = toNum(r.foodCost);
-      row.getCell(19).value = toNum(r.accommodationCost);
-      row.getCell(20).value = toNum(r.foodCost) + toNum(r.accommodationCost);
+      const pricePerDay = toNum(r.pricePerDay);
+      row.getCell(9).value = r.roomNumber ?? "";                                    // I Номер
+      row.getCell(10).value = placementKindLabel(Number(r.placementKind) || 0);     // J Вид размещения
+      row.getCell(11).value = (r.tariffName ?? "").trim() || (r.roomCategory ?? ""); // K Тариф
+      if (pricePerDay > 0) row.getCell(12).value = pricePerDay;                      // L Цена за сутки
+      row.getCell(13).value = toNum(r.daysCount);                                    // M Суток
+      row.getCell(14).value = toNum(r.breakfast) > 0 ? 1 : 0;                        // N
+      row.getCell(15).value = toNum(r.breakfast);                                    // O
+      row.getCell(16).value = toNum(r.lunch) > 0 ? 1 : 0;                            // P
+      row.getCell(17).value = toNum(r.lunch);                                        // Q
+      row.getCell(18).value = toNum(r.dinner) > 0 ? 1 : 0;                           // R
+      row.getCell(19).value = toNum(r.dinner);                                       // S
+      row.getCell(20).value = foodCost;                                             // T Ст-ть питания
+      row.getCell(21).value = accommodationCost;                                     // U Ст-ть проживания
+      row.getCell(22).value = foodCost + accommodationCost;                          // V Итого
 
       if (firstPersonRow == null) firstPersonRow = rowIdx;
       lastPersonRow = rowIdx;
@@ -556,7 +563,7 @@ export function addCombinedSheet(wb, opts) {
         aRow.getCell(5).value = dt; aRow.getCell(5).numFmt = fmtDate;
         aRow.getCell(6).value = dt; aRow.getCell(6).numFmt = fmtTime;
       }
-      if (aCost != null) aRow.getCell(20).value = aCost;
+      if (aCost != null) aRow.getCell(22).value = aCost;
       lastTransferRow = rowIdx;
       rowIdx += 1;
     }
@@ -577,7 +584,7 @@ export function addCombinedSheet(wb, opts) {
         dRow.getCell(5).value = dt; dRow.getCell(5).numFmt = fmtDate;
         dRow.getCell(6).value = dt; dRow.getCell(6).numFmt = fmtTime;
       }
-      if (dCost != null) dRow.getCell(20).value = dCost;
+      if (dCost != null) dRow.getCell(22).value = dCost;
       lastTransferRow = rowIdx;
       rowIdx += 1;
     }
@@ -588,8 +595,6 @@ export function addCombinedSheet(wb, opts) {
   totalRow.getCell(1).value = "Итого:";
   totalRow.getCell(1).font = { name: "Calibri", size: 12, bold: true };
   if (firstPersonRow != null && lastPersonRow != null) {
-    totalRow.getCell(11).value = { formula: `SUM(K${firstPersonRow}:K${lastPersonRow})` };
-    totalRow.getCell(12).value = { formula: `SUM(L${firstPersonRow}:L${lastPersonRow})` };
     totalRow.getCell(13).value = { formula: `SUM(M${firstPersonRow}:M${lastPersonRow})` };
     totalRow.getCell(14).value = { formula: `SUM(N${firstPersonRow}:N${lastPersonRow})` };
     totalRow.getCell(15).value = { formula: `SUM(O${firstPersonRow}:O${lastPersonRow})` };
@@ -597,10 +602,12 @@ export function addCombinedSheet(wb, opts) {
     totalRow.getCell(17).value = { formula: `SUM(Q${firstPersonRow}:Q${lastPersonRow})` };
     totalRow.getCell(18).value = { formula: `SUM(R${firstPersonRow}:R${lastPersonRow})` };
     totalRow.getCell(19).value = { formula: `SUM(S${firstPersonRow}:S${lastPersonRow})` };
+    totalRow.getCell(20).value = { formula: `SUM(T${firstPersonRow}:T${lastPersonRow})` };
+    totalRow.getCell(21).value = { formula: `SUM(U${firstPersonRow}:U${lastPersonRow})` };
   }
   const sumStart = firstPersonRow ?? 5;
   const sumEnd = lastTransferRow ?? lastPersonRow ?? sumStart;
-  totalRow.getCell(20).value = { formula: `SUM(T${sumStart}:T${sumEnd})` };
+  totalRow.getCell(22).value = { formula: `SUM(V${sumStart}:V${sumEnd})` };
 
   applyHotelColumnWidths(ws);
   return ws;
@@ -611,7 +618,7 @@ export async function downloadLivingReport(request) {
   const sheetNames = new Set();
   addCombinedSheet(wb, { request, sheetNames, includeTransfer: false });
   (request?.livingService?.hotels ?? []).forEach((_, hotelIndex) => {
-    addHotelSheet(wb, { request, hotelIndex, sheetNames, mode: "saved" });
+    addHotelSheet(wb, { request, hotelIndex, sheetNames });
   });
   const filename = `${request?.airline?.name ?? ""} заявка ${request?.requestNumber ?? ""} проживание.xlsx`;
   await downloadWorkbook(wb, filename);
@@ -642,7 +649,7 @@ export async function downloadRequestReport(request, notifyError) {
   }
   if (livingEnabled) {
     (request?.livingService?.hotels ?? []).forEach((_, hotelIndex) => {
-      addHotelSheet(wb, { request, hotelIndex, sheetNames, mode: "saved" });
+      addHotelSheet(wb, { request, hotelIndex, sheetNames });
     });
   }
   if (arrEnabled) addTransferSheet(wb, { request, direction: "ARRIVAL", sheetNames });

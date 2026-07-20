@@ -615,6 +615,7 @@ export default function FapDetail({ user, canEdit = true }) {
                 {request.flightNumber && (
                   <span className={classes.airlineFlight}>
                     Рейс <strong>{request.flightNumber}</strong>
+                    {request.flightDate && <> · {formatDate(request.flightDate)}</>}
                   </span>
                 )}
               </span>

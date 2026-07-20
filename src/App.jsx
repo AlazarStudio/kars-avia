@@ -42,7 +42,6 @@ import ExternalLogin from "./Components/Pages/ExternalLogin/ExternalLogin";
 import HotelPreview from "./Components/Pages/HotelPreview/HotelPreview";
 import FapLayout from "./Components/Pages/FapV2/FapLayout";
 import FapDetailPage from "./Components/Pages/FapV2/FapDetailPage";
-import FapReportPage from "./Components/Pages/FapV2/FapReportPage";
 import FapServicePage from "./Components/Pages/FapV2/FapServicePage";
 import FapHotelDetailPage from "./Components/Pages/FapV2/FapHotelDetailPage";
 import FapDriverDetailPage from "./Components/Pages/FapV2/FapDriverDetailPage";
@@ -182,10 +181,6 @@ function App() {
             />
             <Route path="/far/:requestId" element={<FapLayout user={user} />}>
               <Route index element={<FapDetailPage user={user} />} />
-              <Route
-                path="report/:hotelIndex"
-                element={<FapReportPage user={user} />}
-              />
               <Route
                 path="service/:serviceKey"
                 element={<FapServicePage user={user} />}

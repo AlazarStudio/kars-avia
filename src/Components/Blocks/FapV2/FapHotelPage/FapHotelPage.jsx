@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import { InputMask } from "@react-input/mask";
-import * as XLSX from "xlsx";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -19,7 +18,7 @@ import {
   getCookie,
 } from "../../../../../graphQL_requests";
 import { calculateEffectiveCostDays } from "../../../../utils/effectiveCostDays";
-import { PERSON_TYPE_CONFIG, formatDateTime, PERSON_CATEGORY_LABEL, normalizeCategory, PERSON_CATEGORY_OPTIONS } from "../fapConstants";
+import { formatDateTime, normalizeCategory, PERSON_CATEGORY_OPTIONS } from "../fapConstants";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
@@ -34,6 +33,7 @@ import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 import CloseIcon from "../../../../shared/icons/CloseIcon";
 import CopyIcon from "../../../../shared/icons/CopyIcon";
 import DownloadIcon from "../../../../shared/icons/DownloadIcon";
+import { downloadHotelReport } from "../reports/buildReportSheets";
 
 const LIV = "#10B981";
 
@@ -95,9 +95,32 @@ const newTariff = (draft = true) => ({
   lunch: 0,
   dinner: 0,
   foodCost: 0,
-  accommodationCost: 0,
+  // Цена койко-места ЗА СУТКИ по видам размещения (1-местн/2-местн/...).
+  placementPrices: [
+    { places: 1, pricePerDay: 0 },
+    { places: 2, pricePerDay: 0 },
+  ],
   draft,
 });
+
+// Подпись вида размещения: 1 → «одноместное», 2 → «двухместное», ...
+export const placementKindLabel = (n) => {
+  const k = Number(n);
+  if (!Number.isFinite(k) || k <= 0) return "";
+  const names = { 1: "одноместное", 2: "двухместное", 3: "трёхместное", 4: "четырёхместное" };
+  return names[k] || `${k}-местное`;
+};
+
+// Цена за сутки тарифа для вида размещения.
+// Тариф гостиницы (source === "hotel") — единая цена на любой вид.
+// null → цена не определена (нет номера / нет цены для вида).
+export const resolveTariffPricePerDay = (tariff, places) => {
+  if (!tariff) return null;
+  if (tariff.source === "hotel") return toNum(tariff.pricePerDay);
+  if (!Number.isFinite(Number(places)) || Number(places) <= 0) return null;
+  const row = (tariff.placementPrices ?? []).find((p) => Number(p.places) === Number(places));
+  return row ? toNum(row.pricePerDay) : null;
+};
 
 function getPersonDays(person, hotelIndex, plan) {
   const chess =
@@ -280,7 +303,7 @@ export default function FapHotelPage({
         lunch: l,
         dinner: d,
         foodCost: b + l + d,
-        accommodationCost: toNum(rk.priceForAirline),
+        pricePerDay: toNum(rk.priceForAirline),
       }));
   }, [hotelTariffData]);
 
@@ -313,21 +336,93 @@ export default function FapHotelPage({
         groups.push(g);
       }
     });
+    // Только состав групп (без денег) — деньги считаются в groupTotals,
+    // иначе циклическая зависимость: getEffectiveRow ← roomKindByIndex ← reportGroups.
     return groups.map((g) => {
-      const accommodation = Math.max(0, ...g.members.map((m) => toNum(m.pd.accommodationCost)));
-      const food = g.members.reduce((s, m) => s + m.food, 0);
       const withTariff = g.members.find((m) => findTariff(m.pd.tariffId));
       const tariffName = withTariff ? findTariff(withTariff.pd.tariffId)?.name ?? "" : "";
       return {
         ...g,
         memberIndices: g.members.map((m) => m.index),
-        accommodation,
-        food,
-        total: accommodation + food,
         tariffName,
       };
     });
   }, [people, personData, hotelIndex, plan, findTariff]);
+
+  // Вид размещения гостя = число гостей в его номере; null — без номера.
+  const roomKindByIndex = useMemo(() => {
+    const map = {};
+    reportGroups.forEach((g) => {
+      g.members.forEach((m) => {
+        map[m.index] = g.noRoom ? null : g.members.length;
+      });
+    });
+    return map;
+  }, [reportGroups]);
+
+  // Эффективные значения строки гостя. Для гостя с тарифом проживание —
+  // ПРОИЗВОДНОЕ: цена за сутки (по виду размещения) × сутки. Без тарифа —
+  // ручное значение pd.accommodationCost (как раньше).
+  const getEffectiveRow = useCallback(
+    (personIndex, pd) => {
+      const tariff = findTariff(pd.tariffId);
+      const places = roomKindByIndex[personIndex] ?? null;
+      if (!tariff) {
+        return {
+          tariffName: "",
+          placementKind: places ?? 0,
+          pricePerDay: 0,
+          accommodationCost: toNum(pd.accommodationCost),
+          warning: null,
+        };
+      }
+      // Старый отчёт: плоская сумма без цены за сутки — показываем как есть.
+      if (tariff.legacyFlatAccommodation != null && (tariff.placementPrices ?? []).length === 0) {
+        return {
+          tariffName: tariff.name ?? "",
+          placementKind: places ?? 0,
+          pricePerDay: 0,
+          accommodationCost: toNum(pd.accommodationCost),
+          warning: null,
+          isLegacyFlat: true,
+        };
+      }
+      const price = resolveTariffPricePerDay(tariff, places);
+      if (places == null) {
+        return { tariffName: tariff.name ?? "", placementKind: 0, pricePerDay: 0, accommodationCost: 0, warning: "укажите номер" };
+      }
+      if (price == null) {
+        return { tariffName: tariff.name ?? "", placementKind: places, pricePerDay: 0, accommodationCost: 0, warning: `нет цены для ${placementKindLabel(places)} размещения` };
+      }
+      return {
+        tariffName: tariff.name ?? "",
+        placementKind: places,
+        pricePerDay: price,
+        accommodationCost: price * toNum(pd.daysCount),
+        warning: null,
+      };
+    },
+    [findTariff, roomKindByIndex]
+  );
+
+  // Ref на getEffectiveRow: buildReportRows работает через refs (для флаш-сейва
+  // при размонтировании), поэтому вызывает getEffectiveRowRef.current.
+  const getEffectiveRowRef = useRef(getEffectiveRow);
+  useEffect(() => { getEffectiveRowRef.current = getEffectiveRow; }, [getEffectiveRow]);
+
+  // Денежные итоги по группам — отдельно от состава (иначе циклическая зависимость).
+  const groupTotals = useMemo(() => {
+    const totals = {};
+    reportGroups.forEach((g) => {
+      const accommodation = g.members.reduce(
+        (s, m) => s + toNum(getEffectiveRow(m.index, m.pd).accommodationCost),
+        0
+      );
+      const food = g.members.reduce((s, m) => s + m.food, 0);
+      totals[g.key] = { accommodation, food, total: accommodation + food };
+    });
+    return totals;
+  }, [reportGroups, getEffectiveRow]);
 
   const savedPassengers = request?.savedPassengers || [];
   // «уже добавлен» — по всей услуге проживания (любая гостиница), а не только текущая:
@@ -471,17 +566,63 @@ export default function FapHotelPage({
     const savedRows = saved?.reportRows ?? [];
 
     const priceKey = (r) =>
-      [toNum(r.breakfast), toNum(r.lunch), toNum(r.dinner), toNum(r.foodCost), toNum(r.accommodationCost)].join("|");
+      [toNum(r.breakfast), toNum(r.lunch), toNum(r.dinner), toNum(r.foodCost), toNum(r.accommodationCost ?? r.legacyFlatAccommodation)].join("|");
 
     const matchHotelTariff = (row) => {
       const rowName = [row.roomCategory, row.roomKind].filter(Boolean).join(" / ");
-      const k = priceKey(row);
-      return hotelTariffs.find((ht) => ht.name === rowName && priceKey(ht) === k) || null;
+      return hotelTariffs.find((ht) => ht.name === rowName) || null;
     };
 
     if (savedRows.length > 0) {
+      // 1) Новый формат: строки с tariffName → тариф собирается по имени,
+      //    цены по видам — из пар (placementKind, pricePerDay).
+      const byName = new Map();
+      // Тарифы гостиницы не дублируем.
+      const isHotelName = (nm) => hotelTariffs.some((ht) => ht.name === nm);
+      const ensureShell = (nm, r) => {
+        if (!byName.has(nm)) {
+          byName.set(nm, {
+            ...newTariff(false),
+            name: nm,
+            breakfast: toNum(r.breakfast),
+            lunch: toNum(r.lunch),
+            dinner: toNum(r.dinner),
+            foodCost: toNum(r.foodCost),
+            placementPrices: [],
+          });
+        }
+        return byName.get(nm);
+      };
+      // 1a) Теневые строки (пустой fullName) — единственный авторитетный источник
+      //     таблицы цен по видам и meal-полей тарифа.
+      savedRows.forEach((r) => {
+        const nm = (r.tariffName ?? "").trim();
+        if (!nm || (r.fullName ?? "").trim() || isHotelName(nm)) return;
+        const t = ensureShell(nm, r);
+        const places = Number(r.placementKind) || 0;
+        if (places > 0 && !t.placementPrices.some((p) => p.places === places)) {
+          t.placementPrices.push({ places, pricePerDay: toNum(r.pricePerDay) });
+        }
+      });
+      // 1b) Гостевые строки — только гарантируют наличие оболочки тарифа,
+      //     цены по видам из них НЕ берём (иначе деградировавший гость даёт фантомный вид).
+      savedRows.forEach((r) => {
+        const nm = (r.tariffName ?? "").trim();
+        if (!nm || !(r.fullName ?? "").trim() || isHotelName(nm)) return;
+        ensureShell(nm, r);
+      });
+      byName.forEach((t) => {
+        if (t.placementPrices.length === 0) {
+          t.placementPrices = [{ places: 1, pricePerDay: 0 }, { places: 2, pricePerDay: 0 }];
+        } else {
+          t.placementPrices.sort((a, b) => a.places - b.places);
+        }
+      });
+
+      // 2) Legacy-строки (без tariffName) — старая инференция по ценовому ключу.
       const tariffByKey = new Map();
       savedRows.forEach((r) => {
+        if ((r.tariffName ?? "").trim()) return; // уже обработана выше
         // Тариф восстанавливается только из строк с непустым названием категории.
         // Иначе строки гостей с ценами, но без привязки тарифа, создавали бы
         // «безымянные» тарифы, которые невозможно удалить (X срабатывает,
@@ -489,21 +630,25 @@ export default function FapHotelPage({
         const hasName = (r.roomCategory || "").trim() || (r.roomKind || "").trim();
         if (!hasName) return;
         if (matchHotelTariff(r)) return;
+        const legacyName = [r.roomCategory, r.roomKind].filter(Boolean).join(" / ") || "";
+        if (byName.has(legacyName)) return;
 
         const k = priceKey(r);
         if (!tariffByKey.has(k)) {
           tariffByKey.set(k, {
             ...newTariff(false),
-            name: [r.roomCategory, r.roomKind].filter(Boolean).join(" / ") || "",
+            name: legacyName,
             breakfast: toNum(r.breakfast),
             lunch: toNum(r.lunch),
             dinner: toNum(r.dinner),
             foodCost: toNum(r.foodCost),
-            accommodationCost: toNum(r.accommodationCost),
+            // legacy: плоская сумма без цены за сутки — вид не известен
+            placementPrices: [],
+            legacyFlatAccommodation: toNum(r.accommodationCost),
           });
         }
       });
-      const restored = [...tariffByKey.values()];
+      const restored = [...byName.values(), ...tariffByKey.values()];
       setTariffs(restored);
 
       const data = {};
@@ -529,7 +674,11 @@ export default function FapHotelPage({
         if (idx < 0) return;
         consumed.add(idx);
         const k = priceKey(row);
-        const t = matchHotelTariff(row) || restored.find((tt) => priceKey(tt) === k);
+        const nm = (row.tariffName ?? "").trim();
+        const t =
+          (nm && (hotelTariffs.find((ht) => ht.name === nm) || restored.find((tt) => tt.name === nm))) ||
+          matchHotelTariff(row) ||
+          restored.find((tt) => priceKey(tt) === k);
         data[idx] = {
           // Номер в отчёте развязан с гостем (см. коммент выше). Но если в отчёте
           // он пуст — дозаполняем текущей комнатой гостя из вкладки «Гости».
@@ -564,43 +713,54 @@ export default function FapHotelPage({
     const currentTariffs = tariffsRef.current;
     const currentPersonData = personDataRef.current;
     const currentPeople = peopleRef.current;
-    const usedTariffIds = new Set(
-      Object.values(currentPersonData).map((pd) => pd?.tariffId).filter(Boolean)
-    );
+    // Теневые строки: одна на пару тариф × вид размещения для КАЖДОГО
+    // сохранённого тарифа (даже привязанного к гостям). Гостевая строка несёт
+    // лишь ОДИН вид размещения гостя — без ghost-строк цены остальных видов
+    // терялись бы при следующем входе. Пустой fullName → restore/Excel их
+    // пропускают, а byName-дедуп не создаёт дублей с гостевыми строками.
     const ghostRows = currentTariffs
-      .filter((t) => !t.draft && !usedTariffIds.has(t.id))
-      .map((t) => ({
-        fullName: "",
-        roomNumber: "",
-        roomCategory: t.name || "",
-        roomKind: "",
-        daysCount: 0,
-        breakfast: toNum(t.breakfast),
-        lunch: toNum(t.lunch),
-        dinner: toNum(t.dinner),
-        foodCost: toNum(t.breakfast) + toNum(t.lunch) + toNum(t.dinner),
-        accommodationCost: toNum(t.accommodationCost),
-      }));
+      .filter((t) => !t.draft)
+      .flatMap((t) =>
+        (t.placementPrices ?? []).map((pp) => ({
+          fullName: "",
+          roomNumber: "",
+          roomCategory: t.name || "",
+          roomKind: "",
+          daysCount: 0,
+          breakfast: toNum(t.breakfast),
+          lunch: toNum(t.lunch),
+          dinner: toNum(t.dinner),
+          foodCost: toNum(t.breakfast) + toNum(t.lunch) + toNum(t.dinner),
+          accommodationCost: 0,
+          tariffName: t.name || "",
+          pricePerDay: toNum(pp.pricePerDay),
+          placementKind: Number(pp.places) || 0,
+        }))
+      );
     const personRows = currentPeople.map((person, i) => {
       const pd = currentPersonData[i] ?? emptyPD(person, hotelIndex, plan);
-      const tariff =
-        currentTariffs.find((tt) => tt.id === pd.tariffId) ||
-        hotelTariffs.find((tt) => tt.id === pd.tariffId);
+      const eff = getEffectiveRowRef.current(i, pd);
       return {
         fullName: person.fullName ?? "",
         roomNumber: pd.roomNumber ?? "",
-        roomCategory: tariff?.name ?? "",
+        roomCategory: eff.tariffName,   // legacy-совместимость (ФАП v1, старый Excel)
         roomKind: "",
         daysCount: toNum(pd.daysCount),
         breakfast: toNum(pd.breakfast),
         lunch: toNum(pd.lunch),
         dinner: toNum(pd.dinner),
         foodCost: toNum(pd.breakfast) + toNum(pd.lunch) + toNum(pd.dinner),
-        accommodationCost: toNum(pd.accommodationCost),
+        accommodationCost: toNum(eff.accommodationCost),
+        // Легаси-flat строку держим в legacy-полосе восстановления (roomCategory),
+        // иначе на следующем restore она попадёт в byName-путь (без legacyFlatAccommodation)
+        // и проживание пересчитается в 0 — потеря суммы.
+        tariffName: eff.isLegacyFlat ? "" : eff.tariffName,
+        pricePerDay: toNum(eff.pricePerDay),
+        placementKind: Number(eff.placementKind) || 0,
       };
     });
     return [...personRows, ...ghostRows];
-  }, [hotelIndex, plan, hotelTariffs]);
+  }, [hotelIndex, plan]);
 
   const persistReport = useCallback(async () => {
     if (!request?.id) return;
@@ -678,52 +838,21 @@ export default function FapHotelPage({
             accommodationCost: 0,
           };
       });
+      // Обновляем refs синхронно, чтобы buildReportRows увидел свежее состояние
+      // (сериализация проживания теперь производная — через getEffectiveRow).
+      tariffsRef.current = newTariffs;
+      personDataRef.current = newPersonData;
       setTariffs(newTariffs);
       setPersonData(newPersonData);
 
       if (!request?.id) return;
       try {
         setSaving(true);
-        const usedTariffIds = new Set(
-          Object.values(newPersonData).map((pd) => pd?.tariffId).filter(Boolean)
-        );
-        const ghostRows = newTariffs
-          .filter((tt) => !tt.draft && !usedTariffIds.has(tt.id))
-          .map((tt) => ({
-            fullName: "",
-            roomNumber: "",
-            roomCategory: tt.name || "",
-            roomKind: "",
-            daysCount: 0,
-            breakfast: toNum(tt.breakfast),
-            lunch: toNum(tt.lunch),
-            dinner: toNum(tt.dinner),
-            foodCost: toNum(tt.breakfast) + toNum(tt.lunch) + toNum(tt.dinner),
-            accommodationCost: toNum(tt.accommodationCost),
-          }));
-        const personRows = people.map((person, i) => {
-          const pd = newPersonData[i] ?? emptyPD(person, hotelIndex, plan);
-          const tariff =
-            newTariffs.find((tt) => tt.id === pd.tariffId) ||
-            hotelTariffs.find((tt) => tt.id === pd.tariffId);
-          return {
-            fullName: person.fullName ?? "",
-            roomNumber: pd.roomNumber,
-            roomCategory: tariff?.name ?? "",
-            roomKind: "",
-            daysCount: toNum(pd.daysCount),
-            breakfast: toNum(pd.breakfast),
-            lunch: toNum(pd.lunch),
-            dinner: toNum(pd.dinner),
-            foodCost: toNum(pd.breakfast) + toNum(pd.lunch) + toNum(pd.dinner),
-            accommodationCost: toNum(pd.accommodationCost),
-          };
-        });
         await saveReport({
           variables: {
             requestId: request.id,
             hotelIndex: Number(hotelIndex),
-            reportRows: [...personRows, ...ghostRows],
+            reportRows: buildReportRows(),
           },
         });
         onRefetch?.();
@@ -734,7 +863,7 @@ export default function FapHotelPage({
         setSaving(false);
       }
     },
-    [tariffs, hotelTariffs, personData, people, hotelIndex, plan, request?.id, saveReport, notifyError]
+    [tariffs, personData, hotelIndex, request?.id, saveReport, buildReportRows, notifyError]
   );
   const updateTariff = useCallback((tariffId, field, value) => {
     let updated = null;
@@ -750,8 +879,10 @@ export default function FapHotelPage({
     tariffsRef.current = nextTariffs;
     setTariffs(nextTariffs);
 
-    // Цены распространяем на привязанных гостей, чтобы отчёт оставался синхронным с тарифом.
-    // Название не трогаем — оно подтягивается в отчёт через tariffId.
+    // Цены питания распространяем на привязанных гостей, чтобы отчёт оставался
+    // синхронным с тарифом. Проживание НЕ пропагируем — оно теперь производное
+    // (getEffectiveRow: цена за сутки × сутки по виду размещения). Название не
+    // трогаем — оно подтягивается в отчёт через tariffId.
     if (updated && field !== "name") {
       const prevPD = personDataRef.current;
       const nextPD = { ...prevPD };
@@ -764,7 +895,6 @@ export default function FapHotelPage({
             lunch: toNum(updated.lunch),
             dinner: toNum(updated.dinner),
             foodCost: toNum(updated.foodCost),
-            accommodationCost: toNum(updated.accommodationCost),
           };
           changed = true;
         }
@@ -805,48 +935,14 @@ export default function FapHotelPage({
         const newTariffs = tariffs.map((x) =>
           x.id === tariffId ? { ...x, draft: false } : x
         );
-        const usedTariffIds = new Set(
-          Object.values(personData)
-            .map((pd) => pd?.tariffId)
-            .filter(Boolean)
-        );
-        const ghostRows = newTariffs
-          .filter((tt) => !tt.draft && !usedTariffIds.has(tt.id))
-          .map((tt) => ({
-            fullName: "",
-            roomNumber: "",
-            roomCategory: tt.name || "",
-            roomKind: "",
-            daysCount: 0,
-            breakfast: toNum(tt.breakfast),
-            lunch: toNum(tt.lunch),
-            dinner: toNum(tt.dinner),
-            foodCost: toNum(tt.breakfast) + toNum(tt.lunch) + toNum(tt.dinner),
-            accommodationCost: toNum(tt.accommodationCost),
-          }));
-        const personRows = people.map((person, i) => {
-          const pd = personData[i] ?? emptyPD(person, hotelIndex, plan);
-          const tariff =
-            newTariffs.find((tt) => tt.id === pd.tariffId) ||
-            hotelTariffs.find((tt) => tt.id === pd.tariffId);
-          return {
-            fullName: person.fullName ?? "",
-            roomNumber: pd.roomNumber,
-            roomCategory: tariff?.name ?? "",
-            roomKind: "",
-            daysCount: toNum(pd.daysCount),
-            breakfast: toNum(pd.breakfast),
-            lunch: toNum(pd.lunch),
-            dinner: toNum(pd.dinner),
-            foodCost: toNum(pd.breakfast) + toNum(pd.lunch) + toNum(pd.dinner),
-            accommodationCost: toNum(pd.accommodationCost),
-          };
-        });
+        // Синхронно в ref — buildReportRows сериализует свежие тарифы
+        // (теневая строка нового тарифа = пара тариф × вид размещения).
+        tariffsRef.current = newTariffs;
         await saveReport({
           variables: {
             requestId: request.id,
             hotelIndex: Number(hotelIndex),
-            reportRows: [...personRows, ...ghostRows],
+            reportRows: buildReportRows(),
           },
         });
         onRefetch?.();
@@ -858,19 +954,59 @@ export default function FapHotelPage({
         setSaving(false);
       }
     },
-    [
-      tariffs,
-      hotelTariffs,
-      personData,
-      people,
-      hotelIndex,
-      plan,
-      request?.id,
-      saveReport,
-      success,
-      notifyError,
-    ]
+    [tariffs, hotelIndex, request?.id, saveReport, buildReportRows, success, notifyError]
   );
+
+  // ── Цены по видам размещения ──
+  const updateTariffPlacementPrice = useCallback((tariffId, places, value) => {
+    setTariffs((prev) =>
+      prev.map((t) =>
+        t.id !== tariffId
+          ? t
+          : {
+              ...t,
+              placementPrices: (t.placementPrices ?? []).map((p) =>
+                Number(p.places) === Number(places) ? { ...p, pricePerDay: value } : p
+              ),
+            }
+      )
+    );
+    scheduleSave();
+  }, [scheduleSave]);
+
+  const addTariffPlacement = useCallback((tariffId) => {
+    setTariffs((prev) =>
+      prev.map((t) => {
+        if (t.id !== tariffId) return t;
+        const used = new Set((t.placementPrices ?? []).map((p) => Number(p.places)));
+        let next = 1;
+        while (used.has(next)) next += 1;
+        return {
+          ...t,
+          placementPrices: [...(t.placementPrices ?? []), { places: next, pricePerDay: 0 }]
+            .sort((a, b) => a.places - b.places),
+        };
+      })
+    );
+    scheduleSave();
+  }, [scheduleSave]);
+
+  const removeTariffPlacement = useCallback((tariffId, places) => {
+    setTariffs((prev) =>
+      prev.map((t) =>
+        t.id !== tariffId
+          ? t
+          : {
+              ...t,
+              placementPrices: (t.placementPrices ?? []).filter(
+                (p) => Number(p.places) !== Number(places)
+              ),
+            }
+      )
+    );
+    scheduleSave();
+  }, [scheduleSave]);
+
   const applyTariffToAll = useCallback(
     (tariffId) => {
       const t = findTariff(tariffId);
@@ -887,7 +1023,7 @@ export default function FapHotelPage({
           lunch: toNum(t.lunch),
           dinner: toNum(t.dinner),
           foodCost: toNum(t.foodCost),
-          accommodationCost: toNum(t.accommodationCost),
+          // Проживание не копируем — оно производное (getEffectiveRow).
         };
       });
       personDataRef.current = next;
@@ -909,11 +1045,12 @@ export default function FapHotelPage({
           tariffId: tariffId || null,
           ...(t
             ? {
+                // Проживание не копируем — оно производное (getEffectiveRow:
+                // цена за сутки по виду размещения × сутки).
                 breakfast: toNum(t.breakfast),
                 lunch: toNum(t.lunch),
                 dinner: toNum(t.dinner),
                 foodCost: toNum(t.foodCost),
-                accommodationCost: toNum(t.accommodationCost),
               }
             : {
                 // Снятие привязки → обнуляем цены, иначе остаются от прошлого тарифа.
@@ -996,18 +1133,6 @@ export default function FapHotelPage({
     scheduleSave();
   }, [scheduleSave, people, hotelIndex, plan]);
 
-  const updateRoomAccommodation = useCallback((memberIndices, value) => {
-    const prev = personDataRef.current;
-    const next = { ...prev };
-    memberIndices.forEach((idx) => {
-      const base = next[idx] ?? emptyPD(people[idx], hotelIndex, plan);
-      next[idx] = { ...base, accommodationCost: value };
-    });
-    personDataRef.current = next;
-    setPersonData(next);
-    scheduleSave();
-  }, [people, hotelIndex, plan, scheduleSave]);
-
   const reportRows = useMemo(
     () =>
       people.map((person, i) => {
@@ -1033,8 +1158,8 @@ export default function FapHotelPage({
   );
 
   const grandTotal = useMemo(
-    () => reportGroups.reduce((s, g) => s + g.total, 0),
-    [reportGroups]
+    () => Object.values(groupTotals).reduce((s, gt) => s + toNum(gt.total), 0),
+    [groupTotals]
   );
 
   const visibleGroups = useMemo(() => {
@@ -1287,40 +1412,19 @@ export default function FapHotelPage({
     }
   };
 
-  const handleExport = () => {
-    const headers = [
-      "ID", "ФИО", "Тип", "Возрастная категория", "Номер", "Тариф", "Суток",
-      "Завтрак", "Обед", "Ужин", "Ст-ть питания", "Ст-ть проживания", "Итого",
-    ];
-    const dataRows = [];
-    let n = 0;
-    reportGroups.forEach((g) => {
-      g.members.forEach((m, mi) => {
-        n += 1;
-        const pd = m.pd;
-        const acc = mi === 0 ? toNum(g.accommodation) : 0;
-        const tariffName = findTariff(pd.tariffId)?.name ?? "";
-        dataRows.push([
-          n,
-          m.person.fullName ?? "",
-          PERSON_TYPE_CONFIG[m.person.personType === "CREW" ? "CREW" : "PASSENGER"].label,
-          PERSON_CATEGORY_LABEL[normalizeCategory(m.person.personCategory)] ?? "Взрослый",
-          g.roomNumber || "",
-          tariffName,
-          toNum(pd.daysCount),
-          toNum(pd.breakfast), toNum(pd.lunch), toNum(pd.dinner),
-          m.food,
-          acc,
-          m.food + acc,
-        ]);
-      });
-    });
-    const aoa = [headers, ...dataRows, [], ["Итого:", grandTotal]];
-    const ws = XLSX.utils.aoa_to_sheet(aoa);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Отчёт");
-    const safe = (s) => String(s).replace(/[/\\?*[\]:]/g, "_").slice(0, 100);
-    XLSX.writeFile(wb, `otchet-${safe(hotel?.name || "hotel")}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  const handleExport = async () => {
+    try {
+      // Флаш отложенного автосейва — только если правки разрешены и сейв реально запланирован.
+      if (canEdit && saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+        await persistReport();
+      }
+      await downloadHotelReport(request, hotelIndex, { rows: buildReportRows() });
+    } catch (e) {
+      notifyError("Ошибка экспорта");
+      console.error(e);
+    }
   };
 
   // ── Guard ──
@@ -1839,7 +1943,7 @@ export default function FapHotelPage({
                       value={t.name ?? ""}
                       onChange={(e) => canEdit && updateTariff(t.id, "name", e.target.value)}
                       readOnly={!canEdit}
-                      placeholder="Название тарифа (напр. Стандарт 2-мест.)"
+                      placeholder="напр. ДС №1 от 01.08.2026"
                       autoFocus={t.draft}
                     />
                     {canEdit && t.draft && (
@@ -1891,7 +1995,6 @@ export default function FapHotelPage({
                       ["lunch", "Обед"],
                       ["dinner", "Ужин"],
                       ["foodCost", "Ст-ть питания", true, true],
-                      ["accommodationCost", "Ст-ть проживания", true],
                     ].map(([key, label, accent, computed]) => {
                       const displayVal =
                         key === "foodCost"
@@ -1919,6 +2022,52 @@ export default function FapHotelPage({
                       );
                     })}
                   </div>
+                  {/* Цены койко-места за сутки по видам размещения */}
+                  <div className={classes.tariffFields}>
+                    {(t.placementPrices ?? []).map((pp, ppIdx) => (
+                      <label key={pp.places} className={classes.tariffField}>
+                        <span className={classes.tariffFieldLabel}>
+                          {placementKindLabel(pp.places)}, ₽/сутки
+                        </span>
+                        <div className={classes.fieldInputRow}>
+                          <div className={classes.tariffInputWrap} style={{ flex: 1 }}>
+                            <input
+                              type="number"
+                              min={0}
+                              value={pp.pricePerDay ? pp.pricePerDay : ""}
+                              placeholder="0"
+                              readOnly={!canEdit}
+                              onChange={(e) =>
+                                canEdit && updateTariffPlacementPrice(t.id, pp.places, e.target.value)
+                              }
+                              className={classes.tariffInputAccent}
+                            />
+                            <span className={classes.tariffCurrency}>₽</span>
+                          </div>
+                          {canEdit && ppIdx >= 2 && (
+                            <button
+                              type="button"
+                              className={classes.removeTariffBtn}
+                              title="Убрать вид размещения"
+                              onClick={() => removeTariffPlacement(t.id, pp.places)}
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
+                      </label>
+                    ))}
+                    {canEdit && (
+                      <button
+                        type="button"
+                        className={classes.applyAllBtn}
+                        style={{ alignSelf: "end" }}
+                        onClick={() => addTariffPlacement(t.id)}
+                      >
+                        + добавить вид
+                      </button>
+                    )}
+                  </div>
                 </div>
               ))
             )}
@@ -1943,7 +2092,7 @@ export default function FapHotelPage({
                         ["lunch", "Обед"],
                         ["dinner", "Ужин"],
                         ["foodCost", "Ст-ть питания", true, true],
-                        ["accommodationCost", "Ст-ть проживания", true],
+                        ["pricePerDay", "Цена за сутки", true],
                       ].map(([key, label, accent]) => {
                         const displayVal =
                           key === "foodCost"
@@ -2014,27 +2163,20 @@ export default function FapHotelPage({
               <div className={classes.reportTableWrap}>
                 <div className={classes.reportGroups}>
                   {visibleGroups.map((g) => {
-                    const memberIndices = g.memberIndices;
+                    const gTotal = groupTotals[g.key]?.total ?? 0;
                     return (
                       <div key={g.key} className={`${classes.roomGroup} ${g.noRoom ? classes.roomGroupNoRoom : ""}`}>
                         <div className={classes.roomHead}>
                           <span className={classes.roomNo}>
                             {g.noRoom ? <span className={classes.noRoomBadge}>Без номера</span> : <>№ {g.roomNumber}</>}
                           </span>
+                          {!g.noRoom && placementKindLabel(g.members.length) && (
+                            <span className={classes.roomKindBadge}>{placementKindLabel(g.members.length)}</span>
+                          )}
                           {g.tariffName && <span className={classes.roomCat}>{g.tariffName}</span>}
-                          <span className={classes.roomAccWrap}>
-                            <span className={classes.roomAccLabel}>проживание{g.noRoom ? "" : " / номер"}</span>
-                            <input
-                              type="number"
-                              min={0}
-                              className={classes.roomAccInput}
-                              value={g.accommodation ? g.accommodation : ""}
-                              onChange={(e) => canEdit && updateRoomAccommodation(memberIndices, e.target.value)}
-                              readOnly={!canEdit}
-                            />
-                            <span className={classes.roomAccCur}>₽</span>
+                          <span className={classes.roomTotalVal} style={{ marginLeft: "auto" }}>
+                            {gTotal > 0 ? fmt(gTotal) : "—"}
                           </span>
-                          <span className={classes.roomTotalVal}>{g.total > 0 ? fmt(g.total) : "—"}</span>
                         </div>
                         <div className={classes.memberColHead}>
                           <span>Гость</span>
@@ -2045,6 +2187,7 @@ export default function FapHotelPage({
                           <span className={classes.numRight}>Обед</span>
                           <span className={classes.numRight}>Ужин</span>
                           <span className={classes.numRight}>Питание</span>
+                          <span className={classes.numRight}>Прожив.</span>
                         </div>
                         {g.members.map((m) => {
                           const { person, index: i, pd } = m;
@@ -2119,6 +2262,31 @@ export default function FapHotelPage({
                               </div>
                               <div className={`${classes.numRight} ${classes.memberFood}`}>
                                 {m.food > 0 ? fmt(m.food) : "—"}
+                              </div>
+                              <div className={classes.numRight}>
+                                {(() => {
+                                  const eff = getEffectiveRow(i, pd);
+                                  const hasTariff = !!findTariff(pd.tariffId);
+                                  if (!hasTariff) {
+                                    // Без тарифа — ручной ввод стоимости проживания.
+                                    return (
+                                      <input
+                                        type="number" min={0} className={classes.cellInputNum}
+                                        value={pd.accommodationCost ? pd.accommodationCost : ""}
+                                        onChange={(e) => canEdit && updatePersonReport(i, "accommodationCost", e.target.value)}
+                                        readOnly={!canEdit}
+                                      />
+                                    );
+                                  }
+                                  if (eff.warning) {
+                                    return <span className={classes.accWarning} title={eff.warning}>⚠ {eff.warning}</span>;
+                                  }
+                                  return (
+                                    <span className={classes.accFormula}>
+                                      {fmt(eff.pricePerDay)} × {toNum(pd.daysCount)} сут = <strong>{fmt(eff.accommodationCost)}</strong>
+                                    </span>
+                                  );
+                                })()}
                               </div>
                             </div>
                           );

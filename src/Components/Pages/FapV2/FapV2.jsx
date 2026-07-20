@@ -16,6 +16,7 @@ import {
   REQUEST_STATUS_CONFIG,
   getServiceByKey,
   formatDateTime,
+  formatDate,
 } from "../../Blocks/FapV2/fapConstants";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import MUITextField from "../../Blocks/MUITextField/MUITextField";
@@ -355,6 +356,7 @@ export default function FapV2({ user, accessMenu }) {
                         >
                           {req.flightNumber}
                         </strong>
+                        {req.flightDate && <> · {formatDate(req.flightDate)}</>}
                       </div>
                     )}
                   </div>

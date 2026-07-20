@@ -155,6 +155,14 @@ function AddRepresentativeService({
   const departureDriversCount = request?.departureTransferService?.drivers?.length ?? 0;
   const baggageDriversCount = request?.baggageDeliveryService?.drivers?.length ?? 0;
 
+  // Дата рейса: ISO из request → значение для <input type="date">
+  const [flightDate, setFlightDate] = useState("");
+  useEffect(() => {
+    if (!show) return;
+    setFlightDate(isoToDate(request?.flightDate));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [show, request?.id]);
+
   // Инициализируем форму
   const [formData, setFormData] = useState({
     waterSupply: false,
@@ -287,6 +295,7 @@ function AddRepresentativeService({
       baggageDeliveryPlannedDate: "",
       baggageDeliveryPlannedAt: "",
     });
+    setFlightDate("");
     setManifest(null);
     setIsEdited(false);
   }, []);
@@ -540,6 +549,14 @@ function AddRepresentativeService({
       input.includesCrew = crewMembers.length > 0;
     }
 
+    // Дата рейса — только если реально изменилась
+    const requestFlightDateInput = isoToDate(request?.flightDate);
+    if (flightDate !== requestFlightDateInput) {
+      input.flightDate = flightDate
+        ? new Date(`${flightDate}T00:00:00`).toISOString()
+        : null;
+    }
+
     const hasManifest = !!manifest?.people?.length;
 
     // Если нет изменений
@@ -628,6 +645,16 @@ function AddRepresentativeService({
           <>
             <div className={classes.requestMiddle}>
               <div className={classes.requestData}>
+                <label>Дата рейса</label>
+                <input
+                  type="date"
+                  value={flightDate}
+                  onChange={(e) => {
+                    setFlightDate(e.target.value);
+                    setIsEdited(true);
+                  }}
+                />
+
                 <div className={classes.typeServices}>Экипаж</div>
                 <div className={classes.staffWrapper}>
                   <label>Сотрудники экипажа</label>

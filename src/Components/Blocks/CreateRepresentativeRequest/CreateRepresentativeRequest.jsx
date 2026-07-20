@@ -51,6 +51,7 @@ function CreateRepresentativeRequest({
     airlineId: user?.airlineId || "",
     airportId: "",
     flightNumber: "",
+    flightDate: "",
     includesCrew: false,
     includesPassengers: true,
     waterSupply: false,
@@ -268,6 +269,7 @@ function CreateRepresentativeRequest({
       airlineId: user?.airlineId || "",
       airportId: "",
       flightNumber: "",
+      flightDate: "",
       includesCrew: false,
       includesPassengers: true,
       waterSupply: false,
@@ -532,6 +534,9 @@ function CreateRepresentativeRequest({
     const input = {
       airlineId: formData.airlineId,
       flightNumber: formData.flightNumber.trim(),
+      flightDate: formData.flightDate
+        ? new Date(`${formData.flightDate}T00:00:00`).toISOString()
+        : undefined,
       airportId: formData.airportId || null,
       includesCrew: formData.includesCrew,
       includesPassengers: formData.includesPassengers,
@@ -802,6 +807,14 @@ function CreateRepresentativeRequest({
                   name="flightNumber"
                   placeholder="Рейс"
                   value={formData.flightNumber}
+                  onChange={handleChange}
+                />
+
+                <label>Дата рейса</label>
+                <input
+                  type="date"
+                  name="flightDate"
+                  value={formData.flightDate}
                   onChange={handleChange}
                 />
 

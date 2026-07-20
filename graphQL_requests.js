@@ -2601,25 +2601,6 @@ export const UPDATE_PASSENGER_REQUEST_HOTEL_PERSON = gql`
   }
 `;
 
-export const BUILD_PASSENGER_REQUEST_REPORT = gql`
-  mutation BuildPassengerRequestReport($requestId: ID!, $input: PassengerRequestReportInput!) {
-    buildPassengerRequestReport(requestId: $requestId, input: $input) {
-      requestId
-      flightNumber
-      total
-      savedReport {
-        id
-        name
-        url
-        reportType
-        passengerRequestId
-        passengerTotal
-        createdAt
-      }
-    }
-  }
-`;
-
 export const GET_BRONS_HOTEL = gql`
   query Hotel($hotelId: ID!, $hcPagination: HotelChessPaginationInput) {
     hotel(id: $hotelId) {
@@ -3399,6 +3380,7 @@ export const GET_PASSENGER_REQUESTS = gql`
       createdAt
       requestNumber
       flightNumber
+      flightDate
       airline {
         name
         images
@@ -3901,6 +3883,9 @@ export const GET_PASSENGER_REQUEST = gql`
           dinner
           foodCost
           accommodationCost
+          tariffName
+          pricePerDay
+          placementKind
         }
       }
     }
@@ -3959,6 +3944,9 @@ export const SAVE_PASSENGER_REQUEST_HOTEL_REPORT = gql`
         dinner
         foodCost
         accommodationCost
+        tariffName
+        pricePerDay
+        placementKind
       }
     }
   }
