@@ -2,6 +2,7 @@ import React, { useCallback, useState } from "react";
 import classes from "./Analytics.module.css";
 
 import AirlineAnalytics from "../tabs/AirlineAnalytics/AirlineAnalytics";
+import PassengerAnalytics from "../tabs/PassengerAnalytics/PassengerAnalytics";
 import DispatcherAnalytics from "../tabs/DispatcherAnalytics/DispatcherAnalytics";
 import HotelAnalytics from "../tabs/HotelAnalytics/HotelAnalytics";
 import SupportAnalytics from "../tabs/SupportAnalytics/SupportAnalytics";
@@ -9,6 +10,7 @@ import Header from "../../../Blocks/Header/Header";
 
 const tabs = [
   { key: "airlines", label: "Авиакомпании" },
+  { key: "passengers", label: "Пассажиры" },
   // { key: "hotels", label: "Гостиницы" },
   // { key: "dispatchers", label: "Диспетчеры" },
   // { key: "support", label: "Техподдержка" }
@@ -40,6 +42,15 @@ function Analytics({user}) {
             onPeriodChange={setAppliedPeriod}
           />
         );
+      case "passengers":
+        return (
+          <PassengerAnalytics
+            user={user}
+            filterOpen={filterOpen}
+            onFilterClose={closeFilter}
+            onPeriodChange={setAppliedPeriod}
+          />
+        );
       // case "dispatchers":
       //   return <DispatcherAnalytics />;
       // case "hotels":
@@ -57,21 +68,17 @@ function Analytics({user}) {
 
       {/* Строка с табами и кнопкой Фильтры */}
       <div className={classes.tabsBar}>
-        {user?.airlineId ? (
-          <div />
-        ) : (
-          <div className={classes.tabs}>
-            {tabs.map((tab) => (
-              <button
-                key={tab.key}
-                className={`${classes.tabButton} ${activeTab === tab.key ? classes.active : ""}`}
-                onClick={() => handleTabChange(tab.key)}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
-        )}
+        <div className={classes.tabs}>
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              className={`${classes.tabButton} ${activeTab === tab.key ? classes.active : ""}`}
+              onClick={() => handleTabChange(tab.key)}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
         <div className={classes.filterGroup}>
           {appliedPeriod && (

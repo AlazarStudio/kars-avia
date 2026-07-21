@@ -2264,7 +2264,9 @@ export default function FapHotelPage({
             {placed === 0 ? (
               <div className={classes.emptyRow}>Пассажиры ещё не добавлены</div>
             ) : effectiveReportMode === "view" ? (
-              <FapReportView summary={reportSummary} groups={reportViewGroups} />
+              <div className={classes.reportViewScroll}>
+                <FapReportView summary={reportSummary} groups={reportViewGroups} />
+              </div>
             ) : (
               <div className={classes.reportTableWrap}>
                 <div className={classes.reportGroups}>

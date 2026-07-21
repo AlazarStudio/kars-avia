@@ -7607,6 +7607,46 @@ export const GET_AIRLINE_ANALYTICS = gql`
   }
 `;
 
+export const GET_PASSENGER_ANALYTICS = gql`
+  query PassengerAnalytics($input: PassengerAnalyticsInput!) {
+    passengerAnalytics(input: $input) {
+      period {
+        dateFrom
+        dateTo
+      }
+      totals {
+        requestsCount
+        peopleCount
+        living
+        meal
+        transfer
+        total
+        missingCostCount
+        noFlightDateCount
+      }
+      requests {
+        requestId
+        requestNumber
+        flightNumber
+        flightDate
+        airportId
+        airportName
+        airportCode
+        airlineId
+        airlineName
+        hotelNames
+        peopleCount
+        living
+        meal
+        transfer
+        total
+        status
+        costMissing
+      }
+    }
+  }
+`;
+
 export const GET_ANALYTICS_AIRLINE_SERVICE_COMPARISON = gql`
   query AirlineComparison($input: AnalyticsAirlineServiceComparisonInput!) {
     analyticsAirlineServiceComparison(input: $input) {

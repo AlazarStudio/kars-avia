@@ -1,0 +1,510 @@
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useQuery } from "@apollo/client";
+import { differenceInCalendarDays } from "date-fns";
+import classes from "./PassengerAnalytics.module.css";
+import aa from "../AirlineAnalytics/AirlineAnalytics.module.css";
+import DateRangePickerCustom from "../../DateRangePickerCustom";
+import MUITextField from "../../../../Blocks/MUITextField/MUITextField";
+import MUIAutocompleteColor from "../../../../Blocks/MUIAutocompleteColor/MUIAutocompleteColor";
+import MUILoader from "../../../../Blocks/MUILoader/MUILoader";
+import Button from "../../../../Standart/Button/Button";
+import { REQUEST_STATUS_CONFIG } from "../../../../Blocks/FapV2/fapConstants";
+import {
+  cmpNum,
+  cmpStr,
+  nextSortDir,
+} from "../AirlineAnalytics/analyticsTableSortUtils";
+import {
+  GET_PASSENGER_ANALYTICS,
+  GET_AIRPORTS_RELAY,
+  getCookie,
+} from "../../../../../../graphQL_requests";
+import {
+  formatRub,
+  formatInt,
+  formatDateRu,
+  buildPassengerAnalyticsInput,
+  decadePresets,
+} from "./passengerAnalyticsMappers";
+import { exportPassengerAnalyticsXlsx } from "./passengerAnalyticsExport";
+
+const ALL_AIRPORTS = { id: "", label: "Все аэропорты" };
+
+const COLUMN_TYPE = {
+  number: "str",
+  airport: "str",
+  flightDate: "num",
+  people: "num",
+  living: "num",
+  meal: "num",
+  transfer: "num",
+  total: "num",
+};
+
+function isPeriodComplete(r) {
+  return Boolean(
+    r?.startDate &&
+      r?.endDate &&
+      !Number.isNaN(new Date(r.startDate).getTime()) &&
+      !Number.isNaN(new Date(r.endDate).getTime())
+  );
+}
+
+function periodHuman(r) {
+  if (!isPeriodComplete(r)) return "";
+  const days = differenceInCalendarDays(new Date(r.endDate), new Date(r.startDate)) + 1;
+  return `${formatDateRu(r.startDate)} — ${formatDateRu(r.endDate)}  ·  ${days} дн.`;
+}
+
+function getSortVal(row, key) {
+  switch (key) {
+    case "number":
+      return row.flightNumber ?? row.requestNumber ?? "";
+    case "airport":
+      return row.airportCode ?? row.airportName ?? "";
+    case "flightDate":
+      return row.flightDate ? new Date(row.flightDate).getTime() : null;
+    case "people":
+      return row.peopleCount;
+    case "living":
+      return row.living;
+    case "meal":
+      return row.meal;
+    case "transfer":
+      return row.transfer;
+    case "total":
+      return row.total;
+    default:
+      return null;
+  }
+}
+
+function StatusPill({ status }) {
+  const cfg = REQUEST_STATUS_CONFIG?.[status];
+  return (
+    <span
+      className={classes.statusPill}
+      style={cfg ? { color: cfg.color, backgroundColor: cfg.bg } : undefined}
+    >
+      {cfg?.label || status || "—"}
+    </span>
+  );
+}
+
+function SortHead({ label, columnKey, sort, onSort, num }) {
+  const active = sort?.key === columnKey;
+  const arrow = active ? (sort.dir === "asc" ? "↑" : "↓") : "";
+  return (
+    <th
+      className={`${classes.th} ${num ? classes.num : ""} ${classes.sortable} ${
+        active ? classes.sortActive : ""
+      }`}
+      onClick={() => onSort(columnKey)}
+    >
+      {label}
+      {arrow && <span className={classes.sortArrow}>{arrow}</span>}
+    </th>
+  );
+}
+
+function CalendarIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="4" width="18" height="18" rx="2" />
+      <line x1="16" y1="2" x2="16" y2="6" />
+      <line x1="8" y1="2" x2="8" y2="6" />
+      <line x1="3" y1="10" x2="21" y2="10" />
+    </svg>
+  );
+}
+
+function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange }) {
+  const token = getCookie("token");
+  const isAirline = !!user?.airlineId;
+
+  // draft-фильтры (в модалке)
+  const [range, setRange] = useState(null);
+  const [airport, setAirport] = useState(ALL_AIRPORTS);
+  const [flightNumber, setFlightNumber] = useState("");
+  const [showPicker, setShowPicker] = useState(false);
+  const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
+
+  // применённый снимок, который гонит запрос
+  const [appliedInput, setAppliedInput] = useState(null);
+  const [sort, setSort] = useState(null);
+
+  const filterStateRef = useRef({});
+  const openSnapshotRef = useRef(null);
+  filterStateRef.current = { range, airport, flightNumber };
+
+  const { data: airportsData } = useQuery(GET_AIRPORTS_RELAY, {
+    context: { headers: { Authorization: token ? `Bearer ${token}` : "" } },
+  });
+  const airportOptions = useMemo(() => {
+    const list = (airportsData?.airports || []).map((a) => ({ id: a.id, label: a.name }));
+    return [ALL_AIRPORTS, ...list];
+  }, [airportsData]);
+
+  const { data, loading } = useQuery(GET_PASSENGER_ANALYTICS, {
+    variables: { input: appliedInput },
+    skip: !appliedInput,
+    context: { headers: { Authorization: token ? `Bearer ${token}` : "" } },
+    fetchPolicy: "cache-and-network",
+  });
+
+  const result = data?.passengerAnalytics || null;
+  const rows = result?.requests || [];
+  const totals = result?.totals || null;
+
+  // Снимок фильтров при открытии модалки (для discard-подтверждения)
+  useEffect(() => {
+    if (filterOpen) {
+      const f = filterStateRef.current;
+      openSnapshotRef.current = {
+        range: f.range ? { ...f.range } : null,
+        airport: f.airport,
+        flightNumber: f.flightNumber || "",
+      };
+      setDiscardConfirmOpen(false);
+    }
+  }, [filterOpen]);
+
+  // Оповещаем родителя (шапка над табами) о применённом периоде
+  useEffect(() => {
+    if (!appliedInput) {
+      onPeriodChange?.(null);
+      return;
+    }
+    const days =
+      differenceInCalendarDays(new Date(appliedInput.dateTo), new Date(appliedInput.dateFrom)) + 1;
+    onPeriodChange?.({
+      p1: `${formatDateRu(appliedInput.dateFrom)} — ${formatDateRu(appliedInput.dateTo)} · ${days} дн.`,
+    });
+  }, [appliedInput]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const sortedRows = useMemo(() => {
+    if (!sort) return rows;
+    const { key, dir } = sort;
+    const cmp = COLUMN_TYPE[key] === "num" ? cmpNum : cmpStr;
+    return [...rows].sort((a, b) => cmp(getSortVal(a, key), getSortVal(b, key), dir));
+  }, [rows, sort]);
+
+  const onSort = (key) => {
+    if (!COLUMN_TYPE[key]) return;
+    setSort((s) => ({ key, dir: nextSortDir(s, key) }));
+  };
+
+  const openPicker = useCallback(() => setShowPicker(true), []);
+  const applyPicker = useCallback((r) => {
+    setRange({ ...r, key: "selection" });
+    setShowPicker(false);
+  }, []);
+  const applyDecade = (preset) =>
+    setRange({ startDate: preset.startDate, endDate: preset.endDate, key: "selection" });
+
+  const hasDraftChanges = useCallback(() => {
+    const s = openSnapshotRef.current;
+    if (!s) return false;
+    const f = filterStateRef.current;
+    const rangesEqual = (a, b) => {
+      if (!a && !b) return true;
+      if (!a || !b) return false;
+      return (
+        new Date(a.startDate).getTime() === new Date(b.startDate).getTime() &&
+        new Date(a.endDate).getTime() === new Date(b.endDate).getTime()
+      );
+    };
+    return (
+      !rangesEqual(f.range, s.range) ||
+      (f.airport?.id ?? null) !== (s.airport?.id ?? null) ||
+      (f.flightNumber || "") !== s.flightNumber
+    );
+  }, []);
+
+  const handleModalCloseAttempt = useCallback(() => {
+    if (hasDraftChanges()) setDiscardConfirmOpen(true);
+    else onFilterClose?.();
+  }, [hasDraftChanges, onFilterClose]);
+
+  const handleDiscardAndClose = useCallback(() => {
+    const s = openSnapshotRef.current;
+    if (s) {
+      setRange(s.range);
+      setAirport(s.airport || ALL_AIRPORTS);
+      setFlightNumber(s.flightNumber);
+    }
+    setDiscardConfirmOpen(false);
+    onFilterClose?.();
+  }, [onFilterClose]);
+
+  const handleApplyAndClose = useCallback(() => {
+    setAppliedInput(
+      buildPassengerAnalyticsInput({ range, airportId: airport?.id || null, flightNumber })
+    );
+    onFilterClose?.();
+  }, [range, airport, flightNumber, onFilterClose]);
+
+  const handleExport = () => {
+    if (!result) return;
+    exportPassengerAnalyticsXlsx({
+      rows: sortedRows,
+      totals,
+      showAirline: !isAirline,
+      meta: {
+        periodLabel: periodHuman(range) || "",
+        airlineName: isAirline ? rows[0]?.airlineName || "" : "",
+        fileName: `Аналитика_пассажиры_${formatDateRu(appliedInput?.dateFrom)}_${formatDateRu(
+          appliedInput?.dateTo
+        )}.xlsx`,
+      },
+    });
+  };
+
+  return (
+    <div className={classes.wrap}>
+      {/* ─── Модалка фильтров (открывается кнопкой «Фильтры» в шапке) ─── */}
+      {filterOpen && (
+        <div className={aa.filterModalOverlay} onClick={handleModalCloseAttempt}>
+          <div className={aa.filterModalCard} onClick={(e) => e.stopPropagation()}>
+            <div className={aa.filterModalHeader}>
+              <span className={aa.filterModalTitle}>Фильтры</span>
+              <button type="button" className={aa.filterModalCloseBtn} onClick={handleModalCloseAttempt}>
+                ✕
+              </button>
+            </div>
+
+            <div className={aa.filterModalBody}>
+              <div className={aa.filterModalPeriodCard}>
+                <span className={aa.filterModalPeriodLabel}>Период</span>
+                <button type="button" className={aa.periodButtonModal} onClick={openPicker}>
+                  <CalendarIcon />
+                  {isPeriodComplete(range) ? periodHuman(range) : "Выбрать период"}
+                </button>
+
+                <div className={classes.modalDecades}>
+                  {decadePresets().map((p) => (
+                    <button
+                      key={p.label}
+                      type="button"
+                      className={classes.decadeBtn}
+                      onClick={() => applyDecade(p)}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+
+                <div className={aa.filterModalRow2col}>
+                  <MUIAutocompleteColor
+                    dropdownWidth="100%"
+                    label="Аэропорт"
+                    options={airportOptions}
+                    value={airport}
+                    onChange={(e, v) => setAirport(v || ALL_AIRPORTS)}
+                  />
+                  <MUITextField
+                    label="№ рейса"
+                    value={flightNumber}
+                    onChange={(e) => setFlightNumber(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className={aa.filterModalFooter}>
+              <button type="button" className={aa.filterModalCancelBtn} onClick={handleModalCloseAttempt}>
+                Отмена
+              </button>
+              <Button
+                type="button"
+                onClick={handleApplyAndClose}
+                disabled={!isPeriodComplete(range)}
+                padding="0 28px"
+                height="40px"
+                fontSize="14px"
+                fontWeight="600"
+              >
+                Применить
+              </Button>
+            </div>
+
+            {discardConfirmOpen && (
+              <div className={aa.discardOverlay}>
+                <div className={aa.discardCard}>
+                  <p className={aa.discardText}>
+                    Вы изменили параметры фильтра, но не применили их. Закрыть без сохранения?
+                  </p>
+                  <div className={aa.discardActions}>
+                    <button type="button" className={aa.discardContinueBtn} onClick={() => setDiscardConfirmOpen(false)}>
+                      Продолжить редактирование
+                    </button>
+                    <button type="button" className={aa.discardCloseBtn} onClick={handleDiscardAndClose}>
+                      Закрыть без сохранения
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {showPicker && (
+        <DateRangePickerCustom value={range} onChange={applyPicker} onClose={() => setShowPicker(false)} />
+      )}
+
+      {/* ─── Пустое состояние: гайд ─── */}
+      {!appliedInput ? (
+        <div className={aa.emptyState}>
+          <div className={aa.emptyStateIcon}>
+            <svg width="56" height="56" viewBox="0 0 56 56" fill="none" aria-hidden>
+              <rect width="56" height="56" rx="16" fill="#eef2fd" />
+              <g stroke="#0057c3" strokeWidth="2.6" strokeLinecap="round">
+                <line x1="19" y1="21" x2="37" y2="21" />
+                <line x1="23" y1="28" x2="33" y2="28" />
+                <line x1="26" y1="35" x2="30" y2="35" />
+              </g>
+            </svg>
+          </div>
+          <p className={aa.emptyStateTitle}>Настройте фильтры</p>
+          <p className={aa.emptyStateSubtitle}>
+            Выберите период (при необходимости — аэропорт / № рейса)
+            <br />
+            в фильтрах справа сверху
+          </p>
+          <div className={aa.emptyStateSteps}>
+            <div className={aa.emptyStateStep}>
+              <span className={aa.emptyStateStepNum}>1</span>
+              <span>Нажмите «Фильтры»</span>
+            </div>
+            <div className={aa.emptyStateStep}>
+              <span className={aa.emptyStateStepNum}>2</span>
+              <span>Выберите период</span>
+            </div>
+            <div className={aa.emptyStateStep}>
+              <span className={aa.emptyStateStepNum}>3</span>
+              <span>Нажмите «Применить» — данные загрузятся</span>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Шапка результатов */}
+          <div className={classes.resultsHeader}>
+            <span className={classes.resultsTitle}>Сводка по пассажирам</span>
+            <div className={`${aa.exportButtons} pdfNoCapture`}>
+              <button
+                type="button"
+                className={aa.exportXlsxButton}
+                onClick={handleExport}
+                disabled={!result}
+              >
+                Выгрузить xlsx
+              </button>
+            </div>
+          </div>
+
+          {/* Итоги */}
+          {totals && (
+            <div className={classes.kpiRow}>
+              <div className={classes.kpi}>
+                <span className={classes.kpiLabel}>Заявок</span>
+                <span className={classes.kpiValue}>{formatInt(totals.requestsCount)}</span>
+              </div>
+              <div className={classes.kpi}>
+                <span className={classes.kpiLabel}>Человек</span>
+                <span className={classes.kpiValue}>{formatInt(totals.peopleCount)}</span>
+              </div>
+              <div className={classes.kpi}>
+                <span className={classes.kpiLabel}>Проживание</span>
+                <span className={classes.kpiValue}>{formatRub(totals.living)}</span>
+              </div>
+              <div className={classes.kpi}>
+                <span className={classes.kpiLabel}>Питание</span>
+                <span className={classes.kpiValue}>{formatRub(totals.meal)}</span>
+              </div>
+              <div className={classes.kpi}>
+                <span className={classes.kpiLabel}>Трансфер</span>
+                <span className={classes.kpiValue}>{formatRub(totals.transfer)}</span>
+              </div>
+              <div className={`${classes.kpi} ${classes.kpiGrand}`}>
+                <span className={classes.kpiLabel}>Итого</span>
+                <span className={classes.kpiValue}>{formatRub(totals.total)}</span>
+              </div>
+              {totals.missingCostCount > 0 && (
+                <div className={`${classes.kpi} ${classes.kpiWarn}`}>
+                  <span className={classes.kpiLabel}>Без стоимости</span>
+                  <span className={classes.kpiValue}>{formatInt(totals.missingCostCount)}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {loading && (
+            <div className={classes.stateBox}>
+              <MUILoader />
+            </div>
+          )}
+          {!loading && rows.length === 0 && (
+            <div className={classes.empty}>Нет заявок за выбранный период.</div>
+          )}
+
+          {rows.length > 0 && (
+            <div className={classes.tableCard}>
+              <div className={classes.tableScroll}>
+                <table className={classes.table}>
+                  <thead>
+                    <tr>
+                      <SortHead label="№ рейса" columnKey="number" sort={sort} onSort={onSort} />
+                      <SortHead label="Дата рейса" columnKey="flightDate" sort={sort} onSort={onSort} />
+                      {!isAirline && <th className={classes.th}>Авиакомпания</th>}
+                      <SortHead label="Аэропорт" columnKey="airport" sort={sort} onSort={onSort} />
+                      <th className={classes.th}>Гостиница(ы)</th>
+                      <SortHead label="Чел." columnKey="people" sort={sort} onSort={onSort} num />
+                      <SortHead label="Проживание" columnKey="living" sort={sort} onSort={onSort} num />
+                      <SortHead label="Питание" columnKey="meal" sort={sort} onSort={onSort} num />
+                      <SortHead label="Трансфер" columnKey="transfer" sort={sort} onSort={onSort} num />
+                      <SortHead label="Итого" columnKey="total" sort={sort} onSort={onSort} num />
+                      <th className={classes.th}>Статус</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sortedRows.map((r) => (
+                      <tr key={r.requestId} className={r.costMissing ? classes.rowMissing : ""}>
+                        <td className={classes.tdStrong}>
+                          {r.flightNumber || r.requestNumber || "—"}
+                        </td>
+                        <td>{r.flightDate ? formatDateRu(r.flightDate) : "—"}</td>
+                        {!isAirline && <td>{r.airlineName || "—"}</td>}
+                        <td>{r.airportCode || r.airportName || "—"}</td>
+                        <td className={classes.tdHotels}>
+                          {r.hotelNames?.length ? r.hotelNames.join(", ") : "—"}
+                        </td>
+                        <td className={classes.num}>{formatInt(r.peopleCount)}</td>
+                        <td className={classes.num}>{r.costMissing ? "—" : formatRub(r.living)}</td>
+                        <td className={classes.num}>{r.costMissing ? "—" : formatRub(r.meal)}</td>
+                        <td className={classes.num}>{r.costMissing ? "—" : formatRub(r.transfer)}</td>
+                        <td className={`${classes.num} ${classes.tdTotal}`}>
+                          {r.costMissing ? (
+                            <span className={classes.missingTag}>нет отчёта</span>
+                          ) : (
+                            formatRub(r.total)
+                          )}
+                        </td>
+                        <td>
+                          <StatusPill status={r.status} />
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
+export default PassengerAnalytics;
