@@ -19,6 +19,7 @@ import PersonBadge from "../PersonBadge/PersonBadge";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import CatalogPickerModal, { personKey } from "../CatalogPickerModal/CatalogPickerModal";
 import FapActionButton from "../FapActionButton/FapActionButton";
+import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
 import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
 import BusIcon from "../../../../shared/icons/BusIcon";
 import BusDownIcon from "../../../../shared/icons/BusDownIcon";
@@ -900,14 +901,6 @@ export default function FapDriverPage({
               </div>
             )}
           </div>
-          <FapActionButton
-            variant="secondary"
-            active={showLogs}
-            onClick={() => setShowLogs((v) => !v)}
-          >
-            <ScheduleIcon color={showLogs ? "#fff" : "#545873"} />
-            История
-          </FapActionButton>
           {showLinks && linkUrl && (
             <button
               type="button"
@@ -918,6 +911,11 @@ export default function FapDriverPage({
               <LinkSvg color="var(--dark-blue)" /> {linkLabel} <CopyIcon />
             </button>
           )}
+          <FapOverflowMenu
+            items={[
+              { label: "История", icon: ScheduleIcon, onClick: () => setShowLogs((v) => !v) },
+            ]}
+          />
         </div>
 
         {/* Row 2 — metrics */}
@@ -932,15 +930,15 @@ export default function FapDriverPage({
                 {canEdit && !isCompleted && (
                   <button
                     type="button"
+                    className={classes.iconBtn}
                     onClick={() => {
                       setPickupDraft(toLocalInputValue(driver.pickupAt));
                       setEditingPickup(true);
                     }}
-                    style={{ background: "none", border: 0, padding: 0, cursor: "pointer", color: "#94A3B8" }}
                     title="Изменить время подачи"
                     aria-label="Изменить время подачи"
                   >
-                    <EditPencilIcon />
+                    <EditPencilIcon color="#545873" />
                   </button>
                 )}
               </span>

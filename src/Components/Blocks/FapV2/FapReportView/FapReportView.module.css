@@ -203,3 +203,10 @@
   color: #B45309;
   font-size: 11px;
 }
+
+.includedText {
+  color: #9AA0B4;
+  font-size: 13px;
+  font-style: italic;
+  white-space: nowrap;
+}

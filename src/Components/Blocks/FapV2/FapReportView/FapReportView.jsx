@@ -149,6 +149,15 @@ export default function FapReportView({ summary = {}, groups = [] }) {
                         <WarnTriangle />
                         <span>{p.warning}</span>
                       </div>
+                    ) : p.included ? (
+                      <>
+                        <div className={classes.includedText}>проживание в сумме номера</div>
+                        {p.meal > 0 && (
+                          <div className={classes.livingLine} style={{ color: "#0F9D63" }}>
+                            питание {rub(p.meal)}
+                          </div>
+                        )}
+                      </>
                     ) : (
                       <>
                         <div className={classes.rateLine}>

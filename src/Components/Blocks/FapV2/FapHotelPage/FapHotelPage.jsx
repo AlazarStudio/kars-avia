@@ -75,6 +75,21 @@ const LinkSvg = ({ size = 14, color = "#0057C3", strokeWidth = 1.8 }) => (
       stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" />
   </svg>
 );
+const BedSvg = ({ size = 17 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8" />
+    <path d="M4 10V6a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v4" />
+    <path d="M12 4v6" />
+    <path d="M2 17h20" />
+  </svg>
+);
+const DoorSvg = ({ size = 17 }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14" />
+    <path d="M2 20h20" />
+    <path d="M14 12h.01" />
+  </svg>
+);
 
 const initials = (fullName) => {
   if (!fullName) return "?";
@@ -98,6 +113,8 @@ const newTariff = (draft = true) => ({
   lunch: 0,
   dinner: 0,
   foodCost: 0,
+  // Формат начисления проживания: PER_BED (койко-место, за каждого) | PER_ROOM (номер, один раз).
+  billingMode: "PER_BED",
   // Цена койко-места ЗА СУТКИ по видам размещения (1-местн/2-местн/...).
   placementPrices: [
     { places: 1, pricePerDay: 0 },
@@ -371,11 +388,56 @@ export default function FapHotelPage({
     return map;
   }, [reportGroups]);
 
+  // Несущий гость номера = первый гость номера, у которого назначен тариф; его тариф
+  // задаёт режим начисления проживания для ВСЕГО номера (спека §4: «берётся тариф
+  // несущего гостя»). perRoom=true → проживание начисляется один раз на несущего.
+  const roomBillingByIndex = useMemo(() => {
+    const map = {};
+    reportGroups.forEach((g) => {
+      const carrier = g.members.find((m) => findTariff(m.pd.tariffId));
+      const carrierTariff = carrier ? findTariff(carrier.pd.tariffId) : null;
+      const perRoom = carrierTariff?.billingMode === "PER_ROOM";
+      g.members.forEach((m) => {
+        map[m.index] = { carrierIndex: carrier ? carrier.index : null, perRoom };
+      });
+    });
+    return map;
+  }, [reportGroups, findTariff]);
+
   // Эффективные значения строки гостя. Для гостя с тарифом проживание —
   // ПРОИЗВОДНОЕ: цена за сутки (по виду размещения) × сутки. Без тарифа —
   // ручное значение pd.accommodationCost (как раньше).
   const getEffectiveRow = useCallback(
     (personIndex, pd) => {
+      const room = roomBillingByIndex[personIndex];
+      // Режим «Номер» задаётся тарифом несущего гостя и распространяется на ВЕСЬ номер:
+      // проживание начисляется один раз на несущего, остальные гости номера — 0,
+      // независимо от их собственного тарифа (или его отсутствия).
+      if (room?.perRoom) {
+        const tariff = findTariff(pd.tariffId);
+        const places = roomKindByIndex[personIndex] ?? null;
+        if (room.carrierIndex !== personIndex) {
+          return {
+            tariffName: tariff?.name ?? "",
+            placementKind: 0,
+            pricePerDay: 0,
+            accommodationCost: 0,
+            warning: null,
+            perRoomIncluded: true,
+          };
+        }
+        // Несущий гость: тариф гарантированно есть (он — первый гость номера с тарифом).
+        const price = resolveTariffPricePerDay(tariff, places);
+        if (places == null) {
+          return { tariffName: tariff.name ?? "", placementKind: 0, pricePerDay: 0, accommodationCost: 0, warning: "укажите номер" };
+        }
+        if (price == null) {
+          return { tariffName: tariff.name ?? "", placementKind: places, pricePerDay: 0, accommodationCost: 0, warning: `нет цены (${placementKindLabel(places)})` };
+        }
+        // Один раз на номер, без возрастного коэфа.
+        return { tariffName: tariff.name ?? "", placementKind: places, pricePerDay: price, accommodationCost: price * toNum(pd.daysCount), chargeFactor: 1, warning: null };
+      }
+
       const tariff = findTariff(pd.tariffId);
       const places = roomKindByIndex[personIndex] ?? null;
       if (!tariff) {
@@ -406,7 +468,6 @@ export default function FapHotelPage({
         return { tariffName: tariff.name ?? "", placementKind: places, pricePerDay: 0, accommodationCost: 0, warning: `нет цены (${placementKindLabel(places)})` };
       }
       // Возрастная скидка на проживание: инфант — бесплатно, ребёнок — 50%.
-      // Питание НЕ трогаем. Применяется только к производной (тарифной) стоимости.
       const chargeFactor = accommodationChargeFactor(people[personIndex]?.personCategory);
       return {
         tariffName: tariff.name ?? "",
@@ -417,7 +478,7 @@ export default function FapHotelPage({
         warning: null,
       };
     },
-    [findTariff, roomKindByIndex, people]
+    [findTariff, roomKindByIndex, roomBillingByIndex, people]
   );
 
   // Ref на getEffectiveRow: buildReportRows работает через refs (для флаш-сейва
@@ -614,6 +675,7 @@ export default function FapHotelPage({
         const nm = (r.tariffName ?? "").trim();
         if (!nm || (r.fullName ?? "").trim() || isHotelName(nm)) return;
         const t = ensureShell(nm, r);
+        if ((r.roomKind ?? "") === "PER_ROOM") t.billingMode = "PER_ROOM";
         const places = Number(r.placementKind) || 0;
         if (places > 0 && !t.placementPrices.some((p) => p.places === places)) {
           t.placementPrices.push({ places, pricePerDay: toNum(r.pricePerDay) });
@@ -642,10 +704,12 @@ export default function FapHotelPage({
         // Иначе строки гостей с ценами, но без привязки тарифа, создавали бы
         // «безымянные» тарифы, которые невозможно удалить (X срабатывает,
         // но при следующем входе тариф возвращался инференцией).
-        const hasName = (r.roomCategory || "").trim() || (r.roomKind || "").trim();
+        // Маркер режима из ghost-строк (roomKind==="PER_ROOM") — это НЕ имя вида размещения.
+        const legacyRoomKind = (r.roomKind ?? "") === "PER_ROOM" ? "" : (r.roomKind || "");
+        const hasName = (r.roomCategory || "").trim() || legacyRoomKind.trim();
         if (!hasName) return;
         if (matchHotelTariff(r)) return;
-        const legacyName = [r.roomCategory, r.roomKind].filter(Boolean).join(" / ") || "";
+        const legacyName = [r.roomCategory, legacyRoomKind].filter(Boolean).join(" / ") || "";
         if (byName.has(legacyName)) return;
 
         const k = priceKey(r);
@@ -740,7 +804,7 @@ export default function FapHotelPage({
           fullName: "",
           roomNumber: "",
           roomCategory: t.name || "",
-          roomKind: "",
+          roomKind: t.billingMode === "PER_ROOM" ? "PER_ROOM" : "",
           daysCount: 0,
           breakfast: toNum(t.breakfast),
           lunch: toNum(t.lunch),
@@ -1222,6 +1286,7 @@ export default function FapHotelPage({
             nights: toNum(m.pd.daysCount),
             factor: eff.chargeFactor ?? 1,
             warning: eff.warning || null,
+            included: !!eff.perRoomIncluded,
           };
         }),
       })),
@@ -2068,6 +2133,31 @@ export default function FapHotelPage({
                       </>
                     )}
                   </div>
+                  <div className={classes.tariffModeRow}>
+                    <span className={classes.billingLabel}>Тип тарифа</span>
+                    <div className={classes.billingSeg} role="group" aria-label="Тип тарифа">
+                      <button
+                        type="button"
+                        className={`${classes.billingSegBtn} ${t.billingMode !== "PER_ROOM" ? classes.billingSegActive : ""}`}
+                        onClick={() => canEdit && updateTariff(t.id, "billingMode", "PER_BED")}
+                        disabled={!canEdit}
+                        aria-pressed={t.billingMode !== "PER_ROOM"}
+                      >
+                        <BedSvg size={17} />
+                        Койко-место
+                      </button>
+                      <button
+                        type="button"
+                        className={`${classes.billingSegBtn} ${t.billingMode === "PER_ROOM" ? classes.billingSegActive : ""}`}
+                        onClick={() => canEdit && updateTariff(t.id, "billingMode", "PER_ROOM")}
+                        disabled={!canEdit}
+                        aria-pressed={t.billingMode === "PER_ROOM"}
+                      >
+                        <DoorSvg size={17} />
+                        Номер
+                      </button>
+                    </div>
+                  </div>
                   <div className={classes.tariffFields}>
                     {[
                       ["breakfast", "Завтрак"],
@@ -2105,34 +2195,34 @@ export default function FapHotelPage({
                   <div className={classes.tariffFields}>
                     {(t.placementPrices ?? []).map((pp, ppIdx) => (
                       <label key={pp.places} className={classes.tariffField}>
-                        <span className={classes.tariffFieldLabel}>
-                          {placementKindLabel(pp.places)}, ₽/сутки
-                        </span>
-                        <div className={classes.fieldInputRow}>
-                          <div className={classes.tariffInputWrap} style={{ flex: 1 }}>
-                            <input
-                              type="number"
-                              min={0}
-                              value={pp.pricePerDay ? pp.pricePerDay : ""}
-                              placeholder="0"
-                              readOnly={!canEdit}
-                              onChange={(e) =>
-                                canEdit && updateTariffPlacementPrice(t.id, pp.places, e.target.value)
-                              }
-                              className={classes.tariffInputAccent}
-                            />
-                            <span className={classes.tariffCurrency}>₽</span>
-                          </div>
+                        <span className={classes.tariffFieldHead}>
+                          <span className={classes.tariffFieldLabel}>
+                            {placementKindLabel(pp.places)}, ₽/сутки
+                          </span>
                           {canEdit && ppIdx >= 2 && (
                             <button
                               type="button"
-                              className={classes.removeTariffBtn}
+                              className={classes.removeKindBtn}
                               title="Убрать вид размещения"
                               onClick={() => removeTariffPlacement(t.id, pp.places)}
                             >
                               ×
                             </button>
                           )}
+                        </span>
+                        <div className={classes.tariffInputWrap}>
+                          <input
+                            type="number"
+                            min={0}
+                            value={pp.pricePerDay ? pp.pricePerDay : ""}
+                            placeholder="0"
+                            readOnly={!canEdit}
+                            onChange={(e) =>
+                              canEdit && updateTariffPlacementPrice(t.id, pp.places, e.target.value)
+                            }
+                            className={classes.tariffInputAccent}
+                          />
+                          <span className={classes.tariffCurrency}>₽</span>
                         </div>
                       </label>
                     ))}
@@ -2375,6 +2465,9 @@ export default function FapHotelPage({
                                 {(() => {
                                   const eff = getEffectiveRow(i, pd);
                                   const hasTariff = !!findTariff(pd.tariffId);
+                                  if (eff.perRoomIncluded) {
+                                    return <span className={classes.accMuted}>— в сумме номера</span>;
+                                  }
                                   if (!hasTariff) {
                                     // Без тарифа — ручной ввод стоимости проживания.
                                     return (
