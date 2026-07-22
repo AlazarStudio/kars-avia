@@ -1112,7 +1112,7 @@
   overflow-y: hidden;
 }
 
-.reportTableWrap .roomGroup { min-width: 980px; }
+.reportTableWrap .roomGroup { min-width: 830px; }
 
 /* Скролл для режима «Просмотр» отчёта (в edit скролл на .reportGroups) */
 .reportViewScroll {
@@ -1302,10 +1302,10 @@
 .roomAccCur { font-size: 12px; color: #94A3B8; }
 .roomTotalVal { min-width: 92px; text-align: right; font-size: 14px; font-weight: 800; color: #10B981; font-variant-numeric: tabular-nums; }
 .roomKindBadge { font-size: 12px; font-weight: 700; color: #0057C2; background: #EAF1FB; padding: 3px 9px; border-radius: 6px; }
-.memberColHead, .memberRow { display: grid; grid-template-columns: 1.4fr 90px 150px 56px 96px 96px 96px 76px 168px; gap: 8px; align-items: center; padding: 6px 14px; }
+.memberColHead, .memberRow { display: grid; grid-template-columns: 1.4fr 90px 150px 56px 64px 64px 64px 86px 118px; gap: 8px; align-items: center; padding: 6px 14px; }
 .memberColHead { font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.3px; padding-bottom: 2px; }
 .memberRow { border-top: 1px solid #F1F4FB; }
-.memberFood { font-weight: 700; color: #10B981; }
+.memberFood { font-weight: 700; color: #10B981; display: inline-flex; align-items: center; justify-content: flex-end; gap: 5px; }
 
 /* Ячейка приёма пищи: [кол-во] × [цена] [ЛБ] */
 .mealCell { display: flex; align-items: center; gap: 2px; }
@@ -1320,7 +1320,43 @@
   font-variant-numeric: tabular-nums;
 }
 .cellInputCount:read-only { background: #F1F5F9; color: #94A3B8; }
-.mealPrice { color: #545873; font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.foodHint {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #EAF1FB;
+  color: #0057C2;
+  font-size: 10px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  flex-shrink: 0;
+}
+.foodHint:hover, .foodHint:focus-visible { background: #0057C2; color: #fff; outline: none; }
+
+/* Сумма проживания + «?» (формула ушла в тултип) */
+.accValue { display: inline-flex; align-items: center; justify-content: flex-end; gap: 5px; font-size: 13px; }
+.accValue strong { color: #10B981; font-weight: 800; font-variant-numeric: tabular-nums; }
+
+/* Тело «?»-тултипа: строки «метка · выражение · сумма» + итог (светлая карточка) */
+.hintBody { display: flex; flex-direction: column; gap: 4px; min-width: 190px; }
+.hintRow { display: flex; align-items: baseline; gap: 10px; }
+.hintLabel { flex: 1; color: #545873; }
+.hintExpr { color: #94A3B8; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.hintSum { min-width: 44px; text-align: right; font-weight: 700; color: #2E355D; font-variant-numeric: tabular-nums; }
+.hintTotal {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid #EDF0F7;
+  font-weight: 800;
+  color: #2E355D;
+}
+.hintTotal span:last-child { color: #10B981; }
 .lbToggle {
   flex-shrink: 0;
   font-size: 9px;
@@ -1360,8 +1396,6 @@
   cursor: pointer;
 }
 .bulkApplyBtn:hover { background: #F6F9FF; }
-.accFormula { font-size: 12px; color: #545873; white-space: nowrap; text-align: right; }
-.accFormula strong { color: #10B981; font-weight: 800; }
 .accWarning { font-size: 11px; line-height: 1.2; color: #b45309; white-space: normal; word-break: break-word; text-align: left; }
 
 /* Ряд «инпут + кнопка» в редакторе цен по видам размещения */

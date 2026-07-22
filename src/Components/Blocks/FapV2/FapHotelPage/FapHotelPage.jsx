@@ -5,6 +5,7 @@ import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
+import Tooltip from "@mui/material/Tooltip";
 import classes from "./FapHotelPage.module.css";
 import { findPersonIndexForRow } from "../reports/reportRowMatch";
 import {
@@ -190,6 +191,67 @@ const computePdFood = (pd, tariff) =>
   toNum(pd?.lunch) * toNum(pd?.lunchCount) +
   toNum(pd?.dinner) * toNum(pd?.dinnerCount) +
   lunchboxCount(pd) * lunchboxPriceFor(pd, tariff);
+
+// Разбивка питания для «?»-подсказки: цены в строке не показываем, всё — тут.
+// rows: [метка, выражение, сумма]; выражение может быть пустым.
+const foodHintData = (pd, tariff) => {
+  const rows = [
+    ["Завтрак", `${toNum(pd?.breakfastCount)} × ${fmt(toNum(pd?.breakfast))}`, fmt(toNum(pd?.breakfastCount) * toNum(pd?.breakfast))],
+    ["Обед", `${toNum(pd?.lunchCount)} × ${fmt(toNum(pd?.lunch))}`, fmt(toNum(pd?.lunchCount) * toNum(pd?.lunch))],
+    ["Ужин", `${toNum(pd?.dinnerCount)} × ${fmt(toNum(pd?.dinner))}`, fmt(toNum(pd?.dinnerCount) * toNum(pd?.dinner))],
+  ];
+  const lbc = lunchboxCount(pd);
+  const lbPrice = lunchboxPriceFor(pd, tariff);
+  if (lbc > 0 && lbPrice > 0) rows.push(["Ланчбокс", `${lbc} × ${fmt(lbPrice)}`, fmt(lbc * lbPrice)]);
+  return { rows, total: fmt(computePdFood(pd, tariff)) };
+};
+
+// «?»-подсказка с расчётом — светлая карточка в стиле поповеров системы
+// (фильтры, overflow-меню), через MUI Tooltip: портал не клипится
+// скролл-контейнерами отчёта, показывается по наведению и по фокусу с клавиатуры.
+const hintTooltipSlotProps = {
+  tooltip: {
+    sx: {
+      bgcolor: "#fff",
+      color: "#2E355D",
+      border: "1px solid #E4E4EF",
+      borderRadius: "12px",
+      padding: "10px 12px",
+      fontFamily: "Inter, sans-serif",
+      fontSize: "12px",
+      maxWidth: 300,
+      boxShadow: "0 10px 28px rgba(20, 30, 60, 0.14)",
+    },
+  },
+};
+
+function CalcHint({ rows, totalLabel, total }) {
+  return (
+    <Tooltip
+      placement="left"
+      slotProps={hintTooltipSlotProps}
+      title={
+        <div className={classes.hintBody}>
+          {rows.map(([label, expr, sum]) => (
+            <div key={label} className={classes.hintRow}>
+              <span className={classes.hintLabel}>{label}</span>
+              {expr ? <span className={classes.hintExpr}>{expr}</span> : null}
+              <span className={classes.hintSum}>{sum}</span>
+            </div>
+          ))}
+          <div className={classes.hintTotal}>
+            <span>{totalLabel}</span>
+            <span>{total} ₽</span>
+          </div>
+        </div>
+      }
+    >
+      <span className={classes.foodHint} tabIndex={0} aria-label={`Расчёт: ${totalLabel}`}>
+        ?
+      </span>
+    </Tooltip>
+  );
+}
 
 const emptyForm = {
   fullName: "",
@@ -2586,14 +2648,7 @@ export default function FapHotelPage({
                                     value={pd[countF] ? pd[countF] : ""}
                                     onChange={(e) => canEdit && updatePersonReport(i, countF, e.target.value)}
                                     readOnly={!canEdit}
-                                    title={`Количество (${mealLabel})`} />
-                                  {/* Цена за порцию — только из тарифа, индивидуально не правится. */}
-                                  <span
-                                    className={classes.mealPrice}
-                                    title={`Цена за порцию (${mealLabel}) — из тарифа`}
-                                  >
-                                    × {pd[priceF] ? fmt(pd[priceF]) : "—"}
-                                  </span>
+                                    title={`Количество (${mealLabel}) — цена за порцию из тарифа`} />
                                   {lunchboxPriceFor(pd, findTariff(pd.tariffId)) > 0 && (
                                     <button type="button"
                                       className={`${classes.lbToggle} ${pd[lbF] ? classes.lbToggleOn : ""}`}
@@ -2607,6 +2662,10 @@ export default function FapHotelPage({
                               ))}
                               <div className={`${classes.numRight} ${classes.memberFood}`}>
                                 {m.food > 0 ? fmt(m.food) : "—"}
+                                {(() => {
+                                  const fh = foodHintData(pd, findTariff(pd.tariffId));
+                                  return <CalcHint rows={fh.rows} totalLabel="Питание" total={fh.total} />;
+                                })()}
                               </div>
                               <div className={classes.numRight}>
                                 {(() => {
@@ -2629,12 +2688,26 @@ export default function FapHotelPage({
                                   if (eff.warning) {
                                     return <span className={classes.accWarning} title={eff.warning}>⚠ {eff.warning}</span>;
                                   }
+                                  // Формулу в строке не показываем — только сумма + «?» с разбивкой.
+                                  const accRows = [
+                                    [
+                                      `Цена за сутки${eff.placementKind ? ` (${placementKindLabel(eff.placementKind)})` : ""}`,
+                                      "",
+                                      fmt(eff.pricePerDay),
+                                    ],
+                                    ["Количество суток", "", String(toNum(pd.daysCount))],
+                                  ];
+                                  if ((eff.chargeFactor ?? 1) < 1) {
+                                    accRows.push([
+                                      "Возрастная скидка",
+                                      "",
+                                      eff.chargeFactor === 0 ? "бесплатно" : `−${Math.round((1 - eff.chargeFactor) * 100)}%`,
+                                    ]);
+                                  }
                                   return (
-                                    <span className={classes.accFormula}>
-                                      {fmt(eff.pricePerDay)} × {toNum(pd.daysCount)} сут
-                                      {eff.chargeFactor < 1 ? ` × ${Math.round(eff.chargeFactor * 100)}%` : ""}
-                                      {" = "}
+                                    <span className={classes.accValue}>
                                       <strong>{fmt(eff.accommodationCost)}</strong>
+                                      <CalcHint rows={accRows} totalLabel="Проживание" total={fmt(eff.accommodationCost)} />
                                     </span>
                                   );
                                 })()}
