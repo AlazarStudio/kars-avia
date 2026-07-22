@@ -7,6 +7,8 @@ import {
   UPDATE_PASSENGER_REQUEST_SAVED_PERSON,
   REMOVE_PASSENGER_REQUEST_SAVED_PERSON,
   ADD_PASSENGER_REQUEST_SAVED_PEOPLE,
+  SET_PASSENGER_REQUEST_GROUP,
+  REMOVE_PASSENGER_REQUEST_GROUP,
   getCookie,
 } from "../../../../../graphQL_requests";
 import {
@@ -15,7 +17,24 @@ import {
   PERSON_CATEGORY_OPTIONS,
   normalizeCategory,
 } from "../fapConstants";
+import {
+  GROUP_KIND_CONFIG,
+  PLACEMENT_REQUIREMENT_OPTIONS,
+  buildGroupIndex,
+  defaultGroupLabel,
+  groupColor,
+  groupDisplayLabel,
+  groupOrder,
+  nextGroupColor,
+  requestGroups,
+} from "../fapGroups";
+import { computeFapGroupWarnings, groupWarningText } from "../fapGroupWarnings";
+import { suggestPassengerGroups } from "../../../../utils/fapGroupSuggestions";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
+import GroupChip from "../GroupChip/GroupChip";
+import GroupCreateModal from "../GroupModal/GroupCreateModal";
+import PlacementBadge from "../PlacementBadge/PlacementBadge";
+import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import ManifestUploadField from "../ManifestUploadField/ManifestUploadField";
 import { manifestNameKey, isSameFlight } from "../../../../utils/parseManifestXlsx";
@@ -38,7 +57,16 @@ const SERVICE_PRESENCE = [
   { key: "transferDeparture", Icon: BusDownIcon },
 ];
 
-const emptyForm = { fullName: "", phone: "", seat: "", personCategory: "ADULT" };
+const emptyForm = {
+  fullName: "",
+  phone: "",
+  seat: "",
+  personCategory: "ADULT",
+  placementRequirement: "",
+};
+
+// Значение селекта «Размещение» → Int|null для мутаций реестра.
+const placementPayload = (value) => (value === "" ? null : Number(value));
 
 const PlusSvg = ({ size = 15, color = "#fff" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
@@ -101,6 +129,20 @@ function PersonForm({ values, onChange, onSubmit, onCancel, saving, submitLabel 
           ))}
         </select>
       </div>
+      <div className={`${classes.smallField} ${classes.fPlacement}`}>
+        <label className={classes.smallFieldLabel}>Размещение</label>
+        <select
+          className={classes.smallFieldInput}
+          value={values.placementRequirement}
+          onChange={(e) =>
+            onChange({ ...values, placementRequirement: e.target.value })
+          }
+        >
+          {PLACEMENT_REQUIREMENT_OPTIONS.map((o) => (
+            <option key={o.label} value={o.value}>{o.label}</option>
+          ))}
+        </select>
+      </div>
       <button
         type="submit"
         className={classes.quickAddBtn}
@@ -129,11 +171,17 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [manifest, setManifest] = useState(null);
+  const [selected, setSelected] = useState(() => new Set());
+  const [groupModal, setGroupModal] = useState(null);
+  const [groupsOpen, setGroupsOpen] = useState(true);
+  const [dismissedSuggestions, setDismissedSuggestions] = useState(() => new Set());
 
   const [addPerson] = useMutation(ADD_PASSENGER_REQUEST_SAVED_PERSON, ctx);
   const [updatePerson] = useMutation(UPDATE_PASSENGER_REQUEST_SAVED_PERSON, ctx);
   const [removePerson] = useMutation(REMOVE_PASSENGER_REQUEST_SAVED_PERSON, ctx);
   const [addPeople] = useMutation(ADD_PASSENGER_REQUEST_SAVED_PEOPLE, ctx);
+  const [saveGroup] = useMutation(SET_PASSENGER_REQUEST_GROUP, ctx);
+  const [dropGroup] = useMutation(REMOVE_PASSENGER_REQUEST_GROUP, ctx);
 
   const savedPassengers = request?.savedPassengers || [];
   const crewMembers = request?.crewMembers || [];
@@ -164,6 +212,44 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
     );
     return map;
   }, [request]);
+
+  // Группы: индекс personId→группа, порядок (стабильный цвет-фолбэк) и состав.
+  // Мемо строго от документа заявки — не от локальных инпутов (потеря фокуса).
+  const groups = requestGroups(request);
+  const groupIndex = useMemo(() => buildGroupIndex(request), [request]);
+  const groupOrdinals = useMemo(() => groupOrder(request), [request]);
+  const membersByGroupId = useMemo(() => {
+    const byPerson = new Map(
+      (request?.savedPassengers || []).map((p) => [p.personId, p])
+    );
+    const map = new Map();
+    requestGroups(request).forEach((g) => {
+      map.set(
+        g.groupId,
+        (g.memberPersonIds || []).map((id) => byPerson.get(id)).filter(Boolean)
+      );
+    });
+    return map;
+  }, [request]);
+
+  // Ворнинги групп и требований — тоже строго от документа заявки.
+  const warnings = useMemo(() => computeFapGroupWarnings(request), [request]);
+
+  // Подсказки из манифеста: считаются только по людям без группы,
+  // поэтому принятые подсказки исчезают сами после refetch.
+  const suggestions = useMemo(
+    () =>
+      suggestPassengerGroups(
+        (request?.savedPassengers || []).filter(
+          (p) => p.personId && !groupIndex.has(p.personId)
+        )
+      ),
+    [request, groupIndex]
+  );
+
+  const visibleSuggestions = canEdit
+    ? suggestions.filter((s) => !dismissedSuggestions.has(s.key))
+    : [];
 
   const kidsCount = savedPassengers.filter((p) => {
     const c = normalizeCategory(p.personCategory);
@@ -196,6 +282,8 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
       phone: p.phone || "",
       seat: p.seat || "",
       personCategory: normalizeCategory(p.personCategory),
+      placementRequirement:
+        p.placementRequirement != null ? String(p.placementRequirement) : "",
     });
   };
 
@@ -222,6 +310,7 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
             seat: form.seat.trim() || null,
             personType: "PASSENGER",
             personCategory: form.personCategory || "ADULT",
+            placementRequirement: placementPayload(form.placementRequirement),
           },
         },
       });
@@ -256,6 +345,7 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
             seat: editForm.seat.trim() || null,
             personType: person?.personType || "PASSENGER",
             personCategory: editForm.personCategory || "ADULT",
+            placementRequirement: placementPayload(editForm.placementRequirement),
           },
         },
       });
@@ -339,6 +429,158 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
     }
   };
 
+  // ── Выбор пассажиров и группы ──
+  const selectedPersons = savedPassengers.filter((p) => selected.has(p.personId));
+
+  const toggleSelected = (personId) =>
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(personId)) next.delete(personId);
+      else next.add(personId);
+      return next;
+    });
+
+  const clearSelection = () => setSelected(new Set());
+
+  // «Связать в группу»: если кто-то уже в другой группе — подтверждаем перенос
+  // (один человек — максимум одна группа).
+  const openGroupCreate = async () => {
+    const moved = selectedPersons.filter((p) => groupIndex.has(p.personId)).length;
+    if (moved > 0) {
+      const ok = await confirm({
+        message: `${moved} из выбранных уже в группах — перенести?`,
+        confirmText: "Перенести",
+        cancelText: "Отмена",
+      });
+      if (!ok) return;
+    }
+    setGroupModal({ group: null, members: selectedPersons });
+  };
+
+  const openGroupEdit = (group) => setGroupModal({ group, members: [] });
+
+  // Подсказка → модалка с предзаполненным составом (тип «Семья» — дефолт модалки).
+  const openSuggestion = (suggestion) =>
+    setGroupModal({ group: null, members: suggestion.members });
+
+  const modalMembers = groupModal?.group
+    ? membersByGroupId.get(groupModal.group.groupId) || []
+    : groupModal?.members || [];
+
+  const modalOrdinal = groupModal?.group
+    ? (groupOrdinals.get(groupModal.group.groupId) ?? groups.length) + 1
+    : groups.length + 1;
+
+  const handleGroupConfirm = async ({ groupId, label, kind, memberPersonIds }) => {
+    const editing = groupModal?.group || null;
+    try {
+      setSaving(true);
+      await saveGroup({
+        variables: {
+          requestId: request.id,
+          group: {
+            ...(groupId ? { groupId } : {}),
+            label,
+            kind,
+            memberPersonIds,
+            color: editing?.color || nextGroupColor(groups),
+          },
+        },
+      });
+      success(editing ? "Группа сохранена" : "Группа создана");
+      setGroupModal(null);
+      clearSelection();
+      onRefetch?.();
+    } catch (err) {
+      notifyError(err?.graphQLErrors?.[0]?.message || "Ошибка при сохранении группы");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleGroupRemove = async (group) => {
+    const ok = await confirm({
+      message: `Расформировать группу «${groupDisplayLabel(group)}»?`,
+      confirmText: "Расформировать",
+      cancelText: "Отмена",
+    });
+    if (!ok) return;
+    try {
+      setSaving(true);
+      await dropGroup({
+        variables: { requestId: request.id, groupId: group.groupId },
+      });
+      success("Группа расформирована");
+      onRefetch?.();
+    } catch (err) {
+      notifyError(err?.graphQLErrors?.[0]?.message || "Ошибка при расформировании");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Понижение уровня «вместе» до гостиницы — единственный UI togetherLevel в v1
+  // (гасит ворнинг «группа разнесена по номерам»).
+  const handleGroupLevelHotel = async (group) => {
+    try {
+      setSaving(true);
+      await saveGroup({
+        variables: {
+          requestId: request.id,
+          group: {
+            groupId: group.groupId,
+            label: group.label,
+            kind: group.kind,
+            color: group.color,
+            memberPersonIds: group.memberPersonIds || [],
+            togetherLevel: "HOTEL",
+          },
+        },
+      });
+      success("Группа селится в одной гостинице");
+      onRefetch?.();
+    } catch (err) {
+      notifyError(err?.graphQLErrors?.[0]?.message || "Ошибка при сохранении группы");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const dismissSuggestion = (key) =>
+    setDismissedSuggestions((prev) => new Set(prev).add(key));
+
+  // «Связать все N» — строго последовательные мутации (бэк переписывает весь
+  // массив групп целиком, параллельные вызовы теряют данные).
+  const handleLinkAllSuggestions = async () => {
+    if (visibleSuggestions.length === 0) return;
+    try {
+      setSaving(true);
+      const acc = [...groups];
+      for (const s of visibleSuggestions) {
+        const color = nextGroupColor(acc);
+        // eslint-disable-next-line no-await-in-loop
+        await saveGroup({
+          variables: {
+            requestId: request.id,
+            group: {
+              label: defaultGroupLabel(s.members, acc.length + 1),
+              kind: s.kind,
+              memberPersonIds: s.members.map((m) => m.personId),
+              color,
+            },
+          },
+        });
+        acc.push({ color });
+      }
+      success(`Создано групп: ${visibleSuggestions.length}`);
+      onRefetch?.();
+    } catch (err) {
+      notifyError(err?.graphQLErrors?.[0]?.message || "Ошибка при создании групп");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const targetLabels = deleteTarget
     ? Array.from(presence[deleteTarget.personId] || [])
         .map((k) => SERVICE_CONFIG[k]?.label)
@@ -409,6 +651,137 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
         </div>
       )}
 
+      {/* Groups */}
+      {(groups.length > 0 || visibleSuggestions.length > 0) && (
+        <div className={classes.listCard}>
+          <div
+            className={`${classes.listHead} ${classes.groupsHead}`}
+            onClick={() => setGroupsOpen((v) => !v)}
+          >
+            <span className={classes.listTitle}>Группы</span>
+            <span className={classes.listCount}>{groups.length}</span>
+            <span className={classes.groupsToggle}>
+              {groupsOpen ? "Свернуть" : "Развернуть"}
+            </span>
+          </div>
+          {groupsOpen && (
+            <div className={classes.listBody}>
+              {groups.map((g) => {
+                const members = membersByGroupId.get(g.groupId) || [];
+                const warn = warnings.byGroupId.get(g.groupId);
+                return (
+                  <div key={g.groupId} className={classes.groupRow}>
+                    <span
+                      className={classes.groupDot}
+                      style={{
+                        background: groupColor(g, groupOrdinals.get(g.groupId) ?? 0),
+                      }}
+                    />
+                    <div className={classes.rowMain}>
+                      <div className={classes.rowName}>
+                        <span className={classes.rowNameText}>
+                          {groupDisplayLabel(g)}
+                        </span>
+                      </div>
+                      <div className={classes.rowMeta}>
+                        {[
+                          GROUP_KIND_CONFIG[g.kind]?.label,
+                          `${members.length} чел.`,
+                        ]
+                          .filter(Boolean)
+                          .join(" · ")}
+                        {members.length === 1 && (
+                          <span className={classes.groupNote}>остался 1 человек</span>
+                        )}
+                      </div>
+                      {warn && (
+                        <div className={classes.groupWarn}>
+                          <span>⚠ {groupWarningText(warn)}</span>
+                          {canEdit && warn.splitRooms && (
+                            <button
+                              type="button"
+                              className={classes.groupWarnBtn}
+                              onClick={() => handleGroupLevelHotel(g)}
+                              disabled={saving}
+                            >
+                              Считать уровнем «гостиница»
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                    {canEdit && (
+                      <FapOverflowMenu
+                        items={[
+                          {
+                            label: "Изменить",
+                            icon: EditPencilIcon,
+                            onClick: () => openGroupEdit(g),
+                          },
+                          {
+                            label: "Расформировать",
+                            icon: DeleteIcon,
+                            tone: "danger",
+                            onClick: () => handleGroupRemove(g),
+                          },
+                        ]}
+                      />
+                    )}
+                  </div>
+                );
+              })}
+
+              {visibleSuggestions.length > 0 && (
+                <div className={classes.suggestBlock}>
+                  <div className={classes.suggestHead}>
+                    <span className={classes.suggestTitle}>
+                      Похоже на группы: {visibleSuggestions.length}
+                    </span>
+                    {visibleSuggestions.length >= 2 && (
+                      <button
+                        type="button"
+                        className={classes.bulkBtn}
+                        onClick={handleLinkAllSuggestions}
+                        disabled={saving}
+                      >
+                        Связать все {visibleSuggestions.length}
+                      </button>
+                    )}
+                  </div>
+                  {visibleSuggestions.map((s) => (
+                    <div key={s.key} className={classes.suggestCard}>
+                      <div className={classes.rowMain}>
+                        <div className={classes.rowName}>
+                          <span className={classes.rowNameText}>
+                            {s.members.map((m) => m.fullName || "—").join(", ")}
+                          </span>
+                        </div>
+                        <div className={classes.rowMeta}>{s.reason}</div>
+                      </div>
+                      <button
+                        type="button"
+                        className={classes.bulkBtn}
+                        onClick={() => openSuggestion(s)}
+                        disabled={saving}
+                      >
+                        Связать
+                      </button>
+                      <button
+                        type="button"
+                        className={classes.clearSelBtn}
+                        onClick={() => dismissSuggestion(s.key)}
+                      >
+                        Скрыть
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
       {/* Passengers */}
       <div className={classes.listCard}>
         <div className={classes.listHead}>
@@ -420,6 +793,30 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
             </button>
           )}
         </div>
+
+        {canEdit && selectedPersons.length >= 2 && (
+          <div className={classes.selectionBar}>
+            <span className={classes.selectionCount}>
+              Выбрано: {selectedPersons.length}
+            </span>
+            <button
+              type="button"
+              className={classes.bulkBtn}
+              onClick={openGroupCreate}
+              disabled={saving}
+            >
+              Связать в группу
+            </button>
+            <span className={classes.spacer} />
+            <button
+              type="button"
+              className={classes.clearSelBtn}
+              onClick={clearSelection}
+            >
+              Снять выбор
+            </button>
+          </div>
+        )}
 
         {canEdit && adding && (
           <PersonForm
@@ -463,8 +860,19 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
               const keys = SERVICE_PRESENCE.filter((s) =>
                 presence[p.personId]?.has(s.key)
               );
+              const group = groupIndex.get(p.personId);
+              const groupWarn = group ? warnings.byGroupId.get(group.groupId) : null;
               return (
                 <div key={p.personId} className={classes.row}>
+                  {canEdit && (
+                    <div className={classes.rowCheck}>
+                      <input
+                        type="checkbox"
+                        checked={selected.has(p.personId)}
+                        onChange={() => toggleSelected(p.personId)}
+                      />
+                    </div>
+                  )}
                   <span
                     className={classes.avatar}
                     style={{ background: PERSON_TYPE_CONFIG.PASSENGER.color }}
@@ -475,6 +883,15 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
                     <div className={classes.rowName}>
                       <span className={classes.rowNameText}>{p.fullName || "—"}</span>
                       <CategoryBadge category={normalizeCategory(p.personCategory)} />
+                      <PlacementBadge value={p.placementRequirement} />
+                      <GroupChip
+                        group={group}
+                        index={group ? groupOrdinals.get(group.groupId) ?? 0 : 0}
+                        members={group ? membersByGroupId.get(group.groupId) || [] : null}
+                        warn={!!groupWarn}
+                        warnText={groupWarningText(groupWarn)}
+                        onEdit={canEdit ? openGroupEdit : null}
+                      />
                     </div>
                     <div className={classes.rowMeta}>
                       {[p.seat && `место ${p.seat}`, p.phone]
@@ -585,6 +1002,16 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
         confirmText="Удалить"
         cancelText="Отмена"
         saving={saving}
+      />
+
+      <GroupCreateModal
+        open={!!groupModal}
+        onClose={() => setGroupModal(null)}
+        members={modalMembers}
+        group={groupModal?.group || null}
+        ordinal={modalOrdinal}
+        saving={saving}
+        onConfirm={handleGroupConfirm}
       />
     </div>
   );

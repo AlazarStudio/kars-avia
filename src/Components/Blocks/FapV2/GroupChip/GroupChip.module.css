@@ -1,0 +1,96 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 8px;
+  border: 1px solid;
+  border-radius: 999px;
+  background: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  color: #2E355D;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.clickable {
+  cursor: pointer;
+}
+
+.dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-block;
+}
+
+.warn {
+  color: #B45309;
+  font-size: 10px;
+}
+
+.card {
+  width: 240px;
+  padding: 12px 14px;
+  font-family: Inter, sans-serif;
+}
+
+.cardHead {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.cardMeta {
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--main-gray);
+}
+
+.cardWarn {
+  margin-top: 8px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: #FEF3C7;
+  color: #92400E;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.cardList {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.cardMember {
+  font-size: 12px;
+  color: #545873;
+}
+
+.cardEmpty {
+  font-size: 12px;
+  color: var(--main-gray);
+}
+
+.cardLink {
+  margin-top: 10px;
+  padding: 0;
+  background: none;
+  border: none;
+  color: #0057C3;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.cardLink:hover {
+  text-decoration: underline;
+}

@@ -54,6 +54,78 @@
   opacity: 0.5;
   cursor: default;
 }
+/* Секции групп в пикере */
+.section {
+  display: block;
+}
+.sectionHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 16px;
+  background: #f6f8fc;
+  border-bottom: 1px solid #eef0f5;
+  font-size: 12px;
+  color: #2b2f3a;
+}
+.sectionLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  margin: 0;
+  cursor: pointer;
+}
+.sectionTitle {
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.sectionCount {
+  color: #9aa0b4;
+  white-space: nowrap;
+}
+.sectionHint {
+  margin-left: auto;
+  color: #b45309;
+  font-size: 11px;
+  white-space: nowrap;
+}
+.groupAddAll {
+  display: block;
+  width: 100%;
+  padding: 7px 16px 7px 44px;
+  border: none;
+  background: none;
+  color: #0057c3;
+  font-size: 12px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.groupAddAll:hover {
+  text-decoration: underline;
+}
+.warnRow {
+  padding: 6px 16px;
+  background: #fef3c7;
+  color: #92400e;
+  border-bottom: 1px solid #f2f3f7;
+  font-size: 11px;
+  line-height: 1.35;
+}
+.nameLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+.nameLine b {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .avatar {
   width: 28px;
   height: 28px;

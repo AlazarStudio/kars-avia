@@ -2250,6 +2250,22 @@ export const REMOVE_PASSENGER_REQUEST_SAVED_PERSON = gql`
   }
 `;
 
+export const SET_PASSENGER_REQUEST_GROUP = gql`
+  mutation SetPassengerRequestGroup($requestId: ID!, $group: PassengerRequestGroupInput!) {
+    setPassengerRequestGroup(requestId: $requestId, group: $group) {
+      id
+    }
+  }
+`;
+
+export const REMOVE_PASSENGER_REQUEST_GROUP = gql`
+  mutation RemovePassengerRequestGroup($requestId: ID!, $groupId: String!) {
+    removePassengerRequestGroup(requestId: $requestId, groupId: $groupId) {
+      id
+    }
+  }
+`;
+
 export const UPDATE_PASSENGER_REQUEST_PERSON = gql`
   mutation UpdatePassengerRequestPerson(
     $requestId: ID!
@@ -3668,6 +3684,16 @@ export const GET_PASSENGER_REQUEST = gql`
         personCategory
         airlinePersonalId
         addedAt
+        placementRequirement
+      }
+      passengerGroups {
+        groupId
+        label
+        kind
+        togetherLevel
+        color
+        memberPersonIds
+        createdAt
       }
       createdBy {
         id

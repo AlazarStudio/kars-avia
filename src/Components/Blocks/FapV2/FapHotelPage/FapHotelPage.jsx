@@ -22,6 +22,20 @@ import {
 import { calculateEffectiveCostDays } from "../../../../utils/effectiveCostDays";
 import { formatDateTime, normalizeCategory, PERSON_CATEGORY_OPTIONS, accommodationChargeFactor } from "../fapConstants";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
+import {
+  buildGroupIndex,
+  groupDisplayLabel,
+  groupOrder,
+  requestGroups,
+  roomKey,
+} from "../fapGroups";
+import {
+  computeFapGroupWarnings,
+  groupWarningText,
+  placementWarningText,
+} from "../fapGroupWarnings";
+import GroupChip from "../GroupChip/GroupChip";
+import PlacementBadge from "../PlacementBadge/PlacementBadge";
 import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 import Button from "../../../Standart/Button/Button";
@@ -253,6 +267,19 @@ function CalcHint({ rows, totalLabel, total }) {
   );
 }
 
+// Обёртка-тултип для ворнинга группы/требования: без текста отдаёт детей как есть
+// (чтобы не добавлять лишнюю разметку в строку, когда нарушений нет).
+function WarnTip({ text, children }) {
+  if (!text) return children;
+  return (
+    <Tooltip title={text} slotProps={hintTooltipSlotProps}>
+      <span className={classes.warnAnchor} tabIndex={0}>
+        {children}
+      </span>
+    </Tooltip>
+  );
+}
+
 const emptyForm = {
   fullName: "",
   phone: "",
@@ -321,6 +348,10 @@ export default function FapHotelPage({
   const [relocateTarget, setRelocateTarget] = useState("");
   const [relocateReason, setRelocateReason] = useState("");
   const [evictState, setEvictState] = useState(null);
+
+  // Батч «Присвоить номер…» выбранным гостям
+  const [assignRoomOpen, setAssignRoomOpen] = useState(false);
+  const [assignRoomValue, setAssignRoomValue] = useState("");
 
   // Report state
   const [tariffs, setTariffs] = useState([]);
@@ -437,7 +468,7 @@ export default function FapHotelPage({
     const byRoom = new Map();
     people.forEach((person, i) => {
       const pd = personData[i] ?? emptyPD(person, hotelIndex, plan);
-      const room = (pd.roomNumber ?? "").trim();
+      const room = roomKey(pd.roomNumber);
       const member = {
         person,
         index: i,
@@ -602,6 +633,56 @@ export default function FapHotelPage({
           .filter(Boolean)
       ),
     [request?.livingService?.hotels]
+  );
+
+  // ── Группы пассажиров ──
+  // Всё производное считаем СТРОГО от документа заявки, а не от локальных инпутов:
+  // пересчёт от вводимых значений пересоздаёт строки таблицы и уводит фокус
+  // (та же причина, что у RoomNumberCell выше).
+  const passengerGroups = useMemo(() => requestGroups(request), [request]);
+  const groupIndex = useMemo(() => buildGroupIndex(request), [request]);
+  const groupOrderMap = useMemo(() => groupOrder(request), [request]);
+
+  // Ворнинги: W1/W2 (группа разнесена по гостиницам/номерам) и W3 (нарушено
+  // требование вида размещения). Считаются от документа заявки — не от
+  // локальных инпутов отчёта.
+  const warnings = useMemo(() => computeFapGroupWarnings(request), [request]);
+
+  // Требование вида размещения — только чтение: редактируется в реестре.
+  const placementByPersonId = useMemo(() => {
+    const map = new Map();
+    (request?.savedPassengers ?? []).forEach((sp) => {
+      if (sp?.personId) map.set(sp.personId, sp.placementRequirement ?? null);
+    });
+    return map;
+  }, [request]);
+
+  // Где размещён человек по всей услуге: personId → { hotelIndex, hotelName }.
+  const placedByPersonId = useMemo(() => {
+    const map = new Map();
+    (request?.livingService?.hotels ?? []).forEach((h, idx) => {
+      (h?.people ?? []).forEach((p) => {
+        if (p?.personId && !map.has(p.personId)) {
+          map.set(p.personId, { hotelIndex: idx, hotelName: h?.name ?? "" });
+        }
+      });
+    });
+    return map;
+  }, [request]);
+
+  // Для пикера: размещённые в ЛЮБОЙ гостинице, КРОМЕ текущей (превентивный хинт W1).
+  const placedElsewhere = useMemo(() => {
+    const map = new Map();
+    placedByPersonId.forEach((at, pid) => {
+      if (at.hotelIndex !== Number(hotelIndex)) map.set(pid, at.hotelName);
+    });
+    return map;
+  }, [placedByPersonId, hotelIndex]);
+
+  // Контракт с CatalogPickerModal: { groups, groupIndex, placedElsewhere }.
+  const groupContext = useMemo(
+    () => ({ groups: passengerGroups, groupIndex, placedElsewhere }),
+    [passengerGroups, groupIndex, placedElsewhere]
   );
 
   const handleCatalogConfirm = async (selected) => {
@@ -1713,6 +1794,60 @@ export default function FapHotelPage({
     }
   };
 
+  // ── Батч «Присвоить номер…» ──
+  const openAssignRoom = () => {
+    setAssignRoomValue("");
+    setAssignRoomOpen(true);
+  };
+  const closeAssignRoom = () => {
+    setAssignRoomOpen(false);
+    setAssignRoomValue("");
+  };
+  const handleAssignRoom = async () => {
+    if (selected.length === 0) return;
+    const room = roomKey(assignRoomValue);
+    if (!room) {
+      notifyError("Укажите номер");
+      return;
+    }
+    try {
+      setSaving(true);
+      // Строго последовательные await: бэк переписывает весь массив people
+      // (load-modify-write), параллельные вызовы теряют данные.
+      // personIndex берём из выбора (_idx) — допущение: правка roomNumber индексы
+      // не сдвигает, а выселение/переселение в эту пачку не входят, поэтому людей
+      // между шагами не перечитываем; refetch — один в конце.
+      for (const idx of selected) {
+        const person = people[idx];
+        if (!person) continue;
+        await updatePerson({
+          variables: {
+            requestId: request.id,
+            hotelIndex: Number(hotelIndex),
+            personIndex: idx,
+            person: {
+              fullName: person.fullName ?? "",
+              phone: person.phone ?? null,
+              roomNumber: room,
+              personType: person.personType === "CREW" ? "CREW" : "PASSENGER",
+              airlinePersonalId: person.airlinePersonalId ?? null,
+              personCategory:
+                person.personType === "CREW" ? "ADULT" : normalizeCategory(person.personCategory),
+            },
+          },
+        });
+      }
+      success(`Номер присвоен: ${selected.length}`);
+      setSelected([]);
+      closeAssignRoom();
+      onRefetch?.();
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при присвоении номера");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   // ── Report save / export ──
   const handleSaveReport = async () => {
     if (!request?.id) return;
@@ -1761,6 +1896,55 @@ export default function FapHotelPage({
 
   const canMutateGuests = canEdit;
   const showCrewToggle = request?.includesCrew;
+
+  // Занятость набранного номера в текущей гостинице (учитываются ВСЕ гости номера).
+  const assignRoomOccupancy = roomKey(assignRoomValue)
+    ? people.filter((p) => roomKey(p.roomNumber) === roomKey(assignRoomValue)).length
+    : 0;
+
+  // Группы, которые действие разделяет: у группы остаются РАЗМЕЩЁННЫЕ участники,
+  // которых действие не затрагивает. Незаселённые участники нарушением не считаются.
+  // toHotelIndex — целевая гостиница переселения (там участники не «разделяются»).
+  const splitGroupsFor = (indices, toHotelIndex = null) => {
+    const affectedIds = new Set(
+      (indices ?? []).map((i) => people[i]?.personId).filter(Boolean)
+    );
+    if (affectedIds.size === 0) return [];
+    const affectedGroups = new Map();
+    affectedIds.forEach((pid) => {
+      const g = groupIndex.get(pid);
+      if (g) affectedGroups.set(g.groupId, g);
+    });
+    return [...affectedGroups.values()].filter((g) =>
+      (g.memberPersonIds ?? []).some((pid) => {
+        if (affectedIds.has(pid)) return false;
+        const at = placedByPersonId.get(pid);
+        if (!at) return false;
+        if (toHotelIndex != null && at.hotelIndex === Number(toHotelIndex)) return false;
+        return true;
+      })
+    );
+  };
+
+  const splitGroupsText = (list) => {
+    if (!list || list.length === 0) return "";
+    if (list.length === 1) {
+      return `Внимание: разделяется группа „${groupDisplayLabel(list[0])}“`;
+    }
+    return `Внимание: разделяются группы: ${list
+      .map((g) => `„${groupDisplayLabel(g)}“`)
+      .join(", ")}`;
+  };
+
+  const evictSplitText = evictState ? splitGroupsText(splitGroupsFor(evictState.indices)) : "";
+  const relocateSplitText = relocateState
+    ? splitGroupsText(
+        splitGroupsFor(
+          relocateState.indices,
+          relocateTarget === "" ? null : Number(relocateTarget)
+        )
+      )
+    : "";
 
   // ── Render helpers ──
   const renderGuestRow = (p) => {
@@ -1836,6 +2020,11 @@ export default function FapHotelPage({
         </div>
       );
     }
+    const group = p.personId ? groupIndex.get(p.personId) : null;
+    const groupWarn = group ? warnings.byGroupId.get(group.groupId) : null;
+    const groupWarnText = groupWarn ? groupWarningText(groupWarn) : "";
+    const placementWarn = p.personId ? warnings.byPersonId.get(p.personId) : null;
+    const placementWarnText = placementWarn ? placementWarningText(placementWarn) : "";
     return (
       <div
         key={p._idx}
@@ -1861,6 +2050,29 @@ export default function FapHotelPage({
             <div className={classes.guestName}>
               {p.fullName || "—"}
               {p.personType === "CREW" && <PersonBadge type="CREW" />}
+              {/* Метка группы и требование размещения — только чтение (правятся в реестре) */}
+              {group && (
+                <WarnTip text={groupWarnText}>
+                  <GroupChip
+                    group={group}
+                    index={groupOrderMap.get(group.groupId) ?? 0}
+                    warn={!!groupWarn}
+                    warnText={groupWarnText}
+                    members={(group.memberPersonIds ?? []).map((pid) => ({
+                      personId: pid,
+                      fullName: savedPassengers.find((sp) => sp.personId === pid)?.fullName || "",
+                    }))}
+                  />
+                </WarnTip>
+              )}
+              {p.personId && (
+                <WarnTip text={placementWarnText}>
+                  <PlacementBadge
+                    value={placementByPersonId.get(p.personId) ?? null}
+                    violated={!!placementWarn}
+                  />
+                </WarnTip>
+              )}
             </div>
           </div>
         </div>
@@ -2191,6 +2403,11 @@ export default function FapHotelPage({
                     onClick={() => openRelocate(selected)}
                   >
                     <SwapSvg color="#0057C3" /> Переселить
+                  </button>
+                )}
+                {canMutateGuests && (
+                  <button type="button" className={classes.bulkBtn} onClick={openAssignRoom}>
+                    <HotelBedIcon size={16} strokeWidth={2} /> Присвоить номер…
                   </button>
                 )}
                 <button
@@ -2560,6 +2777,19 @@ export default function FapHotelPage({
                 <div className={classes.reportGroups}>
                   {visibleGroups.map((g) => {
                     const gTotal = groupTotals[g.key]?.total ?? 0;
+                    // Маркер нарушения требования размещения в номере.
+                    // Авиакомпании ворнинги не показываем (спека §5) — таблица
+                    // редактирования доступна только при canEdit.
+                    const roomWarnText = canEdit
+                      ? [
+                          ...new Set(
+                            g.members
+                              .map((m) => warnings.byPersonId.get(m.person.personId))
+                              .filter(Boolean)
+                              .map(placementWarningText)
+                          ),
+                        ].join("; ")
+                      : "";
                     return (
                       <div key={g.key} className={`${classes.roomGroup} ${g.noRoom ? classes.roomGroupNoRoom : ""}`}>
                         <div className={classes.roomHead}>
@@ -2568,6 +2798,13 @@ export default function FapHotelPage({
                           </span>
                           {!g.noRoom && placementKindLabel(g.members.length) && (
                             <span className={classes.roomKindBadge}>{placementKindLabel(g.members.length)}</span>
+                          )}
+                          {roomWarnText && (
+                            <Tooltip title={roomWarnText} slotProps={hintTooltipSlotProps}>
+                              <span className={classes.roomWarnBadge} tabIndex={0}>
+                                ⚠ нарушено требование
+                              </span>
+                            </Tooltip>
                           )}
                           {g.tariffName && <span className={classes.roomCat}>{g.tariffName}</span>}
                           <span className={classes.roomTotalVal} style={{ marginLeft: "auto" }}>
@@ -2746,9 +2983,17 @@ export default function FapHotelPage({
             : "Выселение пассажира"
         }
         description={
-          people[evictState?.indices?.[0]]?.personType === "CREW"
-            ? "Укажите причину выселения. Это действие изменит статус члена экипажа."
-            : "Укажите причину выселения. Это действие изменит статус пассажира."
+          <>
+            {people[evictState?.indices?.[0]]?.personType === "CREW"
+              ? "Укажите причину выселения. Это действие изменит статус члена экипажа."
+              : "Укажите причину выселения. Это действие изменит статус пассажира."}
+            {evictSplitText && (
+              <>
+                <br />
+                <span className={classes.groupSplitWarn}>{evictSplitText}</span>
+              </>
+            )}
+          </>
         }
         reasonLabel="Причина *"
         placeholder="Укажите причину выселения..."
@@ -2768,6 +3013,7 @@ export default function FapHotelPage({
         loading={saving}
         onConfirm={personMode === "CREW" ? handleCrewCatalogConfirm : handleCatalogConfirm}
         title={personMode === "CREW" ? "Выбрать из экипажа заявки" : undefined}
+        groupContext={personMode === "CREW" ? undefined : groupContext}
       />
 
       <Dialog
@@ -2799,6 +3045,9 @@ export default function FapHotelPage({
           <p className={classes.dialogHint}>
             Выберите гостиницу для переселения и укажите причину.
           </p>
+          {relocateSplitText && (
+            <p className={classes.groupSplitWarn}>{relocateSplitText}</p>
+          )}
           <div className={classes.dialogField}>
             <label className={classes.dialogLabel}>Гостиница *</label>
             <select
@@ -2852,6 +3101,69 @@ export default function FapHotelPage({
               : relocateState && relocateState.indices.length > 1
               ? "Переселить всех"
               : "Переселить"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={assignRoomOpen}
+        onClose={closeAssignRoom}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: "16px" } }}
+      >
+        <DialogTitle
+          sx={{
+            fontFamily: "Inter, sans-serif",
+            fontWeight: 700,
+            fontSize: 18,
+            color: "var(--text)",
+            borderBottom: "1px solid #F1F5F9",
+            pb: 2,
+          }}
+        >
+          Присвоить номер ({selected.length})
+        </DialogTitle>
+        <DialogContent
+          sx={{ pt: "16px !important", display: "flex", flexDirection: "column", gap: 2 }}
+        >
+          <p className={classes.dialogHint}>
+            Номер будет проставлен всем выбранным гостям.
+          </p>
+          <div className={classes.dialogField}>
+            <label className={classes.dialogLabel}>Номер *</label>
+            <input
+              type="text"
+              className={classes.dialogInput}
+              value={assignRoomValue}
+              onChange={(e) => setAssignRoomValue(e.target.value)}
+              placeholder="Например, 512"
+            />
+            {roomKey(assignRoomValue) && (
+              <span className={classes.dialogNote}>
+                {assignRoomOccupancy > 0
+                  ? `Сейчас в номере ${roomKey(assignRoomValue)}: ${assignRoomOccupancy} — станет ${
+                      assignRoomOccupancy +
+                      selected.filter(
+                        (i) => roomKey(people[i]?.roomNumber) !== roomKey(assignRoomValue)
+                      ).length
+                    }`
+                  : `Номер ${roomKey(assignRoomValue)} сейчас свободен`}
+              </span>
+            )}
+          </div>
+        </DialogContent>
+        <DialogActions sx={{ padding: "12px 20px 20px", gap: 1 }}>
+          <Button backgroundcolor="#F6F7FB" color="#545873" onClick={closeAssignRoom}>
+            Отмена
+          </Button>
+          <Button
+            backgroundcolor="var(--dark-blue)"
+            color="#fff"
+            onClick={handleAssignRoom}
+            disabled={saving || !roomKey(assignRoomValue) || selected.length === 0}
+          >
+            {saving ? "Сохранение..." : "Присвоить"}
           </Button>
         </DialogActions>
       </Dialog>
