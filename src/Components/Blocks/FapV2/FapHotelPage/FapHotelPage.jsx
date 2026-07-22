@@ -284,6 +284,10 @@ export default function FapHotelPage({
   const peopleRef = useRef([]);
   const saveTimerRef = useRef(null);
   const reconciledKeyRef = useRef(null);
+  // Снапшот строк, из которых собрано текущее состояние (реконсиляция) либо
+  // ответ нашего последнего сейва — для live-подхвата чужих изменений (подписка).
+  const lastAppliedRowsRef = useRef(null);
+  const [remoteVersion, setRemoteVersion] = useState(0);
   // persistReportRef нужен для cleanup'a на размонтирование — обычное замыкание
   // useEffect([], ...) видит persistReport времени монтирования, а мы хотим вызвать
   // АКТУАЛЬНЫЙ с up-to-date зависимостями (requestId, mutation client и т.д.).
@@ -664,6 +668,8 @@ export default function FapHotelPage({
     reconciledKeyRef.current = reconcileKey;
     const saved = (request.hotelReports ?? []).find((r) => r.hotelIndex === Number(hotelIndex));
     const savedRows = saved?.reportRows ?? [];
+    // Фиксируем, из чего собрано состояние — live-синк ниже сравнивает с этим снапшотом.
+    lastAppliedRowsRef.current = JSON.stringify(savedRows);
 
     const priceKey = (r) =>
       [toNum(r.breakfast), toNum(r.lunch), toNum(r.dinner), toNum(r.foodCost), toNum(r.accommodationCost ?? r.legacyFlatAccommodation)].join("|");
@@ -810,7 +816,22 @@ export default function FapHotelPage({
       setTariffs([]);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [request?.id, hotelIndex, hotelTariffsReady]);
+  }, [request?.id, hotelIndex, hotelTariffsReady, remoteVersion]);
+
+  // Live-обновления: другой клиент сохранил отчёт (подписка → refetch наверху) —
+  // принимаем удалённые строки повторной реконсиляцией, но ТОЛЬКО если у нас нет
+  // несохранённых правок (иначе прежний last-write-wins). Собственный сейв
+  // узнаём по совпадению снапшота с ответом мутации в persistReport.
+  useEffect(() => {
+    if (lastAppliedRowsRef.current === null) return; // до первой реконсиляции
+    const saved = (request?.hotelReports ?? []).find((r) => r.hotelIndex === Number(hotelIndex));
+    const incoming = JSON.stringify(saved?.reportRows ?? []);
+    if (incoming === lastAppliedRowsRef.current) return;
+    if (saveTimerRef.current || saving) return; // свои правки в полёте — не затираем
+    reconciledKeyRef.current = null;
+    setRemoteVersion((v) => v + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [request?.hotelReports]);
 
   // ── Persistence helpers ──
   // Сериализация текущих тарифов + personData в строки отчёта.
@@ -893,13 +914,17 @@ export default function FapHotelPage({
     if (!request?.id) return;
     try {
       setSaving(true);
-      await saveReport({
+      const res = await saveReport({
         variables: {
           requestId: request.id,
           hotelIndex: Number(hotelIndex),
           reportRows: buildReportRows(),
         },
       });
+      // Ответ мутации = как строки лежат в БД (бэк дополняет roomCategory и т.п.) —
+      // live-синк узнает по нему наш собственный сейв и не будет пересобирать состояние.
+      const savedRows = res?.data?.savePassengerRequestHotelReport?.reportRows;
+      if (savedRows) lastAppliedRowsRef.current = JSON.stringify(savedRows);
       onRefetch?.();
     } catch (e) {
       notifyError("Ошибка при сохранении тарифа");
@@ -2562,12 +2587,13 @@ export default function FapHotelPage({
                                     onChange={(e) => canEdit && updatePersonReport(i, countF, e.target.value)}
                                     readOnly={!canEdit}
                                     title={`Количество (${mealLabel})`} />
-                                  <span className={classes.mealX}>×</span>
-                                  <input type="number" min={0} className={classes.cellInputNum}
-                                    value={pd[priceF] ? pd[priceF] : ""}
-                                    onChange={(e) => canEdit && updatePersonReport(i, priceF, e.target.value)}
-                                    readOnly={!canEdit}
-                                    title={`Цена за порцию (${mealLabel})`} />
+                                  {/* Цена за порцию — только из тарифа, индивидуально не правится. */}
+                                  <span
+                                    className={classes.mealPrice}
+                                    title={`Цена за порцию (${mealLabel}) — из тарифа`}
+                                  >
+                                    × {pd[priceF] ? fmt(pd[priceF]) : "—"}
+                                  </span>
                                   {lunchboxPriceFor(pd, findTariff(pd.tariffId)) > 0 && (
                                     <button type="button"
                                       className={`${classes.lbToggle} ${pd[lbF] ? classes.lbToggleOn : ""}`}

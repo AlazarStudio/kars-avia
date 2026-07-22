@@ -1112,7 +1112,7 @@
   overflow-y: hidden;
 }
 
-.reportTableWrap .roomGroup { min-width: 1080px; }
+.reportTableWrap .roomGroup { min-width: 980px; }
 
 /* Скролл для режима «Просмотр» отчёта (в edit скролл на .reportGroups) */
 .reportViewScroll {
@@ -1302,7 +1302,7 @@
 .roomAccCur { font-size: 12px; color: #94A3B8; }
 .roomTotalVal { min-width: 92px; text-align: right; font-size: 14px; font-weight: 800; color: #10B981; font-variant-numeric: tabular-nums; }
 .roomKindBadge { font-size: 12px; font-weight: 700; color: #0057C2; background: #EAF1FB; padding: 3px 9px; border-radius: 6px; }
-.memberColHead, .memberRow { display: grid; grid-template-columns: 1.4fr 90px 150px 56px 118px 118px 118px 76px 168px; gap: 8px; align-items: center; padding: 6px 14px; }
+.memberColHead, .memberRow { display: grid; grid-template-columns: 1.4fr 90px 150px 56px 96px 96px 96px 76px 168px; gap: 8px; align-items: center; padding: 6px 14px; }
 .memberColHead { font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.3px; padding-bottom: 2px; }
 .memberRow { border-top: 1px solid #F1F4FB; }
 .memberFood { font-weight: 700; color: #10B981; }
@@ -1320,7 +1320,7 @@
   font-variant-numeric: tabular-nums;
 }
 .cellInputCount:read-only { background: #F1F5F9; color: #94A3B8; }
-.mealX { color: #94A3B8; font-size: 11px; flex-shrink: 0; }
+.mealPrice { color: #545873; font-size: 12px; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .lbToggle {
   flex-shrink: 0;
   font-size: 9px;
