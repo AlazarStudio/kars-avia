@@ -7,6 +7,20 @@ import {
   groupDisplayLabel,
   groupTogetherLevel,
 } from "../fapGroups";
+import GroupFamilyIcon from "../../../../shared/icons/GroupFamilyIcon";
+import GroupEscortIcon from "../../../../shared/icons/GroupEscortIcon";
+import GroupColleaguesIcon from "../../../../shared/icons/GroupColleaguesIcon";
+import GroupTeamIcon from "../../../../shared/icons/GroupTeamIcon";
+import GroupOtherIcon from "../../../../shared/icons/GroupOtherIcon";
+
+// Иконка типа связи. Карта здесь, а не в fapGroups.js: та утилита — .js без JSX.
+const GROUP_KIND_ICON = {
+  FAMILY: GroupFamilyIcon,
+  ESCORT: GroupEscortIcon,
+  COLLEAGUES: GroupColleaguesIcon,
+  GROUP: GroupTeamIcon,
+  OTHER: GroupOtherIcon,
+};
 
 const LEVEL_LABEL = { ROOM: "в одном номере", HOTEL: "в одной гостинице" };
 
@@ -26,9 +40,12 @@ export default function GroupChip({
   if (!group) return null;
 
   const color = groupColor(group, index);
-  const label = groupDisplayLabel(group);
   const kindLabel = GROUP_KIND_CONFIG[group.kind]?.label ?? "";
-  const title = [label, kindLabel].filter(Boolean).join(" · ");
+  const Icon = GROUP_KIND_ICON[group.kind] ?? GroupOtherIcon;
+  // «Семья · Ивановы»; у группы без подписи — только тип, без висящего разделителя
+  const text = group.label ? `${kindLabel} · ${group.label}` : kindLabel;
+  const label = groupDisplayLabel(group);
+  const title = warn && warnText ? `${text} · ${warnText}` : text;
   const hasPopover = Array.isArray(members);
 
   if (compact) {
@@ -41,10 +58,11 @@ export default function GroupChip({
         className={`${classes.chip} ${hasPopover ? classes.clickable : ""}`}
         style={{ borderColor: color }}
         onClick={hasPopover ? (e) => setAnchor(e.currentTarget) : undefined}
-        title={warn && warnText ? `${title} · ${warnText}` : title}
+        title={title}
       >
         <span className={classes.dot} style={{ background: color }} />
-        {label}
+        <Icon size={13} className={classes.kindIcon} style={{ color }} />
+        {text}
         {warn && <span className={classes.warn}>⚠</span>}
       </span>
 

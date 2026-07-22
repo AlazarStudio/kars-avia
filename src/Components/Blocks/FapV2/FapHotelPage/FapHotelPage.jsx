@@ -12,7 +12,6 @@ import {
   ADD_PASSENGER_REQUEST_HOTEL_PERSON,
   ADD_PASSENGER_REQUEST_HOTEL_PEOPLE,
   UPDATE_PASSENGER_REQUEST_HOTEL_PERSON,
-  REMOVE_PASSENGER_REQUEST_HOTEL_PERSON,
   RELOCATE_PASSENGER_REQUEST_HOTEL_PERSON,
   EVICT_PASSENGER_REQUEST_HOTEL_PERSON,
   SAVE_PASSENGER_REQUEST_HOTEL_REPORT,
@@ -23,7 +22,9 @@ import { calculateEffectiveCostDays } from "../../../../utils/effectiveCostDays"
 import { formatDateTime, normalizeCategory, PERSON_CATEGORY_OPTIONS, accommodationChargeFactor } from "../fapConstants";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import {
+  GROUP_KIND_CONFIG,
   buildGroupIndex,
+  groupColor,
   groupDisplayLabel,
   groupOrder,
   requestGroups,
@@ -37,7 +38,6 @@ import {
 import GroupChip from "../GroupChip/GroupChip";
 import PlacementBadge from "../PlacementBadge/PlacementBadge";
 import { useToast } from "../../../../contexts/ToastContext";
-import { useDialog } from "../../../../contexts/DialogContext";
 import Button from "../../../Standart/Button/Button";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import CatalogPickerModal, { personKey } from "../CatalogPickerModal/CatalogPickerModal";
@@ -192,6 +192,19 @@ const emptyPD = (person, hotelIndex, plan) => ({
   accommodationCost: 0,
 });
 
+// Ключи гостей для сопоставления personData (адресуется индексом) со списком people.
+// Однофамильцы без personId различаются порядковым номером повтора.
+const personRosterKeys = (list) => {
+  const seen = new Map();
+  return (list ?? []).map((p) => {
+    if (p?.personId) return `id:${p.personId}`;
+    const nm = (p?.fullName ?? "").trim().toLowerCase();
+    const n = seen.get(nm) ?? 0;
+    seen.set(nm, n + 1);
+    return `nm:${nm}:${n}`;
+  });
+};
+
 // Цена ланчбокса гостя: живой тариф приоритетнее снапшота в pd.
 const lunchboxPriceFor = (pd, tariff) =>
   toNum(tariff ? tariff.lunchboxPrice : pd?.lunchboxPrice);
@@ -325,7 +338,6 @@ export default function FapHotelPage({
 }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
-  const { confirm } = useDialog();
 
   const hotel = request?.livingService?.hotels?.[hotelIndex];
   const plan = request?.livingService?.plan;
@@ -377,6 +389,8 @@ export default function FapHotelPage({
   const peopleRef = useRef([]);
   const saveTimerRef = useRef(null);
   const reconciledKeyRef = useRef(null);
+  // Снапшот ключей гостей — по нему personData переносится при сдвиге состава.
+  const personKeysRef = useRef(null);
   // Снапшот строк, из которых собрано текущее состояние (реконсиляция) либо
   // ответ нашего последнего сейва — для live-подхвата чужих изменений (подписка).
   const lastAppliedRowsRef = useRef(null);
@@ -405,9 +419,6 @@ export default function FapHotelPage({
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
   const [updatePerson] = useMutation(UPDATE_PASSENGER_REQUEST_HOTEL_PERSON, {
-    context: { headers: { Authorization: `Bearer ${token}` } },
-  });
-  const [removePerson] = useMutation(REMOVE_PASSENGER_REQUEST_HOTEL_PERSON, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
   const [relocatePerson] = useMutation(RELOCATE_PASSENGER_REQUEST_HOTEL_PERSON, {
@@ -547,16 +558,20 @@ export default function FapHotelPage({
             perRoomIncluded: true,
           };
         }
-        // Несущий гость: тариф гарантированно есть (он — первый гость номера с тарифом).
-        const price = resolveTariffPricePerDay(tariff, places);
-        if (places == null) {
-          return { tariffName: tariff.name ?? "", placementKind: 0, pricePerDay: 0, accommodationCost: 0, warning: "укажите номер" };
+        // Несущий гость. Карта начислений — мемо предыдущего рендера, поэтому
+        // тариф может быть уже снят (removeTariff чистит pd и синхронно зовёт
+        // buildReportRows) — тогда падаем на ручное значение общей веткой ниже.
+        if (tariff) {
+          const price = resolveTariffPricePerDay(tariff, places);
+          if (places == null) {
+            return { tariffName: tariff.name ?? "", placementKind: 0, pricePerDay: 0, accommodationCost: 0, warning: "укажите номер" };
+          }
+          if (price == null) {
+            return { tariffName: tariff.name ?? "", placementKind: places, pricePerDay: 0, accommodationCost: 0, warning: `нет цены (${placementKindLabel(places)})` };
+          }
+          // Один раз на номер, без возрастного коэфа.
+          return { tariffName: tariff.name ?? "", placementKind: places, pricePerDay: price, accommodationCost: price * toNum(pd.daysCount), chargeFactor: 1, warning: null };
         }
-        if (price == null) {
-          return { tariffName: tariff.name ?? "", placementKind: places, pricePerDay: 0, accommodationCost: 0, warning: `нет цены (${placementKindLabel(places)})` };
-        }
-        // Один раз на номер, без возрастного коэфа.
-        return { tariffName: tariff.name ?? "", placementKind: places, pricePerDay: price, accommodationCost: price * toNum(pd.daysCount), chargeFactor: 1, warning: null };
       }
 
       const tariff = findTariff(pd.tariffId);
@@ -648,6 +663,34 @@ export default function FapHotelPage({
   // локальных инпутов отчёта.
   const warnings = useMemo(() => computeFapGroupWarnings(request), [request]);
 
+  // Состав групп внутри номера отчёта: какие группы представлены, сколько их
+  // участников в этом номере и сколько гостей номера вне групп.
+  // Гости без personId считаются «без группы» (инвариант спеки §5.3).
+  const reportRoomGroups = useCallback(
+    (members) => {
+      const counts = new Map();
+      let ungrouped = 0;
+      (members ?? []).forEach((m) => {
+        const pid = m?.person?.personId;
+        const g = pid ? groupIndex.get(pid) : null;
+        if (!g) {
+          ungrouped += 1;
+          return;
+        }
+        counts.set(g.groupId, (counts.get(g.groupId) ?? 0) + 1);
+      });
+      const list = passengerGroups
+        .filter((g) => counts.has(g.groupId))
+        .map((g) => ({
+          group: g,
+          inRoom: counts.get(g.groupId),
+          total: (g.memberPersonIds ?? []).length,
+        }));
+      return { list, ungrouped };
+    },
+    [groupIndex, passengerGroups]
+  );
+
   // Требование вида размещения — только чтение: редактируется в реестре.
   const placementByPersonId = useMemo(() => {
     const map = new Map();
@@ -656,6 +699,27 @@ export default function FapHotelPage({
     });
     return map;
   }, [request]);
+
+  // Состав группы для карточки-поповера чипа. Считаем один раз на группу:
+  // раньше на каждую строку шёл линейный поиск по всему реестру.
+  const groupMembersById = useMemo(() => {
+    const nameByPersonId = new Map(
+      (request?.savedPassengers ?? [])
+        .filter((sp) => sp?.personId)
+        .map((sp) => [sp.personId, sp.fullName || ""])
+    );
+    const map = new Map();
+    passengerGroups.forEach((g) => {
+      map.set(
+        g.groupId,
+        (g.memberPersonIds ?? []).map((pid) => ({
+          personId: pid,
+          fullName: nameByPersonId.get(pid) || "",
+        }))
+      );
+    });
+    return map;
+  }, [request, passengerGroups]);
 
   // Где размещён человек по всей услуге: personId → { hotelIndex, hotelName }.
   const placedByPersonId = useMemo(() => {
@@ -809,6 +873,9 @@ export default function FapHotelPage({
     const reconcileKey = `${request?.id}:${hotelIndex}`;
     if (reconciledKeyRef.current === reconcileKey) return;
     reconciledKeyRef.current = reconcileKey;
+    // Состояние пересобирается под текущий состав — фиксируем ключи гостей,
+    // иначе перенос personData по сдвигу индексов затрёт результат реконсиляции.
+    personKeysRef.current = personRosterKeys(people);
     const saved = (request.hotelReports ?? []).find((r) => r.hotelIndex === Number(hotelIndex));
     const savedRows = saved?.reportRows ?? [];
     // Фиксируем, из чего собрано состояние — live-синк ниже сравнивает с этим снапшотом.
@@ -1094,6 +1161,31 @@ export default function FapHotelPage({
 
   // Синк-ref для cleanup на unmount.
   useEffect(() => { persistReportRef.current = persistReport; }, [persistReport]);
+
+  // Гостя удалили/выселили из середины списка — индексы people сдвинулись, а
+  // personData адресуется индексом. Без переноса данные (тариф, сутки, питание)
+  // достались бы соседу, и автосейв записал бы их под чужим personId.
+  // Реконсиляция сюда не приходит (она заперта reconciledKeyRef и hotelReports
+  // при удалении гостя не меняется), поэтому переносим записи по ключу гостя.
+  useEffect(() => {
+    const keys = personRosterKeys(people);
+    const prevKeys = personKeysRef.current;
+    personKeysRef.current = keys;
+    if (!prevKeys) return;
+    // Список только дополнился в конец — прежние индексы не сдвинулись.
+    const appendedOnly = keys.length >= prevKeys.length && prevKeys.every((k, i) => k === keys[i]);
+    if (appendedOnly) return;
+    const prevIndexByKey = new Map(prevKeys.map((k, i) => [k, i]));
+    const prevPD = personDataRef.current;
+    const next = {};
+    people.forEach((person, i) => {
+      const from = prevIndexByKey.get(keys[i]);
+      next[i] = (from != null && prevPD[from]) || emptyPD(person, hotelIndex, plan);
+    });
+    personDataRef.current = next;
+    setPersonData(next);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [people]);
 
   // Гарантируем, что personData содержит запись для каждого фактического гостя.
   // Init useEffect выше срабатывает только при смене request.id/hotelIndex.
@@ -1513,15 +1605,33 @@ export default function FapHotelPage({
   }, [reportGroups, getEffectiveRow, grandTotal, reportNights]);
 
   // View-model для FapReportView.
+  // Колонку точек показываем только когда в заявке вообще есть группы: иначе
+  // legacy-отчёт получил бы пунктирный кружок у каждого гостя (спека §5.4).
+  const showReportGroupDots = passengerGroups.length > 0;
+
   const reportViewGroups = useMemo(
     () =>
-      reportGroups.map((g) => ({
+      reportGroups.map((g) => {
+        // Метки групп видны и в режиме «Просмотр» — в т.ч. авиакомпании (спека §5).
+        // Ворнинги сюда НЕ передаём: read-only-роль их видеть не должна.
+        const roomGroups = reportRoomGroups(g.members);
+        return {
         key: g.key,
         room: g.noRoom ? null : g.roomNumber,
         kind: g.noRoom ? "" : placementKindLabel(g.members.length),
         tariff: g.tariffName || "",
         total: groupTotals[g.key]?.total ?? 0,
+        showDots: showReportGroupDots,
+        groups: roomGroups.list.map(({ group, inRoom, total }) => ({
+          group,
+          index: groupOrderMap.get(group.groupId) ?? 0,
+          members: groupMembersById.get(group.groupId) ?? [],
+          inRoom,
+          total,
+        })),
+        ungrouped: roomGroups.ungrouped,
         people: g.members.map((m) => {
+          const mg = m.person.personId ? groupIndex.get(m.person.personId) : null;
           const eff = getEffectiveRow(m.index, m.pd);
           // Суффикс питания: «завтрак ×3 · обед ×3 · ланчбокс ×2» (нулевые опускаем).
           const mealParts = [];
@@ -1547,16 +1657,34 @@ export default function FapHotelPage({
             factor: eff.chargeFactor ?? 1,
             warning: eff.warning || null,
             included: !!eff.perRoomIncluded,
+            groupColor: mg ? groupColor(mg, groupOrderMap.get(mg.groupId) ?? 0) : null,
+            groupTitle: mg
+              ? [GROUP_KIND_CONFIG[mg.kind]?.label, mg.label].filter(Boolean).join(" · ")
+              : "",
           };
         }),
-      })),
-    [reportGroups, groupTotals, getEffectiveRow]
+        };
+      }),
+    [
+      reportGroups,
+      groupTotals,
+      getEffectiveRow,
+      reportRoomGroups,
+      groupIndex,
+      groupOrderMap,
+      groupMembersById,
+      showReportGroupDots,
+    ]
   );
 
   const visibleGroups = useMemo(() => {
     const q = reportSearch.trim().toLowerCase();
-    if (!q) return reportGroups;
-    return reportGroups
+    // fullMembers — исходный состав номера до поиска: бейдж вида размещения и
+    // состав групп считаем по всему номеру, иначе шапка разойдётся с ценой,
+    // которая всегда считается по полному составу.
+    const withFull = reportGroups.map((g) => ({ ...g, fullMembers: g.members }));
+    if (!q) return withFull;
+    return withFull
       .map((g) => ({ ...g, members: g.members.filter((m) => (m.person.fullName || "").toLowerCase().includes(q)) }))
       .filter((g) => g.members.length > 0);
   }, [reportGroups, reportSearch]);
@@ -1665,24 +1793,6 @@ export default function FapHotelPage({
       onRefetch?.();
     } catch (e) {
       notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при сохранении");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleDelete = async (personIndex) => {
-    const isCrewPerson = people[personIndex]?.personType === "CREW";
-    const ok = await confirm(isCrewPerson ? "Удалить запись о члене экипажа?" : "Удалить запись о пассажире?");
-    if (!ok) return;
-    try {
-      setSaving(true);
-      await removePerson({
-        variables: { requestId: request.id, hotelIndex: Number(hotelIndex), personIndex },
-      });
-      success("Запись удалена");
-      onRefetch?.();
-    } catch (e) {
-      notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при удалении");
     } finally {
       setSaving(false);
     }
@@ -2058,10 +2168,7 @@ export default function FapHotelPage({
                     index={groupOrderMap.get(group.groupId) ?? 0}
                     warn={!!groupWarn}
                     warnText={groupWarnText}
-                    members={(group.memberPersonIds ?? []).map((pid) => ({
-                      personId: pid,
-                      fullName: savedPassengers.find((sp) => sp.personId === pid)?.fullName || "",
-                    }))}
+                    members={groupMembersById.get(group.groupId) ?? []}
                   />
                 </WarnTip>
               )}
@@ -2777,6 +2884,10 @@ export default function FapHotelPage({
                 <div className={classes.reportGroups}>
                   {visibleGroups.map((g) => {
                     const gTotal = groupTotals[g.key]?.total ?? 0;
+                    const { list: roomGroupList, ungrouped: roomUngrouped } =
+                      reportRoomGroups(g.fullMembers);
+                    const shownGroups = roomGroupList.slice(0, 2);
+                    const hiddenGroups = roomGroupList.length - shownGroups.length;
                     // Маркер нарушения требования размещения в номере.
                     // Авиакомпании ворнинги не показываем (спека §5) — таблица
                     // редактирования доступна только при canEdit.
@@ -2796,8 +2907,35 @@ export default function FapHotelPage({
                           <span className={classes.roomNo}>
                             {g.noRoom ? <span className={classes.noRoomBadge}>Без номера</span> : <>№ {g.roomNumber}</>}
                           </span>
-                          {!g.noRoom && placementKindLabel(g.members.length) && (
-                            <span className={classes.roomKindBadge}>{placementKindLabel(g.members.length)}</span>
+                          {!g.noRoom && placementKindLabel(g.fullMembers.length) && (
+                            <span className={classes.roomKindBadge}>{placementKindLabel(g.fullMembers.length)}</span>
+                          )}
+                          {shownGroups.map(({ group, inRoom, total }) => {
+                            const gw = warnings.byGroupId.get(group.groupId);
+                            return (
+                              <span key={group.groupId} className={classes.roomGroupWrap}>
+                                <GroupChip
+                                  group={group}
+                                  index={groupOrderMap.get(group.groupId) ?? 0}
+                                  warn={canEdit && !!gw}
+                                  warnText={gw ? groupWarningText(gw) : ""}
+                                  members={groupMembersById.get(group.groupId) ?? []}
+                                />
+                                {inRoom < total && (
+                                  <span className={classes.roomGroupMeta}>
+                                    {inRoom} из {total}
+                                  </span>
+                                )}
+                              </span>
+                            );
+                          })}
+                          {hiddenGroups > 0 && (
+                            <span className={classes.roomGroupMeta}>+{hiddenGroups}</span>
+                          )}
+                          {roomGroupList.length > 0 && roomUngrouped > 0 && (
+                            <span className={classes.roomGroupMeta}>
+                              +{roomUngrouped} без группы
+                            </span>
                           )}
                           {roomWarnText && (
                             <Tooltip title={roomWarnText} slotProps={hintTooltipSlotProps}>
@@ -2812,7 +2950,11 @@ export default function FapHotelPage({
                           </span>
                         </div>
                         <div className={classes.memberColHead}>
-                          <span>ФИО</span>
+                          {/* Тот же flex, что и в строке гостя: спейсер держит «ФИО» над колонкой точек */}
+                          <span className={classes.reportCellName}>
+                            {showReportGroupDots && <span className={classes.reportDotSpacer} />}
+                            ФИО
+                          </span>
                           <span>Номер</span>
                           <span>Тариф</span>
                           <span className={classes.numRight}>Сут.</span>
@@ -2825,9 +2967,23 @@ export default function FapHotelPage({
                         {g.members.map((m) => {
                           const { person, index: i, pd } = m;
                           const unbound = !pd.tariffId;
+                          const memberGroup = person.personId
+                            ? groupIndex.get(person.personId)
+                            : null;
                           return (
                             <div key={i} className={classes.memberRow}>
                               <div className={classes.reportCellName}>
+                                {showReportGroupDots &&
+                                  (memberGroup ? (
+                                    <GroupChip
+                                      group={memberGroup}
+                                      index={groupOrderMap.get(memberGroup.groupId) ?? 0}
+                                      compact
+                                    />
+                                  ) : (
+                                    // Гость без группы: пустой кружок держит колонку ровной
+                                    <span className={classes.reportDotEmpty} />
+                                  ))}
                                 <span
                                   className={classes.avatar}
                                   style={{ background: person.personType === "CREW" ? "#8B5CF6" : LIV, width: 26, height: 26 }}

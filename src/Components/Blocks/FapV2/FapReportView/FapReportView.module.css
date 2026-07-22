@@ -104,6 +104,34 @@
   white-space: nowrap;
 }
 
+/* Метка группы в шапке номера — тот же GroupChip, что и в режиме редактирования */
+.groupWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.groupMeta {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--main-gray, #545873);
+  white-space: nowrap;
+}
+
+/* Точка группы в строке гостя; пустая — держит колонку ровной */
+.personDot,
+.personDotEmpty {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.personDotEmpty {
+  background: transparent;
+  border: 1px dashed #CBD5E1;
+}
+
 .tariffText {
   font-size: 12px;
   color: var(--main-gray, #545873);

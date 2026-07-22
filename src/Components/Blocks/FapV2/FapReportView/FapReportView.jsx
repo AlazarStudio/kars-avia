@@ -1,5 +1,6 @@
 import React from "react";
 import classes from "./FapReportView.module.css";
+import GroupChip from "../GroupChip/GroupChip";
 
 // Read-only «красивый детальный отчёт» по размещению. Никаких инпутов — только рендер view-model.
 // props: {
@@ -110,6 +111,21 @@ export default function FapReportView({ summary = {}, groups = [] }) {
                 <span className={classes.roomTitle}>Номер {g.room}</span>
               )}
               {!noRoom && g.kind && <span className={classes.kindPill}>{g.kind}</span>}
+              {(g.groups || []).map((gr) => (
+                <span key={gr.group.groupId} className={classes.groupWrap}>
+                  {/* members включает карточку-поповер: состав и тип. Ворнинги
+                      сюда не приходят — read-only-роль их видеть не должна. */}
+                  <GroupChip group={gr.group} index={gr.index} members={gr.members || []} />
+                  {gr.inRoom < gr.total && (
+                    <span className={classes.groupMeta}>
+                      {gr.inRoom} из {gr.total}
+                    </span>
+                  )}
+                </span>
+              ))}
+              {(g.groups || []).length > 0 && g.ungrouped > 0 && (
+                <span className={classes.groupMeta}>+{g.ungrouped} без группы</span>
+              )}
               <span className={classes.tariffText}>
                 Тариф {g.tariff} · {people.length} чел.
               </span>
@@ -123,6 +139,13 @@ export default function FapReportView({ summary = {}, groups = [] }) {
               const free = p.living === 0;
               return (
                 <div key={pi} className={classes.personRow}>
+                  {g.showDots && (
+                    <span
+                      className={p.groupColor ? classes.personDot : classes.personDotEmpty}
+                      style={p.groupColor ? { background: p.groupColor } : undefined}
+                      title={p.groupTitle || ""}
+                    />
+                  )}
                   <div className={classes.avatar} style={{ background: AVATAR_BG[cat] }}>
                     {initials(p.name)}
                   </div>

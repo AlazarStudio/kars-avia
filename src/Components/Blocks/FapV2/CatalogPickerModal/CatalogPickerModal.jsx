@@ -236,10 +236,7 @@ export default function CatalogPickerModal({
                   disabled={ids.length === 0 || (!allChecked && !fits)}
                   onChange={() => toggleGroup(ids)}
                 />
-                <GroupChip group={section.group} index={section.index} compact />
-                <span className={classes.sectionTitle}>
-                  {groupDisplayLabel(section.group)}
-                </span>
+                <GroupChip group={section.group} index={section.index} />
                 <span className={classes.sectionCount}>
                   {section.rows.length} чел.
                 </span>

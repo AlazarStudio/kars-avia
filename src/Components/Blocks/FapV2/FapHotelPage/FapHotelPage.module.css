@@ -115,14 +115,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.metaDot {
-  width: 3px;
-  height: 3px;
-  border-radius: 999px;
-  background: #C0C3D6;
-  flex-shrink: 0;
-}
-
 .linkBtn {
   height: 36px;
   padding: 0 13px;
@@ -186,13 +178,6 @@
   height: 100%;
   background: linear-gradient(90deg, #10B981, #34D399);
   transition: width 0.3s ease;
-}
-
-.summaryDivider {
-  width: 1px;
-  align-self: stretch;
-  background: #E4E4EF;
-  min-height: 48px;
 }
 
 .metric {
@@ -757,45 +742,6 @@
   background: #F1F4FB;
 }
 
-/* ── Add trigger row ── */
-.addRow {
-  width: 100%;
-  padding: 11px 16px;
-  border: none;
-  border-top: 1px solid #E4E4EF;
-  background: #fff;
-  cursor: pointer;
-  font-family: inherit;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  color: var(--dark-blue);
-  font-size: 13px;
-  font-weight: 600;
-  transition: background 0.15s;
-}
-
-.addRow:hover {
-  background: #EAF1FB;
-}
-
-.addRowIcon {
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 1.5px dashed #CBD2E4;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
-.addRowHint {
-  font-size: 12px;
-  color: #545873;
-  font-weight: 400;
-}
-
 .emptyRow {
   padding: 40px 16px;
   text-align: center;
@@ -1318,13 +1264,41 @@
 .roomNo { font-size: 15px; font-weight: 800; color: var(--text); }
 .roomCat { font-size: 12px; font-weight: 700; color: #0F766E; background: #ECFDF5; padding: 3px 9px; border-radius: 6px; }
 .noRoomBadge { font-size: 11px; font-weight: 800; padding: 2px 8px; border-radius: 999px; background: #FEF2F2; color: #B91C1C; }
-.roomAccWrap { margin-left: auto; display: flex; align-items: center; gap: 6px; }
-.roomAccLabel { font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.3px; }
 .roomAccInput { width: 92px; box-sizing: border-box; height: 30px; border: 1px solid #C7D2FE; border-radius: 7px; padding: 0 8px; font-size: 13px; font-weight: 800; color: #0057C2; text-align: right; background: #F5F8FF; font-family: inherit; outline: none; }
 .roomAccInput:read-only { background: #F1F5F9; color: #94A3B8; }
 .roomAccCur { font-size: 12px; color: #94A3B8; }
 .roomTotalVal { min-width: 92px; text-align: right; font-size: 14px; font-weight: 800; color: #10B981; font-variant-numeric: tabular-nums; }
 .roomKindBadge { font-size: 12px; font-weight: 700; color: #0057C2; background: #EAF1FB; padding: 3px 9px; border-radius: 6px; }
+
+/* Чипы групп в шапке номера отчёта + серые счётчики рядом с ними */
+.roomGroupWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.roomGroupMeta {
+  font-size: 11px;
+  color: var(--main-gray);
+  white-space: nowrap;
+}
+
+/* Точку группы рисует GroupChip (compact); здесь — только плейсхолдер
+   для гостя без группы и спейсер в шапке колонки «ФИО» */
+.reportDotEmpty {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1px dashed #CBD5E1;
+}
+
+.reportDotSpacer {
+  width: 7px;
+  flex-shrink: 0;
+}
+
 /* Маркер W3: в номере больше гостей, чем допускает требование (только редактирование) */
 .roomWarnBadge { font-size: 12px; font-weight: 700; color: #B45309; background: #FEF3C7; border: 1px solid #F59E0B; padding: 2px 8px; border-radius: 6px; cursor: help; outline: none; white-space: nowrap; }
 .memberColHead, .memberRow { display: grid; grid-template-columns: 1.4fr 90px 150px 56px 64px 64px 64px 86px 118px; gap: 8px; align-items: center; padding: 6px 14px; }
