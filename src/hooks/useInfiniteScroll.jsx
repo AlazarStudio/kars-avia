@@ -54,6 +54,9 @@ export default function useInfiniteScroll(query, options) {
   const loadingRef = useRef(false); // in-flight guard от двойных запросов
   const wrapperRef = useRef(null); // скролл-контейнер = root для observer
   const sentinelRef = useRef(null); // якорь внизу списка
+  // Фактический take последнего базового запроса (page-0). Отличается от take
+  // только после refreshWindow(), когда одним запросом перечитано несколько страниц.
+  const requestedTakeRef = useRef(take);
 
   // Свежие колбэки/опции без пере-подписки эффектов
   const cfgRef = useRef(null);
@@ -69,22 +72,25 @@ export default function useInfiniteScroll(query, options) {
   const loading =
     networkStatus === NetworkStatus.loading && items.length === 0;
 
-  // Страница 0: initial / refetch / смена переменных базового запроса
+  // Страница 0: initial / refetch / refreshWindow / смена переменных базового запроса
   useEffect(() => {
     if (!data) return;
     const { getItems, getPageInfo, getKey, take } = cfgRef.current;
     const arr = dedupe(getItems(data) ?? [], getKey);
     itemsRef.current = arr;
     setItems(arr);
-    currentPageRef.current = 0;
+    // После refreshWindow в data может лежать несколько страниц сразу —
+    // восстанавливаем номер последней, чтобы догрузка продолжилась с верного skip.
+    currentPageRef.current = Math.max(0, Math.ceil(arr.length / take) - 1);
+    const requested = requestedTakeRef.current || take;
     const pageInfo = getPageInfo?.(data);
     setHasMore(
       computeHasMore({
         pageInfo,
-        loadedPages: 1,
+        loadedPages: currentPageRef.current + 1,
         loadedCount: arr.length,
         lastChunkLen: arr.length,
-        take,
+        take: requested,
       })
     );
   }, [data]);
@@ -92,8 +98,19 @@ export default function useInfiniteScroll(query, options) {
   const refresh = useCallback(() => {
     const { buildVariables, take } = cfgRef.current;
     currentPageRef.current = 0;
+    requestedTakeRef.current = take;
     setHasMore(true);
     return refetch(buildVariables(0, take));
+  }, [refetch]);
+
+  // Перезапрос всего загруженного окна одним запросом (страницы 0..N).
+  // Для realtime-обновлений: список не схлопывается к первой странице,
+  // позиция скролла сохраняется.
+  const refreshWindow = useCallback(() => {
+    const { buildVariables, take } = cfgRef.current;
+    const pages = Math.max(1, Math.ceil(itemsRef.current.length / take));
+    requestedTakeRef.current = pages * take;
+    return refetch(buildVariables(0, pages * take));
   }, [refetch]);
 
   // Сброс на стр.0 при смене фильтров. ВАЖНО: значения resetKeys должны также
@@ -106,6 +123,7 @@ export default function useInfiniteScroll(query, options) {
       return;
     }
     currentPageRef.current = 0;
+    requestedTakeRef.current = cfgRef.current.take;
     setHasMore(true);
   }, [resetSignature]);
 
@@ -181,5 +199,6 @@ export default function useInfiniteScroll(query, options) {
     wrapperRef,
     sentinelRef,
     refresh,
+    refreshWindow,
   };
 }

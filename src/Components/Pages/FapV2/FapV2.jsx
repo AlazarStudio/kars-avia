@@ -26,6 +26,8 @@ import MUIAutocompleteColor from "../../Blocks/MUIAutocompleteColor/MUIAutocompl
 import Button from "../../Standart/Button/Button";
 import CreateRepresentativeRequest from "../../Blocks/CreateRepresentativeRequest/CreateRepresentativeRequest";
 import { useDebounce } from "../../../hooks/useDebounce";
+import useInfiniteScroll from "../../../hooks/useInfiniteScroll";
+import InfiniteScrollSentinel from "../../Blocks/InfiniteScrollSentinel/InfiniteScrollSentinel";
 import Header from "../../Blocks/Header/Header";
 import ServiceProgressDot from "../../Blocks/FapV2/ServiceProgressDot/ServiceProgressDot";
 import { roles } from "../../../roles";
@@ -39,6 +41,8 @@ const SERVICE_ORDER = [
   "transferDeparture",
   "baggage",
 ];
+
+const PAGE_SIZE = 30;
 
 const LOGO_PALETTE = [
   "#0057C3",
@@ -145,29 +149,43 @@ export default function FapV2({ user, accessMenu }) {
     ? user?.airlineId
     : selectedAirline?.id;
 
-  const { loading, data, refetch } = useQuery(GET_PASSENGER_REQUESTS, {
+  const {
+    items: requests,
+    loading,
+    loadingMore,
+    hasMore,
+    wrapperRef,
+    sentinelRef,
+    refreshWindow,
+  } = useInfiniteScroll(GET_PASSENGER_REQUESTS, {
+    take: PAGE_SIZE,
     context: { headers: { Authorization: `Bearer ${token}` } },
-    variables: {
-      skip: 0,
-      take: 100,
+    buildVariables: (page, take) => ({
+      skip: page * take,
+      take,
       filter: {
         status: statusOption?.value ?? undefined,
         search: debouncedSearch || undefined,
         airlineId: effectiveAirlineId,
         airportId: selectedAirport?.id,
       },
-    },
+    }),
+    getItems: (d) => d?.passengerRequests,
+    resetKeys: [
+      statusOption?.value,
+      debouncedSearch,
+      effectiveAirlineId,
+      selectedAirport?.id,
+    ],
   });
 
   useSubscription(PASSENGER_REQUEST_CREATED_SUBSCRIPTION, {
-    onData: () => refetch(),
+    onData: () => refreshWindow(),
   });
 
   useSubscription(PASSENGER_REQUEST_UPDATED_SUBSCRIPTION, {
-    onData: () => refetch(),
+    onData: () => refreshWindow(),
   });
-
-  const requests = data?.passengerRequests || [];
 
   const serviceDots = (req) =>
     SERVICE_ORDER.map((key) => {
@@ -285,7 +303,7 @@ export default function FapV2({ user, accessMenu }) {
         )}
       </div>
 
-      <div className={classes.grid}>
+      <div className={classes.grid} ref={wrapperRef}>
         {loading ? (
           <div className={classes.loader}>
             <MUILoader fullHeight={"60vh"} />
@@ -403,6 +421,17 @@ export default function FapV2({ user, accessMenu }) {
             );
           })
         )}
+        {!loading && (
+          <div className={classes.sentinelWrap}>
+            <InfiniteScrollSentinel
+              sentinelRef={sentinelRef}
+              loadingMore={loadingMore}
+              hasMore={hasMore}
+              hasItems={requests.length > 0}
+              endLabel="Больше заявок нет"
+            />
+          </div>
+        )}
       </div>
 
       {showCreate && (
@@ -410,7 +439,7 @@ export default function FapV2({ user, accessMenu }) {
           show={showCreate}
           onClose={() => {
             setShowCreate(false);
-            refetch();
+            refreshWindow();
           }}
           user={user}
         />

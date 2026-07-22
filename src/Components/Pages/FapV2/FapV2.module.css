@@ -42,6 +42,11 @@
   align-content: start;
 }
 
+/* Якорь/лоадер инфинит-скролла — на всю ширину грида, не в ячейку */
+.sentinelWrap {
+  grid-column: 1 / -1;
+}
+
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: minmax(0, 1fr);
