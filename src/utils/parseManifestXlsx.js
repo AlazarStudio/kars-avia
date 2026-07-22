@@ -3,7 +3,7 @@ import { detectProfile, extractPeople } from "./manifestCore.js";
 import { PROFILES } from "./manifestProfiles.js";
 
 // Ре-экспорт для потребителей (AddRepresentativeService.jsx импортирует отсюда).
-export { manifestNameKey } from "./manifestCore.js";
+export { manifestNameKey, isSameFlight } from "./manifestCore.js";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 МБ
 

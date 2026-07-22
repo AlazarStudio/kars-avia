@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import classes from "./ManifestUploadField.module.css";
-import { parseManifestXlsx } from "../../../../utils/parseManifestXlsx.js";
+import { parseManifestXlsx, isSameFlight } from "../../../../utils/parseManifestXlsx.js";
 import CategoryBadge from "../CategoryBadge/CategoryBadge.jsx";
 import ChevronIcon from "../../../../shared/icons/ChevronIcon.jsx";
 import FileDropzone from "../../FileDropzone/FileDropzone.jsx";
@@ -15,7 +15,13 @@ const plural = (n, forms) => {
 
 // Загрузка пассажирского манифеста (форма ПМ) с превью.
 // parsed = { people, flightNumber, fileName } | null — владеет родитель.
-export default function ManifestUploadField({ parsed, onParsed, onClear }) {
+// expectedFlightNumber — рейс заявки: при расхождении с рейсом файла показываем плашку.
+export default function ManifestUploadField({
+  parsed,
+  onParsed,
+  onClear,
+  expectedFlightNumber,
+}) {
   const [error, setError] = useState(null);
   const [parsing, setParsing] = useState(false);
   const [expanded, setExpanded] = useState(false);
@@ -61,6 +67,11 @@ export default function ManifestUploadField({ parsed, onParsed, onClear }) {
     { label: "РМ", value: counts.INFANT || 0 },
   ].filter((c) => c.value > 0);
 
+  const flightMismatch =
+    !!parsed?.flightNumber &&
+    !!expectedFlightNumber &&
+    !isSameFlight(parsed.flightNumber, expectedFlightNumber);
+
   const meta = parsed && (
     <>
       <span>
@@ -87,6 +98,13 @@ export default function ManifestUploadField({ parsed, onParsed, onClear }) {
         onFile={handleFile}
         onClear={handleClear}
       />
+
+      {flightMismatch && (
+        <div className={classes.flightWarn}>
+          ⚠ В манифесте рейс <b>{parsed.flightNumber}</b>, в заявке —{" "}
+          <b>{expectedFlightNumber}</b>
+        </div>
+      )}
 
       {parsed?.people?.length > 0 && (
         <>

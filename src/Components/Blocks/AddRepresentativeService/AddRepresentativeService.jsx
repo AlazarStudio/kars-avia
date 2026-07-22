@@ -18,7 +18,8 @@ import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutoc
 import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import ManifestUploadField from "../FapV2/ManifestUploadField/ManifestUploadField.jsx";
-import { manifestNameKey } from "../../../utils/parseManifestXlsx.js";
+import { manifestNameKey, isSameFlight } from "../../../utils/parseManifestXlsx.js";
+import { useDialog } from "../../../contexts/DialogContext";
 
 function AddRepresentativeService({
   show,
@@ -28,6 +29,7 @@ function AddRepresentativeService({
   addNotification,
 }) {
   const token = getCookie("token");
+  const { confirm } = useDialog();
   const [isEdited, setIsEdited] = useState(false);
   const sidebarRef = useRef();
 
@@ -566,6 +568,18 @@ function AddRepresentativeService({
       return;
     }
 
+    if (hasManifest && !isSameFlight(manifest.flightNumber, request?.flightNumber)) {
+      const ok = await confirm({
+        message: `Рейс в манифесте (${manifest.flightNumber}) не совпадает с рейсом заявки (${request?.flightNumber}). Импортировать всё равно?`,
+        confirmText: "Импортировать",
+        cancelText: "Отмена",
+      });
+      if (!ok) {
+        setIsLoading(false);
+        return;
+      }
+    }
+
     try {
       if (Object.keys(input).length > 0) {
         await updatePassengerRequest({
@@ -688,6 +702,7 @@ function AddRepresentativeService({
                         setIsEdited(true);
                       }}
                       onClear={() => setManifest(null)}
+                      expectedFlightNumber={request?.flightNumber}
                     />
                   </>
                 )}

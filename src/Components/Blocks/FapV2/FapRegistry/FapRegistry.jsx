@@ -18,8 +18,9 @@ import {
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import ManifestUploadField from "../ManifestUploadField/ManifestUploadField";
-import { manifestNameKey } from "../../../../utils/parseManifestXlsx";
+import { manifestNameKey, isSameFlight } from "../../../../utils/parseManifestXlsx";
 import { useToast } from "../../../../contexts/ToastContext";
+import { useDialog } from "../../../../contexts/DialogContext";
 import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 import WaterIcon from "../../../../shared/icons/WaterIcon";
@@ -117,6 +118,7 @@ function PersonForm({ values, onChange, onSubmit, onCancel, saving, submitLabel 
 export default function FapRegistry({ request, canEdit = false, onRefetch }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
+  const { confirm } = useDialog();
   const ctx = { context: { headers: { Authorization: `Bearer ${token}` } } };
 
   const [search, setSearch] = useState("");
@@ -301,6 +303,14 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
 
   const handleManifestImport = async () => {
     if (!manifest?.people?.length) return;
+    if (!isSameFlight(manifest.flightNumber, request?.flightNumber)) {
+      const ok = await confirm({
+        message: `Рейс в манифесте (${manifest.flightNumber}) не совпадает с рейсом заявки (${request?.flightNumber}). Импортировать всё равно?`,
+        confirmText: "Импортировать",
+        cancelText: "Отмена",
+      });
+      if (!ok) return;
+    }
     try {
       setSaving(true);
       const { added, skipped } = countManifestImport(manifest.people, savedPassengers);
@@ -382,6 +392,7 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
             parsed={manifest}
             onParsed={setManifest}
             onClear={() => setManifest(null)}
+            expectedFlightNumber={request?.flightNumber}
           />
           {manifest?.people?.length > 0 && (
             <div className={classes.manifestConfirm}>

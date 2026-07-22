@@ -27,6 +27,33 @@ export const manifestNameKey = (fullName) =>
     .toLowerCase()
     .replace(/\s+/g, " ");
 
+// Транслитерация кириллицы → латиница для сравнения номеров рейсов
+// («СУ1177» ≡ «SU1177», «ФВ6346» ≡ «FV6346»).
+const CYR_TO_LAT = {
+  А: "A", Б: "B", В: "V", Г: "G", Д: "D", Е: "E", Ё: "E", Ж: "ZH", З: "Z",
+  И: "I", Й: "I", К: "K", Л: "L", М: "M", Н: "N", О: "O", П: "P", Р: "R",
+  С: "S", Т: "T", У: "U", Ф: "F", Х: "H", Ц: "TS", Ч: "CH", Ш: "SH",
+  Щ: "SCH", Ъ: "", Ы: "Y", Ь: "", Э: "E", Ю: "YU", Я: "YA",
+};
+
+export const normalizeFlightNumber = (v) =>
+  s(v)
+    .toUpperCase()
+    .replace(/[^A-ZА-ЯЁ0-9]/g, "")
+    .replace(/[А-ЯЁ]/g, (ch) => CYR_TO_LAT[ch] ?? ch);
+
+// Совпадение рейсов для проверки манифеста. Пустая сторона → true (не проверяем).
+// Обе стороны с буквами → полное сравнение; иначе — только цифры («2704» ≡ «SU2704»).
+export const isSameFlight = (a, b) => {
+  const na = normalizeFlightNumber(a);
+  const nb = normalizeFlightNumber(b);
+  if (!na || !nb) return true;
+  const hasLetters = (x) => /[A-Z]/.test(x);
+  if (hasLetters(na) && hasLetters(nb)) return na === nb;
+  const digits = (x) => x.replace(/\D/g, "");
+  return digits(na) !== "" && digits(na) === digits(nb);
+};
+
 // Ищем в строке индексы колонок профиля по синонимам (точное совпадение normHeader).
 // Первое совпадение на поле. Возвращает { field: index } только для найденных.
 const matchRowColumns = (row, columns) => {
