@@ -3898,6 +3898,7 @@ export const GET_PASSENGER_REQUEST = gql`
         hotelIndex
         reportRows {
           fullName
+          personId
           roomNumber
           roomCategory
           roomKind
@@ -3959,6 +3960,7 @@ export const SAVE_PASSENGER_REQUEST_HOTEL_REPORT = gql`
       hotelIndex
       reportRows {
         fullName
+        personId
         roomNumber
         roomCategory
         roomKind

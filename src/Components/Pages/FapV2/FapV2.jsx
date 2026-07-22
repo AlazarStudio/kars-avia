@@ -28,6 +28,7 @@ import CreateRepresentativeRequest from "../../Blocks/CreateRepresentativeReques
 import { useDebounce } from "../../../hooks/useDebounce";
 import useInfiniteScroll from "../../../hooks/useInfiniteScroll";
 import InfiniteScrollSentinel from "../../Blocks/InfiniteScrollSentinel/InfiniteScrollSentinel";
+import DateRangeModalSelector from "../../Blocks/DateRangeModalSelector/DateRangeModalSelector";
 import Header from "../../Blocks/Header/Header";
 import ServiceProgressDot from "../../Blocks/FapV2/ServiceProgressDot/ServiceProgressDot";
 import { roles } from "../../../roles";
@@ -125,6 +126,7 @@ export default function FapV2({ user, accessMenu }) {
 
   const [selectedAirline, setSelectedAirline] = useState(null);
   const [selectedAirport, setSelectedAirport] = useState(null);
+  const [dateRange, setDateRange] = useState({ startDate: null, endDate: null });
   const [airlines, setAirlines] = useState([]);
   const [airports, setAirports] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
@@ -168,6 +170,12 @@ export default function FapV2({ user, accessMenu }) {
         search: debouncedSearch || undefined,
         airlineId: effectiveAirlineId,
         airportId: selectedAirport?.id,
+        dateFrom: dateRange.startDate
+          ? dateRange.startDate.toISOString()
+          : undefined,
+        dateTo: dateRange.endDate
+          ? new Date(new Date(dateRange.endDate).setHours(23, 59, 59, 999)).toISOString()
+          : undefined,
       },
     }),
     getItems: (d) => d?.passengerRequests,
@@ -176,6 +184,8 @@ export default function FapV2({ user, accessMenu }) {
       debouncedSearch,
       effectiveAirlineId,
       selectedAirport?.id,
+      dateRange.startDate,
+      dateRange.endDate,
     ],
   });
 
@@ -203,11 +213,13 @@ export default function FapV2({ user, accessMenu }) {
   const activeFilterCount =
     (selectedAirline ? 1 : 0) +
     (selectedAirport ? 1 : 0) +
-    (statusOption?.value ? 1 : 0);
+    (statusOption?.value ? 1 : 0) +
+    (dateRange.startDate || dateRange.endDate ? 1 : 0);
 
   const handleResetFilters = () => {
     setSelectedAirline(null);
     setSelectedAirport(null);
+    setDateRange({ startDate: null, endDate: null });
     handleStatusChange(STATUS_OPTIONS[0]);
   };
 
@@ -284,6 +296,11 @@ export default function FapV2({ user, accessMenu }) {
             onChange={(_, val) => handleStatusChange(val)}
             getOptionLabel={(o) => o?.label ?? ""}
             isOptionEqualToValue={(o, v) => o?.value === v?.value}
+          />
+          <DateRangeModalSelector
+            initialRange={dateRange}
+            onChange={(startDate, endDate) => setDateRange({ startDate, endDate })}
+            width="100%"
           />
         </FilterPopoverButton>
         <MUITextField

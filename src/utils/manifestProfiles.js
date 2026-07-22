@@ -29,10 +29,16 @@ const flightPM = (rows) => {
 const PAX_CATEGORY = { ВЗ: "ADULT", РБ: "CHILD", РМ: "INFANT" };
 
 // № рейса PNL — из титульной строки «…на рейс СУ1177 от …».
+// Сначала пробуем «код + пробел? + цифры (+буква?)» — рейс с пробелом
+// («ФВ 6346») не обрезаем до кода; иначе прежний захват первого слова.
 const flightPNL = (rows) => {
   for (const row of rows) {
     for (const cell of row || []) {
-      const m = s(cell).match(/на рейс\s+(\S+)/i);
+      const text = s(cell);
+      if (!/на рейс/i.test(text)) continue;
+      const m =
+        text.match(/на рейс\s+([A-ZА-ЯЁ]{1,3}\s?\d{1,5}[A-ZА-ЯЁ]?)/i) ||
+        text.match(/на рейс\s+(\S+)/i);
       if (m) return m[1];
     }
   }

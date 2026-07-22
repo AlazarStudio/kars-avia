@@ -6,6 +6,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import classes from "./FapHotelPage.module.css";
+import { findPersonIndexForRow } from "../reports/reportRowMatch";
 import {
   ADD_PASSENGER_REQUEST_HOTEL_PERSON,
   ADD_PASSENGER_REQUEST_HOTEL_PEOPLE,
@@ -734,22 +735,15 @@ export default function FapHotelPage({
       people.forEach((p, i) => {
         data[i] = emptyPD(p, hotelIndex, plan);
       });
-      // Матчим строки отчёта к гостям ТОЛЬКО по ФИО + порядок (consumed-сет).
-      // Раньше в условие входил roomNumber, но это давало баг: номер в строке отчёта
-      // и у гостя — это два разных поля (одно из вкладки «Гости», другое из «Отчёта»).
-      // Когда диспетчер вводил номер в «Отчёте», people[i].roomNumber оставался пустой,
-      // а row.roomNumber становился «123» → матч проваливался → тариф «слетал».
-      // Сейчас ходим по строкам по порядку (buildReportRows пишет их в порядке people),
-      // расходуя уже подобранные индексы — дубликаты ФИО тоже корректно матчатся.
+      // Матчим строки отчёта к гостям: сначала по personId (стойко к переименованию
+      // гостя), для старых строк без personId — по ФИО + порядок (consumed-сет).
+      // roomNumber в условие сознательно не входит: номер в строке отчёта и у гостя —
+      // два разных поля, их расхождение раньше давало «слетевший» тариф.
       const consumed = new Set();
       savedRows.forEach((row) => {
         // Пропускаем теневые строки тарифов (без ФИО) — они не привязаны к гостю.
         if (!(row.fullName ?? "").trim()) return;
-        const idx = people.findIndex(
-          (p, i) =>
-            !consumed.has(i) &&
-            (p.fullName ?? "").trim() === (row.fullName ?? "").trim()
-        );
+        const idx = findPersonIndexForRow(people, row, consumed);
         if (idx < 0) return;
         consumed.add(idx);
         const k = priceKey(row);
@@ -802,6 +796,7 @@ export default function FapHotelPage({
       .flatMap((t) =>
         (t.placementPrices ?? []).map((pp) => ({
           fullName: "",
+          personId: "",
           roomNumber: "",
           roomCategory: t.name || "",
           roomKind: t.billingMode === "PER_ROOM" ? "PER_ROOM" : "",
@@ -821,6 +816,7 @@ export default function FapHotelPage({
       const eff = getEffectiveRowRef.current(i, pd);
       return {
         fullName: person.fullName ?? "",
+        personId: person.personId ?? "",
         roomNumber: pd.roomNumber ?? "",
         roomCategory: eff.tariffName,   // legacy-совместимость (ФАП v1, старый Excel)
         roomKind: "",

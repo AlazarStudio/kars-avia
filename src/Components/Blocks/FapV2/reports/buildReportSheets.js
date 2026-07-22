@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import { PERSON_CATEGORY_LABEL, normalizeCategory } from "../fapConstants";
+import { findRowIndexForPerson } from "./reportRowMatch";
 
 // ── helpers ──
 
@@ -110,7 +111,7 @@ function accommodationDiscountLabel(pricePerDay, daysCount, accommodationCost) {
 
 // Извлечь даты заезда/выезда персоны (Date или null).
 // Приоритет: person.arrival/departure (явное переопределение per-person)
-//          → service.plan.plannedAt/plannedToAt (план услуги, дефолт)
+//          → service.plan.plannedFromAt/plannedToAt (план услуги, дефолт)
 //          → accommodationChesses[hotelIndex].startAt/endAt (history, последний шанс).
 //
 // accommodationChesses содержит ИСТОРИЮ операций (когда диспетчер заселил/выселил),
@@ -120,7 +121,9 @@ function getCheckInOut(person, hotelIndex, plan) {
   let outAt = person?.departure ? new Date(person.departure) : null;
 
   if (!inAt) {
-    const planned = plan?.plannedAt || plan?.plannedFromAt;
+    // plannedFromAt первичен (начало периода проживания) — симметрично getPersonDays
+    // в FapHotelPage, иначе сутки и дата заезда считаются от разных моментов.
+    const planned = plan?.plannedFromAt || plan?.plannedAt;
     if (planned) inAt = new Date(planned);
   }
   if (!outAt && plan?.plannedToAt) {
@@ -192,12 +195,11 @@ export function addHotelSheet(wb, opts) {
     );
     sourceRows = saved?.reportRows ?? [];
   }
-  // Матч к гостям по ФИО с consumed-сетом (дубликаты ФИО получают разные строки).
+  // Матч к гостям: personId — первично, ФИО — fallback для старых строк
+  // (consumed-сет: дубликаты ФИО получают разные строки).
   const consumed = new Set();
   const rowsByPersonIdx = people.map((p) => {
-    const idx = sourceRows.findIndex(
-      (r, ri) => !consumed.has(ri) && (r.fullName ?? "").trim() === (p.fullName ?? "").trim()
-    );
+    const idx = findRowIndexForPerson(sourceRows, p, consumed);
     if (idx < 0) {
       return { tariffName: "", pricePerDay: 0, placementKind: 0, roomNumber: "", daysCount: 0, breakfast: 0, lunch: 0, dinner: 0, foodCost: 0, accommodationCost: 0 };
     }
@@ -496,12 +498,10 @@ export function addCombinedSheet(wb, opts) {
     );
     const savedRows = saved?.reportRows ?? [];
 
-    // Матч к гостям по ФИО с consumed-сетом (дубликаты ФИО получают разные строки).
+    // Матч к гостям: personId — первично, ФИО — fallback для старых строк.
     const consumed = new Set();
     people.forEach((p) => {
-      const idx = savedRows.findIndex(
-        (row, ri) => !consumed.has(ri) && (row.fullName ?? "").trim() === (p.fullName ?? "").trim()
-      );
+      const idx = findRowIndexForPerson(savedRows, p, consumed);
       const matched = idx >= 0 ? savedRows[idx] : null;
       if (idx >= 0) consumed.add(idx);
       const r = matched ?? {};
