@@ -177,7 +177,7 @@ export function addHotelSheet(wb, opts) {
     ? ` от ${new Date(request.flightDate).toLocaleDateString("ru-RU")}`
     : "";
   ws.getCell("C3").value =
-    `Детализация оказанных услуг пассажиров задерженного рейса № ${request?.flightNumber ?? ""}${flightPart} г. ${city} гостиница ${hotelName}`;
+    `Детализация оказанных услуг пассажиров задержанного рейса № ${request?.flightNumber ?? ""}${flightPart} г. ${city} гостиница ${hotelName}`;
   [ws.getCell("A1"), ws.getCell("X1"), ws.getCell("C3")].forEach((c) => {
     c.font = { name: "Calibri", size: 12, bold: true };
   });
@@ -475,7 +475,7 @@ export function addCombinedSheet(wb, opts) {
     ? ` от ${new Date(request.flightDate).toLocaleDateString("ru-RU")}`
     : "";
   ws.getCell("C3").value =
-    `Детализация оказанных услуг пассажиров задерженного рейса № ${request?.flightNumber ?? ""}${flightPart} г. ${city}`;
+    `Детализация оказанных услуг пассажиров задержанного рейса № ${request?.flightNumber ?? ""}${flightPart} г. ${city}`;
   [ws.getCell("A1"), ws.getCell("X1"), ws.getCell("C3")].forEach((c) => {
     c.font = { name: "Calibri", size: 12, bold: true };
   });
