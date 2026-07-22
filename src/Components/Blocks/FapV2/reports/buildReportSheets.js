@@ -86,19 +86,29 @@ function applyHotelColumnWidths(ws) {
   ws.getColumn(17).width = 12;    // Q = Обед
   ws.getColumn(18).width = 15;    // R = Количество ужинов
   ws.getColumn(19).width = 12;    // S = Ужин
-  ws.getColumn(20).width = 15;    // T = Стоимость питания
-  ws.getColumn(21).width = 10;    // U = Скидка
-  ws.getColumn(22).width = 15;    // V = Стоимость проживания
-  ws.getColumn(23).width = 12;    // W = Итого
+  ws.getColumn(20).width = 12;    // T = Ланчбокс
+  ws.getColumn(21).width = 15;    // U = Стоимость питания
+  ws.getColumn(22).width = 10;    // V = Скидка
+  ws.getColumn(23).width = 15;    // W = Стоимость проживания
+  ws.getColumn(24).width = 12;    // X = Итого
 }
 
 const HOTEL_HEADERS = [
   "ID", "ФИО", "Тип", "Возрастная категория", "Дата заезда", "Время заезда",
   "Дата выезда", "Время выезда", "Номер", "Вид размещения", "Тариф", "Цена за сутки",
   "Количество суток", "Количество завтраков", "Завтрак",
-  "Количество обедов", "Обед", "Количество ужинов", "Ужин",
+  "Количество обедов", "Обед", "Количество ужинов", "Ужин", "Ланчбокс",
   "Стоимость питания", "Скидка", "Стоимость проживания", "Итого",
 ];
+
+// Количество порций приёма: легаси-строки без количеств — 1 при цене > 0.
+const mealCountOf = (r, priceField, countField) =>
+  r?.[countField] != null ? toNum(r[countField]) : (toNum(r?.[priceField]) > 0 ? 1 : 0);
+
+// Сумма ланчбоксов гостя: число включённых приёмов × применённая цена (разово, без умножения на порции).
+const lunchboxAmountOf = (r) =>
+  ((r?.breakfastLunchbox ? 1 : 0) + (r?.lunchLunchbox ? 1 : 0) + (r?.dinnerLunchbox ? 1 : 0)) *
+  toNum(r?.lunchboxPrice);
 
 // Процент возрастной скидки на проживание, выведенный из чисел строки:
 // 1 − факт/(цена за сутки × сутки). «—», если базы нет (ручной ввод / легаси).
@@ -161,14 +171,14 @@ export function addHotelSheet(wb, opts) {
 
   // ── Шапка ──
   ws.getCell("A1").value = request?.airline?.name ?? "";
-  ws.getCell("W1").value = "Договор № или \"по согласованию\"";
-  ws.getCell("W1").alignment = { horizontal: "right" };
+  ws.getCell("X1").value = "Договор № или \"по согласованию\"";
+  ws.getCell("X1").alignment = { horizontal: "right" };
   const flightPart = request?.flightDate
     ? ` от ${new Date(request.flightDate).toLocaleDateString("ru-RU")}`
     : "";
   ws.getCell("C3").value =
     `Детализация оказанных услуг пассажиров задерженного рейса № ${request?.flightNumber ?? ""}${flightPart} г. ${city} гостиница ${hotelName}`;
-  [ws.getCell("A1"), ws.getCell("W1"), ws.getCell("C3")].forEach((c) => {
+  [ws.getCell("A1"), ws.getCell("X1"), ws.getCell("C3")].forEach((c) => {
     c.font = { name: "Calibri", size: 12, bold: true };
   });
 
@@ -201,7 +211,12 @@ export function addHotelSheet(wb, opts) {
   const rowsByPersonIdx = people.map((p) => {
     const idx = findRowIndexForPerson(sourceRows, p, consumed);
     if (idx < 0) {
-      return { tariffName: "", pricePerDay: 0, placementKind: 0, roomNumber: "", daysCount: 0, breakfast: 0, lunch: 0, dinner: 0, foodCost: 0, accommodationCost: 0 };
+      return {
+        tariffName: "", pricePerDay: 0, placementKind: 0, roomNumber: "", daysCount: 0,
+        breakfast: 0, lunch: 0, dinner: 0,
+        breakfastCount: 0, lunchCount: 0, dinnerCount: 0, lunchboxAmount: 0,
+        foodCost: 0, accommodationCost: 0,
+      };
     }
     consumed.add(idx);
     const r = sourceRows[idx];
@@ -214,6 +229,10 @@ export function addHotelSheet(wb, opts) {
       breakfast: toNum(r.breakfast),
       lunch: toNum(r.lunch),
       dinner: toNum(r.dinner),
+      breakfastCount: mealCountOf(r, "breakfast", "breakfastCount"),
+      lunchCount: mealCountOf(r, "lunch", "lunchCount"),
+      dinnerCount: mealCountOf(r, "dinner", "dinnerCount"),
+      lunchboxAmount: lunchboxAmountOf(r),
       foodCost: toNum(r.foodCost),
       accommodationCost: toNum(r.accommodationCost),
     };
@@ -248,16 +267,17 @@ export function addHotelSheet(wb, opts) {
     row.getCell(11).value = r.tariffName;                       // K Тариф
     if (r.pricePerDay > 0) row.getCell(12).value = r.pricePerDay; // L Цена за сутки
     row.getCell(13).value = r.daysCount;                        // M Суток
-    row.getCell(14).value = r.breakfast > 0 ? 1 : 0;            // N (флаг — как раньше)
-    row.getCell(15).value = r.breakfast;                        // O
-    row.getCell(16).value = r.lunch > 0 ? 1 : 0;               // P
+    row.getCell(14).value = r.breakfastCount;                   // N Кол-во завтраков
+    row.getCell(15).value = r.breakfast;                        // O Цена завтрака (за порцию)
+    row.getCell(16).value = r.lunchCount;                       // P
     row.getCell(17).value = r.lunch;                            // Q
-    row.getCell(18).value = r.dinner > 0 ? 1 : 0;              // R
+    row.getCell(18).value = r.dinnerCount;                      // R
     row.getCell(19).value = r.dinner;                           // S
-    row.getCell(20).value = r.foodCost;                         // T Стоимость питания
-    row.getCell(21).value = accommodationDiscountLabel(r.pricePerDay, r.daysCount, r.accommodationCost); // U Скидка
-    row.getCell(22).value = r.accommodationCost;                // V Стоимость проживания
-    row.getCell(23).value = r.foodCost + r.accommodationCost;   // W Итого
+    row.getCell(20).value = r.lunchboxAmount;                   // T Ланчбокс (разово × включённые приёмы)
+    row.getCell(21).value = r.foodCost;                         // U Стоимость питания
+    row.getCell(22).value = accommodationDiscountLabel(r.pricePerDay, r.daysCount, r.accommodationCost); // V Скидка
+    row.getCell(23).value = r.accommodationCost;                // W Стоимость проживания
+    row.getCell(24).value = r.foodCost + r.accommodationCost;   // X Итого
 
     rowIdx += 1;
   });
@@ -293,7 +313,7 @@ export function addHotelSheet(wb, opts) {
     aRow.getCell(6).value = dt;
     aRow.getCell(6).numFmt = fmtTime;
   }
-  if (aCost != null) aRow.getCell(23).value = aCost;
+  if (aCost != null) aRow.getCell(24).value = aCost;
   rowIdx += 1;
 
   // DEPARTURE
@@ -315,7 +335,7 @@ export function addHotelSheet(wb, opts) {
     dRow.getCell(6).value = dt;
     dRow.getCell(6).numFmt = fmtTime;
   }
-  if (dCost != null) dRow.getCell(23).value = dCost;
+  if (dCost != null) dRow.getCell(24).value = dCost;
   const lastTransferRow = rowIdx;
   rowIdx += 1;
 
@@ -326,17 +346,19 @@ export function addHotelSheet(wb, opts) {
   if (lastPersonRow >= 5) {
     totalRow.getCell(13).value = { formula: `SUM(M5:M${lastPersonRow})` };
     totalRow.getCell(14).value = { formula: `SUM(N5:N${lastPersonRow})` };
-    totalRow.getCell(15).value = { formula: `SUM(O5:O${lastPersonRow})` };
+    // Деньги приёма = Σ(кол-во × цена за порцию) — простой SUM цен потерял смысл.
+    totalRow.getCell(15).value = { formula: `SUMPRODUCT(N5:N${lastPersonRow},O5:O${lastPersonRow})` };
     totalRow.getCell(16).value = { formula: `SUM(P5:P${lastPersonRow})` };
-    totalRow.getCell(17).value = { formula: `SUM(Q5:Q${lastPersonRow})` };
+    totalRow.getCell(17).value = { formula: `SUMPRODUCT(P5:P${lastPersonRow},Q5:Q${lastPersonRow})` };
     totalRow.getCell(18).value = { formula: `SUM(R5:R${lastPersonRow})` };
-    totalRow.getCell(19).value = { formula: `SUM(S5:S${lastPersonRow})` };
+    totalRow.getCell(19).value = { formula: `SUMPRODUCT(R5:R${lastPersonRow},S5:S${lastPersonRow})` };
     totalRow.getCell(20).value = { formula: `SUM(T5:T${lastPersonRow})` };
-    // U (Скидка) — не суммируется.
-    totalRow.getCell(22).value = { formula: `SUM(V5:V${lastPersonRow})` };
+    totalRow.getCell(21).value = { formula: `SUM(U5:U${lastPersonRow})` };
+    // V (Скидка) — не суммируется.
+    totalRow.getCell(23).value = { formula: `SUM(W5:W${lastPersonRow})` };
   }
-  totalRow.getCell(23).value = {
-    formula: `SUM(W5:W${lastTransferRow})`,
+  totalRow.getCell(24).value = {
+    formula: `SUM(X5:X${lastTransferRow})`,
   };
 
   applyHotelColumnWidths(ws);
@@ -447,14 +469,14 @@ export function addCombinedSheet(wb, opts) {
 
   // ── Шапка ──
   ws.getCell("A1").value = request?.airline?.name ?? "";
-  ws.getCell("W1").value = "Договор № или \"по согласованию\"";
-  ws.getCell("W1").alignment = { horizontal: "right" };
+  ws.getCell("X1").value = "Договор № или \"по согласованию\"";
+  ws.getCell("X1").alignment = { horizontal: "right" };
   const flightPart = request?.flightDate
     ? ` от ${new Date(request.flightDate).toLocaleDateString("ru-RU")}`
     : "";
   ws.getCell("C3").value =
     `Детализация оказанных услуг пассажиров задерженного рейса № ${request?.flightNumber ?? ""}${flightPart} г. ${city}`;
-  [ws.getCell("A1"), ws.getCell("W1"), ws.getCell("C3")].forEach((c) => {
+  [ws.getCell("A1"), ws.getCell("X1"), ws.getCell("C3")].forEach((c) => {
     c.font = { name: "Calibri", size: 12, bold: true };
   });
 
@@ -479,8 +501,8 @@ export function addCombinedSheet(wb, opts) {
     const people = hotel?.people ?? [];
     if (people.length === 0) return; // пустые гостиницы пропускаем в сводке
 
-    // Сабхедер гостиницы — merged A:W
-    ws.mergeCells(`A${rowIdx}:W${rowIdx}`);
+    // Сабхедер гостиницы — merged A:X
+    ws.mergeCells(`A${rowIdx}:X${rowIdx}`);
     const hdr = ws.getCell(`A${rowIdx}`);
     hdr.value = `Гостиница: ${pickHotelName(hotel)}${hotel?.address ? ` · ${hotel.address}` : ""}`;
     hdr.font = { name: "Calibri", size: 12, bold: true };
@@ -531,16 +553,17 @@ export function addCombinedSheet(wb, opts) {
       row.getCell(11).value = (r.tariffName ?? "").trim() || (r.roomCategory ?? ""); // K Тариф
       if (pricePerDay > 0) row.getCell(12).value = pricePerDay;                      // L Цена за сутки
       row.getCell(13).value = toNum(r.daysCount);                                    // M Суток
-      row.getCell(14).value = toNum(r.breakfast) > 0 ? 1 : 0;                        // N
-      row.getCell(15).value = toNum(r.breakfast);                                    // O
-      row.getCell(16).value = toNum(r.lunch) > 0 ? 1 : 0;                            // P
+      row.getCell(14).value = mealCountOf(r, "breakfast", "breakfastCount");         // N Кол-во завтраков
+      row.getCell(15).value = toNum(r.breakfast);                                    // O Цена завтрака
+      row.getCell(16).value = mealCountOf(r, "lunch", "lunchCount");                 // P
       row.getCell(17).value = toNum(r.lunch);                                        // Q
-      row.getCell(18).value = toNum(r.dinner) > 0 ? 1 : 0;                           // R
+      row.getCell(18).value = mealCountOf(r, "dinner", "dinnerCount");               // R
       row.getCell(19).value = toNum(r.dinner);                                       // S
-      row.getCell(20).value = foodCost;                                             // T Ст-ть питания
-      row.getCell(21).value = accommodationDiscountLabel(pricePerDay, r.daysCount, accommodationCost); // U Скидка
-      row.getCell(22).value = accommodationCost;                                     // V Ст-ть проживания
-      row.getCell(23).value = foodCost + accommodationCost;                          // W Итого
+      row.getCell(20).value = lunchboxAmountOf(r);                                   // T Ланчбокс
+      row.getCell(21).value = foodCost;                                             // U Ст-ть питания
+      row.getCell(22).value = accommodationDiscountLabel(pricePerDay, r.daysCount, accommodationCost); // V Скидка
+      row.getCell(23).value = accommodationCost;                                     // W Ст-ть проживания
+      row.getCell(24).value = foodCost + accommodationCost;                          // X Итого
 
       if (firstPersonRow == null) firstPersonRow = rowIdx;
       lastPersonRow = rowIdx;
@@ -576,7 +599,7 @@ export function addCombinedSheet(wb, opts) {
         aRow.getCell(5).value = dt; aRow.getCell(5).numFmt = fmtDate;
         aRow.getCell(6).value = dt; aRow.getCell(6).numFmt = fmtTime;
       }
-      if (aCost != null) aRow.getCell(23).value = aCost;
+      if (aCost != null) aRow.getCell(24).value = aCost;
       lastTransferRow = rowIdx;
       rowIdx += 1;
     }
@@ -597,7 +620,7 @@ export function addCombinedSheet(wb, opts) {
         dRow.getCell(5).value = dt; dRow.getCell(5).numFmt = fmtDate;
         dRow.getCell(6).value = dt; dRow.getCell(6).numFmt = fmtTime;
       }
-      if (dCost != null) dRow.getCell(23).value = dCost;
+      if (dCost != null) dRow.getCell(24).value = dCost;
       lastTransferRow = rowIdx;
       rowIdx += 1;
     }
@@ -610,18 +633,20 @@ export function addCombinedSheet(wb, opts) {
   if (firstPersonRow != null && lastPersonRow != null) {
     totalRow.getCell(13).value = { formula: `SUM(M${firstPersonRow}:M${lastPersonRow})` };
     totalRow.getCell(14).value = { formula: `SUM(N${firstPersonRow}:N${lastPersonRow})` };
-    totalRow.getCell(15).value = { formula: `SUM(O${firstPersonRow}:O${lastPersonRow})` };
+    // Деньги приёма = Σ(кол-во × цена за порцию).
+    totalRow.getCell(15).value = { formula: `SUMPRODUCT(N${firstPersonRow}:N${lastPersonRow},O${firstPersonRow}:O${lastPersonRow})` };
     totalRow.getCell(16).value = { formula: `SUM(P${firstPersonRow}:P${lastPersonRow})` };
-    totalRow.getCell(17).value = { formula: `SUM(Q${firstPersonRow}:Q${lastPersonRow})` };
+    totalRow.getCell(17).value = { formula: `SUMPRODUCT(P${firstPersonRow}:P${lastPersonRow},Q${firstPersonRow}:Q${lastPersonRow})` };
     totalRow.getCell(18).value = { formula: `SUM(R${firstPersonRow}:R${lastPersonRow})` };
-    totalRow.getCell(19).value = { formula: `SUM(S${firstPersonRow}:S${lastPersonRow})` };
+    totalRow.getCell(19).value = { formula: `SUMPRODUCT(R${firstPersonRow}:R${lastPersonRow},S${firstPersonRow}:S${lastPersonRow})` };
     totalRow.getCell(20).value = { formula: `SUM(T${firstPersonRow}:T${lastPersonRow})` };
-    // U (Скидка) — не суммируется.
-    totalRow.getCell(22).value = { formula: `SUM(V${firstPersonRow}:V${lastPersonRow})` };
+    totalRow.getCell(21).value = { formula: `SUM(U${firstPersonRow}:U${lastPersonRow})` };
+    // V (Скидка) — не суммируется.
+    totalRow.getCell(23).value = { formula: `SUM(W${firstPersonRow}:W${lastPersonRow})` };
   }
   const sumStart = firstPersonRow ?? 5;
   const sumEnd = lastTransferRow ?? lastPersonRow ?? sumStart;
-  totalRow.getCell(23).value = { formula: `SUM(W${sumStart}:W${sumEnd})` };
+  totalRow.getCell(24).value = { formula: `SUM(X${sumStart}:X${sumEnd})` };
 
   applyHotelColumnWidths(ws);
   return ws;

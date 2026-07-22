@@ -3906,6 +3906,13 @@ export const GET_PASSENGER_REQUEST = gql`
           breakfast
           lunch
           dinner
+          breakfastCount
+          lunchCount
+          dinnerCount
+          breakfastLunchbox
+          lunchLunchbox
+          dinnerLunchbox
+          lunchboxPrice
           foodCost
           accommodationCost
           tariffName
@@ -3968,6 +3975,13 @@ export const SAVE_PASSENGER_REQUEST_HOTEL_REPORT = gql`
         breakfast
         lunch
         dinner
+        breakfastCount
+        lunchCount
+        dinnerCount
+        breakfastLunchbox
+        lunchLunchbox
+        dinnerLunchbox
+        lunchboxPrice
         foodCost
         accommodationCost
         tariffName

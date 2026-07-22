@@ -139,7 +139,10 @@ export default function FapReportView({ summary = {}, groups = [] }) {
                     </div>
                     <div className={classes.mealLine}>
                       Питание {rub(p.meal)}
-                      <span className={classes.mealSuffix}> · завтрак · обед · ужин</span>
+                      <span className={classes.mealSuffix}>
+                        {" · "}
+                        {p.mealSuffix || "завтрак · обед · ужин"}
+                      </span>
                     </div>
                   </div>
 
