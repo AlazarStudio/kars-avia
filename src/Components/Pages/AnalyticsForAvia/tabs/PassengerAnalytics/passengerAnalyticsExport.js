@@ -25,7 +25,7 @@ export async function exportPassengerAnalyticsXlsx({ rows, totals, showAirline, 
     "Дети",
     "Млад.",
     "Группы",
-    "Ночей",
+    "Суток",
     "Проживание",
     "Питание",
     "Трансфер",
@@ -132,7 +132,7 @@ export async function exportPassengerAnalyticsXlsx({ rows, totals, showAirline, 
     ...(showAirline ? ["Авиакомпания"] : []),
     "Гостиница",
     "Чел.",
-    "Ночей",
+    "Суток",
     "Проживание",
     "Питание",
     "Примечание",
@@ -183,6 +183,78 @@ export async function exportPassengerAnalyticsXlsx({ rows, totals, showAirline, 
   const a = document.createElement("a");
   a.href = url;
   a.download = meta.fileName || "passenger_analytics.xlsx";
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+export async function exportPassengerSummaryXlsx({ summaryRows, totals, dimensionLabel, meta }) {
+  const ExcelJS = (await import("exceljs")).default;
+  const wb = new ExcelJS.Workbook();
+  const ws = wb.addWorksheet("Сводка");
+  ws.addRow([`Сводка ФАП — ${dimensionLabel}`]);
+  ws.addRow([`Период: ${meta.periodLabel}`]);
+  ws.addRow([]);
+  const header = [
+    dimensionLabel,
+    "Заявок",
+    "Чел.",
+    "Дети",
+    "Млад.",
+    "Суток",
+    "Проживание",
+    "Питание",
+    "Трансфер",
+    "Итого",
+    "Без стоимости",
+  ];
+  const headerRow = ws.addRow(header);
+  headerRow.font = { bold: true };
+  for (const g of summaryRows) {
+    ws.addRow([
+      g.label,
+      g.requestsCount,
+      g.peopleCount,
+      g.childrenCount,
+      g.infantsCount,
+      g.roomNights,
+      g.living,
+      g.meal,
+      g.transfer,
+      g.total,
+      g.missingCostCount,
+    ]);
+  }
+  ws.addRow([]);
+  const totalRow = ws.addRow([
+    "ИТОГО",
+    totals?.requestsCount || 0,
+    totals?.peopleCount || 0,
+    totals?.childrenCount || 0,
+    totals?.infantsCount || 0,
+    totals?.roomNights || 0,
+    totals?.living || 0,
+    totals?.meal || 0,
+    totals?.transfer || 0,
+    totals?.total || 0,
+    totals?.missingCostCount || 0,
+  ]);
+  totalRow.font = { bold: true };
+  const widths = [24, 10, 8, 8, 8, 10, 14, 14, 14, 14, 14];
+  widths.forEach((w, i) => {
+    ws.getColumn(i + 1).width = w;
+  });
+  for (let c = 7; c <= 10; c++) {
+    ws.getColumn(c).numFmt = "#,##0";
+  }
+  ws.getColumn(6).numFmt = "0.##";
+  const buf = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buf], {
+    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = meta.fileName || "passenger_analytics_summary.xlsx";
   a.click();
   URL.revokeObjectURL(url);
 }

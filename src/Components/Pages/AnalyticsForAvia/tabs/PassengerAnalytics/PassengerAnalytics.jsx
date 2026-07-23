@@ -28,7 +28,8 @@ import {
   buildPassengerAnalyticsInput,
   decadePresets,
 } from "./passengerAnalyticsMappers";
-import { exportPassengerAnalyticsXlsx } from "./passengerAnalyticsExport";
+import { exportPassengerAnalyticsXlsx, exportPassengerSummaryXlsx } from "./passengerAnalyticsExport";
+import { buildSummary } from "./passengerAnalyticsAggregations";
 
 const COLUMN_TYPE = {
   number: "str",
@@ -46,6 +47,12 @@ const COLUMN_TYPE = {
 
 const STATUS_ORDER = ["CREATED", "ACCEPTED", "IN_PROGRESS", "COMPLETED", "CANCELLED"];
 const DEFAULT_STATUSES = ["CREATED", "ACCEPTED", "IN_PROGRESS", "COMPLETED"];
+
+const DIMENSIONS = [
+  { key: "airport", label: "Аэропорты", col: "Аэропорт" },
+  { key: "airline", label: "Авиакомпании", col: "Авиакомпания" },
+  { key: "month", label: "Месяцы", col: "Месяц" },
+];
 
 function isPeriodComplete(r) {
   return Boolean(
@@ -155,6 +162,9 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
   const [appliedInput, setAppliedInput] = useState(null);
   const [sort, setSort] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
+  const [viewMode, setViewMode] = useState("requests");
+  const [dimension, setDimension] = useState("airport");
+  const [summarySort, setSummarySort] = useState(null);
 
   const filterStateRef = useRef({});
   const openSnapshotRef = useRef(null);
@@ -222,6 +232,17 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
     const cmp = COLUMN_TYPE[key] === "num" ? cmpNum : cmpStr;
     return [...rows].sort((a, b) => cmp(getSortVal(a, key), getSortVal(b, key), dir));
   }, [rows, sort]);
+
+  const summaryRows = useMemo(() => buildSummary(rows, dimension), [rows, dimension]);
+  const sortedSummaryRows = useMemo(() => {
+    if (!summarySort) return summaryRows;
+    const { key, dir } = summarySort;
+    const getVal = (g) =>
+      key === "label" ? g.label : key === "kids" ? g.childrenCount + g.infantsCount : g[key];
+    const cmp = key === "label" ? cmpStr : cmpNum;
+    return [...summaryRows].sort((a, b) => cmp(getVal(a), getVal(b), dir));
+  }, [summaryRows, summarySort]);
+  const onSummarySort = (key) => setSummarySort((s) => ({ key, dir: nextSortDir(s, key) }));
 
   const onSort = (key) => {
     if (!COLUMN_TYPE[key]) return;
@@ -291,6 +312,18 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
 
   const handleExport = () => {
     if (!result) return;
+    if (viewMode === "summary") {
+      exportPassengerSummaryXlsx({
+        summaryRows: sortedSummaryRows,
+        totals,
+        dimensionLabel: DIMENSIONS.find((d) => d.key === dimension).label,
+        meta: {
+          periodLabel: periodHuman(range) || "",
+          fileName: `Аналитика_пассажиры_сводка_${formatDateRu(appliedInput?.dateFrom)}_${formatDateRu(appliedInput?.dateTo)}.xlsx`,
+        },
+      });
+      return;
+    }
     exportPassengerAnalyticsXlsx({
       rows: sortedRows,
       totals,
@@ -477,6 +510,22 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
           {/* Шапка результатов */}
           <div className={classes.resultsHeader}>
             <span className={classes.resultsTitle}>Сводка по пассажирам</span>
+            <div className={classes.viewSwitch}>
+              <button
+                type="button"
+                className={`${classes.viewBtn} ${viewMode === "requests" ? classes.viewBtnActive : ""}`}
+                onClick={() => setViewMode("requests")}
+              >
+                По заявкам
+              </button>
+              <button
+                type="button"
+                className={`${classes.viewBtn} ${viewMode === "summary" ? classes.viewBtnActive : ""}`}
+                onClick={() => setViewMode("summary")}
+              >
+                Сводки
+              </button>
+            </div>
             <div className={`${aa.exportButtons} pdfNoCapture`}>
               <button
                 type="button"
@@ -512,7 +561,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                 </span>
               </div>
               <div className={classes.kpi}>
-                <span className={classes.kpiLabel}>Ночей</span>
+                <span className={classes.kpiLabel}>Суток</span>
                 <span className={classes.kpiValue}>{formatNights(totals.roomNights)}</span>
               </div>
               <div className={classes.kpi}>
@@ -549,7 +598,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
             <div className={classes.empty}>Нет заявок за выбранный период.</div>
           )}
 
-          {rows.length > 0 && (
+          {viewMode === "requests" && rows.length > 0 && (
             <div className={classes.tableCard}>
               <div className={classes.tableScroll}>
                 <table className={classes.table}>
@@ -563,7 +612,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                       <SortHead label="Чел." columnKey="people" sort={sort} onSort={onSort} num />
                       <SortHead label="Дети" columnKey="kids" sort={sort} onSort={onSort} num />
                       <SortHead label="Группы" columnKey="groups" sort={sort} onSort={onSort} num />
-                      <SortHead label="Ночей" columnKey="nights" sort={sort} onSort={onSort} num />
+                      <SortHead label="Суток" columnKey="nights" sort={sort} onSort={onSort} num />
                       <SortHead label="Проживание" columnKey="living" sort={sort} onSort={onSort} num />
                       <SortHead label="Питание" columnKey="meal" sort={sort} onSort={onSort} num />
                       <SortHead label="Трансфер" columnKey="transfer" sort={sort} onSort={onSort} num />
@@ -598,9 +647,9 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                             </a>
                           </td>
                           <td>{r.flightDate ? formatDateRu(r.flightDate) : "—"}</td>
-                          {!isAirline && <td>{r.airlineName || "—"}</td>}
+                          {!isAirline && <td className={classes.tdEllipsis} title={r.airlineName || ""}>{r.airlineName || "—"}</td>}
                           <td>{r.airportCode || r.airportName || "—"}</td>
-                          <td className={classes.tdHotels}>
+                          <td className={classes.tdHotels} title={r.hotelNames?.length ? r.hotelNames.join(", ") : ""}>
                             {r.hotelNames?.length ? r.hotelNames.join(", ") : "—"}
                           </td>
                           <td className={classes.num}>{formatInt(r.peopleCount)}</td>
@@ -655,7 +704,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                                   ) : (
                                     <table className={classes.detailTable}>
                                       <thead>
-                                        <tr><th>Гостиница</th><th>Чел.</th><th>Ночей</th><th>Проживание</th><th>Питание</th></tr>
+                                        <tr><th>Гостиница</th><th>Чел.</th><th>Суток</th><th>Проживание</th><th>Питание</th></tr>
                                       </thead>
                                       <tbody>
                                         {r.hotels.map((h, i) => (
@@ -712,6 +761,81 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                 </table>
               </div>
             </div>
+          )}
+
+          {viewMode === "summary" && rows.length > 0 && (
+            <>
+              <div className={classes.dimChips}>
+                {DIMENSIONS.filter((d) => !(isAirline && d.key === "airline")).map((d) => (
+                  <button
+                    key={d.key}
+                    type="button"
+                    className={`${classes.dimChip} ${dimension === d.key ? classes.dimChipActive : ""}`}
+                    onClick={() => setDimension(d.key)}
+                  >
+                    {d.label}
+                  </button>
+                ))}
+              </div>
+              <div className={classes.tableCard}>
+                <div className={classes.tableScroll}>
+                  <table className={classes.table}>
+                    <thead>
+                      <tr>
+                        <SortHead label={DIMENSIONS.find((d) => d.key === dimension).col} columnKey="label" sort={summarySort} onSort={onSummarySort} />
+                        <SortHead label="Заявок" columnKey="requestsCount" sort={summarySort} onSort={onSummarySort} num />
+                        <SortHead label="Чел." columnKey="peopleCount" sort={summarySort} onSort={onSummarySort} num />
+                        <SortHead label="Дети" columnKey="kids" sort={summarySort} onSort={onSummarySort} num />
+                        <SortHead label="Суток" columnKey="roomNights" sort={summarySort} onSort={onSummarySort} num />
+                        <SortHead label="Проживание" columnKey="living" sort={summarySort} onSort={onSummarySort} num />
+                        <SortHead label="Питание" columnKey="meal" sort={summarySort} onSort={onSummarySort} num />
+                        <SortHead label="Трансфер" columnKey="transfer" sort={summarySort} onSort={onSummarySort} num />
+                        <SortHead label="Итого" columnKey="total" sort={summarySort} onSort={onSummarySort} num />
+                        <SortHead label="Без стоимости" columnKey="missingCostCount" sort={summarySort} onSort={onSummarySort} num />
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedSummaryRows.map((g) => (
+                        <tr key={g.key}>
+                          <td className={classes.tdStrong}>{g.label}</td>
+                          <td className={classes.num}>{formatInt(g.requestsCount)}</td>
+                          <td className={classes.num}>{formatInt(g.peopleCount)}</td>
+                          <td className={classes.num}>
+                            {g.childrenCount + g.infantsCount > 0
+                              ? g.infantsCount > 0
+                                ? `${g.childrenCount}+${g.infantsCount}`
+                                : `${g.childrenCount}`
+                              : "—"}
+                          </td>
+                          <td className={classes.num}>{g.roomNights > 0 ? formatNights(g.roomNights) : "—"}</td>
+                          <td className={classes.num}>{formatRub(g.living)}</td>
+                          <td className={classes.num}>{formatRub(g.meal)}</td>
+                          <td className={classes.num}>{formatRub(g.transfer)}</td>
+                          <td className={`${classes.num} ${classes.tdTotal}`}>{formatRub(g.total)}</td>
+                          <td className={classes.num}>{g.missingCostCount > 0 ? formatInt(g.missingCostCount) : "—"}</td>
+                        </tr>
+                      ))}
+                      {totals && (
+                        <tr className={classes.summaryTotalRow}>
+                          <td className={classes.tdStrong}>ИТОГО</td>
+                          <td className={classes.num}>{formatInt(totals.requestsCount)}</td>
+                          <td className={classes.num}>{formatInt(totals.peopleCount)}</td>
+                          <td className={classes.num}>
+                            {formatInt((totals.childrenCount || 0) + (totals.infantsCount || 0))}
+                          </td>
+                          <td className={classes.num}>{formatNights(totals.roomNights)}</td>
+                          <td className={classes.num}>{formatRub(totals.living)}</td>
+                          <td className={classes.num}>{formatRub(totals.meal)}</td>
+                          <td className={classes.num}>{formatRub(totals.transfer)}</td>
+                          <td className={`${classes.num} ${classes.tdTotal}`}>{formatRub(totals.total)}</td>
+                          <td className={classes.num}>{totals.missingCostCount > 0 ? formatInt(totals.missingCostCount) : "—"}</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </>
           )}
         </>
       )}
