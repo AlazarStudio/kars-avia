@@ -248,3 +248,64 @@
   font-size: 12px;
   font-weight: 600;
 }
+
+.rowClickable {
+  cursor: pointer;
+}
+.rowExpanded td {
+  background: #f7f8fd;
+}
+.detailCell {
+  padding: 0;
+  border-bottom: 1px solid #e4e8f5;
+}
+.detailGrid {
+  display: flex;
+  gap: 28px;
+  flex-wrap: wrap;
+  padding: 14px 16px;
+  background: #f8f9fd;
+}
+.detailBlock {
+  min-width: 220px;
+}
+.detailTitle {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #545873;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+.detailLine {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  font-size: 13px;
+  color: #2e355d;
+  padding: 2px 0;
+  font-variant-numeric: tabular-nums;
+}
+.detailLine span:first-child {
+  color: #545873;
+}
+.detailMuted {
+  color: #9ca4d9;
+  font-size: 13px;
+}
+.detailTable {
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.detailTable th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  color: #545873;
+  font-weight: 600;
+  padding: 2px 12px 4px 0;
+}
+.detailTable td {
+  padding: 2px 12px 2px 0;
+  color: #2e355d;
+}

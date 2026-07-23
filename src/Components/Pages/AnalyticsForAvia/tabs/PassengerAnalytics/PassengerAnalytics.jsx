@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef, Fragment } from "react";
 import { useQuery } from "@apollo/client";
 import { differenceInCalendarDays } from "date-fns";
 import classes from "./PassengerAnalytics.module.css";
@@ -36,6 +36,8 @@ const COLUMN_TYPE = {
   flightDate: "num",
   people: "num",
   groups: "num",
+  kids: "num",
+  nights: "num",
   living: "num",
   meal: "num",
   transfer: "num",
@@ -69,6 +71,10 @@ function getSortVal(row, key) {
       return row.peopleCount;
     case "groups":
       return row.groupsCount;
+    case "kids":
+      return (row.childrenCount || 0) + (row.infantsCount || 0);
+    case "nights":
+      return row.roomNights;
     case "living":
       return row.living;
     case "meal":
@@ -81,6 +87,13 @@ function getSortVal(row, key) {
       return null;
   }
 }
+
+const formatNights = (n) => {
+  const v = Number(n) || 0;
+  return Number.isInteger(v)
+    ? formatInt(v)
+    : v.toLocaleString("ru-RU", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+};
 
 function StatusPill({ status }) {
   const cfg = REQUEST_STATUS_CONFIG?.[status];
@@ -135,6 +148,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
   // применённый снимок, который гонит запрос
   const [appliedInput, setAppliedInput] = useState(null);
   const [sort, setSort] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
 
   const filterStateRef = useRef({});
   const openSnapshotRef = useRef(null);
@@ -423,6 +437,17 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                 <span className={classes.kpiValue}>{formatInt(totals.linkedPeopleCount)}</span>
               </div>
               <div className={classes.kpi}>
+                <span className={classes.kpiLabel}>Дети</span>
+                <span className={classes.kpiValue}>
+                  {formatInt((totals.childrenCount || 0) + (totals.infantsCount || 0))}
+                  {totals.infantsCount > 0 ? ` (+${formatInt(totals.infantsCount)} млад.)` : ""}
+                </span>
+              </div>
+              <div className={classes.kpi}>
+                <span className={classes.kpiLabel}>Ночей</span>
+                <span className={classes.kpiValue}>{formatNights(totals.roomNights)}</span>
+              </div>
+              <div className={classes.kpi}>
                 <span className={classes.kpiLabel}>Проживание</span>
                 <span className={classes.kpiValue}>{formatRub(totals.living)}</span>
               </div>
@@ -468,7 +493,9 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                       <SortHead label="Аэропорт" columnKey="airport" sort={sort} onSort={onSort} />
                       <th className={classes.th}>Гостиница(ы)</th>
                       <SortHead label="Чел." columnKey="people" sort={sort} onSort={onSort} num />
+                      <SortHead label="Дети" columnKey="kids" sort={sort} onSort={onSort} num />
                       <SortHead label="Группы" columnKey="groups" sort={sort} onSort={onSort} num />
+                      <SortHead label="Ночей" columnKey="nights" sort={sort} onSort={onSort} num />
                       <SortHead label="Проживание" columnKey="living" sort={sort} onSort={onSort} num />
                       <SortHead label="Питание" columnKey="meal" sort={sort} onSort={onSort} num />
                       <SortHead label="Трансфер" columnKey="transfer" sort={sort} onSort={onSort} num />
@@ -478,40 +505,126 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                   </thead>
                   <tbody>
                     {sortedRows.map((r) => (
-                      <tr key={r.requestId} className={r.costMissing ? classes.rowMissing : ""}>
-                        <td className={classes.tdStrong}>
-                          {r.flightNumber || r.requestNumber || "—"}
-                        </td>
-                        <td>{r.flightDate ? formatDateRu(r.flightDate) : "—"}</td>
-                        {!isAirline && <td>{r.airlineName || "—"}</td>}
-                        <td>{r.airportCode || r.airportName || "—"}</td>
-                        <td className={classes.tdHotels}>
-                          {r.hotelNames?.length ? r.hotelNames.join(", ") : "—"}
-                        </td>
-                        <td className={classes.num}>{formatInt(r.peopleCount)}</td>
-                        <td className={classes.num}>
-                          {r.groupsCount > 0 ? (
-                            <span className={classes.grp}>
-                              {formatInt(r.groupsCount)} гр. · {formatInt(r.linkedPeopleCount)} чел.
-                            </span>
-                          ) : (
-                            "—"
-                          )}
-                        </td>
-                        <td className={classes.num}>{r.costMissing ? "—" : formatRub(r.living)}</td>
-                        <td className={classes.num}>{r.costMissing ? "—" : formatRub(r.meal)}</td>
-                        <td className={classes.num}>{r.costMissing ? "—" : formatRub(r.transfer)}</td>
-                        <td className={`${classes.num} ${classes.tdTotal}`}>
-                          {r.costMissing ? (
-                            <span className={classes.missingTag}>нет отчёта</span>
-                          ) : (
-                            formatRub(r.total)
-                          )}
-                        </td>
-                        <td>
-                          <StatusPill status={r.status} />
-                        </td>
-                      </tr>
+                      <Fragment key={r.requestId}>
+                        <tr
+                          className={`${r.costMissing ? classes.rowMissing : ""} ${classes.rowClickable} ${
+                            expandedId === r.requestId ? classes.rowExpanded : ""
+                          }`}
+                          onClick={() => setExpandedId(expandedId === r.requestId ? null : r.requestId)}
+                        >
+                          <td className={classes.tdStrong}>
+                            {r.flightNumber || r.requestNumber || "—"}
+                          </td>
+                          <td>{r.flightDate ? formatDateRu(r.flightDate) : "—"}</td>
+                          {!isAirline && <td>{r.airlineName || "—"}</td>}
+                          <td>{r.airportCode || r.airportName || "—"}</td>
+                          <td className={classes.tdHotels}>
+                            {r.hotelNames?.length ? r.hotelNames.join(", ") : "—"}
+                          </td>
+                          <td className={classes.num}>{formatInt(r.peopleCount)}</td>
+                          <td className={classes.num}>
+                            {(r.childrenCount || 0) + (r.infantsCount || 0) > 0
+                              ? r.infantsCount > 0
+                                ? `${r.childrenCount || 0}+${r.infantsCount}`
+                                : `${r.childrenCount}`
+                              : "—"}
+                          </td>
+                          <td className={classes.num}>
+                            {r.groupsCount > 0 ? (
+                              <span className={classes.grp}>
+                                {formatInt(r.groupsCount)} гр. · {formatInt(r.linkedPeopleCount)} чел.
+                              </span>
+                            ) : (
+                              "—"
+                            )}
+                          </td>
+                          <td className={classes.num}>{r.roomNights > 0 ? formatNights(r.roomNights) : "—"}</td>
+                          <td className={classes.num}>{r.costMissing ? "—" : formatRub(r.living)}</td>
+                          <td className={classes.num}>{r.costMissing ? "—" : formatRub(r.meal)}</td>
+                          <td className={classes.num}>{r.costMissing ? "—" : formatRub(r.transfer)}</td>
+                          <td className={`${classes.num} ${classes.tdTotal}`}>
+                            {r.costMissing ? (
+                              <span className={classes.missingTag}>нет отчёта</span>
+                            ) : (
+                              formatRub(r.total)
+                            )}
+                          </td>
+                          <td>
+                            <StatusPill status={r.status} />
+                          </td>
+                        </tr>
+                        {expandedId === r.requestId && (
+                          <tr className={classes.detailRow}>
+                            <td colSpan={isAirline ? 13 : 14} className={classes.detailCell}>
+                              <div className={classes.detailGrid}>
+                                <div className={classes.detailBlock}>
+                                  <div className={classes.detailTitle}>Трансфер</div>
+                                  <div className={classes.detailLine}><span>Прилёт</span><span>{formatRub(r.transferArrival)}</span></div>
+                                  <div className={classes.detailLine}><span>Вылет</span><span>{formatRub(r.transferDeparture)}</span></div>
+                                  <div className={classes.detailLine}><span>Багаж</span><span>{formatRub(r.transferBaggage)}</span></div>
+                                  {r.transferIntercity > 0 && (
+                                    <div className={classes.detailLine}><span>Межгород</span><span>{formatRub(r.transferIntercity)}</span></div>
+                                  )}
+                                </div>
+                                <div className={classes.detailBlock}>
+                                  <div className={classes.detailTitle}>По гостиницам</div>
+                                  {(r.hotels || []).length === 0 ? (
+                                    <div className={classes.detailMuted}>Нет проживания</div>
+                                  ) : (
+                                    <table className={classes.detailTable}>
+                                      <thead>
+                                        <tr><th>Гостиница</th><th>Чел.</th><th>Ночей</th><th>Проживание</th><th>Питание</th></tr>
+                                      </thead>
+                                      <tbody>
+                                        {r.hotels.map((h, i) => (
+                                          <tr key={i}>
+                                            <td>{h.hotelName || "—"}</td>
+                                            <td className={classes.num}>{formatInt(h.peopleCount)}</td>
+                                            {h.reportSaved ? (
+                                              <>
+                                                <td className={classes.num}>{formatNights(h.roomNights)}</td>
+                                                <td className={classes.num}>{formatRub(h.living)}</td>
+                                                <td className={classes.num}>{formatRub(h.meal)}</td>
+                                              </>
+                                            ) : (
+                                              <td colSpan={3}><span className={classes.missingTag}>нет отчёта</span></td>
+                                            )}
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  )}
+                                </div>
+                                <div className={classes.detailBlock}>
+                                  <div className={classes.detailTitle}>Люди и сервисы</div>
+                                  <div className={classes.detailLine}>
+                                    <span>Взр. / дети / млад.</span>
+                                    <span>{formatInt(r.adultsCount)} / {formatInt(r.childrenCount)} / {formatInt(r.infantsCount)}</span>
+                                  </div>
+                                  {r.crewCount > 0 && (
+                                    <div className={classes.detailLine}><span>Экипаж</span><span>{formatInt(r.crewCount)}</span></div>
+                                  )}
+                                  {(r.breakfastsCount || 0) + (r.lunchesCount || 0) + (r.dinnersCount || 0) + (r.lunchboxesCount || 0) > 0 && (
+                                    <div className={classes.detailLine}>
+                                      <span>Питание З/О/У/ЛБ</span>
+                                      <span>{formatInt(r.breakfastsCount)} / {formatInt(r.lunchesCount)} / {formatInt(r.dinnersCount)} / {formatInt(r.lunchboxesCount)}</span>
+                                    </div>
+                                  )}
+                                  {(r.waterPlanned > 0 || r.waterServed > 0) && (
+                                    <div className={classes.detailLine}><span>Вода (план/факт)</span><span>{formatInt(r.waterPlanned)} / {formatInt(r.waterServed)}</span></div>
+                                  )}
+                                  {(r.mealServicePlanned > 0 || r.mealServiceServed > 0) && (
+                                    <div className={classes.detailLine}><span>Раздача питания (план/факт)</span><span>{formatInt(r.mealServicePlanned)} / {formatInt(r.mealServiceServed)}</span></div>
+                                  )}
+                                  {r.avgPricePerNight > 0 && (
+                                    <div className={classes.detailLine}><span>Средняя цена за ночь</span><span>{formatRub(r.avgPricePerNight)}</span></div>
+                                  )}
+                                </div>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
                     ))}
                   </tbody>
                 </table>

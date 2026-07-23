@@ -7660,6 +7660,14 @@ export const GET_PASSENGER_ANALYTICS = gql`
         requestsCount
         peopleCount
         linkedPeopleCount
+        adultsCount
+        childrenCount
+        infantsCount
+        roomNights
+        transferArrival
+        transferDeparture
+        transferBaggage
+        transferIntercity
         living
         meal
         transfer
@@ -7681,6 +7689,32 @@ export const GET_PASSENGER_ANALYTICS = gql`
         peopleCount
         groupsCount
         linkedPeopleCount
+        adultsCount
+        childrenCount
+        infantsCount
+        crewCount
+        roomNights
+        avgPricePerNight
+        transferArrival
+        transferDeparture
+        transferBaggage
+        transferIntercity
+        breakfastsCount
+        lunchesCount
+        dinnersCount
+        lunchboxesCount
+        waterPlanned
+        waterServed
+        mealServicePlanned
+        mealServiceServed
+        hotels {
+          hotelName
+          peopleCount
+          roomNights
+          living
+          meal
+          reportSaved
+        }
         living
         meal
         transfer
