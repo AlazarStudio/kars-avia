@@ -129,6 +129,15 @@ export default function FapReportView({ summary = {}, groups = [] }) {
               <span className={classes.tariffText}>
                 Тариф {g.tariff} · {people.length} чел.
               </span>
+              {/* Тариф «Номер»: проживание принадлежит номеру, а не гостю */}
+              {g.perRoom &&
+                (g.accommodationWarning ? (
+                  <span className={classes.accRoomPillWarn} title={g.accommodationWarning}>
+                    ⚠ проживание
+                  </span>
+                ) : (
+                  <span className={classes.accRoomPill}>проживание {rub(g.accommodation)}</span>
+                ))}
               <span className={classes.spacer} />
               <span className={classes.roomTotal}>{rub(g.total)}</span>
             </div>
@@ -170,7 +179,17 @@ export default function FapReportView({ summary = {}, groups = [] }) {
                   </div>
 
                   <div className={classes.personRight}>
-                    {p.warning ? (
+                    {g.perRoom ? (
+                      // Тариф «Номер»: проживание — на шапке номера, у гостя нейтрально
+                      <>
+                        <div className={classes.includedText}>в номере</div>
+                        {p.meal > 0 && (
+                          <div className={classes.livingLine} style={{ color: "#0F9D63" }}>
+                            питание {rub(p.meal)}
+                          </div>
+                        )}
+                      </>
+                    ) : p.warning ? (
                       <div className={classes.warnText}>
                         <WarnTriangle />
                         <span>{p.warning}</span>

@@ -1624,12 +1624,25 @@ export default function FapHotelPage({
         // Метки групп видны и в режиме «Просмотр» — в т.ч. авиакомпании (спека §5).
         // Ворнинги сюда НЕ передаём: read-only-роль их видеть не должна.
         const roomGroups = reportRoomGroups(g.members);
+        // Тариф «Номер»: проживание — на номере, не на госте (число с несущего).
+        const carrier = g.members.find((m) => findTariff(m.pd.tariffId));
+        const perRoom = !!(carrier && roomBillingByIndex[carrier.index]?.perRoom);
+        let accommodation = null;
+        let accommodationWarning = null;
+        if (perRoom) {
+          const ce = getEffectiveRow(carrier.index, carrier.pd);
+          if (ce.warning) accommodationWarning = ce.warning;
+          else accommodation = toNum(ce.accommodationCost);
+        }
         return {
         key: g.key,
         room: g.noRoom ? null : g.roomNumber,
         kind: g.noRoom ? "" : placementKindLabel(g.members.length),
         tariff: g.tariffName || "",
         total: groupTotals[g.key]?.total ?? 0,
+        perRoom,
+        accommodation,
+        accommodationWarning,
         showDots: showReportGroupDots,
         groups: roomGroups.list.map(({ group, inRoom, total }) => ({
           group,
@@ -1681,6 +1694,8 @@ export default function FapHotelPage({
       groupTotals,
       getEffectiveRow,
       reportRoomGroups,
+      roomBillingByIndex,
+      findTariff,
       groupIndex,
       groupOrderMap,
       groupMembersById,
@@ -2926,6 +2941,20 @@ export default function FapHotelPage({
                           ),
                         ].join("; ")
                       : "";
+                    // Тариф «Номер»: проживание принадлежит номеру, а не гостю —
+                    // показываем на шапке. Число берём с несущего (у него оно
+                    // начислено для сумм), у гостей в колонке будет «в номере».
+                    const perRoomCarrier = g.fullMembers.find((m) => findTariff(m.pd.tariffId));
+                    const roomPerRoom = !!(
+                      perRoomCarrier && roomBillingByIndex[perRoomCarrier.index]?.perRoom
+                    );
+                    let roomAccCost = null;
+                    let roomAccWarn = "";
+                    if (roomPerRoom) {
+                      const ce = getEffectiveRow(perRoomCarrier.index, perRoomCarrier.pd);
+                      if (ce.warning) roomAccWarn = ce.warning;
+                      else roomAccCost = ce.accommodationCost;
+                    }
                     return (
                       <div key={g.key} className={`${classes.roomGroup} ${g.noRoom ? classes.roomGroupNoRoom : ""}`}>
                         <div className={classes.roomHead}>
@@ -2970,6 +2999,19 @@ export default function FapHotelPage({
                             </Tooltip>
                           )}
                           {g.tariffName && <span className={classes.roomCat}>{g.tariffName}</span>}
+                          {roomPerRoom &&
+                            (roomAccWarn ? (
+                              <Tooltip title={roomAccWarn} slotProps={hintTooltipSlotProps}>
+                                <span className={`${classes.roomAccPill} ${classes.roomAccPillWarn}`} tabIndex={0}>
+                                  ⚠ проживание
+                                </span>
+                              </Tooltip>
+                            ) : (
+                              <span className={classes.roomAccPill}>
+                                <HotelBedIcon size={13} strokeWidth={2} />
+                                проживание {fmt(roomAccCost)}
+                              </span>
+                            ))}
                           <span className={classes.roomTotalVal} style={{ marginLeft: "auto" }}>
                             {gTotal > 0 ? fmt(gTotal) : "—"}
                           </span>
@@ -3089,8 +3131,10 @@ export default function FapHotelPage({
                                 {(() => {
                                   const eff = getEffectiveRow(i, pd);
                                   const hasTariff = !!findTariff(pd.tariffId);
-                                  if (eff.perRoomIncluded) {
-                                    return <span className={classes.accMuted}>— в сумме номера</span>;
+                                  // Тариф «Номер»: стоимость на шапке, у гостя — нейтрально
+                                  // (без выделенного несущего). Сумма номера не меняется.
+                                  if (roomBillingByIndex[i]?.perRoom) {
+                                    return <span className={classes.accMuted}>в номере</span>;
                                   }
                                   if (!hasTariff) {
                                     // Без тарифа — ручной ввод стоимости проживания.

@@ -104,6 +104,28 @@
   white-space: nowrap;
 }
 
+/* Проживание при тарифе «Номер» — чип в шапке (стоимость принадлежит номеру) */
+.accRoomPill {
+  font-size: 12px;
+  font-weight: 700;
+  color: #0F766E;
+  background: #EAF6F0;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.accRoomPillWarn {
+  font-size: 12px;
+  font-weight: 700;
+  color: #92400E;
+  background: #FEF3C7;
+  padding: 3px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  cursor: default;
+}
+
 /* Метка группы в шапке номера — тот же GroupChip, что и в режиме редактирования */
 .groupWrap {
   display: inline-flex;
