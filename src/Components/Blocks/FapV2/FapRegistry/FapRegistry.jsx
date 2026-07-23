@@ -260,9 +260,15 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
   const q = search.trim().toLowerCase();
   const matchText = (...vals) =>
     !q || vals.some((v) => (v || "").toLowerCase().includes(q));
-  const filteredPassengers = savedPassengers.filter((p) =>
-    matchText(p.fullName, p.phone, p.seat)
-  );
+  // Порядок по умолчанию: сначала со связью (в группе), затем по алфавиту ФИО.
+  const filteredPassengers = savedPassengers
+    .filter((p) => matchText(p.fullName, p.phone, p.seat))
+    .sort((a, b) => {
+      const ga = a.personId && groupIndex.has(a.personId) ? 0 : 1;
+      const gb = b.personId && groupIndex.has(b.personId) ? 0 : 1;
+      if (ga !== gb) return ga - gb;
+      return (a.fullName ?? "").localeCompare(b.fullName ?? "", "ru");
+    });
   const filteredCrew = crewMembers.filter((c) =>
     matchText(c.fullName, c.phone, c.position)
   );

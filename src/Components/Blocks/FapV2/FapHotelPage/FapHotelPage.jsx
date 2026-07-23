@@ -788,15 +788,23 @@ export default function FapHotelPage({
   const indexed = useMemo(() => people.map((p, idx) => ({ ...p, _idx: idx })), [people]);
   const filteredPeople = useMemo(() => {
     const byMode = indexed.filter(matchesMode);
-    if (!search.trim()) return byMode;
-    const q = search.toLowerCase();
-    return byMode.filter(
-      (p) =>
-        (p.fullName ?? "").toLowerCase().includes(q) ||
-        (p.phone ?? "").toLowerCase().includes(q) ||
-        (p.roomNumber ?? "").toLowerCase().includes(q)
-    );
-  }, [indexed, search, personMode]);
+    const q = search.trim().toLowerCase();
+    const list = q
+      ? byMode.filter(
+          (p) =>
+            (p.fullName ?? "").toLowerCase().includes(q) ||
+            (p.phone ?? "").toLowerCase().includes(q) ||
+            (p.roomNumber ?? "").toLowerCase().includes(q)
+        )
+      : byMode;
+    // Порядок по умолчанию: сначала со связью (в группе), затем по алфавиту ФИО.
+    return [...list].sort((a, b) => {
+      const ga = a.personId && groupIndex.has(a.personId) ? 0 : 1;
+      const gb = b.personId && groupIndex.has(b.personId) ? 0 : 1;
+      if (ga !== gb) return ga - gb;
+      return (a.fullName ?? "").localeCompare(b.fullName ?? "", "ru");
+    });
+  }, [indexed, search, personMode, groupIndex]);
 
   const allSelected =
     filteredPeople.length > 0 && filteredPeople.every((p) => selected.includes(p._idx));
@@ -1611,7 +1619,8 @@ export default function FapHotelPage({
 
   const reportViewGroups = useMemo(
     () =>
-      reportGroups.map((g) => {
+      reportGroups
+        .map((g) => {
         // Метки групп видны и в режиме «Просмотр» — в т.ч. авиакомпании (спека §5).
         // Ворнинги сюда НЕ передаём: read-only-роль их видеть не должна.
         const roomGroups = reportRoomGroups(g.members);
@@ -1664,7 +1673,9 @@ export default function FapHotelPage({
           };
         }),
         };
-      }),
+      })
+        // Номера со связью — наверх (порядок внутри стабилен); только показ.
+        .sort((a, b) => ((a.groups?.length ? 0 : 1) - (b.groups?.length ? 0 : 1))),
     [
       reportGroups,
       groupTotals,
@@ -1677,17 +1688,31 @@ export default function FapHotelPage({
     ]
   );
 
+  // Номер со связью = в нём есть хотя бы один гость из группы.
+  const roomHasGroup = useCallback(
+    (g) =>
+      (g.fullMembers ?? g.members ?? []).some(
+        (m) => m.person?.personId && groupIndex.has(m.person.personId)
+      ),
+    [groupIndex]
+  );
+
   const visibleGroups = useMemo(() => {
     const q = reportSearch.trim().toLowerCase();
     // fullMembers — исходный состав номера до поиска: бейдж вида размещения и
     // состав групп считаем по всему номеру, иначе шапка разойдётся с ценой,
     // которая всегда считается по полному составу.
     const withFull = reportGroups.map((g) => ({ ...g, fullMembers: g.members }));
-    if (!q) return withFull;
-    return withFull
-      .map((g) => ({ ...g, members: g.members.filter((m) => (m.person.fullName || "").toLowerCase().includes(q)) }))
-      .filter((g) => g.members.length > 0);
-  }, [reportGroups, reportSearch]);
+    const filtered = q
+      ? withFull
+          .map((g) => ({ ...g, members: g.members.filter((m) => (m.person.fullName || "").toLowerCase().includes(q)) }))
+          .filter((g) => g.members.length > 0)
+      : withFull;
+    // Номера со связью — наверх (порядок внутри стабилен); только показ.
+    return [...filtered].sort(
+      (a, b) => (roomHasGroup(a) ? 0 : 1) - (roomHasGroup(b) ? 0 : 1)
+    );
+  }, [reportGroups, reportSearch, roomHasGroup]);
 
   const boundCount = useMemo(
     () => reportRows.filter((r) => r.roomCategory).length,
