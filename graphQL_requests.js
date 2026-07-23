@@ -7726,6 +7726,17 @@ export const GET_PASSENGER_ANALYTICS = gql`
   }
 `;
 
+export const GET_AIRLINES_LIGHT = gql`
+  query AirlinesLight {
+    airlines(pagination: { all: true }) {
+      airlines {
+        id
+        name
+      }
+    }
+  }
+`;
+
 export const GET_ANALYTICS_AIRLINE_SERVICE_COMPARISON = gql`
   query AirlineComparison($input: AnalyticsAirlineServiceComparisonInput!) {
     analyticsAirlineServiceComparison(input: $input) {

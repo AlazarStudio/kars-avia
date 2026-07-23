@@ -31,14 +31,16 @@ export function decadePresets(ref = new Date()) {
 }
 
 // Собираем input для GET_PASSENGER_ANALYTICS (null → запрос пропускается)
-export function buildPassengerAnalyticsInput({ range, airportId, flightNumber }) {
+export function buildPassengerAnalyticsInput({ range, airportIds, flightNumber, statuses, airlineId }) {
   if (!range?.startDate || !range?.endDate) return null;
   const input = {
     dateFrom: formatISO(range.startDate, { representation: "date" }),
     dateTo: formatISO(range.endDate, { representation: "date" }),
   };
-  if (airportId) input.airportIds = [airportId];
+  if (airportIds?.length) input.airportIds = airportIds;
   const fn = (flightNumber || "").trim();
   if (fn) input.flightNumber = fn;
+  if (statuses?.length) input.statuses = statuses;
+  if (airlineId) input.airlineId = airlineId;
   return input;
 }

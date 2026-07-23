@@ -6,6 +6,7 @@ import aa from "../AirlineAnalytics/AirlineAnalytics.module.css";
 import DateRangePickerCustom from "../../DateRangePickerCustom";
 import MUITextField from "../../../../Blocks/MUITextField/MUITextField";
 import MUIAutocompleteColor from "../../../../Blocks/MUIAutocompleteColor/MUIAutocompleteColor";
+import MultiSelectAutocomplete from "../../../../Blocks/MultiSelectAutocomplete/MultiSelectAutocomplete";
 import MUILoader from "../../../../Blocks/MUILoader/MUILoader";
 import Button from "../../../../Standart/Button/Button";
 import { REQUEST_STATUS_CONFIG } from "../../../../Blocks/FapV2/fapConstants";
@@ -16,6 +17,7 @@ import {
 } from "../AirlineAnalytics/analyticsTableSortUtils";
 import {
   GET_PASSENGER_ANALYTICS,
+  GET_AIRLINES_LIGHT,
   GET_AIRPORTS_RELAY,
   getCookie,
 } from "../../../../../../graphQL_requests";
@@ -27,8 +29,6 @@ import {
   decadePresets,
 } from "./passengerAnalyticsMappers";
 import { exportPassengerAnalyticsXlsx } from "./passengerAnalyticsExport";
-
-const ALL_AIRPORTS = { id: "", label: "Все аэропорты" };
 
 const COLUMN_TYPE = {
   number: "str",
@@ -43,6 +43,9 @@ const COLUMN_TYPE = {
   transfer: "num",
   total: "num",
 };
+
+const STATUS_ORDER = ["CREATED", "ACCEPTED", "IN_PROGRESS", "COMPLETED", "CANCELLED"];
+const DEFAULT_STATUSES = ["CREATED", "ACCEPTED", "IN_PROGRESS", "COMPLETED"];
 
 function isPeriodComplete(r) {
   return Boolean(
@@ -140,8 +143,11 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
 
   // draft-фильтры (в модалке)
   const [range, setRange] = useState(null);
-  const [airport, setAirport] = useState(ALL_AIRPORTS);
+  const [airports, setAirports] = useState([]);
   const [flightNumber, setFlightNumber] = useState("");
+  const [statuses, setStatuses] = useState(DEFAULT_STATUSES);
+  const [airline, setAirline] = useState(null);
+  const [presetMonth, setPresetMonth] = useState(() => new Date());
   const [showPicker, setShowPicker] = useState(false);
   const [discardConfirmOpen, setDiscardConfirmOpen] = useState(false);
 
@@ -152,15 +158,24 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
 
   const filterStateRef = useRef({});
   const openSnapshotRef = useRef(null);
-  filterStateRef.current = { range, airport, flightNumber };
+  filterStateRef.current = { range, airports, flightNumber, statuses, airline };
 
   const { data: airportsData } = useQuery(GET_AIRPORTS_RELAY, {
     context: { headers: { Authorization: token ? `Bearer ${token}` : "" } },
   });
-  const airportOptions = useMemo(() => {
-    const list = (airportsData?.airports || []).map((a) => ({ id: a.id, label: a.name }));
-    return [ALL_AIRPORTS, ...list];
-  }, [airportsData]);
+  const airportOptions = useMemo(
+    () => (airportsData?.airports || []).map((a) => ({ id: a.id, label: a.name })),
+    [airportsData]
+  );
+
+  const { data: airlinesData } = useQuery(GET_AIRLINES_LIGHT, {
+    context: { headers: { Authorization: token ? `Bearer ${token}` : "" } },
+    skip: isAirline,
+  });
+  const airlineOptions = useMemo(
+    () => (airlinesData?.airlines?.airlines || []).map((a) => ({ id: a.id, label: a.name })),
+    [airlinesData]
+  );
 
   const { data, loading } = useQuery(GET_PASSENGER_ANALYTICS, {
     variables: { input: appliedInput },
@@ -179,8 +194,10 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
       const f = filterStateRef.current;
       openSnapshotRef.current = {
         range: f.range ? { ...f.range } : null,
-        airport: f.airport,
+        airports: [...(f.airports || [])],
         flightNumber: f.flightNumber || "",
+        statuses: [...(f.statuses || [])],
+        airline: f.airline || null,
       };
       setDiscardConfirmOpen(false);
     }
@@ -231,10 +248,13 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
         new Date(a.endDate).getTime() === new Date(b.endDate).getTime()
       );
     };
+    const idsKey = (arr) => (arr || []).map((x) => x?.id).join(",");
     return (
       !rangesEqual(f.range, s.range) ||
-      (f.airport?.id ?? null) !== (s.airport?.id ?? null) ||
-      (f.flightNumber || "") !== s.flightNumber
+      idsKey(f.airports) !== idsKey(s.airports) ||
+      (f.flightNumber || "") !== s.flightNumber ||
+      (f.statuses || []).join(",") !== (s.statuses || []).join(",") ||
+      (f.airline?.id ?? null) !== (s.airline?.id ?? null)
     );
   }, []);
 
@@ -247,8 +267,10 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
     const s = openSnapshotRef.current;
     if (s) {
       setRange(s.range);
-      setAirport(s.airport || ALL_AIRPORTS);
+      setAirports(s.airports);
       setFlightNumber(s.flightNumber);
+      setStatuses(s.statuses);
+      setAirline(s.airline);
     }
     setDiscardConfirmOpen(false);
     onFilterClose?.();
@@ -256,10 +278,16 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
 
   const handleApplyAndClose = useCallback(() => {
     setAppliedInput(
-      buildPassengerAnalyticsInput({ range, airportId: airport?.id || null, flightNumber })
+      buildPassengerAnalyticsInput({
+        range,
+        airportIds: airports.map((a) => a.id),
+        flightNumber,
+        statuses,
+        airlineId: !isAirline ? airline?.id || null : null,
+      })
     );
     onFilterClose?.();
-  }, [range, airport, flightNumber, onFilterClose]);
+  }, [range, airports, flightNumber, statuses, airline, isAirline, onFilterClose]);
 
   const handleExport = () => {
     if (!result) return;
@@ -298,8 +326,16 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                   {isPeriodComplete(range) ? periodHuman(range) : "Выбрать период"}
                 </button>
 
+                <div className={classes.monthSwitch}>
+                  <button type="button" className={classes.monthBtn} onClick={() => setPresetMonth((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))}>‹</button>
+                  <span className={classes.monthLabel}>
+                    {presetMonth.toLocaleDateString("ru-RU", { month: "long" })} {presetMonth.getFullYear()}
+                  </span>
+                  <button type="button" className={classes.monthBtn} onClick={() => setPresetMonth((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))}>›</button>
+                </div>
+
                 <div className={classes.modalDecades}>
-                  {decadePresets().map((p) => (
+                  {decadePresets(presetMonth).map((p) => (
                     <button
                       key={p.label}
                       type="button"
@@ -311,13 +347,35 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                   ))}
                 </div>
 
+                <div className={classes.statusChips}>
+                  {STATUS_ORDER.map((code) => {
+                    const cfg = REQUEST_STATUS_CONFIG?.[code];
+                    const active = statuses.includes(code);
+                    return (
+                      <button
+                        key={code}
+                        type="button"
+                        className={`${classes.statusChip} ${active ? classes.statusChipActive : ""}`}
+                        style={active && cfg ? { color: cfg.color, backgroundColor: cfg.bg, borderColor: cfg.color } : undefined}
+                        onClick={() =>
+                          setStatuses((prev) => (prev.includes(code) ? prev.filter((c) => c !== code) : [...prev, code]))
+                        }
+                      >
+                        {cfg?.label || code}
+                      </button>
+                    );
+                  })}
+                </div>
+
                 <div className={aa.filterModalRow2col}>
-                  <MUIAutocompleteColor
+                  <MultiSelectAutocomplete
                     dropdownWidth="100%"
-                    label="Аэропорт"
+                    label="Аэропорты"
                     options={airportOptions}
-                    value={airport}
-                    onChange={(e, v) => setAirport(v || ALL_AIRPORTS)}
+                    value={airports}
+                    onChange={(e, v) => setAirports(v || [])}
+                    isMultiple
+                    limitTags={2}
                   />
                   <MUITextField
                     label="№ рейса"
@@ -325,6 +383,16 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                     onChange={(e) => setFlightNumber(e.target.value)}
                   />
                 </div>
+
+                {!isAirline && (
+                  <MUIAutocompleteColor
+                    dropdownWidth="100%"
+                    label="Авиакомпания"
+                    options={airlineOptions}
+                    value={airline}
+                    onChange={(e, v) => setAirline(v || null)}
+                  />
+                )}
               </div>
             </div>
 
@@ -335,7 +403,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
               <Button
                 type="button"
                 onClick={handleApplyAndClose}
-                disabled={!isPeriodComplete(range)}
+                disabled={!isPeriodComplete(range) || statuses.length === 0}
                 padding="0 28px"
                 height="40px"
                 fontSize="14px"
@@ -514,6 +582,20 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                         >
                           <td className={classes.tdStrong}>
                             {r.flightNumber || r.requestNumber || "—"}
+                            <a
+                              className={classes.openLink}
+                              href={`/far/${r.requestId}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              onClick={(e) => e.stopPropagation()}
+                              title="Открыть заявку"
+                            >
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                <polyline points="15 3 21 3 21 9" />
+                                <line x1="10" y1="14" x2="21" y2="3" />
+                              </svg>
+                            </a>
                           </td>
                           <td>{r.flightDate ? formatDateRu(r.flightDate) : "—"}</td>
                           {!isAirline && <td>{r.airlineName || "—"}</td>}

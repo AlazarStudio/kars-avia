@@ -19,7 +19,8 @@ const tabs = [
 function Analytics({user}) {
   const [activeTab, setActiveTab] = useState("airlines");
   const [filterOpen, setFilterOpen] = useState(false);
-  const [appliedPeriod, setAppliedPeriod] = useState(null);
+  const [appliedPeriods, setAppliedPeriods] = useState({});
+  const appliedPeriod = appliedPeriods[activeTab] || null;
 
   const openFilter = useCallback(() => setFilterOpen(true), []);
   const closeFilter = useCallback(() => setFilterOpen(false), []);
@@ -27,39 +28,6 @@ function Analytics({user}) {
   const handleTabChange = (key) => {
     setActiveTab(key);
     setFilterOpen(false);
-    setAppliedPeriod(null);
-  };
-
-  const renderTabContent = () => {
-    switch (activeTab) {
-      case "airlines":
-        return (
-          <AirlineAnalytics
-            user={user}
-            height={user.airlineId ? "calc(100vh - 125px)" : null}
-            filterOpen={filterOpen}
-            onFilterClose={closeFilter}
-            onPeriodChange={setAppliedPeriod}
-          />
-        );
-      case "passengers":
-        return (
-          <PassengerAnalytics
-            user={user}
-            filterOpen={filterOpen}
-            onFilterClose={closeFilter}
-            onPeriodChange={setAppliedPeriod}
-          />
-        );
-      // case "dispatchers":
-      //   return <DispatcherAnalytics />;
-      // case "hotels":
-      //   return <HotelAnalytics />;
-      // case "support":
-      //   return <SupportAnalytics />;
-      default:
-        return null;
-    }
   };
 
   return (
@@ -108,7 +76,25 @@ function Analytics({user}) {
         </div>
       </div>
 
-      <div className={classes.tabContent}>{renderTabContent()}</div>
+      <div className={classes.tabContent}>
+        <div style={{ display: activeTab === "airlines" ? "contents" : "none" }}>
+          <AirlineAnalytics
+            user={user}
+            height={user.airlineId ? "calc(100vh - 125px)" : null}
+            filterOpen={filterOpen && activeTab === "airlines"}
+            onFilterClose={closeFilter}
+            onPeriodChange={(p) => setAppliedPeriods((prev) => ({ ...prev, airlines: p }))}
+          />
+        </div>
+        <div style={{ display: activeTab === "passengers" ? "contents" : "none" }}>
+          <PassengerAnalytics
+            user={user}
+            filterOpen={filterOpen && activeTab === "passengers"}
+            onFilterClose={closeFilter}
+            onPeriodChange={(p) => setAppliedPeriods((prev) => ({ ...prev, passengers: p }))}
+          />
+        </div>
+      </div>
     </div>
   );
 }
