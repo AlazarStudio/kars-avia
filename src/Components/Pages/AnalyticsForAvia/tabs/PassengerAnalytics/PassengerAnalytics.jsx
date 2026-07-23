@@ -802,6 +802,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                   </button>
                 ))}
               </div>
+              <div className={classes.summaryFlow}>
               <div className={classes.chartsRow}>
                 <div className={classes.chartCard}>
                   <div className={classes.chartCardHead}>
@@ -855,7 +856,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                   </div>
                 )}
               </div>
-              <div className={classes.tableCard}>
+              <div className={`${classes.tableCard} ${classes.tableCardFlow}`}>
                 <div className={classes.tableScroll}>
                   <table className={classes.table}>
                     <thead>
@@ -912,6 +913,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                     </tbody>
                   </table>
                 </div>
+              </div>
               </div>
             </>
           )}
