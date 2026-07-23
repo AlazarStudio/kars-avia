@@ -92,3 +92,66 @@ export function buildSummary(rows, dimension) {
   }
   return list;
 }
+
+const CHART_TOP_GROUPS = 8;
+
+const MONEY_SERIES = [
+  { key: "living", label: "Проживание" },
+  { key: "meal", label: "Питание" },
+  { key: "transfer", label: "Трансфер" },
+];
+
+const PEOPLE_SERIES = [
+  { key: "adults", label: "Взрослые" },
+  { key: "kids", label: "Дети" },
+];
+
+function toChartRow(g, metric) {
+  if (metric === "people") {
+    const kids = g.childrenCount + g.infantsCount;
+    return { x: g.label, adults: Math.max(0, g.peopleCount - kids), kids };
+  }
+  return { x: g.label, living: g.living, meal: g.meal, transfer: g.transfer };
+}
+
+// Данные для стек-бара: месяцы — хронологично без бакета «Без даты рейса»;
+// аэропорты/АК — по метрике desc, при >9 группах топ-8 + «Прочие».
+export function buildChartData(summaryRows, dimension, metric) {
+  const series = metric === "people" ? PEOPLE_SERIES : MONEY_SERIES;
+  const rows = summaryRows || [];
+  if (dimension === "month") {
+    const noDate = rows.find((g) => g.key === NO_DATE_KEY);
+    const data = rows.filter((g) => g.key !== NO_DATE_KEY).map((g) => toChartRow(g, metric));
+    return { data, series, noDateCount: noDate ? noDate.requestsCount : 0 };
+  }
+  const metricVal = (g) => (metric === "people" ? g.peopleCount : g.total);
+  const sorted = [...rows].sort((a, b) => metricVal(b) - metricVal(a));
+  if (sorted.length <= CHART_TOP_GROUPS + 1) {
+    return { data: sorted.map((g) => toChartRow(g, metric)), series, noDateCount: 0 };
+  }
+  const others = {
+    label: "Прочие",
+    peopleCount: 0,
+    childrenCount: 0,
+    infantsCount: 0,
+    living: 0,
+    meal: 0,
+    transfer: 0,
+    total: 0,
+  };
+  for (const g of sorted.slice(CHART_TOP_GROUPS)) {
+    others.peopleCount += g.peopleCount;
+    others.childrenCount += g.childrenCount;
+    others.infantsCount += g.infantsCount;
+    others.living += g.living;
+    others.meal += g.meal;
+    others.transfer += g.transfer;
+    others.total += g.total;
+  }
+  others.living = round2(others.living);
+  others.meal = round2(others.meal);
+  others.transfer = round2(others.transfer);
+  others.total = round2(others.total);
+  const data = [...sorted.slice(0, CHART_TOP_GROUPS).map((g) => toChartRow(g, metric)), toChartRow(others, metric)];
+  return { data, series, noDateCount: 0 };
+}

@@ -57,6 +57,7 @@ function AnalyticsChart({
   series = [],
   /** Для type="groupedBar": форматирование значений в тултипе */
   groupedValueFormat,
+  pieValueFormat,
   // colors = ["#0057C3", "#F44336", "#4CAF50", "#9575CD", "#9E9E9E", "#FF9800", "#638EA4", "#3B653D"],
   colors = ["#0057C3", "#2196f3", "#4CAF50", "#9575CD", "#ff9800", "#f44336", "#638EA4", "#3B653D"],
   height = 265,
@@ -429,6 +430,140 @@ function AnalyticsChart({
         );
       }
 
+      case "stackedBar": {
+        if (!series?.length) {
+          return <p className={classes.chartEmpty}>Нет данных</p>;
+        }
+        const seriesKeys = series.map((s) => s.key);
+        if (groupedSeriesDataIsEffectivelyEmpty(data, seriesKeys)) {
+          return <p className={classes.chartEmpty}>Нет данных</p>;
+        }
+        const bd = barDensityProps(data.length);
+        const formatVal = (v) =>
+          typeof groupedValueFormat === "function" ? groupedValueFormat(v) : v;
+        const stackLegend = (
+          <Legend
+            wrapperStyle={{ fontSize: 12, paddingTop: 8 }}
+            content={() => (
+              <ul
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 16,
+                  justifyContent: "center",
+                  listStyle: "none",
+                  padding: 0,
+                  margin: 0,
+                }}
+              >
+                {series.map((s, i) => (
+                  <li
+                    key={s.key}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      fontSize: 12,
+                    }}
+                  >
+                    <span
+                      style={{
+                        width: 12,
+                        height: 12,
+                        borderRadius: 2,
+                        background: colors[i % colors.length],
+                        flexShrink: 0,
+                      }}
+                    />
+                    <span>{s.label}</span>
+                  </li>
+                ))}
+              </ul>
+            )}
+          />
+        );
+        return (
+          <ResponsiveContainer width="100%" height={chartHeight} outline={false}>
+            <BarChart
+              data={data}
+              margin={{ top: 8, right: 8, left: 8, bottom: 8 }}
+              barCategoryGap={bd.categoryGap}
+            >
+              <CartesianGrid strokeDasharray="3 3" stroke="#e8eaf5" />
+              <XAxis dataKey={xKey} tick={{ fontSize: 11 }} interval={0} angle={-28} textAnchor="end" height={70} />
+              <YAxis tick={{ fontSize: 11 }} />
+              <Tooltip
+                cursor={{ fill: "#9CA4D91A" }}
+                content={({ active, payload, label }) => {
+                  if (!active || !payload?.length) return null;
+                  const sum = seriesKeys.reduce(
+                    (acc, k) => acc + (Number(payload.find((p) => p.dataKey === k)?.value) || 0),
+                    0
+                  );
+                  return (
+                    <div
+                      style={{
+                        background: "#fff",
+                        border: "1px solid #aab0dd5c",
+                        borderRadius: 8,
+                        padding: "8px 12px",
+                        fontSize: 12,
+                      }}
+                    >
+                      <div style={{ fontWeight: 600, marginBottom: 6 }}>
+                        {String(label ?? "")}
+                      </div>
+                      {series.map((s, i) => {
+                        const num = Number(payload.find((p) => p.dataKey === s.key)?.value) || 0;
+                        return (
+                          <div
+                            key={s.key}
+                            style={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 8,
+                              marginTop: 4,
+                            }}
+                          >
+                            <span
+                              style={{
+                                width: 10,
+                                height: 10,
+                                borderRadius: 2,
+                                background: colors[i % colors.length],
+                                flexShrink: 0,
+                              }}
+                            />
+                            <span>
+                              {s.label}: {formatVal(num)}
+                            </span>
+                          </div>
+                        );
+                      })}
+                      <div style={{ marginTop: 6, paddingTop: 6, borderTop: "1px solid #eceef8", fontWeight: 600 }}>
+                        Итого: {formatVal(sum)}
+                      </div>
+                    </div>
+                  );
+                }}
+              />
+              {stackLegend}
+              {series.map((s, i) => (
+                <Bar
+                  key={s.key}
+                  dataKey={s.key}
+                  name={s.label}
+                  stackId="s"
+                  fill={colors[i % colors.length]}
+                  maxBarSize={bd.simpleMaxBarSize}
+                  radius={i === series.length - 1 ? [4, 4, 0, 0] : undefined}
+                />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        );
+      }
+
       case "line":
         return (
           <ResponsiveContainer width="100%" height={chartHeight}>
@@ -506,7 +641,7 @@ function AnalyticsChart({
                       contentStyle={{ background: "#fff", border: "1px solid #aab0dd5c", borderRadius: "8px" }}
                       itemStyle={{ color: "#000" }}
                       cursor={{ fill: "#9CA4D91A" }}
-                      formatter={(value, name) => [`${value}`, name]}
+                      formatter={(value, name) => [typeof pieValueFormat === "function" ? pieValueFormat(value) : `${value}`, name]}
                     />
                   </PieChart>
                 </ResponsiveContainer>

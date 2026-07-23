@@ -9,6 +9,7 @@ import MUIAutocompleteColor from "../../../../Blocks/MUIAutocompleteColor/MUIAut
 import MultiSelectAutocomplete from "../../../../Blocks/MultiSelectAutocomplete/MultiSelectAutocomplete";
 import MUILoader from "../../../../Blocks/MUILoader/MUILoader";
 import Button from "../../../../Standart/Button/Button";
+import AnalyticsChart from "../../AnalyticsChart/AnalyticsChart";
 import { REQUEST_STATUS_CONFIG } from "../../../../Blocks/FapV2/fapConstants";
 import {
   cmpNum,
@@ -29,7 +30,7 @@ import {
   decadePresets,
 } from "./passengerAnalyticsMappers";
 import { exportPassengerAnalyticsXlsx, exportPassengerSummaryXlsx } from "./passengerAnalyticsExport";
-import { buildSummary } from "./passengerAnalyticsAggregations";
+import { buildSummary, buildChartData } from "./passengerAnalyticsAggregations";
 
 const COLUMN_TYPE = {
   number: "str",
@@ -49,10 +50,17 @@ const STATUS_ORDER = ["CREATED", "ACCEPTED", "IN_PROGRESS", "COMPLETED", "CANCEL
 const DEFAULT_STATUSES = ["CREATED", "ACCEPTED", "IN_PROGRESS", "COMPLETED"];
 
 const DIMENSIONS = [
-  { key: "airport", label: "Аэропорты", col: "Аэропорт" },
-  { key: "airline", label: "Авиакомпании", col: "Авиакомпания" },
-  { key: "month", label: "Месяцы", col: "Месяц" },
+  { key: "airport", label: "Аэропорты", col: "Аэропорт", chartTitle: "По аэропортам" },
+  { key: "airline", label: "Авиакомпании", col: "Авиакомпания", chartTitle: "По авиакомпаниям" },
+  { key: "month", label: "Месяцы", col: "Месяц", chartTitle: "По месяцам" },
 ];
+
+const CHART_METRICS = {
+  money: { colors: ["#0057C3", "#4CAF50", "#ff9800"], format: formatRub },
+  people: { colors: ["#0057C3", "#2196f3"], format: formatInt },
+};
+
+const DONUT_COLORS = ["#0057C3", "#4CAF50", "#ff9800"];
 
 function isPeriodComplete(r) {
   return Boolean(
@@ -165,6 +173,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
   const [viewMode, setViewMode] = useState("requests");
   const [dimension, setDimension] = useState("airport");
   const [summarySort, setSummarySort] = useState(null);
+  const [chartMetric, setChartMetric] = useState("money");
 
   const filterStateRef = useRef({});
   const openSnapshotRef = useRef(null);
@@ -243,6 +252,22 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
     return [...summaryRows].sort((a, b) => cmp(getVal(a), getVal(b), dir));
   }, [summaryRows, summarySort]);
   const onSummarySort = (key) => setSummarySort((s) => ({ key, dir: nextSortDir(s, key) }));
+
+  const chartData = useMemo(
+    () => buildChartData(summaryRows, dimension, chartMetric),
+    [summaryRows, dimension, chartMetric]
+  );
+  const donutData = useMemo(
+    () =>
+      totals
+        ? [
+            { x: "Проживание", value: totals.living },
+            { x: "Питание", value: totals.meal },
+            { x: "Трансфер", value: totals.transfer },
+          ]
+        : [],
+    [totals]
+  );
 
   const onSort = (key) => {
     if (!COLUMN_TYPE[key]) return;
@@ -776,6 +801,59 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                     {d.label}
                   </button>
                 ))}
+              </div>
+              <div className={classes.chartsRow}>
+                <div className={classes.chartCard}>
+                  <div className={classes.chartCardHead}>
+                    <span className={classes.chartCardTitle}>
+                      {DIMENSIONS.find((d) => d.key === dimension).chartTitle}
+                    </span>
+                    <div className={classes.metricSwitch}>
+                      <button
+                        type="button"
+                        className={`${classes.metricBtn} ${chartMetric === "money" ? classes.metricBtnActive : ""}`}
+                        onClick={() => setChartMetric("money")}
+                      >
+                        ₽
+                      </button>
+                      <button
+                        type="button"
+                        className={`${classes.metricBtn} ${chartMetric === "people" ? classes.metricBtnActive : ""}`}
+                        onClick={() => setChartMetric("people")}
+                      >
+                        Люди
+                      </button>
+                    </div>
+                  </div>
+                  <AnalyticsChart
+                    type="stackedBar"
+                    data={chartData.data}
+                    series={chartData.series}
+                    xKey="x"
+                    height={260}
+                    colors={CHART_METRICS[chartMetric].colors}
+                    groupedValueFormat={CHART_METRICS[chartMetric].format}
+                    fullWidth
+                  />
+                  {dimension === "month" && chartData.noDateCount > 0 && (
+                    <div className={classes.chartCaption}>
+                      Заявок без даты рейса: {formatInt(chartData.noDateCount)} — на графике не показаны
+                    </div>
+                  )}
+                </div>
+                {totals && (
+                  <div className={classes.chartCardSide}>
+                    <span className={classes.chartCardTitle}>Структура расходов</span>
+                    <AnalyticsChart
+                      type="pie"
+                      data={donutData}
+                      xKey="x"
+                      dataKey="value"
+                      colors={DONUT_COLORS}
+                      pieValueFormat={formatRub}
+                    />
+                  </div>
+                )}
               </div>
               <div className={classes.tableCard}>
                 <div className={classes.tableScroll}>
