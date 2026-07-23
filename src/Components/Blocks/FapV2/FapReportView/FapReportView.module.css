@@ -94,18 +94,32 @@
   color: var(--main-gray, #545873);
 }
 
+/* Вид размещения и тариф — те же пилюли, что в режиме «Редактирование» */
 .kindPill {
-  padding: 2px 9px;
+  padding: 3px 9px;
   border-radius: 6px;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
-  color: #10B981;
+  color: #0057C2;
+  background: #EAF1FB;
+  white-space: nowrap;
+}
+
+.tariffPill {
+  padding: 3px 9px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0F766E;
   background: #ECFDF5;
   white-space: nowrap;
 }
 
 /* Проживание при тарифе «Номер» — чип в шапке (стоимость принадлежит номеру) */
 .accRoomPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-size: 12px;
   font-weight: 700;
   color: #0F766E;
@@ -152,11 +166,6 @@
 .personDotEmpty {
   background: transparent;
   border: 1px dashed #CBD5E1;
-}
-
-.tariffText {
-  font-size: 12px;
-  color: var(--main-gray, #545873);
 }
 
 .spacer {

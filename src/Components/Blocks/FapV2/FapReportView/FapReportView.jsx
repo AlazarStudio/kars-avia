@@ -1,6 +1,7 @@
 import React from "react";
 import classes from "./FapReportView.module.css";
 import GroupChip from "../GroupChip/GroupChip";
+import HotelBedIcon from "../../../../shared/icons/HotelBedIcon";
 
 // Read-only «красивый детальный отчёт» по размещению. Никаких инпутов — только рендер view-model.
 // props: {
@@ -111,6 +112,7 @@ export default function FapReportView({ summary = {}, groups = [] }) {
                 <span className={classes.roomTitle}>Номер {g.room}</span>
               )}
               {!noRoom && g.kind && <span className={classes.kindPill}>{g.kind}</span>}
+              {g.tariff && <span className={classes.tariffPill}>{g.tariff}</span>}
               {(g.groups || []).map((gr) => (
                 <span key={gr.group.groupId} className={classes.groupWrap}>
                   {/* members включает карточку-поповер: состав и тип. Ворнинги
@@ -126,9 +128,6 @@ export default function FapReportView({ summary = {}, groups = [] }) {
               {(g.groups || []).length > 0 && g.ungrouped > 0 && (
                 <span className={classes.groupMeta}>+{g.ungrouped} без группы</span>
               )}
-              <span className={classes.tariffText}>
-                Тариф {g.tariff} · {people.length} чел.
-              </span>
               {/* Тариф «Номер»: проживание принадлежит номеру, а не гостю */}
               {g.perRoom &&
                 (g.accommodationWarning ? (
@@ -136,7 +135,10 @@ export default function FapReportView({ summary = {}, groups = [] }) {
                     ⚠ проживание
                   </span>
                 ) : (
-                  <span className={classes.accRoomPill}>проживание {rub(g.accommodation)}</span>
+                  <span className={classes.accRoomPill}>
+                    <HotelBedIcon size={13} strokeWidth={2} />
+                    проживание {rub(g.accommodation)}
+                  </span>
                 ))}
               <span className={classes.spacer} />
               <span className={classes.roomTotal}>{rub(g.total)}</span>

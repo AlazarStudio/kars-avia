@@ -2964,6 +2964,7 @@ export default function FapHotelPage({
                           {!g.noRoom && placementKindLabel(g.fullMembers.length) && (
                             <span className={classes.roomKindBadge}>{placementKindLabel(g.fullMembers.length)}</span>
                           )}
+                          {g.tariffName && <span className={classes.roomCat}>{g.tariffName}</span>}
                           {shownGroups.map(({ group, inRoom, total }) => {
                             const gw = warnings.byGroupId.get(group.groupId);
                             return (
@@ -2998,7 +2999,6 @@ export default function FapHotelPage({
                               </span>
                             </Tooltip>
                           )}
-                          {g.tariffName && <span className={classes.roomCat}>{g.tariffName}</span>}
                           {roomPerRoom &&
                             (roomAccWarn ? (
                               <Tooltip title={roomAccWarn} slotProps={hintTooltipSlotProps}>
