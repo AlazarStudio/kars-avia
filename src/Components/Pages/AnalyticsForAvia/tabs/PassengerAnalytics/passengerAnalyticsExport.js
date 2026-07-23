@@ -21,6 +21,7 @@ export async function exportPassengerAnalyticsXlsx({ rows, totals, showAirline, 
     "Аэропорт",
     "Гостиница(ы)",
     "Чел.",
+    "Группы",
     "Проживание",
     "Питание",
     "Трансфер",
@@ -39,6 +40,7 @@ export async function exportPassengerAnalyticsXlsx({ rows, totals, showAirline, 
       r.airportCode || r.airportName || "",
       (r.hotelNames || []).join(", "),
       r.peopleCount || 0,
+      r.groupsCount ? `${r.groupsCount} гр. · ${r.linkedPeopleCount} чел.` : "",
       r.costMissing ? "" : r.living || 0,
       r.costMissing ? "" : r.meal || 0,
       r.costMissing ? "" : r.transfer || 0,
@@ -56,6 +58,7 @@ export async function exportPassengerAnalyticsXlsx({ rows, totals, showAirline, 
     "",
     "",
     totals?.peopleCount || 0,
+    totals?.linkedPeopleCount || 0,
     totals?.living || 0,
     totals?.meal || 0,
     totals?.transfer || 0,
@@ -73,6 +76,7 @@ export async function exportPassengerAnalyticsXlsx({ rows, totals, showAirline, 
     12, // Аэропорт
     34, // Гостиница(ы)
     8, // Чел.
+    18, // Группы
     14, // Проживание
     14, // Питание
     14, // Трансфер
@@ -85,7 +89,7 @@ export async function exportPassengerAnalyticsXlsx({ rows, totals, showAirline, 
   });
 
   // Разделитель тысяч в денежных колонках (Проживание/Питание/Трансфер/Итого)
-  const firstMoneyCol = showAirline ? 7 : 6;
+  const firstMoneyCol = showAirline ? 8 : 7;
   for (let c = firstMoneyCol; c < firstMoneyCol + 4; c++) {
     ws.getColumn(c).numFmt = "#,##0";
   }

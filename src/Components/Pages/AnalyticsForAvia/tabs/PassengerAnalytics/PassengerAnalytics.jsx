@@ -35,6 +35,7 @@ const COLUMN_TYPE = {
   airport: "str",
   flightDate: "num",
   people: "num",
+  groups: "num",
   living: "num",
   meal: "num",
   transfer: "num",
@@ -66,6 +67,8 @@ function getSortVal(row, key) {
       return row.flightDate ? new Date(row.flightDate).getTime() : null;
     case "people":
       return row.peopleCount;
+    case "groups":
+      return row.groupsCount;
     case "living":
       return row.living;
     case "meal":
@@ -416,6 +419,10 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                 <span className={classes.kpiValue}>{formatInt(totals.peopleCount)}</span>
               </div>
               <div className={classes.kpi}>
+                <span className={classes.kpiLabel}>Связано пассажиров</span>
+                <span className={classes.kpiValue}>{formatInt(totals.linkedPeopleCount)}</span>
+              </div>
+              <div className={classes.kpi}>
                 <span className={classes.kpiLabel}>Проживание</span>
                 <span className={classes.kpiValue}>{formatRub(totals.living)}</span>
               </div>
@@ -461,6 +468,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                       <SortHead label="Аэропорт" columnKey="airport" sort={sort} onSort={onSort} />
                       <th className={classes.th}>Гостиница(ы)</th>
                       <SortHead label="Чел." columnKey="people" sort={sort} onSort={onSort} num />
+                      <SortHead label="Группы" columnKey="groups" sort={sort} onSort={onSort} num />
                       <SortHead label="Проживание" columnKey="living" sort={sort} onSort={onSort} num />
                       <SortHead label="Питание" columnKey="meal" sort={sort} onSort={onSort} num />
                       <SortHead label="Трансфер" columnKey="transfer" sort={sort} onSort={onSort} num />
@@ -481,6 +489,15 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                           {r.hotelNames?.length ? r.hotelNames.join(", ") : "—"}
                         </td>
                         <td className={classes.num}>{formatInt(r.peopleCount)}</td>
+                        <td className={classes.num}>
+                          {r.groupsCount > 0 ? (
+                            <span className={classes.grp}>
+                              {formatInt(r.groupsCount)} гр. · {formatInt(r.linkedPeopleCount)} чел.
+                            </span>
+                          ) : (
+                            "—"
+                          )}
+                        </td>
                         <td className={classes.num}>{r.costMissing ? "—" : formatRub(r.living)}</td>
                         <td className={classes.num}>{r.costMissing ? "—" : formatRub(r.meal)}</td>
                         <td className={classes.num}>{r.costMissing ? "—" : formatRub(r.transfer)}</td>

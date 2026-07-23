@@ -7659,6 +7659,7 @@ export const GET_PASSENGER_ANALYTICS = gql`
       totals {
         requestsCount
         peopleCount
+        linkedPeopleCount
         living
         meal
         transfer
@@ -7678,6 +7679,8 @@ export const GET_PASSENGER_ANALYTICS = gql`
         airlineName
         hotelNames
         peopleCount
+        groupsCount
+        linkedPeopleCount
         living
         meal
         transfer

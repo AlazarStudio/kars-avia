@@ -178,6 +178,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+.grp {
+  color: #0f7b4f;
+  font-weight: 600;
+}
+
 .sortable {
   cursor: pointer;
   user-select: none;
