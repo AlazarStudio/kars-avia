@@ -9,6 +9,16 @@ export const formatRub = (n) =>
 
 export const formatInt = (n) => new Intl.NumberFormat("ru-RU").format(Number(n) || 0);
 
+export const formatNights = (n) => {
+  const v = Number(n) || 0;
+  return Number.isInteger(v)
+    ? formatInt(v)
+    : v.toLocaleString("ru-RU", { minimumFractionDigits: 1, maximumFractionDigits: 1 });
+};
+
+export const formatMoneyShort = (v) =>
+  (Number(v) || 0).toLocaleString("ru-RU", { maximumFractionDigits: 2 });
+
 export function formatDateRu(d) {
   if (!d) return "";
   const dt = new Date(d);

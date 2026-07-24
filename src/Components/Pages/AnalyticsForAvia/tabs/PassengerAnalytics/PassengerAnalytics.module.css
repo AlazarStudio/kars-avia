@@ -212,13 +212,6 @@
   color: #2e355d;
 }
 
-.tdHotels {
-  max-width: 180px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
 .rowMissing td {
   color: #a6adc4;
 }
@@ -260,55 +253,9 @@
   padding: 0;
   border-bottom: 1px solid #e4e8f5;
 }
-.detailGrid {
-  display: flex;
-  gap: 28px;
-  flex-wrap: wrap;
-  padding: 14px 16px;
-  background: #f8f9fd;
-}
-.detailBlock {
-  min-width: 220px;
-}
-.detailTitle {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #545873;
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-.detailLine {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  font-size: 13px;
-  color: #2e355d;
-  padding: 2px 0;
-  font-variant-numeric: tabular-nums;
-}
-.detailLine span:first-child {
-  color: #545873;
-}
 .detailMuted {
   color: #9ca4d9;
   font-size: 13px;
-}
-.detailTable {
-  border-collapse: collapse;
-  font-size: 13px;
-}
-.detailTable th {
-  text-align: left;
-  font-size: 11px;
-  text-transform: uppercase;
-  color: #545873;
-  font-weight: 600;
-  padding: 2px 12px 4px 0;
-}
-.detailTable td {
-  padding: 2px 12px 2px 0;
-  color: #2e355d;
 }
 
 .monthSwitch {
@@ -414,12 +361,6 @@
   border-top: 2px solid #e4e8f5;
 }
 
-.tdEllipsis {
-  max-width: 150px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 /* ── Графики сводки (D2) ── */
 .chartsRow {
   display: flex;
@@ -520,4 +461,158 @@
 .tableCardFlow {
   flex: 0 0 auto;
   min-height: auto;
+}
+
+/* ── Список: двухэтажные ячейки (этап E) ── */
+.cellStack {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  line-height: 1.3;
+}
+
+.cellStackRight {
+  align-items: flex-end;
+}
+
+.cellSub {
+  font-size: 11px;
+  font-weight: 400;
+  color: #9ca4d9;
+}
+
+.cellEllipsis {
+  display: block;
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rowAlt:not(.rowExpanded) td {
+  background: #fafbfe;
+}
+
+/* ── Раскрывашка: плитки + чипы (этап E) ── */
+.panelWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 14px 16px;
+  background: #f8f9fd;
+}
+
+.tilesRow {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.tile {
+  border-radius: 8px;
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 150px;
+}
+
+.tileLabel {
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.tileValue {
+  font-size: 15px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.tileSub {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+}
+
+.tileLiving {
+  background: #ecfdf5;
+}
+.tileLiving .tileLabel,
+.tileLiving .tileSub {
+  color: #0f7b4f;
+}
+.tileLiving .tileValue {
+  color: #065f46;
+}
+
+.tileMeal {
+  background: #fffbeb;
+}
+.tileMeal .tileLabel,
+.tileMeal .tileSub {
+  color: #b45309;
+}
+.tileMeal .tileValue {
+  color: #92400e;
+}
+
+.tileTransfer {
+  background: #f5f3ff;
+}
+.tileTransfer .tileLabel,
+.tileTransfer .tileSub {
+  color: #6d28d9;
+}
+.tileTransfer .tileValue {
+  color: #5b21b6;
+}
+
+.tilePeople {
+  background: #eef2fd;
+}
+.tilePeople .tileLabel {
+  color: #0057c3;
+}
+.tilePeople .tileSub {
+  color: #545873;
+}
+.tilePeople .tileValue {
+  color: #2e355d;
+}
+
+.tileMissing {
+  background: #fffbeb;
+}
+.tileMissing .tileLabel,
+.tileMissing .tileSub,
+.tileMissing .tileValue {
+  color: #b45309;
+}
+
+.chipsRow {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+.chipGreen {
+  background: #ecfdf5;
+  color: #0f7b4f;
+}
+
+.chipAmber {
+  background: #fffbeb;
+  color: #b45309;
+}
+
+.chipBlue {
+  background: #eff6ff;
+  color: #3b82f6;
 }
