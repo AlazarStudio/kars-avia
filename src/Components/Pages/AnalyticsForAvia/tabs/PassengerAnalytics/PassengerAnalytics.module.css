@@ -7,13 +7,6 @@
   flex: 1;
 }
 
-/* ── Декада-пресеты внутри модалки (под кнопкой периода) ── */
-.modalDecades {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
 .decadeBtn {
   height: 32px;
   padding: 0 12px;
@@ -257,7 +250,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin: 10px 0 6px;
+  margin: 0;
 }
 .monthBtn {
   width: 26px;
@@ -286,7 +279,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin: 10px 0 4px;
+  margin: 0;
 }
 .statusChip {
   border: 1px solid #e4e8f5;
@@ -597,4 +590,80 @@
   font-weight: 700;
   color: #2e355d;
   margin: 4px 0 0;
+}
+
+/* ── Модалка фильтров: секции (этап G) ── */
+.fltSection {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fltSectionTitle {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca4d9;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.fltPeriodBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: #fff;
+  color: #2e355d;
+  border: 1px solid #d0d5f0;
+  padding: 10px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+  text-align: left;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.fltPeriodBtn:hover {
+  border-color: #0057c3;
+  color: #0057c3;
+}
+
+.fltPeriodRow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.fltDivider {
+  height: 1px;
+  background: #eef1f8;
+}
+
+.fltRow2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.fltResetBtn {
+  margin-right: auto;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #545873;
+  cursor: pointer;
+}
+
+.fltResetBtn:hover {
+  color: #0057c3;
+}
+
+.decadeBtnActive {
+  border-color: #0057c3;
+  color: #0057c3;
+  background: #eef2fd;
 }

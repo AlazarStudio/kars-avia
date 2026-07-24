@@ -93,6 +93,14 @@ function airportLine(r) {
   return r.airportCode || r.airportName || "—";
 }
 
+function sameRange(a, b) {
+  if (!a?.startDate || !a?.endDate || !b?.startDate || !b?.endDate) return false;
+  return (
+    new Date(a.startDate).toDateString() === new Date(b.startDate).toDateString() &&
+    new Date(a.endDate).toDateString() === new Date(b.endDate).toDateString()
+  );
+}
+
 function StatusPill({ status }) {
   const cfg = REQUEST_STATUS_CONFIG?.[status];
   return (
@@ -201,7 +209,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
     }
   }, [filterOpen]);
 
-  // Оповещаем родителя (шапка над табами) о применённом периоде
+  // Оповещаем родителя (шапка над табами) о применённом периоде и числе активных фильтров
   useEffect(() => {
     if (!appliedInput) {
       onPeriodChange?.(null);
@@ -209,8 +217,18 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
     }
     const days =
       differenceInCalendarDays(new Date(appliedInput.dateTo), new Date(appliedInput.dateFrom)) + 1;
+    const appliedStatuses = appliedInput.statuses || [];
+    const statusesDefault =
+      appliedStatuses.length === DEFAULT_STATUSES.length &&
+      appliedStatuses.every((s) => DEFAULT_STATUSES.includes(s));
+    const filtersCount =
+      (appliedInput.airportIds?.length ? 1 : 0) +
+      (appliedInput.flightNumber ? 1 : 0) +
+      (appliedInput.airlineId ? 1 : 0) +
+      (statusesDefault ? 0 : 1);
     onPeriodChange?.({
       p1: `${formatDateRu(appliedInput.dateFrom)} — ${formatDateRu(appliedInput.dateTo)} · ${days} дн.`,
+      filtersCount,
     });
   }, [appliedInput]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -314,6 +332,15 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
     onFilterClose?.();
   }, [range, airports, flightNumber, statuses, airline, isAirline, onFilterClose]);
 
+  const handleReset = useCallback(() => {
+    setRange(null);
+    setAirports([]);
+    setFlightNumber("");
+    setStatuses(DEFAULT_STATUSES);
+    setAirline(null);
+    setPresetMonth(new Date());
+  }, []);
+
   const handleExport = () => {
     if (!result) return;
     exportPassengerAnalyticsFullXlsx({
@@ -349,34 +376,37 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
             </div>
 
             <div className={aa.filterModalBody}>
-              <div className={aa.filterModalPeriodCard}>
-                <span className={aa.filterModalPeriodLabel}>Период</span>
-                <button type="button" className={aa.periodButtonModal} onClick={openPicker}>
+              <div className={classes.fltSection}>
+                <span className={classes.fltSectionTitle}>Период</span>
+                <button type="button" className={classes.fltPeriodBtn} onClick={openPicker}>
                   <CalendarIcon />
                   {isPeriodComplete(range) ? periodHuman(range) : "Выбрать период"}
                 </button>
-
-                <div className={classes.monthSwitch}>
-                  <button type="button" className={classes.monthBtn} onClick={() => setPresetMonth((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))}>‹</button>
-                  <span className={classes.monthLabel}>
-                    {presetMonth.toLocaleDateString("ru-RU", { month: "long" })} {presetMonth.getFullYear()}
-                  </span>
-                  <button type="button" className={classes.monthBtn} onClick={() => setPresetMonth((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))}>›</button>
-                </div>
-
-                <div className={classes.modalDecades}>
+                <div className={classes.fltPeriodRow}>
+                  <div className={classes.monthSwitch}>
+                    <button type="button" className={classes.monthBtn} onClick={() => setPresetMonth((d) => new Date(d.getFullYear(), d.getMonth() - 1, 1))}>‹</button>
+                    <span className={classes.monthLabel}>
+                      {presetMonth.toLocaleDateString("ru-RU", { month: "long" })} {presetMonth.getFullYear()}
+                    </span>
+                    <button type="button" className={classes.monthBtn} onClick={() => setPresetMonth((d) => new Date(d.getFullYear(), d.getMonth() + 1, 1))}>›</button>
+                  </div>
                   {decadePresets(presetMonth).map((p) => (
                     <button
                       key={p.label}
                       type="button"
-                      className={classes.decadeBtn}
+                      className={`${classes.decadeBtn} ${sameRange(range, p) ? classes.decadeBtnActive : ""}`}
                       onClick={() => applyDecade(p)}
                     >
                       {p.label}
                     </button>
                   ))}
                 </div>
+              </div>
 
+              <div className={classes.fltDivider} />
+
+              <div className={classes.fltSection}>
+                <span className={classes.fltSectionTitle}>Статусы</span>
                 <div className={classes.statusChips}>
                   {STATUS_ORDER.map((code) => {
                     const cfg = REQUEST_STATUS_CONFIG?.[code];
@@ -396,8 +426,13 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                     );
                   })}
                 </div>
+              </div>
 
-                <div className={aa.filterModalRow2col}>
+              <div className={classes.fltDivider} />
+
+              <div className={classes.fltSection}>
+                <span className={classes.fltSectionTitle}>Параметры</span>
+                <div className={classes.fltRow2col}>
                   <MultiSelectAutocomplete
                     dropdownWidth="100%"
                     label="Аэропорты"
@@ -413,7 +448,6 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                     onChange={(e) => setFlightNumber(e.target.value)}
                   />
                 </div>
-
                 {!isAirline && (
                   <MUIAutocompleteColor
                     dropdownWidth="100%"
@@ -427,6 +461,9 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
             </div>
 
             <div className={aa.filterModalFooter}>
+              <button type="button" className={classes.fltResetBtn} onClick={handleReset}>
+                Сбросить
+              </button>
               <button type="button" className={aa.filterModalCancelBtn} onClick={handleModalCloseAttempt}>
                 Отмена
               </button>

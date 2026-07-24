@@ -169,3 +169,19 @@
   min-width: 0;
   flex: 1;
 }
+
+/* Бейдж активных фильтров на кнопке «Фильтры» (этап G) */
+.filterBtnBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #fff;
+  color: #0057c3;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
