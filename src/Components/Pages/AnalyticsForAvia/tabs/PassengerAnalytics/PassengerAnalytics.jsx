@@ -32,7 +32,7 @@ import {
   buildPassengerAnalyticsInput,
   decadePresets,
 } from "./passengerAnalyticsMappers";
-import { exportPassengerAnalyticsXlsx, exportPassengerSummaryXlsx } from "./passengerAnalyticsExport";
+import { exportPassengerAnalyticsFullXlsx } from "./passengerAnalyticsExport";
 import { buildSummary, buildChartData } from "./passengerAnalyticsAggregations";
 
 const COLUMN_TYPE = {
@@ -150,7 +150,6 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
   const [appliedInput, setAppliedInput] = useState(null);
   const [sort, setSort] = useState(null);
   const [expandedId, setExpandedId] = useState(null);
-  const [viewMode, setViewMode] = useState("requests");
   const [dimension, setDimension] = useState("airport");
   const [summarySort, setSummarySort] = useState(null);
   const [chartMetric, setChartMetric] = useState("money");
@@ -317,21 +316,14 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
 
   const handleExport = () => {
     if (!result) return;
-    if (viewMode === "summary") {
-      exportPassengerSummaryXlsx({
-        summaryRows: sortedSummaryRows,
-        totals,
-        dimensionLabel: DIMENSIONS.find((d) => d.key === dimension).label,
-        meta: {
-          periodLabel: periodHuman(range) || "",
-          fileName: `Аналитика_пассажиры_сводка_${formatDateRu(appliedInput?.dateFrom)}_${formatDateRu(appliedInput?.dateTo)}.xlsx`,
-        },
-      });
-      return;
-    }
-    exportPassengerAnalyticsXlsx({
+    exportPassengerAnalyticsFullXlsx({
       rows: sortedRows,
       totals,
+      summaries: {
+        airport: buildSummary(rows, "airport"),
+        airline: isAirline ? null : buildSummary(rows, "airline"),
+        month: buildSummary(rows, "month"),
+      },
       showAirline: !isAirline,
       meta: {
         periodLabel: periodHuman(range) || "",
@@ -515,22 +507,6 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
           {/* Шапка результатов */}
           <div className={classes.resultsHeader}>
             <span className={classes.resultsTitle}>Сводка по пассажирам</span>
-            <div className={classes.viewSwitch}>
-              <button
-                type="button"
-                className={`${classes.viewBtn} ${viewMode === "requests" ? classes.viewBtnActive : ""}`}
-                onClick={() => setViewMode("requests")}
-              >
-                По заявкам
-              </button>
-              <button
-                type="button"
-                className={`${classes.viewBtn} ${viewMode === "summary" ? classes.viewBtnActive : ""}`}
-                onClick={() => setViewMode("summary")}
-              >
-                Сводки
-              </button>
-            </div>
             <div className={`${aa.exportButtons} pdfNoCapture`}>
               <button
                 type="button"
@@ -603,130 +579,8 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
             <div className={classes.empty}>Нет заявок за выбранный период.</div>
           )}
 
-          {viewMode === "requests" && rows.length > 0 && (
-            <div className={classes.tableCard}>
-              <div className={classes.tableScroll}>
-                <table className={classes.table}>
-                  <thead>
-                    <tr>
-                      <SortHead label="Рейс" columnKey="flightDate" sort={sort} onSort={onSort} />
-                      <SortHead
-                        label={isAirline ? "Аэропорт" : "АК · Аэропорт"}
-                        columnKey="airport"
-                        sort={sort}
-                        onSort={onSort}
-                      />
-                      <th className={classes.th}>Гостиница</th>
-                      <SortHead label="Чел." columnKey="people" sort={sort} onSort={onSort} num />
-                      <SortHead label="Итого" columnKey="total" sort={sort} onSort={onSort} num />
-                      <th className={classes.th}>Статус</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {sortedRows.map((r, i) => (
-                      <Fragment key={r.requestId}>
-                        <tr
-                          className={`${r.costMissing ? classes.rowMissing : ""} ${classes.rowClickable} ${
-                            i % 2 === 1 ? classes.rowAlt : ""
-                          } ${expandedId === r.requestId ? classes.rowExpanded : ""}`}
-                          onClick={() => setExpandedId(expandedId === r.requestId ? null : r.requestId)}
-                        >
-                          <td className={classes.tdStrong}>
-                            <span className={classes.cellStack}>
-                              <span>
-                                {r.flightNumber || r.requestNumber || "—"}
-                                <a
-                                  className={classes.openLink}
-                                  href={`/far/${r.requestId}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  onClick={(e) => e.stopPropagation()}
-                                  title="Открыть заявку"
-                                >
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
-                                    <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-                                    <polyline points="15 3 21 3 21 9" />
-                                    <line x1="10" y1="14" x2="21" y2="3" />
-                                  </svg>
-                                </a>
-                              </span>
-                              <span className={classes.cellSub}>
-                                {r.flightDate ? formatDateRu(r.flightDate) : "без даты"}
-                              </span>
-                            </span>
-                          </td>
-                          <td>
-                            <span className={classes.cellStack}>
-                              {!isAirline && (
-                                <span className={classes.cellEllipsis} title={r.airlineName || ""}>
-                                  {r.airlineName || "—"}
-                                </span>
-                              )}
-                              {isAirline ? (
-                                <span>{airportLine(r)}</span>
-                              ) : (
-                                <span className={`${classes.cellSub} ${classes.cellEllipsis}`}>{airportLine(r)}</span>
-                              )}
-                            </span>
-                          </td>
-                          <td title={r.hotelNames?.length ? r.hotelNames.join(", ") : ""}>
-                            <span className={classes.cellStack}>
-                              <span className={classes.cellEllipsis}>
-                                {r.hotelNames?.length ? r.hotelNames.join(", ") : "—"}
-                              </span>
-                              {r.roomNights > 0 && (
-                                <span className={classes.cellSub}>{formatNights(r.roomNights)} сут</span>
-                              )}
-                            </span>
-                          </td>
-                          <td className={classes.num}>
-                            <span className={`${classes.cellStack} ${classes.cellStackRight}`}>
-                              <span>{formatInt(r.peopleCount)}</span>
-                              {(r.childrenCount || 0) + (r.infantsCount || 0) > 0 && (
-                                <span className={classes.cellSub}>
-                                  {r.infantsCount > 0
-                                    ? `${r.childrenCount || 0}+${r.infantsCount}`
-                                    : `${r.childrenCount}`}{" "}
-                                  дет.
-                                </span>
-                              )}
-                            </span>
-                          </td>
-                          <td className={`${classes.num} ${classes.tdTotal}`}>
-                            {r.costMissing ? (
-                              <span className={classes.missingTag}>нет отчёта</span>
-                            ) : (
-                              <span className={`${classes.cellStack} ${classes.cellStackRight}`}>
-                                <span>{formatRub(r.total)}</span>
-                                {r.total > 0 && (
-                                  <span className={classes.cellSub}>
-                                    {formatMoneyShort(r.living)} + {formatMoneyShort(r.meal)} + {formatMoneyShort(r.transfer)}
-                                  </span>
-                                )}
-                              </span>
-                            )}
-                          </td>
-                          <td>
-                            <StatusPill status={r.status} />
-                          </td>
-                        </tr>
-                        {expandedId === r.requestId && (
-                          <tr className={classes.detailRow}>
-                            <td colSpan={6} className={classes.detailCell}>
-                              <PassengerRequestDetailPanel r={r} />
-                            </td>
-                          </tr>
-                        )}
-                      </Fragment>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {viewMode === "summary" && rows.length > 0 && (
-            <>
+          {rows.length > 0 && (
+            <div className={classes.summaryFlow}>
               <div className={classes.dimChips}>
                 {DIMENSIONS.filter((d) => !(isAirline && d.key === "airline")).map((d) => (
                   <button
@@ -739,7 +593,6 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                   </button>
                 ))}
               </div>
-              <div className={classes.summaryFlow}>
               <div className={classes.chartsRow}>
                 <div className={classes.chartCard}>
                   <div className={classes.chartCardHead}>
@@ -851,8 +704,132 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                   </table>
                 </div>
               </div>
+              <div className={classes.sectionTitle}>Заявки</div>
+              <div className={`${classes.tableCard} ${classes.tableCardFlow}`}>
+                <div className={classes.tableScroll}>
+                  <table className={classes.table}>
+                    <thead>
+                      <tr>
+                        <SortHead label="Рейс" columnKey="flightDate" sort={sort} onSort={onSort} />
+                        <SortHead
+                          label={isAirline ? "Аэропорт" : "АК · Аэропорт"}
+                          columnKey="airport"
+                          sort={sort}
+                          onSort={onSort}
+                        />
+                        <th className={classes.th}>Гостиница</th>
+                        <SortHead label="Чел." columnKey="people" sort={sort} onSort={onSort} num />
+                        <SortHead label="Итого" columnKey="total" sort={sort} onSort={onSort} num />
+                        <th className={classes.th}>Статус</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sortedRows.map((r, i) => (
+                        <Fragment key={r.requestId}>
+                          <tr
+                            className={`${r.costMissing ? classes.rowMissing : ""} ${classes.rowClickable} ${
+                              i % 2 === 1 ? classes.rowAlt : ""
+                            } ${expandedId === r.requestId ? classes.rowExpanded : ""}`}
+                            onClick={() => setExpandedId(expandedId === r.requestId ? null : r.requestId)}
+                          >
+                            <td className={classes.tdStrong}>
+                              <span className={classes.cellStack}>
+                                <span>
+                                  {r.flightNumber || r.requestNumber || "—"}
+                                  <a
+                                    className={classes.openLink}
+                                    href={`/far/${r.requestId}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    onClick={(e) => e.stopPropagation()}
+                                    title="Открыть заявку"
+                                  >
+                                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                                      <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+                                      <polyline points="15 3 21 3 21 9" />
+                                      <line x1="10" y1="14" x2="21" y2="3" />
+                                    </svg>
+                                  </a>
+                                </span>
+                                <span className={classes.cellSub}>
+                                  {[
+                                    r.flightNumber && r.requestNumber ? r.requestNumber : null,
+                                    r.flightDate ? formatDateRu(r.flightDate) : "без даты",
+                                  ]
+                                    .filter(Boolean)
+                                    .join(" · ")}
+                                </span>
+                              </span>
+                            </td>
+                            <td>
+                              <span className={classes.cellStack}>
+                                {!isAirline && (
+                                  <span className={classes.cellEllipsis} title={r.airlineName || ""}>
+                                    {r.airlineName || "—"}
+                                  </span>
+                                )}
+                                {isAirline ? (
+                                  <span>{airportLine(r)}</span>
+                                ) : (
+                                  <span className={`${classes.cellSub} ${classes.cellEllipsis}`}>{airportLine(r)}</span>
+                                )}
+                              </span>
+                            </td>
+                            <td title={r.hotelNames?.length ? r.hotelNames.join(", ") : ""}>
+                              <span className={classes.cellStack}>
+                                <span className={classes.cellEllipsis}>
+                                  {r.hotelNames?.length ? r.hotelNames.join(", ") : "—"}
+                                </span>
+                                {r.roomNights > 0 && (
+                                  <span className={classes.cellSub}>{formatNights(r.roomNights)} сут</span>
+                                )}
+                              </span>
+                            </td>
+                            <td className={classes.num}>
+                              <span className={`${classes.cellStack} ${classes.cellStackRight}`}>
+                                <span>{formatInt(r.peopleCount)}</span>
+                                {(r.childrenCount || 0) + (r.infantsCount || 0) > 0 && (
+                                  <span className={classes.cellSub}>
+                                    {r.infantsCount > 0
+                                      ? `${r.childrenCount || 0}+${r.infantsCount}`
+                                      : `${r.childrenCount}`}{" "}
+                                    дет.
+                                  </span>
+                                )}
+                              </span>
+                            </td>
+                            <td className={`${classes.num} ${classes.tdTotal}`}>
+                              {r.costMissing ? (
+                                <span className={classes.missingTag}>нет отчёта</span>
+                              ) : (
+                                <span className={`${classes.cellStack} ${classes.cellStackRight}`}>
+                                  <span>{formatRub(r.total)}</span>
+                                  {r.total > 0 && (
+                                    <span className={classes.cellSub}>
+                                      {formatMoneyShort(r.living)} + {formatMoneyShort(r.meal)} + {formatMoneyShort(r.transfer)}
+                                    </span>
+                                  )}
+                                </span>
+                              )}
+                            </td>
+                            <td>
+                              <StatusPill status={r.status} />
+                            </td>
+                          </tr>
+                          {expandedId === r.requestId && (
+                            <tr className={classes.detailRow}>
+                              <td colSpan={6} className={classes.detailCell}>
+                                <PassengerRequestDetailPanel r={r} />
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </>
+            </div>
           )}
         </>
       )}
