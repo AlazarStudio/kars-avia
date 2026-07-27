@@ -1,5 +1,5 @@
 import { useState, useMemo, useCallback, useEffect, useRef, Fragment } from "react";
-import { useQuery } from "@apollo/client";
+import { useApolloClient, useQuery } from "@apollo/client";
 import { differenceInCalendarDays } from "date-fns";
 import classes from "./PassengerAnalytics.module.css";
 import aa from "../AirlineAnalytics/AirlineAnalytics.module.css";
@@ -12,6 +12,7 @@ import Button from "../../../../Standart/Button/Button";
 import AnalyticsChart from "../../AnalyticsChart/AnalyticsChart";
 import PassengerRequestDetailPanel from "./PassengerRequestDetailPanel";
 import { REQUEST_STATUS_CONFIG } from "../../../../Blocks/FapV2/fapConstants";
+import { useToast } from "../../../../../contexts/ToastContext";
 import {
   cmpNum,
   cmpStr,
@@ -19,6 +20,7 @@ import {
 } from "../AirlineAnalytics/analyticsTableSortUtils";
 import {
   GET_PASSENGER_ANALYTICS,
+  GET_PASSENGER_REQUEST_REPORT,
   GET_AIRLINES_LIGHT,
   GET_AIRPORTS_RELAY,
   getCookie,
@@ -57,6 +59,21 @@ const CHART_METRICS = {
 };
 
 const DONUT_COLORS = ["#0057C3", "#4CAF50", "#ff9800"];
+const EXPORT_DETAILS_CONCURRENCY = 4;
+
+async function mapLimit(items, limit, mapper) {
+  const result = new Array(items.length);
+  let nextIndex = 0;
+  const workers = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (nextIndex < items.length) {
+      const currentIndex = nextIndex;
+      nextIndex += 1;
+      result[currentIndex] = await mapper(items[currentIndex], currentIndex);
+    }
+  });
+  await Promise.all(workers);
+  return result;
+}
 
 function isPeriodComplete(r) {
   return Boolean(
@@ -142,6 +159,8 @@ function CalendarIcon() {
 
 function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange }) {
   const token = getCookie("token");
+  const client = useApolloClient();
+  const { error: notifyError } = useToast();
   const isAirline = !!user?.airlineId;
 
   // draft-фильтры (в модалке)
@@ -161,6 +180,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
   const [dimension, setDimension] = useState("airport");
   const [summarySort, setSummarySort] = useState(null);
   const [chartMetric, setChartMetric] = useState("money");
+  const [exporting, setExporting] = useState(false);
 
   const filterStateRef = useRef({});
   const openSnapshotRef = useRef(null);
@@ -191,7 +211,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
   });
 
   const result = data?.passengerAnalytics || null;
-  const rows = result?.requests || [];
+  const rows = useMemo(() => result?.requests || [], [result]);
   const totals = result?.totals || null;
 
   // Снимок фильтров при открытии модалки (для discard-подтверждения)
@@ -341,25 +361,48 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
     setPresetMonth(new Date());
   }, []);
 
-  const handleExport = () => {
-    if (!result) return;
-    exportPassengerAnalyticsFullXlsx({
-      rows: sortedRows,
-      totals,
-      summaries: {
-        airport: buildSummary(rows, "airport"),
-        airline: isAirline ? null : buildSummary(rows, "airline"),
-        month: buildSummary(rows, "month"),
-      },
-      showAirline: !isAirline,
-      meta: {
-        periodLabel: periodHuman(range) || "",
-        airlineName: isAirline ? rows[0]?.airlineName || "" : "",
-        fileName: `Аналитика_пассажиры_${formatDateRu(appliedInput?.dateFrom)}_${formatDateRu(
-          appliedInput?.dateTo
-        )}.xlsx`,
-      },
-    });
+  const handleExport = async () => {
+    if (!result || exporting) return;
+    setExporting(true);
+    try {
+      const detailRequests = await mapLimit(
+        sortedRows,
+        EXPORT_DETAILS_CONCURRENCY,
+        async (row) => {
+          const response = await client.query({
+            query: GET_PASSENGER_REQUEST_REPORT,
+            variables: { passengerRequestId: row.requestId },
+            context: { headers: { Authorization: token ? `Bearer ${token}` : "" } },
+            fetchPolicy: "network-only",
+          });
+          return response?.data?.passengerRequest || null;
+        }
+      );
+
+      await exportPassengerAnalyticsFullXlsx({
+        rows: sortedRows,
+        totals,
+        summaries: {
+          airport: buildSummary(rows, "airport"),
+          airline: isAirline ? null : buildSummary(rows, "airline"),
+          month: buildSummary(rows, "month"),
+        },
+        showAirline: !isAirline,
+        detailRequests,
+        meta: {
+          periodLabel: periodHuman(range) || "",
+          airlineName: isAirline ? rows[0]?.airlineName || "" : "",
+          fileName: `Аналитика_пассажиры_${formatDateRu(appliedInput?.dateFrom)}_${formatDateRu(
+            appliedInput?.dateTo
+          )}.xlsx`,
+        },
+      });
+    } catch (e) {
+      notifyError("Ошибка экспорта");
+      console.error(e);
+    } finally {
+      setExporting(false);
+    }
   };
 
   return (
@@ -549,9 +592,9 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                 type="button"
                 className={aa.exportXlsxButton}
                 onClick={handleExport}
-                disabled={!result}
+                disabled={!result || exporting}
               >
-                Выгрузить xlsx
+                {exporting ? "Формирование..." : "Выгрузить xlsx"}
               </button>
             </div>
           </div>

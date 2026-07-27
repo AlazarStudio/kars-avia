@@ -2527,14 +2527,30 @@ export const COMPLETE_PASSENGER_REQUEST_BAGGAGE_DRIVER_DELIVERY = gql`
       id
       baggageDeliveryService {
         drivers {
+          id
           fullName
           phone
+          peopleCount
+          pickupAt
           link
           linkPWA
           addressFrom
           addressTo
           description
           deliveryCompletedAt
+          vehicleType
+          reportCost
+          people {
+            personId
+            fullName
+            phone
+            personType
+            personCategory
+            airlinePersonalId
+            baggageTags
+            reportCost
+            addressTo
+          }
         }
       }
     }
@@ -2605,11 +2621,36 @@ export const EVICT_PASSENGER_REQUEST_HOTEL_PERSON = gql`
 `;
 
 export const ADD_PASSENGER_REQUEST_BAGGAGE_DRIVER = gql`
-  mutation AddPassengerRequestBaggageDriver($requestId: ID!, $driver: PassengerServiceDriverInput!) {
+  mutation AddPassengerRequestBaggageDriver($requestId: ID!, $driver: PassengerBaggageDriverInput!) {
     addPassengerRequestBaggageDriver(requestId: $requestId, driver: $driver) {
       id
       baggageDeliveryService {
-        drivers { fullName phone pickupAt link linkPWA addressFrom addressTo description }
+        drivers {
+          id
+          fullName
+          phone
+          peopleCount
+          pickupAt
+          link
+          linkPWA
+          addressFrom
+          addressTo
+          description
+          deliveryCompletedAt
+          vehicleType
+          reportCost
+          people {
+            personId
+            fullName
+            phone
+            personType
+            personCategory
+            airlinePersonalId
+            baggageTags
+            reportCost
+            addressTo
+          }
+        }
       }
     }
   }
@@ -2618,6 +2659,22 @@ export const ADD_PASSENGER_REQUEST_BAGGAGE_DRIVER = gql`
 export const REMOVE_PASSENGER_REQUEST_BAGGAGE_DRIVER = gql`
   mutation RemovePassengerRequestBaggageDriver($requestId: ID!, $driverIndex: Int!) {
     removePassengerRequestBaggageDriver(requestId: $requestId, driverIndex: $driverIndex) {
+      id
+    }
+  }
+`;
+
+export const UPDATE_PASSENGER_REQUEST_BAGGAGE_DRIVER = gql`
+  mutation UpdatePassengerRequestBaggageDriver(
+    $requestId: ID!
+    $driverIndex: Int!
+    $patch: PassengerBaggageDriverPatchInput!
+  ) {
+    updatePassengerRequestBaggageDriver(
+      requestId: $requestId
+      driverIndex: $driverIndex
+      patch: $patch
+    ) {
       id
     }
   }
@@ -3784,6 +3841,7 @@ export const GET_PASSENGER_REQUEST = gql`
           cancelledAt
         }
         drivers {
+          id
           fullName
           phone
           peopleCount
@@ -3818,6 +3876,7 @@ export const GET_PASSENGER_REQUEST = gql`
           cancelledAt
         }
         drivers {
+          id
           fullName
           phone
           peopleCount
@@ -3852,6 +3911,7 @@ export const GET_PASSENGER_REQUEST = gql`
           cancelledAt
         }
         drivers {
+          id
           fullName
           phone
           peopleCount
@@ -3862,6 +3922,19 @@ export const GET_PASSENGER_REQUEST = gql`
           addressTo
           description
           deliveryCompletedAt
+          vehicleType
+          reportCost
+          people {
+            personId
+            fullName
+            phone
+            personType
+            personCategory
+            airlinePersonalId
+            baggageTags
+            reportCost
+            addressTo
+          }
         }
       }
       mealService {
@@ -3921,6 +3994,108 @@ export const GET_PASSENGER_REQUEST = gql`
       }
       hotelReports {
         id
+        hotelIndex
+        reportRows {
+          fullName
+          personId
+          roomNumber
+          roomCategory
+          roomKind
+          daysCount
+          breakfast
+          lunch
+          dinner
+          breakfastCount
+          lunchCount
+          dinnerCount
+          breakfastLunchbox
+          lunchLunchbox
+          dinnerLunchbox
+          lunchboxPrice
+          foodCost
+          accommodationCost
+          tariffName
+          pricePerDay
+          placementKind
+        }
+      }
+    }
+  }
+`;
+
+export const GET_PASSENGER_REQUEST_REPORT = gql`
+  query PassengerRequestReport($passengerRequestId: ID!) {
+    passengerRequest(id: $passengerRequestId) {
+      id
+      requestNumber
+      flightNumber
+      flightDate
+      airline {
+        name
+      }
+      airport {
+        city
+      }
+      livingService {
+        plan {
+          enabled
+          plannedAt
+          plannedFromAt
+          plannedToAt
+        }
+        hotels {
+          name
+          address
+          people {
+            personId
+            fullName
+            personType
+            personCategory
+            arrival
+            departure
+            accommodationChesses {
+              hotelIndex
+              hotelName
+              startAt
+              endAt
+              reason
+            }
+          }
+        }
+      }
+      transferService {
+        plan {
+          enabled
+          plannedAt
+        }
+        drivers {
+          id
+          fullName
+          phone
+          pickupAt
+          addressFrom
+          addressTo
+          vehicleType
+          reportCost
+        }
+      }
+      departureTransferService {
+        plan {
+          enabled
+          plannedAt
+        }
+        drivers {
+          id
+          fullName
+          phone
+          pickupAt
+          addressFrom
+          addressTo
+          vehicleType
+          reportCost
+        }
+      }
+      hotelReports {
         hotelIndex
         reportRows {
           fullName

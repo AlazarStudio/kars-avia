@@ -9,7 +9,7 @@ import {
   getCookie,
 } from "../../../../../graphQL_requests";
 import { downloadTransferReport } from "../reports/buildReportSheets";
-import { SERVICE_STATUS_CONFIG, formatDateTime } from "../fapConstants";
+import { SERVICE_STATUS_CONFIG, formatDateTime, VEHICLE_TYPES } from "../fapConstants";
 import { useToast } from "../../../../contexts/ToastContext";
 import FapActionButton from "../FapActionButton/FapActionButton";
 import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
@@ -27,16 +27,6 @@ import CopyIcon from "../../../../shared/icons/CopyIcon";
 const TR = "#8B5CF6";
 const TR_BG = "#F5F3FF";
 const TR_DEP = "#7C3AED";
-
-// Справочник типов ТС для дропдауна «Тип ТС» в карточке водителя.
-const VEHICLE_TYPES = [
-  "легковая",
-  "минивэн (до 8)",
-  "микроавтобус (до 20)",
-  "автобус до 30",
-  "автобус до 50",
-  "автобус до 70",
-];
 
 const PlusSvg = ({ size = 14, color = "#fff" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">

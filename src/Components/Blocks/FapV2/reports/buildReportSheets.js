@@ -19,6 +19,9 @@ const placementKindLabel = (n) => {
 const safeFilename = (s) =>
   String(s ?? "").replace(/[/\\?*[\]:]/g, "_").slice(0, 100);
 
+const prefixedSheetName = (name, prefix) =>
+  prefix ? `${prefix} ${name}` : name;
+
 // Имя листа в Excel ≤ 31 символ; дубли получают суффикс #2, #3, ...
 export function chooseSheetName(rawName, existingNames) {
   const base = String(rawName ?? "Лист").replace(/[\\/?*[\]:]/g, "_");
@@ -28,7 +31,7 @@ export function chooseSheetName(rawName, existingNames) {
     return name;
   }
   let n = 2;
-  while (true) {
+  for (;;) {
     const suffix = ` #${n}`;
     const trimmed = base.slice(0, 31 - suffix.length) + suffix;
     if (!existingNames.has(trimmed)) {
@@ -161,13 +164,13 @@ function getCheckInOut(person, hotelIndex, plan) {
  * Иначе — берёт сохранённые строки из request.hotelReports[hotelIndex].
  */
 export function addHotelSheet(wb, opts) {
-  const { request, hotelIndex, sheetNames } = opts;
+  const { request, hotelIndex, sheetNames, sheetPrefix = "" } = opts;
   const hotel = request?.livingService?.hotels?.[hotelIndex];
   if (!hotel) return null;
 
   const hotelName = pickHotelName(hotel);
   const city = pickCity(request, hotel);
-  const ws = wb.addWorksheet(chooseSheetName(hotelName, sheetNames));
+  const ws = wb.addWorksheet(chooseSheetName(prefixedSheetName(hotelName, sheetPrefix), sheetNames));
 
   // ── Шапка ──
   ws.getCell("A1").value = request?.airline?.name ?? "";
@@ -371,7 +374,7 @@ const TRANSFER_HEADERS = [
 ];
 
 export function addTransferSheet(wb, opts) {
-  const { request, direction, sheetNames } = opts;
+  const { request, direction, sheetNames, sheetPrefix = "" } = opts;
   const service =
     direction === "DEPARTURE"
       ? request?.departureTransferService
@@ -379,7 +382,7 @@ export function addTransferSheet(wb, opts) {
 
   const baseName =
     direction === "DEPARTURE" ? "Трансфер (в аэропорт)" : "Трансфер (в гостиницу)";
-  const ws = wb.addWorksheet(chooseSheetName(baseName, sheetNames));
+  const ws = wb.addWorksheet(chooseSheetName(prefixedSheetName(baseName, sheetPrefix), sheetNames));
   const city = pickCity(request, request?.livingService?.hotels?.[0]);
 
   ws.getCell("A1").value = request?.airline?.name ?? "";
@@ -463,8 +466,8 @@ export async function downloadHotelReport(request, hotelIndex, opts) {
 // Сводный лист «Сводка» — все гостиницы заявки одним списком + общий блок трансфера.
 // Используется как первый лист в per-living и per-request отчётах.
 export function addCombinedSheet(wb, opts) {
-  const { request, sheetNames, includeTransfer = true } = opts;
-  const ws = wb.addWorksheet(chooseSheetName("Сводка", sheetNames));
+  const { request, sheetNames, includeTransfer = true, sheetPrefix = "" } = opts;
+  const ws = wb.addWorksheet(chooseSheetName(prefixedSheetName("Сводка", sheetPrefix), sheetNames));
   const city = pickCity(request, request?.livingService?.hotels?.[0]);
 
   // ── Шапка ──
@@ -672,27 +675,43 @@ export async function downloadTransferReport(request, direction) {
   await downloadWorkbook(wb, filename);
 }
 
-export async function downloadRequestReport(request, notifyError) {
+export function addRequestReportSheets(wb, request, opts = {}) {
+  const { notifyError, sheetNames = new Set(), sheetPrefix = "" } = opts;
   const livingEnabled = request?.livingService?.plan?.enabled;
   const arrEnabled = request?.transferService?.plan?.enabled;
   const depEnabled = request?.departureTransferService?.plan?.enabled;
   if (!livingEnabled && !arrEnabled && !depEnabled) {
     notifyError?.("Нет данных для отчёта");
-    return;
+    return false;
   }
-  const wb = new ExcelJS.Workbook();
-  const sheetNames = new Set();
-  // Первый лист — сводка по всей заявке (все гостиницы + блок трансфера).
+
   if (livingEnabled || arrEnabled || depEnabled) {
-    addCombinedSheet(wb, { request, sheetNames, includeTransfer: arrEnabled || depEnabled });
+    addCombinedSheet(wb, {
+      request,
+      sheetNames,
+      sheetPrefix,
+      includeTransfer: arrEnabled || depEnabled,
+    });
   }
   if (livingEnabled) {
     (request?.livingService?.hotels ?? []).forEach((_, hotelIndex) => {
-      addHotelSheet(wb, { request, hotelIndex, sheetNames });
+      addHotelSheet(wb, { request, hotelIndex, sheetNames, sheetPrefix });
     });
   }
-  if (arrEnabled) addTransferSheet(wb, { request, direction: "ARRIVAL", sheetNames });
-  if (depEnabled) addTransferSheet(wb, { request, direction: "DEPARTURE", sheetNames });
+  if (arrEnabled) {
+    addTransferSheet(wb, { request, direction: "ARRIVAL", sheetNames, sheetPrefix });
+  }
+  if (depEnabled) {
+    addTransferSheet(wb, { request, direction: "DEPARTURE", sheetNames, sheetPrefix });
+  }
+
+  return true;
+}
+
+export async function downloadRequestReport(request, notifyError) {
+  const wb = new ExcelJS.Workbook();
+  const sheetNames = new Set();
+  if (!addRequestReportSheets(wb, request, { notifyError, sheetNames })) return;
   const filename = `${request?.airline?.name ?? ""} заявка ${request?.requestNumber ?? ""}.xlsx`;
   await downloadWorkbook(wb, filename);
 }

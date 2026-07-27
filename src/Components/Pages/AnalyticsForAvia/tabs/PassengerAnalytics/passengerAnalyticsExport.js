@@ -1,6 +1,10 @@
 // XLSX-экспорт аналитики пассажиров: полный отчёт одной книгой
 // (exceljs, динамический импорт как в reports/buildReportSheets.js)
 import { REQUEST_STATUS_CONFIG } from "../../../../Blocks/FapV2/fapConstants";
+import {
+  addCombinedSheet,
+  downloadWorkbook,
+} from "../../../../Blocks/FapV2/reports/buildReportSheets";
 import { formatDateRu } from "./passengerAnalyticsMappers";
 
 const statusLabel = (code) => REQUEST_STATUS_CONFIG?.[code]?.label || code || "";
@@ -246,9 +250,25 @@ function fillHotelsSheet(wb, { rows, showAirline }) {
   ws.getColumn(nightsCol + 2).numFmt = "#,##0";
 }
 
+function requestSheetPrefix(request, index) {
+  const label =
+    request?.requestNumber ||
+    request?.flightNumber ||
+    request?.id ||
+    `Заявка ${index + 1}`;
+  return String(label).trim();
+}
+
 // Полный отчёт: «Сводка — Аэропорты» → «Сводка — Авиакомпании» (нет у АК-роли,
 // summaries.airline == null) → «Сводка — Месяцы» → «Заявки» → «По гостиницам».
-export async function exportPassengerAnalyticsFullXlsx({ rows, totals, summaries, showAirline, meta }) {
+export async function exportPassengerAnalyticsFullXlsx({
+  rows,
+  totals,
+  summaries,
+  showAirline,
+  meta,
+  detailRequests = [],
+}) {
   const ExcelJS = (await import("exceljs")).default;
   const wb = new ExcelJS.Workbook();
 
@@ -266,14 +286,24 @@ export async function exportPassengerAnalyticsFullXlsx({ rows, totals, summaries
   fillRequestsSheet(wb, { rows, totals, showAirline, meta });
   fillHotelsSheet(wb, { rows, showAirline });
 
-  const buf = await wb.xlsx.writeBuffer();
-  const blob = new Blob([buf], {
-    type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+  const sheetNames = new Set(wb.worksheets.map((ws) => ws.name));
+  detailRequests.forEach((request, index) => {
+    if (!request) return;
+    const livingEnabled = request?.livingService?.plan?.enabled;
+    const arrEnabled = request?.transferService?.plan?.enabled;
+    const depEnabled = request?.departureTransferService?.plan?.enabled;
+    if (!livingEnabled && !arrEnabled && !depEnabled) return;
+    addCombinedSheet(wb, {
+      request: {
+        ...request,
+        requestNumber: request.requestNumber || rows[index]?.requestNumber,
+        flightNumber: request.flightNumber || rows[index]?.flightNumber,
+      },
+      sheetNames,
+      sheetPrefix: requestSheetPrefix(request, index),
+      includeTransfer: arrEnabled || depEnabled,
+    });
   });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = meta.fileName || "passenger_analytics.xlsx";
-  a.click();
-  URL.revokeObjectURL(url);
+
+  await downloadWorkbook(wb, meta.fileName || "passenger_analytics.xlsx");
 }
