@@ -19,17 +19,12 @@ import { downloadLivingReport } from "../reports/buildReportSheets";
 import { useToast } from "../../../../contexts/ToastContext";
 import Button from "../../../Standart/Button/Button";
 import FapActionButton from "../FapActionButton/FapActionButton";
-import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
-import DownloadIcon from "../../../../shared/icons/DownloadIcon";
-import EditIcon from "../../../../shared/icons/EditIcon";
+import FapHeaderActions from "../FapHeaderActions/FapHeaderActions";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import AddRepresentativeHotel from "../../AddRepresentativeHotel/AddRepresentativeHotel";
-import AddRepresentativeService from "../../AddRepresentativeService/AddRepresentativeService";
-import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
 import HotelBedIcon from "../../../../shared/icons/HotelBedIcon";
 import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
-import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
 import CopyIcon from "../../../../shared/icons/CopyIcon";
 
 const LIV = "#10B981";
@@ -76,8 +71,6 @@ export default function FapLivingPage({
   const isExtHotel = isExternalUser(user) && user?.scope === "HOTEL";
 
   const [showAddHotel, setShowAddHotel] = useState(false);
-  const [showAddService, setShowAddService] = useState(false);
-  const [showLogs, setShowLogs] = useState(false);
   const [showEarlyModal, setShowEarlyModal] = useState(false);
   const [removeHotelIndex, setRemoveHotelIndex] = useState(null);
   const [editHotelState, setEditHotelState] = useState(null); // { index, peopleCount }
@@ -275,13 +268,27 @@ export default function FapLivingPage({
               </FapActionButton>
             )
           )}
-          <FapOverflowMenu items={[
-            { label: "Скачать отчёт", icon: DownloadIcon, onClick: async () => { try { await downloadLivingReport(request); } catch (e) { notifyError("Ошибка экспорта"); console.error(e); } }, hidden: !(canEdit && !isCompleted && !isExtHotel) || isExternalUser(user) },
-            { label: "Редактировать", icon: EditIcon, onClick: () => setShowAddService(true), hidden: !(canEdit && !isCompleted && !isExtHotel) },
-            { label: "История", icon: ScheduleIcon, onClick: () => setShowLogs((v) => !v) },
-            { sep: true },
-            { label: "Завершить услугу", tone: "danger", onClick: () => setShowEarlyModal(true), hidden: !(canEdit && !isCompleted && !isExtHotel) },
-          ]} />
+          <FapHeaderActions
+            request={request}
+            user={user}
+            canEdit={canEdit && !isCompleted && !isExtHotel}
+            onRefetch={onRefetch}
+            onDownloadReport={() => downloadLivingReport(request)}
+            // Кнопка отчёта в шапке показывается ровно в обратном условии —
+            // два пути к одному действию в одной шапке не нужны. Без гостиниц
+            // выгружать нечего: получилась бы книга из одной шапки.
+            hideReport={
+              !(canEdit && !isCompleted && !isExtHotel) || hotels.length === 0
+            }
+            items={[
+              {
+                label: "Завершить услугу",
+                tone: "danger",
+                onClick: () => setShowEarlyModal(true),
+                hidden: !(canEdit && !isCompleted && !isExtHotel),
+              },
+            ]}
+          />
         </div>
       </div>
 
@@ -435,23 +442,6 @@ export default function FapLivingPage({
           request={request}
         />
       )}
-
-      {canEdit && showAddService && (
-        <AddRepresentativeService
-          show={showAddService}
-          onClose={() => {
-            setShowAddService(false);
-            onRefetch?.();
-          }}
-          request={request}
-        />
-      )}
-
-      <PassengerRequestLogs
-        show={showLogs}
-        onClose={() => setShowLogs(false)}
-        passengerRequestId={request?.id}
-      />
 
       <FapDestructiveModal
         open={showEarlyModal}

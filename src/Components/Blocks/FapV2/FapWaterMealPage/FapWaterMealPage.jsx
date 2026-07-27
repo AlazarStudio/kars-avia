@@ -17,15 +17,11 @@ import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import FapActionButton from "../FapActionButton/FapActionButton";
-import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
-import EditIcon from "../../../../shared/icons/EditIcon";
+import FapHeaderActions from "../FapHeaderActions/FapHeaderActions";
 import CatalogPickerModal, { personKey } from "../CatalogPickerModal/CatalogPickerModal";
-import AddRepresentativeService from "../../AddRepresentativeService/AddRepresentativeService";
-import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
 import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 import CloseIcon from "../../../../shared/icons/CloseIcon";
-import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
 import WaterIcon from "../../../../shared/icons/WaterIcon";
 import MealIcon from "../../../../shared/icons/MealIcon";
 
@@ -83,6 +79,7 @@ export default function FapWaterMealPage({
   request,
   onRefetch,
   canEdit = true,
+  user,
 }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
@@ -92,8 +89,6 @@ export default function FapWaterMealPage({
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [showEarlyModal, setShowEarlyModal] = useState(false);
-  const [showAddService, setShowAddService] = useState(false);
-  const [showLogs, setShowLogs] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
 
   // editingIdx — индекс редактируемой строки (в исходном массиве people)
@@ -376,12 +371,20 @@ export default function FapWaterMealPage({
           </div>
         </div>
         <div className={classes.headRight}>
-          <FapOverflowMenu items={[
-            { label: "Редактировать", icon: EditIcon, onClick: () => setShowAddService(true), hidden: !(canEdit && !isCancelled) },
-            { label: "История", icon: ScheduleIcon, onClick: () => setShowLogs((v) => !v) },
-            { sep: true },
-            { label: "Завершить услугу", tone: "danger", onClick: () => setShowEarlyModal(true), hidden: !(canEdit && !isCancelled && !isFinished) },
-          ]} />
+          <FapHeaderActions
+            request={request}
+            user={user}
+            canEdit={canEdit && !isCancelled}
+            onRefetch={onRefetch}
+            items={[
+              {
+                label: "Завершить услугу",
+                tone: "danger",
+                onClick: () => setShowEarlyModal(true),
+                hidden: !(canEdit && !isCancelled && !isFinished),
+              },
+            ]}
+          />
         </div>
       </div>
 
@@ -692,23 +695,6 @@ export default function FapWaterMealPage({
         confirmText="Завершить"
         cancelText="Отмена"
         saving={saving}
-      />
-
-      {canEdit && showAddService && (
-        <AddRepresentativeService
-          show={showAddService}
-          onClose={() => {
-            setShowAddService(false);
-            onRefetch?.();
-          }}
-          request={request}
-        />
-      )}
-
-      <PassengerRequestLogs
-        show={showLogs}
-        onClose={() => setShowLogs(false)}
-        passengerRequestId={request?.id}
       />
 
       <CatalogPickerModal

@@ -78,6 +78,7 @@ export default function FapServicePage({ user }) {
             request={request}
             onRefetch={refetch}
             canEdit={canEdit}
+            user={user}
           />
         );
       case "meal":
@@ -91,6 +92,7 @@ export default function FapServicePage({ user }) {
             request={request}
             onRefetch={refetch}
             canEdit={canEdit}
+            user={user}
           />
         );
       case "living":
@@ -113,6 +115,7 @@ export default function FapServicePage({ user }) {
             onRefetch={refetch}
             canEdit={canEdit}
             showLinks={!isAirlineRole}
+            user={user}
           />
         );
       case "transferDeparture":
@@ -124,6 +127,7 @@ export default function FapServicePage({ user }) {
             onRefetch={refetch}
             canEdit={canEdit}
             showLinks={!isAirlineRole}
+            user={user}
           />
         );
       case "baggage":
@@ -134,6 +138,7 @@ export default function FapServicePage({ user }) {
             onRefetch={refetch}
             canEdit={canEdit}
             showLinks={!isAirlineRole}
+            user={user}
           />
         );
       default:

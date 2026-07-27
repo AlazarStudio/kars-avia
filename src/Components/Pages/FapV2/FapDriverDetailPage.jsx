@@ -73,6 +73,7 @@ export default function FapDriverDetailPage({ user }) {
               onRefetch={refetch}
               canEdit={canEdit}
               showLinks={!isAirlineRole}
+              user={user}
             />
           </div>
         </div>

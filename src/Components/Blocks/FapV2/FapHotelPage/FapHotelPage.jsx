@@ -53,6 +53,7 @@ import EyeIcon from "../../../../shared/icons/EyeIcon";
 import { downloadHotelReport } from "../reports/buildReportSheets";
 import FapReportView from "../FapReportView/FapReportView";
 import FapModeToggle from "../FapModeToggle/FapModeToggle";
+import FapHeaderActions from "../FapHeaderActions/FapHeaderActions";
 
 const LIV = "#10B981";
 
@@ -335,6 +336,7 @@ export default function FapHotelPage({
   showLinks = true,
   isExtHotel = false,
   showTariffs = true,
+  user,
 }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
@@ -783,6 +785,12 @@ export default function FapHotelPage({
 
   const passengersCount = people.filter((p) => p?.personType !== "CREW").length;
   const crewCount = placed - passengersCount;
+
+  // Редактирование заявки из шапки закрыто на завершённой/отменённой услуге —
+  // то же условие, что у страницы услуги (FapLivingPage).
+  const livingFinished =
+    request?.livingService?.status === "COMPLETED" ||
+    request?.livingService?.status === "CANCELLED";
 
   const matchesMode = (p) => (p?.personType === "CREW" ? "CREW" : "PASSENGER") === personMode;
   const indexed = useMemo(() => people.map((p, idx) => ({ ...p, _idx: idx })), [people]);
@@ -2407,6 +2415,17 @@ export default function FapHotelPage({
               <LinkSvg /> Сканер <CopyIcon />
             </button>
           )}
+          <FapHeaderActions
+            request={request}
+            user={user}
+            canEdit={canEdit && !isExtHotel && !livingFinished}
+            onRefetch={onRefetch}
+            // Отчёт по этой гостинице — тот же экспорт, что у кнопки «Excel» на
+            // вкладке отчёта (со сбросом отложенного автосейва). Без гостей
+            // выгружать нечего — там кнопка по той же причине неактивна.
+            onDownloadReport={handleExport}
+            hideReport={placed === 0}
+          />
         </div>
 
         {/* Row 2 — metrics strip */}

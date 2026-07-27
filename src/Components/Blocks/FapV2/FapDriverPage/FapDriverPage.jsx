@@ -19,15 +19,14 @@ import PersonBadge from "../PersonBadge/PersonBadge";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import CatalogPickerModal, { personKey } from "../CatalogPickerModal/CatalogPickerModal";
 import FapActionButton from "../FapActionButton/FapActionButton";
-import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
-import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
+import FapHeaderActions from "../FapHeaderActions/FapHeaderActions";
+import { downloadTransferReport } from "../reports/buildReportSheets";
 import BusIcon from "../../../../shared/icons/BusIcon";
 import BusDownIcon from "../../../../shared/icons/BusDownIcon";
 import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 import CloseIcon from "../../../../shared/icons/CloseIcon";
 import CopyIcon from "../../../../shared/icons/CopyIcon";
-import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
 
 // Валидация формы + сборка person-объекта для CREW/PASSENGER.
 // Возвращает { ok, error } при ошибке валидации или { ok, person } при успехе.
@@ -161,6 +160,7 @@ export default function FapDriverPage({
   onRefetch,
   canEdit = true,
   showLinks = true,
+  user,
 }) {
   const navigate = useNavigate();
   const { requestId } = useParams();
@@ -189,7 +189,6 @@ export default function FapDriverPage({
   const [editForm, setEditForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [selected, setSelected] = useState([]);
-  const [showLogs, setShowLogs] = useState(false);
   const [catalogOpen, setCatalogOpen] = useState(false);
   const [editingPickup, setEditingPickup] = useState(false);
   const [pickupDraft, setPickupDraft] = useState("");
@@ -911,10 +910,12 @@ export default function FapDriverPage({
               <LinkSvg color="var(--dark-blue)" /> {linkLabel} <CopyIcon />
             </button>
           )}
-          <FapOverflowMenu
-            items={[
-              { label: "История", icon: ScheduleIcon, onClick: () => setShowLogs((v) => !v) },
-            ]}
+          <FapHeaderActions
+            request={request}
+            user={user}
+            canEdit={canEdit && !isCompleted}
+            onRefetch={onRefetch}
+            onDownloadReport={() => downloadTransferReport(request, direction)}
           />
         </div>
 
@@ -1207,11 +1208,6 @@ export default function FapDriverPage({
         )}
       </div>
 
-      <PassengerRequestLogs
-        show={showLogs}
-        onClose={() => setShowLogs(false)}
-        passengerRequestId={request?.id}
-      />
       <CatalogPickerModal
         open={catalogOpen}
         onClose={() => setCatalogOpen(false)}

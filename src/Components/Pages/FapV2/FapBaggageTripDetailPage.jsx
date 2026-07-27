@@ -8,24 +8,22 @@ import {
 } from "../../../../graphQL_requests";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import Header from "../../Blocks/Header/Header";
-import FapHotelPage from "../../Blocks/FapV2/FapHotelPage/FapHotelPage";
+import FapBaggageTripPage from "../../Blocks/FapV2/FapBaggageTripPage/FapBaggageTripPage";
 import FapChat from "../../Blocks/FapV2/FapChat/FapChat";
 import {
   isAirlineRole as isAirlineRoleCheck,
   isExternalUser,
   canAccessMenu,
 } from "../../../utils/access";
-import { authService } from "../../../services/authService";
 import classes from "./FapServicePage.module.css";
 
-export default function FapHotelDetailPage({ user }) {
+export default function FapBaggageTripDetailPage({ user }) {
   const navigate = useNavigate();
-  const { requestId, hotelIndex } = useParams();
+  const { requestId, driverIndex } = useParams();
   const { accessMenu } = useOutletContext();
   const token = getCookie("token");
 
   const isAirlineRole = isAirlineRoleCheck(user);
-  const isExtHotel = isExternalUser(user) && user?.scope === "HOTEL";
 
   const { loading, data, refetch } = useQuery(GET_PASSENGER_REQUEST, {
     context: { headers: { Authorization: `Bearer ${token}` } },
@@ -37,15 +35,8 @@ export default function FapHotelDetailPage({ user }) {
   });
 
   const request = data?.passengerRequest;
-
   const canEdit =
-    (canAccessMenu(accessMenu, "reserveUpdate", user) && !isAirlineRole) ||
-    (isExternalUser(user) && user?.scope === "HOTEL");
-
-  const handleExternalLogout = () => {
-    document.cookie = "externalUserContext=; Max-Age=0; Path=/";
-    authService.clear();
-  };
+    canAccessMenu(accessMenu, "reserveUpdate", user) && !isAirlineRole;
 
   return (
     <div className={classes.page}>
@@ -53,7 +44,7 @@ export default function FapHotelDetailPage({ user }) {
         <div className={classes.headerNav}>
           <button
             className={classes.backBtn}
-            onClick={() => navigate(`/far/${requestId}/service/living`)}
+            onClick={() => navigate(`/far/${requestId}/service/baggage`)}
             aria-label="Назад"
           >
             <img src="/arrow.png" alt="" />
@@ -73,14 +64,12 @@ export default function FapHotelDetailPage({ user }) {
       ) : (
         <div className={classes.contentRow}>
           <div className={classes.content}>
-            <FapHotelPage
+            <FapBaggageTripPage
               request={request}
-              hotelIndex={hotelIndex}
+              driverIndex={driverIndex}
               onRefetch={refetch}
               canEdit={canEdit}
-              showLinks={!isAirlineRole && !isExtHotel}
-              isExtHotel={isExtHotel}
-              showTariffs={!isAirlineRole}
+              showLinks={!isAirlineRole}
               user={user}
             />
           </div>

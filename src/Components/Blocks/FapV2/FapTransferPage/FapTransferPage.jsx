@@ -12,16 +12,13 @@ import { downloadTransferReport } from "../reports/buildReportSheets";
 import { SERVICE_STATUS_CONFIG, formatDateTime, VEHICLE_TYPES } from "../fapConstants";
 import { useToast } from "../../../../contexts/ToastContext";
 import FapActionButton from "../FapActionButton/FapActionButton";
-import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
-import DownloadIcon from "../../../../shared/icons/DownloadIcon";
+import FapHeaderActions from "../FapHeaderActions/FapHeaderActions";
 import FapSelect from "../FapSelect/FapSelect";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import AddRepresentativeDriver from "../../AddRepresentativeDriver/AddRepresentativeDriver";
-import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
 import BusIcon from "../../../../shared/icons/BusIcon";
 import BusDownIcon from "../../../../shared/icons/BusDownIcon";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
-import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
 import CopyIcon from "../../../../shared/icons/CopyIcon";
 
 const TR = "#8B5CF6";
@@ -105,6 +102,7 @@ export default function FapTransferPage({
   onRefetch,
   canEdit = true,
   showLinks = true,
+  user,
 }) {
   const navigate = useNavigate();
   const { requestId } = useParams();
@@ -119,7 +117,6 @@ export default function FapTransferPage({
   const serviceKey = isDeparture ? "transferDeparture" : "transfer";
 
   const [showAddDriver, setShowAddDriver] = useState(false);
-  const [showLogs, setShowLogs] = useState(false);
   const [showEarlyModal, setShowEarlyModal] = useState(false);
   const [deleteDriverConfirm, setDeleteDriverConfirm] = useState(null);
   const [saving, setSaving] = useState(false);
@@ -250,12 +247,24 @@ export default function FapTransferPage({
               </FapActionButton>
             )
           )}
-          <FapOverflowMenu items={[
-            { label: "Скачать отчёт", icon: DownloadIcon, onClick: async () => { try { await downloadTransferReport(request, direction); } catch (e) { notifyError("Ошибка экспорта"); console.error(e); } }, hidden: !(drivers.length > 0) || !(canEdit && !isCompleted) },
-            { label: "История", icon: ScheduleIcon, onClick: () => setShowLogs((v) => !v) },
-            { sep: true },
-            { label: "Завершить услугу", tone: "danger", onClick: () => setShowEarlyModal(true), hidden: !(canEdit && !isCompleted) },
-          ]} />
+          <FapHeaderActions
+            request={request}
+            user={user}
+            canEdit={canEdit && !isCompleted}
+            onRefetch={onRefetch}
+            onDownloadReport={() => downloadTransferReport(request, direction)}
+            // Без водителей выгружать нечего (книга из одной шапки), а когда
+            // правка недоступна — отчёт уже висит кнопкой в этой же шапке.
+            hideReport={!(drivers.length > 0 && canEdit && !isCompleted)}
+            items={[
+              {
+                label: "Завершить услугу",
+                tone: "danger",
+                onClick: () => setShowEarlyModal(true),
+                hidden: !(canEdit && !isCompleted),
+              },
+            ]}
+          />
         </div>
       </div>
 
@@ -378,12 +387,6 @@ export default function FapTransferPage({
           direction={direction}
         />
       )}
-
-      <PassengerRequestLogs
-        show={showLogs}
-        onClose={() => setShowLogs(false)}
-        passengerRequestId={request?.id}
-      />
 
       <FapDestructiveModal
         open={showEarlyModal}

@@ -45,6 +45,7 @@ import FapDetailPage from "./Components/Pages/FapV2/FapDetailPage";
 import FapServicePage from "./Components/Pages/FapV2/FapServicePage";
 import FapHotelDetailPage from "./Components/Pages/FapV2/FapHotelDetailPage";
 import FapDriverDetailPage from "./Components/Pages/FapV2/FapDriverDetailPage";
+import FapBaggageTripDetailPage from "./Components/Pages/FapV2/FapBaggageTripDetailPage";
 import FapRegistryPage from "./Components/Pages/FapV2/FapRegistryPage";
 import HotelPMS from "./Components/HotelPMS/HotelPMS";
 import MaintenanceBannerBar from "./Components/Blocks/MaintenanceBanner/MaintenanceBannerBar";
@@ -189,6 +190,10 @@ function App() {
               <Route
                 path="service/living/hotel/:hotelIndex"
                 element={<FapHotelDetailPage user={user} />}
+              />
+              <Route
+                path="service/baggage/trip/:driverIndex"
+                element={<FapBaggageTripDetailPage user={user} />}
               />
               <Route
                 path="service/:serviceKey/driver/:driverIndex"

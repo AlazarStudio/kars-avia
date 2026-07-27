@@ -1,33 +1,29 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useMutation } from "@apollo/client";
 import classes from "./FapBaggagePage.module.css";
 import {
   COMPLETE_PASSENGER_REQUEST_BAGGAGE_DRIVER_DELIVERY,
   COMPLETE_PASSENGER_REQUEST_BAGGAGE_EARLY,
   REMOVE_PASSENGER_REQUEST_BAGGAGE_DRIVER,
-  UPDATE_PASSENGER_REQUEST_BAGGAGE_DRIVER,
   getCookie,
 } from "../../../../../graphQL_requests";
 import {
   SERVICE_STATUS_CONFIG,
   formatDateTime,
   formatTime,
-  toLocalInputValue,
-  VEHICLE_TYPES,
 } from "../fapConstants";
 import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
-import FapActionButton from "../FapActionButton/FapActionButton";
-import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
+import { useBaggageTripDraft } from "../hooks/useBaggageTripDraft";
+import FapBaggageTripFields, {
+  deriveTripCost,
+} from "../FapBaggageTripFields/FapBaggageTripFields";
+import FapHeaderActions from "../FapHeaderActions/FapHeaderActions";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
-import FapSelect from "../FapSelect/FapSelect";
-import BaggageTagsInput from "../BaggageTagsInput/BaggageTagsInput";
-import CatalogPickerModal, { personKey } from "../CatalogPickerModal/CatalogPickerModal";
 import AddRepresentativeBaggageDriver from "../../AddRepresentativeBaggageDriver/AddRepresentativeBaggageDriver";
-import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
 import BaggageIcon from "../../../../shared/icons/BaggageIcon";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
-import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
 import CopyIcon from "../../../../shared/icons/CopyIcon";
 
 const BG_FG = "#64748B";
@@ -119,12 +115,17 @@ const LinkSvg = ({ size = 14, color = "currentColor", strokeWidth = 1.8 }) => (
     />
   </svg>
 );
-
-// Пассажиров берём только из реестра заявки, поэтому пустой реестр — это тупик.
-// Называем раздел так же, как чип в шапке заявки («Реестр»), чтобы подсказка
-// вела в существующее место интерфейса.
-const EMPTY_REGISTRY_HINT =
-  "Реестр заявки пуст — сначала добавьте пассажиров в разделе «Реестр»";
+const ArrowRightSvg = ({ size = 14, color = "#fff" }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
+    <path
+      d="M5 12h14M13 6l6 6-6 6"
+      stroke={color}
+      strokeWidth="2.4"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 
 const TASK_STATUS = {
   ACTIVE: { label: "В работе", color: "#F59E0B", bg: "#FFFBEB" },
@@ -143,52 +144,6 @@ const TASK_STATUS = {
 // черновик сбросится при сдвиге — потерять ввод безопаснее, чем записать его
 // чужой заявке.
 const driverCardKey = (driver, index) => driver.id || `idx-${index}`;
-
-// Клиентский ключ строки пассажира уходит из объекта перед сравнением с
-// сервером: в модели его нет. delete сохраняет порядок остальных ключей —
-// сравнение с serverPeopleKey идёт по строке JSON.
-const stripRowKey = (row) => {
-  const rest = { ...row };
-  delete rest._rowKey;
-  return rest;
-};
-
-// Идентичность пассажира для поиска дублей. Новые пассажиры приходят только из
-// реестра заявки, то есть с personId, но в уже сохранённых поездках остались
-// строки, вписанные руками до отказа от ручного ввода: у них personId нет и
-// опознать их можно только по нормализованному ФИО.
-const normalizeName = (name) =>
-  String(name ?? "")
-    .trim()
-    .replace(/\s+/g, " ")
-    .toLowerCase();
-
-// Сервер/пикер → строка черновика. reportCost держим строкой: это значение
-// <input type="number">, пустая строка означает «сумма не указана».
-const toDraftRow = (person) => ({
-  personId: person.personId ?? null,
-  fullName: person.fullName ?? "",
-  phone: person.phone ?? null,
-  personType: person.personType ?? "PASSENGER",
-  personCategory: person.personCategory ?? null,
-  airlinePersonalId: person.airlinePersonalId ?? null,
-  baggageTags: Array.isArray(person.baggageTags) ? person.baggageTags : [],
-  reportCost: person.reportCost != null ? String(person.reportCost) : "",
-  addressTo: person.addressTo ?? "",
-});
-
-// Строка черновика → PassengerServiceDriverPersonInput.
-const toPersonInput = (row) => ({
-  personId: row.personId || null,
-  fullName: row.fullName.trim(),
-  phone: row.phone || null,
-  personType: row.personType || "PASSENGER",
-  personCategory: row.personCategory || null,
-  airlinePersonalId: row.airlinePersonalId || null,
-  baggageTags: row.baggageTags,
-  reportCost: row.reportCost === "" ? null : Number(row.reportCost),
-  addressTo: row.addressTo.trim() || null,
-});
 
 const passengersLabel = (count) => {
   const tail100 = count % 100;
@@ -216,13 +171,15 @@ export default function FapBaggagePage({
   onRefetch,
   canEdit = true,
   showLinks = true,
+  user,
 }) {
+  const navigate = useNavigate();
+  const { requestId } = useParams();
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
   const { confirm } = useDialog();
 
   const [showAddDriver, setShowAddDriver] = useState(false);
-  const [showLogs, setShowLogs] = useState(false);
   const [showEarlyModal, setShowEarlyModal] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -244,31 +201,11 @@ export default function FapBaggagePage({
   const isCompleted = service?.status === "COMPLETED" || isCancelled;
   const plannedAt = service?.plan?.plannedAt;
 
-  const savedPassengers = request?.savedPassengers || [];
-
   const totals = useMemo(() => {
     const done = drivers.filter((d) => d.deliveryCompletedAt).length;
     const cost = drivers.reduce((sum, d) => sum + (Number(d.reportCost) || 0), 0);
     return { total: drivers.length, done, active: drivers.length - done, cost };
   }, [drivers]);
-
-  // Багаж пассажира везёт одна поездка: расписанных по другим поездкам в выборе
-  // не предлагаем. Своих карточка исключает сама — по черновику, чтобы ещё не
-  // сохранённое добавление тоже не предлагалось повторно.
-  const takenByOtherTrips = useMemo(
-    () =>
-      drivers.map(
-        (_, i) =>
-          new Set(
-            drivers.flatMap((d, j) =>
-              j === i
-                ? []
-                : (d.people ?? []).map((p) => personKey(p)).filter(Boolean)
-            )
-          )
-      ),
-    [drivers]
-  );
 
   const copyLink = (url) => {
     if (!url) return;
@@ -372,11 +309,20 @@ export default function FapBaggagePage({
               <PlusSvg /> Создать заявку
             </button>
           )}
-          <FapOverflowMenu items={[
-            { label: "История", icon: ScheduleIcon, onClick: () => setShowLogs((v) => !v) },
-            { sep: true },
-            { label: "Завершить услугу", tone: "danger", onClick: () => setShowEarlyModal(true), hidden: !(canEdit && !isCompleted) },
-          ]} />
+          <FapHeaderActions
+            request={request}
+            user={user}
+            canEdit={canEdit && !isCompleted}
+            onRefetch={onRefetch}
+            items={[
+              {
+                label: "Завершить услугу",
+                tone: "danger",
+                onClick: () => setShowEarlyModal(true),
+                hidden: !(canEdit && !isCompleted),
+              },
+            ]}
+          />
         </div>
       </div>
 
@@ -469,19 +415,17 @@ export default function FapBaggagePage({
               driver={driver}
               index={idx}
               requestId={request.id}
-              token={token}
               isCompleted={isCompleted}
               canEdit={canEdit}
               showLinks={showLinks}
               saving={saving}
-              savedPassengers={savedPassengers}
-              takenPersonIds={takenByOtherTrips[idx]}
+              onOpen={() =>
+                navigate(`/far/${requestId}/service/baggage/trip/${idx}`)
+              }
               onComplete={() => handleCompleteDelivery(idx)}
               onDelete={() => handleRemoveDriver(idx)}
               onCopyLink={copyLink}
               onRefetch={onRefetch}
-              onSaved={success}
-              onNotifyError={notifyError}
             />
           ))
         )}
@@ -498,12 +442,6 @@ export default function FapBaggagePage({
           request={request}
         />
       )}
-
-      <PassengerRequestLogs
-        show={showLogs}
-        onClose={() => setShowLogs(false)}
-        passengerRequestId={request?.id}
-      />
 
       <FapDestructiveModal
         open={showEarlyModal}
@@ -522,25 +460,23 @@ export default function FapBaggagePage({
 }
 
 // ──────────────────────────────────────────────────────────────────
-// TaskCard — one delivery task per row.
+// TaskCard — компакт в списке: кто, куда, статус, поля поездки.
+// Пассажиры поездки (адреса, бирки, цены) живут на её странице —
+// FapBaggageTripPage, открывается кнопкой «Открыть».
 // ──────────────────────────────────────────────────────────────────
 function TaskCard({
   driver,
   index,
   requestId,
-  token,
   isCompleted,
   canEdit,
   showLinks,
   saving,
-  savedPassengers,
-  takenPersonIds,
+  onOpen,
   onComplete,
   onDelete,
   onCopyLink,
   onRefetch,
-  onSaved,
-  onNotifyError,
 }) {
   const done = !!driver.deliveryCompletedAt;
   const status = done ? "DONE" : "ACTIVE";
@@ -549,196 +485,43 @@ function TaskCard({
   const hasRoute = driver.addressFrom || driver.addressTo;
   const mapUrl = hasRoute ? buildMapUrl(driver.addressFrom, driver.addressTo) : "";
 
-  const [updateBaggageDriver] = useMutation(UPDATE_PASSENGER_REQUEST_BAGGAGE_DRIVER, {
-    context: { headers: { Authorization: `Bearer ${token}` } },
+  const people = driver.people || [];
+  const hasPeople = people.length > 0;
+  const tripCost = deriveTripCost(people, driver);
+
+  // Тип ТС и дату доставки правят из двух мест — с карточки и со страницы
+  // поездки, — поэтому черновики и запись общие (useBaggageTripDraft), а свежие
+  // значения обоим местам приносит подписка на заявку.
+  const {
+    vehicleType,
+    setVehicleType,
+    deliveredAt,
+    setDeliveredAt,
+    onDeliveredAtFocus,
+    onDeliveredAtBlur,
+    dirty,
+    assertValid,
+    save,
+    saving: savingFields,
+  } = useBaggageTripDraft({
+    driver,
+    requestId,
+    driverIndex: index,
+    onRefetch,
   });
 
-  // Список пассажиров приходит из кэша новой ссылкой на каждый refetch, поэтому
-  // синхронизируемся по содержимому, а не по ссылке: иначе чужой refetch стёр бы
-  // набранное. Сравниваем в форме черновика — у неё стабильный порядок ключей и
-  // строковая сумма, так что «сервер → строка → сервер» не даёт ложного dirty.
-  const serverPeopleKey = JSON.stringify((driver.people || []).map(toDraftRow));
-
-  // Стойкого id у пассажира поездки нет: personId есть только у реестрового,
-  // вписанного руками опознать нечем. А ключ по позиции — ровно та же ловушка,
-  // что и у карточек: после удаления соседа React отдаёт инстанс строки
-  // следующему пассажиру вместе с его внутренним стейтом, и ненабранный токен
-  // из BaggageTagsInput уехал бы к чужим биркам. Поэтому выдаём каждой строке
-  // собственный ключ в момент её появления — он живёт ровно столько же, сколько
-  // сама строка, и переживает удаление любого соседа.
-  const rowKeySeq = useRef(0);
-  const withRowKey = (row) => ({ ...row, _rowKey: (rowKeySeq.current += 1) });
-
-  const [vehicleTypeDraft, setVehicleTypeDraft] = useState(driver.vehicleType ?? "");
-  const [deliveredAtDraft, setDeliveredAtDraft] = useState(
-    toLocalInputValue(driver.deliveryCompletedAt)
-  );
-  const [peopleDraft, setPeopleDraft] = useState(() =>
-    JSON.parse(serverPeopleKey).map(withRowKey)
-  );
-  const [pickerOpen, setPickerOpen] = useState(false);
-  const [savingFields, setSavingFields] = useState(false);
-  const registryEmpty = !(savedPassengers?.length > 0);
-
-  // Пока поле в фокусе — не перезатираем черновик значением из кэша:
-  // refetch после сохранения иначе откатит только что напечатанное.
-  const dtFocused = useRef(false);
-  // У строк пассажиров полей много и фокус ходит между ними, а BaggageTagsInput
-  // своих onFocus/onBlur не отдаёт. Поэтому смотрим не на флаг, а на живой
-  // activeElement: флаг, выставленный в строке, которую потом размонтировали,
-  // остался бы висеть и навсегда заморозил синхронизацию карточки.
-  // Ref держим на всём блоке пассажиров, а не на одной таблице: добавление
-  // из реестра тоже правит несохранённый список.
-  const paxBlockRef = useRef(null);
-
-  useEffect(() => {
-    setVehicleTypeDraft(driver.vehicleType ?? "");
-  }, [driver.vehicleType]);
-  useEffect(() => {
-    if (!dtFocused.current) setDeliveredAtDraft(toLocalInputValue(driver.deliveryCompletedAt));
-  }, [driver.deliveryCompletedAt]);
-  useEffect(() => {
-    if (paxBlockRef.current?.contains(document.activeElement)) return;
-    setPeopleDraft(JSON.parse(serverPeopleKey).map(withRowKey));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [serverPeopleKey]);
-
-  const vtNext = vehicleTypeDraft.trim();
-  const vtPrev = (driver.vehicleType ?? "").trim();
-  // datetime-local отдаёт локальное время без зоны — new Date() трактует такую
-  // строку как локальную, обратно toLocalInputValue тоже собирает локальные
-  // компоненты, так что круг «сервер → инпут → сервер» не сдвигает время.
-  // Сравниваем именно в формате инпута: ISO с сервера может нести секунды,
-  // которых у инпута нет, и карточка казалась бы изменённой сразу после загрузки.
-  const dtPrevInput = toLocalInputValue(driver.deliveryCompletedAt);
-  const parsedDeliveredAt = deliveredAtDraft ? new Date(deliveredAtDraft) : null;
-  const deliveredAtValid = !parsedDeliveredAt || !Number.isNaN(parsedDeliveredAt.getTime());
-  const dtNext = parsedDeliveredAt && deliveredAtValid ? parsedDeliveredAt.toISOString() : null;
-  const dtChanged = deliveredAtDraft !== dtPrevInput;
-  const peopleChanged =
-    JSON.stringify(peopleDraft.map(stripRowKey)) !== serverPeopleKey;
-  const isDirty = vtNext !== vtPrev || dtChanged || peopleChanged;
-
-  // Сумма поездки производная: бэк пересчитывает её как сумму цен пассажиров
-  // при каждой записи. Считаем ровно по его правилу — пустой список даёт «нет
-  // суммы», список без проставленных цен даёт 0 (в отчётности это разные
-  // состояния) — иначе поле расходилось бы со строками до сохранения и с
-  // сохранённым значением после. У легаси-поездки без пассажиров показываем
-  // сумму с сервера: патч поездки reportCost не принимает, менять её отсюда
-  // нечем.
-  const hasPeople = peopleDraft.length > 0;
-  // Легаси-поездка — та, у которой пассажиров нет и на сервере. Пустой черновик
-  // у поездки с пассажирами — это не легаси, а «все строки убраны»: после
-  // сохранения сумма там станет пустой, и показывать старую было бы обманом.
-  const isLegacyTrip = (driver.people || []).length === 0;
-  const paxCostSum = peopleDraft.reduce(
-    (sum, row) => sum + (row.reportCost === "" ? 0 : Number(row.reportCost) || 0),
-    0
-  );
-  const tripCost = hasPeople
-    ? Math.round(paxCostSum * 100) / 100
-    : isLegacyTrip
-      ? driver.reportCost ?? null
-      : null;
-  const tripCostText =
-    tripCost != null ? `${Number(tripCost).toLocaleString("ru-RU")} ₽` : "—";
-  // Сумму отсюда не правят ни в одном из состояний, поэтому подпись объясняет
-  // откуда она взялась и что с ней делать — иначе поле читается как сломанное.
-  const tripCostHint = hasPeople
-    ? "считается по пассажирам"
-    : isLegacyTrip
-      ? "от прежней доставки — задайте цены пассажирам"
-      : "пассажиры убраны — сумма очистится";
-
-  const patchRow = (rowIndex, changes) =>
-    setPeopleDraft((prev) =>
-      prev.map((row, i) => (i === rowIndex ? { ...row, ...changes } : row))
-    );
-  const removeRow = (rowIndex) =>
-    setPeopleDraft((prev) => prev.filter((_, i) => i !== rowIndex));
-
-  const excludeKeys = useMemo(() => {
-    const keys = new Set(takenPersonIds || []);
-    const usedNames = new Set();
-    peopleDraft.forEach((row) => {
-      if (row.personId) keys.add(row.personId);
-      const name = normalizeName(row.fullName);
-      if (name) usedNames.add(name);
-    });
-    // Строку без personId (осталась от прежнего ручного ввода) реестр не знает
-    // по id, поэтому её карточку в реестре гасим по ФИО — иначе один человек
-    // уедет в поездку дважды.
-    savedPassengers.forEach((p) => {
-      if (p.personId && usedNames.has(normalizeName(p.fullName))) keys.add(p.personId);
-    });
-    return keys;
-  }, [takenPersonIds, peopleDraft, savedPassengers]);
-
-  // Добавление правит черновик, а не шлёт мутацию: список пассажиров уходит
-  // целиком одним патчем вместе с остальными правками по кнопке «Сохранить».
-  const handlePickPeople = (selected) => {
-    setPeopleDraft((prev) => {
-      const seenIds = new Set(prev.map((row) => row.personId).filter(Boolean));
-      const seenNames = new Set(
-        prev.map((row) => normalizeName(row.fullName)).filter(Boolean)
-      );
-      const additions = selected
-        .filter(
-          (p) =>
-            (!p.personId || !seenIds.has(p.personId)) &&
-            !seenNames.has(normalizeName(p.fullName))
-        )
-        .map((p) => withRowKey(toDraftRow(p)));
-      return [...prev, ...additions];
-    });
-    setPickerOpen(false);
-  };
-
   const handleSave = async () => {
-    const patch = {};
-    if (vtNext !== vtPrev) patch.vehicleType = vtNext === "" ? null : vtNext;
-    if (dtChanged) {
-      if (!deliveredAtValid) {
-        onNotifyError("Некорректная дата доставки");
-        return;
-      }
-      patch.deliveryCompletedAt = dtNext;
-    }
-    if (peopleChanged) {
-      const badCost = peopleDraft.find(
-        (row) => row.reportCost !== "" && !Number.isFinite(Number(row.reportCost))
-      );
-      if (badCost) {
-        onNotifyError(`Некорректная сумма у пассажира «${badCost.fullName || "—"}»`);
-        return;
-      }
-      const noName = peopleDraft.find((row) => !row.fullName.trim());
-      if (noName) {
-        onNotifyError("У пассажира не указано ФИО");
-        return;
-      }
-      patch.people = peopleDraft.map(toPersonInput);
-    }
-    if (Object.keys(patch).length === 0) return;
-    try {
-      setSavingFields(true);
-      await updateBaggageDriver({
-        variables: { requestId, driverIndex: index, patch },
-      });
-      onSaved?.("Сохранено");
-      onRefetch?.();
-    } catch (e) {
-      onNotifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при сохранении");
-    } finally {
-      setSavingFields(false);
-    }
+    if (!assertValid()) return;
+    await save();
   };
 
   // Без права правки (авиакомпания, а также диспетчер на завершённой или
-  // отменённой услуге) показываем поля текстом, а не серыми disabled-инпутами.
-  // Пустая доставка в таком виде выглядела бы строкой из прочерков — прячем блок.
+  // отменённой услуге) поля показываются текстом. Пустая поездка в таком виде
+  // выглядела бы строкой из прочерков — блок прячется.
   const hasReportData =
-    !!driver.vehicleType || tripCost != null || !!driver.deliveryCompletedAt;
+    !!driver.vehicleType ||
+    tripCost.value != null ||
+    !!driver.deliveryCompletedAt;
 
   return (
     <div className={`${classes.taskCard} ${done ? classes.taskCardDone : ""}`}>
@@ -763,7 +546,7 @@ function TaskCard({
               {driver.fullName || "Водитель не указан"}
             </span>
             <span className={classes.headChip}>
-              {hasPeople ? passengersLabel(peopleDraft.length) : "без пассажиров"}
+              {hasPeople ? passengersLabel(people.length) : "без пассажиров"}
             </span>
           </div>
           <div className={classes.taskMeta}>
@@ -844,6 +627,10 @@ function TaskCard({
           )
         )}
 
+        <button type="button" className={classes.openBtn} onClick={onOpen}>
+          Открыть <ArrowRightSvg />
+        </button>
+
         {canAct && (
           <button
             type="button"
@@ -879,198 +666,28 @@ function TaskCard({
         </div>
       )}
 
-      {/* Passengers: address + tags + cost per person */}
-      {(canAct || hasPeople) && (
-        <div className={classes.paxBlock} ref={paxBlockRef}>
-          <div className={classes.paxHead}>
-            <span className={classes.paxTitle}>
-              Пассажиры
-              <span className={classes.paxCount}>{peopleDraft.length}</span>
-            </span>
-            {canAct && peopleChanged && (
-              <span className={classes.paxDirty}>есть несохранённые изменения</span>
-            )}
-            {canAct && (
-              <span className={classes.paxHeadActions}>
-                {/* Кнопку не прячем: добавить пассажира больше неоткуда, и
-                    исчезнувшее действие читалось бы как поломка. Гасим и
-                    объясняем причину. */}
-                <button
-                  type="button"
-                  className={classes.paxAddBtn}
-                  onClick={() => setPickerOpen(true)}
-                  disabled={registryEmpty}
-                  title={registryEmpty ? EMPTY_REGISTRY_HINT : undefined}
-                >
-                  <PlusSvg size={13} color="currentColor" /> Из реестра
-                </button>
-              </span>
-            )}
-          </div>
-
-          <div className={classes.paxTable}>
-            <div
-              className={`${classes.paxRow} ${classes.paxHeadRow} ${
-                canAct ? "" : classes.paxRowRO
-              }`}
-            >
-              <span>ФИО</span>
-              <span>Адрес доставки</span>
-              <span>Номера бирок</span>
-              <span>Сумма, ₽</span>
-              {canAct && <span />}
-            </div>
-
-            {peopleDraft.length === 0 ? (
-              <div className={classes.paxEmpty}>
-                {canAct && registryEmpty
-                  ? EMPTY_REGISTRY_HINT
-                  : "Пассажиры не добавлены"}
-              </div>
-            ) : (
-              peopleDraft.map((row, rowIndex) =>
-                canAct ? (
-                  <div key={row._rowKey} className={classes.paxRow}>
-                    <span className={classes.paxName} title={row.fullName}>
-                      {row.fullName || "—"}
-                    </span>
-                    <input
-                      type="text"
-                      value={row.addressTo}
-                      onChange={(e) => patchRow(rowIndex, { addressTo: e.target.value })}
-                      placeholder="Адрес доставки"
-                      className={classes.paxInput}
-                    />
-                    <BaggageTagsInput
-                      value={row.baggageTags}
-                      onChange={(next) => patchRow(rowIndex, { baggageTags: next })}
-                    />
-                    <input
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={row.reportCost}
-                      onChange={(e) => patchRow(rowIndex, { reportCost: e.target.value })}
-                      placeholder="0"
-                      className={classes.paxInput}
-                    />
-                    <button
-                      type="button"
-                      className={`${classes.iconBtn} ${classes.iconBtnDanger} ${classes.paxDelBtn}`}
-                      onClick={() => removeRow(rowIndex)}
-                      title="Убрать пассажира из поездки"
-                    >
-                      <DeleteIcon cursor="pointer" />
-                    </button>
-                  </div>
-                ) : (
-                  <div
-                    key={row._rowKey}
-                    className={`${classes.paxRow} ${classes.paxRowRO}`}
-                  >
-                    <span className={classes.paxName} title={row.fullName}>
-                      {row.fullName || "—"}
-                    </span>
-                    <span className={classes.paxValue} title={row.addressTo}>
-                      {row.addressTo || "—"}
-                    </span>
-                    <BaggageTagsInput value={row.baggageTags} disabled />
-                    <span className={classes.paxValue}>
-                      {row.reportCost === ""
-                        ? "—"
-                        : `${Number(row.reportCost).toLocaleString("ru-RU")} ₽`}
-                    </span>
-                  </div>
-                )
-              )
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Report fields: vehicle type + derived cost + delivery date */}
-      {canAct ? (
-        <div className={classes.reportFields}>
-          <label className={classes.reportField}>
-            <span className={classes.reportFieldLabel}>Тип ТС</span>
-            <FapSelect
-              value={vehicleTypeDraft}
-              onChange={setVehicleTypeDraft}
-              placeholder="— тип ТС —"
-              accent={BG_FG}
-              style={{ width: 170 }}
-              options={[
-                { value: "", label: "Не указан" },
-                ...(vehicleTypeDraft && !VEHICLE_TYPES.includes(vehicleTypeDraft)
-                  ? [{ value: vehicleTypeDraft, label: vehicleTypeDraft }]
-                  : []),
-                ...VEHICLE_TYPES.map((t) => ({ value: t, label: t })),
-              ]}
-            />
-          </label>
-
-          <span className={classes.reportField}>
-            <span className={classes.reportFieldLabel}>Сумма</span>
-            <span className={classes.reportValue}>{tripCostText}</span>
-            <span className={classes.reportHint}>{tripCostHint}</span>
-          </span>
-
-          <label className={classes.reportField}>
-            <span className={classes.reportFieldLabel}>Дата доставки</span>
-            <input
-              type="datetime-local"
-              value={deliveredAtDraft}
-              onChange={(e) => setDeliveredAtDraft(e.target.value)}
-              onFocus={() => {
-                dtFocused.current = true;
-              }}
-              onBlur={() => {
-                dtFocused.current = false;
-              }}
-              className={classes.reportInputDate}
-            />
-          </label>
-
-          <button
-            type="button"
-            className={classes.saveBtn}
-            onClick={handleSave}
-            disabled={!isDirty || savingFields || saving}
-          >
-            {savingFields ? "Сохранение…" : "Сохранить"}
-          </button>
-        </div>
-      ) : (
-        hasReportData && (
-          <div className={classes.reportFields}>
-            <span className={classes.reportField}>
-              <span className={classes.reportFieldLabel}>Тип ТС</span>
-              <span className={classes.reportValue}>{driver.vehicleType || "—"}</span>
-            </span>
-            <span className={classes.reportField}>
-              <span className={classes.reportFieldLabel}>Сумма</span>
-              <span className={classes.reportValue}>{tripCostText}</span>
-            </span>
-            <span className={classes.reportField}>
-              <span className={classes.reportFieldLabel}>Дата доставки</span>
-              <span className={classes.reportValue}>
-                {driver.deliveryCompletedAt ? formatDateTime(driver.deliveryCompletedAt) : "—"}
-              </span>
-            </span>
-          </div>
-        )
-      )}
-
-      {pickerOpen && (
-        <CatalogPickerModal
-          open={pickerOpen}
-          onClose={() => setPickerOpen(false)}
-          savedPassengers={savedPassengers}
-          excludeKeys={excludeKeys}
-          onConfirm={handlePickPeople}
-          title="Добавить пассажиров в поездку"
-        />
-      )}
+      {/* Trip fields: vehicle type + derived cost + delivery date */}
+      <FapBaggageTripFields
+        canEdit={canAct}
+        accent={BG_FG}
+        hasReportData={hasReportData}
+        vehicleType={canAct ? vehicleType : driver.vehicleType || ""}
+        onVehicleTypeChange={setVehicleType}
+        deliveredAt={deliveredAt}
+        onDeliveredAtChange={setDeliveredAt}
+        onDeliveredAtFocus={onDeliveredAtFocus}
+        onDeliveredAtBlur={onDeliveredAtBlur}
+        deliveredAtText={
+          driver.deliveryCompletedAt
+            ? formatDateTime(driver.deliveryCompletedAt)
+            : "—"
+        }
+        costText={tripCost.text}
+        costHint={tripCost.hint}
+        onSave={handleSave}
+        saveDisabled={!dirty || savingFields || saving}
+        saving={savingFields}
+      />
 
       {/* Description footer */}
       {(driver.description || done) && (

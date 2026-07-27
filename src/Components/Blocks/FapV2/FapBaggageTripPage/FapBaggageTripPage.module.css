@@ -1,0 +1,479 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+  min-height: 0;
+  font-family: Inter, sans-serif;
+}
+
+/* ── Header panel ── */
+.headPanel {
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  border-radius: 16px;
+  box-shadow: 0 1px 3px rgba(20, 30, 60, 0.04);
+  overflow: hidden;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.headRow1 {
+  padding: 14px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.headRow2 {
+  padding: 12px 18px;
+  border-top: 1px solid #E4E4EF;
+  background: #F1F4FB;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.headRow3 {
+  padding: 12px 18px;
+  border-top: 1px solid #E4E4EF;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.headRow4 {
+  padding: 10px 18px 12px;
+  border-top: 1px solid #E4E4EF;
+  font-size: 12.5px;
+  color: #545873;
+  line-height: 1.45;
+}
+
+.headIcon {
+  width: 46px;
+  height: 46px;
+  border-radius: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.headText {
+  flex: 1;
+  min-width: 0;
+}
+
+.headTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.headNumber {
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+}
+
+.headTitle {
+  font-size: 19px;
+  font-weight: 800;
+  color: var(--text);
+  line-height: 1.1;
+  letter-spacing: -0.3px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.headSub {
+  margin-top: 3px;
+  font-size: 12.5px;
+  color: #545873;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.headSub strong {
+  color: var(--text);
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  font-variant-numeric: tabular-nums;
+}
+
+.statusPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.statusDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+/* ── Header actions ── */
+.iconBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  flex-shrink: 0;
+  color: var(--dark-blue);
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.iconBtn:hover {
+  background: #EAF1FB;
+  border-color: #CBD2E4;
+}
+
+.iconBtnDanger:hover {
+  background: #FEF2F2;
+  border-color: #FCA5A5;
+}
+
+.linkBtn {
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  color: var(--dark-blue);
+  font-size: 12px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.linkBtn:hover {
+  background: #EAF1FB;
+  border-color: #CBD2E4;
+}
+
+.mapBtn {
+  height: 36px;
+  padding: 0 13px;
+  border-radius: 10px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  color: var(--dark-blue);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.mapBtn:hover {
+  background: #EAF1FB;
+  border-color: #CBD2E4;
+}
+
+.completeBtn {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 10px;
+  border: none;
+  background: #10B981;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  transition: background 0.15s;
+}
+
+.completeBtn:hover {
+  background: #059669;
+}
+
+.completeBtn:disabled {
+  background: #C7E9D8;
+  cursor: not-allowed;
+}
+
+.completeBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 14px;
+  height: 36px;
+  border-radius: 10px;
+  background: #ECFDF5;
+  color: #10B981;
+  font-size: 13px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* ── Metrics ── */
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.metricLabel {
+  font-size: 10px;
+  font-weight: 700;
+  color: #9AA0B4;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+}
+
+.metricValue {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.metricDivider {
+  width: 1px;
+  height: 34px;
+  background: #E4E4EF;
+  flex-shrink: 0;
+}
+
+/* ── Route row ── */
+.routeAddr {
+  flex: 1;
+  font-size: 13px;
+  color: var(--text);
+  line-height: 1.5;
+  word-break: break-word;
+}
+
+.routeAddr strong {
+  font-weight: 600;
+}
+
+.routeArrow {
+  font-weight: 800;
+  margin: 0 7px;
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+/* ── Content card: passengers + trip fields ── */
+.card {
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.paxBlock {
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.paxHead {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.paxTitle {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #545873;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.paxCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #F1F5F9;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.paxDirty {
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: #FFFBEB;
+  color: #B45309;
+  font-size: 11.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.paxHeadActions {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.paxAddBtn {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  color: var(--dark-blue);
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.paxAddBtn:hover:not(:disabled) {
+  background: #EAF1FB;
+  border-color: #CBD2E4;
+}
+
+.paxAddBtn:disabled {
+  background: #F8FAFC;
+  border-color: #EDEFF5;
+  color: #94A3B8;
+  cursor: not-allowed;
+}
+
+.paxTable {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* Колонки фиксированной пропорции: длинное ФИО режется многоточием, бирки
+   переносятся внутри своей ячейки — строка не разъезжает по ширине. */
+.paxRow {
+  display: grid;
+  grid-template-columns:
+    minmax(120px, 1.2fr) minmax(140px, 1.6fr) minmax(150px, 1.8fr) 100px 34px;
+  gap: 10px;
+  align-items: center;
+}
+
+.paxRowRO {
+  grid-template-columns:
+    minmax(120px, 1.2fr) minmax(140px, 1.6fr) minmax(150px, 1.8fr) 100px;
+}
+
+.paxHeadRow {
+  font-size: 10px;
+  font-weight: 700;
+  color: #94A3B8;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.paxName {
+  min-width: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.paxValue {
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.paxInput {
+  box-sizing: border-box;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #e2e5ee;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  background: #fff;
+  outline: none;
+  transition: border-color 0.12s ease;
+}
+
+.paxInput:focus {
+  border-color: var(--dark-blue);
+}
+
+.paxDelBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+
+.paxEmpty {
+  padding: 8px 2px;
+  font-size: 12.5px;
+  color: #94A3B8;
+}
+
+/* ── Empty state ── */
+.empty {
+  padding: 40px 16px;
+  text-align: center;
+  font-size: 14px;
+  color: #94A3B8;
+}
