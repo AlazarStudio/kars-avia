@@ -6,6 +6,8 @@ import MUISwitch from "../MUISwitch/MUISwitch";
 import MUILoader from "../MUILoader/MUILoader";
 import SystemUpdateCard from "./SystemUpdateCard";
 import { useToast } from "../../../contexts/ToastContext";
+import { useDialog } from "../../../contexts/DialogContext";
+import systemUpdateTemplate from "../../../../scripts/systemUpdate.data.mjs";
 import {
   AUDIENCE_ORDER,
   AUDIENCE_LABELS,
@@ -30,7 +32,8 @@ const emptyState = () => audiencesArrayToState([]);
 
 function SystemUpdateSettings() {
   const token = getCookie("token");
-  const { success, error: notifyError } = useToast();
+  const { success, error: notifyError, info } = useToast();
+  const { confirm: confirmDialog } = useDialog();
 
   const [enabled, setEnabled] = useState(false);
   const [version, setVersion] = useState("");
@@ -90,6 +93,27 @@ function SystemUpdateSettings() {
         ),
       },
     }));
+  };
+
+  // Подставляет в форму шаблон релиза (scripts/systemUpdate.data.mjs) — без сохранения:
+  // дальше владелец правит руками и жмёт «Сохранить».
+  const handleFillFromTemplate = async () => {
+    const hasData =
+      !!version.trim() ||
+      !!title.trim() ||
+      countItems(stateToAudiencesArray(audiencesState)) > 0;
+
+    if (hasData) {
+      const ok = await confirmDialog(
+        "Заполнить из шаблона? Версия, заголовок и все пункты будут заменены."
+      );
+      if (!ok) return;
+    }
+
+    setVersion(systemUpdateTemplate.version || "");
+    setTitle(systemUpdateTemplate.title || "");
+    setAudiencesState(audiencesArrayToState(systemUpdateTemplate.audiences));
+    info("Шаблон подставлен. Проверьте и нажмите «Сохранить».");
   };
 
   const handleSave = async () => {
@@ -264,6 +288,16 @@ function SystemUpdateSettings() {
           })}
 
           <div className={classes.actions}>
+            <Button
+              onClick={handleFillFromTemplate}
+              disabled={saving || (loading && !data)}
+              padding="0 18px"
+              backgroundcolor="#fff"
+              color="#0057C3"
+              border="1px solid #0057C3"
+            >
+              Заполнить из шаблона
+            </Button>
             <Button onClick={handleSave} disabled={saving} padding="0 28px">
               {saving ? "Сохранение..." : "Сохранить"}
             </Button>
