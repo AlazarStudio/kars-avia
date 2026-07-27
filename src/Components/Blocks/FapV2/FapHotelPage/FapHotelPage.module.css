@@ -13,7 +13,7 @@
   border: 1px solid #E4E4EF;
   border-radius: 16px;
   box-shadow: 0 1px 3px rgba(20, 30, 60, 0.04);
-  overflow: hidden;
+  /* overflow: hidden; */
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
