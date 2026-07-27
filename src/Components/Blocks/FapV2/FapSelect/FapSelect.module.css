@@ -13,7 +13,9 @@
   border: 1px solid #e2e5ee;
   border-radius: 8px;
   background: #fff;
-  padding: 8px 10px;
+  /* Та же высота, что у соседних инпутов в строках ФАП (34px). */
+  min-height: 34px;
+  padding: 0 10px;
   font-size: 13px;
   font-family: inherit;
   color: #2b2f3a;
@@ -72,10 +74,26 @@
   animation: fapSelectIn 0.14s ease;
 }
 
+/* Раскрытие вверх: выезжаем снизу, иначе меню «уползало» от триггера. */
+.menuUp {
+  animation-name: fapSelectInUp;
+}
+
 @keyframes fapSelectIn {
   from {
     opacity: 0;
     transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fapSelectInUp {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
   }
   to {
     opacity: 1;

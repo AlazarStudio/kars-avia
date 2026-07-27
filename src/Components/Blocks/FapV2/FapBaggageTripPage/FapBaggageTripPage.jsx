@@ -16,6 +16,7 @@ import FapBaggageTripFields, {
 } from "../FapBaggageTripFields/FapBaggageTripFields";
 import FapHeaderActions from "../FapHeaderActions/FapHeaderActions";
 import BaggageTagsInput from "../BaggageTagsInput/BaggageTagsInput";
+import { AddressField } from "../../AddressField/AddressField";
 import CatalogPickerModal, {
   personKey,
 } from "../CatalogPickerModal/CatalogPickerModal";
@@ -227,12 +228,9 @@ export default function FapBaggageTripPage({
   const {
     vehicleType,
     setVehicleType,
-    deliveredAt,
-    setDeliveredAt,
-    onDeliveredAtFocus,
-    onDeliveredAtBlur,
+    peopleCount,
+    setPeopleCount,
     dirty: tripFieldsDirty,
-    assertValid,
     save: saveTrip,
     saving: savingFields,
   } = useBaggageTripDraft({
@@ -248,6 +246,20 @@ export default function FapBaggageTripPage({
   const hasPeople = peopleDraft.length > 0;
 
   const tripCost = deriveTripCost(peopleDraft, driver);
+
+  // Ожидаемое количество пассажиров ограничивает добавление из реестра. Берём
+  // черновик, а не серверное значение: подняли ожидание — добавлять можно сразу,
+  // не дожидаясь записи. Пустое или нулевое ожидание — прежнее поведение без
+  // ограничения (такие поездки создавались до появления количества).
+  const expectedPeople = Number(peopleCount) > 0 ? Number(peopleCount) : 0;
+  const peopleCountChanged =
+    peopleCount.trim() !==
+    (driver?.peopleCount != null ? String(driver.peopleCount) : "");
+  // null — предела нет.
+  const freeSlots =
+    expectedPeople > 0 ? Math.max(0, expectedPeople - peopleDraft.length) : null;
+  const noFreeSlots = freeSlots === 0;
+  const NO_SLOTS_HINT = `Ожидается ${expectedPeople} пассажиров, добавлено ${peopleDraft.length} — увеличьте ожидаемое количество`;
 
   // Багаж пассажира везёт одна поездка: расписанных по другим поездкам в выборе
   // не предлагаем. Своих страница исключает сама — по черновику, чтобы ещё не
@@ -288,45 +300,89 @@ export default function FapBaggageTripPage({
   const removeRow = (rowIndex) =>
     setPeopleDraft((prev) => prev.filter((_, i) => i !== rowIndex));
 
-  // Добавление правит черновик, а не шлёт мутацию: список пассажиров уходит
-  // целиком одним патчем вместе с остальными правками по кнопке «Сохранить».
-  const handlePickPeople = (selected) => {
-    setPeopleDraft((prev) => {
-      const seenIds = new Set(prev.map((row) => row.personId).filter(Boolean));
-      const seenNames = new Set(
-        prev.map((row) => normalizeName(row.fullName)).filter(Boolean)
-      );
-      const additions = selected
-        .filter(
-          (p) =>
-            (!p.personId || !seenIds.has(p.personId)) &&
-            !seenNames.has(normalizeName(p.fullName))
-        )
-        .map((p) => withRowKey(toDraftRow(p)));
-      return [...prev, ...additions];
-    });
+  // Ожидание ниже факта разошло бы счётчик, поэтому такую правку не принимаем.
+  // Проверяем только собственную правку поля: у поездок, где превышение уже
+  // сохранено (ожидали 10, добавлено 91), править строки и удалять лишних нужно
+  // по-прежнему — блокировать их запись было бы поломкой.
+  const countError = (actual) => {
+    if (!peopleCountChanged) return null;
+    if (expectedPeople > 0 && actual > expectedPeople) {
+      return `Ожидается ${expectedPeople} пассажиров, а добавлено ${actual} — ожидаемое количество не может быть меньше`;
+    }
+    return null;
+  };
+
+  // Проверки списка общие для ручного «Сохранить» и немедленной записи после
+  // выбора из реестра: мутация принимает список пассажиров целиком, поэтому
+  // отправляется он в обоих случаях одинаково.
+  const peopleError = (rows) => {
+    const badCost = rows.find(
+      (row) => row.reportCost !== "" && !Number.isFinite(Number(row.reportCost))
+    );
+    if (badCost) {
+      return `Некорректная сумма у пассажира «${badCost.fullName || "—"}»`;
+    }
+    if (rows.some((row) => !row.fullName.trim())) {
+      return "У пассажира не указано ФИО";
+    }
+    return countError(rows.length);
+  };
+
+  // Сервер нормализует список (сумма числом, пустой адрес — null), поэтому
+  // сохранённый черновик приводим к той же форме: иначе он остался бы «грязным»
+  // после успешной записи и кнопка «Сохранить» светилась бы без причины.
+  const normalizeSavedRow = (row) => ({
+    ...toDraftRow(toPersonInput(row)),
+    _rowKey: row._rowKey,
+  });
+
+  const savePeople = async (rows) => {
+    const err = peopleError(rows);
+    if (err) {
+      notifyError(err);
+      return false;
+    }
+    const ok = await saveTrip({ people: rows.map(toPersonInput) });
+    if (ok) setPeopleDraft(rows.map(normalizeSavedRow));
+    return ok;
+  };
+
+  // Выбор из реестра сохраняется сразу — без «Сохранить». Список пассажиров
+  // уходит целиком, поэтому вместе с добавленными записываются и несохранённые
+  // правки строк (адреса, бирки, суммы).
+  const handlePickPeople = async (selected) => {
+    const seenIds = new Set(peopleDraft.map((row) => row.personId).filter(Boolean));
+    const seenNames = new Set(
+      peopleDraft.map((row) => normalizeName(row.fullName)).filter(Boolean)
+    );
+    const additions = selected
+      .filter(
+        (p) =>
+          (!p.personId || !seenIds.has(p.personId)) &&
+          !seenNames.has(normalizeName(p.fullName))
+      )
+      .map((p) => withRowKey(toDraftRow(p)))
+      // Страховка к лимиту пикера: набрать больше ожидаемого нельзя.
+      .slice(0, freeSlots == null ? undefined : freeSlots);
+
     setPickerOpen(false);
+    if (additions.length === 0) return;
+    const next = [...peopleDraft, ...additions];
+    setPeopleDraft(next);
+    await savePeople(next);
   };
 
   const handleSave = async () => {
-    if (!assertValid()) return;
-    const extra = {};
     if (peopleChanged) {
-      const badCost = peopleDraft.find(
-        (row) => row.reportCost !== "" && !Number.isFinite(Number(row.reportCost))
-      );
-      if (badCost) {
-        notifyError(`Некорректная сумма у пассажира «${badCost.fullName || "—"}»`);
-        return;
-      }
-      const noName = peopleDraft.find((row) => !row.fullName.trim());
-      if (noName) {
-        notifyError("У пассажира не указано ФИО");
-        return;
-      }
-      extra.people = peopleDraft.map(toPersonInput);
+      await savePeople(peopleDraft);
+      return;
     }
-    await saveTrip(extra);
+    const err = countError(peopleDraft.length);
+    if (err) {
+      notifyError(err);
+      return;
+    }
+    await saveTrip();
   };
 
   const handleCompleteDelivery = async () => {
@@ -490,7 +546,13 @@ export default function FapBaggageTripPage({
         <div className={classes.headRow2}>
           <div className={classes.metric}>
             <span className={classes.metricLabel}>Пассажиров</span>
-            <span className={classes.metricValue}>{peopleDraft.length}</span>
+            {/* Ожидаемое количество задаётся при создании поездки, фактические
+                пассажиры добавляются из реестра. У поездок, созданных до
+                появления количества, его нет — показываем только факт. */}
+            <span className={classes.metricValue}>
+              {peopleDraft.length}
+              {expectedPeople > 0 ? ` / ${expectedPeople}` : ""}
+            </span>
           </div>
           <div className={classes.metricDivider} />
           <div className={classes.metric}>
@@ -545,6 +607,11 @@ export default function FapBaggageTripPage({
                 {canAct && peopleChanged && (
                   <span className={classes.paxDirty}>есть несохранённые изменения</span>
                 )}
+                {/* Гашёная кнопка без объяснения читалась бы как поломка, а
+                    title у disabled-кнопки браузер не показывает. */}
+                {canAct && !registryEmpty && noFreeSlots && (
+                  <span className={classes.paxDirty}>{NO_SLOTS_HINT}</span>
+                )}
                 {canAct && (
                   <span className={classes.paxHeadActions}>
                     {/* Кнопку не прячем: добавить пассажира больше неоткуда, и
@@ -554,8 +621,14 @@ export default function FapBaggageTripPage({
                       type="button"
                       className={classes.paxAddBtn}
                       onClick={() => setPickerOpen(true)}
-                      disabled={registryEmpty}
-                      title={registryEmpty ? EMPTY_REGISTRY_HINT : undefined}
+                      disabled={registryEmpty || noFreeSlots}
+                      title={
+                        registryEmpty
+                          ? EMPTY_REGISTRY_HINT
+                          : noFreeSlots
+                            ? NO_SLOTS_HINT
+                            : undefined
+                      }
                     >
                       <PlusSvg size={13} color="currentColor" /> Из реестра
                     </button>
@@ -589,12 +662,13 @@ export default function FapBaggageTripPage({
                         <span className={classes.paxName} title={row.fullName}>
                           {row.fullName || "—"}
                         </span>
-                        <input
-                          type="text"
-                          value={row.addressTo}
-                          onChange={(e) => patchRow(rowIndex, { addressTo: e.target.value })}
+                        <AddressField
+                          compact
                           placeholder="Адрес доставки"
-                          className={classes.paxInput}
+                          value={row.addressTo}
+                          onChange={(addr) =>
+                            patchRow(rowIndex, { addressTo: addr })
+                          }
                         />
                         <BaggageTagsInput
                           value={row.baggageTags}
@@ -643,17 +717,16 @@ export default function FapBaggageTripPage({
             </div>
           )}
 
-          {/* ── Trip fields: vehicle type + derived cost + delivery date ── */}
+          {/* ── Trip fields: vehicle type + derived cost ── */}
           <FapBaggageTripFields
             canEdit={canAct}
             accent={BG_FG}
             hasReportData={hasReportData}
             vehicleType={canAct ? vehicleType : driver.vehicleType || ""}
             onVehicleTypeChange={setVehicleType}
-            deliveredAt={deliveredAt}
-            onDeliveredAtChange={setDeliveredAt}
-            onDeliveredAtFocus={onDeliveredAtFocus}
-            onDeliveredAtBlur={onDeliveredAtBlur}
+            peopleCount={peopleCount}
+            onPeopleCountChange={setPeopleCount}
+            peopleCountMin={peopleDraft.length}
             deliveredAtText={
               driver.deliveryCompletedAt
                 ? formatDateTime(driver.deliveryCompletedAt)
@@ -674,6 +747,7 @@ export default function FapBaggageTripPage({
           onClose={() => setPickerOpen(false)}
           savedPassengers={savedPassengers}
           excludeKeys={excludeKeys}
+          maxSelectable={freeSlots ?? undefined}
           onConfirm={handlePickPeople}
           title="Добавить пассажиров в поездку"
         />

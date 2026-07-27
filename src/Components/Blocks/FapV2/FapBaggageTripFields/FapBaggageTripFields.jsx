@@ -56,20 +56,24 @@ export function deriveTripCost(rows, driver) {
   };
 }
 
-// Поля уровня поездки: тип ТС, сумма (только для чтения) и дата доставки.
+// Поля уровня поездки: тип ТС и сумма (только для чтения). Дату доставки руками
+// не задают — её проставляет кнопка «Завершить», поэтому на чтении она остаётся
+// фактом доставки, а редактируемого поля нет.
 // Один и тот же набор нужен и на карточке в списке услуги, и на странице
 // поездки — владелец просил тип ТС в обоих местах, поэтому строка полей живёт
-// одним компонентом, а черновики и запись — в useBaggageTripDraft.
+// одним компонентом, а черновик и запись — в useBaggageTripDraft.
 export default function FapBaggageTripFields({
   canEdit,
   accent,
   hasReportData,
   vehicleType,
   onVehicleTypeChange,
-  deliveredAt,
-  onDeliveredAtChange,
-  onDeliveredAtFocus,
-  onDeliveredAtBlur,
+  // Ожидаемое количество пассажиров правят только на странице поездки: там
+  // видно фактический список, ниже которого его опускать нельзя. Без колбэка
+  // (карточка в списке) поля нет.
+  peopleCount,
+  onPeopleCountChange,
+  peopleCountMin,
   deliveredAtText,
   costText,
   costHint,
@@ -120,28 +124,34 @@ export default function FapBaggageTripFields({
         />
       </label>
 
+      {onPeopleCountChange && (
+        <label className={classes.reportField}>
+          <span className={classes.reportFieldLabel}>Ожидается пассажиров</span>
+          <input
+            type="number"
+            min={peopleCountMin ?? 0}
+            step={1}
+            value={peopleCount}
+            onChange={(e) => onPeopleCountChange(e.target.value)}
+            placeholder="—"
+            className={classes.countInput}
+          />
+        </label>
+      )}
+
       <span className={classes.reportField}>
         <span className={classes.reportFieldLabel}>Сумма</span>
         <span className={classes.reportValue}>{costText}</span>
         <span className={classes.reportHint}>{costHint}</span>
       </span>
 
-      <label className={classes.reportField}>
-        <span className={classes.reportFieldLabel}>Дата доставки</span>
-        <input
-          type="datetime-local"
-          value={deliveredAt}
-          onChange={(e) => onDeliveredAtChange(e.target.value)}
-          onFocus={onDeliveredAtFocus}
-          onBlur={onDeliveredAtBlur}
-          className={classes.reportInputDate}
-        />
-      </label>
-
+      {/* Колбэк вызываем без аргументов: переданный прямо в onClick, он получил
+          бы первым аргументом клик-событие, а потребители хука раскладывают
+          аргумент в патч мутации. */}
       <button
         type="button"
         className={classes.saveBtn}
-        onClick={onSave}
+        onClick={() => onSave?.()}
         disabled={saveDisabled}
       >
         {saving ? "Сохранение…" : "Сохранить"}

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import classes from "../AddRepresentativeDriver/AddRepresentativeDriver.module.css";
 import Sidebar from "../Sidebar/Sidebar.jsx";
@@ -13,7 +13,6 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import Button from "../../Standart/Button/Button.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
-import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import { AddressField } from "../AddressField/AddressField.jsx";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
@@ -25,7 +24,6 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
   const [isEdited, setIsEdited] = useState(false);
   const sidebarRef = useRef();
   const [selectedDriver, setSelectedDriver] = useState(null);
-  const [people, setPeople] = useState([]);
   const [showQuickCreate, setShowQuickCreate] = useState(false);
   const [quickCreate, setQuickCreate] = useState({
     name: "",
@@ -34,9 +32,8 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
     password: "",
   });
 
-  const savedPassengers = request?.savedPassengers || [];
-
   const [formData, setFormData] = useState({
+    peopleCount: "",
     fullName: "",
     phone: "",
     addressFrom: "",
@@ -85,8 +82,8 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
 
   const resetForm = useCallback(() => {
     setSelectedDriver(null);
-    setPeople([]);
     setFormData({
+      peopleCount: "",
       fullName: "",
       phone: "",
       addressFrom: "",
@@ -115,38 +112,29 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
     }
   }, [isEdited, resetForm, onClose, isDialogOpen, confirm]);
 
+  // Количество — целое: сырой ввод чистим от всего, кроме цифр, чтобы «e», минус
+  // и точка из type="number" не доехали до мутации.
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
     setIsEdited(true);
+    if (name === "peopleCount") {
+      const digits = value.replace(/\D/g, "");
+      setFormData((prev) => ({ ...prev, peopleCount: digits }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   }, []);
 
-  // Опции для MultiSelectAutocomplete: компонент читает подпись из option.label,
-  // а сравнивает опции по option.id (на нём же держится «Выбрать всё»). Поля
-  // пассажира тащим рядом — из них собирается payload мутации.
-  // Запасной ключ на случай легаси-записи без personId: позиция в реестре.
-  // Она уникальна в пределах списка, поэтому двух однофамильцев без id
-  // компонент не схлопнет в одного.
-  const passengerOptions = useMemo(
-    () =>
-      savedPassengers.map((p, index) => ({
-        id: p.personId ?? `no-id-${index}`,
-        label: [p.fullName, p.phone].filter(Boolean).join(", "),
-        personId: p.personId ?? null,
-        fullName: p.fullName ?? "",
-        phone: p.phone ?? null,
-        personType: p.personType ?? "PASSENGER",
-        personCategory: p.personCategory ?? null,
-        airlinePersonalId: p.airlinePersonalId ?? null,
-      })),
-    [savedPassengers]
-  );
-
   // Адрес отправления не обязателен: отправление всегда аэропорт, в реестре его нет.
-  // Пассажиры обязательны — хотя бы один; бирки и адрес доставки теперь их личные
-  // поля и заполняются позже в карточке, здесь они не нужны для сохранения.
+  // Конкретных пассажиров здесь не выбирают — на этом шаге известно только
+  // сколько их ожидается; сами пассажиры добавляются из реестра на странице
+  // поездки вместе со своими адресами, бирками и ценами.
   const isFormValid = () => {
-    return Boolean(formData.fullName?.trim() && people.length > 0);
+    return Boolean(
+      formData.fullName?.trim() &&
+        formData.peopleCount !== "" &&
+        Number(formData.peopleCount) >= 1
+    );
   };
 
   const handleQuickCreate = async () => {
@@ -198,27 +186,17 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
       showAlert("Пожалуйста, заполните все обязательные поля.");
       return;
     }
-    // Категорию не подставляем сами — передаём то, что реально знаем.
-    // Бэк (ensureDriverPerson → normalizePersonCategory) всё равно приведёт
-    // отсутствующее значение к "ADULT", так что угадывать её на фронте незачем.
-    // Бирки, цену и адрес доставки на этом шаге не задаём — они личные поля
-    // пассажира и заполняются позже в карточке поездки.
-    const peoplePayload = people.map((p) => ({
-      personId: p.personId ?? null,
-      fullName: p.fullName,
-      phone: p.phone ?? null,
-      personType: p.personType ?? "PASSENGER",
-      personCategory: p.personCategory ?? null,
-      airlinePersonalId: p.airlinePersonalId ?? null,
-    }));
-
+    // Поездка заводится пустой: ожидаемое количество пишем в peopleCount, а сам
+    // список наполняется из реестра на странице поездки — там же у пассажира
+    // появляются адрес доставки, бирки и цена.
     const driver = {
       fullName: formData.fullName.trim(),
       phone: formData.phone?.trim() || null,
+      peopleCount: Number(formData.peopleCount),
       link: formData.link?.trim() || null,
       addressFrom: formData.addressFrom?.trim() || null,
       description: formData.description?.trim() || null,
-      people: peoplePayload,
+      people: [],
     };
     try {
       await addBaggageDriver({
@@ -271,27 +249,16 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>Пассажиры *</label>
-              <MultiSelectAutocomplete
-                dropdownWidth="100%"
-                label="Выберите пассажиров из реестра"
-                isMultiple
-                showSelectAll
-                limitTags={4}
-                listboxHeight="220px"
-                options={passengerOptions}
-                value={people}
-                onChange={(event, newValue) => {
-                  setIsEdited(true);
-                  setPeople(newValue || []);
-                }}
+              <label>Количество пассажиров *</label>
+              <input
+                type="number"
+                name="peopleCount"
+                min={1}
+                step={1}
+                value={formData.peopleCount}
+                onChange={handleChange}
+                placeholder="Сколько пассажиров ожидается"
               />
-              {passengerOptions.length === 0 && (
-                <span className={classes.fieldHint}>
-                  Реестр заявки пуст — сначала добавьте пассажиров в разделе
-                  «Реестр»
-                </span>
-              )}
 
               <label>Водитель *</label>
               <MUIAutocompleteColor

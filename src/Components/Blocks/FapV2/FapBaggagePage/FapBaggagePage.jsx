@@ -488,19 +488,18 @@ function TaskCard({
   const people = driver.people || [];
   const hasPeople = people.length > 0;
   const tripCost = deriveTripCost(people, driver);
+  // Ожидаемое количество задаётся при создании поездки, фактические пассажиры
+  // добавляются из реестра позже — счётчик показывает оба числа. У поездок,
+  // созданных до появления количества, его нет: там счётчик как прежде.
+  const expectedPeople = driver.peopleCount || 0;
 
-  // Тип ТС и дату доставки правят из двух мест — с карточки и со страницы
-  // поездки, — поэтому черновики и запись общие (useBaggageTripDraft), а свежие
-  // значения обоим местам приносит подписка на заявку.
+  // Тип ТС правят из двух мест — с карточки и со страницы поездки, — поэтому
+  // черновик и запись общие (useBaggageTripDraft), а свежее значение обоим
+  // местам приносит подписка на заявку.
   const {
     vehicleType,
     setVehicleType,
-    deliveredAt,
-    setDeliveredAt,
-    onDeliveredAtFocus,
-    onDeliveredAtBlur,
     dirty,
-    assertValid,
     save,
     saving: savingFields,
   } = useBaggageTripDraft({
@@ -509,11 +508,6 @@ function TaskCard({
     driverIndex: index,
     onRefetch,
   });
-
-  const handleSave = async () => {
-    if (!assertValid()) return;
-    await save();
-  };
 
   // Без права правки (авиакомпания, а также диспетчер на завершённой или
   // отменённой услуге) поля показываются текстом. Пустая поездка в таком виде
@@ -546,7 +540,11 @@ function TaskCard({
               {driver.fullName || "Водитель не указан"}
             </span>
             <span className={classes.headChip}>
-              {hasPeople ? passengersLabel(people.length) : "без пассажиров"}
+              {expectedPeople > 0
+                ? `${people.length}/${expectedPeople} пасс.`
+                : hasPeople
+                  ? passengersLabel(people.length)
+                  : "без пассажиров"}
             </span>
           </div>
           <div className={classes.taskMeta}>
@@ -666,17 +664,13 @@ function TaskCard({
         </div>
       )}
 
-      {/* Trip fields: vehicle type + derived cost + delivery date */}
+      {/* Trip fields: vehicle type + derived cost */}
       <FapBaggageTripFields
         canEdit={canAct}
         accent={BG_FG}
         hasReportData={hasReportData}
         vehicleType={canAct ? vehicleType : driver.vehicleType || ""}
         onVehicleTypeChange={setVehicleType}
-        deliveredAt={deliveredAt}
-        onDeliveredAtChange={setDeliveredAt}
-        onDeliveredAtFocus={onDeliveredAtFocus}
-        onDeliveredAtBlur={onDeliveredAtBlur}
         deliveredAtText={
           driver.deliveryCompletedAt
             ? formatDateTime(driver.deliveryCompletedAt)
@@ -684,7 +678,7 @@ function TaskCard({
         }
         costText={tripCost.text}
         costHint={tripCost.hint}
-        onSave={handleSave}
+        onSave={save}
         saveDisabled={!dirty || savingFields || saving}
         saving={savingFields}
       />

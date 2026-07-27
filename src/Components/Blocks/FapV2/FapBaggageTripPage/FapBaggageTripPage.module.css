@@ -398,18 +398,19 @@
 }
 
 /* Колонки фиксированной пропорции: длинное ФИО режется многоточием, бирки
-   переносятся внутри своей ячейки — строка не разъезжает по ширине. */
+   переносятся внутри своей ячейки — строка не разъезжает по ширине.
+   Адрес шире остальных: в его ячейке рядом с полем стоит кнопка карты. */
 .paxRow {
   display: grid;
   grid-template-columns:
-    minmax(120px, 1.2fr) minmax(140px, 1.6fr) minmax(150px, 1.8fr) 100px 34px;
+    minmax(120px, 1.2fr) minmax(180px, 1.8fr) minmax(150px, 1.8fr) 100px 34px;
   gap: 10px;
   align-items: center;
 }
 
 .paxRowRO {
   grid-template-columns:
-    minmax(120px, 1.2fr) minmax(140px, 1.6fr) minmax(150px, 1.8fr) 100px;
+    minmax(120px, 1.2fr) minmax(180px, 1.8fr) minmax(150px, 1.8fr) 100px;
 }
 
 .paxHeadRow {
@@ -439,13 +440,16 @@
   text-overflow: ellipsis;
 }
 
+/* 34px — общая высота всех полей строки: инпуты, бирки, адрес и дропдаун типа
+   ТС. Задаём явно, чтобы разный padding/шрифт внутри не разводил их по высоте. */
 .paxInput {
   box-sizing: border-box;
   width: 100%;
   min-width: 0;
+  height: 34px;
   border: 1px solid #e2e5ee;
   border-radius: 8px;
-  padding: 8px 10px;
+  padding: 0 10px;
   font-size: 13px;
   font-family: inherit;
   color: var(--text);

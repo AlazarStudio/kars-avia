@@ -8,10 +8,6 @@
   font-size: 16px;
 }
 
-.addressSearch {
-  position: relative;
-}
-
 .inputRow {
   display: flex;
   align-items: center;
@@ -53,20 +49,26 @@
   background: #e3f2ff;
 }
 
-.suggestionsList {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+/* Выпадашка рендерится в портал с position: fixed — абсолютный список внутри
+   скроллящихся контейнеров (строка таблицы поездки, карточки ФАП) подрезался
+   overflow родителя. Приём тот же, что у FapSelect: позиция и направление
+   считаются при появлении, координаты приходят инлайном. */
+.popup {
+  position: fixed;
+  z-index: 2000;
+  box-sizing: border-box;
   background: #fff;
   border-radius: 10px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
-  margin: 4px 0 0;
   padding: 4px 0;
   max-height: 200px;
   overflow-y: auto;
+}
+
+.suggestionsList {
+  margin: 0;
+  padding: 0;
   list-style: none;
-  z-index: 20;
 }
 
 .suggestionItem {
@@ -79,10 +81,41 @@
   background: #f2f4f7;
 }
 
+/* Подсказки состояния живут в той же выпадашке: в строке таблицы текст под
+   полем дёргал бы высоту строки, а внутри карточки он подрезался. */
 .hint {
-  margin-top: 6px;
+  padding: 8px 12px;
   font-size: 12px;
   color: #828282;
+}
+
+/* Компактный вариант: поле в строке таблицы. Высота 34px — та же, что у
+   соседних инпутов и дропдауна, чтобы строка не разъезжалась. */
+.compact {
+  gap: 6px;
+}
+
+.compact .addressInput {
+  height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border-color: #e2e5ee;
+  font-size: 13px;
+}
+
+.compact .addressInput:focus {
+  border-color: var(--dark-blue);
+}
+
+.compact .mapIconBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border-color: #e2e5ee;
+}
+
+.compact .inputRow {
+  gap: 6px;
 }
 
 @media (min-width: 0px) and (max-width: 1399px) {

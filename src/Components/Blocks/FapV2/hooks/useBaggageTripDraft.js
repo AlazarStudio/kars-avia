@@ -1,19 +1,43 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useMutation } from "@apollo/client";
 import {
   UPDATE_PASSENGER_REQUEST_BAGGAGE_DRIVER,
   getCookie,
 } from "../../../../../graphQL_requests";
-import { toLocalInputValue } from "../fapConstants";
 import { useToast } from "../../../../contexts/ToastContext";
 
-// Черновик полей уровня поездки доставки багажа (тип ТС + дата доставки) и
-// запись патча. Эти поля правятся из двух мест — компактной карточки в списке
-// услуги и страницы поездки, — поэтому черновики, сравнение с сервером и вызов
-// мутации живут здесь, а не копируются дважды.
+// Патч отбивается сервером до GraphQL-слоя (невалидные переменные → HTTP 400),
+// и тогда graphQLErrors пуст, а причина лежит в networkError.result.errors.
+// Показывать в этом случае голый фолбэк — значит скрыть от диспетчера ровно тот
+// текст, который объясняет отказ.
+const saveErrorText = (e) =>
+  e?.graphQLErrors?.[0]?.message ||
+  e?.networkError?.result?.errors?.[0]?.message ||
+  e?.networkError?.message ||
+  e?.message ||
+  "Ошибка при сохранении";
+
+// Дополнительные поля патча принимаем только обычным объектом. Хук вызывают из
+// нескольких мест, и колбэк, попавший прямо в onClick, приносит первым
+// аргументом клик-событие: разложенное в патч, оно уносит на сервер nativeEvent,
+// target и прочий мусор, и мутация отбивается целиком. Проверяем по существу —
+// объект без чужого прототипа, — а не по имени класса события.
+const isPlainObject = (v) => {
+  if (typeof v !== "object" || v === null || Array.isArray(v)) return false;
+  const proto = Object.getPrototypeOf(v);
+  return proto === Object.prototype || proto === null;
+};
+
+// Черновик полей уровня поездки доставки багажа (тип ТС, ожидаемое количество
+// пассажиров) и запись патча. Поля правятся из двух мест — компактной карточки в
+// списке услуги и страницы поездки, — поэтому черновик, сравнение с сервером и
+// вызов мутации живут здесь, а не копируются дважды. Дату доставки руками не
+// задают: её проставляет кнопка «Завершить».
 //
 // save(extraPatch) принимает дополнительные поля патча: страница поездки шлёт
 // вместе с полями ещё и список пассажиров, а карточка — только свои поля.
+// Возвращает true при успешной записи — вызывающему это нужно, чтобы честно
+// сбросить свой собственный черновик (список пассажиров).
 export function useBaggageTripDraft({
   driver,
   requestId,
@@ -29,59 +53,37 @@ export function useBaggageTripDraft({
   );
 
   const [vehicleType, setVehicleType] = useState(driver?.vehicleType ?? "");
-  const [deliveredAt, setDeliveredAt] = useState(
-    toLocalInputValue(driver?.deliveryCompletedAt)
+  // Значение <input type="number">: держим строкой, пустая строка означает
+  // «ожидаемое количество не задано» (у поездок, созданных до его появления).
+  const [peopleCount, setPeopleCount] = useState(
+    driver?.peopleCount != null ? String(driver.peopleCount) : ""
   );
   const [saving, setSaving] = useState(false);
-
-  // Пока поле в фокусе — не перезатираем черновик значением из кэша:
-  // refetch после сохранения иначе откатит только что напечатанное.
-  const dtFocused = useRef(false);
 
   useEffect(() => {
     setVehicleType(driver?.vehicleType ?? "");
   }, [driver?.vehicleType]);
+
   useEffect(() => {
-    if (!dtFocused.current) {
-      setDeliveredAt(toLocalInputValue(driver?.deliveryCompletedAt));
-    }
-  }, [driver?.deliveryCompletedAt]);
+    setPeopleCount(driver?.peopleCount != null ? String(driver.peopleCount) : "");
+  }, [driver?.peopleCount]);
 
   const vtNext = vehicleType.trim();
   const vtPrev = (driver?.vehicleType ?? "").trim();
-  // datetime-local отдаёт локальное время без зоны — new Date() трактует такую
-  // строку как локальную, обратно toLocalInputValue тоже собирает локальные
-  // компоненты, так что круг «сервер → инпут → сервер» не сдвигает время.
-  // Сравниваем именно в формате инпута: ISO с сервера может нести секунды,
-  // которых у инпута нет, и поездка казалась бы изменённой сразу после загрузки.
-  const dtPrevInput = toLocalInputValue(driver?.deliveryCompletedAt);
-  const parsedDeliveredAt = deliveredAt ? new Date(deliveredAt) : null;
-  const deliveredAtValid =
-    !parsedDeliveredAt || !Number.isNaN(parsedDeliveredAt.getTime());
-  const dtChanged = deliveredAt !== dtPrevInput;
+
+  const pcNext = peopleCount.trim();
+  const pcPrev = driver?.peopleCount != null ? String(driver.peopleCount) : "";
+  const pcChanged = pcNext !== pcPrev;
 
   const patch = {};
   if (vtNext !== vtPrev) patch.vehicleType = vtNext === "" ? null : vtNext;
-  if (dtChanged) {
-    patch.deliveryCompletedAt =
-      parsedDeliveredAt && deliveredAtValid
-        ? parsedDeliveredAt.toISOString()
-        : null;
-  }
+  if (pcChanged) patch.peopleCount = pcNext === "" ? null : Number(pcNext);
 
-  const dirty = vtNext !== vtPrev || dtChanged;
-
-  const assertValid = () => {
-    if (dtChanged && !deliveredAtValid) {
-      notifyError("Некорректная дата доставки");
-      return false;
-    }
-    return true;
-  };
+  const dirty = vtNext !== vtPrev || pcChanged;
 
   const save = async (extraPatch) => {
-    const full = { ...patch, ...(extraPatch || {}) };
-    if (Object.keys(full).length === 0) return;
+    const full = { ...patch, ...(isPlainObject(extraPatch) ? extraPatch : {}) };
+    if (Object.keys(full).length === 0) return true;
     try {
       setSaving(true);
       await updateBaggageDriver({
@@ -89,8 +91,10 @@ export function useBaggageTripDraft({
       });
       success("Сохранено");
       onRefetch?.();
+      return true;
     } catch (e) {
-      notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при сохранении");
+      notifyError(saveErrorText(e));
+      return false;
     } finally {
       setSaving(false);
     }
@@ -99,16 +103,9 @@ export function useBaggageTripDraft({
   return {
     vehicleType,
     setVehicleType,
-    deliveredAt,
-    setDeliveredAt,
-    onDeliveredAtFocus: () => {
-      dtFocused.current = true;
-    },
-    onDeliveredAtBlur: () => {
-      dtFocused.current = false;
-    },
+    peopleCount,
+    setPeopleCount,
     dirty,
-    assertValid,
     save,
     saving,
   };

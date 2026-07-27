@@ -35,12 +35,14 @@
   white-space: nowrap;
 }
 
-.reportInputDate {
+/* Ожидаемое количество пассажиров: одна высота с типом ТС и полями пассажиров. */
+.countInput {
   box-sizing: border-box;
-  width: 200px;
+  width: 80px;
+  height: 34px;
   border: 1px solid #e2e5ee;
   border-radius: 8px;
-  padding: 8px 10px;
+  padding: 0 10px;
   font-size: 13px;
   font-family: inherit;
   color: var(--text);
@@ -49,7 +51,7 @@
   transition: border-color 0.12s ease;
 }
 
-.reportInputDate:focus {
+.countInput:focus {
   border-color: var(--dark-blue);
 }
 
@@ -57,7 +59,9 @@
   margin-left: auto;
   border: none;
   border-radius: 8px;
-  padding: 8px 16px;
+  /* Одна высота со всеми полями строки (тип ТС и поля пассажиров). */
+  height: 34px;
+  padding: 0 16px;
   font-size: 12.5px;
   font-weight: 600;
   font-family: inherit;

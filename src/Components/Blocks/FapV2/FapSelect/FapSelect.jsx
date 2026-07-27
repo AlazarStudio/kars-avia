@@ -2,9 +2,26 @@ import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import classes from "./FapSelect.module.css";
 
+// Оценка высоты меню по числу опций — держим в согласии с FapSelect.module.css:
+// .option = 8px padding сверху и снизу + строка 13px шрифта, .menu = padding 4px
+// с каждой стороны плюс 1px рамки, и растёт не выше max-height.
+const OPTION_HEIGHT = 32;
+const MENU_CHROME = 10;
+const MENU_MAX_HEIGHT = 262;
+// Отступ меню от триггера и минимальный зазор до края окна.
+const MENU_GAP = 4;
+const VIEWPORT_MARGIN = 8;
+
+const estimateMenuHeight = (optionsCount) =>
+  Math.min(MENU_MAX_HEIGHT, optionsCount * OPTION_HEIGHT + MENU_CHROME);
+
 // Кастомный стилизованный дропдаун. Меню рендерится в портал (position: fixed),
 // чтобы не обрезаться overflow родительских карточек. Закрывается по клику вне,
 // Esc, скроллу и ресайзу. options — массив строк или { value, label }.
+//
+// Направление раскрытия выбирается в момент открытия: снизу не хватает места, а
+// сверху хватает — раскрываемся вверх. Пересчитывать позже не нужно, потому что
+// скролл и ресайз меню закрывают.
 export default function FapSelect({
   value,
   onChange,
@@ -16,6 +33,8 @@ export default function FapSelect({
 }) {
   const [open, setOpen] = useState(false);
   const [rect, setRect] = useState(null);
+  // { up, space } — направление раскрытия и доступная в нём высота.
+  const [placement, setPlacement] = useState({ up: false, space: null });
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
 
@@ -27,7 +46,18 @@ export default function FapSelect({
   const openMenu = () => {
     if (disabled) return;
     const el = triggerRef.current;
-    if (el) setRect(el.getBoundingClientRect());
+    if (el) {
+      const next = el.getBoundingClientRect();
+      const needed = estimateMenuHeight(norm.length) + MENU_GAP;
+      const spaceBelow = window.innerHeight - next.bottom - VIEWPORT_MARGIN;
+      const spaceAbove = next.top - VIEWPORT_MARGIN;
+      const up = needed > spaceBelow && spaceAbove > spaceBelow;
+      setRect(next);
+      setPlacement({
+        up,
+        space: Math.max(0, (up ? spaceAbove : spaceBelow) - MENU_GAP),
+      });
+    }
     setOpen(true);
   };
   const close = () => setOpen(false);
@@ -94,12 +124,21 @@ export default function FapSelect({
         createPortal(
           <div
             ref={menuRef}
-            className={classes.menu}
+            className={`${classes.menu} ${placement.up ? classes.menuUp : ""}`}
             style={{
               position: "fixed",
-              top: rect.bottom + 4,
+              // Вверх привязываемся снизу к триггеру: тогда точная высота меню
+              // не нужна — оно растёт от места, где обрывается.
+              ...(placement.up
+                ? { bottom: window.innerHeight - rect.top + MENU_GAP }
+                : { top: rect.bottom + MENU_GAP }),
               left: rect.left,
               width: rect.width,
+              // Длинный список не должен упираться в край окна: внутри меню
+              // свой скролл, поэтому режем высоту по доступному месту.
+              ...(placement.space != null
+                ? { maxHeight: Math.min(MENU_MAX_HEIGHT, placement.space) }
+                : null),
             }}
           >
             {norm.map((o) => {
