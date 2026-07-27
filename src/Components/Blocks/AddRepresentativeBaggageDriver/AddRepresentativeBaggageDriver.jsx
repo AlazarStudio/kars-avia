@@ -13,17 +13,10 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import Button from "../../Standart/Button/Button.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
+import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import { AddressField } from "../AddressField/AddressField.jsx";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
-
-// Идентичность пассажира в списке: personId для реестра, нормализованное ФИО
-// для ручного ввода (у него personId нет). Один и тот же ключ = дубль.
-const normalizeName = (name) =>
-  String(name ?? "")
-    .trim()
-    .replace(/\s+/g, " ")
-    .toLowerCase();
 
 function AddRepresentativeBaggageDriver({ show, onClose, request }) {
   const token = getCookie("token");
@@ -33,8 +26,6 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
   const sidebarRef = useRef();
   const [selectedDriver, setSelectedDriver] = useState(null);
   const [people, setPeople] = useState([]);
-  const [manualPassenger, setManualPassenger] = useState("");
-  const [showManualPassenger, setShowManualPassenger] = useState(false);
   const [showQuickCreate, setShowQuickCreate] = useState(false);
   const [quickCreate, setQuickCreate] = useState({
     name: "",
@@ -95,8 +86,6 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
   const resetForm = useCallback(() => {
     setSelectedDriver(null);
     setPeople([]);
-    setManualPassenger("");
-    setShowManualPassenger(false);
     setFormData({
       fullName: "",
       phone: "",
@@ -132,61 +121,26 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
     setFormData((prev) => ({ ...prev, [name]: value }));
   }, []);
 
-  // Ручной ввод — доп. путь для тех, кого нет в реестре, не исключает автокомплит:
-  // оба пути пополняют один и тот же список пассажиров поездки.
-  const togglePassengerManual = () => {
-    setShowManualPassenger((prev) => {
-      const next = !prev;
-      if (!next) setManualPassenger("");
-      return next;
-    });
-  };
-
-  const addPerson = useCallback((entry) => {
-    setIsEdited(true);
-    setPeople((prev) =>
-      prev.some((p) => p.key === entry.key) ? prev : [...prev, entry]
-    );
-  }, []);
-
-  const removePerson = useCallback((key) => {
-    setIsEdited(true);
-    setPeople((prev) => prev.filter((p) => p.key !== key));
-  }, []);
-
-  const handleAddManualPassenger = () => {
-    const fullName = manualPassenger.trim();
-    if (!fullName) return;
-    addPerson({
-      key: normalizeName(fullName),
-      personId: null,
-      fullName,
-      phone: null,
-      personType: "PASSENGER",
-      personCategory: null,
-      airlinePersonalId: null,
-    });
-    setManualPassenger("");
-  };
-
-  const handleManualPassengerKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      handleAddManualPassenger();
-    }
-  };
-
-  // Уже добавленных (по реестровому personId либо по совпавшему ФИО, если
-  // человека уже вписали вручную) убираем из выдачи, чтобы не выбрать дважды.
-  const availablePassengers = useMemo(() => {
-    const usedKeys = new Set(people.map((p) => p.key));
-    const usedNames = new Set(people.map((p) => normalizeName(p.fullName)));
-    return savedPassengers.filter((option) => {
-      if (usedKeys.has(option.personId)) return false;
-      if (usedNames.has(normalizeName(option.fullName))) return false;
-      return true;
-    });
-  }, [savedPassengers, people]);
+  // Опции для MultiSelectAutocomplete: компонент читает подпись из option.label,
+  // а сравнивает опции по option.id (на нём же держится «Выбрать всё»). Поля
+  // пассажира тащим рядом — из них собирается payload мутации.
+  // Запасной ключ на случай легаси-записи без personId: позиция в реестре.
+  // Она уникальна в пределах списка, поэтому двух однофамильцев без id
+  // компонент не схлопнет в одного.
+  const passengerOptions = useMemo(
+    () =>
+      savedPassengers.map((p, index) => ({
+        id: p.personId ?? `no-id-${index}`,
+        label: [p.fullName, p.phone].filter(Boolean).join(", "),
+        personId: p.personId ?? null,
+        fullName: p.fullName ?? "",
+        phone: p.phone ?? null,
+        personType: p.personType ?? "PASSENGER",
+        personCategory: p.personCategory ?? null,
+        airlinePersonalId: p.airlinePersonalId ?? null,
+      })),
+    [savedPassengers]
+  );
 
   // Адрес отправления не обязателен: отправление всегда аэропорт, в реестре его нет.
   // Пассажиры обязательны — хотя бы один; бирки и адрес доставки теперь их личные
@@ -318,110 +272,25 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
               <label>Пассажиры *</label>
-              <MUIAutocompleteColor
+              <MultiSelectAutocomplete
                 dropdownWidth="100%"
-                label="Добавить пассажира из реестра"
-                options={availablePassengers}
-                getOptionLabel={(option) =>
-                  option
-                    ? `${option.fullName ?? ""}${option.phone ? `, ${option.phone}` : ""}`.trim()
-                    : ""
-                }
-                renderOption={(optionProps, option) => {
-                  const labelText = `${option?.fullName ?? ""}${
-                    option?.phone ? `, ${option.phone}` : ""
-                  }`.trim();
-                  const words = labelText.split(", ");
-                  return (
-                    <li
-                      {...optionProps}
-                      key={option?.personId ?? labelText}
-                    >
-                      {words.map((word, index) => (
-                        <span
-                          key={index}
-                          style={{
-                            color: index === 0 ? "black" : "gray",
-                            marginRight: 4,
-                          }}
-                        >
-                          {word}
-                        </span>
-                      ))}
-                    </li>
-                  );
-                }}
-                isOptionEqualToValue={(option, selected) =>
-                  option?.personId
-                    ? option.personId === selected?.personId
-                    : option === selected
-                }
-                value={null}
+                label="Выберите пассажиров из реестра"
+                isMultiple
+                showSelectAll
+                limitTags={4}
+                listboxHeight="220px"
+                options={passengerOptions}
+                value={people}
                 onChange={(event, newValue) => {
-                  if (!newValue) return;
-                  addPerson({
-                    key: newValue.personId,
-                    personId: newValue.personId ?? null,
-                    fullName: newValue.fullName,
-                    phone: newValue.phone ?? null,
-                    personType: newValue.personType ?? "PASSENGER",
-                    personCategory: newValue.personCategory ?? null,
-                    airlinePersonalId: newValue.airlinePersonalId ?? null,
-                  });
+                  setIsEdited(true);
+                  setPeople(newValue || []);
                 }}
               />
-              <div className={classes.quickCreateWrap}>
-                <button
-                  type="button"
-                  className={classes.quickCreateLink}
-                  onClick={togglePassengerManual}
-                >
-                  {showManualPassenger
-                    ? "Скрыть ручной ввод"
-                    : "Нет в реестре? Ввести вручную"}
-                </button>
-                {showManualPassenger && (
-                  <div className={classes.quickCreateForm}>
-                    <input
-                      type="text"
-                      placeholder="ФИО пассажира"
-                      value={manualPassenger}
-                      onChange={(e) => {
-                        setIsEdited(true);
-                        setManualPassenger(e.target.value);
-                      }}
-                      onKeyDown={handleManualPassengerKeyDown}
-                      className={classes.quickCreateInput}
-                    />
-                    <Button
-                      onClick={handleAddManualPassenger}
-                      disabled={!manualPassenger.trim()}
-                    >
-                      Добавить пассажира
-                    </Button>
-                  </div>
-                )}
-              </div>
-
-              {people.length > 0 && (
-                <div className={classes.passengerList}>
-                  {people.map((p) => (
-                    <div key={p.key} className={classes.passengerRow}>
-                      <span className={classes.passengerName}>
-                        {p.fullName}
-                        {p.phone ? `, ${p.phone}` : ""}
-                      </span>
-                      <button
-                        type="button"
-                        className={classes.passengerRemove}
-                        onClick={() => removePerson(p.key)}
-                        aria-label={`Убрать ${p.fullName}`}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                </div>
+              {passengerOptions.length === 0 && (
+                <span className={classes.fieldHint}>
+                  Реестр заявки пуст — сначала добавьте пассажиров в разделе
+                  «Реестр»
+                </span>
               )}
 
               <label>Водитель *</label>

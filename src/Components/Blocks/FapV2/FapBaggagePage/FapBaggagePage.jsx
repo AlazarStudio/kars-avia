@@ -120,6 +120,12 @@ const LinkSvg = ({ size = 14, color = "currentColor", strokeWidth = 1.8 }) => (
   </svg>
 );
 
+// Пассажиров берём только из реестра заявки, поэтому пустой реестр — это тупик.
+// Называем раздел так же, как чип в шапке заявки («Реестр»), чтобы подсказка
+// вела в существующее место интерфейса.
+const EMPTY_REGISTRY_HINT =
+  "Реестр заявки пуст — сначала добавьте пассажиров в разделе «Реестр»";
+
 const TASK_STATUS = {
   ACTIVE: { label: "В работе", color: "#F59E0B", bg: "#FFFBEB" },
   DONE: { label: "Завершён", color: "#10B981", bg: "#ECFDF5" },
@@ -147,10 +153,10 @@ const stripRowKey = (row) => {
   return rest;
 };
 
-// Идентичность пассажира для поиска дублей: personId есть только у реестрового,
-// вписанного руками опознаём по нормализованному ФИО. Правило намеренно то же,
-// что в сайдбаре создания поездки (AddRepresentativeBaggageDriver) — два места
-// добавляют пассажиров в один и тот же список и расходиться не должны.
+// Идентичность пассажира для поиска дублей. Новые пассажиры приходят только из
+// реестра заявки, то есть с personId, но в уже сохранённых поездках остались
+// строки, вписанные руками до отказа от ручного ввода: у них personId нет и
+// опознать их можно только по нормализованному ФИО.
 const normalizeName = (name) =>
   String(name ?? "")
     .trim()
@@ -571,9 +577,8 @@ function TaskCard({
     JSON.parse(serverPeopleKey).map(withRowKey)
   );
   const [pickerOpen, setPickerOpen] = useState(false);
-  const [manualOpen, setManualOpen] = useState(false);
-  const [manualName, setManualName] = useState("");
   const [savingFields, setSavingFields] = useState(false);
+  const registryEmpty = !(savedPassengers?.length > 0);
 
   // Пока поле в фокусе — не перезатираем черновик значением из кэша:
   // refetch после сохранения иначе откатит только что напечатанное.
@@ -583,7 +588,7 @@ function TaskCard({
   // activeElement: флаг, выставленный в строке, которую потом размонтировали,
   // остался бы висеть и навсегда заморозил синхронизацию карточки.
   // Ref держим на всём блоке пассажиров, а не на одной таблице: добавление
-  // (кнопки и поле ручного ввода) тоже правит несохранённый список.
+  // из реестра тоже правит несохранённый список.
   const paxBlockRef = useRef(null);
 
   useEffect(() => {
@@ -660,8 +665,9 @@ function TaskCard({
       const name = normalizeName(row.fullName);
       if (name) usedNames.add(name);
     });
-    // Вписанного руками пассажира реестр не знает по id, поэтому его же карточку
-    // в реестре гасим по ФИО — иначе один человек уедет в поездку дважды.
+    // Строку без personId (осталась от прежнего ручного ввода) реестр не знает
+    // по id, поэтому её карточку в реестре гасим по ФИО — иначе один человек
+    // уедет в поездку дважды.
     savedPassengers.forEach((p) => {
       if (p.personId && usedNames.has(normalizeName(p.fullName))) keys.add(p.personId);
     });
@@ -687,37 +693,6 @@ function TaskCard({
     });
     setPickerOpen(false);
   };
-
-  // Второй путь добавления — для тех, кого в реестре заявки нет. Такой пассажир
-  // уходит без personId (как и при создании поездки в сайдбаре), а бэк добьёт
-  // остальные поля в ensureDriverPerson.
-  const addManualPerson = () => {
-    const fullName = manualName.trim();
-    if (!fullName) return;
-    const key = normalizeName(fullName);
-    if (peopleDraft.some((row) => normalizeName(row.fullName) === key)) {
-      onNotifyError("Такой пассажир уже в поездке");
-      return;
-    }
-    setPeopleDraft((prev) => [
-      ...prev,
-      withRowKey(toDraftRow({ fullName, personType: "PASSENGER" })),
-    ]);
-    setManualName("");
-  };
-
-  const handleManualKeyDown = (e) => {
-    if (e.key === "Enter") {
-      e.preventDefault();
-      addManualPerson();
-    }
-  };
-
-  const toggleManual = () =>
-    setManualOpen((prev) => {
-      if (prev) setManualName("");
-      return !prev;
-    });
 
   const handleSave = async () => {
     const patch = {};
@@ -917,52 +892,21 @@ function TaskCard({
             )}
             {canAct && (
               <span className={classes.paxHeadActions}>
-                {savedPassengers?.length > 0 && (
-                  <button
-                    type="button"
-                    className={classes.paxAddBtn}
-                    onClick={() => setPickerOpen(true)}
-                  >
-                    <PlusSvg size={13} color="currentColor" /> Из реестра
-                  </button>
-                )}
+                {/* Кнопку не прячем: добавить пассажира больше неоткуда, и
+                    исчезнувшее действие читалось бы как поломка. Гасим и
+                    объясняем причину. */}
                 <button
                   type="button"
-                  className={`${classes.paxAddBtn} ${
-                    manualOpen ? classes.paxAddBtnActive : ""
-                  }`}
-                  onClick={toggleManual}
+                  className={classes.paxAddBtn}
+                  onClick={() => setPickerOpen(true)}
+                  disabled={registryEmpty}
+                  title={registryEmpty ? EMPTY_REGISTRY_HINT : undefined}
                 >
-                  <PlusSvg size={13} color="currentColor" /> Вручную
+                  <PlusSvg size={13} color="currentColor" /> Из реестра
                 </button>
               </span>
             )}
           </div>
-
-          {canAct && manualOpen && (
-            <div className={classes.paxManual}>
-              <input
-                type="text"
-                value={manualName}
-                onChange={(e) => setManualName(e.target.value)}
-                onKeyDown={handleManualKeyDown}
-                placeholder="ФИО пассажира"
-                className={`${classes.paxInput} ${classes.paxManualInput}`}
-                autoFocus
-              />
-              <button
-                type="button"
-                className={classes.paxManualBtn}
-                onClick={addManualPerson}
-                disabled={!manualName.trim()}
-              >
-                Добавить
-              </button>
-              <span className={classes.paxManualHint}>
-                для тех, кого нет в реестре заявки
-              </span>
-            </div>
-          )}
 
           <div className={classes.paxTable}>
             <div
@@ -978,7 +922,11 @@ function TaskCard({
             </div>
 
             {peopleDraft.length === 0 ? (
-              <div className={classes.paxEmpty}>Пассажиры не добавлены</div>
+              <div className={classes.paxEmpty}>
+                {canAct && registryEmpty
+                  ? EMPTY_REGISTRY_HINT
+                  : "Пассажиры не добавлены"}
+              </div>
             ) : (
               peopleDraft.map((row, rowIndex) =>
                 canAct ? (

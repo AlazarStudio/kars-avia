@@ -632,57 +632,16 @@
   transition: background 0.15s, border-color 0.15s;
 }
 
-.paxAddBtn:hover {
+.paxAddBtn:hover:not(:disabled) {
   background: #EAF1FB;
   border-color: #CBD2E4;
 }
 
-/* Открытая форма ручного ввода подсвечивает свою кнопку — иначе непонятно,
-   какой из двух путей добавления сейчас развёрнут. */
-.paxAddBtnActive {
-  background: #EAF1FB;
-  border-color: #CBD2E4;
-}
-
-.paxManual {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.paxManualInput {
-  flex: 1;
-  max-width: 320px;
-}
-
-.paxManualBtn {
-  height: 34px;
-  padding: 0 14px;
-  border: none;
-  border-radius: 8px;
-  font-size: 12.5px;
-  font-weight: 600;
-  font-family: inherit;
-  color: #fff;
-  background: var(--dark-blue);
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: background 0.15s;
-}
-
-.paxManualBtn:hover:not(:disabled) {
-  background: var(--dark-blue-hover, #00489F);
-}
-
-.paxManualBtn:disabled {
-  background: #CBD2E4;
-  cursor: not-allowed;
-}
-
-.paxManualHint {
-  font-size: 11.5px;
+.paxAddBtn:disabled {
+  background: #F8FAFC;
+  border-color: #EDEFF5;
   color: #94A3B8;
-  white-space: nowrap;
+  cursor: not-allowed;
 }
 
 .paxTable {
