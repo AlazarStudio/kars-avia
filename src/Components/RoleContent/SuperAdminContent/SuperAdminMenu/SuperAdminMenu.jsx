@@ -349,7 +349,7 @@ const SuperAdminMenu = ({
 
           <div className={classes.footer}>
             <Link to={"/patchNotes"} className={classes.footerVer}>
-              ver 4.1.3
+              ver 4.2.0
             </Link>
             <span className={classes.footerPow}>
               Powered by <a>Alazar studio</a>
