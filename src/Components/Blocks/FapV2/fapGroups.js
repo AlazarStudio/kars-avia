@@ -1,6 +1,8 @@
 // Группы пассажиров: конфиг типов, индекс personId→группа, палитра, roomKey.
 // Данные групп живут на заявке (request.passengerGroups); legacy-заявки → [].
 
+import { canonicalSurname, familyLabel } from "../../../utils/surnameForms.js";
+
 export const GROUP_KIND_CONFIG = {
   FAMILY: { label: "Семья", defaultLevel: "ROOM" },
   ESCORT: { label: "Сопровождение", defaultLevel: "ROOM" },
@@ -59,15 +61,20 @@ export const nextGroupColor = (groups) => {
 export const groupColor = (group, index = 0) =>
   group?.color || GROUP_PALETTE[index % GROUP_PALETTE.length];
 
-// Подпись по умолчанию: мажоритарная фамилия («Ивановы») или «Группа N».
+// Подпись по умолчанию: мажоритарная фамилия семьи (муж/жен формы считаются
+// одной фамилией) русским плюралом («Алексеевы») или «Группа N».
 export const defaultGroupLabel = (members, ordinal) => {
   const counts = new Map();
   (members ?? []).forEach((m) => {
-    const stem = (m?.fullName ?? "").trim().split(/\s+/)[0];
-    if (stem) counts.set(stem, (counts.get(stem) ?? 0) + 1);
+    const token = (m?.fullName ?? "").trim().split(/\s+/)[0];
+    if (!token) return;
+    const key = canonicalSurname(token);
+    const entry = counts.get(key) || { count: 0, sample: token };
+    entry.count += 1;
+    counts.set(key, entry);
   });
-  const top = [...counts.entries()].sort((a, b) => b[1] - a[1])[0];
-  if (top && top[1] >= 2) return `${top[0]}`;
+  const top = [...counts.values()].sort((a, b) => b.count - a.count)[0];
+  if (top && top.count >= 2) return familyLabel(top.sample);
   return `Группа ${ordinal}`;
 };
 

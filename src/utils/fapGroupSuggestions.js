@@ -4,20 +4,18 @@
 // НЕ предлагаем: фамильные пары без соседства мест и блоки мест незнакомцев.
 
 import { manifestNameKey } from "./manifestCore.js";
+import { canonicalSurname } from "./surnameForms.js";
 
 // Стем фамилии — первый токен ФИО в той же нормализации, что и матчинг манифеста.
 export const surnameStem = (fullName) =>
   manifestNameKey(fullName).split(" ")[0] || "";
 
-const CYRILLIC_RE = /[а-яё]/;
-
-// Равенство стемов: точное совпадение либо (только кириллица) женское окончание
-// «а»/«ва» (Иванов ↔ Иванова, Кузнецов ↔ Кузнецова). Латиница — строго точное.
+// Равенство фамилий с учётом муж/жен формы (обе раскладки, включая -ский/-ой) —
+// через общий бесполый корень. Иванов↔Иванова, ALEKSEEV↔ALEKSEEVA.
+// Пустой корень (напр. токен целиком = гендерный суффикс) не матчим.
 export const sameStem = (a, b) => {
-  if (!a || !b) return false;
-  if (a === b) return true;
-  if (!CYRILLIC_RE.test(a) || !CYRILLIC_RE.test(b)) return false;
-  return a === `${b}а` || a === `${b}ва` || b === `${a}а` || b === `${a}ва`;
+  const ca = canonicalSurname(a);
+  return !!ca && ca === canonicalSurname(b);
 };
 
 const SEAT_RE = /^(\d+)\s*([A-ZА-ЯЁ])$/i;
