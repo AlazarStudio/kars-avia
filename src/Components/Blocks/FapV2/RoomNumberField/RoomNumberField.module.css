@@ -1,0 +1,66 @@
+.root {
+  width: 100%;
+}
+
+/* Поле в покое: общий каркас; визуал (рамка/высота) — из className контекста
+   (cellInput / editInput / dialogInput). */
+.plain {
+  width: 100%;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+/* Активное поле (в фокусе) — рамка как у сфокусированного инпута приложения. */
+.field :global(.MuiInputBase-root) {
+  font-size: 13px;
+  min-height: 30px;
+  padding: 0 8px !important;
+  border: 1px solid var(--dark-blue);
+  border-radius: 6px;
+  background: #fff;
+}
+.field :global(.MuiInputBase-input) {
+  padding: 0 !important;
+  height: 28px;
+  font-size: 13px;
+}
+.root :global(.MuiAutocomplete-endAdornment) {
+  right: 4px;
+}
+.root :global(.MuiSvgIcon-root) {
+  font-size: 18px;
+  color: #98a0b3;
+}
+
+/* Выпадающий список. */
+.paper {
+  border-radius: 12px !important;
+  box-shadow: 0 10px 30px rgba(16, 24, 40, 0.14) !important;
+  margin-top: 4px;
+}
+.listbox {
+  padding: 6px !important;
+  max-height: 300px;
+}
+.option {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px !important;
+  border-radius: 8px;
+  min-height: unset !important;
+  white-space: nowrap;
+}
+.optName {
+  font-weight: 600;
+  font-size: 13px;
+  color: #1f2430;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.optMeta {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #8a90a6;
+}

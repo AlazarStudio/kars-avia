@@ -4012,6 +4012,7 @@ export const GET_PASSENGER_REQUEST = gql`
           lunchLunchbox
           dinnerLunchbox
           lunchboxPrice
+          lunchboxCount
           foodCost
           accommodationCost
           tariffName
@@ -4114,6 +4115,7 @@ export const GET_PASSENGER_REQUEST_REPORT = gql`
           lunchLunchbox
           dinnerLunchbox
           lunchboxPrice
+          lunchboxCount
           foodCost
           accommodationCost
           tariffName
@@ -4183,6 +4185,7 @@ export const SAVE_PASSENGER_REQUEST_HOTEL_REPORT = gql`
         lunchLunchbox
         dinnerLunchbox
         lunchboxPrice
+        lunchboxCount
         foodCost
         accommodationCost
         tariffName
@@ -4627,6 +4630,16 @@ export const GET_FAP_HOTEL_TARIFFS = gql`
         price
         priceForAirline
         priceForAirReq
+      }
+      rooms {
+        id
+        name
+        category
+        places
+        beds
+        reserve
+        active
+        roomKind { id name }
       }
       mealPrice { breakfast lunch dinner }
       mealPriceForAir { breakfast lunch dinner }

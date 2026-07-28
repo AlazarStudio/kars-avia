@@ -31,6 +31,14 @@ import {
   roomKey,
 } from "../fapGroups";
 import {
+  activeHotelRooms,
+  buildRoomsIndex,
+  matchHotelRoom,
+  roomCapacity,
+  roomOccupancy,
+} from "../fapRooms";
+import RoomNumberField from "../RoomNumberField/RoomNumberField";
+import {
   computeFapGroupWarnings,
   groupWarningText,
   placementWarningText,
@@ -189,6 +197,7 @@ const emptyPD = (person, hotelIndex, plan) => ({
   lunchLunchbox: false,
   dinnerLunchbox: false,
   lunchboxPrice: 0,
+  lunchboxCount: 0,
   foodCost: 0,
   accommodationCost: 0,
 });
@@ -210,15 +219,18 @@ const personRosterKeys = (list) => {
 const lunchboxPriceFor = (pd, tariff) =>
   toNum(tariff ? tariff.lunchboxPrice : pd?.lunchboxPrice);
 
-const lunchboxCount = (pd) =>
-  (pd?.breakfastLunchbox ? 1 : 0) + (pd?.lunchLunchbox ? 1 : 0) + (pd?.dinnerLunchbox ? 1 : 0);
+// Число ланчбоксов гостя: новое поле lunchboxCount; иначе легаси — число тумблеров.
+const lunchboxCountOf = (pd) =>
+  pd?.lunchboxCount != null
+    ? toNum(pd.lunchboxCount)
+    : (pd?.breakfastLunchbox ? 1 : 0) + (pd?.lunchLunchbox ? 1 : 0) + (pd?.dinnerLunchbox ? 1 : 0);
 
-// Питание гостя: Σ(цена × кол-во) + ланчбоксы (разово на приём, НЕ умножаются на кол-во).
+// Питание гостя: Σ(цена × кол-во приёма) + кол-во ланчбоксов × цена ланчбокса.
 const computePdFood = (pd, tariff) =>
   toNum(pd?.breakfast) * toNum(pd?.breakfastCount) +
   toNum(pd?.lunch) * toNum(pd?.lunchCount) +
   toNum(pd?.dinner) * toNum(pd?.dinnerCount) +
-  lunchboxCount(pd) * lunchboxPriceFor(pd, tariff);
+  lunchboxCountOf(pd) * lunchboxPriceFor(pd, tariff);
 
 // Разбивка питания для «?»-подсказки: цены в строке не показываем, всё — тут.
 // rows: [метка, выражение, сумма]; выражение может быть пустым.
@@ -228,7 +240,7 @@ const foodHintData = (pd, tariff) => {
     ["Обед", `${toNum(pd?.lunchCount)} × ${fmt(toNum(pd?.lunch))}`, fmt(toNum(pd?.lunchCount) * toNum(pd?.lunch))],
     ["Ужин", `${toNum(pd?.dinnerCount)} × ${fmt(toNum(pd?.dinner))}`, fmt(toNum(pd?.dinnerCount) * toNum(pd?.dinner))],
   ];
-  const lbc = lunchboxCount(pd);
+  const lbc = lunchboxCountOf(pd);
   const lbPrice = lunchboxPriceFor(pd, tariff);
   if (lbc > 0 && lbPrice > 0) rows.push(["Ланчбокс", `${lbc} × ${fmt(lbPrice)}`, fmt(lbc * lbPrice)]);
   return { rows, total: fmt(computePdFood(pd, tariff)) };
@@ -303,30 +315,6 @@ const emptyForm = {
   personCategory: "ADULT",
 };
 
-
-// Поле номера в отчёте коммитит значение по blur/Enter, а не на каждый символ.
-// Иначе каждый набранный символ менял бы группировку (reportGroups группирует
-// гостей по roomNumber) → группа-контейнер пересоздаётся → input теряет фокус
-// после одной цифры, плюс на каждый символ срабатывал автосейв.
-function RoomNumberCell({ value, canEdit, onCommit }) {
-  const [local, setLocal] = useState(value ?? "");
-  useEffect(() => { setLocal(value ?? ""); }, [value]);
-  const commit = () => {
-    if ((local ?? "") !== (value ?? "")) onCommit(local);
-  };
-  return (
-    <input
-      type="text"
-      className={classes.cellInput}
-      value={local}
-      onChange={(e) => setLocal(e.target.value)}
-      onBlur={commit}
-      onKeyDown={(e) => { if (e.key === "Enter") e.currentTarget.blur(); }}
-      readOnly={!canEdit}
-      placeholder="№"
-    />
-  );
-}
 
 export default function FapHotelPage({
   request,
@@ -471,6 +459,15 @@ export default function FapHotelPage({
 
   const hotelTariffsReady = !hotel?.hotelId || !hotelTariffLoading;
 
+  // Реальный номерной фонд гостиницы (если привязана и есть номера).
+  const hotelRoomsRaw = hotelTariffData?.hotel?.rooms;
+  const activeRooms = useMemo(() => activeHotelRooms(hotelRoomsRaw), [hotelRoomsRaw]);
+  const roomsIndex = useMemo(() => buildRoomsIndex(hotelRoomsRaw), [hotelRoomsRaw]);
+  const roomOccupancyMap = useMemo(
+    () => roomOccupancy(people.map((p) => p.roomNumber)),
+    [people]
+  );
+
   const findTariff = useCallback(
     (id) => tariffs.find((t) => t.id === id) || hotelTariffs.find((t) => t.id === id) || null,
     [tariffs, hotelTariffs]
@@ -511,16 +508,20 @@ export default function FapHotelPage({
     });
   }, [people, personData, hotelIndex, plan, findTariff]);
 
-  // Вид размещения гостя = число гостей в его номере; null — без номера.
+  // Вид размещения гостя: из категории реального номера (если номер совпал с
+  // фондом гостиницы), иначе — число гостей в номере; null — без номера.
   const roomKindByIndex = useMemo(() => {
     const map = {};
     reportGroups.forEach((g) => {
+      const capacity = g.noRoom
+        ? null
+        : roomCapacity(matchHotelRoom(g.roomNumber, roomsIndex));
       g.members.forEach((m) => {
-        map[m.index] = g.noRoom ? null : g.members.length;
+        map[m.index] = g.noRoom ? null : (capacity ?? g.members.length);
       });
     });
     return map;
-  }, [reportGroups]);
+  }, [reportGroups, roomsIndex]);
 
   // Несущий гость номера = первый гость номера, у которого назначен тариф; его тариф
   // задаёт режим начисления проживания для ВСЕГО номера (спека §4: «берётся тариф
@@ -655,7 +656,7 @@ export default function FapHotelPage({
   // ── Группы пассажиров ──
   // Всё производное считаем СТРОГО от документа заявки, а не от локальных инпутов:
   // пересчёт от вводимых значений пересоздаёт строки таблицы и уводит фокус
-  // (та же причина, что у RoomNumberCell выше).
+  // (та же причина, что у RoomNumberField с live=false в отчёте).
   const passengerGroups = useMemo(() => requestGroups(request), [request]);
   const groupIndex = useMemo(() => buildGroupIndex(request), [request]);
   const groupOrderMap = useMemo(() => groupOrder(request), [request]);
@@ -1028,6 +1029,10 @@ export default function FapHotelPage({
           lunchLunchbox: !!row.lunchLunchbox,
           dinnerLunchbox: !!row.dinnerLunchbox,
           lunchboxPrice: toNum(row.lunchboxPrice),
+          lunchboxCount:
+            row.lunchboxCount != null
+              ? toNum(row.lunchboxCount)
+              : (row.breakfastLunchbox ? 1 : 0) + (row.lunchLunchbox ? 1 : 0) + (row.dinnerLunchbox ? 1 : 0),
           foodCost: toNum(row.foodCost),
           accommodationCost: toNum(row.accommodationCost),
         };
@@ -1092,6 +1097,7 @@ export default function FapHotelPage({
           breakfastLunchbox: false,
           lunchLunchbox: false,
           dinnerLunchbox: false,
+          lunchboxCount: 0,
           // Теневая строка несёт цену ланчбокса тарифа — восстанавливается при загрузке.
           lunchboxPrice: toNum(t.lunchboxPrice),
           foodCost: toNum(t.breakfast) + toNum(t.lunch) + toNum(t.dinner),
@@ -1123,6 +1129,7 @@ export default function FapHotelPage({
         dinnerLunchbox: !!pd.dinnerLunchbox,
         // Применённая цена ЛБ — снапшот для чтения сохранённых строк (Excel-сводка).
         lunchboxPrice: lunchboxPriceFor(pd, tariff),
+        lunchboxCount: toNum(pd.lunchboxCount),
         foodCost: computePdFood(pd, tariff),
         accommodationCost: toNum(eff.accommodationCost),
         // Легаси-flat строку держим в legacy-полосе восстановления (roomCategory),
@@ -1464,6 +1471,7 @@ export default function FapHotelPage({
               lunchLunchbox: false,
               dinnerLunchbox: false,
               lunchboxPrice: 0,
+              lunchboxCount: 0,
               accommodationCost: 0,
             }),
       };
@@ -1477,12 +1485,13 @@ export default function FapHotelPage({
   );
   // Массовое задание количеств приёмов («Кол-во всем» в тулбаре отчёта).
   // Пустое поле — этот приём не трогаем.
-  const [bulkCounts, setBulkCounts] = useState({ b: "", l: "", d: "" });
+  const [bulkCounts, setBulkCounts] = useState({ b: "", l: "", d: "", lb: "" });
   const applyBulkCounts = useCallback(() => {
     const patch = {};
     if (bulkCounts.b !== "") patch.breakfastCount = toNum(bulkCounts.b);
     if (bulkCounts.l !== "") patch.lunchCount = toNum(bulkCounts.l);
     if (bulkCounts.d !== "") patch.dinnerCount = toNum(bulkCounts.d);
+    if (bulkCounts.lb !== "") patch.lunchboxCount = toNum(bulkCounts.lb);
     if (!Object.keys(patch).length) return;
     const next = { ...personDataRef.current };
     people.forEach((person, i) => {
@@ -1556,6 +1565,7 @@ export default function FapHotelPage({
         "breakfast", "lunch", "dinner",
         "breakfastCount", "lunchCount", "dinnerCount",
         "breakfastLunchbox", "lunchLunchbox", "dinnerLunchbox",
+        "lunchboxCount",
       ].includes(field)
     ) {
       updated.foodCost = computePdFood(updated, findTariff(updated.tariffId));
@@ -1674,7 +1684,7 @@ export default function FapHotelPage({
               mealParts.push(`${lbl} ×${toNum(m.pd[cf])}`);
             }
           });
-          const lbc = lunchboxCount(m.pd);
+          const lbc = lunchboxCountOf(m.pd);
           if (lbc > 0) mealParts.push(`ланчбокс ×${lbc}`);
           return {
             name: m.person.fullName || "—",
@@ -2150,11 +2160,13 @@ export default function FapHotelPage({
             onChange={(e) => setEditForm((f) => ({ ...f, phone: e.target.value }))}
             placeholder="+7 (___) ___-__-__"
           />
-          <input
+          <RoomNumberField
+            live
             className={classes.editInput}
             value={editForm.roomNumber}
-            onChange={(e) => setEditForm((f) => ({ ...f, roomNumber: e.target.value }))}
-            placeholder="№"
+            rooms={activeRooms}
+            occupancy={roomOccupancyMap}
+            onCommit={(v) => setEditForm((f) => ({ ...f, roomNumber: v }))}
           />
           <div className={classes.editActions}>
             <button
@@ -2343,11 +2355,13 @@ export default function FapHotelPage({
         placeholder="+7 (___) ___-__-__"
         disabled={addForm.personType === "CREW"}
       />
-      <input
+      <RoomNumberField
+        live
         className={classes.editInput}
         value={addForm.roomNumber}
-        onChange={(e) => setAddForm((f) => ({ ...f, roomNumber: e.target.value }))}
-        placeholder="№"
+        rooms={activeRooms}
+        occupancy={roomOccupancyMap}
+        onCommit={(v) => setAddForm((f) => ({ ...f, roomNumber: v }))}
       />
       <div className={classes.editActions}>
         <button
@@ -2873,7 +2887,7 @@ export default function FapHotelPage({
                   {canEdit && (
                     <span className={classes.bulkCounts} title="Задать количество приёмов всем гостям отчёта. Пустое поле — не менять.">
                       Кол-во всем:
-                      {[["b", "З"], ["l", "О"], ["d", "У"]].map(([k, lbl]) => (
+                      {[["b", "З"], ["l", "О"], ["d", "У"], ["lb", "ЛБ"]].map(([k, lbl]) => (
                         <label key={k} className={classes.bulkCountField}>
                           {lbl}
                           <input
@@ -3044,9 +3058,10 @@ export default function FapHotelPage({
                           <span>Номер</span>
                           <span>Тариф</span>
                           <span className={classes.numRight}>Сут.</span>
-                          <span className={classes.numRight}>Завтр.</span>
-                          <span className={classes.numRight}>Обед</span>
-                          <span className={classes.numRight}>Ужин</span>
+                          <span className={classes.numCenter}>Завтр.</span>
+                          <span className={classes.numCenter}>Обед</span>
+                          <span className={classes.numCenter}>Ужин</span>
+                          <span className={classes.numCenter}>ЛБ</span>
                           <span className={classes.numRight}>Питание</span>
                           <span className={classes.numRight}>Прожив.</span>
                         </div>
@@ -3081,9 +3096,12 @@ export default function FapHotelPage({
                                 {person.personType !== "CREW" && <CategoryBadge category={person.personCategory} />}
                               </div>
                               <div>
-                                <RoomNumberCell
+                                <RoomNumberField
                                   value={pd.roomNumber}
-                                  canEdit={canEdit}
+                                  disabled={!canEdit}
+                                  rooms={activeRooms}
+                                  occupancy={roomOccupancyMap}
+                                  className={classes.cellInput}
                                   onCommit={(v) => commitPersonRoom(i, v)}
                                 />
                               </div>
@@ -3118,25 +3136,17 @@ export default function FapHotelPage({
                                   readOnly={!canEdit} />
                               </div>
                               {[
-                                ["breakfast", "breakfastCount", "breakfastLunchbox", "завтрак"],
-                                ["lunch", "lunchCount", "lunchLunchbox", "обед"],
-                                ["dinner", "dinnerCount", "dinnerLunchbox", "ужин"],
-                              ].map(([priceF, countF, lbF, mealLabel]) => (
-                                <div key={priceF} className={classes.mealCell}>
+                                ["breakfastCount", "завтрак", "цена за порцию из тарифа"],
+                                ["lunchCount", "обед", "цена за порцию из тарифа"],
+                                ["dinnerCount", "ужин", "цена за порцию из тарифа"],
+                                ["lunchboxCount", "ланчбокс", "цена ланчбокса из тарифа"],
+                              ].map(([countF, mealLabel, priceHint]) => (
+                                <div key={countF} className={classes.mealCell}>
                                   <input type="number" min={0} className={classes.cellInputCount}
                                     value={pd[countF] ? pd[countF] : ""}
                                     onChange={(e) => canEdit && updatePersonReport(i, countF, e.target.value)}
                                     readOnly={!canEdit}
-                                    title={`Количество (${mealLabel}) — цена за порцию из тарифа`} />
-                                  {lunchboxPriceFor(pd, findTariff(pd.tariffId)) > 0 && (
-                                    <button type="button"
-                                      className={`${classes.lbToggle} ${pd[lbF] ? classes.lbToggleOn : ""}`}
-                                      onClick={() => canEdit && updatePersonReport(i, lbF, !pd[lbF])}
-                                      disabled={!canEdit}
-                                      title={`Ланчбокс к приёму «${mealLabel}» (разовая добавка)`}>
-                                      ЛБ
-                                    </button>
-                                  )}
+                                    title={`Количество (${mealLabel}) — ${priceHint}`} />
                                 </div>
                               ))}
                               <div className={`${classes.numRight} ${classes.memberFood}`}>
@@ -3376,11 +3386,13 @@ export default function FapHotelPage({
           </p>
           <div className={classes.dialogField}>
             <label className={classes.dialogLabel}>Номер *</label>
-            <input
-              type="text"
+            <RoomNumberField
+              live
               className={classes.dialogInput}
               value={assignRoomValue}
-              onChange={(e) => setAssignRoomValue(e.target.value)}
+              rooms={activeRooms}
+              occupancy={roomOccupancyMap}
+              onCommit={setAssignRoomValue}
               placeholder="Например, 512"
             />
             {roomKey(assignRoomValue) && (
