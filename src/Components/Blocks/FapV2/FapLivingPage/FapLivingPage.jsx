@@ -13,7 +13,7 @@ import {
   getCookie,
 } from "../../../../../graphQL_requests";
 import { SERVICE_STATUS_CONFIG, formatDate, formatDateTime } from "../fapConstants";
-import { calculateEffectiveCostDays } from "../../../../utils/effectiveCostDays";
+import { calculateCostDaysByDuration } from "../../../../utils/effectiveCostDays";
 import { isExternalUser } from "../../../../utils/access";
 import { downloadLivingReport } from "../reports/buildReportSheets";
 import { useToast } from "../../../../contexts/ToastContext";
@@ -382,7 +382,7 @@ export default function FapLivingPage({
             const a = service.plan?.plannedFromAt;
             const b = service.plan?.plannedToAt;
             if (!a || !b) return null;
-            const days = calculateEffectiveCostDays(a, b);
+            const days = calculateCostDaysByDuration(a, b);
             return (
               <div className={classes.metric}>
                 <span className={classes.metricLabel}>Суток</span>

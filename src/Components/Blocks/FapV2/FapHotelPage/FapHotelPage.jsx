@@ -18,7 +18,7 @@ import {
   GET_FAP_HOTEL_TARIFFS,
   getCookie,
 } from "../../../../../graphQL_requests";
-import { calculateEffectiveCostDays } from "../../../../utils/effectiveCostDays";
+import { calculateCostDaysByDuration } from "../../../../utils/effectiveCostDays";
 import { formatDateTime, normalizeCategory, PERSON_CATEGORY_OPTIONS, accommodationChargeFactor } from "../fapConstants";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import {
@@ -175,11 +175,11 @@ function getPersonDays(person, hotelIndex, plan) {
       (c) => c != null && Number(c.hotelIndex) === Number(hotelIndex)
     ) || (person?.accommodationChesses ?? [])[0];
   if (chess?.startAt && chess?.endAt) {
-    return calculateEffectiveCostDays(chess.startAt, chess.endAt);
+    return calculateCostDaysByDuration(chess.startAt, chess.endAt);
   }
   const planStart = plan?.plannedFromAt || plan?.plannedAt;
   const planEnd = plan?.plannedToAt;
-  if (planStart && planEnd) return calculateEffectiveCostDays(planStart, planEnd);
+  if (planStart && planEnd) return calculateCostDaysByDuration(planStart, planEnd);
   return 0;
 }
 
@@ -1013,7 +1013,10 @@ export default function FapHotelPage({
           // Номер в отчёте развязан с гостем (см. коммент выше). Но если в отчёте
           // он пуст — дозаполняем текущей комнатой гостя из вкладки «Гости».
           roomNumber: (row.roomNumber ?? "").toString().trim() || (people[idx]?.roomNumber ?? ""),
-          daysCount: toNum(row.daysCount),
+          // Сутки НЕ берём из row.daysCount — пересчитываем по датам чеса/плана:
+          // старые отчёты могли быть посчитаны по прежнему правилу, а при открытии
+          // сутки должны отражать актуальное (перезапись сохранённого/ручного — намеренно).
+          daysCount: getPersonDays(people[idx], hotelIndex, plan),
           tariffId: t?.id ?? null,
           breakfast: toNum(row.breakfast),
           lunch: toNum(row.lunch),
@@ -1609,7 +1612,7 @@ export default function FapHotelPage({
   const reportNights = useMemo(
     () =>
       plan?.plannedFromAt && plan?.plannedToAt
-        ? calculateEffectiveCostDays(plan.plannedFromAt, plan.plannedToAt)
+        ? calculateCostDaysByDuration(plan.plannedFromAt, plan.plannedToAt)
         : 0,
     [plan]
   );
@@ -2473,7 +2476,7 @@ export default function FapHotelPage({
             const a = plan?.plannedFromAt;
             const b = plan?.plannedToAt;
             if (!a || !b) return null;
-            const days = calculateEffectiveCostDays(a, b);
+            const days = calculateCostDaysByDuration(a, b);
             return (
               <div className={classes.metric}>
                 <span className={classes.metricLabel}>Суток</span>

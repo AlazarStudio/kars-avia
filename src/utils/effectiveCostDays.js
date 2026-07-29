@@ -53,3 +53,28 @@ export function calculateEffectiveCostDays(arrivalStr, departureStr) {
   const result = total < 0 ? 0 : total;
   return Math.round(result * 100) / 100;
 }
+
+/**
+ * Сутки проживания по ЧИСТОЙ ДЛИТЕЛЬНОСТИ (ФАП): минимум 1 сутки,
+ * далее +0.5 за каждый начатый 12-часовой блок (округление вверх).
+ * Время суток заезда/выезда НЕ учитывается.
+ *
+ * @param {string|Date} arrivalStr - дата/время заезда (ISO или Date)
+ * @param {string|Date} departureStr - дата/время выезда (ISO или Date)
+ * @returns {number} сутки (0 для пустых/невалидных/непозитивных)
+ */
+export function calculateCostDaysByDuration(arrivalStr, departureStr) {
+  const arrival = arrivalStr instanceof Date ? arrivalStr : new Date(arrivalStr);
+  const departure = departureStr instanceof Date ? departureStr : new Date(departureStr);
+
+  if (!arrivalStr || !departureStr || isNaN(arrival.getTime()) || isNaN(departure.getTime())) {
+    return 0;
+  }
+
+  const diffMs = departure.getTime() - arrival.getTime();
+  if (diffMs <= 0) return 0;
+
+  const minutes = Math.round(diffMs / 60000);
+  const blocks = Math.ceil(minutes / 720); // 720 мин = 12 ч
+  return Math.max(1, blocks * 0.5);
+}

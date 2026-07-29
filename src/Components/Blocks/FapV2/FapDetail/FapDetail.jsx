@@ -22,7 +22,7 @@ import {
   formatDate,
   formatDateTime,
 } from "../fapConstants";
-import { calculateEffectiveCostDays } from "../../../../utils/effectiveCostDays";
+import { calculateCostDaysByDuration } from "../../../../utils/effectiveCostDays";
 import { transferFactCount } from "../fapTransferFact";
 import MUILoader from "../../MUILoader/MUILoader";
 import Button from "../../../Standart/Button/Button";
@@ -424,7 +424,7 @@ export default function FapDetail({ user, canEdit = true }) {
             const from = svc?.plan?.plannedFromAt;
             const to = svc?.plan?.plannedToAt;
             if (from || to) {
-              const days = from && to ? calculateEffectiveCostDays(from, to) : null;
+              const days = from && to ? calculateCostDaysByDuration(from, to) : null;
               livingMeta = `${from ? formatDate(from) : "—"} → ${to ? formatDate(to) : "—"}${
                 days != null ? ` · ${days} сут.` : ""
               }`;
