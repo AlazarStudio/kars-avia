@@ -23,6 +23,7 @@ import {
   formatDateTime,
 } from "../fapConstants";
 import { calculateEffectiveCostDays } from "../../../../utils/effectiveCostDays";
+import { transferFactCount } from "../fapTransferFact";
 import MUILoader from "../../MUILoader/MUILoader";
 import Button from "../../../Standart/Button/Button";
 import Header from "../../Header/Header";
@@ -128,13 +129,13 @@ function getTileMetrics(serviceKey, request) {
     }
     case "transfer": {
       const drivers = request.transferService?.drivers ?? [];
-      cur = drivers.reduce((acc, d) => acc + (d.people?.length ?? 0), 0);
+      cur = transferFactCount(drivers);
       tot = request.transferService?.plan?.peopleCount ?? 0;
       break;
     }
     case "transferDeparture": {
       const drivers = request.departureTransferService?.drivers ?? [];
-      cur = drivers.reduce((acc, d) => acc + (d.people?.length ?? 0), 0);
+      cur = transferFactCount(drivers);
       tot = request.departureTransferService?.plan?.peopleCount ?? 0;
       break;
     }
@@ -144,7 +145,7 @@ function getTileMetrics(serviceKey, request) {
   return {
     num: `${cur}/${tot}`,
     unit: "чел.",
-    pct: tot ? Math.round((cur / tot) * 100) : 0,
+    pct: tot ? Math.min(100, Math.round((cur / tot) * 100)) : 0,
   };
 }
 

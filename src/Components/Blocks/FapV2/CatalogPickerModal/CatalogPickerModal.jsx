@@ -4,6 +4,7 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import GroupChip from "../GroupChip/GroupChip";
+import FapSelect from "../FapSelect/FapSelect";
 import { groupDisplayLabel } from "../fapGroups";
 import classes from "./CatalogPickerModal.module.css";
 
@@ -11,6 +12,10 @@ import classes from "./CatalogPickerModal.module.css";
 export function personKey(person) {
   return person?.personId;
 }
+
+// Ключи фильтра гостиниц: «все» и «без привязки» — не пересекаются с itemId гостиниц.
+const ALL_HOTELS_KEY = "all";
+const NO_HOTEL_KEY = "__none__";
 
 const initials = (fullName) =>
   String(fullName ?? "")
@@ -33,11 +38,21 @@ export default function CatalogPickerModal({
   // { groups, groupIndex: Map<personId, group>, placedElsewhere: Map<personId, hotelName> }
   // Без пропа — прежний плоский список (вода/питание/водитель).
   groupContext = null,
+  // { options: [{key, name}], residencyByPersonId: Map<personId, hotelKey>, initialKey, accent }
+  // Фильтр «Гостиница» (трансфер). Без пропа — прежний вид.
+  hotelFilter = null,
+  // Предпроставленные галочки при открытии (кнопка «Заселённые в …»).
+  initialSelectedIds = null,
 }) {
   const [search, setSearch] = useState("");
   const [selectedIds, setSelectedIds] = useState(() => new Set());
+  const [hotelKey, setHotelKey] = useState(ALL_HOTELS_KEY);
 
   const exclude = excludeKeys instanceof Set ? excludeKeys : new Set();
+  const residency =
+    hotelFilter?.residencyByPersonId instanceof Map
+      ? hotelFilter.residencyByPersonId
+      : null;
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -55,9 +70,15 @@ export default function CatalogPickerModal({
           (p.seat ?? "").toLowerCase().includes(q)
         );
       })
+      // Фильтр по гостинице проживания (только когда передан hotelFilter).
+      .filter((r) => {
+        if (!residency || hotelKey === ALL_HOTELS_KEY) return true;
+        const placedKey = residency.get(r.key);
+        return hotelKey === NO_HOTEL_KEY ? !placedKey : placedKey === hotelKey;
+      })
       // Недобавленные — сверху, уже добавленные — вниз (стабильно).
       .sort((a, b) => Number(a.disabled) - Number(b.disabled));
-  }, [savedPassengers, search, exclude]);
+  }, [savedPassengers, search, exclude, residency, hotelKey]);
 
   // Секции: сначала группы (в порядке заявки), затем «Без группы».
   // Без groupContext — одна безымянная секция (прежнее поведение).
@@ -173,11 +194,21 @@ export default function CatalogPickerModal({
 
   // Сброс при закрытии — на случай, если родитель закрывает напрямую через open
   // (после успешного bulk-добавления), минуя onClose/handleClose.
+  // При открытии — применяем пресет родителя (гостиница + предвыбор).
   useEffect(() => {
     if (!open) {
       setSearch("");
       setSelectedIds(new Set());
+      setHotelKey(ALL_HOTELS_KEY);
+      return;
     }
+    setHotelKey(hotelFilter?.initialKey ?? ALL_HOTELS_KEY);
+    if (initialSelectedIds?.length) {
+      // Уже добавленных не предвыбираем — иначе повторное добавление того же человека.
+      const seed = initialSelectedIds.filter((id) => !exclude.has(id));
+      setSelectedIds(new Set(seed.slice(0, limit)));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   const handleClose = () => {
@@ -187,7 +218,10 @@ export default function CatalogPickerModal({
   };
 
   const handleConfirm = () => {
-    const selected = savedPassengers.filter((p) => selectedIds.has(p.personId));
+    // Страховка от дублей: уже добавленные не уходят в мутацию, даже если попали в выбор.
+    const selected = savedPassengers.filter(
+      (p) => selectedIds.has(p.personId) && !exclude.has(p.personId)
+    );
     if (selected.length === 0) return;
     onConfirm?.(selected);
   };
@@ -293,6 +327,22 @@ export default function CatalogPickerModal({
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        {hotelFilter && (
+          <FapSelect
+            value={hotelKey}
+            onChange={setHotelKey}
+            accent={hotelFilter.accent}
+            style={{ width: "100%", marginTop: 8 }}
+            options={[
+              { value: ALL_HOTELS_KEY, label: "Все гостиницы" },
+              ...(hotelFilter.options ?? []).map((h) => ({
+                value: h.key,
+                label: h.name,
+              })),
+              { value: NO_HOTEL_KEY, label: "Без размещения" },
+            ]}
+          />
+        )}
         <label className={classes.selectAll}>
           <input
             type="checkbox"

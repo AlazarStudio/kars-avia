@@ -146,6 +146,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Пояснение к значению метрики (напр. «поимённо N» при «перевезено») */
+.metricSub {
+  font-weight: 500;
+  color: #9AA0B4;
+}
+
 .composition {
   display: flex;
   gap: 6px;
@@ -202,6 +208,7 @@
 /* Route row */
 .routeAddr {
   flex: 1;
+  min-width: 0;
   font-size: 13px;
   color: var(--text);
   line-height: 1.5;
@@ -217,6 +224,23 @@
   margin: 0 7px;
   display: inline-flex;
   vertical-align: middle;
+}
+
+/* Гостиница проживания, к которой привязана поездка */
+.hotelChip {
+  display: inline-block;
+  vertical-align: middle;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  padding: 2px 8px;
+  margin-right: 8px;
+  border-radius: 999px;
+  background: #F1F5F9;
+  color: #334155;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
 /* ── Tabs ── */

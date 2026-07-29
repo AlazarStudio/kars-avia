@@ -9,6 +9,7 @@ import {
   getCookie,
 } from "../../../../../graphQL_requests";
 import { downloadTransferReport } from "../reports/buildReportSheets";
+import { transferFactCount, driverFactCount } from "../fapTransferFact";
 import { SERVICE_STATUS_CONFIG, formatDateTime, VEHICLE_TYPES } from "../fapConstants";
 import { useToast } from "../../../../contexts/ToastContext";
 import FapActionButton from "../FapActionButton/FapActionButton";
@@ -95,6 +96,15 @@ const initials = (fullName) => {
   return (parts[0][0] + parts[1][0]).toUpperCase();
 };
 
+// Подпись KPI «Пассажиров»: при учёте числом сплит по экипажу невозможен —
+// показываем соотношение поимённых к факту.
+function passengersSubLabel(totals) {
+  if (totals.listed === 0 && totals.fact > 0) return "без поимённого списка";
+  if (totals.fact > totals.listed) return `поимённо ${totals.listed} из ${totals.fact}`;
+  if (totals.crew > 0) return `${totals.passengers} пасс. + ${totals.crew} экипаж`;
+  return `${totals.passengers} пасс.`;
+}
+
 export default function FapTransferPage({
   service,
   request,
@@ -139,7 +149,7 @@ export default function FapTransferPage({
     const all = drivers.flatMap((d) => d.people || []);
     const passengers = all.filter((p) => p?.personType !== "CREW").length;
     const crew = all.length - passengers;
-    return { all: all.length, passengers, crew };
+    return { listed: all.length, passengers, crew, fact: transferFactCount(drivers) };
   }, [drivers]);
 
   const routesCount = useMemo(
@@ -291,19 +301,15 @@ export default function FapTransferPage({
             className={classes.kpiValue}
             style={{
               color:
-                planCap != null && totals.all >= planCap
+                planCap != null && totals.fact >= planCap
                   ? "#10B981"
                   : "var(--text)",
             }}
           >
-            {totals.all}
+            {totals.fact}
             {planCap != null ? ` / ${planCap}` : ""}
           </div>
-          <div className={classes.kpiSub}>
-            {totals.crew > 0
-              ? `${totals.passengers} пасс. + ${totals.crew} экипаж`
-              : `${totals.passengers} пасс.`}
-          </div>
+          <div className={classes.kpiSub}>{passengersSubLabel(totals)}</div>
         </div>
         <div className={classes.kpi}>
           <div className={classes.kpiHead}>
@@ -357,6 +363,7 @@ export default function FapTransferPage({
               bg={bg}
               HeadIcon={HeadIcon}
               isCompleted={isCompleted}
+              isCancelled={isCancelled}
               canEdit={canEdit}
               showLinks={showLinks}
               onOpen={() =>
@@ -426,6 +433,7 @@ function DriverCard({
   bg,
   HeadIcon,
   isCompleted,
+  isCancelled,
   canEdit,
   showLinks,
   onOpen,
@@ -439,10 +447,11 @@ function DriverCard({
   const cap = driver.peopleCount || 0;
   const people = driver.people || [];
   const placed = people.length;
+  const fact = driverFactCount(driver);
   const passengers = people.filter((p) => p?.personType !== "CREW").length;
   const crew = placed - passengers;
-  const isFull = cap > 0 && placed >= cap;
-  const isEmpty = placed === 0;
+  const isFull = cap > 0 && fact >= cap;
+  const isEmpty = fact === 0;
 
   const previewPeople = people.slice(0, 8);
   const extraCount = placed - previewPeople.length;
@@ -457,11 +466,15 @@ function DriverCard({
   const [reportCostDraft, setReportCostDraft] = useState(
     driver.reportCost != null ? String(driver.reportCost) : ""
   );
+  const [transportedDraft, setTransportedDraft] = useState(
+    driver.transportedCount != null ? String(driver.transportedCount) : ""
+  );
 
   // Пока инпут в фокусе — не перезатираем draft значением из кэша:
   // иначе refetch после автосейва может «откатить» только что напечатанное.
   const vtFocused = useRef(false);
   const rcFocused = useRef(false);
+  const tcFocused = useRef(false);
 
   useEffect(() => {
     if (!vtFocused.current) setVehicleTypeDraft(driver.vehicleType ?? "");
@@ -471,6 +484,13 @@ function DriverCard({
       setReportCostDraft(driver.reportCost != null ? String(driver.reportCost) : "");
     }
   }, [driver.reportCost]);
+  useEffect(() => {
+    if (!tcFocused.current) {
+      setTransportedDraft(
+        driver.transportedCount != null ? String(driver.transportedCount) : ""
+      );
+    }
+  }, [driver.transportedCount]);
 
   const { success, error: notifyError } = useToast();
   const [saving, setSaving] = useState(false);
@@ -480,7 +500,9 @@ function DriverCard({
   const vtPrev = (driver.vehicleType ?? "").trim();
   const rcNext = reportCostDraft === "" ? null : Number(reportCostDraft);
   const rcPrev = driver.reportCost ?? null;
-  const isDirty = vtNext !== vtPrev || rcNext !== rcPrev;
+  const tcNext = transportedDraft === "" ? null : Number(transportedDraft);
+  const tcPrev = driver.transportedCount ?? null;
+  const isDirty = vtNext !== vtPrev || rcNext !== rcPrev || tcNext !== tcPrev;
 
   const handleSave = async () => {
     const patch = {};
@@ -491,6 +513,13 @@ function DriverCard({
         return;
       }
       patch.reportCost = rcNext;
+    }
+    if (tcNext !== tcPrev) {
+      if (tcNext != null && (!Number.isInteger(tcNext) || tcNext < 0 || tcNext > 100000)) {
+        notifyError("Некорректное количество");
+        return;
+      }
+      patch.transportedCount = tcNext;
     }
     if (Object.keys(patch).length === 0) return;
     try {
@@ -526,14 +555,14 @@ function DriverCard({
             {driver.pickupAt && <span>подача {formatDateTime(driver.pickupAt)}</span>}
             <span className={classes.metaDot} />
             <span>
-              {placed}
+              {fact}
               {cap > 0 ? `/${cap}` : ""} пасс.
             </span>
           </div>
         </div>
 
         {/* Compact passenger preview */}
-        {!isEmpty && (
+        {placed > 0 && (
           <div className={classes.avatarStack}>
             {previewPeople.slice(0, 5).map((p, i) => (
               <span
@@ -624,7 +653,7 @@ function DriverCard({
           <FapSelect
             value={vehicleTypeDraft}
             onChange={setVehicleTypeDraft}
-            disabled={!canEdit || isCompleted}
+            disabled={!canEdit || isCancelled}
             placeholder="— тип ТС —"
             accent={color}
             style={{ width: 180 }}
@@ -635,6 +664,22 @@ function DriverCard({
                 : []),
               ...VEHICLE_TYPES.map((t) => ({ value: t, label: t })),
             ]}
+          />
+        </label>
+        <label className={classes.reportField}>
+          <span className={classes.reportFieldLabel}>Перевезено, чел.</span>
+          <input
+            type="number"
+            min={0}
+            step={1}
+            value={transportedDraft}
+            onChange={(e) => setTransportedDraft(e.target.value)}
+            onFocus={() => { tcFocused.current = true; }}
+            onBlur={() => { tcFocused.current = false; }}
+            onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSave(); } }}
+            placeholder="0"
+            disabled={!canEdit || isCancelled}
+            className={`${classes.reportInputNumber} ${classes.reportInputNarrow}`}
           />
         </label>
         <label className={classes.reportField}>
@@ -649,11 +694,11 @@ function DriverCard({
             onBlur={() => { rcFocused.current = false; }}
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSave(); } }}
             placeholder="0"
-            disabled={!canEdit || isCompleted}
+            disabled={!canEdit || isCancelled}
             className={classes.reportInputNumber}
           />
         </label>
-        {canEdit && !isCompleted && (
+        {canEdit && !isCancelled && (
           <button
             type="button"
             className={classes.saveBtn}
@@ -668,7 +713,19 @@ function DriverCard({
 
       {/* Read-only summary strip */}
       <div className={classes.driverStrip}>
-        {isEmpty ? (
+        {placed === 0 && fact > 0 ? (
+          <>
+            <UsersSvg size={14} color="#94A3B8" />
+            <span>
+              Перевезено <strong>{fact}</strong> (без поимённого списка)
+              {" — "}
+              <strong className={classes.stripHint} onClick={onOpen}>
+                Открыть
+              </strong>
+              {", чтобы вести состав поимённо"}
+            </span>
+          </>
+        ) : isEmpty ? (
           <>
             <UsersSvg size={14} color="#94A3B8" />
             <span>
@@ -702,6 +759,12 @@ function DriverCard({
                 <span className={classes.stripDotCrew} />
                 {crew} экипаж
               </span>
+            )}
+            {fact > placed && (
+              <>
+                <span className={classes.metaDot} />
+                <span>перевезено {fact} · поимённо {placed}</span>
+              </>
             )}
             <span className={classes.metaDot} />
             <span className={classes.stripHintText}>

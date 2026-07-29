@@ -507,6 +507,9 @@
   outline: none;
   transition: border-color 0.12s ease;
 }
+.reportInputNarrow {
+  width: 110px;
+}
 .saveBtn {
   margin-left: auto;
   height: 36px;

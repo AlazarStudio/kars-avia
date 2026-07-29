@@ -3852,6 +3852,8 @@ export const GET_PASSENGER_REQUEST = gql`
           addressTo
           vehicleType
           reportCost
+          transportedCount
+          hotelItemId
           people {
             personId
             fullName
@@ -3887,6 +3889,8 @@ export const GET_PASSENGER_REQUEST = gql`
           addressTo
           vehicleType
           reportCost
+          transportedCount
+          hotelItemId
           people {
             personId
             fullName
@@ -4078,6 +4082,10 @@ export const GET_PASSENGER_REQUEST_REPORT = gql`
           addressTo
           vehicleType
           reportCost
+          transportedCount
+          people {
+            personId
+          }
         }
       }
       departureTransferService {
@@ -4094,6 +4102,10 @@ export const GET_PASSENGER_REQUEST_REPORT = gql`
           addressTo
           vehicleType
           reportCost
+          transportedCount
+          people {
+            personId
+          }
         }
       }
       hotelReports {

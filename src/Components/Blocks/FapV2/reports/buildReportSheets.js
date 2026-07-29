@@ -1,5 +1,6 @@
 import ExcelJS from "exceljs";
 import { PERSON_CATEGORY_LABEL, normalizeCategory } from "../fapConstants";
+import { driverFactCount } from "../fapTransferFact.js";
 import { findRowIndexForPerson } from "./reportRowMatch";
 
 // ── helpers ──
@@ -377,7 +378,7 @@ export function addHotelSheet(wb, opts) {
 
 const TRANSFER_HEADERS = [
   "№", "ФИО водителя", "Телефон", "Адрес отправления", "Адрес прибытия",
-  "Дата подачи", "Время подачи", "Тип ТС", "Сумма",
+  "Дата подачи", "Время подачи", "Тип ТС", "Перевезено", "Сумма",
 ];
 
 export function addTransferSheet(wb, opts) {
@@ -413,7 +414,8 @@ export function addTransferSheet(wb, opts) {
   ws.getColumn(6).width = 13;     // Дата подачи
   ws.getColumn(7).width = 11;     // Время подачи
   ws.getColumn(8).width = 22;     // Тип ТС
-  ws.getColumn(9).width = 12;     // Сумма
+  ws.getColumn(9).width = 12;     // Перевезено
+  ws.getColumn(10).width = 12;    // Сумма
 
   const drivers = service?.drivers ?? [];
   drivers.forEach((d, i) => {
@@ -431,7 +433,10 @@ export function addTransferSheet(wb, opts) {
       row.getCell(7).numFmt = fmtTime;
     }
     row.getCell(8).value = d.vehicleType ?? "";
-    if (d.reportCost != null) row.getCell(9).value = d.reportCost;
+    // Факт поездки: поимённый список ИЛИ «перевезено N» — что больше.
+    const fact = driverFactCount(d);
+    if (fact > 0) row.getCell(9).value = fact;
+    if (d.reportCost != null) row.getCell(10).value = d.reportCost;
   });
 
   const last = drivers.length > 0 ? 4 + drivers.length : 4;
@@ -440,6 +445,7 @@ export function addTransferSheet(wb, opts) {
   totalRow.getCell(1).font = { name: "Calibri", size: 12, bold: true };
   if (drivers.length > 0) {
     totalRow.getCell(9).value = { formula: `SUM(I5:I${last})` };
+    totalRow.getCell(10).value = { formula: `SUM(J5:J${last})` };
   }
   return ws;
 }

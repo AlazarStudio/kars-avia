@@ -18,6 +18,7 @@ import PersonTypeToggle from "../PersonTypeToggle/PersonTypeToggle";
 import PersonBadge from "../PersonBadge/PersonBadge";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import CatalogPickerModal, { personKey } from "../CatalogPickerModal/CatalogPickerModal";
+import { driverFactCount } from "../fapTransferFact";
 import FapActionButton from "../FapActionButton/FapActionButton";
 import FapHeaderActions from "../FapHeaderActions/FapHeaderActions";
 import { downloadTransferReport } from "../reports/buildReportSheets";
@@ -142,6 +143,12 @@ const initials = (fullName) => {
 
 const emptyForm = { fullName: "", phone: "", personType: "PASSENGER", airlinePersonalId: "", personCategory: "ADULT" };
 
+// Длинное название гостиницы не должно распирать кнопку.
+const shortName = (s) => {
+  const name = String(s ?? "");
+  return name.length > 24 ? `${name.slice(0, 23)}…` : name;
+};
+
 const buildMapUrl = (from, to) => {
   const f = (from || "").trim();
   const t = (to || "").trim();
@@ -165,7 +172,7 @@ export default function FapDriverPage({
   const navigate = useNavigate();
   const { requestId } = useParams();
   const token = getCookie("token");
-  const { success, error: notifyError } = useToast();
+  const { success, error: notifyError, warning } = useToast();
   const { confirm } = useDialog();
 
   const isDeparture = direction === "DEPARTURE";
@@ -214,7 +221,8 @@ export default function FapDriverPage({
   const passengers = people.filter((p) => p?.personType !== "CREW");
   const crew = people.filter((p) => p?.personType === "CREW");
 
-  const savedPassengers = request?.savedPassengers || [];
+  // Мемо, чтобы стабильная ссылка не сбрасывала мемоизацию пикера и кандидатов.
+  const savedPassengers = useMemo(() => request?.savedPassengers || [], [request]);
   // «уже добавлен» — по всем водителям текущего направления, а не только текущего:
   // пассажир, назначенный другому водителю того же направления, не должен предлагаться повторно.
   const excludeKeys = useMemo(
@@ -227,6 +235,43 @@ export default function FapDriverPage({
       ),
     [service]
   );
+
+  // Гостиницы проживания с itemId и «кто где заселён» (personId → itemId гостиницы).
+  // Образец — placedByPersonId в FapHotelPage.
+  const hotelsWithItemId = useMemo(
+    () => (request?.livingService?.hotels ?? []).filter((h) => h?.itemId),
+    [request]
+  );
+  const residencyByPersonId = useMemo(() => {
+    const map = new Map();
+    hotelsWithItemId.forEach((h) => {
+      (h?.people ?? []).forEach((p) => {
+        if (p?.personId && !map.has(p.personId)) map.set(p.personId, h.itemId);
+      });
+    });
+    return map;
+  }, [hotelsWithItemId]);
+  const linkedHotel = useMemo(
+    () => hotelsWithItemId.find((h) => h.itemId === driver?.hotelItemId) || null,
+    [hotelsWithItemId, driver]
+  );
+  // Кого вообще можно взять из привязанной гостиницы: заселён туда и ещё не у водителя.
+  const residentCandidates = useMemo(
+    () =>
+      linkedHotel
+        ? savedPassengers
+            .map((p) => p.personId)
+            .filter(
+              (id) =>
+                id &&
+                residencyByPersonId.get(id) === linkedHotel.itemId &&
+                !excludeKeys.has(id)
+            )
+        : [],
+    [linkedHotel, savedPassengers, residencyByPersonId, excludeKeys]
+  );
+  // Пресет пикера: с какой гостиницей открыть и кого предвыбрать.
+  const [pickerPreset, setPickerPreset] = useState(null);
 
   const handleCatalogConfirm = async (selected) => {
     try {
@@ -311,6 +356,23 @@ export default function FapDriverPage({
   const remainingSlots = cap > 0 ? cap - placed : null;
   const isCancelled = service?.status === "CANCELLED";
   const isCompleted = service?.status === "COMPLETED" || isCancelled;
+
+  // Открыть пикер с предвыбранными жильцами привязанной гостиницы (в пределах свободных мест).
+  const openResidentsPicker = () => {
+    if (!linkedHotel) return;
+    const residents = residentCandidates;
+    const capped =
+      remainingSlots != null
+        ? residents.slice(0, Math.max(0, remainingSlots))
+        : residents;
+    if (capped.length < residents.length) {
+      warning(
+        `Мест хватает только на ${capped.length} из ${residents.length} заселённых`
+      );
+    }
+    setPickerPreset({ initialKey: linkedHotel.itemId, initialSelectedIds: capped });
+    setCatalogOpen(true);
+  };
 
   // Filter by tab+search
   const visible = useMemo(() => {
@@ -966,9 +1028,15 @@ export default function FapDriverPage({
           </div>
           <div className={classes.metric}>
             <span className={classes.metricLabel}>Кол-во мест</span>
-            <span className={classes.metricValue}>
-              {placed}
+            <span
+              className={classes.metricValue}
+              title="Факт: поимённый список или «перевезено» — что больше"
+            >
+              {driverFactCount(driver)}
               {cap > 0 ? ` / ${cap}` : ""}
+              {driverFactCount(driver) > placed && (
+                <span className={classes.metricSub}> · поимённо {placed}</span>
+              )}
             </span>
           </div>
           <div className={classes.metricDivider} />
@@ -990,10 +1058,18 @@ export default function FapDriverPage({
         </div>
 
         {/* Row 3 — full route */}
-        {(driver.addressFrom || driver.addressTo) && (
+        {(driver.addressFrom || driver.addressTo || linkedHotel) && (
           <div className={classes.headRow3}>
             <PinSvg size={15} color={color} style={{ marginTop: 2, flexShrink: 0 }} />
             <div className={classes.routeAddr}>
+              {linkedHotel && (
+                <span
+                  className={classes.hotelChip}
+                  title="Гостиница проживания, к которой привязана поездка"
+                >
+                  {linkedHotel.name}
+                </span>
+              )}
               {driver.addressFrom && <strong>{driver.addressFrom}</strong>}
               {driver.addressFrom && driver.addressTo && (
                 <span className={classes.routeArrow} style={{ color }}>
@@ -1037,6 +1113,7 @@ export default function FapDriverPage({
                     cancelAdd();
                     cancelEdit();
                     clearSel();
+                    setPickerPreset(null);
                   }}
                 />
               )}
@@ -1075,17 +1152,40 @@ export default function FapDriverPage({
                   type="button"
                   className={classes.primaryBtn}
                   style={{ background: "#fff", color, border: `1px solid ${color}` }}
-                  onClick={() => setCatalogOpen(true)}
+                  onClick={() => {
+                    setPickerPreset(null);
+                    setCatalogOpen(true);
+                  }}
                 >
                   <PlusSvg color={color} /> Из реестра
                 </button>
               )}
+              {canEdit &&
+                !isCompleted &&
+                !addDisabled &&
+                personMode !== "CREW" &&
+                linkedHotel &&
+                residentCandidates.length > 0 && (
+                  <button
+                    type="button"
+                    className={classes.primaryBtn}
+                    style={{ background: "#fff", color, border: `1px solid ${color}` }}
+                    onClick={openResidentsPicker}
+                    title={`Заселённые в «${linkedHotel.name}»`}
+                  >
+                    <PlusSvg color={color} /> Заселённые в «{shortName(linkedHotel.name)}» (
+                    {residentCandidates.length})
+                  </button>
+                )}
               {canEdit && !isCompleted && personMode === "CREW" && availableCrew.length > 0 && (
                 <button
                   type="button"
                   className={classes.primaryBtn}
                   style={{ background: "#fff", color, border: `1px solid ${color}` }}
-                  onClick={() => setCatalogOpen(true)}
+                  onClick={() => {
+                    setPickerPreset(null);
+                    setCatalogOpen(true);
+                  }}
                 >
                   <PlusSvg color={color} /> Из экипажа
                 </button>
@@ -1217,6 +1317,19 @@ export default function FapDriverPage({
         loading={saving}
         onConfirm={personMode === "CREW" ? handleCrewCatalogConfirm : handleCatalogConfirm}
         title={personMode === "CREW" ? "Выбрать из экипажа заявки" : undefined}
+        hotelFilter={
+          personMode !== "CREW" && hotelsWithItemId.length > 0
+            ? {
+                options: hotelsWithItemId.map((h) => ({ key: h.itemId, name: h.name })),
+                residencyByPersonId,
+                initialKey: pickerPreset?.initialKey,
+                accent: color,
+              }
+            : null
+        }
+        initialSelectedIds={
+          personMode === "CREW" ? null : pickerPreset?.initialSelectedIds
+        }
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { useMutation, useQuery } from "@apollo/client";
 import classes from "./AddRepresentativeDriver.module.css";
 import Sidebar from "../Sidebar/Sidebar.jsx";
@@ -42,6 +42,12 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
     link: "",
     pickupAt: "",
   });
+
+  const [selectedHotel, setSelectedHotel] = useState(null);
+  const hotelOptions = useMemo(
+    () => (request?.livingService?.hotels ?? []).filter((h) => h?.itemId),
+    [request]
+  );
 
   const transferServiceObj =
     direction === "DEPARTURE"
@@ -107,6 +113,7 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
 
   const resetForm = useCallback(() => {
     setSelectedDriver(null);
+    setSelectedHotel(null);
     setFormData({
       fullName: "",
       phone: "",
@@ -254,6 +261,7 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
       link: formData.link?.trim() || null,
       addressFrom: formData.addressFrom?.trim() || null,
       addressTo: formData.addressTo?.trim() || null,
+      hotelItemId: selectedHotel?.itemId ?? null,
     };
     try {
       await addDriver({
@@ -383,6 +391,43 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
                   </div>
                 )}
               </div>
+
+              {hotelOptions.length > 0 && (
+                <>
+                  {/* Привязка поездки к гостинице проживания: подставляет адрес по направлению */}
+                  <label>Гостиница проживания</label>
+                  <MUIAutocompleteColor
+                    dropdownWidth="100%"
+                    label="Не привязана"
+                    options={hotelOptions}
+                    getOptionLabel={(option) =>
+                      option
+                        ? `${option.name ?? ""}${option.address ? `, ${option.address}` : ""}`.trim()
+                        : ""
+                    }
+                    value={selectedHotel}
+                    isOptionEqualToValue={(option, value) => option?.itemId === value?.itemId}
+                    renderOption={(optionProps, option) => (
+                      <li {...optionProps} key={option.itemId}>
+                        {option.name}
+                        {option.address ? `, ${option.address}` : ""}
+                      </li>
+                    )}
+                    onChange={(event, newValue) => {
+                      setIsEdited(true);
+                      setSelectedHotel(newValue || null);
+                      if (newValue?.address) {
+                        const field =
+                          direction === "DEPARTURE" ? "addressFrom" : "addressTo";
+                        setFormData((prev) => ({ ...prev, [field]: newValue.address }));
+                      }
+                    }}
+                  />
+                  <span style={{ fontSize: 12, color: "#94A3B8", marginTop: -4 }}>
+                    Подставит адрес {direction === "DEPARTURE" ? "отправления" : "прибытия"}
+                  </span>
+                </>
+              )}
 
               <AddressField
                 label="Адрес отправления"
