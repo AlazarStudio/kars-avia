@@ -289,6 +289,12 @@
   flex-shrink: 0;
 }
 
+/* Факт «перевезено» больше вместимости — несколько ходок одной машиной, не ошибка */
+.metaOver {
+  color: #D97706;
+  font-weight: 600;
+}
+
 /* ── Compact preview avatars ── */
 .avatarStack {
   display: flex;
@@ -537,4 +543,11 @@
   background: #F1F5F9;
   color: #94A3B8;
   cursor: not-allowed;
+}
+/* Превышение вместимости машины — не блокируем, только подсвечиваем (несколько ходок) */
+.reportInputOver {
+  border-color: #F59E0B;
+}
+.reportInputOver:focus {
+  border-color: #D97706;
 }

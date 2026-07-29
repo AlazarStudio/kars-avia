@@ -30,6 +30,16 @@ export default function FapSelect({
   disabled = false,
   accent = "#8B5CF6",
   style,
+  // Опциональные пропы (без них рендер прежний):
+  // className — класс на обёртку (размеры под конкретный layout),
+  // triggerPrefix — подпись перед значением в триггере (напр. «Гостиница:»),
+  // active — подсветить рамку акцентом, когда фильтр не в дефолтном значении.
+  className,
+  triggerPrefix,
+  active = false,
+  // menuMinWidth — минимальная ширина меню, когда триггер узкий и подписи опций
+  // не помещаются. Без пропа меню шириной ровно с триггер (прежнее поведение).
+  menuMinWidth,
 }) {
   const [open, setOpen] = useState(false);
   const [rect, setRect] = useState(null);
@@ -90,17 +100,47 @@ export default function FapSelect({
     close();
   };
 
+  // Ширина меню: по умолчанию ровно как у триггера; menuMinWidth расширяет узкий.
+  const menuWidth = !rect
+    ? 0
+    : menuMinWidth
+    ? Math.max(rect.width, menuMinWidth)
+    : rect.width;
+  // Расширенное меню растим влево от правого края триггера — иначе оно вылезает
+  // за правый край карточки/диалога. У края окна прижимаем к безопасному отступу.
+  const menuLeft = !rect
+    ? 0
+    : menuWidth > rect.width
+    ? Math.max(VIEWPORT_MARGIN, rect.right - menuWidth)
+    : rect.left;
+
   return (
-    <div className={classes.wrap} style={style}>
+    <div
+      className={`${classes.wrap}${className ? ` ${className}` : ""}`}
+      style={style}
+    >
       <button
         ref={triggerRef}
         type="button"
         className={`${classes.trigger} ${open ? classes.triggerOpen : ""}`}
-        style={open ? { borderColor: accent, boxShadow: `0 0 0 3px ${accent}22` } : undefined}
+        style={
+          open
+            ? { borderColor: accent, boxShadow: `0 0 0 3px ${accent}22` }
+            : active
+            ? { borderColor: accent }
+            : undefined
+        }
         onClick={() => (open ? close() : openMenu())}
         disabled={disabled}
       >
-        <span className={current && current.value ? classes.value : classes.placeholder}>
+        {triggerPrefix && (
+          <span className={classes.triggerPrefix}>{triggerPrefix}</span>
+        )}
+        <span
+          className={current && current.value ? classes.value : classes.placeholder}
+          // Значение режется многоточием — полный текст остаётся в подсказке.
+          title={typeof current?.label === "string" ? current.label : undefined}
+        >
           {current ? current.label : placeholder}
         </span>
         <svg
@@ -132,8 +172,8 @@ export default function FapSelect({
               ...(placement.up
                 ? { bottom: window.innerHeight - rect.top + MENU_GAP }
                 : { top: rect.bottom + MENU_GAP }),
-              left: rect.left,
-              width: rect.width,
+              left: menuLeft,
+              width: menuWidth,
               // Длинный список не должен упираться в край окна: внутри меню
               // свой скролл, поэтому режем высоту по доступному месту.
               ...(placement.space != null
@@ -150,7 +190,12 @@ export default function FapSelect({
                   style={sel ? { color: accent } : undefined}
                   onClick={() => pick(o.value)}
                 >
-                  <span className={classes.optionLabel}>{o.label}</span>
+                  <span
+                    className={classes.optionLabel}
+                    title={typeof o.label === "string" ? o.label : undefined}
+                  >
+                    {o.label}
+                  </span>
                   {sel && (
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
                       <path

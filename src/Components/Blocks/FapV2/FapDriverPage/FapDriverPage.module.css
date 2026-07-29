@@ -152,6 +152,11 @@
   color: #9AA0B4;
 }
 
+/* Факт выше вместимости — легально (несколько ходок), просто подсветка */
+.metricOver {
+  color: #D97706;
+}
+
 .composition {
   display: flex;
   gap: 6px;

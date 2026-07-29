@@ -34,6 +34,13 @@
   cursor: default;
 }
 
+/* Подпись перед значением в триггере (опциональный triggerPrefix). */
+.triggerPrefix {
+  flex: 0 0 auto;
+  color: #9aa0b4;
+  font-weight: 400;
+}
+
 .value {
   flex: 1;
   min-width: 0;

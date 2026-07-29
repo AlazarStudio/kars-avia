@@ -251,6 +251,27 @@ export default function FapDriverPage({
     });
     return map;
   }, [hotelsWithItemId]);
+  // Заселённость для подписей фильтра в пикере: сколько человек в каждой гостинице
+  // и сколько вообще без размещения.
+  const hotelPicker = useMemo(() => {
+    const counts = new Map();
+    let noPlacementCount = 0;
+    savedPassengers.forEach((p) => {
+      const id = p?.personId;
+      if (!id) return;
+      const key = residencyByPersonId.get(id);
+      if (key) counts.set(key, (counts.get(key) ?? 0) + 1);
+      else noPlacementCount += 1;
+    });
+    return {
+      options: hotelsWithItemId.map((h) => ({
+        key: h.itemId,
+        name: h.name,
+        count: counts.get(h.itemId) ?? 0,
+      })),
+      noPlacementCount,
+    };
+  }, [savedPassengers, residencyByPersonId, hotelsWithItemId]);
   const linkedHotel = useMemo(
     () => hotelsWithItemId.find((h) => h.itemId === driver?.hotelItemId) || null,
     [hotelsWithItemId, driver]
@@ -353,6 +374,7 @@ export default function FapDriverPage({
 
   const cap = driver?.peopleCount || 0;
   const placed = people.length;
+  const fact = driverFactCount(driver);
   const remainingSlots = cap > 0 ? cap - placed : null;
   const isCancelled = service?.status === "CANCELLED";
   const isCompleted = service?.status === "COMPLETED" || isCancelled;
@@ -1029,12 +1051,16 @@ export default function FapDriverPage({
           <div className={classes.metric}>
             <span className={classes.metricLabel}>Кол-во мест</span>
             <span
-              className={classes.metricValue}
-              title="Факт: поимённый список или «перевезено» — что больше"
+              className={`${classes.metricValue}${cap > 0 && fact > cap ? ` ${classes.metricOver}` : ""}`}
+              title={
+                cap > 0 && fact > cap
+                  ? "Факт: поимённый список или «перевезено» — что больше. Факт выше вместимости — например, несколько ходок"
+                  : "Факт: поимённый список или «перевезено» — что больше"
+              }
             >
-              {driverFactCount(driver)}
+              {fact}
               {cap > 0 ? ` / ${cap}` : ""}
-              {driverFactCount(driver) > placed && (
+              {fact > placed && (
                 <span className={classes.metricSub}> · поимённо {placed}</span>
               )}
             </span>
@@ -1320,7 +1346,8 @@ export default function FapDriverPage({
         hotelFilter={
           personMode !== "CREW" && hotelsWithItemId.length > 0
             ? {
-                options: hotelsWithItemId.map((h) => ({ key: h.itemId, name: h.name })),
+                options: hotelPicker.options,
+                noPlacementCount: hotelPicker.noPlacementCount,
                 residencyByPersonId,
                 initialKey: pickerPreset?.initialKey,
                 accent: color,

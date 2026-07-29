@@ -38,7 +38,8 @@ export default function CatalogPickerModal({
   // { groups, groupIndex: Map<personId, group>, placedElsewhere: Map<personId, hotelName> }
   // Без пропа — прежний плоский список (вода/питание/водитель).
   groupContext = null,
-  // { options: [{key, name}], residencyByPersonId: Map<personId, hotelKey>, initialKey, accent }
+  // { options: [{key, name, count}], residencyByPersonId: Map<personId, hotelKey>,
+  //   noPlacementCount, initialKey, accent }
   // Фильтр «Гостиница» (трансфер). Без пропа — прежний вид.
   hotelFilter = null,
   // Предпроставленные галочки при открытии (кнопка «Заселённые в …»).
@@ -53,6 +54,24 @@ export default function CatalogPickerModal({
     hotelFilter?.residencyByPersonId instanceof Map
       ? hotelFilter.residencyByPersonId
       : null;
+
+  // Опции фильтра: у гостиниц и «Без размещения» — счётчик заселённых (если передан).
+  const hotelOptions = useMemo(() => {
+    if (!hotelFilter) return [];
+    const withCount = (name, count) =>
+      count == null ? name : `${name} · ${count}`;
+    return [
+      { value: ALL_HOTELS_KEY, label: "Все гостиницы" },
+      ...(hotelFilter.options ?? []).map((h) => ({
+        value: h.key,
+        label: withCount(h.name, h.count),
+      })),
+      {
+        value: NO_HOTEL_KEY,
+        label: withCount("Без размещения", hotelFilter.noPlacementCount),
+      },
+    ];
+  }, [hotelFilter]);
 
   const rows = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -321,28 +340,27 @@ export default function CatalogPickerModal({
         <span className={classes.count}> · {savedPassengers.length} чел.</span>
       </DialogTitle>
       <DialogContent dividers className={classes.content}>
-        <input
-          className={classes.search}
-          placeholder="Поиск по ФИО, телефону, месту…"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-        {hotelFilter && (
-          <FapSelect
-            value={hotelKey}
-            onChange={setHotelKey}
-            accent={hotelFilter.accent}
-            style={{ width: "100%", marginTop: 8 }}
-            options={[
-              { value: ALL_HOTELS_KEY, label: "Все гостиницы" },
-              ...(hotelFilter.options ?? []).map((h) => ({
-                value: h.key,
-                label: h.name,
-              })),
-              { value: NO_HOTEL_KEY, label: "Без размещения" },
-            ]}
+        <div className={classes.filtersRow}>
+          <input
+            className={classes.search}
+            placeholder="Поиск по ФИО, телефону, месту…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
           />
-        )}
+          {hotelFilter && (
+            <FapSelect
+              value={hotelKey}
+              onChange={setHotelKey}
+              accent={hotelFilter.accent}
+              className={classes.hotelSelect}
+              triggerPrefix="Гостиница:"
+              active={hotelKey !== ALL_HOTELS_KEY}
+              // Триггер узкий — меню расширяем, чтобы названия со счётчиком не резались.
+              menuMinWidth={300}
+              options={hotelOptions}
+            />
+          )}
+        </div>
         <label className={classes.selectAll}>
           <input
             type="checkbox"

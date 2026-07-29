@@ -504,6 +504,11 @@ function DriverCard({
   const tcPrev = driver.transportedCount ?? null;
   const isDirty = vtNext !== vtPrev || rcNext !== rcPrev || tcNext !== tcPrev;
 
+  // Превышение вместимости не блокируем (легально — несколько ходок одной машиной),
+  // но подсвечиваем как необычное значение.
+  const tcOver = cap > 0 && transportedDraft !== "" && Number(transportedDraft) > cap;
+  const tcOverTitle = "Больше вместимости машины — например, несколько ходок";
+
   const handleSave = async () => {
     const patch = {};
     if (vtNext !== vtPrev) patch.vehicleType = vtNext === "" ? null : vtNext;
@@ -554,7 +559,10 @@ function DriverCard({
             {driver.phone && driver.pickupAt && <span className={classes.metaDot} />}
             {driver.pickupAt && <span>подача {formatDateTime(driver.pickupAt)}</span>}
             <span className={classes.metaDot} />
-            <span>
+            <span
+              className={cap > 0 && fact > cap ? classes.metaOver : undefined}
+              title={cap > 0 && fact > cap ? tcOverTitle : undefined}
+            >
               {fact}
               {cap > 0 ? `/${cap}` : ""} пасс.
             </span>
@@ -679,7 +687,8 @@ function DriverCard({
             onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); handleSave(); } }}
             placeholder="0"
             disabled={!canEdit || isCancelled}
-            className={`${classes.reportInputNumber} ${classes.reportInputNarrow}`}
+            className={`${classes.reportInputNumber} ${classes.reportInputNarrow}${tcOver ? ` ${classes.reportInputOver}` : ""}`}
+            title={tcOver ? tcOverTitle : undefined}
           />
         </label>
         <label className={classes.reportField}>
