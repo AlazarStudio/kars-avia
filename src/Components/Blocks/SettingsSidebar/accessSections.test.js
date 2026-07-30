@@ -63,6 +63,30 @@ test("каждая секция описана полностью и ключи 
   }
 });
 
+test("наборы ключей и ACCESS_SECTIONS описывают один и тот же набор секций", () => {
+  const described = new Set(ACCESS_SECTIONS.map((s) => s.key));
+
+  for (const [name, keys] of [
+    ["DISPATCHER_SECTION_KEYS", DISPATCHER_SECTION_KEYS],
+    ["AIRLINE_SECTION_KEYS", AIRLINE_SECTION_KEYS],
+    ["LEGACY_SECTION_KEYS", LEGACY_SECTION_KEYS],
+  ]) {
+    assert.equal(new Set(keys).size, keys.length, `${name}: дубли ключей`);
+    for (const key of keys) {
+      // опечатка здесь молча выкинула бы карточку с экрана: панель делает
+      // ACCESS_SECTIONS.find(...) и при промахе рендерит null
+      assert.ok(described.has(key), `${name}: секция "${key}" не описана в ACCESS_SECTIONS`);
+    }
+  }
+
+  for (const key of described) {
+    assert.ok(
+      DISPATCHER_SECTION_KEYS.includes(key) || LEGACY_SECTION_KEYS.includes(key),
+      `ACCESS_SECTIONS: секция "${key}" не показывается ни на одном экране`,
+    );
+  }
+});
+
 test("у аналитики нет строк действий — выгрузка закомментирована в обеих панелях", () => {
   const analytics = ACCESS_SECTIONS.find((s) => s.key === "analytics");
   assert.deepEqual(analytics.rows, []);
