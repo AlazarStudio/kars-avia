@@ -64,13 +64,37 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
       ? Math.max(totalServicePeople - usedServicePeople, 0)
       : null;
 
+  const servicePlannedAt = transferServiceObj?.plan?.plannedAt ?? null;
+  // Аэропорт заявки закрывает сторону маршрута, противоположную гостинице:
+  // прилёт — точка подачи, вылет — точка назначения.
+  const airportField = direction === "DEPARTURE" ? "addressTo" : "addressFrom";
+  const airportAddress = request?.airport?.address?.trim() || "";
+  const airportLabel = request?.airport?.code || request?.airport?.name || "";
+  // Подпись живёт, пока в поле лежит именно подставленный адрес: изменил вручную —
+  // объяснять больше нечего. Отдельное состояние для этого не нужно.
+  const airportHint =
+    airportAddress && formData[airportField] === airportAddress ? (
+      <span style={{ fontSize: 12, color: "#94A3B8", marginTop: -4 }}>
+        Адрес аэропорта заявки{airportLabel ? ` — ${airportLabel}` : ""}
+      </span>
+    ) : null;
+
+  // Значения по умолчанию при открытии: время подачи — из плана услуги,
+  // адрес со стороны аэропорта — из аэропорта заявки. Пишем только в пустые поля,
+  // введённое пользователем не затираем.
   useEffect(() => {
     if (!show) return;
-    const servicePlanned = transferServiceObj?.plan?.plannedAt;
-    if (!servicePlanned) return;
-    setFormData((p) => (p.pickupAt ? p : { ...p, pickupAt: toLocalInputValue(servicePlanned) }));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [show]);
+    setFormData((p) => {
+      const patch = {};
+      if (servicePlannedAt && !p.pickupAt) {
+        patch.pickupAt = toLocalInputValue(servicePlannedAt);
+      }
+      if (airportAddress && !p[airportField]) {
+        patch[airportField] = airportAddress;
+      }
+      return Object.keys(patch).length ? { ...p, ...patch } : p;
+    });
+  }, [show, servicePlannedAt, airportAddress, airportField]);
 
   const { data: driversData, refetch: refetchDrivers } = useQuery(DRIVERS_QUERY, {
     context: {
@@ -438,6 +462,7 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
                   setIsEdited(true);
                 }}
               />
+              {airportField === "addressFrom" && airportHint}
 
               <AddressField
                 label="Адрес прибытия"
@@ -448,6 +473,7 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
                   setIsEdited(true);
                 }}
               />
+              {airportField === "addressTo" && airportHint}
 
               <label>Количество людей</label>
               <input
@@ -471,9 +497,9 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
                 value={formData.pickupAt}
                 onChange={handleChange}
               />
-              {transferServiceObj?.plan?.plannedAt && (
+              {servicePlannedAt && (
                 <span style={{ fontSize: 12, color: "#94A3B8", marginTop: -4 }}>
-                  По умолчанию — {formatDateTime(transferServiceObj.plan.plannedAt)} (время услуги)
+                  По умолчанию — {formatDateTime(servicePlannedAt)} (время услуги)
                 </span>
               )}
 
