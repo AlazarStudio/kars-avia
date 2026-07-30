@@ -352,7 +352,6 @@ export default function PositionAccessPage({ user }) {
                     stateRef={panelRef}
                     isEditing={!inherit}
                     type={type}
-                    positionOptions={[]}
                   />
                   {inherit && (
                     <div className={classes.lockOverlay}>
