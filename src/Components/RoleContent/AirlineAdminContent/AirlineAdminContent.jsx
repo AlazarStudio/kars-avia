@@ -23,7 +23,6 @@ import {
   hasAccessMenu,
   safeAccessMenu as getSafeAccessMenu,
 } from "../../../utils/access";
-import AccessSettings from "../../Blocks/AccessSettings/AccessSettings";
 import PositionAccessPage from "../../Blocks/PositionAccessPage/PositionAccessPage";
 import { useQuery, useSubscription } from "@apollo/client";
 import {
@@ -31,7 +30,6 @@ import {
   GET_AIRLINES_UPDATE_SUBSCRIPTION,
   getCookie,
 } from "../../../../graphQL_requests";
-import NotificationsSettings from "../../Blocks/NotificationsSettings/NotificationsSettings";
 import RepresentativeRequests from "../../Blocks/RepresentativeRequests/RepresentativeRequests";
 import FapV2 from "../../Pages/FapV2/FapV2";
 
@@ -105,22 +103,10 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
         props: () => ({ user, accessMenu: safeAccessMenu }),
       },
       {
-        ids: ["access", "airlineAccess"],
-        guardKey: "userUpdate",
-        Comp: AccessSettings,
-        props: () => ({ user }),
-      },
-      {
         ids: ["positions"],
         guardKey: "userUpdate",
         Comp: PositionAccessPage,
         props: () => ({ user }),
-      },
-      {
-        ids: ["notifications"],
-        guardKey: "userUpdate",
-        Comp: NotificationsSettings,
-        props: () => ({}),
       },
       {
         ids: ["updates"],

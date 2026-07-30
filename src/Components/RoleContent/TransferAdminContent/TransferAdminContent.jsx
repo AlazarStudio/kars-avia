@@ -12,8 +12,6 @@ import UpdatesList from "../../Blocks/UpdatesList/UpdatesList";
 import RegisterOfContracts from "../../Blocks/RegisterOfContracts/RegisterOfContracts";
 import MyCompany from "../../Blocks/MyCompany/MyCompany";
 import Analytics from "../../Pages/AnalyticsForAvia/Analytics/Analytics";
-import AccessSettings from "../../Blocks/AccessSettings/AccessSettings";
-import NotificationsSettings from "../../Blocks/NotificationsSettings/NotificationsSettings";
 import DriversCompanyList from "../../Blocks/DriversCompanyList/DriversCompanyList";
 import DriversCompanyPage from "../../Blocks/DriversCompanyPage/DriversCompanyPage";
 import DriversList from "../../Blocks/DriversList/DriversList";
@@ -56,8 +54,6 @@ const TransferAdminContent = ({ user }) => {
       {/* {id === "updates" && <UpdatesList user={user} />} */}
       {/* {id === "myCompany" && <MyCompany user={user} />} */}
       {/* {id === "patchNotes" && <PatchNotesList user={user} />} */}
-      {/* {id === "access" && <AccessSettings user={user} />} */}
-      {/* {id === "notifications" && <NotificationsSettings user={user} />} */}
       {/* {!id && hotelID && <HotelPage id={hotelID} user={user} />} */}
       {/* {!id && airlineID && <AirlinePage id={airlineID} user={user} />} */}
       {!id && driversCompanyID && <DriversCompanyPage id={driversCompanyID} user={user} />}

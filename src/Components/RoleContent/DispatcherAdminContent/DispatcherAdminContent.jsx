@@ -15,13 +15,9 @@ import UpdatesList from "../../Blocks/UpdatesList/UpdatesList";
 import RegisterOfContracts from "../../Blocks/RegisterOfContracts/RegisterOfContracts";
 import MyCompany from "../../Blocks/MyCompany/MyCompany";
 import Analytics from "../../Pages/AnalyticsForAvia/Analytics/Analytics";
-import AccessSettings from "../../Blocks/AccessSettings/AccessSettings";
-import NotificationsSettings from "../../Blocks/NotificationsSettings/NotificationsSettings";
 import DisAdminTransferContent from "./DisAdminTransferContent/DisAdminTransferContent";
 import DisAdminAutoparkContent from "./DisAdminAutoparkContent/DisAdminAutoparkContent";
-import DispatcherAccessSettings from "../../Blocks/DispatcherAccessSettings/DispatcherAccessSettings";
 import PositionAccessPage from "../../Blocks/PositionAccessPage/PositionAccessPage";
-import DispatcherNotificationsSettings from "../../Blocks/DispatcherNotificationsSettings/DispatcherNotificationsSettings";
 import { canAccessMenu, safeAccessMenu as getSafeAccessMenu } from "../../../utils/access";
 import RepresentativeRequests from "../../Blocks/RepresentativeRequests/RepresentativeRequests";
 import FapV2 from "../../Pages/FapV2/FapV2";
@@ -106,34 +102,10 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
         props: () => ({ user, accessMenu: safeAccessMenu }),
       },
       {
-        ids: ["airlineAccess"],
-        guardKey: "userUpdate",
-        Comp: AccessSettings,
-        props: () => ({ user }),
-      },
-      {
-        ids: ["airlineNotifications"],
-        guardKey: "userUpdate",
-        Comp: NotificationsSettings,
-        props: () => ({ user }),
-      },
-      {
-        ids: ["dispatcherAccess"],
-        guardKey: "userUpdate",
-        Comp: DispatcherAccessSettings,
-        props: () => ({}),
-      },
-      {
         ids: ["positions"],
         guardKey: "userUpdate",
         Comp: PositionAccessPage,
         props: () => ({ user }),
-      },
-      {
-        ids: ["dispatcherNotifications"],
-        guardKey: "userUpdate",
-        Comp: DispatcherNotificationsSettings,
-        props: () => ({}),
       },
       { ids: ["hotels"], guardKey: null, Comp: HotelsList, props: () => ({ user }) },
       {

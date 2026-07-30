@@ -41,7 +41,7 @@ const DisAdminMenu = ({
       items: [
         canAccessMenu(accessMenu, "airlineMenu", user) && {
           label: "Авиакомпании", to: "/airlines", icon: MenuNavIcons.airlines,
-          active: id == "airlines" || id == "airlineAccess" || id == "airlineNotifications",
+          active: id == "airlines",
         },
         { label: "Гостиницы", to: "/hotels", icon: MenuNavIcons.hotels, active: id == "hotels" },
         canAccessMenu(accessMenu, "organizationMenu", user) && {
@@ -55,7 +55,7 @@ const DisAdminMenu = ({
       items: [
         canAccessMenu(accessMenu, "userMenu", user) && {
           label: "Пользователи", to: "/company", icon: MenuNavIcons.users,
-          active: id == "company" || id == "dispatcherAccess" || id == "dispatcherNotifications",
+          active: id == "company",
         },
         { label: "ГК Карс", to: "/myCompany", icon: MenuNavIcons.myCompany, fill: true, active: id == "myCompany" },
         canAccessMenu(accessMenu, "contracts", user) && {

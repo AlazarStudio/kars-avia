@@ -175,10 +175,10 @@ const CATEGORIES = [
     key: "manage",
     title: "Управление",
     items: [
-      { label: "Авиакомпании", meta: "Контрагенты", to: "/airlines", ids: ["airlines", "airlineAccess", "airlineNotifications"], icon: ItemIcon.airlines },
+      { label: "Авиакомпании", meta: "Контрагенты", to: "/airlines", ids: ["airlines"], icon: ItemIcon.airlines },
       { label: "Гостиницы", meta: "Контрагенты", to: "/hotels", ids: ["hotels"], icon: ItemIcon.hotels },
       { label: "Автопарк", meta: "Организации и водители", to: "/driversCompany", ids: ["driversCompany", "driversList"], icon: ItemIcon.drivers },
-      { label: "Пользователи", meta: "Доступы и роли", to: "/company", ids: ["company", "dispatcherAccess", "dispatcherNotifications"], icon: ItemIcon.users },
+      { label: "Пользователи", meta: "Доступы и роли", to: "/company", ids: ["company"], icon: ItemIcon.users },
       { label: "ГК Карс", meta: "Своя компания", to: "/myCompany", ids: ["myCompany"], icon: ItemIcon.myCompany },
     ],
   },

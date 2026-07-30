@@ -17,7 +17,7 @@ SettingsSidebar/
 
 ## Использование
 
-### Для диспетчеров (`Company.jsx`, `DispatcherAccessSettings.jsx`)
+### Для диспетчеров (`Company.jsx`)
 
 ```jsx
 import SettingsSidebar from "../SettingsSidebar/SettingsSidebar";
@@ -126,12 +126,6 @@ const openAccessDepartment = (department) => {
 ### Используемые мутации
 - `UPDATE_AIRLINE` - обновление настроек авиакомпании
 - `UPDATE_DISPATCHER_DEPARTMENT` - обновление настроек департамента диспетчера
-
-## Обратная совместимость
-
-Существующие страницы настроек (`/access`, `/notifications`, `/dispatcherAccess`, `/dispatcherNotifications`) сохранены и продолжают работать. Настройки можно открыть двумя способами:
-1. Через Sidebar (из таблицы департаментов по клику на иконку настроек)
-2. Через URL (старый способ, через навигацию)
 
 ## Стилизация
 

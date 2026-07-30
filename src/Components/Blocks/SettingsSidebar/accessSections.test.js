@@ -4,7 +4,6 @@ import {
   ACCESS_SECTIONS,
   DISPATCHER_SECTION_KEYS,
   AIRLINE_SECTION_KEYS,
-  LEGACY_SECTION_KEYS,
   defaultSectionKeys,
 } from "./accessSections.js";
 
@@ -36,12 +35,6 @@ test("у авиакомпании скрыты автопарк и реестр 
   ]);
 });
 
-test("легаси-порядок заканчивается автопарком", () => {
-  assert.equal(LEGACY_SECTION_KEYS.at(-1), "organization");
-  assert.equal(LEGACY_SECTION_KEYS.length, 10);
-  assert.deepEqual([...LEGACY_SECTION_KEYS].sort(), [...DISPATCHER_SECTION_KEYS].sort());
-});
-
 test("defaultSectionKeys выбирает набор по типу", () => {
   assert.deepEqual(defaultSectionKeys("dispatcher"), DISPATCHER_SECTION_KEYS);
   assert.deepEqual(defaultSectionKeys("airline"), AIRLINE_SECTION_KEYS);
@@ -69,7 +62,6 @@ test("наборы ключей и ACCESS_SECTIONS описывают один �
   for (const [name, keys] of [
     ["DISPATCHER_SECTION_KEYS", DISPATCHER_SECTION_KEYS],
     ["AIRLINE_SECTION_KEYS", AIRLINE_SECTION_KEYS],
-    ["LEGACY_SECTION_KEYS", LEGACY_SECTION_KEYS],
   ]) {
     assert.equal(new Set(keys).size, keys.length, `${name}: дубли ключей`);
     for (const key of keys) {
@@ -81,7 +73,7 @@ test("наборы ключей и ACCESS_SECTIONS описывают один �
 
   for (const key of described) {
     assert.ok(
-      DISPATCHER_SECTION_KEYS.includes(key) || LEGACY_SECTION_KEYS.includes(key),
+      DISPATCHER_SECTION_KEYS.includes(key),
       `ACCESS_SECTIONS: секция "${key}" не показывается ни на одном экране`,
     );
   }
@@ -92,8 +84,7 @@ test("у аналитики нет строк действий — выгруз�
   assert.deepEqual(analytics.rows, []);
 });
 
-test("секция пассажиров называется по-разному в сайдбаре и на легаси-странице", () => {
+test("секция пассажиров называется «ФАП»", () => {
   const passengers = ACCESS_SECTIONS.find((s) => s.key === "passengers");
   assert.equal(passengers.title, "ФАП");
-  assert.equal(passengers.detailedTitle, "Пассажиры");
 });

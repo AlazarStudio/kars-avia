@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import defaultClasses from "./SettingsSidebar.module.css";
+import classes from "./SettingsSidebar.module.css";
 import MUISwitch from "../MUISwitch/MUISwitch";
 import {
   NOTIFICATION_SECTIONS,
@@ -8,15 +8,13 @@ import {
   sitePushKey,
 } from "./notificationSections";
 
+const EMPTY_MENU = {};
+
 export default function NotificationsPermissionsPanel({
-  notificationMenu = {},
+  notificationMenu = EMPTY_MENU,
   stateRef,
   isEditing,
-  styles,
-  showBulkToggle = true,
 }) {
-  const classes = styles || defaultClasses;
-
   const boolOrDefault = (value, defaultValue = false) =>
     typeof value === "boolean" ? value : defaultValue;
   // канал считается включённым, если мастер включён, а сам канал в данных не задан
@@ -60,7 +58,7 @@ export default function NotificationsPermissionsPanel({
 
   return (
     <div className={classes.accessPanel}>
-      {showBulkToggle && isEditing && (
+      {isEditing && (
         <button
           className={classes.enableAllBtn}
           onClick={allEnabled ? disableAll : enableAll}

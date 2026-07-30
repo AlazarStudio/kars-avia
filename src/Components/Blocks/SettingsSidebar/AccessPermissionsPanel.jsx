@@ -1,19 +1,16 @@
 import React, { useState, useEffect, useMemo } from "react";
-import defaultClasses from "./SettingsSidebar.module.css";
+import classes from "./SettingsSidebar.module.css";
 import MUISwitch from "../MUISwitch/MUISwitch";
 import { ACCESS_SECTIONS, defaultSectionKeys } from "./accessSections";
 
+const EMPTY_MENU = {};
+
 export default function AccessPermissionsPanel({
-  accessMenu = {},
+  accessMenu = EMPTY_MENU,
   stateRef,
   isEditing,
   type = "dispatcher",
-  granularity = "coarse",
-  styles,
-  sections,
-  showBulkToggle = true,
 }) {
-  const classes = styles || defaultClasses;
   const b = (v) => !!v;
 
   const initial = useMemo(
@@ -81,16 +78,9 @@ export default function AccessPermissionsPanel({
     if (stateRef) stateRef.current = state;
   }, [state, stateRef]);
 
-  const sectionKeys = useMemo(
-    () => sections || defaultSectionKeys(type),
-    [sections, type],
-  );
+  const sectionKeys = useMemo(() => defaultSectionKeys(type), [type]);
 
-  // точечная правка одного флага (режим detailed)
-  const set = (section, key, value) =>
-    setState((s) => ({ ...s, [section]: { ...s[section], [key]: value } }));
-
-  // доступ к разделу с каскадом (режим coarse): выключение гасит все действия
+  // доступ к разделу с каскадом: выключение гасит все действия
   const setAccess = (section, value) =>
     setState((s) => ({
       ...s,
@@ -144,11 +134,9 @@ export default function AccessPermissionsPanel({
       ),
     );
 
-  const isDetailed = granularity === "detailed";
-
   return (
     <div className={classes.accessPanel}>
-      {showBulkToggle && isEditing && (
+      {isEditing && (
         <button
           className={classes.enableAllBtn}
           onClick={allEnabled ? disableAll : enableAll}
@@ -161,41 +149,25 @@ export default function AccessPermissionsPanel({
           const config = ACCESS_SECTIONS.find((s) => s.key === key);
           if (!config || !state[key]) return null;
 
-          const title =
-            isDetailed && config.detailedTitle ? config.detailedTitle : config.title;
-
           return (
-            <SectionCard key={key} title={title} classes={classes}>
+            <SectionCard key={key} title={config.title} classes={classes}>
               <RowSwitch
                 classes={classes}
                 label="Доступ к разделу"
                 checked={state[key].access}
-                onChange={(v) =>
-                  isDetailed ? set(key, "access", v) : setAccess(key, v)
-                }
+                onChange={(v) => setAccess(key, v)}
                 disabled={!isEditing}
               />
 
-              {isDetailed
-                ? config.rows.map((row) => (
-                    <RowSwitch
-                      key={row.key}
-                      classes={classes}
-                      label={row.label}
-                      checked={state[key][row.key]}
-                      onChange={(v) => set(key, row.key, v)}
-                      disabled={!isEditing || !state[key].access}
-                    />
-                  ))
-                : config.rows.length > 0 && (
-                    <RowSwitch
-                      classes={classes}
-                      label="Взаимодействие с разделом"
-                      checked={interactChecked(key)}
-                      onChange={(v) => setInteraction(key, v)}
-                      disabled={!isEditing || !state[key].access}
-                    />
-                  )}
+              {config.rows.length > 0 && (
+                <RowSwitch
+                  classes={classes}
+                  label="Взаимодействие с разделом"
+                  checked={interactChecked(key)}
+                  onChange={(v) => setInteraction(key, v)}
+                  disabled={!isEditing || !state[key].access}
+                />
+              )}
             </SectionCard>
           );
         })}

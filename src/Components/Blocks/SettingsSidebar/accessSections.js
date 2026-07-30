@@ -1,5 +1,5 @@
 // Единое описание секций прав доступа отдела.
-// Используется общей панелью в двух режимах: coarse (сайдбар) и detailed (/airlineAccess).
+// Используется общей панелью AccessPermissionsPanel (сайдбар и страница доступов должности).
 export const ACCESS_SECTIONS = [
   {
     key: "squadron",
@@ -13,7 +13,6 @@ export const ACCESS_SECTIONS = [
   {
     key: "passengers",
     title: "ФАП",
-    detailedTitle: "Пассажиры",
     rows: [
       { key: "create", label: "Создание заявки" },
       { key: "edit", label: "Редактирование заявки" },
@@ -99,20 +98,6 @@ export const DISPATCHER_SECTION_KEYS = [
 export const AIRLINE_SECTION_KEYS = DISPATCHER_SECTION_KEYS.filter(
   (key) => key !== "organization" && key !== "contracts",
 );
-
-// Порядок карточек на легаси-странице /airlineAccess: автопарк последний.
-export const LEGACY_SECTION_KEYS = [
-  "squadron",
-  "passengers",
-  "transfer",
-  "users",
-  "employees",
-  "contracts",
-  "analytics",
-  "aboutAirlines",
-  "reports",
-  "organization",
-];
 
 export function defaultSectionKeys(type) {
   return type === "airline" ? AIRLINE_SECTION_KEYS : DISPATCHER_SECTION_KEYS;

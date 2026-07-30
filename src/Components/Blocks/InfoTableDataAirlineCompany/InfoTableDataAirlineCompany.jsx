@@ -5,7 +5,6 @@ import { getMediaUrl } from "../../../../graphQL_requests";
 import SettingsIcon from "../../../shared/icons/SettingsIcon";
 import DeleteIcon from "../../../shared/icons/DeleteIcon";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
-import { useNavigate } from "react-router-dom";
 import { menuAccess, roles } from "../../../roles";
 import ReadinessIndicator from "../ReadinessIndicator/ReadinessIndicator";
 import { computeDepartmentReadiness } from "../../../utils/dispatcherDepartmentReadiness";
@@ -22,7 +21,6 @@ const collapseBtnStyle = {
 };
 
 function InfoTableDataAirlineCompany({ children, user, representative, accessMenu, airlineId, toggleRequestSidebar, onViewOtdel, requests, openDeleteComponent, toggleRequestEditNumber, onViewEmployee, openDeleteNomerComponent, onOpenSettings, ...props }) {
-    const navigate = useNavigate();
     const [collapsed, setCollapsed] = useState({});
     const toggleCollapse = (key) =>
         setCollapsed((c) => ({ ...c, [key]: !c[key] }));
@@ -63,7 +61,7 @@ function InfoTableDataAirlineCompany({ children, user, representative, accessMen
                                 })()}
                                 {(!user?.airlineId || accessMenu.userUpdate) && !item.isNoDepartment &&
                                 <><EditPencilIcon cursor="pointer" strokeWidth={0.5} onClick={() => toggleRequestSidebar(item)} />
-                                {!representative && (<SettingsIcon cursor={"pointer"} onClick={() => onOpenSettings ? onOpenSettings(item) : navigate("/airlineAccess", { state:{ item: item, airlineId: airlineId } } )} />)}
+                                {!representative && (<SettingsIcon cursor={"pointer"} onClick={() => onOpenSettings?.(item)} />)}
                                 <DeleteIcon cursor="pointer" strokeWidth={0.5} onClick={() => openDeleteComponent(index, item.id)} /></>}
                             </div>
 

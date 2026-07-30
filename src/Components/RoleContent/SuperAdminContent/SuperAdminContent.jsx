@@ -17,13 +17,9 @@ import UpdatesList from '../../Blocks/UpdatesList/UpdatesList'
 import MyCompany from '../../Blocks/MyCompany/MyCompany'
 import Analytics from '../../Pages/AnalyticsForAvia/Analytics/Analytics'
 import RegisterOfContracts from '../../Blocks/RegisterOfContracts/RegisterOfContracts'
-import AccessSettings from '../../Blocks/AccessSettings/AccessSettings'
 import DisAdminTransferContent from '../DispatcherAdminContent/DisAdminTransferContent/DisAdminTransferContent'
 import DisAdminAutoparkContent from '../DispatcherAdminContent/DisAdminAutoparkContent/DisAdminAutoparkContent'
-import DispatcherAccessSettings from '../../Blocks/DispatcherAccessSettings/DispatcherAccessSettings'
 import PositionAccessPage from '../../Blocks/PositionAccessPage/PositionAccessPage'
-import NotificationsSettings from '../../Blocks/NotificationsSettings/NotificationsSettings'
-import DispatcherNotificationsSettings from '../../Blocks/DispatcherNotificationsSettings/DispatcherNotificationsSettings'
 import SystemNotificationsSettings from '../../Blocks/SystemUpdate/SystemNotificationsSettings'
 
 const SuperAdminContent = ({ user }) => {
@@ -54,11 +50,7 @@ const SuperAdminContent = ({ user }) => {
       {id === 'documentation' && <DocumentationList user={user} />}
       {id === 'updates' && <UpdatesList user={user} />}
       {id === 'registerOfContracts' && <RegisterOfContracts user={user} />}
-      {id === 'airlineAccess' && <AccessSettings user={user} />}
-      {id === 'airlineNotifications' && <NotificationsSettings user={user} />}
-      {id === 'dispatcherAccess' && <DispatcherAccessSettings user={user} />}
       {id === 'positions' && <PositionAccessPage user={user} />}
-      {id === 'dispatcherNotifications' && <DispatcherNotificationsSettings user={user} />}
       {id === 'myCompany' && <MyCompany user={user} />}
       {id === 'patchNotes' && <PatchNotesList user={user} />}
       {id === 'systemNotifications' && <SystemNotificationsSettings user={user} />}
