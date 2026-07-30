@@ -14,7 +14,7 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import TariffGeographyList from "../TariffGeographyList/TariffGeographyList.jsx";
 import ContractTypeToggle from "../ContractTypeToggle/ContractTypeToggle.jsx";
 import { rowsToGeographyInput, findDuplicateGeoRow, getContractType } from "../../../utils/airlineTariffGeography.js";
-import { airlineTariffToInput, tariffInputToPayload, tariffFormToDisplayItem } from "../../../utils/airlineTariffPrices.js";
+import { airlineTariffToInput, tariffInputToPayload, tariffFormToDisplayItem, PRICE_APPLIES_TO_OPTIONS, DEFAULT_APPLIES_TO, conflictingContractTypes, normalizeAppliesTo, appliesToLabel } from "../../../utils/airlineTariffPrices.js";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
@@ -74,6 +74,7 @@ function EditRequestAirlineTarifCategory({
   const [isEdited, setIsEdited] = useState(false);
 
   const [contractType, setContractType] = useState("individual");
+  const [appliesTo, setAppliesTo] = useState(DEFAULT_APPLIES_TO);
 
   const [airports, setAirports] = useState([]); // Список аэропортов
   const sidebarRef = useRef();
@@ -93,23 +94,30 @@ function EditRequestAirlineTarifCategory({
     city: airport.city,
   }));
 
+  const conflictingTypes = useMemo(
+    () => new Set(conflictingContractTypes(appliesTo)),
+    [appliesTo],
+  );
+
   const usedAirportIds = useMemo(() => {
     const set = new Set();
     (addTarif || []).forEach((contract) => {
       if (contract?.id === tarif?.id) return; // свой договор — не блокируем
+      if (!conflictingTypes.has(normalizeAppliesTo(contract?.contractType))) return;
       (contract?.airports || []).forEach((a) => {
         const airportId = a?.airport?.id ?? a?.id;
         if (airportId != null) set.add(String(airportId));
       });
     });
     return set;
-  }, [addTarif, tarif?.id]);
+  }, [addTarif, tarif?.id, conflictingTypes]);
 
   const usedGeo = useMemo(() => {
     const regionIds = new Set();
     const cityIds = new Set();
     (addTarif || []).forEach((contract) => {
       if (contract?.id === tarif?.id) return; // свой договор — не блокируем
+      if (!conflictingTypes.has(normalizeAppliesTo(contract?.contractType))) return;
       (contract?.geography || []).forEach((g) => {
         const cityId = g?.cityId || g?.cityRef?.id;
         const regionId = g?.regionId || g?.regionRef?.id;
@@ -118,7 +126,7 @@ function EditRequestAirlineTarifCategory({
       });
     });
     return { regionIds: [...regionIds], cityIds: [...cityIds] };
-  }, [addTarif, tarif?.id]);
+  }, [addTarif, tarif?.id, conflictingTypes]);
 
   const [skippedAirports, setSkippedAirports] = useState([]);
 
@@ -128,6 +136,7 @@ function EditRequestAirlineTarifCategory({
     if (show && tarif) {
       setFormData(getInitialFormData());
       setContractType(getContractType(tarif));
+      setAppliesTo(normalizeAppliesTo(tarif?.contractType));
       setIsEdited(false);
       setIsEditing(initialEditMode);
       setSkippedAirports([]);
@@ -137,6 +146,7 @@ function EditRequestAirlineTarifCategory({
   const resetForm = useCallback(() => {
     setFormData(getInitialFormData());
     setContractType(getContractType(tarif));
+    setAppliesTo(normalizeAppliesTo(tarif?.contractType));
     setIsEdited(false);
   }, [getInitialFormData, tarif]);
 
@@ -238,10 +248,12 @@ function EditRequestAirlineTarifCategory({
 
     const record = tariffInputToPayload(formData, contractType, {
       id: tarif?.id,
+      appliesTo,
     });
     const displayItem = tariffFormToDisplayItem(formData, contractType, airports, {
       id: tarif?.id,
       prevCategory: tarif?.category || [],
+      appliesTo,
     });
     onSubmit?.(record, displayItem);
   };
@@ -329,6 +341,33 @@ function EditRequestAirlineTarifCategory({
                   </div>
                 )}
               </div>
+
+              {isEditing ? (
+                <div className={classes.requestDataInfo_block}>
+                  <div className={classes.requestDataInfo_title}>Применяется к</div>
+                  <ContractTypeToggle
+                    value={appliesTo}
+                    options={PRICE_APPLIES_TO_OPTIONS}
+                    onChange={(t) => {
+                      setIsEdited(true);
+                      setAppliesTo(t);
+                    }}
+                  />
+                  {appliesTo === "all" && (
+                    <div className={classes.airportHint}>
+                      Локации этого ценника станут недоступны для ценников «Эскадрилья»
+                      и «ФАП».
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className={classes.requestDataInfo}>
+                  <div className={classes.requestDataInfo_title}>Применяется к</div>
+                  <div className={classes.requestDataInfo_desc}>
+                    {appliesToLabel(appliesTo)}
+                  </div>
+                </div>
+              )}
 
               {isEditing ? (
                 <div className={classes.requestDataInfo_block}>

@@ -15,7 +15,7 @@ import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutoc
 import TariffGeographyList from "../TariffGeographyList/TariffGeographyList.jsx";
 import ContractTypeToggle from "../ContractTypeToggle/ContractTypeToggle.jsx";
 import { rowsToGeographyInput, findDuplicateGeoRow } from "../../../utils/airlineTariffGeography.js";
-import { createEmptyTariffInput, tariffInputToPayload, tariffFormToDisplayItem } from "../../../utils/airlineTariffPrices.js";
+import { createEmptyTariffInput, tariffInputToPayload, tariffFormToDisplayItem, PRICE_APPLIES_TO_OPTIONS, DEFAULT_APPLIES_TO, conflictingContractTypes, normalizeAppliesTo } from "../../../utils/airlineTariffPrices.js";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
 
@@ -51,6 +51,8 @@ function CreateRequestAirlineTarifCategory({
 
   const [contractType, setContractType] = useState("individual");
 
+  const [appliesTo, setAppliesTo] = useState(DEFAULT_APPLIES_TO);
+
   useEffect(() => {
     if (infoAirports.data) {
       setAirports(infoAirports.data.airports || []);
@@ -64,21 +66,28 @@ function CreateRequestAirlineTarifCategory({
     city: airport.city,
   }));
 
+  const conflictingTypes = useMemo(
+    () => new Set(conflictingContractTypes(appliesTo)),
+    [appliesTo],
+  );
+
   const usedAirportIds = useMemo(() => {
     const set = new Set();
     (addTarif || []).forEach((contract) => {
+      if (!conflictingTypes.has(normalizeAppliesTo(contract?.contractType))) return;
       (contract?.airports || []).forEach((a) => {
         const airportId = a?.airport?.id ?? a?.id;
         if (airportId != null) set.add(String(airportId));
       });
     });
     return set;
-  }, [addTarif]);
+  }, [addTarif, conflictingTypes]);
 
   const usedGeo = useMemo(() => {
     const regionIds = new Set();
     const cityIds = new Set();
     (addTarif || []).forEach((contract) => {
+      if (!conflictingTypes.has(normalizeAppliesTo(contract?.contractType))) return;
       (contract?.geography || []).forEach((g) => {
         const cityId = g?.cityId || g?.cityRef?.id;
         const regionId = g?.regionId || g?.regionRef?.id;
@@ -87,7 +96,7 @@ function CreateRequestAirlineTarifCategory({
       });
     });
     return { regionIds: [...regionIds], cityIds: [...cityIds] };
-  }, [addTarif]);
+  }, [addTarif, conflictingTypes]);
 
   const [skippedAirports, setSkippedAirports] = useState([]);
 
@@ -102,6 +111,7 @@ function CreateRequestAirlineTarifCategory({
     setIsEdited(false);
     setSkippedAirports([]);
     setContractType("individual");
+    setAppliesTo(DEFAULT_APPLIES_TO);
   }, []);
 
   const closeButton = useCallback(async () => {
@@ -188,8 +198,11 @@ function CreateRequestAirlineTarifCategory({
 
     const record = tariffInputToPayload(formData, contractType, {
       coerceZero: true,
+      appliesTo,
     });
-    const displayItem = tariffFormToDisplayItem(formData, contractType, airports);
+    const displayItem = tariffFormToDisplayItem(formData, contractType, airports, {
+      appliesTo,
+    });
     onSubmit?.(record, displayItem);
   };
 
@@ -327,6 +340,21 @@ function CreateRequestAirlineTarifCategory({
                 onChange={handleChange}
                 placeholder="Например: Договор №1"
               />
+
+              <label>Применяется к</label>
+              <ContractTypeToggle
+                value={appliesTo}
+                options={PRICE_APPLIES_TO_OPTIONS}
+                onChange={(t) => {
+                  setIsEdited(true);
+                  setAppliesTo(t);
+                }}
+              />
+              {appliesTo === "all" && (
+                <div className={classes.airportHint}>
+                  Локации этого ценника станут недоступны для ценников «Эскадрилья» и «ФАП».
+                </div>
+              )}
 
               <label>Тип договора</label>
               <ContractTypeToggle

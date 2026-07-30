@@ -31,6 +31,42 @@ const PRICE_FIELDS = [
 const MEAL_FIELDS = ["breakfast", "dinner", "lunch"];
 
 /**
+ * Значения бэкенд-поля AirlinePrice.contractType (энум AirlinePriceContractType).
+ * ВАЖНО: это НЕ «Тип договора» из формы (individual/shared) — то другое поле,
+ * которое решает, задаётся ценник географией или аэропортами.
+ * Здесь — к какому виду заявок ценник применяется.
+ */
+export const PRICE_APPLIES_TO_OPTIONS = [
+  { key: "request", label: "Эскадрилья" },
+  { key: "fap", label: "ФАП" },
+  { key: "all", label: "Все типы" },
+];
+
+export const DEFAULT_APPLIES_TO = "request";
+
+/** Ценники, созданные до появления поля, читаются как request. */
+export function normalizeAppliesTo(value) {
+  return PRICE_APPLIES_TO_OPTIONS.some((o) => o.key === value)
+    ? value
+    : DEFAULT_APPLIES_TO;
+}
+
+/**
+ * Типы, внутри которых локация не может быть занята дважды.
+ * request ↔ request/all, fap ↔ fap/all, all ↔ всем.
+ */
+export function conflictingContractTypes(appliesTo) {
+  const type = normalizeAppliesTo(appliesTo);
+  return type === "all" ? ["all", "fap", "request"] : [type, "all"];
+}
+
+/** Подпись типа для бейджа в списке ценников. */
+export function appliesToLabel(value) {
+  const type = normalizeAppliesTo(value);
+  return PRICE_APPLIES_TO_OPTIONS.find((o) => o.key === type).label;
+}
+
+/**
  * Пустой input формы (значения цен — null, как при создании).
  * @returns {object}
  */
@@ -82,14 +118,16 @@ export function airlineTariffToInput(tarif) {
  *
  * @param {object} formData
  * @param {"individual"|"shared"} contractType
- * @param {{ id?: string, coerceZero?: boolean }} [opts]
+ * @param {{ id?: string, coerceZero?: boolean, appliesTo?: string }} [opts]
  *   id — для обновления существующей записи;
  *   coerceZero — приводить NaN к 0 (форма создания шлёт `parseFloat || 0`,
- *   форма редактирования — `parseFloat`). Сохраняем историческое поведение.
+ *   форма редактирования — `parseFloat`). Сохраняем историческое поведение;
+ *   appliesTo — вид заявок ценника (уходит в поле contractType, см.
+ *   PRICE_APPLIES_TO_OPTIONS); по умолчанию request.
  * @returns {object}
  */
 export function tariffInputToPayload(formData, contractType, opts = {}) {
-  const { id, coerceZero = false } = opts;
+  const { id, coerceZero = false, appliesTo } = opts;
   const isIndividual = contractType === "individual";
   const num = (v) => (coerceZero ? parseFloat(v) || 0 : parseFloat(v));
 
@@ -107,6 +145,7 @@ export function tariffInputToPayload(formData, contractType, opts = {}) {
     ...(id ? { id } : {}),
     name: formData.name,
     individual: isIndividual,
+    contractType: normalizeAppliesTo(appliesTo),
     airportIds: isIndividual ? formData.airportIds : [],
     geography: isIndividual ? [] : rowsToGeographyInput(formData.geography),
     prices,
@@ -125,12 +164,13 @@ export function tariffInputToPayload(formData, contractType, opts = {}) {
  * @param {object} formData
  * @param {"individual"|"shared"} contractType
  * @param {Array} airports полный список аэропортов ({id,code,name,city}) — есть у формы
- * @param {{ id?: string, prevCategory?: Array }} [opts]
- *   id — для существующей записи (edit); prevCategory — сохранить категории записи.
+ * @param {{ id?: string, prevCategory?: Array, appliesTo?: string }} [opts]
+ *   id — для существующей записи (edit); prevCategory — сохранить категории записи;
+ *   appliesTo — вид заявок ценника (поле contractType), нужен бейджу в таблице.
  * @returns {object}
  */
 export function tariffFormToDisplayItem(formData, contractType, airports = [], opts = {}) {
-  const { id, prevCategory = [] } = opts;
+  const { id, prevCategory = [], appliesTo } = opts;
   const isIndividual = contractType === "individual";
   const toNum = (v) => parseFloat(v) || 0;
   const airportsById = new Map((airports || []).map((a) => [String(a.id), a]));
@@ -148,6 +188,7 @@ export function tariffFormToDisplayItem(formData, contractType, airports = [], o
     ...(id ? { id } : {}),
     name: formData.name || "",
     individual: isIndividual,
+    contractType: normalizeAppliesTo(appliesTo),
     airports: isIndividual
       ? (formData.airportIds || [])
           .map((aid) => {

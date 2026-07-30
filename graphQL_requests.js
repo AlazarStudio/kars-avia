@@ -818,7 +818,7 @@ export const GET_ORGANIZATION = gql`
       twentySeater { intercity city }
       fiftySeater { intercity city }
     }
-    airports { id name code city }
+    airports { id name code city address }
     cities { id city region }
   }
   query Organization($organizationId: ID!) {
@@ -1416,6 +1416,7 @@ export const GET_REQUESTS = gql`
           name
           city
           code
+          address
         }
         arrival
         departure
@@ -1482,6 +1483,7 @@ export const GET_REQUESTS_ARCHIVED = gql`
             name
             city
             code
+            address
           }
           arrival
           departure
@@ -1539,6 +1541,7 @@ export const REQUESTS_BY_GROUP = gql`
           id
           name
           code
+          address
         }
         year
         month
@@ -1567,6 +1570,7 @@ export const REQUESTS_BY_GROUP = gql`
             id
             name
             code
+            address
           }
           chat {
             unreadMessagesCount
@@ -1591,6 +1595,7 @@ export const REQUEST_CREATED_SUBSCRIPTION = gql`
             name
             city
             code
+            address
           }
           arrival
           departure
@@ -1654,6 +1659,7 @@ export const REQUEST_UPDATED_SUBSCRIPTION = gql`
             name
             city
             code
+            address
           }
           arrival
           departure
@@ -1833,6 +1839,7 @@ export const CREATE_REQUEST_MUTATION = gql`
             name
             city
             code
+            address
           }
           arrival
           departure
@@ -1924,6 +1931,7 @@ export const GET_AIRPORTS_RELAY = gql`
       name
       city
       code
+      address
     }
   }
 `;
@@ -1954,6 +1962,7 @@ export const GET_HOTELS_RELAY = gql`
           name
           city
           code
+          address
         }
       }
     }
@@ -1968,6 +1977,7 @@ export const GET_HOTELS_WITH_PRICES = gql`
         name
         airport {
           id
+          address
         }
         roomKind {
           name
@@ -2002,6 +2012,7 @@ export const GET_REQUEST = gql`
         name
         city
         code
+        address
       }
       arrival
       departure
@@ -2742,6 +2753,7 @@ export const GET_BRONS_HOTEL = gql`
             city
             code
             name
+            address
           }
           arrival
           departure
@@ -2764,6 +2776,7 @@ export const GET_BRONS_HOTEL = gql`
             city
             code
             name
+            address
           }
           arrival
           departure
@@ -3228,6 +3241,7 @@ export const GET_LOGS = gql`
       }
       airport {
         name
+        address
       }
       id
       arrival
@@ -3401,6 +3415,7 @@ export const CREATE_REQUEST_RESERVE_MUTATION = gql`
         name
         city
         code
+        address
       }
       arrival
       departure
@@ -3440,6 +3455,7 @@ export const GET_RESERVE_REQUESTS = gql`
           name
           city
           code
+          address
         }
         arrival
         departure
@@ -3485,6 +3501,7 @@ export const GET_PASSENGER_REQUESTS = gql`
       airport {
         name
         code
+        address
       }
       statusTimes {
         acceptedAt
@@ -3608,6 +3625,7 @@ export const REQUEST_RESERVE_CREATED_SUBSCRIPTION = gql`
         name
         city
         code
+        address
       }
       airline {
         id
@@ -3651,6 +3669,7 @@ export const REQUEST_RESERVE_UPDATED_SUBSCRIPTION1 = gql`
         name
         city
         code
+        address
       }
       airline {
         id
@@ -3682,6 +3701,7 @@ export const GET_RESERVE_REQUEST = gql`
         name
         city
         code
+        address
       }
       arrival
       departure
@@ -3771,6 +3791,7 @@ export const GET_PASSENGER_REQUEST = gql`
         name
         code
         city
+        address
       }
       earlyCompletionReason
       earlyCompletedAt
@@ -4040,6 +4061,7 @@ export const GET_PASSENGER_REQUEST_REPORT = gql`
       }
       airport {
         city
+        address
       }
       livingService {
         plan {
@@ -4551,6 +4573,7 @@ export const GET_HOTEL = gql`
         id
         name
         code
+        address
       }
       airportDistance
       information {
@@ -4733,6 +4756,7 @@ export const GET_HOTEL_PREVIEW = gql`
         id
         name
         city
+        address
       }
       rooms {
         id
@@ -4783,6 +4807,7 @@ export const GET_HOTEL_MIN = gql`
         id
         name
         code
+        address
       }
       information {
         city
@@ -4986,6 +5011,7 @@ export const UPDATE_HOTEL = gql`
         id
         name
         code
+        address
       }
       breakfast {
         start
@@ -5370,6 +5396,7 @@ export const GET_AIRLINES_UPDATE_SUBSCRIPTION = gql`
             name
             city
             code
+            address
           }
         }
         mealPrice {
@@ -5538,7 +5565,7 @@ export const GET_AIRLINE_TRANSFER_PRICES = gql`
       twentySeater { intercity city }
       fiftySeater { intercity city }
     }
-    airports { id name code city }
+    airports { id name code city address }
     cities { id city region }
   }
   query AirlineTransferPrices($airlineId: ID!) {
@@ -5582,6 +5609,7 @@ export const GET_AIRLINE_TARIFS = gql`
             name
             code
             city
+            address
           }
         }
         geography {
@@ -5603,6 +5631,7 @@ export const GET_AIRLINE_TARIFS = gql`
         id
         name
         individual
+        contractType
         prices {
           priceApartment
           priceStudio
@@ -7532,6 +7561,7 @@ export const GET_ALL_TARIFFS = gql`
       airlinePrices {
         id
         individual
+        contractType
         prices {
           priceApartment
           priceStudio
@@ -7578,6 +7608,7 @@ export const GET_ALL_TARIFFS = gql`
             name
             code
             city
+            address
           }
         }
       }
@@ -7606,6 +7637,7 @@ export const PRICE_CATEGORY_CHANGE_SUBSCRIPTION = gql`
             name
             code
             city
+            address
           }
         }
         name

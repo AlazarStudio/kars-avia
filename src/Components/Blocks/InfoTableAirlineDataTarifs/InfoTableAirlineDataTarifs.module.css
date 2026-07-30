@@ -308,6 +308,20 @@
     color: #5b4cc4;
 }
 
+/* Бейдж «Применяется к» — та же геометрия, нейтральный цвет */
+.appliesToBadge {
+    display: inline-flex;
+    align-items: center;
+    font-size: 12px;
+    font-weight: 500;
+    line-height: 1;
+    padding: 4px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    background: #eef0f6;
+    color: #545873;
+}
+
 .expandButton {
     display: flex;
     align-items: center;

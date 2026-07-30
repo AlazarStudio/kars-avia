@@ -5,6 +5,7 @@ import { roles } from "../../../roles";
 import DeleteIcon from "../../../shared/icons/DeleteIcon";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import { getContractType } from "../../../utils/airlineTariffGeography.js";
+import { appliesToLabel } from "../../../utils/airlineTariffPrices";
 
 const SHOW_LIMIT = 20;
 
@@ -107,6 +108,9 @@ function InfoTableAirlineDataTarifs({
                   }`}
                 >
                   {type === "individual" ? "Индивидуальный" : "Общий"}
+                </span>
+                <span className={classes.appliesToBadge}>
+                  {appliesToLabel(item.contractType)}
                 </span>
               </div>
               <div className={classes.contractRowActions}>
