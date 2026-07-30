@@ -1,5 +1,9 @@
 # Архитектура компонента шахматки размещения (NewPlacement)
 
+> **Версия:** документ описывает шахматку **v1** — `src/Components/PlacementDND/` (`NewPlacement`, `Timeline`, `RoomRow`, `DraggableRequest`, `EditRequestModal`, `ConfirmBookingModal`, `AddPassengersModal`).
+> Текущий модуль — **v2**: `src/Components/PlacementDNDV2/` (`TimelineV2`, `RoomRowV2`, `DraggableRequestV2`, `EditRequestModalV2`, данные через `hooks/usePlacementData.js`, утилиты в `utils/placementFilters|placementPositions|placementOverlap|placementTransforms`).
+> Архитектурные принципы (DnD-поток, виртуализация, подписки, расчёт пересечений и позиций) совпадают; имена файлов и часть структуры — нет.
+
 ## Обзор
 
 Компонент `NewPlacement` представляет собой интерактивную систему управления размещением гостей в номерах отеля с визуализацией в виде шахматки (timeline-календаря). Система поддерживает drag-and-drop операции, реальное время обновлений через GraphQL подписки и виртуализацию для производительности.

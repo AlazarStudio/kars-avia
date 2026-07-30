@@ -8,7 +8,7 @@ import HotelPage from "../../Blocks/HotelPage/HotelPage";
 import HotelsList from "../../Blocks/HotelsList/HotelsList";
 import Reports from "../../Blocks/Reports/Reports";
 import Reserve from "../../Blocks/Reserve/Reserve";
-import Company from "../../Blocks/Сompany/Сompany";
+import Company from "../../Blocks/Company/Company";
 import DocumentationList from "../../Blocks/DocumentationList/DocumentationList";
 import PatchNotesList from "../../Blocks/PatchNotesList/PatchNotesList";
 import UpdatesList from "../../Blocks/UpdatesList/UpdatesList";

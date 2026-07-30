@@ -173,7 +173,7 @@ src/
 
 Права работают на двух уровнях одновременно:
 
-**1. Роль** — грубая фильтрация: что вообще видит пользователь. Определяется через `user.role` (из JWT). `src/constants/access.js` содержит матрицу: какие страницы/действия доступны каждой роли.
+**1. Роль** — грубая фильтрация: что вообще видит пользователь. Определяется через `user.role` (из JWT). `src/utils/access.js` содержит матрицу: какие страницы/действия доступны каждой роли.
 
 **2. `accessMenu`** — точечные feature-флаги внутри роли. Для авиакомпаний берётся из `authUser.effectiveAccessMenu` (GraphQL), для диспетчеров — из `dispatcherDepartment.accessMenu`.
 
@@ -239,7 +239,7 @@ reportMenu, reportCreate
 - Drag-and-drop заявок по номерам и датам (`@dnd-kit/core`)
 - Виртуализация строк номеров (`react-window`, `VariableSizeList`)
 - Real-time обновления через GraphQL subscriptions
-- Документация архитектуры: `SHAHMATKA_ARCHITECTURE.md`
+- Документация архитектуры: `SHAHMATKA_ARCHITECTURE.md` — описывает **v1** (`PlacementDND/`): принципы (DnD, виртуализация, подписки) актуальны, имена компонентов — нет
 
 ## Статусы заявок
 
@@ -262,8 +262,8 @@ reportMenu, reportCreate
 
 - `fapConstants.js` — конфиги статусов (`REQUEST_STATUS_CONFIG`, `SERVICE_STATUS_CONFIG`), типов услуг (`SERVICE_CONFIG`), утилиты форматирования дат
 - `FapDetail` — детальная страница заявки, управляет переходами статусов (`CREATED → ACCEPTED → IN_PROGRESS → COMPLETED`)
-- Каждая секция (`FapLivingSection`, `FapTransferSection`, и т.д.) — отдельный компонент своего типа услуги
-- `FapReport` — отчёт по размещению с группировкой по `roomCategory + roomKind`, редактируемыми ценами и экспортом в XLSX
+- Каждая услуга — отдельный компонент: `FapLivingPage` + `FapHotelPage` (проживание), `FapTransferPage` + `FapDriverPage` (трансфер), `FapWaterMealPage` (вода/питание), `FapBaggagePage` + `FapBaggageTripPage` (багаж). Маппинг `serviceKey` → компонент — в `src/Components/Pages/FapV2/FapServicePage.jsx`
+- `FapHotelPage` + `FapReportView` — отчёт по проживанию: группировка по `roomCategory + roomKind`, редактируемые цены и тарифы, экспорт в XLSX (`reports/buildReportSheets.js`)
 
 ## Ключевые паттерны
 

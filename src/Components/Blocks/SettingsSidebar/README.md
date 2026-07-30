@@ -17,7 +17,7 @@ SettingsSidebar/
 
 ## Использование
 
-### Для диспетчеров (Company.jsx)
+### Для диспетчеров (`Company.jsx`, `DispatcherAccessSettings.jsx`)
 
 ```jsx
 import SettingsSidebar from "../SettingsSidebar/SettingsSidebar";

@@ -9,7 +9,7 @@ import Reports from '../../Blocks/Reports/Reports'
 import Reserve from '../../Blocks/Reserve/Reserve'
 import RepresentativeRequests from "../../Blocks/RepresentativeRequests/RepresentativeRequests";
 import FapV2 from "../../Pages/FapV2/FapV2";
-import Company from '../../Blocks/Сompany/Сompany'
+import Company from '../../Blocks/Company/Company'
 import SupportPage from '../../Blocks/SupportPage/SupportPage'
 import PatchNotesList from '../../Blocks/PatchNotesList/PatchNotesList'
 import DocumentationList from '../../Blocks/DocumentationList/DocumentationList'

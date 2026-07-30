@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import classes from "./Сompany.module.css";
+import classes from "./Company.module.css";
 import Header from "../Header/Header";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
