@@ -6,13 +6,14 @@ import {
   UPDATE_DISPATCHER_DEPARTMENT,
   getCookie,
 } from "../../../../graphQL_requests";
-import MUISwitch from "../MUISwitch/MUISwitch";
 import MUILoader from "../MUILoader/MUILoader";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useMutation, useQuery } from "@apollo/client";
 import { fullNotifyTime } from "../../../roles";
 import Notification from "../../Notification/Notification";
 import Button from "../../Standart/Button/Button";
+import NotificationsPermissionsPanel from "../SettingsSidebar/NotificationsPermissionsPanel";
+import { buildNotificationPayload } from "../../../utils/notificationPayload";
 
 export default function DispatcherNotificationsSettings() {
   const token = getCookie("token");
@@ -72,19 +73,6 @@ export default function DispatcherNotificationsSettings() {
       setNotifications((prev) => prev.filter((n) => n.id !== id));
     }, fullNotifyTime);
   };
-
-  const buildNotificationPayload = (s) => ({
-    requestCreate: !!s?.requestCreate,
-    requestDatesChange: !!s?.requestDatesChange,
-    requestPlacementChange: !!s?.requestPlacementChange,
-    requestCancel: !!s?.requestCancel,
-    passengerRequestCreate: !!s?.passengerRequestCreate,
-    passengerRequestDatesChange: !!s?.passengerRequestDatesChange,
-    passengerRequestUpdate: !!s?.passengerRequestUpdate,
-    passengerRequestPlacementChange: !!s?.passengerRequestPlacementChange,
-    passengerRequestCancel: !!s?.passengerRequestCancel,
-    newMessage: !!s?.newMessage,
-  });
 
   const handleSubmit = async () => {
     if (!isEditing) {
@@ -177,10 +165,12 @@ export default function DispatcherNotificationsSettings() {
         {error && <p>Error: {error.message}</p>}
 
         {!loading && !error && (
-          <NotificationsPanel
+          <NotificationsPermissionsPanel
             notificationMenu={notificationMenu || {}}
             stateRef={localStateRef}
             isEditing={isEditing}
+            styles={classes}
+            showBulkToggle={false}
           />
         )}
 
@@ -203,142 +193,3 @@ export default function DispatcherNotificationsSettings() {
   );
 }
 
-function NotificationsPanel({ notificationMenu = {}, stateRef, isEditing }) {
-  const b = (v) => !!v;
-
-  const initial = useMemo(
-    () => ({
-      requestCreate: b(notificationMenu?.requestCreate),
-      requestDatesChange: b(notificationMenu?.requestDatesChange),
-      requestPlacementChange: b(notificationMenu?.requestPlacementChange),
-      requestCancel: b(notificationMenu?.requestCancel),
-      passengerRequestCreate: b(notificationMenu?.passengerRequestCreate),
-      passengerRequestDatesChange: b(
-        notificationMenu?.passengerRequestDatesChange
-      ),
-      passengerRequestUpdate: b(notificationMenu?.passengerRequestUpdate),
-      passengerRequestPlacementChange: b(
-        notificationMenu?.passengerRequestPlacementChange
-      ),
-      passengerRequestCancel: b(notificationMenu?.passengerRequestCancel),
-      newMessage: b(notificationMenu?.newMessage),
-    }),
-    [notificationMenu]
-  );
-
-  const [state, setState] = useState(initial);
-
-  useEffect(() => setState(initial), [initial]);
-
-  useEffect(() => {
-    if (stateRef) stateRef.current = state;
-  }, [state, stateRef]);
-
-  const set = (key, value) => setState((s) => ({ ...s, [key]: value }));
-
-  return (
-    <div className={classes.accessPanel}>
-      <div className={classes.accessGrid}>
-        <SectionCard title="Заявки">
-          <RowSwitch
-            label="Создание заявки"
-            checked={state.requestCreate}
-            onChange={(v) => set("requestCreate", v)}
-            disabled={!isEditing}
-          />
-          <RowSwitch
-            label="Изменение дат заявки"
-            checked={state.requestDatesChange}
-            onChange={(v) => set("requestDatesChange", v)}
-            disabled={!isEditing}
-          />
-          <RowSwitch
-            label="Смена размещения заявки"
-            checked={state.requestPlacementChange}
-            onChange={(v) => set("requestPlacementChange", v)}
-            disabled={!isEditing}
-          />
-          <RowSwitch
-            label="Отмена заявки"
-            checked={state.requestCancel}
-            onChange={(v) => set("requestCancel", v)}
-            disabled={!isEditing}
-          />
-        </SectionCard>
-
-        <SectionCard title="ФАП">
-          <RowSwitch
-            label="Создание"
-            checked={state.passengerRequestCreate}
-            onChange={(v) => set("passengerRequestCreate", v)}
-            disabled={!isEditing}
-          />
-          <RowSwitch
-            label="Запрос на изменение дат"
-            checked={state.passengerRequestDatesChange}
-            onChange={(v) => set("passengerRequestDatesChange", v)}
-            disabled={!isEditing}
-          />
-          <RowSwitch
-            label="Обновление"
-            checked={state.passengerRequestUpdate}
-            onChange={(v) => set("passengerRequestUpdate", v)}
-            disabled={!isEditing}
-          />
-          <RowSwitch
-            label="Смена размещения"
-            checked={state.passengerRequestPlacementChange}
-            onChange={(v) => set("passengerRequestPlacementChange", v)}
-            disabled={!isEditing}
-          />
-          <RowSwitch
-            label="Отмена"
-            checked={state.passengerRequestCancel}
-            onChange={(v) => set("passengerRequestCancel", v)}
-            disabled={!isEditing}
-          />
-        </SectionCard>
-
-        <SectionCard title="Сообщения">
-          <RowSwitch
-            label="Новое сообщение в чате"
-            checked={state.newMessage}
-            onChange={(v) => set("newMessage", v)}
-            disabled={!isEditing}
-          />
-        </SectionCard>
-      </div>
-    </div>
-  );
-}
-
-function SectionCard({ title, children }) {
-  return (
-    <div className={classes.card}>
-      <div className={classes.cardTitle}>
-        <span className={classes.title}>{title}</span>{" "}
-        <span className={classes.mail}>на почту</span>{" "}
-        <span className={classes.browser}>уведомление в браузере</span>
-      </div>
-      <div className={classes.cardBody}>{children}</div>
-    </div>
-  );
-}
-
-function RowSwitch({ label, checked, onChange, disabled }) {
-  return (
-    <div className={`${classes.row} ${disabled ? classes.rowDisabled : ""}`}>
-      <div className={classes.rowLabel}>{label}</div>
-      <div className={classes.rowControl}>
-        <MUISwitch
-          label=""
-          checked={!!checked}
-          onChange={(e) => onChange(e.target.checked)}
-          disabled={!!disabled}
-        />
-        <input type="checkbox" name="" id="" disabled={!!disabled} />
-        <input type="checkbox" name="" id="" disabled={!!disabled} />
-      </div>
-    </div>
-  );
-}

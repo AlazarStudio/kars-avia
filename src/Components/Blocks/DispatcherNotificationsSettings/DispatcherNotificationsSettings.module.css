@@ -182,3 +182,79 @@
     font-family: Nunito Sans;
     font-size: 16px;
 }
+
+/* --- Классы общей панели уведомлений (NotificationsPermissionsPanel) --- */
+/* Ширины правых колонок в шапке и в строке совпадают (120px), и шапка со строкой
+   имеют одинаковый боковой отступ 28px — за счёт этого подписи «на почту» и
+   «в браузере» стоят ровно над своими чекбоксами. */
+
+.notificationsGrid {
+  width: 85%;
+  display: grid;
+  grid-template-columns: repeat(1, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+.notificationCard {
+  border-radius: 16px;
+}
+
+.notificationCardTitle {
+  font-family: Inter, sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--main-gray, #2b2b34);
+  margin-bottom: 25px;
+  padding: 0 28px;
+  display: flex;
+  align-items: center;
+}
+
+.notificationLabel {
+  flex: 1;
+}
+
+.notificationChannels {
+  display: flex;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--main-gray, #2b2b34);
+}
+
+.channelLabel {
+  width: 120px;
+  text-align: center;
+}
+
+.notificationRow {
+  background: #fff;
+  display: flex;
+  align-items: center;
+  min-height: 38px;
+  padding: 10px 28px;
+  border-radius: 10px;
+}
+
+.notificationRowLabel {
+  font-family: Nunito Sans, sans-serif;
+  font-size: 16px;
+  color: var(--main-gray, #2b2b34);
+  flex: 1;
+}
+
+.notificationRowControl {
+  display: flex;
+  align-items: center;
+}
+
+.switchColumn {
+  width: 60px;
+  display: flex;
+  justify-content: center;
+}
+
+.checkboxColumn {
+  width: 120px;
+  display: flex;
+  justify-content: center;
+}

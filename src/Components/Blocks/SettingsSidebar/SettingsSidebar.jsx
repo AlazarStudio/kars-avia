@@ -11,6 +11,7 @@ import {
 } from "../../../../graphQL_requests";
 import MUILoader from "../MUILoader/MUILoader";
 import { buildAccessPayload } from "../../../utils/accessPayload";
+import { buildNotificationPayload } from "../../../utils/notificationPayload";
 import { useToast } from "../../../contexts/ToastContext";
 import AccessPermissionsPanel from "./AccessPermissionsPanel";
 import NotificationsPermissionsPanel from "./NotificationsPermissionsPanel";
@@ -110,55 +111,6 @@ export default function SettingsSidebar({
       setNotificationMenu(currentDepartment.notificationMenu || {});
     }
   }, [show, currentDepartment, type]);
-
-  const buildNotificationPayload = (s) => ({
-    requestCreate: !!s?.requestCreate,
-    emailRequestCreate: !!s?.requestCreate && !!s?.emailRequestCreate,
-    sitePushRequestCreate: !!s?.requestCreate && !!s?.sitePushRequestCreate,
-    requestDatesChange: !!s?.requestDatesChange,
-    emailRequestDatesChange: !!s?.requestDatesChange && !!s?.emailRequestDatesChange,
-    sitePushRequestDatesChange: !!s?.requestDatesChange && !!s?.sitePushRequestDatesChange,
-    requestPlacementChange: !!s?.requestPlacementChange,
-    emailRequestPlacementChange:
-      !!s?.requestPlacementChange && !!s?.emailRequestPlacementChange,
-    sitePushRequestPlacementChange:
-      !!s?.requestPlacementChange && !!s?.sitePushRequestPlacementChange,
-    requestCancel: !!s?.requestCancel,
-    emailRequestCancel: !!s?.requestCancel && !!s?.emailRequestCancel,
-    sitePushRequestCancel: !!s?.requestCancel && !!s?.sitePushRequestCancel,
-    passengerRequestCreate: !!s?.passengerRequestCreate,
-    emailPassengerRequestCreate:
-      !!s?.passengerRequestCreate && !!s?.emailPassengerRequestCreate,
-    sitePushPassengerRequestCreate:
-      !!s?.passengerRequestCreate && !!s?.sitePushPassengerRequestCreate,
-    passengerRequestDatesChange: !!s?.passengerRequestDatesChange,
-    emailPassengerRequestDatesChange:
-      !!s?.passengerRequestDatesChange &&
-      !!s?.emailPassengerRequestDatesChange,
-    sitePushPassengerRequestDatesChange:
-      !!s?.passengerRequestDatesChange &&
-      !!s?.sitePushPassengerRequestDatesChange,
-    passengerRequestUpdate: !!s?.passengerRequestUpdate,
-    emailPassengerRequestUpdate:
-      !!s?.passengerRequestUpdate && !!s?.emailPassengerRequestUpdate,
-    sitePushPassengerRequestUpdate:
-      !!s?.passengerRequestUpdate && !!s?.sitePushPassengerRequestUpdate,
-    passengerRequestPlacementChange: !!s?.passengerRequestPlacementChange,
-    emailPassengerRequestPlacementChange:
-      !!s?.passengerRequestPlacementChange &&
-      !!s?.emailPassengerRequestPlacementChange,
-    sitePushPassengerRequestPlacementChange:
-      !!s?.passengerRequestPlacementChange &&
-      !!s?.sitePushPassengerRequestPlacementChange,
-    passengerRequestCancel: !!s?.passengerRequestCancel,
-    emailPassengerRequestCancel:
-      !!s?.passengerRequestCancel && !!s?.emailPassengerRequestCancel,
-    sitePushPassengerRequestCancel:
-      !!s?.passengerRequestCancel && !!s?.sitePushPassengerRequestCancel,
-    newMessage: !!s?.newMessage,
-    emailNewMessage: !!s?.newMessage && !!s?.emailNewMessage,
-    sitePushNewMessage: !!s?.newMessage && !!s?.sitePushNewMessage,
-  });
 
   const handleSubmit = async () => {
     if (!isEditing) {
