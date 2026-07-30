@@ -16,6 +16,7 @@ import {
   EVICT_PASSENGER_REQUEST_HOTEL_PERSON,
   SAVE_PASSENGER_REQUEST_HOTEL_REPORT,
   GET_FAP_HOTEL_TARIFFS,
+  GET_AIRLINE_TARIFS,
   getCookie,
 } from "../../../../../graphQL_requests";
 import { calculateCostDaysByDuration } from "../../../../utils/effectiveCostDays";
@@ -35,8 +36,14 @@ import {
   buildRoomsIndex,
   matchHotelRoom,
   roomCapacity,
+  roomCategoryLabel,
   roomOccupancy,
 } from "../fapRooms";
+import {
+  pickAirlinePriceForAirport,
+  airlinePriceToTariff,
+  airlineTariffPricePerDay,
+} from "../fapAirlineTariff.js";
 import RoomNumberField from "../RoomNumberField/RoomNumberField";
 import {
   computeFapGroupWarnings,
@@ -161,9 +168,10 @@ export const placementKindLabel = (n) => {
 // Цена за сутки тарифа для вида размещения.
 // Тариф гостиницы (source === "hotel") — единая цена на любой вид.
 // null → цена не определена (нет номера / нет цены для вида).
-export const resolveTariffPricePerDay = (tariff, places) => {
+export const resolveTariffPricePerDay = (tariff, places, category = null) => {
   if (!tariff) return null;
   if (tariff.source === "hotel") return toNum(tariff.pricePerDay);
+  if (tariff.source === "airline") return airlineTariffPricePerDay(tariff, places, category);
   if (!Number.isFinite(Number(places)) || Number(places) <= 0) return null;
   const row = (tariff.placementPrices ?? []).find((p) => Number(p.places) === Number(places));
   return row ? toNum(row.pricePerDay) : null;
@@ -357,6 +365,10 @@ export default function FapHotelPage({
 
   // Report state
   const [tariffs, setTariffs] = useState([]);
+  // Правки договорного тарифа, живущие только в этом отчёте: { [tariffId]: { billingMode, lunchboxPrice } }.
+  // Ценник авиакомпании они не меняют — накладываются поверх мемо airlineTariffs
+  // и сохраняются в теневой строке отчёта.
+  const [airlineTariffOverrides, setAirlineTariffOverrides] = useState({});
   const [personData, setPersonData] = useState({});
   const [reportSearch, setReportSearch] = useState("");
   const [reportMode, setReportMode] = useState(() => {
@@ -375,6 +387,9 @@ export default function FapHotelPage({
   // `people` инициализируем пустым массивом: значение синхронизируется через useEffect ниже,
   // т.к. сама переменная `people` объявлена позже по коду.
   const tariffsRef = useRef(tariffs);
+  // Договорный тариф — мемо (объявлен ниже), в ref его кладём эффектом:
+  // buildReportRows читает тарифы только через refs.
+  const airlineTariffsRef = useRef([]);
   const personDataRef = useRef(personData);
   const peopleRef = useRef([]);
   const saveTimerRef = useRef(null);
@@ -430,6 +445,15 @@ export default function FapHotelPage({
     { variables: { id: hotel?.hotelId }, skip: !hotel?.hotelId }
   );
 
+  const airlineId = request?.airline?.id ?? null;
+  const requestAirportId = request?.airport?.id ?? null;
+
+  const { data: airlinePricesData, loading: airlinePricesLoading } = useQuery(GET_AIRLINE_TARIFS, {
+    variables: { airlineId },
+    skip: !airlineId || !requestAirportId,
+    fetchPolicy: "cache-first",
+  });
+
   const hotelTariffs = useMemo(() => {
     const h = hotelTariffData?.hotel;
     if (!h || !Array.isArray(h.roomKind)) return [];
@@ -457,7 +481,22 @@ export default function FapHotelPage({
       }));
   }, [hotelTariffData]);
 
+  // Договорный тариф авиакомпании: ценник с типом «ФАП»/«Все типы» по аэропорту заявки.
+  // Подходящий ценник может быть только один — гарантируется правилами конфликтов.
+  const airlineTariffs = useMemo(() => {
+    const price = pickAirlinePriceForAirport(
+      airlinePricesData?.airline?.prices,
+      requestAirportId
+    );
+    const tariff = airlinePriceToTariff(price);
+    if (!tariff) return [];
+    // Поверх ценника — правки отчёта (тип тарифа, цена ланчбокса).
+    return [{ ...tariff, ...(airlineTariffOverrides[tariff.id] ?? {}) }];
+  }, [airlinePricesData, requestAirportId, airlineTariffOverrides]);
+  useEffect(() => { airlineTariffsRef.current = airlineTariffs; }, [airlineTariffs]);
+
   const hotelTariffsReady = !hotel?.hotelId || !hotelTariffLoading;
+  const airlineTariffsReady = !airlineId || !requestAirportId || !airlinePricesLoading;
 
   // Реальный номерной фонд гостиницы (если привязана и есть номера).
   const hotelRoomsRaw = hotelTariffData?.hotel?.rooms;
@@ -469,8 +508,12 @@ export default function FapHotelPage({
   );
 
   const findTariff = useCallback(
-    (id) => tariffs.find((t) => t.id === id) || hotelTariffs.find((t) => t.id === id) || null,
-    [tariffs, hotelTariffs]
+    (id) =>
+      tariffs.find((t) => t.id === id) ||
+      airlineTariffs.find((t) => t.id === id) ||
+      hotelTariffs.find((t) => t.id === id) ||
+      null,
+    [tariffs, airlineTariffs, hotelTariffs]
   );
 
   const reportGroups = useMemo(() => {
@@ -523,6 +566,19 @@ export default function FapHotelPage({
     return map;
   }, [reportGroups, roomsIndex]);
 
+  // Категория реального номера гостя (люкс/студия/N-местный) — ключ цены договорного
+  // тарифа. null, если номер не сопоставлен с фондом гостиницы.
+  const roomCategoryByIndex = useMemo(() => {
+    const map = {};
+    reportGroups.forEach((g) => {
+      const room = g.noRoom ? null : matchHotelRoom(g.roomNumber, roomsIndex);
+      g.members.forEach((m) => {
+        map[m.index] = room?.category ?? null;
+      });
+    });
+    return map;
+  }, [reportGroups, roomsIndex]);
+
   // Несущий гость номера = первый гость номера, у которого назначен тариф; его тариф
   // задаёт режим начисления проживания для ВСЕГО номера (спека §4: «берётся тариф
   // несущего гостя»). perRoom=true → проживание начисляется один раз на несущего.
@@ -565,7 +621,7 @@ export default function FapHotelPage({
         // тариф может быть уже снят (removeTariff чистит pd и синхронно зовёт
         // buildReportRows) — тогда падаем на ручное значение общей веткой ниже.
         if (tariff) {
-          const price = resolveTariffPricePerDay(tariff, places);
+          const price = resolveTariffPricePerDay(tariff, places, roomCategoryByIndex[personIndex] ?? null);
           if (places == null) {
             return { tariffName: tariff.name ?? "", placementKind: 0, pricePerDay: 0, accommodationCost: 0, warning: "укажите номер" };
           }
@@ -599,7 +655,7 @@ export default function FapHotelPage({
           isLegacyFlat: true,
         };
       }
-      const price = resolveTariffPricePerDay(tariff, places);
+      const price = resolveTariffPricePerDay(tariff, places, roomCategoryByIndex[personIndex] ?? null);
       if (places == null) {
         return { tariffName: tariff.name ?? "", placementKind: 0, pricePerDay: 0, accommodationCost: 0, warning: "укажите номер" };
       }
@@ -617,7 +673,7 @@ export default function FapHotelPage({
         warning: null,
       };
     },
-    [findTariff, roomKindByIndex, roomBillingByIndex, people]
+    [findTariff, roomKindByIndex, roomCategoryByIndex, roomBillingByIndex, people]
   );
 
   // Ref на getEffectiveRow: buildReportRows работает через refs (для флаш-сейва
@@ -886,7 +942,7 @@ export default function FapHotelPage({
   // ── Report initialization ──
   useEffect(() => {
     if (!request || !hotel) return;
-    if (!hotelTariffsReady) return;
+    if (!hotelTariffsReady || !airlineTariffsReady) return;
     const reconcileKey = `${request?.id}:${hotelIndex}`;
     if (reconciledKeyRef.current === reconcileKey) return;
     reconciledKeyRef.current = reconcileKey;
@@ -903,7 +959,11 @@ export default function FapHotelPage({
 
     const matchHotelTariff = (row) => {
       const rowName = [row.roomCategory, row.roomKind].filter(Boolean).join(" / ");
-      return hotelTariffs.find((ht) => ht.name === rowName) || null;
+      return (
+        hotelTariffs.find((ht) => ht.name === rowName) ||
+        airlineTariffs.find((at) => at.name === rowName) ||
+        null
+      );
     };
 
     if (savedRows.length > 0) {
@@ -911,7 +971,9 @@ export default function FapHotelPage({
       //    цены по видам — из пар (placementKind, pricePerDay).
       const byName = new Map();
       // Тарифы гостиницы не дублируем.
-      const isHotelName = (nm) => hotelTariffs.some((ht) => ht.name === nm);
+      const isHotelName = (nm) =>
+        hotelTariffs.some((ht) => ht.name === nm) ||
+        airlineTariffs.some((at) => at.name === nm);
       const ensureShell = (nm, r) => {
         if (!byName.has(nm)) {
           byName.set(nm, {
@@ -929,9 +991,22 @@ export default function FapHotelPage({
       };
       // 1a) Теневые строки (пустой fullName) — единственный авторитетный источник
       //     таблицы цен по видам и meal-полей тарифа.
+      //     Теневая строка договорного тарифа несёт только правки отчёта (тип тарифа,
+      //     цена ланчбокса) — они уходят в оверлей, пользовательским тарифом такая
+      //     строка не становится.
+      const nextAirlineOverrides = {};
       savedRows.forEach((r) => {
         const nm = (r.tariffName ?? "").trim();
-        if (!nm || (r.fullName ?? "").trim() || isHotelName(nm)) return;
+        if (!nm || (r.fullName ?? "").trim()) return;
+        const at = airlineTariffs.find((a) => a.name === nm);
+        if (at) {
+          nextAirlineOverrides[at.id] = {
+            billingMode: (r.roomKind ?? "") === "PER_ROOM" ? "PER_ROOM" : "PER_BED",
+            lunchboxPrice: toNum(r.lunchboxPrice),
+          };
+          return;
+        }
+        if (isHotelName(nm)) return;
         const t = ensureShell(nm, r);
         if ((r.roomKind ?? "") === "PER_ROOM") t.billingMode = "PER_ROOM";
         const places = Number(r.placementKind) || 0;
@@ -939,6 +1014,7 @@ export default function FapHotelPage({
           t.placementPrices.push({ places, pricePerDay: toNum(r.pricePerDay) });
         }
       });
+      setAirlineTariffOverrides(nextAirlineOverrides);
       // 1b) Гостевые строки — только гарантируют наличие оболочки тарифа,
       //     цены по видам из них НЕ берём (иначе деградировавший гость даёт фантомный вид).
       savedRows.forEach((r) => {
@@ -1006,7 +1082,10 @@ export default function FapHotelPage({
         const k = priceKey(row);
         const nm = (row.tariffName ?? "").trim();
         const t =
-          (nm && (hotelTariffs.find((ht) => ht.name === nm) || restored.find((tt) => tt.name === nm))) ||
+          (nm &&
+            (hotelTariffs.find((ht) => ht.name === nm) ||
+              airlineTariffs.find((at) => at.name === nm) ||
+              restored.find((tt) => tt.name === nm))) ||
           matchHotelTariff(row) ||
           restored.find((tt) => priceKey(tt) === k);
         data[idx] = {
@@ -1048,9 +1127,10 @@ export default function FapHotelPage({
       });
       setPersonData(data);
       setTariffs([]);
+      setAirlineTariffOverrides({});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [request?.id, hotelIndex, hotelTariffsReady, remoteVersion]);
+  }, [request?.id, hotelIndex, hotelTariffsReady, airlineTariffsReady, remoteVersion, airlineTariffs]);
 
   // Live-обновления: другой клиент сохранил отчёт (подписка → refetch наверху) —
   // принимаем удалённые строки повторной реконсиляцией, но ТОЛЬКО если у нас нет
@@ -1110,6 +1190,33 @@ export default function FapHotelPage({
           placementKind: Number(pp.places) || 0,
         }))
       );
+    // Теневая строка договорного тарифа — одна на тариф: цен по видам у него нет
+    // (они берутся из категорий ценника АК), она хранит только правки отчёта —
+    // тип тарифа (roomKind) и цену ланчбокса.
+    const airlineGhostRows = (airlineTariffsRef.current ?? []).map((t) => ({
+      fullName: "",
+      personId: "",
+      roomNumber: "",
+      roomCategory: t.name || "",
+      roomKind: t.billingMode === "PER_ROOM" ? "PER_ROOM" : "",
+      daysCount: 0,
+      breakfast: toNum(t.breakfast),
+      lunch: toNum(t.lunch),
+      dinner: toNum(t.dinner),
+      breakfastCount: 0,
+      lunchCount: 0,
+      dinnerCount: 0,
+      breakfastLunchbox: false,
+      lunchLunchbox: false,
+      dinnerLunchbox: false,
+      lunchboxCount: 0,
+      lunchboxPrice: toNum(t.lunchboxPrice),
+      foodCost: toNum(t.breakfast) + toNum(t.lunch) + toNum(t.dinner),
+      accommodationCost: 0,
+      tariffName: t.name || "",
+      pricePerDay: 0,
+      placementKind: 0,
+    }));
     const personRows = currentPeople.map((person, i) => {
       const pd = currentPersonData[i] ?? emptyPD(person, hotelIndex, plan);
       const eff = getEffectiveRowRef.current(i, pd);
@@ -1143,7 +1250,7 @@ export default function FapHotelPage({
         placementKind: Number(eff.placementKind) || 0,
       };
     });
-    return [...personRows, ...ghostRows];
+    return [...personRows, ...ghostRows, ...airlineGhostRows];
   }, [hotelIndex, plan]);
 
   const persistReport = useCallback(async () => {
@@ -1206,12 +1313,16 @@ export default function FapHotelPage({
     const next = {};
     people.forEach((person, i) => {
       const from = prevIndexByKey.get(keys[i]);
-      next[i] = (from != null && prevPD[from]) || emptyPD(person, hotelIndex, plan);
+      next[i] =
+        (from != null && prevPD[from]) || {
+          ...emptyPD(person, hotelIndex, plan),
+          tariffId: airlineTariffs[0]?.id ?? null,
+        };
     });
     personDataRef.current = next;
     setPersonData(next);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [people]);
+  }, [people, airlineTariffs]);
 
   // Гарантируем, что personData содержит запись для каждого фактического гостя.
   // Init useEffect выше срабатывает только при смене request.id/hotelIndex.
@@ -1224,14 +1335,17 @@ export default function FapHotelPage({
       let changed = false;
       people.forEach((person, i) => {
         if (!next[i]) {
-          next[i] = emptyPD(person, hotelIndex, plan);
+          next[i] = {
+            ...emptyPD(person, hotelIndex, plan),
+            tariffId: airlineTariffs[0]?.id ?? null,
+          };
           changed = true;
         }
       });
       return changed ? next : prev;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [people.length]);
+  }, [people.length, airlineTariffs]);
 
   // ── Tariff handlers ──
   const addTariff = useCallback(() => setTariffs((prev) => [...prev, newTariff()]), []);
@@ -1321,6 +1435,14 @@ export default function FapHotelPage({
 
     // Автосохранение только для уже сохранённых тарифов. Черновики сохраняются явной кнопкой.
     if (updated && !updated.draft) scheduleSave();
+  }, [scheduleSave]);
+  // Правка договорного тарифа: пишем в оверлей отчёта, ценник авиакомпании не трогаем.
+  const updateAirlineTariff = useCallback((tariffId, field, value) => {
+    setAirlineTariffOverrides((prev) => ({
+      ...prev,
+      [tariffId]: { ...(prev[tariffId] ?? {}), [field]: value },
+    }));
+    scheduleSave();
   }, [scheduleSave]);
   const cancelTariff = useCallback((tariffId) => {
     setTariffs((prev) => prev.filter((t) => t.id !== tariffId));
@@ -2820,6 +2942,96 @@ export default function FapHotelPage({
                 </div>
               ))
             )}
+            {airlineTariffs.length > 0 && (
+              <>
+                <div className={classes.tariffsHead} style={{ marginTop: 16 }}>
+                  <p className={classes.tariffsHint}>
+                    По договору авиакомпании — подставляется из ценника авиакомпании, доступен для назначения в «Отчёте».
+                  </p>
+                </div>
+                {airlineTariffs.map((t) => (
+                  <div key={t.id} className={classes.tariffCard}>
+                    <div className={classes.tariffHead}>
+                      <span className={classes.draftBadge} style={{ background: "#EAF1FB", color: "#0057C2" }}>
+                        по договору авиакомпании
+                      </span>
+                      <input className={classes.tariffName} value={t.name ?? ""} readOnly />
+                    </div>
+                    {/* Тип тарифа и цена ланчбокса — свойства отчёта, ценник АК они не меняют. */}
+                    <div className={classes.tariffModeRow}>
+                      <span className={classes.billingLabel}>Тип тарифа</span>
+                      <div className={classes.billingSeg} role="group" aria-label="Тип тарифа">
+                        <button
+                          type="button"
+                          className={`${classes.billingSegBtn} ${t.billingMode !== "PER_ROOM" ? classes.billingSegActive : ""}`}
+                          onClick={() => canEdit && updateAirlineTariff(t.id, "billingMode", "PER_BED")}
+                          disabled={!canEdit}
+                          aria-pressed={t.billingMode !== "PER_ROOM"}
+                        >
+                          <BedSvg size={17} />
+                          Койко-место
+                        </button>
+                        <button
+                          type="button"
+                          className={`${classes.billingSegBtn} ${t.billingMode === "PER_ROOM" ? classes.billingSegActive : ""}`}
+                          onClick={() => canEdit && updateAirlineTariff(t.id, "billingMode", "PER_ROOM")}
+                          disabled={!canEdit}
+                          aria-pressed={t.billingMode === "PER_ROOM"}
+                        >
+                          <DoorSvg size={17} />
+                          Номер
+                        </button>
+                      </div>
+                    </div>
+                    <div className={classes.tariffFields}>
+                      {[
+                        ["breakfast", "Завтрак"],
+                        ["lunch", "Обед"],
+                        ["dinner", "Ужин"],
+                        ["lunchboxPrice", "Ланчбокс", false, true],
+                        ["foodCost", "Ст-ть питания", true],
+                        ...Object.keys(t.categoryPrices ?? {}).map((cat) => [
+                          `category:${cat}`,
+                          roomCategoryLabel(cat),
+                          true,
+                        ]),
+                      ].map(([key, label, accent, editable]) => {
+                        const displayVal =
+                          key === "foodCost"
+                            ? toNum(t.breakfast) + toNum(t.lunch) + toNum(t.dinner)
+                            : key.startsWith("category:")
+                              ? t.categoryPrices?.[key.slice("category:".length)]
+                              : t[key];
+                        return (
+                          <label key={key} className={classes.tariffField}>
+                            <span className={classes.tariffFieldLabel}>{label}</span>
+                            <div className={classes.tariffInputWrap}>
+                              <input
+                                type="number"
+                                min={0}
+                                value={displayVal ? displayVal : ""}
+                                onChange={(e) =>
+                                  editable && canEdit && updateAirlineTariff(t.id, key, e.target.value)
+                                }
+                                readOnly={!editable || !canEdit}
+                                placeholder="0"
+                                className={accent ? classes.tariffInputAccent : classes.tariffInput}
+                              />
+                              <span className={classes.tariffCurrency}>₽</span>
+                            </div>
+                          </label>
+                        );
+                      })}
+                    </div>
+                    {Object.keys(t.categoryPrices ?? {}).length === 0 && (
+                      <p className={classes.tariffsHint}>
+                        В договоре не заполнена ни одна категория номера — стоимость проживания по нему считаться не будет.
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </>
+            )}
             {hotelTariffs.length > 0 && (
               <>
                 <div className={classes.tariffsHead} style={{ marginTop: 16 }}>
@@ -3116,6 +3328,13 @@ export default function FapHotelPage({
                                   disabled={!canEdit}
                                 >
                                   <option value="">Выбрать тариф</option>
+                                  {airlineTariffs.length > 0 && (
+                                    <optgroup label="По договору авиакомпании">
+                                      {airlineTariffs.map((t) => (
+                                        <option key={t.id} value={t.id}>{t.name || "Без названия"}</option>
+                                      ))}
+                                    </optgroup>
+                                  )}
                                   {tariffs.filter((t) => !t.draft).length > 0 && (
                                     <optgroup label="Тарифы заявки">
                                       {tariffs.filter((t) => !t.draft).map((t) => (
