@@ -32,6 +32,7 @@ import {
   isDispatcherAdmin,
   isSuperAdmin,
 } from "../../../utils/access";
+import { normalizeAppliesTo } from "../../../utils/airlineTariffPrices";
 import { Link } from "react-router-dom";
 import ReactPaginate from "react-paginate";
 import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff";
@@ -1722,6 +1723,7 @@ function ExistRequest({
                         <MUILoader loadSize="30px" fullHeight="200px" />
                       ) : (() => {
                         const matchingPrices = (airlineTariffsData?.airline?.prices ?? [])
+                          .filter(ap => ["request", "all"].includes(normalizeAppliesTo(ap.contractType)))
                           .filter(ap => ap.airports?.some(a => a.airport?.id === formData.airport?.id));
                         if (matchingPrices.length === 0) {
                           return (
@@ -1812,6 +1814,7 @@ function ExistRequest({
                           <div className={classes.requestDataTitle}>Цена авиакомпании</div>
                           {(() => {
                             const matchingPrices = (airlineTariffsData?.airline?.prices ?? [])
+                              .filter(ap => ["request", "all"].includes(normalizeAppliesTo(ap.contractType)))
                               .filter(ap => ap.airports?.some(a => a.airport?.id === formData.airport?.id));
                             if (matchingPrices.length === 0) {
                               return (

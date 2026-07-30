@@ -60,6 +60,79 @@ export function conflictingContractTypes(appliesTo) {
   return type === "all" ? ["all", "fap", "request"] : [type, "all"];
 }
 
+/**
+ * Локации, занятые ДРУГИМИ ценниками, для заданного вида заявок.
+ * Учитываются только ценники с конфликтующим типом (conflictingContractTypes).
+ * Используется и для дизейбла опций в пикерах, и для пересчёта уже сделанного
+ * выбора при смене «Применяется к».
+ *
+ * @param {Array} contracts список ценников авиакомпании (addTarif)
+ * @param {string} appliesTo вид заявок, для которого считаем занятость
+ * @param {string} [excludeId] id редактируемого ценника — сам себя не блокирует
+ * @returns {{ airportIds: Set<string>, regionIds: Set<string>, cityIds: Set<string> }}
+ */
+export function collectUsedLocations(contracts, appliesTo, excludeId) {
+  const conflicting = new Set(conflictingContractTypes(appliesTo));
+  const airportIds = new Set();
+  const regionIds = new Set();
+  const cityIds = new Set();
+
+  (contracts || []).forEach((contract) => {
+    if (excludeId && contract?.id === excludeId) return;
+    if (!conflicting.has(normalizeAppliesTo(contract?.contractType))) return;
+    (contract?.airports || []).forEach((a) => {
+      const airportId = a?.airport?.id ?? a?.id;
+      if (airportId != null) airportIds.add(String(airportId));
+    });
+    (contract?.geography || []).forEach((g) => {
+      const cityId = g?.cityId || g?.cityRef?.id;
+      const regionId = g?.regionId || g?.regionRef?.id;
+      if (cityId) cityIds.add(String(cityId));
+      else if (regionId) regionIds.add(String(regionId));
+    });
+  });
+
+  return { airportIds, regionIds, cityIds };
+}
+
+/**
+ * Убирает из выбора формы локации, занятые в конфликтующих ценниках.
+ * Чистая функция: возвращает новые массивы и то, что было снято
+ * (аэропорты — id, гео — названия региона/города для подсказки).
+ *
+ * @param {object} formData { airportIds?: Array, geography?: Array }
+ * @param {{ airportIds: Set<string>, regionIds: Set<string>, cityIds: Set<string> }} used
+ * @returns {{ airportIds: Array, geography: Array, removedAirportIds: Array<string>, removedGeoLabels: Array<string> }}
+ */
+export function pruneUsedSelections(formData, used) {
+  const usedAirports = used?.airportIds || new Set();
+  const usedCities = used?.cityIds || new Set();
+  const usedRegions = used?.regionIds || new Set();
+
+  const airportIds = [];
+  const removedAirportIds = [];
+  (formData?.airportIds || []).forEach((airportId) => {
+    if (usedAirports.has(String(airportId))) removedAirportIds.push(String(airportId));
+    else airportIds.push(airportId);
+  });
+
+  const geography = [];
+  const removedGeoLabels = [];
+  (formData?.geography || []).forEach((row) => {
+    if (row?.cityId && usedCities.has(String(row.cityId))) {
+      removedGeoLabels.push(row.city || "Город");
+      return;
+    }
+    if (!row?.cityId && row?.regionId && usedRegions.has(String(row.regionId))) {
+      removedGeoLabels.push(row.region || "Регион");
+      return;
+    }
+    geography.push(row);
+  });
+
+  return { airportIds, geography, removedAirportIds, removedGeoLabels };
+}
+
 /** Подпись типа для бейджа в списке ценников. */
 export function appliesToLabel(value) {
   const type = normalizeAppliesTo(value);

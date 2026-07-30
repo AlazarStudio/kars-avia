@@ -14,7 +14,7 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import TariffGeographyList from "../TariffGeographyList/TariffGeographyList.jsx";
 import ContractTypeToggle from "../ContractTypeToggle/ContractTypeToggle.jsx";
 import { rowsToGeographyInput, findDuplicateGeoRow, getContractType } from "../../../utils/airlineTariffGeography.js";
-import { airlineTariffToInput, tariffInputToPayload, tariffFormToDisplayItem, PRICE_APPLIES_TO_OPTIONS, DEFAULT_APPLIES_TO, conflictingContractTypes, normalizeAppliesTo, appliesToLabel } from "../../../utils/airlineTariffPrices.js";
+import { airlineTariffToInput, tariffInputToPayload, tariffFormToDisplayItem, PRICE_APPLIES_TO_OPTIONS, DEFAULT_APPLIES_TO, normalizeAppliesTo, appliesToLabel, collectUsedLocations, pruneUsedSelections } from "../../../utils/airlineTariffPrices.js";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
@@ -94,41 +94,54 @@ function EditRequestAirlineTarifCategory({
     city: airport.city,
   }));
 
-  const conflictingTypes = useMemo(
-    () => new Set(conflictingContractTypes(appliesTo)),
-    [appliesTo],
+  // свой договор (tarif.id) не блокирует сам себя
+  const usedLocations = useMemo(
+    () => collectUsedLocations(addTarif, appliesTo, tarif?.id),
+    [addTarif, tarif?.id, appliesTo],
   );
 
-  const usedAirportIds = useMemo(() => {
-    const set = new Set();
-    (addTarif || []).forEach((contract) => {
-      if (contract?.id === tarif?.id) return; // свой договор — не блокируем
-      if (!conflictingTypes.has(normalizeAppliesTo(contract?.contractType))) return;
-      (contract?.airports || []).forEach((a) => {
-        const airportId = a?.airport?.id ?? a?.id;
-        if (airportId != null) set.add(String(airportId));
-      });
-    });
-    return set;
-  }, [addTarif, tarif?.id, conflictingTypes]);
+  const usedAirportIds = usedLocations.airportIds;
 
-  const usedGeo = useMemo(() => {
-    const regionIds = new Set();
-    const cityIds = new Set();
-    (addTarif || []).forEach((contract) => {
-      if (contract?.id === tarif?.id) return; // свой договор — не блокируем
-      if (!conflictingTypes.has(normalizeAppliesTo(contract?.contractType))) return;
-      (contract?.geography || []).forEach((g) => {
-        const cityId = g?.cityId || g?.cityRef?.id;
-        const regionId = g?.regionId || g?.regionRef?.id;
-        if (cityId) cityIds.add(String(cityId));
-        else if (regionId) regionIds.add(String(regionId));
-      });
-    });
-    return { regionIds: [...regionIds], cityIds: [...cityIds] };
-  }, [addTarif, tarif?.id, conflictingTypes]);
+  const usedGeo = useMemo(
+    () => ({
+      regionIds: [...usedLocations.regionIds],
+      cityIds: [...usedLocations.cityIds],
+    }),
+    [usedLocations],
+  );
 
   const [skippedAirports, setSkippedAirports] = useState([]);
+  // Что сняли из выбора при смене «Применяется к» (подсказка пользователю)
+  const [removedByAppliesTo, setRemovedByAppliesTo] = useState(null);
+
+  // Смена вида заявок меняет набор занятых локаций: то, что стало
+  // конфликтным, убираем из формы, иначе бэкенд отклонит сохранение.
+  const handleAppliesToChange = (nextAppliesTo) => {
+    setIsEdited(true);
+    setAppliesTo(nextAppliesTo);
+    setSkippedAirports([]);
+
+    const used = collectUsedLocations(addTarif, nextAppliesTo, tarif?.id);
+    const pruned = pruneUsedSelections(formData, used);
+
+    if (!pruned.removedAirportIds.length && !pruned.removedGeoLabels.length) {
+      setRemovedByAppliesTo(null);
+      return;
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      airportIds: pruned.airportIds,
+      geography: pruned.geography,
+    }));
+    setRemovedByAppliesTo({
+      airports: pruned.removedAirportIds.map((airportId) => {
+        const a = airports.find((item) => String(item.id) === airportId);
+        return a ? `${a.code} ${a.city}` : airportId;
+      }),
+      geo: pruned.removedGeoLabels,
+    });
+  };
 
   const [isEditing, setIsEditing] = useState(false);
 
@@ -140,6 +153,7 @@ function EditRequestAirlineTarifCategory({
       setIsEdited(false);
       setIsEditing(initialEditMode);
       setSkippedAirports([]);
+      setRemovedByAppliesTo(null);
     }
   }, [show, tarif?.id, getInitialFormData]);
 
@@ -148,6 +162,8 @@ function EditRequestAirlineTarifCategory({
     setContractType(getContractType(tarif));
     setAppliesTo(normalizeAppliesTo(tarif?.contractType));
     setIsEdited(false);
+    setSkippedAirports([]);
+    setRemovedByAppliesTo(null);
   }, [getInitialFormData, tarif]);
 
   const closeButton = useCallback(async () => {
@@ -348,15 +364,24 @@ function EditRequestAirlineTarifCategory({
                   <ContractTypeToggle
                     value={appliesTo}
                     options={PRICE_APPLIES_TO_OPTIONS}
-                    onChange={(t) => {
-                      setIsEdited(true);
-                      setAppliesTo(t);
-                    }}
+                    onChange={handleAppliesToChange}
                   />
                   {appliesTo === "all" && (
                     <div className={classes.airportHint}>
                       Локации этого ценника станут недоступны для ценников «Эскадрилья»
                       и «ФАП».
+                    </div>
+                  )}
+                  {removedByAppliesTo?.airports?.length > 0 && (
+                    <div className={classes.airportHint}>
+                      Сняты аэропорты: {removedByAppliesTo.airports.join(", ")} — уже
+                      используются в других договорах этого типа
+                    </div>
+                  )}
+                  {removedByAppliesTo?.geo?.length > 0 && (
+                    <div className={classes.airportHint}>
+                      Сняты регионы и города: {removedByAppliesTo.geo.join(", ")} — уже
+                      используются в других договорах этого типа
                     </div>
                   )}
                 </div>
@@ -427,6 +452,7 @@ function EditRequestAirlineTarifCategory({
                       )}
                       onChange={(event, newValue, reason, details) => {
                         setIsEdited(true);
+                        setRemovedByAppliesTo(null);
                         setFormData((prev) => ({
                           ...prev,
                           airportIds: (newValue || []).map((opt) => opt.value),
@@ -476,6 +502,7 @@ function EditRequestAirlineTarifCategory({
                   usedCityIds={usedGeo.cityIds}
                   onChange={(rows) => {
                     setIsEdited(true);
+                    setRemovedByAppliesTo(null);
                     setFormData((prev) => ({ ...prev, geography: rows }));
                   }}
                 />

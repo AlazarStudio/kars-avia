@@ -5420,6 +5420,7 @@ export const GET_AIRLINES_UPDATE_SUBSCRIPTION = gql`
           priceTenCategory
         }
         name
+        contractType
       }
     }
   }
@@ -7641,6 +7642,7 @@ export const PRICE_CATEGORY_CHANGE_SUBSCRIPTION = gql`
           }
         }
         name
+        contractType
         prices {
           priceApartment
           priceStudio
