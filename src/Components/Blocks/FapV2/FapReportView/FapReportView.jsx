@@ -86,7 +86,8 @@ export default function FapReportView({ summary = {}, groups = [] }) {
             </div>
           </div>
           <div className={classes.miniCard}>
-            <div className={classes.capLabel}>Скидки (дети)</div>
+            {/* Скидка больше не только возрастная — её можно выставить вручную любому гостю */}
+            <div className={classes.capLabel}>Скидки</div>
             <div className={classes.miniValue} style={{ color: "#B45309" }}>
               −{rub(s.discounts)}
             </div>

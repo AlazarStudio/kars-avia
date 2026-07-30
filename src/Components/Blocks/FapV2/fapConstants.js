@@ -129,6 +129,11 @@ export const accommodationChargeFactor = (category) => {
   return 1;
 };
 
+// Та же величина в процентах скидки: взрослый — 0, ребёнок — 50, инфант — 100.
+// Выражена через accommodationChargeFactor, чтобы правда о льготах оставалась одна.
+export const accommodationDiscountPercent = (category) =>
+  Math.round((1 - accommodationChargeFactor(category)) * 100);
+
 export const PERSON_CATEGORY_OPTIONS = [
   { value: "ADULT", label: "Взрослый" },
   { value: "CHILD", label: "Ребёнок" },

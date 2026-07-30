@@ -555,19 +555,6 @@
   outline: none;
 }
 
-.editSelect {
-  min-width: 0;
-  height: 34px;
-  padding: 0 10px;
-  border-radius: 7px;
-  background: #fff;
-  font-size: 13px;
-  font-family: inherit;
-  color: var(--text);
-  font-weight: 600;
-  outline: none;
-  box-sizing: border-box;
-}
 
 .editPhoneRO {
   height: 34px;

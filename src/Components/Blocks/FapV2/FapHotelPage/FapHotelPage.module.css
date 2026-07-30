@@ -1058,7 +1058,10 @@
   overflow-y: hidden;
 }
 
-.reportTableWrap .roomGroup { min-width: 830px; }
+/* Минимум строки отчёта: 826px фиксированных треков + 80px гэпов + 28px паддинга + ~55px
+   на аватар в колонке ФИО. Меньше — и .roomGroup с overflow:hidden срежет денежную
+   колонку, а скролл у обёртки не включится. Держать в согласии с .memberRow ниже. */
+.reportTableWrap .roomGroup { min-width: 990px; }
 
 /* Скролл для режима «Просмотр» отчёта (в edit скролл на .reportGroups) */
 .reportViewScroll {
@@ -1127,23 +1130,21 @@
   background: #F8FAFC;
 }
 
-.tariffSelect {
-  width: 100%;
-  height: 30px;
-  padding: 0 8px;
-  border-radius: 7px;
-  border: 1px solid #8B5CF6;
+/* Селект тарифа переехал на FapSelect: тон сохраняем прежний, а красим триггер
+   изнутри обёртки — свои классы компонента остаются его делом. */
+.tariffPick button {
+  border-color: #8B5CF6;
   background: #F5F3FF;
   color: #8B5CF6;
-  font-size: 12px;
   font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  outline: none;
-  box-sizing: border-box;
 }
 
-.tariffSelectUnbound {
+.tariffPick button span,
+.tariffPick button svg {
+  color: inherit;
+}
+
+.tariffPickUnbound button {
   border-color: #CBD2E4;
   background: #fff;
   color: #545873;
@@ -1269,6 +1270,9 @@
 .roomAccCur { font-size: 12px; color: #94A3B8; }
 .roomTotalVal { min-width: 92px; text-align: right; font-size: 14px; font-weight: 800; color: #10B981; font-variant-numeric: tabular-nums; }
 .roomKindBadge { font-size: 12px; font-weight: 700; color: #0057C2; background: #EAF1FB; padding: 3px 9px; border-radius: 6px; }
+/* Обёртка FapSelect по умолчанию тянется на всю ширину — в шапке номера она должна
+   вести себя как соседние бейджи и занимать ровно свой текст. */
+.roomKindPick { width: auto; }
 /* Проживание при тарифе «Номер» — чип в шапке номера (стоимость принадлежит номеру) */
 .roomAccPill { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 700; color: #0F766E; background: #EAF6F0; padding: 3px 10px; border-radius: 999px; white-space: nowrap; }
 .roomAccPillWarn { color: #92400E; background: #FEF3C7; cursor: default; }
@@ -1304,7 +1308,7 @@
 
 /* Маркер W3: в номере больше гостей, чем допускает требование (только редактирование) */
 .roomWarnBadge { font-size: 12px; font-weight: 700; color: #B45309; background: #FEF3C7; border: 1px solid #F59E0B; padding: 2px 8px; border-radius: 6px; cursor: help; outline: none; white-space: nowrap; }
-.memberColHead, .memberRow { display: grid; grid-template-columns: 1.4fr 90px 150px 56px 64px 64px 64px 64px 86px 118px; gap: 8px; align-items: center; padding: 6px 14px; }
+.memberColHead, .memberRow { display: grid; grid-template-columns: 1.4fr 90px 150px 56px 64px 64px 64px 64px 86px 70px 118px; gap: 8px; align-items: center; padding: 6px 14px; }
 .numCenter { text-align: center; }
 .memberColHead { font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.3px; padding-bottom: 2px; }
 .memberRow { border-top: 1px solid #F1F4FB; }
@@ -1474,3 +1478,9 @@
   font-size: 12px;
   white-space: nowrap;
 }
+
+.discountCell { display: flex; align-items: center; justify-content: flex-end; gap: 2px; }
+/* Шире, чем инпуты количеств: здесь до трёх цифр плюс стрелки number-инпута. */
+.discountInput { width: 52px; }
+.discountSuffix { font-size: 11px; color: #94A3B8; }
+.discountMuted { color: #9AA0B4; font-size: 12px; text-align: right; }

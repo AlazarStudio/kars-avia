@@ -271,6 +271,11 @@
   border-color: #CBD2E4;
 }
 
+/* FapSelect на месте поля формы: высоту равняем на .smallFieldInput (38px). */
+.pickField button {
+  min-height: 38px;
+}
+
 .smallFieldInput:focus {
   border-color: var(--dark-blue);
   box-shadow: 0 0 0 3px rgba(0, 87, 195, 0.08);

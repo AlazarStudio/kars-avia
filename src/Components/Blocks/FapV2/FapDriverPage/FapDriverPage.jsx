@@ -20,6 +20,7 @@ import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import CatalogPickerModal, { personKey } from "../CatalogPickerModal/CatalogPickerModal";
 import { driverFactCount } from "../fapTransferFact";
 import FapActionButton from "../FapActionButton/FapActionButton";
+import FapSelect from "../FapSelect/FapSelect";
 import FapHeaderActions from "../FapHeaderActions/FapHeaderActions";
 import { downloadTransferReport } from "../reports/buildReportSheets";
 import BusIcon from "../../../../shared/icons/BusIcon";
@@ -639,45 +640,39 @@ export default function FapDriverPage({
           </span>
           <div className={classes.cellName} style={{ alignItems: "center" }}>
             {isCrewEdit ? (
-              <select
-                className={classes.editSelect}
-                style={{
-                  width: "100%",
-                  border: `1px solid ${color}`,
-                  boxShadow: `0 0 0 3px ${bg}`,
-                }}
+              <FapSelect
+                accent={color}
+                menuMinWidth={260}
                 value={editForm.airlinePersonalId}
-                onChange={(e) => {
-                  const m = crewRoster.find(
-                    (mm) => mm.airlinePersonalId === e.target.value
-                  );
+                onChange={(v) => {
+                  const m = crewRoster.find((mm) => mm.airlinePersonalId === v);
                   setEditForm((f) => ({
                     ...f,
-                    airlinePersonalId: e.target.value,
+                    airlinePersonalId: v,
                     fullName: m?.fullName ?? "",
                     phone: m?.phone ?? "",
                   }));
                 }}
-              >
-                <option value="">Выберите сотрудника</option>
-                {/* Keep current crew member visible even if otherwise marked assigned */}
-                {p.airlinePersonalId &&
-                  !crewRoster.find(
-                    (m) => m.airlinePersonalId === p.airlinePersonalId
-                  ) === false &&
-                  !availableCrew.find(
-                    (m) => m.airlinePersonalId === p.airlinePersonalId
-                  ) && (
-                    <option value={p.airlinePersonalId}>
-                      {p.fullName} · из экипажа (текущий)
-                    </option>
-                  )}
-                {availableCrew.map((m) => (
-                  <option key={m.airlinePersonalId} value={m.airlinePersonalId}>
-                    {[m.fullName, m.position].filter(Boolean).join(", ")}
-                  </option>
-                ))}
-              </select>
+                options={[
+                  { value: "", label: "Выберите сотрудника" },
+                  // Текущий член экипажа должен остаться в списке, даже если он уже
+                  // помечен назначенным и потому выпал из availableCrew.
+                  ...(p.airlinePersonalId &&
+                  crewRoster.some((m) => m.airlinePersonalId === p.airlinePersonalId) &&
+                  !availableCrew.some((m) => m.airlinePersonalId === p.airlinePersonalId)
+                    ? [
+                        {
+                          value: p.airlinePersonalId,
+                          label: `${p.fullName} · из экипажа (текущий)`,
+                        },
+                      ]
+                    : []),
+                  ...availableCrew.map((m) => ({
+                    value: m.airlinePersonalId,
+                    label: [m.fullName, m.position].filter(Boolean).join(", "),
+                  })),
+                ]}
+              />
             ) : (
               <input
                 className={classes.editInput}
@@ -699,16 +694,12 @@ export default function FapDriverPage({
             {isCrewEdit ? (
               <span className={classes.dash}>—</span>
             ) : (
-              <select
-                className={classes.editInput}
-                style={{ width: "100%", border: `1px solid ${color}`, boxShadow: `0 0 0 3px ${bg}` }}
+              <FapSelect
+                accent={color}
                 value={editForm.personCategory}
-                onChange={(e) => setEditForm((f) => ({ ...f, personCategory: e.target.value }))}
-              >
-                {PERSON_CATEGORY_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
+                onChange={(v) => setEditForm((f) => ({ ...f, personCategory: v }))}
+                options={PERSON_CATEGORY_OPTIONS}
+              />
             )}
           </div>
           {isCrewEdit ? (
@@ -837,34 +828,28 @@ export default function FapDriverPage({
         </span>
         <div className={classes.cellName}>
           {isCrewAdd ? (
-            <select
-              className={classes.editSelect}
-              style={{
-                width: "100%",
-                border: `1px solid ${color}`,
-                boxShadow: `0 0 0 3px ${bg}`,
-              }}
+            <FapSelect
+              accent={color}
+              menuMinWidth={260}
+              autoFocus
               value={addForm.airlinePersonalId}
-              onChange={(e) => {
-                const m = crewRoster.find(
-                  (mm) => mm.airlinePersonalId === e.target.value
-                );
+              onChange={(v) => {
+                const m = crewRoster.find((mm) => mm.airlinePersonalId === v);
                 setAddForm((f) => ({
                   ...f,
-                  airlinePersonalId: e.target.value,
+                  airlinePersonalId: v,
                   fullName: m?.fullName ?? "",
                   phone: m?.phone ?? "",
                 }));
               }}
-              autoFocus
-            >
-              <option value="">Выберите сотрудника</option>
-              {availableCrew.map((m) => (
-                <option key={m.airlinePersonalId} value={m.airlinePersonalId}>
-                  {[m.fullName, m.position].filter(Boolean).join(", ")}
-                </option>
-              ))}
-            </select>
+              options={[
+                { value: "", label: "Выберите сотрудника" },
+                ...availableCrew.map((m) => ({
+                  value: m.airlinePersonalId,
+                  label: [m.fullName, m.position].filter(Boolean).join(", "),
+                })),
+              ]}
+            />
           ) : (
             <input
               className={classes.editInput}
@@ -886,16 +871,12 @@ export default function FapDriverPage({
           {isCrewAdd ? (
             <span className={classes.dash}>—</span>
           ) : (
-            <select
-              className={classes.editInput}
-              style={{ width: "100%", border: `1px solid ${color}`, boxShadow: `0 0 0 3px ${bg}` }}
+            <FapSelect
+              accent={color}
               value={addForm.personCategory}
-              onChange={(e) => setAddForm((f) => ({ ...f, personCategory: e.target.value }))}
-            >
-              {PERSON_CATEGORY_OPTIONS.map((o) => (
-                <option key={o.value} value={o.value}>{o.label}</option>
-              ))}
-            </select>
+              onChange={(v) => setAddForm((f) => ({ ...f, personCategory: v }))}
+              options={PERSON_CATEGORY_OPTIONS}
+            />
           )}
         </div>
         {isCrewAdd ? (

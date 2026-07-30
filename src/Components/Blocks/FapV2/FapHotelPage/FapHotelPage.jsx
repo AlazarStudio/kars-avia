@@ -20,8 +20,9 @@ import {
   getCookie,
 } from "../../../../../graphQL_requests";
 import { calculateCostDaysByDuration } from "../../../../utils/effectiveCostDays";
-import { formatDateTime, normalizeCategory, PERSON_CATEGORY_OPTIONS, accommodationChargeFactor } from "../fapConstants";
+import { formatDateTime, normalizeCategory, PERSON_CATEGORY_OPTIONS, accommodationDiscountPercent } from "../fapConstants";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
+import FapSelect from "../FapSelect/FapSelect";
 import {
   GROUP_KIND_CONFIG,
   buildGroupIndex,
@@ -165,6 +166,12 @@ export const placementKindLabel = (n) => {
   return names[k] || `${k}-местное`;
 };
 
+// Ручной выбор вида размещения: до десятиместного — выше категорий номеров нет.
+const PLACEMENT_KIND_CHOICES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({
+  value: String(n),
+  label: placementKindLabel(n),
+}));
+
 // Цена за сутки тарифа для вида размещения.
 // Тариф гостиницы (source === "hotel") — единая цена на любой вид.
 // null → цена не определена (нет номера / нет цены для вида).
@@ -208,6 +215,8 @@ const emptyPD = (person, hotelIndex, plan) => ({
   lunchboxCount: 0,
   foodCost: 0,
   accommodationCost: 0,
+  // null — скидка не переопределена: берётся дефолт возрастной категории.
+  accommodationDiscount: null,
 });
 
 // Ключи гостей для сопоставления personData (адресуется индексом) со списком people.
@@ -370,6 +379,9 @@ export default function FapHotelPage({
   // и сохраняются в теневой строке отчёта.
   const [airlineTariffOverrides, setAirlineTariffOverrides] = useState({});
   const [personData, setPersonData] = useState({});
+  // Ручной вид размещения номера: { [roomKey номера]: число мест }. Ключ — номер, а не
+  // гость: при переезде гостя переопределение остаётся у комнаты.
+  const [placementOverrides, setPlacementOverrides] = useState({});
   const [reportSearch, setReportSearch] = useState("");
   const [reportMode, setReportMode] = useState(() => {
     try { return localStorage.getItem("fapReportMode") === "view" ? "view" : "edit"; } catch { return "edit"; }
@@ -391,6 +403,8 @@ export default function FapHotelPage({
   // buildReportRows читает тарифы только через refs.
   const airlineTariffsRef = useRef([]);
   const personDataRef = useRef(personData);
+  // buildReportRows читает состояние только через refs (он работает и на размонтировании).
+  const placementOverridesRef = useRef({});
   const peopleRef = useRef([]);
   const saveTimerRef = useRef(null);
   const reconciledKeyRef = useRef(null);
@@ -516,6 +530,21 @@ export default function FapHotelPage({
     [tariffs, airlineTariffs, hotelTariffs]
   );
 
+  // Опции селекта тарифа: три источника отдельными группами — так же, как было
+  // в нативных <optgroup>.
+  const tariffOptions = useMemo(() => {
+    const opts = [{ value: "", label: "Выбрать тариф" }];
+    const push = (groupLabel, list) => {
+      if (!list.length) return;
+      opts.push({ groupLabel });
+      list.forEach((t) => opts.push({ value: t.id, label: t.name || "Без названия" }));
+    };
+    push("По договору авиакомпании", airlineTariffs);
+    push("Тарифы заявки", tariffs.filter((t) => !t.draft));
+    push("Тарифы гостиницы", hotelTariffs);
+    return opts;
+  }, [airlineTariffs, tariffs, hotelTariffs]);
+
   const reportGroups = useMemo(() => {
     const groups = [];
     const byRoom = new Map();
@@ -551,20 +580,34 @@ export default function FapHotelPage({
     });
   }, [people, personData, hotelIndex, plan, findTariff]);
 
-  // Вид размещения гостя: из категории реального номера (если номер совпал с
-  // фондом гостиницы), иначе — число гостей в номере; null — без номера.
+  // Единый источник вида размещения номера. Приоритет: ручное переопределение →
+  // вместимость реального номера из фонда → число гостей в номере. Его читают и
+  // бейдж в шапке, и расчёт цены — иначе шапка расходится с тем, что оплачивается.
+  // Отдаёт по номеру пару { kind, auto }: kind — то, по чему считается цена, auto — то,
+  // что получилось бы без ручного выбора (нужно для подписи пункта «Авто»). Обе величины
+  // выводятся здесь и только здесь, иначе подпись и цена снова разъедутся.
+  const placementKindByRoom = useMemo(() => {
+    const map = {};
+    reportGroups.forEach((g) => {
+      if (g.noRoom) return;
+      const override = Number(placementOverrides[g.roomNumber]) || null;
+      const auto =
+        roomCapacity(matchHotelRoom(g.roomNumber, roomsIndex)) ?? g.members.length;
+      map[g.roomNumber] = { kind: override ?? auto, auto };
+    });
+    return map;
+  }, [reportGroups, roomsIndex, placementOverrides]);
+
+  // Вид размещения гостя — вид его номера; null — гость без номера.
   const roomKindByIndex = useMemo(() => {
     const map = {};
     reportGroups.forEach((g) => {
-      const capacity = g.noRoom
-        ? null
-        : roomCapacity(matchHotelRoom(g.roomNumber, roomsIndex));
       g.members.forEach((m) => {
-        map[m.index] = g.noRoom ? null : (capacity ?? g.members.length);
+        map[m.index] = g.noRoom ? null : placementKindByRoom[g.roomNumber]?.kind ?? null;
       });
     });
     return map;
-  }, [reportGroups, roomsIndex]);
+  }, [reportGroups, placementKindByRoom]);
 
   // Категория реального номера гостя (люкс/студия/N-местный) — ключ цены договорного
   // тарифа. null, если номер не сопоставлен с фондом гостиницы.
@@ -662,8 +705,13 @@ export default function FapHotelPage({
       if (price == null) {
         return { tariffName: tariff.name ?? "", placementKind: places, pricePerDay: 0, accommodationCost: 0, warning: `нет цены (${placementKindLabel(places)})` };
       }
-      // Возрастная скидка на проживание: инфант — бесплатно, ребёнок — 50%.
-      const chargeFactor = accommodationChargeFactor(people[personIndex]?.personCategory);
+      // Скидка на проживание: ручное значение строки, иначе дефолт возрастной категории
+      // (инфант — бесплатно, ребёнок — 50%). Явный 0 — это скидка 0%, а не «авто».
+      const discountPercent =
+        pd.accommodationDiscount != null
+          ? Math.min(100, Math.max(0, toNum(pd.accommodationDiscount)))
+          : accommodationDiscountPercent(people[personIndex]?.personCategory);
+      const chargeFactor = 1 - discountPercent / 100;
       return {
         tariffName: tariff.name ?? "",
         placementKind: places,
@@ -680,6 +728,7 @@ export default function FapHotelPage({
   // при размонтировании), поэтому вызывает getEffectiveRowRef.current.
   const getEffectiveRowRef = useRef(getEffectiveRow);
   useEffect(() => { getEffectiveRowRef.current = getEffectiveRow; }, [getEffectiveRow]);
+  useEffect(() => { placementOverridesRef.current = placementOverrides; }, [placementOverrides]);
 
   // Денежные итоги по группам — отдельно от состава (иначе циклическая зависимость).
   const groupTotals = useMemo(() => {
@@ -1117,9 +1166,22 @@ export default function FapHotelPage({
               : (row.breakfastLunchbox ? 1 : 0) + (row.lunchLunchbox ? 1 : 0) + (row.dinnerLunchbox ? 1 : 0),
           foodCost: toNum(row.foodCost),
           accommodationCost: toNum(row.accommodationCost),
+          // Легаси-строки поля не несут — там null, то есть дефолт по категории.
+          accommodationDiscount:
+            row.accommodationDiscount != null ? toNum(row.accommodationDiscount) : null,
         };
       });
       setPersonData(data);
+      // Переопределения вида размещения собираем по номеру комнаты: первое непустое
+      // значение выигрывает. Теневые строки их не несут.
+      const overrides = {};
+      savedRows.forEach((row) => {
+        const rk = roomKey(row.roomNumber);
+        const places = Number(row.placementKindOverride) || 0;
+        if (rk && places > 0 && overrides[rk] == null) overrides[rk] = places;
+      });
+      placementOverridesRef.current = overrides;
+      setPlacementOverrides(overrides);
     } else {
       const data = {};
       people.forEach((p, i) => {
@@ -1128,6 +1190,8 @@ export default function FapHotelPage({
       setPersonData(data);
       setTariffs([]);
       setAirlineTariffOverrides({});
+      placementOverridesRef.current = {};
+      setPlacementOverrides({});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [request?.id, hotelIndex, hotelTariffsReady, airlineTariffsReady, remoteVersion, airlineTariffs]);
@@ -1188,6 +1252,8 @@ export default function FapHotelPage({
           tariffName: t.name || "",
           pricePerDay: toNum(pp.pricePerDay),
           placementKind: Number(pp.places) || 0,
+          placementKindOverride: null,
+          accommodationDiscount: null,
         }))
       );
     // Теневая строка договорного тарифа — одна на тариф: цен по видам у него нет
@@ -1216,6 +1282,8 @@ export default function FapHotelPage({
       tariffName: t.name || "",
       pricePerDay: 0,
       placementKind: 0,
+      placementKindOverride: null,
+      accommodationDiscount: null,
     }));
     const personRows = currentPeople.map((person, i) => {
       const pd = currentPersonData[i] ?? emptyPD(person, hotelIndex, plan);
@@ -1248,6 +1316,12 @@ export default function FapHotelPage({
         tariffName: eff.isLegacyFlat ? "" : eff.tariffName,
         pricePerDay: toNum(eff.pricePerDay),
         placementKind: Number(eff.placementKind) || 0,
+        // Переопределение принадлежит комнате: пишем то, что стоит у ТЕКУЩЕЙ комнаты гостя,
+        // поэтому при переезде старое значение за ним не тянется.
+        placementKindOverride:
+          placementOverridesRef.current[roomKey(pd.roomNumber)] ?? null,
+        accommodationDiscount:
+          pd.accommodationDiscount != null ? toNum(pd.accommodationDiscount) : null,
       };
     });
     return [...personRows, ...ghostRows, ...airlineGhostRows];
@@ -1701,6 +1775,19 @@ export default function FapHotelPage({
     scheduleSave();
   }, [scheduleSave, people, hotelIndex, plan, findTariff]);
 
+  // Ручной вид размещения номера. Пустое значение снимает переопределение (возврат к «Авто»).
+  const setRoomPlacementKind = useCallback((roomNumber, value) => {
+    const places = Number(value) || 0;
+    // Ref обновляем синхронно, как остальные писатели файла: отложенный автосейв читает
+    // состояние только через refs и не должен зависеть от того, случился ли рендер.
+    const next = { ...placementOverridesRef.current };
+    if (places > 0) next[roomNumber] = places;
+    else delete next[roomNumber];
+    placementOverridesRef.current = next;
+    setPlacementOverrides(next);
+    scheduleSave();
+  }, [scheduleSave]);
+
   const reportRows = useMemo(
     () =>
       people.map((person, i) => {
@@ -1780,7 +1867,9 @@ export default function FapHotelPage({
         return {
         key: g.key,
         room: g.noRoom ? null : g.roomNumber,
-        kind: g.noRoom ? "" : placementKindLabel(g.members.length),
+        // Тот же единый источник, что и в режиме редактирования: авиакомпания видит
+        // только этот экран, и вид размещения обязан совпадать с тем, что оплачено.
+        kind: g.noRoom ? "" : placementKindLabel(placementKindByRoom[g.roomNumber]?.kind ?? 0),
         tariff: g.tariffName || "",
         total: groupTotals[g.key]?.total ?? 0,
         perRoom,
@@ -1838,6 +1927,7 @@ export default function FapHotelPage({
       getEffectiveRow,
       reportRoomGroups,
       roomBillingByIndex,
+      placementKindByRoom,
       findTariff,
       groupIndex,
       groupOrderMap,
@@ -2264,15 +2354,12 @@ export default function FapHotelPage({
           </div>
           <div className={classes.cellCategory}>
             {editForm.personType !== "CREW" ? (
-              <select
-                className={classes.editInput}
+              <FapSelect
+                accent={LIV}
                 value={editForm.personCategory}
-                onChange={(e) => setEditForm((f) => ({ ...f, personCategory: e.target.value }))}
-              >
-                {PERSON_CATEGORY_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
+                onChange={(v) => setEditForm((f) => ({ ...f, personCategory: v }))}
+                options={PERSON_CATEGORY_OPTIONS}
+              />
             ) : (
               <span className={classes.dash}>—</span>
             )}
@@ -2427,26 +2514,27 @@ export default function FapHotelPage({
           <PlusSvg color={LIV} />
         </span>
         {addForm.personType === "CREW" ? (
-          <select
-            className={classes.editInput}
+          <FapSelect
+            accent={LIV}
+            menuMinWidth={260}
             value={addForm.airlinePersonalId}
-            onChange={(e) => {
-              const member = crewRoster.find((m) => m.airlinePersonalId === e.target.value);
+            onChange={(v) => {
+              const member = crewRoster.find((m) => m.airlinePersonalId === v);
               setAddForm((f) => ({
                 ...f,
-                airlinePersonalId: e.target.value,
+                airlinePersonalId: v,
                 fullName: member?.fullName ?? "",
                 phone: member?.phone ?? "",
               }));
             }}
-          >
-            <option value="">Выберите сотрудника</option>
-            {availableCrew.map((m) => (
-              <option key={m.airlinePersonalId} value={m.airlinePersonalId}>
-                {[m.fullName, m.position].filter(Boolean).join(", ")}
-              </option>
-            ))}
-          </select>
+            options={[
+              { value: "", label: "Выберите сотрудника" },
+              ...availableCrew.map((m) => ({
+                value: m.airlinePersonalId,
+                label: [m.fullName, m.position].filter(Boolean).join(", "),
+              })),
+            ]}
+          />
         ) : (
           <input
             className={classes.editInput}
@@ -2458,15 +2546,12 @@ export default function FapHotelPage({
       </div>
       <div className={classes.cellCategory}>
         {addForm.personType !== "CREW" ? (
-          <select
-            className={classes.editInput}
+          <FapSelect
+            accent={LIV}
             value={addForm.personCategory}
-            onChange={(e) => setAddForm((f) => ({ ...f, personCategory: e.target.value }))}
-          >
-            {PERSON_CATEGORY_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
-            ))}
-          </select>
+            onChange={(v) => setAddForm((f) => ({ ...f, personCategory: v }))}
+            options={PERSON_CATEGORY_OPTIONS}
+          />
         ) : (
           <span className={classes.dash}>—</span>
         )}
@@ -3209,9 +3294,45 @@ export default function FapHotelPage({
                           <span className={classes.roomNo}>
                             {g.noRoom ? <span className={classes.noRoomBadge}>Без номера</span> : <>№ {g.roomNumber}</>}
                           </span>
-                          {!g.noRoom && placementKindLabel(g.fullMembers.length) && (
-                            <span className={classes.roomKindBadge}>{placementKindLabel(g.fullMembers.length)}</span>
-                          )}
+                          {!g.noRoom &&
+                            (() => {
+                              // Показываем ровно то, по чему считается цена; авто-значение
+                              // для подписи берём оттуда же, а не пересчитываем.
+                              const effKind = placementKindByRoom[g.roomNumber]?.kind ?? 0;
+                              const autoKind = placementKindByRoom[g.roomNumber]?.auto ?? 0;
+                              const override = Number(placementOverrides[g.roomNumber]) || 0;
+                              if (!canEdit) {
+                                return placementKindLabel(effKind) ? (
+                                  <span className={classes.roomKindBadge}>
+                                    {placementKindLabel(effKind)}
+                                  </span>
+                                ) : null;
+                              }
+                              return (
+                                <FapSelect
+                                  size="pill"
+                                  accent="#0057C2"
+                                  className={classes.roomKindPick}
+                                  menuMinWidth={180}
+                                  value={override ? String(override) : ""}
+                                  onChange={(v) => setRoomPlacementKind(g.roomNumber, v)}
+                                  options={[
+                                    {
+                                      value: "",
+                                      label: placementKindLabel(autoKind)
+                                        ? `Авто (${placementKindLabel(autoKind)})`
+                                        : "Авто",
+                                    },
+                                    ...PLACEMENT_KIND_CHOICES,
+                                  ]}
+                                  title={
+                                    override
+                                      ? `Вид размещения задан вручную. Автоматически — ${placementKindLabel(autoKind) || "не определён"}`
+                                      : "Вид размещения определён автоматически"
+                                  }
+                                />
+                              );
+                            })()}
                           {g.tariffName && <span className={classes.roomCat}>{g.tariffName}</span>}
                           {shownGroups.map(({ group, inRoom, total }) => {
                             const gw = warnings.byGroupId.get(group.groupId);
@@ -3278,6 +3399,7 @@ export default function FapHotelPage({
                           <span className={classes.numCenter}>Ужин</span>
                           <span className={classes.numCenter}>ЛБ</span>
                           <span className={classes.numRight}>Питание</span>
+                          <span className={classes.numRight}>Скидка</span>
                           <span className={classes.numRight}>Прожив.</span>
                         </div>
                         {g.members.map((m) => {
@@ -3321,35 +3443,16 @@ export default function FapHotelPage({
                                 />
                               </div>
                               <div>
-                                <select
-                                  className={`${classes.tariffSelect} ${unbound ? classes.tariffSelectUnbound : ""}`}
-                                  value={pd.tariffId || ""}
-                                  onChange={(e) => canEdit && applyTariffToPerson(i, e.target.value)}
+                                <FapSelect
+                                  size="compact"
+                                  accent="#8B5CF6"
+                                  className={`${classes.tariffPick} ${unbound ? classes.tariffPickUnbound : ""}`}
                                   disabled={!canEdit}
-                                >
-                                  <option value="">Выбрать тариф</option>
-                                  {airlineTariffs.length > 0 && (
-                                    <optgroup label="По договору авиакомпании">
-                                      {airlineTariffs.map((t) => (
-                                        <option key={t.id} value={t.id}>{t.name || "Без названия"}</option>
-                                      ))}
-                                    </optgroup>
-                                  )}
-                                  {tariffs.filter((t) => !t.draft).length > 0 && (
-                                    <optgroup label="Тарифы заявки">
-                                      {tariffs.filter((t) => !t.draft).map((t) => (
-                                        <option key={t.id} value={t.id}>{t.name || "Без названия"}</option>
-                                      ))}
-                                    </optgroup>
-                                  )}
-                                  {hotelTariffs.length > 0 && (
-                                    <optgroup label="Тарифы гостиницы">
-                                      {hotelTariffs.map((t) => (
-                                        <option key={t.id} value={t.id}>{t.name || "Без названия"}</option>
-                                      ))}
-                                    </optgroup>
-                                  )}
-                                </select>
+                                  value={pd.tariffId || ""}
+                                  onChange={(v) => canEdit && applyTariffToPerson(i, v)}
+                                  options={tariffOptions}
+                                  menuMinWidth={260}
+                                />
                               </div>
                               <div>
                                 <input type="number" min={0} step={0.5} className={classes.cellInputNum}
@@ -3378,6 +3481,48 @@ export default function FapHotelPage({
                                   return <CalcHint rows={fh.rows} totalLabel="Питание" total={fh.total} />;
                                 })()}
                               </div>
+                              {(() => {
+                                // Скидка применима только там, где проживание считается от цены
+                                // за сутки: при тарифе «Номер» оно принадлежит номеру, без тарифа
+                                // и у легаси-строк с плоской суммой процент считать не от чего.
+                                const hasTariff = !!findTariff(pd.tariffId);
+                                if (
+                                  roomBillingByIndex[i]?.perRoom ||
+                                  !hasTariff ||
+                                  getEffectiveRow(i, pd).isLegacyFlat
+                                ) {
+                                  return <div className={classes.discountMuted}>—</div>;
+                                }
+                                const auto = accommodationDiscountPercent(
+                                  people[i]?.personCategory
+                                );
+                                return (
+                                  <div className={classes.discountCell}>
+                                    <input
+                                      type="number" min={0} max={100}
+                                      className={`${classes.cellInputCount} ${classes.discountInput}`}
+                                      value={pd.accommodationDiscount ?? ""}
+                                      onChange={(e) =>
+                                        canEdit &&
+                                        updatePersonReport(
+                                          i,
+                                          "accommodationDiscount",
+                                          // Кламп на вводе, а не только в расчёте: иначе набранные
+                                          // «500» сохранились бы в отчёт, а деньги посчитались бы
+                                          // по 100% — число на экране разошлось бы с суммой.
+                                          e.target.value === ""
+                                            ? null
+                                            : String(Math.min(100, Math.max(0, Number(e.target.value) || 0)))
+                                        )
+                                      }
+                                      readOnly={!canEdit}
+                                      placeholder={String(auto)}
+                                      title={`По умолчанию для категории — ${auto}%. Пусто — авто, 0 — скидки нет.`}
+                                    />
+                                    <span className={classes.discountSuffix}>%</span>
+                                  </div>
+                                );
+                              })()}
                               <div className={classes.numRight}>
                                 {(() => {
                                   const eff = getEffectiveRow(i, pd);
@@ -3412,7 +3557,7 @@ export default function FapHotelPage({
                                   ];
                                   if ((eff.chargeFactor ?? 1) < 1) {
                                     accRows.push([
-                                      "Возрастная скидка",
+                                      "Скидка",
                                       "",
                                       eff.chargeFactor === 0 ? "бесплатно" : `−${Math.round((1 - eff.chargeFactor) * 100)}%`,
                                     ]);
@@ -3526,30 +3671,27 @@ export default function FapHotelPage({
           )}
           <div className={classes.dialogField}>
             <label className={classes.dialogLabel}>Гостиница *</label>
-            <select
-              className={classes.dialogInput}
+            <FapSelect
+              accent={LIV}
               value={relocateTarget}
-              onChange={(e) => setRelocateTarget(e.target.value)}
-            >
-              <option value="">Выберите гостиницу</option>
-              {otherHotels.map(({ hotel: h, originalIndex }) => {
-                const cap = Number(h?.peopleCount) || 0;
-                const placed = (h?.people || []).length;
-                const free = Math.max(0, cap - placed);
-                const isFull = cap > 0 && free <= 0;
-                return (
-                  <option
-                    key={h.itemId || originalIndex}
-                    value={originalIndex}
-                    disabled={isFull}
-                  >
-                    {h.name || `Гостиница ${originalIndex + 1}`}
-                    {cap > 0 ? ` · свободно ${free}/${cap}` : ""}
-                    {isFull ? " (заполнен)" : ""}
-                  </option>
-                );
-              })}
-            </select>
+              onChange={(v) => setRelocateTarget(v)}
+              options={[
+                { value: "", label: "Выберите гостиницу" },
+                ...otherHotels.map(({ hotel: h, originalIndex }) => {
+                  const cap = Number(h?.peopleCount) || 0;
+                  const placed = (h?.people || []).length;
+                  const free = Math.max(0, cap - placed);
+                  const isFull = cap > 0 && free <= 0;
+                  return {
+                    value: String(originalIndex),
+                    disabled: isFull,
+                    label: `${h.name || `Гостиница ${originalIndex + 1}`}${
+                      cap > 0 ? ` · свободно ${free}/${cap}` : ""
+                    }${isFull ? " (заполнен)" : ""}`,
+                  };
+                }),
+              ]}
+            />
           </div>
           <div className={classes.dialogField}>
             <label className={classes.dialogLabel}>Причина *</label>

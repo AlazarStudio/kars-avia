@@ -11,19 +11,21 @@
   padding: 0 18px;
   border-radius: 12px;
   border: none;
-  background: #1366e1;
+  background: var(--dark-blue);
   color: #fff;
   font-family: "Inter", sans-serif;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  box-shadow: 0 6px 16px rgba(19, 102, 225, 0.28);
-  transition: background 0.18s ease;
+  opacity: 0.8;
+  /* box-shadow: 0 6px 16px rgba(19, 102, 225, 0.28); */
+  /* transition: background 0.18s ease; */
+  transition: all 0.3s ease-in-out;
 }
 
 .trigger:hover {
-  background: #0f57c4;
+  opacity: 1;
 }
 
 .overlay {
@@ -52,6 +54,7 @@
     opacity: 0;
     transform: translateY(-5px) scale(0.99);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);

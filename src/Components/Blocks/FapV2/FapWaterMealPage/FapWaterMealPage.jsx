@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useMutation } from "@apollo/client";
 import { InputMask } from "@react-input/mask";
 import classes from "./FapWaterMealPage.module.css";
+import FapSelect from "../FapSelect/FapSelect";
 import {
   ADD_PASSENGER_REQUEST_PERSON,
   ADD_PASSENGER_REQUEST_PEOPLE,
@@ -480,15 +481,13 @@ export default function FapWaterMealPage({
             </div>
             <div className={`${classes.smallField} ${classes.fSeat}`}>
               <label className={classes.smallFieldLabel}>Категория</label>
-              <select
-                className={classes.smallFieldInput}
+              <FapSelect
+                className={classes.pickField}
+                accent={color}
                 value={form.personCategory}
-                onChange={(e) => setForm((f) => ({ ...f, personCategory: e.target.value }))}
-              >
-                {PERSON_CATEGORY_OPTIONS.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
+                onChange={(v) => setForm((f) => ({ ...f, personCategory: v }))}
+                options={PERSON_CATEGORY_OPTIONS}
+              />
             </div>
             <button
               type="submit"
@@ -594,16 +593,13 @@ export default function FapWaterMealPage({
                       onChange={(e) => setEditForm((f) => ({ ...f, seat: e.target.value }))}
                       placeholder="Место"
                     />
-                    <select
-                      className={`${classes.editInput} ${classes.fSeat}`}
-                      style={{ border: `1px solid ${color}`, boxShadow: `0 0 0 3px ${bg}` }}
+                    <FapSelect
+                      className={classes.fSeat}
+                      accent={color}
                       value={editForm.personCategory}
-                      onChange={(e) => setEditForm((f) => ({ ...f, personCategory: e.target.value }))}
-                    >
-                      {PERSON_CATEGORY_OPTIONS.map((o) => (
-                        <option key={o.value} value={o.value}>{o.label}</option>
-                      ))}
-                    </select>
+                      onChange={(v) => setEditForm((f) => ({ ...f, personCategory: v }))}
+                      options={PERSON_CATEGORY_OPTIONS}
+                    />
                     <button
                       type="button"
                       className={classes.editSaveBtn}

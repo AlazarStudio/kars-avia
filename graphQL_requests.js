@@ -4043,6 +4043,8 @@ export const GET_PASSENGER_REQUEST = gql`
           tariffName
           pricePerDay
           placementKind
+          accommodationDiscount
+          placementKindOverride
         }
       }
     }
@@ -4155,6 +4157,8 @@ export const GET_PASSENGER_REQUEST_REPORT = gql`
           tariffName
           pricePerDay
           placementKind
+          accommodationDiscount
+          placementKindOverride
         }
       }
     }
@@ -4225,6 +4229,8 @@ export const SAVE_PASSENGER_REQUEST_HOTEL_REPORT = gql`
         tariffName
         pricePerDay
         placementKind
+        accommodationDiscount
+        placementKindOverride
       }
     }
   }

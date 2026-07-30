@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import { useMutation } from "@apollo/client";
 import { InputMask } from "@react-input/mask";
 import classes from "./FapRegistry.module.css";
+import FapSelect from "../FapSelect/FapSelect";
 import {
   ADD_PASSENGER_REQUEST_SAVED_PERSON,
   UPDATE_PASSENGER_REQUEST_SAVED_PERSON,
@@ -119,29 +120,27 @@ function PersonForm({ values, onChange, onSubmit, onCancel, saving, submitLabel 
       </div>
       <div className={`${classes.smallField} ${classes.fSeat}`}>
         <label className={classes.smallFieldLabel}>Категория</label>
-        <select
-          className={classes.smallFieldInput}
+        <FapSelect
+          className={classes.pickField}
           value={values.personCategory}
-          onChange={(e) => onChange({ ...values, personCategory: e.target.value })}
-        >
-          {PERSON_CATEGORY_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+          onChange={(v) => onChange({ ...values, personCategory: v })}
+          options={PERSON_CATEGORY_OPTIONS}
+        />
       </div>
       <div className={`${classes.smallField} ${classes.fPlacement}`}>
         <label className={classes.smallFieldLabel}>Размещение</label>
-        <select
-          className={classes.smallFieldInput}
+        <FapSelect
+          className={classes.pickField}
           value={values.placementRequirement}
-          onChange={(e) =>
-            onChange({ ...values, placementRequirement: e.target.value })
-          }
-        >
-          {PLACEMENT_REQUIREMENT_OPTIONS.map((o) => (
-            <option key={o.label} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+          onChange={(v) => onChange({ ...values, placementRequirement: v })}
+          // В справочнике значения числовые, а форма хранит строку (см. гидрацию
+          // editForm ниже) — нативный селект приводил тип за нас, FapSelect отдаёт
+          // значение как есть, поэтому приводим здесь.
+          options={PLACEMENT_REQUIREMENT_OPTIONS.map((o) => ({
+            ...o,
+            value: String(o.value),
+          }))}
+        />
       </div>
       <button
         type="submit"

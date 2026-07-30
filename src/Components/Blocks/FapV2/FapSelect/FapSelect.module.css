@@ -34,6 +34,45 @@
   cursor: default;
 }
 
+/* Плотная строка таблицы: та же высота, что у числовых ячеек отчёта (28px). */
+.compact {
+  min-height: 28px;
+  padding: 0 8px;
+  gap: 6px;
+  font-size: 12px;
+  border-radius: 6px;
+}
+
+/* Бейдж в шапке номера: высота и радиус как у соседних пилюль (.roomCat и др.),
+   поэтому строка шапки не «прыгает». Рамки в покое нет — она появляется на ховере. */
+.pill {
+  min-height: 22px;
+  padding: 0 9px;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  border-radius: 6px;
+  border-color: transparent;
+  background: #eaf1fb;
+  color: #0057c2;
+}
+
+.pill .value,
+.pill .placeholder {
+  color: inherit;
+}
+
+.pill .chevron {
+  color: inherit;
+  opacity: 0.75;
+}
+
+/* Идёт после .trigger:hover — иначе общий ховер погасил бы заливку пилюли. */
+.pill:hover:not(:disabled) {
+  background: #e1ebfa;
+  border-color: #b9d2f5;
+}
+
 /* Подпись перед значением в триггере (опциональный triggerPrefix). */
 .triggerPrefix {
   flex: 0 0 auto;
@@ -130,8 +169,35 @@
   background: #f6f4ff;
 }
 
+/* Недоступная опция (аналог <option disabled>) — видна, но не выбирается. */
+.optionDisabled {
+  color: #b6bbcb;
+  cursor: default;
+}
+
+.optionDisabled:hover {
+  background: transparent;
+}
+
 .optionLabel {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/* Заголовок группы опций — аналог <optgroup>, кликать нечего. */
+.group {
+  padding: 8px 10px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: #9aa0b4;
+  cursor: default;
+  user-select: none;
+}
+
+.group:not(:first-child) {
+  border-top: 1px solid #f1f3fa;
+  margin-top: 4px;
 }

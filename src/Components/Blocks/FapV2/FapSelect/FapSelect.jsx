@@ -40,6 +40,16 @@ export default function FapSelect({
   // menuMinWidth — минимальная ширина меню, когда триггер узкий и подписи опций
   // не помещаются. Без пропа меню шириной ровно с триггер (прежнее поведение).
   menuMinWidth,
+  // size — вид триггера под место, куда он встаёт:
+  //   default — поле формы 34px (как было),
+  //   compact — плотная строка таблицы, 24px,
+  //   pill    — бейдж в шапке номера: заливка и радиус как у соседних пилюль.
+  // Меню во всех вариантах одинаковое: оно в портале и в тесноту не попадает.
+  size = "default",
+  // Подсказка на триггере — там, где значение само по себе не объясняет выбор.
+  title,
+  // Фокус на триггере при появлении — для строк «добавить», которые раскрываются по кнопке.
+  autoFocus = false,
 }) {
   const [open, setOpen] = useState(false);
   const [rect, setRect] = useState(null);
@@ -48,10 +58,11 @@ export default function FapSelect({
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
 
+  // Элемент вида { groupLabel } — некликабельный заголовок группы (аналог <optgroup>).
   const norm = options.map((o) =>
     typeof o === "string" ? { value: o, label: o } : o
   );
-  const current = norm.find((o) => o.value === value);
+  const current = norm.find((o) => !o.groupLabel && o.value === value);
 
   const openMenu = () => {
     if (disabled) return;
@@ -82,16 +93,23 @@ export default function FapSelect({
     const onKey = (e) => {
       if (e.key === "Escape") close();
     };
-    const onScrollResize = () => close();
+    // Прокрутка страницы уводит триггер из-под меню (оно position: fixed) — закрываем.
+    // Но скролл ВНУТРИ самого меню закрывать не должен: длинный список прокручивается
+    // сам, а событие долетает до window в фазе перехвата. Та же защита есть в AddressField.
+    const onScroll = (e) => {
+      if (menuRef.current?.contains(e.target)) return;
+      close();
+    };
+    const onResize = () => close();
     document.addEventListener("mousedown", onDocMouse);
     document.addEventListener("keydown", onKey);
-    window.addEventListener("scroll", onScrollResize, true);
-    window.addEventListener("resize", onScrollResize);
+    window.addEventListener("scroll", onScroll, true);
+    window.addEventListener("resize", onResize);
     return () => {
       document.removeEventListener("mousedown", onDocMouse);
       document.removeEventListener("keydown", onKey);
-      window.removeEventListener("scroll", onScrollResize, true);
-      window.removeEventListener("resize", onScrollResize);
+      window.removeEventListener("scroll", onScroll, true);
+      window.removeEventListener("resize", onResize);
     };
   }, [open]);
 
@@ -122,7 +140,7 @@ export default function FapSelect({
       <button
         ref={triggerRef}
         type="button"
-        className={`${classes.trigger} ${open ? classes.triggerOpen : ""}`}
+        className={`${classes.trigger} ${classes[size] ?? ""} ${open ? classes.triggerOpen : ""}`}
         style={
           open
             ? { borderColor: accent, boxShadow: `0 0 0 3px ${accent}22` }
@@ -132,6 +150,8 @@ export default function FapSelect({
         }
         onClick={() => (open ? close() : openMenu())}
         disabled={disabled}
+        title={title}
+        autoFocus={autoFocus}
       >
         {triggerPrefix && (
           <span className={classes.triggerPrefix}>{triggerPrefix}</span>
@@ -145,8 +165,8 @@ export default function FapSelect({
         </span>
         <svg
           className={`${classes.chevron} ${open ? classes.chevronOpen : ""}`}
-          width="14"
-          height="14"
+          width={size === "default" ? 14 : 12}
+          height={size === "default" ? 14 : 12}
           viewBox="0 0 24 24"
           fill="none"
         >
@@ -181,14 +201,23 @@ export default function FapSelect({
                 : null),
             }}
           >
-            {norm.map((o) => {
+            {norm.map((o, oi) => {
+              if (o.groupLabel) {
+                return (
+                  <div key={`__g${oi}`} className={classes.group}>
+                    {o.groupLabel}
+                  </div>
+                );
+              }
               const sel = o.value === value;
               return (
                 <div
                   key={o.value || "__empty"}
-                  className={`${classes.option} ${sel ? classes.optionSelected : ""}`}
-                  style={sel ? { color: accent } : undefined}
-                  onClick={() => pick(o.value)}
+                  className={`${classes.option} ${sel ? classes.optionSelected : ""} ${
+                    o.disabled ? classes.optionDisabled : ""
+                  }`}
+                  style={sel && !o.disabled ? { color: accent } : undefined}
+                  onClick={() => !o.disabled && pick(o.value)}
                 >
                   <span
                     className={classes.optionLabel}
