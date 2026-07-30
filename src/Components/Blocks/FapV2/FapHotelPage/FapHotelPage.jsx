@@ -20,7 +20,7 @@ import {
   getCookie,
 } from "../../../../../graphQL_requests";
 import { calculateCostDaysByDuration } from "../../../../utils/effectiveCostDays";
-import { formatDateTime, normalizeCategory, PERSON_CATEGORY_OPTIONS, accommodationDiscountPercent } from "../fapConstants";
+import { formatDateTime, normalizeCategory, PERSON_CATEGORY_OPTIONS, accommodationDiscountPercent, placementKindLabel } from "../fapConstants";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import FapSelect from "../FapSelect/FapSelect";
 import {
@@ -64,7 +64,6 @@ import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 import CloseIcon from "../../../../shared/icons/CloseIcon";
 import CopyIcon from "../../../../shared/icons/CopyIcon";
-import DownloadIcon from "../../../../shared/icons/DownloadIcon";
 import EyeIcon from "../../../../shared/icons/EyeIcon";
 import { downloadHotelReport } from "../reports/buildReportSheets";
 import FapReportView from "../FapReportView/FapReportView";
@@ -157,14 +156,6 @@ const newTariff = (draft = true) => ({
   ],
   draft,
 });
-
-// Подпись вида размещения: 1 → «одноместное», 2 → «двухместное», ...
-export const placementKindLabel = (n) => {
-  const k = Number(n);
-  if (!Number.isFinite(k) || k <= 0) return "";
-  const names = { 1: "одноместное", 2: "двухместное", 3: "трёхместное", 4: "четырёхместное" };
-  return names[k] || `${k}-местное`;
-};
 
 // Ручной выбор вида размещения: до десятиместного — выше категорий номеров нет.
 const PLACEMENT_KIND_CHOICES = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((n) => ({
@@ -1685,6 +1676,8 @@ export default function FapHotelPage({
   // Массовое задание количеств приёмов («Кол-во всем» в тулбаре отчёта).
   // Пустое поле — этот приём не трогаем.
   const [bulkCounts, setBulkCounts] = useState({ b: "", l: "", d: "", lb: "" });
+  // Массовая простановка приёмов переехала из тулбара в меню «⋯» — форма живёт в диалоге.
+  const [bulkCountsOpen, setBulkCountsOpen] = useState(false);
   const applyBulkCounts = useCallback(() => {
     const patch = {};
     if (bulkCounts.b !== "") patch.breakfastCount = toNum(bulkCounts.b);
@@ -3184,24 +3177,6 @@ export default function FapHotelPage({
                   <span className={classes.boundCount}>
                     Тариф назначен: <strong>{boundCount}</strong> из {placed}
                   </span>
-                  {canEdit && (
-                    <span className={classes.bulkCounts} title="Задать количество приёмов всем гостям отчёта. Пустое поле — не менять.">
-                      Кол-во всем:
-                      {[["b", "З"], ["l", "О"], ["d", "У"], ["lb", "ЛБ"]].map(([k, lbl]) => (
-                        <label key={k} className={classes.bulkCountField}>
-                          {lbl}
-                          <input
-                            type="number" min={0}
-                            value={bulkCounts[k]}
-                            onChange={(e) => setBulkCounts((p) => ({ ...p, [k]: e.target.value }))}
-                          />
-                        </label>
-                      ))}
-                      <button type="button" className={classes.bulkApplyBtn} onClick={applyBulkCounts}>
-                        Применить
-                      </button>
-                    </span>
-                  )}
                 </>
               )}
               <span className={classes.spacer} />
@@ -3226,14 +3201,16 @@ export default function FapHotelPage({
                   <EyeIcon size={15} color="#545873" /> Только просмотр · авиакомпания
                 </span>
               )}
+              {effectiveReportMode === "edit" && canEdit && placed > 0 && (
                 <button
                   type="button"
                   className={classes.secondaryBtn}
-                  onClick={handleExport}
-                  disabled={placed === 0}
+                  onClick={() => setBulkCountsOpen(true)}
+                  title="Задать количество приёмов всем гостям отчёта"
                 >
-                  <DownloadIcon /> Excel
+                  <EditPencilIcon color="#545873" /> Кол-во всем
                 </button>
+              )}
               {effectiveReportMode === "edit" && canEdit && (
                 <button
                   type="button"
@@ -3719,6 +3696,67 @@ export default function FapHotelPage({
               : relocateState && relocateState.indices.length > 1
               ? "Переселить всех"
               : "Переселить"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={bulkCountsOpen}
+        onClose={() => setBulkCountsOpen(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: "16px" } }}
+      >
+        <DialogTitle
+          sx={{
+            fontFamily: "Inter, sans-serif",
+            fontWeight: 700,
+            fontSize: 18,
+            color: "var(--text)",
+            borderBottom: "1px solid #F1F5F9",
+            pb: 2,
+          }}
+        >
+          Количество приёмов всем
+        </DialogTitle>
+        <DialogContent
+          sx={{ pt: "16px !important", display: "flex", flexDirection: "column", gap: 2 }}
+        >
+          <p className={classes.dialogHint}>
+            Значение проставится всем гостям отчёта. Пустое поле — не менять.
+          </p>
+          <div className={classes.bulkDialogGrid}>
+            {[["b", "Завтраки"], ["l", "Обеды"], ["d", "Ужины"], ["lb", "Ланчбоксы"]].map(
+              ([k, lbl]) => (
+                <div key={k} className={classes.dialogField}>
+                  <label className={classes.dialogLabel}>{lbl}</label>
+                  <input
+                    type="number"
+                    min={0}
+                    className={classes.dialogInput}
+                    value={bulkCounts[k]}
+                    onChange={(e) => setBulkCounts((p) => ({ ...p, [k]: e.target.value }))}
+                    placeholder="не менять"
+                  />
+                </div>
+              )
+            )}
+          </div>
+        </DialogContent>
+        <DialogActions sx={{ padding: "12px 20px 20px", gap: 1 }}>
+          <Button backgroundcolor="#F6F7FB" color="#545873" onClick={() => setBulkCountsOpen(false)}>
+            Отмена
+          </Button>
+          <Button
+            backgroundcolor="var(--dark-blue)"
+            color="#fff"
+            onClick={() => {
+              applyBulkCounts();
+              setBulkCountsOpen(false);
+            }}
+            disabled={Object.values(bulkCounts).every((v) => v === "")}
+          >
+            Применить
           </Button>
         </DialogActions>
       </Dialog>

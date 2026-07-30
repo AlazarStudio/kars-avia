@@ -1,5 +1,5 @@
 import ExcelJS from "exceljs";
-import { PERSON_CATEGORY_LABEL, normalizeCategory } from "../fapConstants";
+import { PERSON_CATEGORY_LABEL, normalizeCategory, placementKindLabel } from "../fapConstants";
 import { driverFactCount } from "../fapTransferFact.js";
 import { findRowIndexForPerson } from "./reportRowMatch";
 
@@ -8,13 +8,6 @@ import { findRowIndexForPerson } from "./reportRowMatch";
 const toNum = (v) => {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
-};
-
-const placementKindLabel = (n) => {
-  const k = Number(n);
-  if (!Number.isFinite(k) || k <= 0) return "";
-  const names = { 1: "одноместное", 2: "двухместное", 3: "трёхместное", 4: "четырёхместное" };
-  return names[k] || `${k}-местное`;
 };
 
 const safeFilename = (s) =>

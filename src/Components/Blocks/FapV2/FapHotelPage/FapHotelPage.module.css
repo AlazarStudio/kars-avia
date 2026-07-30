@@ -1380,29 +1380,8 @@
 .lbToggleOn { background: #FFFBEB; border-color: #F59E0B; color: #B45309; }
 
 /* Панель массового задания количеств приёмов (тулбар отчёта) */
-.bulkCounts { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #545873; white-space: nowrap; }
-.bulkCountField { display: inline-flex; align-items: center; gap: 3px; font-weight: 700; }
-.bulkCountField input {
-  width: 44px;
-  height: 28px;
-  padding: 0 6px;
-  border: 1px solid #E4E4EF;
-  border-radius: 6px;
-  font-size: 12px;
-  text-align: right;
-}
-.bulkApplyBtn {
-  height: 28px;
-  padding: 0 10px;
-  border-radius: 6px;
-  border: 1px solid #E4E4EF;
-  background: #fff;
-  color: #0057C2;
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-}
-.bulkApplyBtn:hover { background: #F6F9FF; }
+/* Диалог «Количество приёмов всем»: четыре поля в две колонки. */
+.bulkDialogGrid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 .accWarning { font-size: 11px; line-height: 1.2; color: #b45309; white-space: normal; word-break: break-word; text-align: left; }
 
 /* Ряд «инпут + кнопка» в редакторе цен по видам размещения */
