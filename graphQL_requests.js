@@ -4020,6 +4020,7 @@ export const GET_PASSENGER_REQUEST = gql`
       hotelReports {
         id
         hotelIndex
+        submittedAt
         reportRows {
           fullName
           personId
@@ -4134,6 +4135,7 @@ export const GET_PASSENGER_REQUEST_REPORT = gql`
       }
       hotelReports {
         hotelIndex
+        submittedAt
         reportRows {
           fullName
           personId
@@ -4206,6 +4208,7 @@ export const SAVE_PASSENGER_REQUEST_HOTEL_REPORT = gql`
     ) {
       id
       hotelIndex
+      submittedAt
       reportRows {
         fullName
         personId
@@ -4232,6 +4235,19 @@ export const SAVE_PASSENGER_REQUEST_HOTEL_REPORT = gql`
         accommodationDiscount
         placementKindOverride
       }
+    }
+  }
+`;
+
+export const SUBMIT_PASSENGER_REQUEST_HOTEL_REPORT = gql`
+  mutation SubmitPassengerRequestHotelReport($requestId: ID!, $hotelIndex: Int!) {
+    submitPassengerRequestHotelReport(
+      requestId: $requestId
+      hotelIndex: $hotelIndex
+    ) {
+      id
+      hotelIndex
+      submittedAt
     }
   }
 `;

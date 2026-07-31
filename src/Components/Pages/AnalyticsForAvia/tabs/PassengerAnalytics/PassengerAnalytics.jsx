@@ -389,6 +389,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
         },
         showAirline: !isAirline,
         detailRequests,
+        user,
         meta: {
           periodLabel: periodHuman(range) || "",
           airlineName: isAirline ? rows[0]?.airlineName || "" : "",

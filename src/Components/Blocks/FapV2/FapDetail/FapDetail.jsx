@@ -47,6 +47,7 @@ import EditIcon from "../../../../shared/icons/EditIcon";
 import FapChat from "../FapChat/FapChat";
 import { isExternalUser, isAirlineRole } from "../../../../utils/access";
 import { downloadRequestReport } from "../reports/buildReportSheets";
+import { visibleHotelIndexes } from "../fapReportAccess";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import { useRepresentativeLink } from "../hooks/useRepresentativeLink";
 
@@ -637,7 +638,11 @@ export default function FapDetail({ user, canEdit = true }) {
               <FapActionButton
                 variant="primary"
                 onClick={async () => {
-                  try { await downloadRequestReport(request, notifyError); }
+                  try {
+                    await downloadRequestReport(request, notifyError, {
+                      hotelIndexes: visibleHotelIndexes(request, user),
+                    });
+                  }
                   catch (e) { notifyError("Ошибка экспорта"); console.error(e); }
                 }}
               >

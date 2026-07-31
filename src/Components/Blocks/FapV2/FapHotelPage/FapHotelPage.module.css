@@ -417,6 +417,44 @@
   cursor: not-allowed;
 }
 
+.submittedPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid #BBF7D0;
+  background: #F0FDF4;
+  color: #15803D;
+  font-size: 12.5px;
+  font-weight: 700;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.reportPending {
+  padding: 48px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+  color: #94A3B8;
+}
+
+.reportPendingTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--main-gray);
+}
+
+.reportPendingText {
+  font-size: 13px;
+  max-width: 380px;
+  line-height: 1.5;
+}
+
 /* ── Selection bar ── */
 .selectionBar {
   display: flex;

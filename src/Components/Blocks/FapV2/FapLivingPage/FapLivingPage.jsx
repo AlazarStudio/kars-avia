@@ -14,8 +14,9 @@ import {
 } from "../../../../../graphQL_requests";
 import { SERVICE_STATUS_CONFIG, formatDate, formatDateTime } from "../fapConstants";
 import { calculateCostDaysByDuration } from "../../../../utils/effectiveCostDays";
-import { isExternalUser } from "../../../../utils/access";
+import { isExternalUser, isAirlineRole } from "../../../../utils/access";
 import { downloadLivingReport } from "../reports/buildReportSheets";
+import { visibleHotelIndexes, hotelReportSubmittedAt } from "../fapReportAccess";
 import { useToast } from "../../../../contexts/ToastContext";
 import Button from "../../../Standart/Button/Button";
 import FapActionButton from "../FapActionButton/FapActionButton";
@@ -106,6 +107,10 @@ export default function FapLivingPage({
       navigate(`/far/${requestId}/service/living/hotel/${idx}`, { replace: true });
     }
   }, [isExtHotel, displayHotels, navigate, requestId]);
+
+  // Авиакомпании выгружаем только отправленные отчёты; если таких нет — выгружать нечего.
+  const exportHotelIndexes = visibleHotelIndexes(request, user);
+  const nothingToExport = isAirlineRole(user) && exportHotelIndexes.length === 0;
 
   const planCap = service?.plan?.peopleCount ?? null;
   const totalGuests = hotels.reduce((s, h) => s + (h.people?.length || 0), 0);
@@ -256,11 +261,11 @@ export default function FapLivingPage({
               <PlusSvg /> Добавить гостиницу
             </button>
           ) : (
-            !isExternalUser(user) && (
+            !isExternalUser(user) && !nothingToExport && (
               <FapActionButton
                 variant="primary"
                 onClick={async () => {
-                  try { await downloadLivingReport(request); }
+                  try { await downloadLivingReport(request, { hotelIndexes: exportHotelIndexes }); }
                   catch (e) { notifyError("Ошибка экспорта"); console.error(e); }
                 }}
               >
@@ -273,7 +278,9 @@ export default function FapLivingPage({
             user={user}
             canEdit={canEdit && !isCompleted && !isExtHotel}
             onRefetch={onRefetch}
-            onDownloadReport={() => downloadLivingReport(request)}
+            onDownloadReport={() =>
+              downloadLivingReport(request, { hotelIndexes: exportHotelIndexes })
+            }
             // Кнопка отчёта в шапке показывается ровно в обратном условии —
             // два пути к одному действию в одной шапке не нужны. Без гостиниц
             // выгружать нечего: получилась бы книга из одной шапки.
@@ -422,6 +429,8 @@ export default function FapLivingPage({
               canEdit={canEdit}
               isExtHotel={isExtHotel}
               isCompleted={isCompleted}
+              reportSubmittedAt={hotelReportSubmittedAt(request, origIdx)}
+              showReportState={!isAirlineRole(user)}
               onOpen={() => navigate(`/far/${requestId}/service/living/hotel/${origIdx}`)}
               onCopyLink={copyLink}
               onEdit={() => openEditHotel(origIdx)}
@@ -548,6 +557,7 @@ export default function FapLivingPage({
 // ──────────────────────────────────────────────────────────────────
 function HotelCard({
   hotel, showLinks, canEdit, isExtHotel, isCompleted,
+  reportSubmittedAt, showReportState,
   onOpen, onCopyLink, onEdit, onRemove,
 }) {
   const cap = hotel.peopleCount || 0;
@@ -576,6 +586,13 @@ function HotelCard({
           <div className={classes.hotelNameRow}>
             <span className={classes.hotelName}>{hotel.name || "Гостиница"}</span>
             {isFull && <span className={classes.fullBadge}>заполнен</span>}
+            {showReportState && placed > 0 && (
+              reportSubmittedAt ? (
+                <span className={classes.reportBadgeSent}>Отчёт отправлен</span>
+              ) : (
+                <span className={classes.reportBadgePending}>Отчёт формируется</span>
+              )
+            )}
           </div>
           {(hotel.address || hotel.checkInAt || hotel.checkOutAt) && (
             <div className={classes.hotelMeta}>

@@ -15,11 +15,15 @@ import {
   RELOCATE_PASSENGER_REQUEST_HOTEL_PERSON,
   EVICT_PASSENGER_REQUEST_HOTEL_PERSON,
   SAVE_PASSENGER_REQUEST_HOTEL_REPORT,
+  SUBMIT_PASSENGER_REQUEST_HOTEL_REPORT,
   GET_FAP_HOTEL_TARIFFS,
   GET_AIRLINE_TARIFS,
   getCookie,
 } from "../../../../../graphQL_requests";
 import { calculateCostDaysByDuration } from "../../../../utils/effectiveCostDays";
+import { hotelReportSubmittedAt, isHotelReportSubmitted } from "../fapReportAccess";
+import { isAirlineRole } from "../../../../utils/access";
+import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
 import { formatDateTime, normalizeCategory, PERSON_CATEGORY_OPTIONS, accommodationDiscountPercent, placementKindLabel } from "../fapConstants";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import FapSelect from "../FapSelect/FapSelect";
@@ -223,6 +227,13 @@ const personRosterKeys = (list) => {
   });
 };
 
+// Есть ли вообще сохранённая запись отчёта по гостинице: отправлять нечего,
+// пока отчёт ни разу не сохранён — записи в базе просто нет.
+const hasHotelReport = (request, hotelIndex) =>
+  (request?.hotelReports ?? []).some(
+    (r) => Number(r?.hotelIndex) === Number(hotelIndex)
+  );
+
 // Цена ланчбокса гостя: живой тариф приоритетнее снапшота в pd.
 const lunchboxPriceFor = (pd, tariff) =>
   toNum(tariff ? tariff.lunchboxPrice : pd?.lunchboxPrice);
@@ -384,6 +395,7 @@ export default function FapHotelPage({
   };
 
   const [saving, setSaving] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
   // Refs хранят актуальное состояние для отложенного автосохранения —
   // дебаунс-таймер должен видеть последние значения, а не замороженные в замыкании.
@@ -398,6 +410,10 @@ export default function FapHotelPage({
   const placementOverridesRef = useRef({});
   const peopleRef = useRef([]);
   const saveTimerRef = useRef(null);
+  // Промис сохранения, которое уже улетело на бэк. Отправка отчёта обязана его дождаться:
+  // иначе его upsert придёт в базу ПОСЛЕ отправки, увидит изменившиеся строки и сбросит
+  // только что поставленный флаг.
+  const inFlightSaveRef = useRef(null);
   const reconciledKeyRef = useRef(null);
   // Снапшот ключей гостей — по нему personData переносится при сдвиге состава.
   const personKeysRef = useRef(null);
@@ -440,10 +456,20 @@ export default function FapHotelPage({
   const [saveReport] = useMutation(SAVE_PASSENGER_REQUEST_HOTEL_REPORT, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
+  const [submitReport] = useMutation(SUBMIT_PASSENGER_REQUEST_HOTEL_REPORT, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
 
   // ── Derived ──
   const people = hotel?.people ?? [];
   useEffect(() => { peopleRef.current = people; }, [people]);
+
+  // Видимость отчёта авиакомпании: пока диспетчер не отправил — заглушка.
+  const isAirline = isAirlineRole(user);
+  const reportSubmittedAt = hotelReportSubmittedAt(request, hotelIndex);
+  const reportSubmitted = isHotelReportSubmitted(request, hotelIndex);
+  const reportHidden = isAirline && !reportSubmitted;
+  const hasSavedReport = hasHotelReport(request, hotelIndex);
 
   const { data: hotelTariffData, loading: hotelTariffLoading } = useQuery(
     GET_FAP_HOTEL_TARIFFS,
@@ -1320,15 +1346,21 @@ export default function FapHotelPage({
 
   const persistReport = useCallback(async () => {
     if (!request?.id) return;
+    // Промис объявлен вне try, чтобы finally сбрасывал ref только если там всё ещё
+    // ЭТОТ сейв: при перекрытии двух сохранений завершение раннего иначе обнулило бы
+    // ссылку на более поздний, и отправка снова обогнала бы его.
+    let p = null;
     try {
       setSaving(true);
-      const res = await saveReport({
+      p = saveReport({
         variables: {
           requestId: request.id,
           hotelIndex: Number(hotelIndex),
           reportRows: buildReportRows(),
         },
       });
+      inFlightSaveRef.current = p;
+      const res = await p;
       // Ответ мутации = как строки лежат в БД (бэк дополняет roomCategory и т.п.) —
       // live-синк узнает по нему наш собственный сейв и не будет пересобирать состояние.
       const savedRows = res?.data?.savePassengerRequestHotelReport?.reportRows;
@@ -1338,6 +1370,7 @@ export default function FapHotelPage({
       notifyError("Ошибка при сохранении тарифа");
       console.error(e);
     } finally {
+      if (inFlightSaveRef.current === p) inFlightSaveRef.current = null;
       setSaving(false);
     }
   }, [request?.id, hotelIndex, buildReportRows, saveReport, notifyError, onRefetch]);
@@ -2228,26 +2261,34 @@ export default function FapHotelPage({
   const handleSaveReport = async () => {
     if (!request?.id) return;
     setSaving(true);
+    // Промис объявлен вне try — finally сбрасывает ref только если это всё ещё наш сейв
+    // (см. тот же приём в persistReport).
+    let p = null;
     try {
-      await saveReport({
+      p = saveReport({
         variables: {
           requestId: request.id,
           hotelIndex: Number(hotelIndex),
           reportRows: buildReportRows(),
         },
       });
+      inFlightSaveRef.current = p;
+      await p;
       onRefetch?.();
       success("Отчёт сохранён");
     } catch (e) {
       notifyError("Ошибка при сохранении");
       console.error(e);
     } finally {
+      if (inFlightSaveRef.current === p) inFlightSaveRef.current = null;
       setSaving(false);
     }
   };
 
   const handleExport = async () => {
     try {
+      // Авиакомпания не выгружает то, чего не видит.
+      if (reportHidden) return;
       // Флаш отложенного автосейва — только если правки разрешены и сейв реально запланирован.
       if (canEdit && saveTimerRef.current) {
         clearTimeout(saveTimerRef.current);
@@ -2258,6 +2299,39 @@ export default function FapHotelPage({
     } catch (e) {
       notifyError("Ошибка экспорта");
       console.error(e);
+    }
+  };
+
+  const handleSubmitReport = async () => {
+    if (submitting) return;
+    try {
+      setSubmitting(true);
+      // Отложенный автосейв обязан улететь ДО отправки: иначе он прилетит следом,
+      // увидит изменившиеся строки и сбросит только что поставленный флаг.
+      if (saveTimerRef.current) {
+        clearTimeout(saveTimerRef.current);
+        saveTimerRef.current = null;
+        await persistReport();
+      }
+      // Сейв мог уже улететь без дебаунса (кнопка «Сохранить отчёт») — дожидаемся его,
+      // иначе он приземлится после отправки и сбросит флаг.
+      if (inFlightSaveRef.current) {
+        try {
+          await inFlightSaveRef.current;
+        } catch {
+          // об ошибке сохранения пользователю сообщает сам сейв
+        }
+      }
+      await submitReport({
+        variables: { requestId: request.id, hotelIndex: Number(hotelIndex) },
+      });
+      success("Отчёт отправлен на проверку");
+      onRefetch?.();
+    } catch (e) {
+      notifyError("Не удалось отправить отчёт");
+      console.error(e);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -2641,7 +2715,7 @@ export default function FapHotelPage({
             // вкладке отчёта (со сбросом отложенного автосейва). Без гостей
             // выгружать нечего — там кнопка по той же причине неактивна.
             onDownloadReport={handleExport}
-            hideReport={placed === 0}
+            hideReport={placed === 0 || reportHidden}
           />
         </div>
 
@@ -3221,9 +3295,43 @@ export default function FapHotelPage({
                   <CheckSvg /> {saving ? "Сохранение…" : "Сохранить отчёт"}
                 </button>
               )}
+              {effectiveReportMode === "edit" && canEdit &&
+                (reportSubmitted ? (
+                  <span
+                    className={classes.submittedPill}
+                    title="Авиакомпания видит этот отчёт. Любая правка снова его скроет"
+                  >
+                    <CheckSvg color="#15803D" /> Отправлено · {formatDateTime(reportSubmittedAt)}
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    className={classes.secondaryBtn}
+                    onClick={handleSubmitReport}
+                    disabled={submitting || saving || placed === 0 || !hasSavedReport}
+                    title={
+                      placed === 0
+                        ? "Нет размещённых гостей"
+                        : !hasSavedReport
+                        ? "Сначала сохраните отчёт"
+                        : "Открыть отчёт авиакомпании"
+                    }
+                  >
+                    {submitting ? "Отправка…" : "Отправить на проверку"}
+                  </button>
+                ))}
             </div>
 
-            {placed === 0 ? (
+            {reportHidden ? (
+              <div className={classes.reportPending}>
+                <ScheduleIcon />
+                <div className={classes.reportPendingTitle}>Отчёт формируется</div>
+                <div className={classes.reportPendingText}>
+                  Диспетчер ещё не отправил отчёт. Как только он будет готов,
+                  он появится здесь.
+                </div>
+              </div>
+            ) : placed === 0 ? (
               <div className={classes.emptyRow}>Пассажиры ещё не добавлены</div>
             ) : effectiveReportMode === "view" ? (
               <div className={classes.reportViewScroll}>

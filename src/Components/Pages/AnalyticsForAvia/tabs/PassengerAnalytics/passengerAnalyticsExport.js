@@ -5,6 +5,7 @@ import {
   addCombinedSheet,
   downloadWorkbook,
 } from "../../../../Blocks/FapV2/reports/buildReportSheets";
+import { visibleHotelIndexes } from "../../../../Blocks/FapV2/fapReportAccess";
 import { formatDateRu } from "./passengerAnalyticsMappers";
 
 const statusLabel = (code) => REQUEST_STATUS_CONFIG?.[code]?.label || code || "";
@@ -268,6 +269,7 @@ export async function exportPassengerAnalyticsFullXlsx({
   showAirline,
   meta,
   detailRequests = [],
+  user = null,
 }) {
   const ExcelJS = (await import("exceljs")).default;
   const wb = new ExcelJS.Workbook();
@@ -302,6 +304,7 @@ export async function exportPassengerAnalyticsFullXlsx({
       sheetNames,
       sheetPrefix: requestSheetPrefix(request, index),
       includeTransfer: arrEnabled || depEnabled,
+      hotelIndexes: visibleHotelIndexes(request, user),
     });
   });
 

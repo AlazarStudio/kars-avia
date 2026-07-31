@@ -9,6 +9,7 @@ import DownloadIcon from "../../../../shared/icons/DownloadIcon";
 import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
 import { isExternalUser } from "../../../../utils/access";
 import { downloadRequestReport } from "../reports/buildReportSheets";
+import { visibleHotelIndexes } from "../fapReportAccess";
 import { useToast } from "../../../../contexts/ToastContext";
 
 // Единый набор действий шапки услуги / внутренней страницы ФАП: чип «Реестр»
@@ -49,7 +50,10 @@ export default function FapHeaderActions({
   const handleDownloadReport = async () => {
     try {
       if (onDownloadReport) await onDownloadReport();
-      else await downloadRequestReport(request, notifyError);
+      else
+        await downloadRequestReport(request, notifyError, {
+          hotelIndexes: visibleHotelIndexes(request, user),
+        });
     } catch (e) {
       notifyError("Ошибка экспорта");
       console.error(e);
