@@ -12,6 +12,7 @@ import {
   ADD_PASSENGER_REQUEST_HOTEL_PERSON,
   ADD_PASSENGER_REQUEST_HOTEL_PEOPLE,
   UPDATE_PASSENGER_REQUEST_HOTEL_PERSON,
+  ASSIGN_PASSENGER_REQUEST_HOTEL_ROOM,
   RELOCATE_PASSENGER_REQUEST_HOTEL_PEOPLE,
   EVICT_PASSENGER_REQUEST_HOTEL_PEOPLE,
   SAVE_PASSENGER_REQUEST_HOTEL_REPORT,
@@ -445,6 +446,9 @@ export default function FapHotelPage({
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
   const [updatePerson] = useMutation(UPDATE_PASSENGER_REQUEST_HOTEL_PERSON, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const [assignRoom] = useMutation(ASSIGN_PASSENGER_REQUEST_HOTEL_ROOM, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
   const [relocatePeople] = useMutation(RELOCATE_PASSENGER_REQUEST_HOTEL_PEOPLE, {
@@ -1761,27 +1765,19 @@ export default function FapHotelPage({
     const roomNumber = (value ?? "").trim() || null;
     if ((person.roomNumber ?? "") === (roomNumber ?? "")) return;
     try {
-      await updatePerson({
+      await assignRoom({
         variables: {
           requestId: request.id,
           hotelIndex: Number(hotelIndex),
-          personIndex,
-          person: {
-            fullName: person.fullName ?? "",
-            phone: person.phone ?? null,
-            roomNumber,
-            personType: person.personType === "CREW" ? "CREW" : "PASSENGER",
-            airlinePersonalId: person.airlinePersonalId ?? null,
-            personCategory:
-              person.personType === "CREW" ? "ADULT" : normalizeCategory(person.personCategory),
-          },
+          personIndexes: [personIndex],
+          roomNumber,
         },
       });
       onRefetch?.();
     } catch (e) {
       notifyError(e?.graphQLErrors?.[0]?.message || "Не удалось сохранить номер");
     }
-  }, [people, request?.id, hotelIndex, updatePerson, onRefetch, notifyError]);
+  }, [people, request?.id, hotelIndex, assignRoom, onRefetch, notifyError]);
 
   const updatePersonReport = useCallback((personIndex, field, value) => {
     const prev = personDataRef.current;
@@ -2221,31 +2217,14 @@ export default function FapHotelPage({
     }
     try {
       setSaving(true);
-      // Строго последовательные await: бэк переписывает весь массив people
-      // (load-modify-write), параллельные вызовы теряют данные.
-      // personIndex берём из выбора (_idx) — допущение: правка roomNumber индексы
-      // не сдвигает, а выселение/переселение в эту пачку не входят, поэтому людей
-      // между шагами не перечитываем; refetch — один в конце.
-      for (const idx of selected) {
-        const person = people[idx];
-        if (!person) continue;
-        await updatePerson({
-          variables: {
-            requestId: request.id,
-            hotelIndex: Number(hotelIndex),
-            personIndex: idx,
-            person: {
-              fullName: person.fullName ?? "",
-              phone: person.phone ?? null,
-              roomNumber: room,
-              personType: person.personType === "CREW" ? "CREW" : "PASSENGER",
-              airlinePersonalId: person.airlinePersonalId ?? null,
-              personCategory:
-                person.personType === "CREW" ? "ADULT" : normalizeCategory(person.personCategory),
-            },
-          },
-        });
-      }
+      await assignRoom({
+        variables: {
+          requestId: request.id,
+          hotelIndex: Number(hotelIndex),
+          personIndexes: selected,
+          roomNumber: room,
+        },
+      });
       success(`Номер присвоен: ${selected.length}`);
       setSelected([]);
       closeAssignRoom();

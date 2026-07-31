@@ -2806,6 +2806,24 @@ export const UPDATE_PASSENGER_REQUEST_HOTEL_PERSON = gql`
   }
 `;
 
+export const ASSIGN_PASSENGER_REQUEST_HOTEL_ROOM = gql`
+  mutation AssignPassengerRequestHotelRoom(
+    $requestId: ID!
+    $hotelIndex: Int!
+    $personIndexes: [Int!]!
+    $roomNumber: String
+  ) {
+    assignPassengerRequestHotelRoom(
+      requestId: $requestId
+      hotelIndex: $hotelIndex
+      personIndexes: $personIndexes
+      roomNumber: $roomNumber
+    ) {
+      id
+    }
+  }
+`;
+
 export const GET_BRONS_HOTEL = gql`
   query Hotel($hotelId: ID!, $hcPagination: HotelChessPaginationInput) {
     hotel(id: $hotelId) {
