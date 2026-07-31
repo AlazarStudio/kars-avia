@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { detectProfile, extractPeople } from "./manifestCore.js";
+import { detectProfile, extractPeople, expandLapInfants } from "./manifestCore.js";
 import { PROFILES } from "./manifestProfiles.js";
 
 const TITLE =
@@ -148,7 +148,7 @@ test("PLI: № рейса берётся из титульной строки", 
   assert.equal(profile.flight(rows), "A4-3051");
 });
 
-test("PLI: младенцы на руках считаются по колонке «РМ»", () => {
+test("PLI: инфанты на руках считаются по колонке «РМ»", () => {
   const { rows, profile, cols } = detectNarrow([
     narrowRow("1", "IVANOV/IVAN MR", "1A", "ADT", "1"),
     narrowRow("2", "PETROVA/OLGA MRS", "2A", "ADT", "1"),
@@ -158,12 +158,40 @@ test("PLI: младенцы на руках считаются по колонк
   const infants = profile.lapInfants(rows, cols);
   assert.equal(infants.count, 3);
   assert.deepEqual(infants.carriers, [
-    "IVANOV IVAN",
-    "PETROVA OLGA",
-    "KUZNETSOVA VERA",
+    { name: "IVANOV IVAN", count: 1 },
+    { name: "PETROVA OLGA", count: 1 },
+    { name: "KUZNETSOVA VERA", count: 1 },
   ]);
-  // Своих строк у младенцев нет — пассажиров ровно четверо.
+  // Своих строк у инфантов в файле нет — строк-пассажиров ровно четыре.
   assert.equal(extractPeople(rows, profile, cols).length, 4);
+});
+
+test("PLI: инфанты разворачиваются в записи под именем сопровождающего", () => {
+  const { rows, profile, cols } = detectNarrow([
+    narrowRow("1", "IVANOV/IVAN MR", "1A", "ADT", "1"),
+    narrowRow("2", "SIDOROV/SEMEN MR", "2A", "ADT", null),
+  ]);
+  const people = expandLapInfants(profile.lapInfants(rows, cols));
+  assert.deepEqual(people, [
+    { fullName: "IVANOV IVAN (инфант)", seat: null, personCategory: "INFANT" },
+  ]);
+});
+
+test("PLI: двое инфантов у одного сопровождающего получают разные имена", () => {
+  const { rows, profile, cols } = detectNarrow([
+    narrowRow("1", "IVANOV/IVAN MR", "1A", "ADT", "2"),
+  ]);
+  const infants = profile.lapInfants(rows, cols);
+  assert.equal(infants.count, 2);
+  assert.deepEqual(
+    expandLapInfants(infants).map((p) => p.fullName),
+    ["IVANOV IVAN (инфант 1)", "IVANOV IVAN (инфант 2)"]
+  );
+});
+
+test("форматы без колонки инфантов не дают лишних записей", () => {
+  assert.deepEqual(expandLapInfants(null), []);
+  assert.deepEqual(expandLapInfants({ count: 0, carriers: [] }), []);
 });
 
 test("регресс PM: профиль и категория INFANT не перехвачены PLI", () => {

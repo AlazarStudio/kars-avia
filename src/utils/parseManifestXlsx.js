@@ -1,5 +1,5 @@
 import * as XLSX from "xlsx";
-import { detectProfile, extractPeople } from "./manifestCore.js";
+import { detectProfile, extractPeople, expandLapInfants } from "./manifestCore.js";
 import { PROFILES } from "./manifestProfiles.js";
 
 // Ре-экспорт для потребителей (AddRepresentativeService.jsx импортирует отсюда).
@@ -9,7 +9,8 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 МБ
 
 // Возвращает { people: [{ fullName, seat, personCategory }], flightNumber, lapInfants, error }.
 // Формат (PM / PNL / PLI) определяется автоматически по заголовкам (см. manifestProfiles.js).
-// lapInfants = { count, carriers } | null — младенцы на руках, если формат их вообще выделяет.
+// lapInfants = { count, carriers: [{ name, count }] } | null — инфанты на руках, если
+// формат их вообще выделяет. Они попадают и в people (см. expandLapInfants).
 export async function parseManifestXlsx(file) {
   if (file.size > MAX_FILE_SIZE) {
     return { people: [], flightNumber: "", error: "Файл больше 10 МБ" };
@@ -53,12 +54,13 @@ export async function parseManifestXlsx(file) {
     };
   }
 
+  const lapInfants = detected.profile.lapInfants?.(rows, detected.cols) ?? null;
+
   return {
-    people,
+    people: [...people, ...expandLapInfants(lapInfants)],
     flightNumber: detected.profile.flight(rows),
-    // Младенцы на руках: в некоторых форматах у них нет своих строк, только счётчик
-    // на сопровождающем. Отдаём их отдельно — импортировать нечего, но предупредить надо.
-    lapInfants: detected.profile.lapInfants?.(rows, detected.cols) ?? null,
+    // Отдаём и отдельно — плашка называет сопровождающих поимённо.
+    lapInfants,
     error: null,
   };
 }
