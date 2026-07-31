@@ -554,6 +554,13 @@ export default function FapHotelPage({
     [tariffs, airlineTariffs, hotelTariffs]
   );
 
+  // Ref на findTariff: buildReportRows читает состояние только через refs, но искать
+  // тариф обязан в ТЕХ ЖЕ трёх источниках, что и экран. Пока он искал только среди
+  // ручных, у гостя на договорном тарифе в сохранённую строку уходила цена ланчбокса
+  // из pd (всегда 0) — на экране сумма была верной, а в строке, Excel и аналитике нет.
+  const findTariffRef = useRef(findTariff);
+  useEffect(() => { findTariffRef.current = findTariff; }, [findTariff]);
+
   // Опции селекта тарифа: три источника отдельными группами — так же, как было
   // в нативных <optgroup>.
   const tariffOptions = useMemo(() => {
@@ -1312,7 +1319,8 @@ export default function FapHotelPage({
     const personRows = currentPeople.map((person, i) => {
       const pd = currentPersonData[i] ?? emptyPD(person, hotelIndex, plan);
       const eff = getEffectiveRowRef.current(i, pd);
-      const tariff = currentTariffs.find((t) => t.id === pd.tariffId) ?? null;
+      // Все три источника, как на экране (см. коммент у findTariffRef).
+      const tariff = findTariffRef.current(pd.tariffId);
       return {
         fullName: person.fullName ?? "",
         personId: person.personId ?? "",
