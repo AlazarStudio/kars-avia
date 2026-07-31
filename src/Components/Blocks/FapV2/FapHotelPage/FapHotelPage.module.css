@@ -1399,6 +1399,33 @@
   cursor: help;
   flex-shrink: 0;
 }
+
+/* Тот же кружок на месте «?», но янтарный: у гостя проставлены ланчбоксы, а цены
+   ланчбокса у тарифа нет — в сумму питания они не попадут. Геометрия совпадает с
+   .foodHint намеренно: ширину строки отчёта менять нельзя (.roomGroup обрезает
+   по overflow: hidden), поэтому подменяем глиф, а не добавляем элемент. */
+.foodHintWarn {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #FEF3C7;
+  color: #B45309;
+  font-size: 10px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  flex-shrink: 0;
+}
+
+.hintWarn {
+  color: #B45309;
+  font-weight: 600;
+  margin-bottom: 6px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #EDF0F7;
+}
 .foodHint:hover, .foodHint:focus-visible { background: #0057C2; color: #fff; outline: none; }
 
 /* Сумма проживания + «?» (формула ушла в тултип) */

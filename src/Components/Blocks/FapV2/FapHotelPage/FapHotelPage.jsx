@@ -263,7 +263,18 @@ const foodHintData = (pd, tariff) => {
   const lbc = lunchboxCountOf(pd);
   const lbPrice = lunchboxPriceFor(pd, tariff);
   if (lbc > 0 && lbPrice > 0) rows.push(["Ланчбокс", `${lbc} × ${fmt(lbPrice)}`, fmt(lbc * lbPrice)]);
-  return { rows, total: fmt(computePdFood(pd, tariff)) };
+  return {
+    rows,
+    total: fmt(computePdFood(pd, tariff)),
+    // Ланчбоксы проставлены, а цены у тарифа нет — в сумму они не попадут, и строки
+    // «Ланчбокс» выше в этом случае тоже нет. Без этого предупреждения ноль молчаливый:
+    // диспетчер видит количество в поле и считает, что оно учтено. Цена ланчбокса есть
+    // у ручного тарифа и у договорного (правится в его карточке), у гостиничного её нет.
+    warn:
+      lbc > 0 && lbPrice <= 0
+        ? `Ланчбоксы (${lbc}) не посчитаны: у тарифа не задана цена ланчбокса`
+        : null,
+  };
 };
 
 // «?»-подсказка с расчётом — светлая карточка в стиле поповеров системы
@@ -285,13 +296,14 @@ const hintTooltipSlotProps = {
   },
 };
 
-function CalcHint({ rows, totalLabel, total }) {
+function CalcHint({ rows, totalLabel, total, warn = null }) {
   return (
     <Tooltip
       placement="left"
       slotProps={hintTooltipSlotProps}
       title={
         <div className={classes.hintBody}>
+          {warn ? <div className={classes.hintWarn}>⚠ {warn}</div> : null}
           {rows.map(([label, expr, sum]) => (
             <div key={label} className={classes.hintRow}>
               <span className={classes.hintLabel}>{label}</span>
@@ -306,8 +318,12 @@ function CalcHint({ rows, totalLabel, total }) {
         </div>
       }
     >
-      <span className={classes.foodHint} tabIndex={0} aria-label={`Расчёт: ${totalLabel}`}>
-        ?
+      <span
+        className={warn ? classes.foodHintWarn : classes.foodHint}
+        tabIndex={0}
+        aria-label={warn ? `Внимание: ${warn}` : `Расчёт: ${totalLabel}`}
+      >
+        {warn ? "⚠" : "?"}
       </span>
     </Tooltip>
   );
@@ -3589,7 +3605,7 @@ export default function FapHotelPage({
                                 {m.food > 0 ? fmt(m.food) : "—"}
                                 {(() => {
                                   const fh = foodHintData(pd, findTariff(pd.tariffId));
-                                  return <CalcHint rows={fh.rows} totalLabel="Питание" total={fh.total} />;
+                                  return <CalcHint rows={fh.rows} totalLabel="Питание" total={fh.total} warn={fh.warn} />;
                                 })()}
                               </div>
                               {(() => {
