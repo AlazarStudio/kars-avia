@@ -397,6 +397,10 @@ export default function FapHotelPage({
   // Ценник авиакомпании они не меняют — накладываются поверх мемо airlineTariffs
   // и сохраняются в теневой строке отчёта.
   const [airlineTariffOverrides, setAirlineTariffOverrides] = useState({});
+  // То же самое для тарифов гостиницы, но только цена ланчбокса: в прайсе гостиницы
+  // такого поля нет вовсе, а ланчбоксы гостю выдают. Тип тарифа сюда НЕ добавляем —
+  // он менял бы расчёт проживания, а тут задача только про питание.
+  const [hotelTariffOverrides, setHotelTariffOverrides] = useState({});
   const [personData, setPersonData] = useState({});
   // Ручной вид размещения номера: { [roomKey номера]: число мест }. Ключ — номер, а не
   // гость: при переезде гостя переопределение остаётся у комнаты.
@@ -422,6 +426,8 @@ export default function FapHotelPage({
   // Договорный тариф — мемо (объявлен ниже), в ref его кладём эффектом:
   // buildReportRows читает тарифы только через refs.
   const airlineTariffsRef = useRef([]);
+  // Тарифы гостиницы — тоже мемо; ref нужен теневым строкам в buildReportRows.
+  const hotelTariffsRef = useRef([]);
   const personDataRef = useRef(personData);
   // buildReportRows читает состояние только через refs (он работает и на размонтировании).
   const placementOverridesRef = useRef({});
@@ -532,8 +538,11 @@ export default function FapHotelPage({
         dinner: d,
         foodCost: b + l + d,
         pricePerDay: toNum(rk.priceForAirline),
+        // Поверх прайса гостиницы — правки отчёта (цена ланчбокса). Прайс не меняют.
+        ...(hotelTariffOverrides[rk.id] ?? {}),
       }));
-  }, [hotelTariffData]);
+  }, [hotelTariffData, hotelTariffOverrides]);
+  useEffect(() => { hotelTariffsRef.current = hotelTariffs; }, [hotelTariffs]);
 
   // Договорный тариф авиакомпании: ценник с типом «ФАП»/«Все типы» по аэропорту заявки.
   // Подходящий ценник может быть только один — гарантируется правилами конфликтов.
@@ -1091,6 +1100,7 @@ export default function FapHotelPage({
       //     цена ланчбокса) — они уходят в оверлей, пользовательским тарифом такая
       //     строка не становится.
       const nextAirlineOverrides = {};
+      const nextHotelOverrides = {};
       savedRows.forEach((r) => {
         const nm = (r.tariffName ?? "").trim();
         if (!nm || (r.fullName ?? "").trim()) return;
@@ -1102,6 +1112,13 @@ export default function FapHotelPage({
           };
           return;
         }
+        // Теневая строка тарифа гостиницы несёт только цену ланчбокса — она уходит
+        // в оверлей; пользовательским тарифом такая строка не становится (как у АК).
+        const ht = hotelTariffs.find((h) => h.name === nm);
+        if (ht) {
+          nextHotelOverrides[ht.id] = { lunchboxPrice: toNum(r.lunchboxPrice) };
+          return;
+        }
         if (isHotelName(nm)) return;
         const t = ensureShell(nm, r);
         if ((r.roomKind ?? "") === "PER_ROOM") t.billingMode = "PER_ROOM";
@@ -1111,6 +1128,7 @@ export default function FapHotelPage({
         }
       });
       setAirlineTariffOverrides(nextAirlineOverrides);
+      setHotelTariffOverrides(nextHotelOverrides);
       // 1b) Гостевые строки — только гарантируют наличие оболочки тарифа,
       //     цены по видам из них НЕ берём (иначе деградировавший гость даёт фантомный вид).
       savedRows.forEach((r) => {
@@ -1332,6 +1350,38 @@ export default function FapHotelPage({
       placementKindOverride: null,
       accommodationDiscount: null,
     }));
+    // Теневая строка тарифа гостиницы — только когда в отчёте задали цену ланчбокса
+    // (в прайсе гостиницы такого поля нет, хранить больше нечего). Без фильтра каждый
+    // отчёт получал бы по строке на КАЖДЫЙ вид номера гостиницы — мусор в reportRows.
+    const hotelGhostRows = (hotelTariffsRef.current ?? [])
+      .filter((t) => toNum(t.lunchboxPrice) > 0)
+      .map((t) => ({
+        fullName: "",
+        personId: "",
+        roomNumber: "",
+        roomCategory: t.name || "",
+        // Пусто: режим начисления у гостиничного тарифа не переопределяется.
+        roomKind: "",
+        daysCount: 0,
+        breakfast: toNum(t.breakfast),
+        lunch: toNum(t.lunch),
+        dinner: toNum(t.dinner),
+        breakfastCount: 0,
+        lunchCount: 0,
+        dinnerCount: 0,
+        breakfastLunchbox: false,
+        lunchLunchbox: false,
+        dinnerLunchbox: false,
+        lunchboxCount: 0,
+        lunchboxPrice: toNum(t.lunchboxPrice),
+        foodCost: toNum(t.breakfast) + toNum(t.lunch) + toNum(t.dinner),
+        accommodationCost: 0,
+        tariffName: t.name || "",
+        pricePerDay: 0,
+        placementKind: 0,
+        placementKindOverride: null,
+        accommodationDiscount: null,
+      }));
     const personRows = currentPeople.map((person, i) => {
       const pd = currentPersonData[i] ?? emptyPD(person, hotelIndex, plan);
       const eff = getEffectiveRowRef.current(i, pd);
@@ -1372,7 +1422,7 @@ export default function FapHotelPage({
           pd.accommodationDiscount != null ? toNum(pd.accommodationDiscount) : null,
       };
     });
-    return [...personRows, ...ghostRows, ...airlineGhostRows];
+    return [...personRows, ...ghostRows, ...airlineGhostRows, ...hotelGhostRows];
   }, [hotelIndex, plan]);
 
   const persistReport = useCallback(async () => {
@@ -1568,6 +1618,14 @@ export default function FapHotelPage({
   // Правка договорного тарифа: пишем в оверлей отчёта, ценник авиакомпании не трогаем.
   const updateAirlineTariff = useCallback((tariffId, field, value) => {
     setAirlineTariffOverrides((prev) => ({
+      ...prev,
+      [tariffId]: { ...(prev[tariffId] ?? {}), [field]: value },
+    }));
+    scheduleSave();
+  }, [scheduleSave]);
+  // Правка тарифа гостиницы: тот же оверлей отчёта, прайс гостиницы не трогаем.
+  const updateHotelTariff = useCallback((tariffId, field, value) => {
+    setHotelTariffOverrides((prev) => ({
       ...prev,
       [tariffId]: { ...(prev[tariffId] ?? {}), [field]: value },
     }));
@@ -3236,14 +3294,17 @@ export default function FapHotelPage({
                       </span>
                       <input className={classes.tariffName} value={t.name ?? ""} readOnly />
                     </div>
+                    {/* Цена ланчбокса — свойство отчёта: в прайсе гостиницы её нет,
+                        поэтому поле редактируемое, а сам прайс не меняется. */}
                     <div className={classes.tariffFields}>
                       {[
                         ["breakfast", "Завтрак"],
                         ["lunch", "Обед"],
                         ["dinner", "Ужин"],
-                        ["foodCost", "Ст-ть питания", true, true],
+                        ["lunchboxPrice", "Ланчбокс", false, true],
+                        ["foodCost", "Ст-ть питания", true],
                         ["pricePerDay", "Цена за сутки", true],
-                      ].map(([key, label, accent]) => {
+                      ].map(([key, label, accent, editable]) => {
                         const displayVal =
                           key === "foodCost"
                             ? toNum(t.breakfast) + toNum(t.lunch) + toNum(t.dinner)
@@ -3256,7 +3317,10 @@ export default function FapHotelPage({
                                 type="number"
                                 min={0}
                                 value={displayVal ? displayVal : ""}
-                                readOnly
+                                onChange={(e) =>
+                                  editable && canEdit && updateHotelTariff(t.id, key, e.target.value)
+                                }
+                                readOnly={!editable || !canEdit}
                                 placeholder="0"
                                 className={accent ? classes.tariffInputAccent : classes.tariffInput}
                               />
