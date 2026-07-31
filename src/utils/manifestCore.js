@@ -14,6 +14,14 @@ const TITLE_RE = /\s+(MR|MRS|MS|MISS|MSTR)$/i;
 export const cleanFullName = (v) =>
   s(v).replace(TITLE_RE, "").replace(/\s+/g, " ").trim();
 
+// Первая непустая строка многострочной ячейки: в выгрузке DCS под ФИО в той же
+// ячейке идут номера багажных бирок, а под местом — места по багажу.
+export const firstLine = (v) =>
+  String(v ?? "")
+    .split(/\r?\n/)
+    .map((part) => part.trim())
+    .find((part) => part) || "";
+
 // Отметка в колонках CHD/INF: «X» латиницей или кириллицей.
 export const isMark = (v) => {
   const value = s(v).toUpperCase();
@@ -91,11 +99,20 @@ export const extractPeople = (rows, profile, cols) => {
   for (const row of rows) {
     if (!row) continue;
     if (!profile.isPassenger(row, cols)) continue;
-    const fullName = cleanFullName(row[cols.name]);
+    // Профиль может задать своё чтение ячейки (многострочность, разделители).
+    // Без хука — прежнее поведение: значение ячейки как есть.
+    const rawName = profile.readName ? profile.readName(row, cols) : row[cols.name];
+    const fullName = cleanFullName(rawName);
     if (!fullName) continue;
+    const rawSeat =
+      cols.seat === undefined
+        ? null
+        : profile.readSeat
+          ? profile.readSeat(row, cols)
+          : row[cols.seat];
     people.push({
       fullName,
-      seat: cols.seat !== undefined ? s(row[cols.seat]) || null : null,
+      seat: s(rawSeat) || null,
       personCategory: profile.category(row, cols),
     });
   }

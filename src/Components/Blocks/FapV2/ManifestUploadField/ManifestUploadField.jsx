@@ -14,7 +14,7 @@ const plural = (n, forms) => {
 };
 
 // Загрузка пассажирского манифеста (форма ПМ) с превью.
-// parsed = { people, flightNumber, fileName } | null — владеет родитель.
+// parsed = { people, flightNumber, lapInfants, fileName } | null — владеет родитель.
 // expectedFlightNumber — рейс заявки: при расхождении с рейсом файла показываем плашку.
 export default function ManifestUploadField({
   parsed,
@@ -46,6 +46,7 @@ export default function ManifestUploadField({
     onParsed({
       people: result.people,
       flightNumber: result.flightNumber,
+      lapInfants: result.lapInfants,
       fileName: file.name,
     });
   };
@@ -103,6 +104,22 @@ export default function ManifestUploadField({
         <div className={classes.flightWarn}>
           ⚠ В манифесте рейс <b>{parsed.flightNumber}</b>, в заявке —{" "}
           <b>{expectedFlightNumber}</b>
+        </div>
+      )}
+
+      {parsed?.lapInfants?.count > 0 && (
+        <div className={classes.flightWarn}>
+          ⚠ В манифесте ещё {parsed.lapInfants.count}{" "}
+          {plural(parsed.lapInfants.count, [
+            "младенец",
+            "младенца",
+            "младенцев",
+          ])}{" "}
+          на руках — отдельных строк у них нет
+          {parsed.lapInfants.carriers?.length
+            ? `: ${parsed.lapInfants.carriers.join(", ")}`
+            : ""}
+          . Добавьте их вручную, если нужно.
         </div>
       )}
 

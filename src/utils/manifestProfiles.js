@@ -1,7 +1,7 @@
 // Профили форматов манифестов. Каждый профиль описывает свой формат данными:
 // какие колонки искать, как определить строку-пассажира, категорию и номер рейса.
 // Новый формат = ещё один профиль в массиве PROFILES.
-import { s, isMark } from "./manifestCore.js";
+import { s, isMark, cleanFullName, firstLine } from "./manifestCore.js";
 
 const isInt = (v) => /^\d+$/.test(s(v));
 
@@ -45,6 +45,41 @@ const flightPNL = (rows) => {
   return "";
 };
 
+// PLI: возрастная категория — латинский код в колонке «Кат».
+const PLI_CATEGORY = { ADT: "ADULT", CHD: "CHILD", INF: "INFANT" };
+
+// № рейса PLI — из титульной строки «СПИСОК ПАССАЖИРОВ. РЕЙС A4-3051 ДАТА: …».
+const flightPLI = (rows) => {
+  for (const row of rows) {
+    for (const cell of row || []) {
+      const m = s(cell).match(/РЕЙС\s+([A-ZА-ЯЁ0-9-]+)/i);
+      if (m) return m[1];
+    }
+  }
+  return "";
+};
+
+// Младенцы на руках: в PLI у них НЕТ своих строк, только счётчик в колонке «РМ»
+// на строке сопровождающего взрослого. Возвращаем количество и ФИО сопровождающих,
+// чтобы интерфейс мог предупредить — заводить безымянные записи мы не хотим.
+const lapInfantsPLI = (rows, cols) => {
+  if (cols.infants === undefined) return { count: 0, carriers: [] };
+  let count = 0;
+  const carriers = [];
+  for (const row of rows || []) {
+    if (!row) continue;
+    if (!isInt(row[cols.seq])) continue;
+    const raw = s(row[cols.infants]);
+    if (!raw) continue;
+    const n = Number(raw);
+    if (!Number.isFinite(n) || n <= 0) continue;
+    count += n;
+    const name = cleanFullName(firstLine(row[cols.name]).replace(/\//g, " "));
+    if (name) carriers.push(name);
+  }
+  return { count, carriers };
+};
+
 export const PROFILES = [
   {
     id: "PM", // Пассажирская ведомость (форма ПМ)
@@ -80,5 +115,25 @@ export const PROFILES = [
       PAX_CATEGORY[s(row[c.pax]).toUpperCase()] !== undefined,
     category: (row, c) => PAX_CATEGORY[s(row[c.pax]).toUpperCase()] || "ADULT",
     flight: flightPNL,
+  },
+  {
+    id: "PLI", // Список пассажиров из DCS (набор колонок настраивается оператором)
+    columns: {
+      seq: ["SEQ"],
+      name: ["ФИОПАССАЖИРАНОМЕРБИРКИ", "ФИОПАССАЖИРА"],
+      seat: ["МЕСТАВЕС", "МЕСТА"],
+      cat: ["КАТ"],
+      infants: ["РМ"],
+    },
+    required: ["seq", "name", "cat"],
+    isPassenger: (row, c) => isInt(row[c.seq]),
+    category: (row, c) => PLI_CATEGORY[s(row[c.cat]).toUpperCase()] || "ADULT",
+    // ФИО приходит как «SURNAME/NAME MR», под ним в той же ячейке — номера бирок.
+    // Слеш заменяем пробелом: в ПМ и PNL ФИО уже через пробел, а дедуп реестра
+    // сравнивает строки буква в букву — иначе один человек задвоится.
+    readName: (row, c) => firstLine(row[c.name]).replace(/\//g, " "),
+    readSeat: (row, c) => firstLine(row[c.seat]),
+    flight: flightPLI,
+    lapInfants: lapInfantsPLI,
   },
 ];
