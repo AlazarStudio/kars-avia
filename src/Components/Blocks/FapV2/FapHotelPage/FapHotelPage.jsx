@@ -69,7 +69,6 @@ import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 import CloseIcon from "../../../../shared/icons/CloseIcon";
 import CopyIcon from "../../../../shared/icons/CopyIcon";
-import EyeIcon from "../../../../shared/icons/EyeIcon";
 import { downloadHotelReport } from "../reports/buildReportSheets";
 import FapReportView from "../FapReportView/FapReportView";
 import FapModeToggle from "../FapModeToggle/FapModeToggle";
