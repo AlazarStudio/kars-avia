@@ -65,7 +65,7 @@ export default function ManifestUploadField({
   const chips = [
     { label: "взр", value: counts.ADULT || 0 },
     { label: "РБ", value: counts.CHILD || 0 },
-    { label: "РМ", value: counts.INFANT || 0 },
+    { label: "инф", value: counts.INFANT || 0 },
   ].filter((c) => c.value > 0);
 
   const flightMismatch =
