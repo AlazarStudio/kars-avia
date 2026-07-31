@@ -13,8 +13,8 @@ import AddRepresentativeBooking from "../AddRepresentativeBooking/AddRepresentat
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import {
   REMOVE_PASSENGER_REQUEST_HOTEL_PERSON,
-  RELOCATE_PASSENGER_REQUEST_HOTEL_PERSON,
-  EVICT_PASSENGER_REQUEST_HOTEL_PERSON,
+  RELOCATE_PASSENGER_REQUEST_HOTEL_PEOPLE,
+  EVICT_PASSENGER_REQUEST_HOTEL_PEOPLE,
   GET_PASSENGER_REQUEST,
   getCookie,
   convertToDate,
@@ -122,8 +122,8 @@ export default function RepresentativeHotelDetail({
     },
   );
 
-  const [relocatePerson, { loading: relocating }] = useMutation(
-    RELOCATE_PASSENGER_REQUEST_HOTEL_PERSON,
+  const [relocatePeople, { loading: relocating }] = useMutation(
+    RELOCATE_PASSENGER_REQUEST_HOTEL_PEOPLE,
     {
       context: { headers: { Authorization: `Bearer ${token}` } },
       refetchQueries: [
@@ -136,8 +136,8 @@ export default function RepresentativeHotelDetail({
     },
   );
 
-  const [evictPerson, { loading: evicting }] = useMutation(
-    EVICT_PASSENGER_REQUEST_HOTEL_PERSON,
+  const [evictPeople, { loading: evicting }] = useMutation(
+    EVICT_PASSENGER_REQUEST_HOTEL_PEOPLE,
     {
       context: { headers: { Authorization: `Bearer ${token}` } },
       refetchQueries: [
@@ -197,17 +197,15 @@ export default function RepresentativeHotelDetail({
     const { personIndices, toHotelIndex } = relocateModal;
     if (!personIndices?.length || toHotelIndex === undefined) return;
     try {
-      for (const personIndex of [...personIndices].sort((a, b) => b - a)) {
-        await relocatePerson({
-          variables: {
-            requestId: request.id,
-            fromHotelIndex: hotelIndex,
-            toHotelIndex,
-            personIndex,
-            reason: relocateReason.trim(),
-          },
-        });
-      }
+      await relocatePeople({
+        variables: {
+          requestId: request.id,
+          fromHotelIndex: hotelIndex,
+          toHotelIndex,
+          personIndexes: personIndices,
+          reason: relocateReason.trim(),
+        },
+      });
       addNotification?.(
         personIndices.length === 1
           ? "Пассажир переселён."
@@ -236,16 +234,14 @@ export default function RepresentativeHotelDetail({
     const { personIndices } = evictModal;
     if (!personIndices?.length) return;
     try {
-      for (const personIndex of [...personIndices].sort((a, b) => b - a)) {
-        await evictPerson({
-          variables: {
-            requestId: request.id,
-            hotelIndex,
-            personIndex,
-            reason: evictReason.trim(),
-          },
-        });
-      }
+      await evictPeople({
+        variables: {
+          requestId: request.id,
+          hotelIndex,
+          personIndexes: personIndices,
+          reason: evictReason.trim(),
+        },
+      });
       addNotification?.(
         personIndices.length === 1
           ? "Пассажир выселен."
