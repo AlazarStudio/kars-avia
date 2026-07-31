@@ -8,6 +8,7 @@ import {
   ADD_PASSENGER_REQUEST_DRIVER_PEOPLE,
   UPDATE_PASSENGER_REQUEST_DRIVER_PERSON,
   REMOVE_PASSENGER_REQUEST_DRIVER_PERSON,
+  REMOVE_PASSENGER_REQUEST_DRIVER_PEOPLE,
   UPDATE_PASSENGER_REQUEST_DRIVER,
   getCookie,
 } from "../../../../../graphQL_requests";
@@ -209,6 +210,9 @@ export default function FapDriverPage({
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
   const [removePerson] = useMutation(REMOVE_PASSENGER_REQUEST_DRIVER_PERSON, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const [removeDriverPeople] = useMutation(REMOVE_PASSENGER_REQUEST_DRIVER_PEOPLE, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
   const [addPeople] = useMutation(ADD_PASSENGER_REQUEST_DRIVER_PEOPLE, {
@@ -539,17 +543,14 @@ export default function FapDriverPage({
     if (!ok) return;
     try {
       setSaving(true);
-      const sorted = [...selected].sort((a, b) => b - a);
-      for (const idx of sorted) {
-        await removePerson({
-          variables: {
-            requestId: request.id,
-            driverIndex: Number(driverIndex),
-            personIndex: idx,
-            direction,
-          },
-        });
-      }
+      await removeDriverPeople({
+        variables: {
+          requestId: request.id,
+          driverIndex: Number(driverIndex),
+          personIndexes: selected,
+          direction,
+        },
+      });
       success(isCrew ? `Снято: ${selected.length}` : `Удалено: ${selected.length}`);
       clearSel();
       onRefetch?.();

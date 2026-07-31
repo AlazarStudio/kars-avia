@@ -2311,6 +2311,22 @@ export const REMOVE_PASSENGER_REQUEST_PERSON = gql`
   }
 `;
 
+export const REMOVE_PASSENGER_REQUEST_PEOPLE = gql`
+  mutation RemovePassengerRequestPeople(
+    $requestId: ID!
+    $service: PassengerWaterFoodKind!
+    $personIndexes: [Int!]!
+  ) {
+    removePassengerRequestPeople(
+      requestId: $requestId
+      service: $service
+      personIndexes: $personIndexes
+    ) {
+      id
+    }
+  }
+`;
+
 export const SET_PASSENGER_SERVICE_STATUS = gql`
   mutation SetPassengerServiceStatus($id: ID!, $service: PassengerServiceKind!, $status: PassengerServiceStatus!) {
     setPassengerRequestServiceStatus(id: $id, service: $service, status: $status) {
@@ -2434,6 +2450,24 @@ export const REMOVE_PASSENGER_REQUEST_DRIVER_PERSON = gql`
       requestId: $requestId
       driverIndex: $driverIndex
       personIndex: $personIndex
+      direction: $direction
+    ) {
+      id
+    }
+  }
+`;
+
+export const REMOVE_PASSENGER_REQUEST_DRIVER_PEOPLE = gql`
+  mutation RemovePassengerRequestDriverPeople(
+    $requestId: ID!
+    $driverIndex: Int!
+    $personIndexes: [Int!]!
+    $direction: TransferDirection
+  ) {
+    removePassengerRequestDriverPeople(
+      requestId: $requestId
+      driverIndex: $driverIndex
+      personIndexes: $personIndexes
       direction: $direction
     ) {
       id

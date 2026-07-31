@@ -8,6 +8,7 @@ import {
   ADD_PASSENGER_REQUEST_PEOPLE,
   UPDATE_PASSENGER_REQUEST_PERSON,
   REMOVE_PASSENGER_REQUEST_PERSON,
+  REMOVE_PASSENGER_REQUEST_PEOPLE,
   COMPLETE_PASSENGER_REQUEST_WATER_EARLY,
   COMPLETE_PASSENGER_REQUEST_MEAL_EARLY,
   getCookie,
@@ -110,6 +111,9 @@ export default function FapWaterMealPage({
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
   const [removePerson] = useMutation(REMOVE_PASSENGER_REQUEST_PERSON, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const [removePeople] = useMutation(REMOVE_PASSENGER_REQUEST_PEOPLE, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
   const [addPeople] = useMutation(ADD_PASSENGER_REQUEST_PEOPLE, {
@@ -303,12 +307,13 @@ export default function FapWaterMealPage({
     if (!ok) return;
     try {
       setSaving(true);
-      const sorted = [...selected].sort((a, b) => b - a);
-      for (const idx of sorted) {
-        await removePerson({
-          variables: { requestId: request.id, service: serviceKind, personIndex: idx },
-        });
-      }
+      await removePeople({
+        variables: {
+          requestId: request.id,
+          service: serviceKind,
+          personIndexes: selected,
+        },
+      });
       success(`Удалено: ${selected.length}`);
       clearSel();
       onRefetch?.();
