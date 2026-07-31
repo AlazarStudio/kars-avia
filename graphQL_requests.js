@@ -2604,6 +2604,42 @@ export const RELOCATE_PASSENGER_REQUEST_HOTEL_PERSON = gql`
   }
 `;
 
+export const RELOCATE_PASSENGER_REQUEST_HOTEL_PEOPLE = gql`
+  mutation RelocatePassengerRequestHotelPeople(
+    $requestId: ID!
+    $fromHotelIndex: Int!
+    $toHotelIndex: Int!
+    $personIndexes: [Int!]!
+    $reason: String!
+    $movedAt: Date
+  ) {
+    relocatePassengerRequestHotelPeople(
+      requestId: $requestId
+      fromHotelIndex: $fromHotelIndex
+      toHotelIndex: $toHotelIndex
+      personIndexes: $personIndexes
+      reason: $reason
+      movedAt: $movedAt
+    ) {
+      id
+      livingService {
+        hotels {
+          name
+          people {
+            fullName
+            accommodationChesses {
+              hotelIndex
+              startAt
+              endAt
+              reason
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const EVICT_PASSENGER_REQUEST_HOTEL_PERSON = gql`
   mutation EvictPassengerRequestHotelPerson(
     $requestId: ID!
@@ -2616,6 +2652,33 @@ export const EVICT_PASSENGER_REQUEST_HOTEL_PERSON = gql`
       requestId: $requestId
       hotelIndex: $hotelIndex
       personIndex: $personIndex
+      reason: $reason
+      evictedAt: $evictedAt
+    ) {
+      id
+      livingService {
+        evictions {
+          reason
+          evictedAt
+          person { fullName }
+        }
+      }
+    }
+  }
+`;
+
+export const EVICT_PASSENGER_REQUEST_HOTEL_PEOPLE = gql`
+  mutation EvictPassengerRequestHotelPeople(
+    $requestId: ID!
+    $hotelIndex: Int!
+    $personIndexes: [Int!]!
+    $reason: String!
+    $evictedAt: Date
+  ) {
+    evictPassengerRequestHotelPeople(
+      requestId: $requestId
+      hotelIndex: $hotelIndex
+      personIndexes: $personIndexes
       reason: $reason
       evictedAt: $evictedAt
     ) {

@@ -12,8 +12,8 @@ import {
   ADD_PASSENGER_REQUEST_HOTEL_PERSON,
   ADD_PASSENGER_REQUEST_HOTEL_PEOPLE,
   UPDATE_PASSENGER_REQUEST_HOTEL_PERSON,
-  RELOCATE_PASSENGER_REQUEST_HOTEL_PERSON,
-  EVICT_PASSENGER_REQUEST_HOTEL_PERSON,
+  RELOCATE_PASSENGER_REQUEST_HOTEL_PEOPLE,
+  EVICT_PASSENGER_REQUEST_HOTEL_PEOPLE,
   SAVE_PASSENGER_REQUEST_HOTEL_REPORT,
   SUBMIT_PASSENGER_REQUEST_HOTEL_REPORT,
   HIDE_PASSENGER_REQUEST_HOTEL_REPORT,
@@ -447,10 +447,10 @@ export default function FapHotelPage({
   const [updatePerson] = useMutation(UPDATE_PASSENGER_REQUEST_HOTEL_PERSON, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
-  const [relocatePerson] = useMutation(RELOCATE_PASSENGER_REQUEST_HOTEL_PERSON, {
+  const [relocatePeople] = useMutation(RELOCATE_PASSENGER_REQUEST_HOTEL_PEOPLE, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
-  const [evictPerson] = useMutation(EVICT_PASSENGER_REQUEST_HOTEL_PERSON, {
+  const [evictPeople] = useMutation(EVICT_PASSENGER_REQUEST_HOTEL_PEOPLE, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
   const [saveReport] = useMutation(SAVE_PASSENGER_REQUEST_HOTEL_REPORT, {
@@ -2135,7 +2135,10 @@ export default function FapHotelPage({
       const capacity = Number(targetHotel.peopleCount) || 0;
       const placed = (targetHotel.people || []).length;
       const freeSlots = Math.max(0, capacity - placed);
-      if (relocateState.indices.length > freeSlots) {
+      // capacity === 0 — вместимость не задана, а не «мест нет»: так её трактует и
+      // бэк, и выпадашка выбора гостиницы. Без этой оговорки переселить в гостиницу
+      // с незаполненной вместимостью было нельзя вообще.
+      if (capacity > 0 && relocateState.indices.length > freeSlots) {
         notifyError(
           `В гостинице «${targetHotel.name || "—"}» свободно ${freeSlots} мест, а переселяется ${relocateState.indices.length}`
         );
@@ -2144,18 +2147,15 @@ export default function FapHotelPage({
     }
     try {
       setSaving(true);
-      const sorted = [...relocateState.indices].sort((a, b) => b - a);
-      for (const idx of sorted) {
-        await relocatePerson({
-          variables: {
-            requestId: request.id,
-            fromHotelIndex: Number(hotelIndex),
-            toHotelIndex: targetIdx,
-            personIndex: idx,
-            reason: relocateReason.trim(),
-          },
-        });
-      }
+      await relocatePeople({
+        variables: {
+          requestId: request.id,
+          fromHotelIndex: Number(hotelIndex),
+          toHotelIndex: Number(relocateTarget),
+          personIndexes: relocateState.indices,
+          reason: relocateReason,
+        },
+      });
       success(
         relocateState.indices.length > 1
           ? `Переселено: ${relocateState.indices.length}`
@@ -2178,17 +2178,14 @@ export default function FapHotelPage({
     if (!evictState) return;
     try {
       setSaving(true);
-      const sorted = [...evictState.indices].sort((a, b) => b - a);
-      for (const idx of sorted) {
-        await evictPerson({
-          variables: {
-            requestId: request.id,
-            hotelIndex: Number(hotelIndex),
-            personIndex: idx,
-            reason,
-          },
-        });
-      }
+      await evictPeople({
+        variables: {
+          requestId: request.id,
+          hotelIndex: Number(hotelIndex),
+          personIndexes: evictState.indices,
+          reason,
+        },
+      });
       success(
         evictState.indices.length > 1
           ? `Выселено: ${evictState.indices.length}`
