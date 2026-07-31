@@ -2705,6 +2705,17 @@ export default function FapHotelPage({
                   <span className={classes.fullDot} />заполнен
                 </span>
               )}
+              {/* Статус отчёта живёт в шапке рядом с «заполнен», а не среди кнопок
+                  тулбара: это состояние, а не действие. Тот же бейдж — на карточке
+                  гостиницы в «Проживании». */}
+              {canEdit && reportSubmitted && (
+                <span
+                  className={classes.headReportBadge}
+                  title="Авиакомпания видит этот отчёт. Любая правка снова его скроет"
+                >
+                  Отчёт отправлен · {formatDateTime(reportSubmittedAt)}
+                </span>
+              )}
             </div>
             {hotel.address && (
               <div className={classes.headSub}>
@@ -3325,23 +3336,15 @@ export default function FapHotelPage({
               )}
               {effectiveReportMode === "edit" && canEdit &&
                 (reportSubmitted ? (
-                  <>
-                    <span
-                      className={classes.submittedPill}
-                      title="Авиакомпания видит этот отчёт. Любая правка снова его скроет"
-                    >
-                      <CheckSvg color="#15803D" /> Отправлено · {formatDateTime(reportSubmittedAt)}
-                    </span>
-                    <button
-                      type="button"
-                      className={classes.ghostBtn}
-                      onClick={handleHideReport}
-                      disabled={submitting}
-                      title="Скрыть отчёт от авиакомпании"
-                    >
-                      {submitting ? "Скрываем…" : "Скрыть"}
-                    </button>
-                  </>
+                  <button
+                    type="button"
+                    className={classes.ghostBtn}
+                    onClick={handleHideReport}
+                    disabled={submitting}
+                    title="Скрыть отчёт от авиакомпании"
+                  >
+                    {submitting ? "Скрываем…" : "Скрыть отчёт"}
+                  </button>
                 ) : (
                   <button
                     type="button"

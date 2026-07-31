@@ -417,18 +417,14 @@
   cursor: not-allowed;
 }
 
-.submittedPill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 36px;
-  padding: 0 14px;
-  border-radius: 10px;
-  border: 1px solid #BBF7D0;
-  background: #F0FDF4;
-  color: #15803D;
-  font-size: 12.5px;
+/* Статус отчёта в шапке гостиницы — рядом с бейджем «заполнен», в его габаритах. */
+.headReportBadge {
+  font-size: 11px;
   font-weight: 700;
+  color: #15803D;
+  background: #F0FDF4;
+  padding: 1px 8px;
+  border-radius: 999px;
   white-space: nowrap;
   flex-shrink: 0;
 }
