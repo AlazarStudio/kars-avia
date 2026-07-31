@@ -433,6 +433,30 @@
   flex-shrink: 0;
 }
 
+.ghostBtn {
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: none;
+  background: transparent;
+  color: #545873;
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ghostBtn:hover:not(:disabled) {
+  background: #F1F4FB;
+  color: #0F172A;
+}
+
+.ghostBtn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 .reportPending {
   padding: 48px 16px;
   display: flex;

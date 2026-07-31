@@ -16,6 +16,7 @@ import {
   EVICT_PASSENGER_REQUEST_HOTEL_PERSON,
   SAVE_PASSENGER_REQUEST_HOTEL_REPORT,
   SUBMIT_PASSENGER_REQUEST_HOTEL_REPORT,
+  HIDE_PASSENGER_REQUEST_HOTEL_REPORT,
   GET_FAP_HOTEL_TARIFFS,
   GET_AIRLINE_TARIFS,
   getCookie,
@@ -457,6 +458,9 @@ export default function FapHotelPage({
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
   const [submitReport] = useMutation(SUBMIT_PASSENGER_REQUEST_HOTEL_REPORT, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const [hideReportMutation] = useMutation(HIDE_PASSENGER_REQUEST_HOTEL_REPORT, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
 
@@ -2302,6 +2306,12 @@ export default function FapHotelPage({
     }
   };
 
+  // Отправка и скрытие адресуют один и тот же отчёт — держим переменные в одном месте.
+  const reportMutationVars = () => ({
+    requestId: request.id,
+    hotelIndex: Number(hotelIndex),
+  });
+
   const handleSubmitReport = async () => {
     if (submitting) return;
     try {
@@ -2323,12 +2333,29 @@ export default function FapHotelPage({
         }
       }
       await submitReport({
-        variables: { requestId: request.id, hotelIndex: Number(hotelIndex) },
+        variables: reportMutationVars(),
       });
       success("Отчёт отправлен на проверку");
       onRefetch?.();
     } catch (e) {
       notifyError("Не удалось отправить отчёт");
+      console.error(e);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleHideReport = async () => {
+    if (submitting) return;
+    try {
+      setSubmitting(true);
+      await hideReportMutation({
+        variables: reportMutationVars(),
+      });
+      success("Отчёт скрыт от авиакомпании");
+      onRefetch?.();
+    } catch (e) {
+      notifyError("Не удалось скрыть отчёт");
       console.error(e);
     } finally {
       setSubmitting(false);
@@ -3256,25 +3283,27 @@ export default function FapHotelPage({
               <span className={classes.spacer} />
               {canEdit ? (
                 <FapModeToggle mode={effectiveReportMode} onChange={setReportModePersist} />
-              ) : (
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                    height: 34,
-                    padding: "0 12px",
-                    borderRadius: 999,
-                    background: "var(--gray, #F1F4FB)",
-                    border: "1px solid var(--border, #E4E4EF)",
-                    fontSize: 12.5,
-                    fontWeight: 700,
-                    color: "var(--main-gray)",
-                  }}
-                >
-                  <EyeIcon size={15} color="#545873" /> Только просмотр · авиакомпания
-                </span>
-              )}
+              ) : null
+              // (
+              //   <span
+              //     style={{
+              //       display: "inline-flex",
+              //       alignItems: "center",
+              //       gap: 6,
+              //       height: 34,
+              //       padding: "0 12px",
+              //       borderRadius: 999,
+              //       background: "var(--gray, #F1F4FB)",
+              //       border: "1px solid var(--border, #E4E4EF)",
+              //       fontSize: 12.5,
+              //       fontWeight: 700,
+              //       color: "var(--main-gray)",
+              //     }}
+              //   >
+              //     <EyeIcon size={15} color="#545873" /> Только просмотр · авиакомпания
+              //   </span>
+              // )
+              }
               {effectiveReportMode === "edit" && canEdit && placed > 0 && (
                 <button
                   type="button"
@@ -3297,12 +3326,23 @@ export default function FapHotelPage({
               )}
               {effectiveReportMode === "edit" && canEdit &&
                 (reportSubmitted ? (
-                  <span
-                    className={classes.submittedPill}
-                    title="Авиакомпания видит этот отчёт. Любая правка снова его скроет"
-                  >
-                    <CheckSvg color="#15803D" /> Отправлено · {formatDateTime(reportSubmittedAt)}
-                  </span>
+                  <>
+                    <span
+                      className={classes.submittedPill}
+                      title="Авиакомпания видит этот отчёт. Любая правка снова его скроет"
+                    >
+                      <CheckSvg color="#15803D" /> Отправлено · {formatDateTime(reportSubmittedAt)}
+                    </span>
+                    <button
+                      type="button"
+                      className={classes.ghostBtn}
+                      onClick={handleHideReport}
+                      disabled={submitting}
+                      title="Скрыть отчёт от авиакомпании"
+                    >
+                      {submitting ? "Скрываем…" : "Скрыть"}
+                    </button>
+                  </>
                 ) : (
                   <button
                     type="button"

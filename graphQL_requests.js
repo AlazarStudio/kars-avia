@@ -4252,6 +4252,19 @@ export const SUBMIT_PASSENGER_REQUEST_HOTEL_REPORT = gql`
   }
 `;
 
+export const HIDE_PASSENGER_REQUEST_HOTEL_REPORT = gql`
+  mutation HidePassengerRequestHotelReport($requestId: ID!, $hotelIndex: Int!) {
+    hidePassengerRequestHotelReport(
+      requestId: $requestId
+      hotelIndex: $hotelIndex
+    ) {
+      id
+      hotelIndex
+      submittedAt
+    }
+  }
+`;
+
 export const CREATE_RESERVE_REPORT = gql`
   mutation GenerateReserveReport($reserveId: ID!, $format: ReportFormat!) {
     generateReservePassengerFile(reserveId: $reserveId, format: $format) {
