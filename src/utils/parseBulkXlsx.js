@@ -1,4 +1,5 @@
 import * as XLSX from "xlsx";
+import { fmtDate, fmtTime } from "./excelDate.js";
 
 // Маппинг по именам заголовков MRV-файла (скрытые колонки допустимы)
 export const BULK_HEADERS = {
@@ -23,30 +24,6 @@ const TIME_RE = /^\d{1,2}:\d{2}(:\d{2})?$/;
 const STATUS_RE = /^[ПPРRпpрr]$/;
 
 const s = (v) => String(v ?? "").trim();
-const pad = (n) => String(n).padStart(2, "0");
-
-// Ячейки дат/времени в xlsx бывают текстом ("15.06.2026"), Excel-serial числом
-// (45931) или Date-объектом. Приводим к единому "DD.MM.YYYY" / "HH:MM".
-const fmtDate = (v) => {
-  if (typeof v === "number") {
-    const d = XLSX.SSF.parse_date_code(v);
-    if (d) return `${pad(d.d)}.${pad(d.m)}.${d.y}`;
-  }
-  if (v instanceof Date) {
-    return `${pad(v.getDate())}.${pad(v.getMonth() + 1)}.${v.getFullYear()}`;
-  }
-  return s(v);
-};
-const fmtTime = (v) => {
-  if (typeof v === "number") {
-    const d = XLSX.SSF.parse_date_code(v);
-    if (d) return `${pad(d.H)}:${pad(d.M)}`;
-  }
-  if (v instanceof Date) {
-    return `${pad(v.getHours())}:${pad(v.getMinutes())}`;
-  }
-  return s(v);
-};
 
 // Возвращает { rows, totalRequests, headerError, rowIssues }
 export async function parseBulkXlsx(file) {
