@@ -103,9 +103,8 @@ export default function RepresentativeHotelDetail({
     : () => setInternalShowAddBooking(true);
 
   const bookings = request?.livingService?.hotels?.[hotelIndex]?.people ?? [];
-  const hotelCapacity = hotel?.peopleCount ?? null;
-  const canAddBooking =
-    hotelCapacity == null || bookings.length < hotelCapacity;
+  // Ограничение на добавление брони сверх заказанного количества мест снято сознательно:
+  // фактическое заселение может превышать план (peopleCount).
   const token = getCookie("token");
 
   const [removeHotelPerson, { loading: removing }] = useMutation(
@@ -331,9 +330,7 @@ export default function RepresentativeHotelDetail({
               />
               Сформировать отчет
             </button>
-            {canAddBooking && (
-              <Button onClick={onAddBookingClick}>Добавить бронь</Button>
-            )}
+            <Button onClick={onAddBookingClick}>Добавить бронь</Button>
           </div>
         </div>
       )}

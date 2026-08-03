@@ -1548,3 +1548,30 @@
 .discountInput { width: 52px; }
 .discountSuffix { font-size: 11px; color: #94A3B8; }
 .discountMuted { color: #9AA0B4; font-size: 12px; text-align: right; }
+
+.overNote {
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #B45309;
+}
+
+.overFixBtn {
+  margin-left: 8px;
+  border: none;
+  background: none;
+  padding: 0;
+  font: inherit;
+  font-weight: 700;
+  color: var(--dark-blue);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.collisionMark {
+  margin-left: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #B45309;
+  cursor: help;
+}

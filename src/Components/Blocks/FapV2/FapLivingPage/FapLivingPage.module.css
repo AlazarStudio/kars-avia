@@ -418,6 +418,30 @@
   flex-shrink: 0;
 }
 
+.overBadge {
+  font-size: 11px;
+  font-weight: 700;
+  color: #B45309;
+  background: #FFFBEB;
+  padding: 1px 8px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.collisionStrip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 0 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  color: #B45309;
+  font-size: 12px;
+  font-weight: 600;
+}
+
 .reportBadgeSent {
   font-size: 11px;
   font-weight: 700;
@@ -611,45 +635,6 @@
 .removeBtn:hover {
   background: #FEF2F2;
   border-color: #FCA5A5;
-}
-
-.editHotelField {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.editHotelLabel {
-  font-size: 12px;
-  font-weight: 600;
-  color: #545873;
-}
-
-.editHotelInput {
-  height: 40px;
-  padding: 0 12px;
-  border: 1px solid #E4E4EF;
-  border-radius: 8px;
-  background: #fff;
-  font-size: 14px;
-  font-family: inherit;
-  color: var(--text);
-  outline: none;
-  font-variant-numeric: tabular-nums;
-}
-
-.editHotelInput:focus {
-  border-color: var(--dark-blue);
-}
-
-.editHotelHint {
-  font-size: 12px;
-  color: #545873;
-}
-
-.editHotelHint strong {
-  color: var(--text);
-  font-weight: 700;
 }
 
 /* ── Hotel summary strip ── */

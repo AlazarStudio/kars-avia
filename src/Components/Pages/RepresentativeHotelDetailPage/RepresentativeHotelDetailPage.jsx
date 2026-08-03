@@ -55,12 +55,6 @@ function RepresentativeHotelDetailPage({ user }) {
       }
     },
   });
-  
-  setInterval(() => {
-    console.log('refetch');
-    refetch();
-  }, 10000);
-
 
   const request = data?.passengerRequest ?? null;
   const decodedHotelId = hotelId ? decodeURIComponent(hotelId) : "";
@@ -280,11 +274,7 @@ function RepresentativeHotelDetailPage({ user }) {
           onIssueLink={undefined}
           className={classes.section_searchAndFilter}
           readOnly={isAirlineRole}
-          showAddBookingButton={
-            hotel == null ||
-            hotel.peopleCount == null ||
-            (hotel.people?.length ?? 0) < hotel.peopleCount
-          }
+          showAddBookingButton
         />
         <div className={classes.contentWithChat}>
           <div className={classes.tabContent}>

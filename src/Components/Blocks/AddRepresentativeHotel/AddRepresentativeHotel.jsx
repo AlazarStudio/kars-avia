@@ -42,6 +42,12 @@ function AddRepresentativeHotel({ show, onClose, request }) {
     hotelId: "",
   });
 
+  // Правило «сумма мест по гостиницам ≤ план услуги» снято сознательно (см. бэк:
+  // резолвер updatePassengerRequestHotel и FapLivingPage) — фактическое заселение
+  // может превышать заказанное количество, и диспетчер должен иметь возможность
+  // привести цифры к факту и завести дополнительную гостиницу под перебор.
+  // remainingServicePeople ниже используется только для информационной подсказки,
+  // а не для валидации или ограничения ввода — может быть и отрицательным (перебор).
   const totalServicePeople = request?.livingService?.plan?.peopleCount ?? null;
   const usedServicePeople =
     request?.livingService?.hotels?.reduce(
@@ -50,7 +56,7 @@ function AddRepresentativeHotel({ show, onClose, request }) {
     ) ?? 0;
   const remainingServicePeople =
     typeof totalServicePeople === "number"
-      ? Math.max(totalServicePeople - usedServicePeople, 0)
+      ? totalServicePeople - usedServicePeople
       : null;
 
   const { data: hotelsData, refetch: refetchHotels } = useQuery(GET_HOTELS_RELAY, {
@@ -137,47 +143,25 @@ function AddRepresentativeHotel({ show, onClose, request }) {
       setIsEdited(true);
 
       if (name === "peopleCount") {
-        let next = value.replace(/\D/g, "");
-        if (next === "") {
-          setFormData((prev) => ({ ...prev, peopleCount: "" }));
-          return;
-        }
-        let numeric = Number(next);
-        if (
-          typeof remainingServicePeople === "number" &&
-          remainingServicePeople >= 0 &&
-          numeric > remainingServicePeople
-        ) {
-          numeric = remainingServicePeople;
-          if (remainingServicePeople === 0) {
-            notifyError(
-              "Все места по услуге проживания уже распределены.",
-            );
-          } else {
-            notifyError(
-              `Нельзя указать больше, чем осталось по услуге: ${remainingServicePeople}.`
-            );
-          }
-        }
-        setFormData((prev) => ({
-          ...prev,
-          peopleCount: String(numeric),
-        }));
+        // Клампинг по остатку плана убран: гостиница может заселить больше,
+        // чем заказано, ввод ограничен только форматом (целое положительное число).
+        const next = value.replace(/\D/g, "");
+        setFormData((prev) => ({ ...prev, peopleCount: next }));
         return;
       }
 
       setFormData((prev) => ({ ...prev, [name]: value }));
     },
-    [notifyError, remainingServicePeople]
+    []
   );
 
   const isFormValid = () => {
+    // Остаток по плану услуги (remainingServicePeople) здесь намеренно не проверяется —
+    // превышение плана допустимо.
     return (
       formData.name?.trim() &&
       formData.peopleCount !== "" &&
-      Number(formData.peopleCount) > 0 &&
-      (typeof remainingServicePeople !== "number" ||
-        Number(formData.peopleCount) <= remainingServicePeople)
+      Number(formData.peopleCount) > 0
     );
   };
 
@@ -242,25 +226,11 @@ function AddRepresentativeHotel({ show, onClose, request }) {
 
   const handleSubmit = async () => {
     if (!isFormValid()) {
-      if (
-        typeof remainingServicePeople === "number" &&
-        remainingServicePeople <= 0
-      ) {
-        showAlert(
-          "Нельзя добавить новую гостиницу: все места по услуге проживания уже распределены."
-        );
-      } else if (
-        typeof remainingServicePeople === "number" &&
-        Number(formData.peopleCount) > remainingServicePeople
-      ) {
-        showAlert(
-          `Количество мест превышает доступное по услуге (${remainingServicePeople}).`
-        );
-      } else {
-        showAlert(
-          "Выберите гостиницу из списка (или создайте новую) и укажите корректное количество мест."
-        );
-      }
+      // Блокировки по остатку плана услуги здесь больше нет — сабмит не зависит
+      // от remainingServicePeople, остаются только базовые проверки формы.
+      showAlert(
+        "Выберите гостиницу из списка (или создайте новую) и укажите корректное количество мест."
+      );
       return;
     }
 
@@ -435,11 +405,6 @@ function AddRepresentativeHotel({ show, onClose, request }) {
                 type="number"
                 name="peopleCount"
                 min={1}
-                max={
-                  typeof remainingServicePeople === "number"
-                    ? Math.max(remainingServicePeople, 1)
-                    : undefined
-                }
                 value={formData.peopleCount}
                 onChange={handleChange}
                 placeholder="Количество мест"
@@ -448,8 +413,17 @@ function AddRepresentativeHotel({ show, onClose, request }) {
                 <p style={{ fontSize: 12, color: "#545873" }}>
                   Для услуги проживания указано{" "}
                   <b>{totalServicePeople}</b> мест, уже распределено{" "}
-                  <b>{usedServicePeople}</b>, осталось{" "}
-                  <b>{Math.max(remainingServicePeople ?? 0, 0)}</b>.
+                  <b>{usedServicePeople}</b>
+                  {remainingServicePeople >= 0 ? (
+                    <>
+                      , осталось <b>{remainingServicePeople}</b>.
+                    </>
+                  ) : (
+                    <>
+                      , перебор на <b>{Math.abs(remainingServicePeople)}</b> (заселено
+                      больше плана — это допустимо).
+                    </>
+                  )}
                 </p>
               )}
 

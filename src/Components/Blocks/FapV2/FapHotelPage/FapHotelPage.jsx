@@ -18,12 +18,15 @@ import {
   SAVE_PASSENGER_REQUEST_HOTEL_REPORT,
   SUBMIT_PASSENGER_REQUEST_HOTEL_REPORT,
   HIDE_PASSENGER_REQUEST_HOTEL_REPORT,
+  UPDATE_PASSENGER_REQUEST_HOTEL,
   GET_FAP_HOTEL_TARIFFS,
   GET_AIRLINE_TARIFS,
   getCookie,
 } from "../../../../../graphQL_requests";
 import { calculateCostDaysByDuration } from "../../../../utils/effectiveCostDays";
 import { hotelReportSubmittedAt, isHotelReportSubmitted } from "../fapReportAccess";
+import { hotelOverbookedBy, livingNameCollisions } from "../fapLivingMismatch";
+import HotelCapacityDialog from "../HotelCapacityDialog/HotelCapacityDialog";
 import { isAirlineRole } from "../../../../utils/access";
 import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
 import { formatDateTime, normalizeCategory, PERSON_CATEGORY_OPTIONS, accommodationDiscountPercent, placementKindLabel } from "../fapConstants";
@@ -60,6 +63,7 @@ import {
 import GroupChip from "../GroupChip/GroupChip";
 import PlacementBadge from "../PlacementBadge/PlacementBadge";
 import { useToast } from "../../../../contexts/ToastContext";
+import { useDialog } from "../../../../contexts/DialogContext";
 import Button from "../../../Standart/Button/Button";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import CatalogPickerModal, { personKey } from "../CatalogPickerModal/CatalogPickerModal";
@@ -364,6 +368,7 @@ export default function FapHotelPage({
 }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
+  const { confirm } = useDialog();
 
   const hotel = request?.livingService?.hotels?.[hotelIndex];
   const plan = request?.livingService?.plan;
@@ -417,6 +422,7 @@ export default function FapHotelPage({
 
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [capacityOpen, setCapacityOpen] = useState(false);
 
   // Refs хранят актуальное состояние для отложенного автосохранения —
   // дебаунс-таймер должен видеть последние значения, а не замороженные в замыкании.
@@ -486,6 +492,9 @@ export default function FapHotelPage({
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
   const [hideReportMutation] = useMutation(HIDE_PASSENGER_REQUEST_HOTEL_REPORT, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const [updateHotel] = useMutation(UPDATE_PASSENGER_REQUEST_HOTEL, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
 
@@ -914,6 +923,7 @@ export default function FapHotelPage({
   );
 
   const handleCatalogConfirm = async (selected) => {
+    if (!(await confirmOverCapacity(selected.length))) return;
     try {
       setSaving(true);
       await addPeople({
@@ -942,8 +952,21 @@ export default function FapHotelPage({
   };
   const totalCap = hotel?.peopleCount ?? 0;
   const placed = people.length;
-  const isFull = totalCap > 0 && placed >= totalCap;
+  // Свободных мест больше не требуем: заселение сверх заявки разрешено, превышение
+  // подтверждается диалогом и подсвечивается предупреждением.
+  const isOverCapacity = totalCap > 0 && placed >= totalCap;
   const pct = totalCap > 0 ? Math.min(100, Math.round((placed / totalCap) * 100)) : 0;
+
+  const overBy = hotelOverbookedBy(hotel);
+  const collisionKeys = useMemo(() => {
+    const keys = new Set();
+    livingNameCollisions(request?.livingService).forEach((c) => {
+      c.places.forEach((p) => {
+        if (p.hotelIndex === Number(hotelIndex)) keys.add(p.personIndex);
+      });
+    });
+    return keys;
+  }, [request?.livingService, hotelIndex]);
 
   const passengersCount = people.filter((p) => p?.personType !== "CREW").length;
   const crewCount = placed - passengersCount;
@@ -1006,6 +1029,7 @@ export default function FapHotelPage({
   }));
 
   const handleCrewCatalogConfirm = async (selected) => {
+    if (!(await confirmOverCapacity(selected.length))) return;
     try {
       setSaving(true);
       await addPeople({
@@ -1040,9 +1064,49 @@ export default function FapHotelPage({
     [request?.livingService?.hotels, hotelIndex]
   );
 
-  const hasFreeSlots = totalCap === 0 || placed < totalCap;
   const hasCrewAvailable = personMode !== "CREW" || availableCrew.length > 0;
-  const canAdd = canEdit && hasFreeSlots && hasCrewAvailable;
+  const canAdd = canEdit && hasCrewAvailable;
+
+  // Одно подтверждение на ОПЕРАЦИЮ, а не на человека: пакетное добавление из реестра
+  // спрашивает один раз на всю пачку.
+  // Решаем по ИТОГУ операции, а не по состоянию до неё: пачка может начаться ниже
+  // порога и пересечь его — молча этого допускать нельзя.
+  const confirmOverCapacity = async (count) => {
+    if (!(totalCap > 0 && placed + count > totalCap)) return true;
+    return confirm({
+      message: `Мест по заявке ${totalCap}, заселено ${placed}. Заселить ещё ${count === 1 ? "одного" : `${count} чел.`} сверх заявки?`,
+      confirmText: "Заселить",
+      cancelText: "Отмена",
+      severity: "warning",
+    });
+  };
+
+  // «Обновить по факту» из метрики занятости: приводит план мест к фактическому числу гостей.
+  const handleSaveCapacity = async (newCount) => {
+    try {
+      setSaving(true);
+      await updateHotel({
+        variables: {
+          requestId: request.id,
+          hotelIndex: Number(hotelIndex),
+          hotel: {
+            name: hotel?.name || "",
+            peopleCount: newCount,
+            address: hotel?.address || null,
+            link: hotel?.link || null,
+            hotelId: hotel?.hotelId || null,
+          },
+        },
+      });
+      setCapacityOpen(false);
+      onRefetch?.();
+      success("Количество мест обновлено");
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при обновлении гостиницы");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // ── Report initialization ──
   useEffect(() => {
@@ -2101,6 +2165,7 @@ export default function FapHotelPage({
       notifyError(addForm.personType === "CREW" ? "Укажите ФИО члена экипажа" : "Укажите ФИО пассажира");
       return;
     }
+    if (!(await confirmOverCapacity(1))) return;
     try {
       setSaving(true);
       await addPerson({
@@ -2205,24 +2270,9 @@ export default function FapHotelPage({
       notifyError("Укажите причину переселения");
       return;
     }
-    // Проверка вместимости целевого отеля
-    const targetIdx = Number(relocateTarget);
-    const allHotels = request?.livingService?.hotels || [];
-    const targetHotel = allHotels[targetIdx];
-    if (targetHotel) {
-      const capacity = Number(targetHotel.peopleCount) || 0;
-      const placed = (targetHotel.people || []).length;
-      const freeSlots = Math.max(0, capacity - placed);
-      // capacity === 0 — вместимость не задана, а не «мест нет»: так её трактует и
-      // бэк, и выпадашка выбора гостиницы. Без этой оговорки переселить в гостиницу
-      // с незаполненной вместимостью было нельзя вообще.
-      if (capacity > 0 && relocateState.indices.length > freeSlots) {
-        notifyError(
-          `В гостинице «${targetHotel.name || "—"}» свободно ${freeSlots} мест, а переселяется ${relocateState.indices.length}`
-        );
-        return;
-      }
-    }
+    // Вместимость целевой гостиницы не проверяем: заселение сверх заявки разрешено,
+    // значит и перебор надо иметь возможность перераспределить между гостиницами.
+    // Превышение видно прямо в подписи опции селекта.
     try {
       setSaving(true);
       await relocatePeople({
@@ -2583,6 +2633,14 @@ export default function FapHotelPage({
             <div className={classes.guestName}>
               {p.fullName || "—"}
               {p.personType === "CREW" && <PersonBadge type="CREW" />}
+              {collisionKeys.has(p._idx) && (
+                <span
+                  className={classes.collisionMark}
+                  title="Такое же ФИО есть ещё раз в этой заявке — проверьте, не заселён ли один человек дважды"
+                >
+                  ⚠
+                </span>
+              )}
               {/* Метка группы и требование размещения — только чтение (правятся в реестре) */}
               {group && (
                 <WarnTip text={groupWarnText}>
@@ -2758,7 +2816,9 @@ export default function FapHotelPage({
           <div className={classes.headText}>
             <div className={classes.headTitleRow}>
               <span className={classes.headTitle}>{hotel.name || "Гостиница"}</span>
-              {isFull && (
+              {/* «заполнен» и «+N сверх заявки» — взаимоисключающие состояния:
+                  при переборе предупреждение уже выводится под метрикой «Занятость». */}
+              {isOverCapacity && overBy === 0 && (
                 <span className={classes.fullBadge}>
                   <span className={classes.fullDot} />заполнен
                 </span>
@@ -2820,13 +2880,40 @@ export default function FapHotelPage({
             <span className={classes.metricLabel}>Занятость</span>
             <div className={classes.kpiRow}>
               <div className={classes.kpiValueRow}>
-                <span className={classes.kpiValue}>{placed}</span>
+                <span
+                  className={classes.kpiValue}
+                  style={overBy > 0 ? { color: "#B45309" } : undefined}
+                >
+                  {placed}
+                </span>
                 <span className={classes.kpiTotal}>/ {totalCap || 0}</span>
               </div>
               <div className={classes.kpiBar}>
-                <div className={classes.kpiBarFill} style={{ width: `${pct}%` }} />
+                <div
+                  className={classes.kpiBarFill}
+                  style={{
+                    width: `${overBy > 0 ? 100 : pct}%`,
+                    ...(overBy > 0 ? { background: "#F59E0B" } : null),
+                  }}
+                />
               </div>
             </div>
+            {overBy > 0 && (
+              <div className={classes.overNote}>
+                +{overBy} сверх заявки
+                {/* Предупреждение видно и внешней гостинице, а правка числа мест — нет:
+                    peopleCount это заказ диспетчера, гостиница сообщает только факт. */}
+                {canEdit && !isExtHotel && (
+                  <button
+                    type="button"
+                    className={classes.overFixBtn}
+                    onClick={() => setCapacityOpen(true)}
+                  >
+                    Обновить по факту
+                  </button>
+                )}
+              </div>
+            )}
           </div>
           <div className={classes.metricDivider} />
           {plan?.plannedFromAt && (
@@ -3821,7 +3908,7 @@ export default function FapHotelPage({
         onClose={() => setCatalogOpen(false)}
         savedPassengers={personMode === "CREW" ? crewPickerItems : savedPassengers}
         excludeKeys={personMode === "CREW" ? undefined : excludeKeys}
-        maxSelectable={totalCap > 0 ? Math.max(0, totalCap - placed) : undefined}
+        maxSelectable={undefined}
         loading={saving}
         onConfirm={personMode === "CREW" ? handleCrewCatalogConfirm : handleCatalogConfirm}
         title={personMode === "CREW" ? "Выбрать из экипажа заявки" : undefined}
@@ -3872,13 +3959,14 @@ export default function FapHotelPage({
                   const cap = Number(h?.peopleCount) || 0;
                   const placed = (h?.people || []).length;
                   const free = Math.max(0, cap - placed);
-                  const isFull = cap > 0 && free <= 0;
+                  // Заполненная гостиница остаётся выбираемой: переселение сверх
+                  // заявки разрешено, подпись просто предупреждает об этом.
+                  const targetFull = cap > 0 && free <= 0;
                   return {
                     value: String(originalIndex),
-                    disabled: isFull,
                     label: `${h.name || `Гостиница ${originalIndex + 1}`}${
                       cap > 0 ? ` · свободно ${free}/${cap}` : ""
-                    }${isFull ? " (заполнен)" : ""}`,
+                    }${targetFull ? " · сверх заявки" : ""}`,
                   };
                 }),
               ]}
@@ -4039,6 +4127,17 @@ export default function FapHotelPage({
           </Button>
         </DialogActions>
       </Dialog>
+
+      <HotelCapacityDialog
+        open={capacityOpen}
+        hotelName={hotel?.name}
+        placed={placed}
+        initialValue={placed}
+        saving={saving}
+        onClose={() => setCapacityOpen(false)}
+        onSave={handleSaveCapacity}
+        onError={notifyError}
+      />
     </div>
   );
 }

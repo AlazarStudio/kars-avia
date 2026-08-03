@@ -1,10 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation } from "@apollo/client";
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import DialogActions from "@mui/material/DialogActions";
 import classes from "./FapLivingPage.module.css";
 import {
   REMOVE_PASSENGER_REQUEST_HOTEL,
@@ -13,15 +9,16 @@ import {
   getCookie,
 } from "../../../../../graphQL_requests";
 import { SERVICE_STATUS_CONFIG, formatDate, formatDateTime } from "../fapConstants";
+import { hotelOverbookedBy, livingNameCollisions } from "../fapLivingMismatch";
 import { calculateCostDaysByDuration } from "../../../../utils/effectiveCostDays";
 import { isExternalUser, isAirlineRole } from "../../../../utils/access";
 import { downloadLivingReport } from "../reports/buildReportSheets";
 import { visibleHotelIndexes, hotelReportSubmittedAt } from "../fapReportAccess";
 import { useToast } from "../../../../contexts/ToastContext";
-import Button from "../../../Standart/Button/Button";
 import FapActionButton from "../FapActionButton/FapActionButton";
 import FapHeaderActions from "../FapHeaderActions/FapHeaderActions";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
+import HotelCapacityDialog from "../HotelCapacityDialog/HotelCapacityDialog";
 import AddRepresentativeHotel from "../../AddRepresentativeHotel/AddRepresentativeHotel";
 import HotelBedIcon from "../../../../shared/icons/HotelBedIcon";
 import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
@@ -117,6 +114,11 @@ export default function FapLivingPage({
   const totalCapacity = planCap ?? hotels.reduce((s, h) => s + (h.peopleCount || 0), 0);
   const unplaced = planCap != null ? Math.max(0, planCap - totalGuests) : 0;
 
+  const nameCollisions = useMemo(
+    () => livingNameCollisions(service),
+    [service]
+  );
+
   const copyLink = (url) => {
     if (!url) return;
     navigator.clipboard
@@ -149,36 +151,9 @@ export default function FapLivingPage({
     });
   };
 
-  const handleSaveHotelEdit = async () => {
+  const handleSaveHotelEdit = async (newCount) => {
     if (!editHotelState) return;
-    const newCount = Number(editHotelState.peopleCount);
-    if (!Number.isFinite(newCount) || newCount <= 0) {
-      notifyError("Укажите корректное количество мест");
-      return;
-    }
     const h = hotels[editHotelState.index];
-    const currentPlaced = h?.people?.length || 0;
-    if (newCount < currentPlaced) {
-      notifyError(
-        `Нельзя задать меньше количества уже размещённых человек (${currentPlaced})`
-      );
-      return;
-    }
-    // Проверка против плана услуги: новое значение не должно превышать остаток
-    // по плану заявки (плюс текущая ёмкость этого отеля).
-    if (planCap != null) {
-      const sumOthers = hotels.reduce(
-        (s, hh, i) => s + (i === editHotelState.index ? 0 : hh.peopleCount || 0),
-        0
-      );
-      const maxAllowed = planCap - sumOthers;
-      if (newCount > maxAllowed) {
-        notifyError(
-          `Превышен план услуги. Максимум для этой гостиницы: ${Math.max(0, maxAllowed)}`
-        );
-        return;
-      }
-    }
     try {
       setSaving(true);
       await updateHotel({
@@ -323,6 +298,19 @@ export default function FapLivingPage({
                 </span>
               )}
             </div>
+            {nameCollisions.length > 0 && (
+              <div className={classes.collisionStrip}>
+                Совпадает ФИО — проверьте, не заселён ли один человек дважды:{" "}
+                {nameCollisions
+                  .slice(0, 3)
+                  .map(
+                    (c) =>
+                      `${c.fullName} (${[...new Set(c.places.map((p) => p.hotelName || "без названия"))].join(", ")})`
+                  )
+                  .join("; ")}
+                {nameCollisions.length > 3 && ` и ещё ${nameCollisions.length - 3}`}
+              </div>
+            )}
             <div className={classes.segments}>
               {displayHotels.length === 0 ? (
                 <div className={classes.segmentsEmpty}>Гостиницы ещё не добавлены</div>
@@ -476,77 +464,16 @@ export default function FapLivingPage({
         saving={saving}
       />
 
-      {/* Edit hotel capacity dialog */}
-      <Dialog
+      <HotelCapacityDialog
         open={editHotelState !== null}
+        hotelName={hotels[editHotelState?.index]?.name}
+        placed={hotels[editHotelState?.index]?.people?.length || 0}
+        initialValue={editHotelState?.peopleCount}
+        saving={saving}
         onClose={() => setEditHotelState(null)}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: "16px" } }}
-      >
-        <DialogTitle
-          sx={{
-            fontFamily: "Inter, sans-serif",
-            fontWeight: 700,
-            fontSize: 18,
-            color: "var(--text)",
-            borderBottom: "1px solid #F1F5F9",
-            pb: 2,
-          }}
-        >
-          Изменить количество мест
-        </DialogTitle>
-        <DialogContent sx={{ pt: "16px !important", display: "flex", flexDirection: "column", gap: 2 }}>
-          {editHotelState && (() => {
-            const h = hotels[editHotelState.index];
-            const currentPlaced = h?.people?.length || 0;
-            const sumOthers = hotels.reduce(
-              (s, hh, i) => s + (i === editHotelState.index ? 0 : hh.peopleCount || 0),
-              0
-            );
-            const maxAllowed = planCap != null ? Math.max(0, planCap - sumOthers) : null;
-            return (
-              <>
-                <div style={{ fontSize: 13, color: "#545873" }}>
-                  Гостиница: <strong style={{ color: "var(--text)" }}>{h?.name || "—"}</strong>
-                </div>
-                <div className={classes.editHotelField}>
-                  <label className={classes.editHotelLabel}>Количество мест *</label>
-                  <input
-                    type="number"
-                    min={1}
-                    className={classes.editHotelInput}
-                    value={editHotelState.peopleCount}
-                    onChange={(e) =>
-                      setEditHotelState((s) => ({ ...s, peopleCount: e.target.value }))
-                    }
-                    autoFocus
-                  />
-                  <div className={classes.editHotelHint}>
-                    Сейчас размещено: <strong>{currentPlaced}</strong>
-                    {maxAllowed != null && (
-                      <> · Максимум по плану: <strong>{maxAllowed}</strong></>
-                    )}
-                  </div>
-                </div>
-              </>
-            );
-          })()}
-        </DialogContent>
-        <DialogActions sx={{ padding: "12px 20px 20px", gap: 1 }}>
-          <Button backgroundcolor="#F6F7FB" color="#545873" onClick={() => setEditHotelState(null)}>
-            Отмена
-          </Button>
-          <Button
-            backgroundcolor="var(--dark-blue)"
-            color="#fff"
-            onClick={handleSaveHotelEdit}
-            disabled={saving}
-          >
-            {saving ? "Сохранение..." : "Сохранить"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+        onSave={handleSaveHotelEdit}
+        onError={notifyError}
+      />
     </div>
   );
 }
@@ -564,6 +491,7 @@ function HotelCard({
   const people = hotel.people || [];
   const placed = people.length;
   const isFull = cap > 0 && placed >= cap;
+  const overBy = hotelOverbookedBy(hotel);
   const isEmpty = placed === 0;
   const pct = cap > 0 ? Math.min(100, Math.round((placed / cap) * 100)) : 0;
 
@@ -574,6 +502,9 @@ function HotelCard({
   const extraCount = placed - previewPeople.length;
 
   const canRemove = canEdit && !isCompleted && !isExtHotel;
+  // Правка вместимости и удаление гостиницы разведены: при переборе число мест нужно
+  // менять даже на завершённой услуге, иначе предупреждение погасить нечем.
+  const canEditCapacity = canEdit && !isExtHotel && (!isCompleted || overBy > 0);
 
   return (
     <div className={classes.hotelCard}>
@@ -585,7 +516,11 @@ function HotelCard({
         <div className={classes.hotelInfo}>
           <div className={classes.hotelNameRow}>
             <span className={classes.hotelName}>{hotel.name || "Гостиница"}</span>
-            {isFull && <span className={classes.fullBadge}>заполнен</span>}
+            {overBy > 0 ? (
+              <span className={classes.overBadge}>+{overBy} сверх заявки</span>
+            ) : (
+              isFull && <span className={classes.fullBadge}>заполнен</span>
+            )}
             {showReportState && placed > 0 && (
               reportSubmittedAt ? (
                 <span className={classes.reportBadgeSent}>Отчёт отправлен</span>
@@ -648,7 +583,7 @@ function HotelCard({
           </div>
           <span
             className={classes.occupancyText}
-            style={{ color: isFull ? LIV : "var(--main-gray)" }}
+            style={{ color: overBy > 0 ? "#B45309" : isFull ? LIV : "var(--main-gray)" }}
           >
             {placed}/{cap || 0}
           </span>
@@ -688,7 +623,7 @@ function HotelCard({
         <button type="button" className={classes.openBtn} onClick={onOpen}>
           Открыть <ArrowRightSvg />
         </button>
-        {canRemove && (
+        {canEditCapacity && (
           <button
             type="button"
             className={classes.editBtn}

@@ -1,0 +1,47 @@
+.editHotelField {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.editHotelLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #545873;
+}
+
+.editHotelInput {
+  height: 40px;
+  padding: 0 12px;
+  border: 1px solid #E4E4EF;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--text);
+  outline: none;
+  font-variant-numeric: tabular-nums;
+}
+
+.editHotelInput:focus {
+  border-color: var(--dark-blue);
+}
+
+.editHotelHint {
+  font-size: 12px;
+  color: #545873;
+}
+
+.editHotelHint strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.hotelLine {
+  font-size: 13px;
+  color: #545873;
+}
+
+.hotelLine strong {
+  color: var(--text);
+}

@@ -24,6 +24,7 @@ import {
 } from "../fapConstants";
 import { calculateCostDaysByDuration } from "../../../../utils/effectiveCostDays";
 import { transferFactCount } from "../fapTransferFact";
+import { livingMismatches } from "../fapLivingMismatch";
 import MUILoader from "../../MUILoader/MUILoader";
 import Button from "../../../Standart/Button/Button";
 import Header from "../../Header/Header";
@@ -196,6 +197,14 @@ export default function FapDetail({ user, canEdit = true }) {
     if (!request) return [];
     return SERVICE_KEYS.filter((k) => getServiceByKey(request, k)?.plan?.enabled);
   }, [request]);
+
+  const livingMismatch = useMemo(() => livingMismatches(request), [request]);
+  // Перебор мест — установленный факт; совпадение ФИО без перебора — лишь подозрение
+  // (см. предупреждение в fapLivingMismatch.js про ложные срабатывания на тёзках).
+  const livingMismatchText =
+    livingMismatch.overbooked.length > 0
+      ? "расхождение по факту"
+      : "проверьте совпадение ФИО";
 
   // Закрытие поповера по клику вне.
   useEffect(() => {
@@ -492,6 +501,10 @@ export default function FapDetail({ user, canEdit = true }) {
                   </div>
                   <div className={classes.kpiTileUnit}>{m.unit}</div>
                 </div>
+
+                {key === "living" && livingMismatch.hasAny && (
+                  <span className={classes.mismatchChip}>{livingMismatchText}</span>
+                )}
 
                 {!isCanc ? (
                   <div className={classes.kpiTileFooter}>
