@@ -74,13 +74,17 @@ export const server = import.meta.env.VITE_DEV_SERVER;
 
 | Переменная | Значение |
 |-----------|---------|
-| `VITE_DEV_PATH` | `45.130.42.244:4000` |
-| `VITE_DEV_SERVER` | `http://45.130.42.244:4000` |
+| `VITE_DEV_PATH` | `devbackend.karsavia.ru:443` |
+| `VITE_DEV_SERVER` | `https://devbackend.karsavia.ru:443` |
 | `VITE_DEMO_PATH` | `demobackend.karsavia.ru:443` |
 | `VITE_DEMO_SERVER` | `https://demobackend.karsavia.ru:443` |
 | `VITE_PRODUCTION_PATH` | `backend.karsavia.ru:443` |
 | `VITE_PRODUCTION_SERVER` | `https://backend.karsavia.ru:443` |
 | `VITE_YMAPS_KEY` | Yandex Maps API key |
+
+> В `.env` у dev-переменных лежат ещё и закомментированные варианты (`localhost:4000` для
+> локального бэкенда, старый `45.130.42.244:4000`). Раскомментировать нужно пару
+> `VITE_DEV_PATH`/`VITE_DEV_SERVER` целиком — значение в таблице выше отражает активное.
 
 ## Структура src/
 
