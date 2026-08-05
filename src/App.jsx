@@ -36,7 +36,6 @@ import { TokenRefresher } from "./TokenRefresher";
 import { UserActivityTracker } from "./UserActivityTracker";
 import ReservePlacementRepresentative from "./Components/Pages/ReservePlacementRepresentative/ReservePlacementRepresentative";
 import RepresentativeHotelDetailPage from "./Components/Pages/RepresentativeHotelDetailPage/RepresentativeHotelDetailPage";
-import RepresentativeHotelReportPage from "./Components/Pages/RepresentativeHotelReportPage/RepresentativeHotelReportPage";
 import RepresentativeDriverDetailPage from "./Components/Pages/RepresentativeDriverDetailPage/RepresentativeDriverDetailPage";
 import ExternalLogin from "./Components/Pages/ExternalLogin/ExternalLogin";
 import HotelPreview from "./Components/Pages/HotelPreview/HotelPreview";
@@ -172,10 +171,6 @@ function App() {
             <Route
               path="/:id/representativeRequestsPlacement/:idRequest/hotel/:hotelId"
               element={<RepresentativeHotelDetailPage user={user} />}
-            />
-            <Route
-              path="/:id/representativeRequestsPlacement/:idRequest/hotel/:hotelId/report"
-              element={<RepresentativeHotelReportPage user={user} />}
             />
             <Route
               path="/:id/representativeRequestsPlacement/:idRequest/driver/:driverIndex"

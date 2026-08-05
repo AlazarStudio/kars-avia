@@ -266,11 +266,6 @@ function RepresentativeHotelDetailPage({ user }) {
           searchQuery={searchQuery}
           onSearchChange={setSearchQuery}
           onAddBooking={() => setShowAddBooking(true)}
-          onGenerateReport={() =>
-            navigate(
-              `/${id}/representativeRequestsPlacement/${idRequest}/hotel/${encodeURIComponent(hotelId)}/report`
-            )
-          }
           onIssueLink={undefined}
           className={classes.section_searchAndFilter}
           readOnly={isAirlineRole}

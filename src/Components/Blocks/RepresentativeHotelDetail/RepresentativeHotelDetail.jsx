@@ -26,7 +26,6 @@ export function HotelDetailToolbar({
   searchQuery,
   onSearchChange,
   onAddBooking,
-  onGenerateReport,
   onIssueLink,
   className,
   showAddBookingButton = true,
@@ -50,7 +49,6 @@ export function HotelDetailToolbar({
             Выдать ссылку для гостиницы
           </Button>
         )}
-        <Button onClick={onGenerateReport}>Отчет</Button>
         {!readOnly && showAddBookingButton && (
           <Button onClick={onAddBooking}>Добавить бронь</Button>
         )}
@@ -67,7 +65,6 @@ export default function RepresentativeHotelDetail({
   addNotification,
   showAddBooking = false,
   onCloseAddBooking,
-  onGenerateReport,
   onBack,
   hidePageTitle,
   hideToolbar,
@@ -314,22 +311,6 @@ export default function RepresentativeHotelDetail({
             {/* <button type="button" className={classes.headerBtn}>
               <EditIcon /> Редактировать
             </button> */}
-            <button
-              type="button"
-              className={classes.headerBtn}
-              onClick={onGenerateReport}
-            >
-              <img
-                src="/plus.png"
-                alt=""
-                style={{
-                  width: "15px",
-                  objectFit: "contain",
-                  filter: "invert(100%)",
-                }}
-              />
-              Сформировать отчет
-            </button>
             <Button onClick={onAddBookingClick}>Добавить бронь</Button>
           </div>
         </div>
