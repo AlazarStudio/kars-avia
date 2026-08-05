@@ -2288,6 +2288,12 @@ export default function FapHotelPage({
           ? "Член экипажа переселён"
           : "Пассажир переселён"
       );
+      // Открытая правка гостя адресует его ПОЗИЦИЕЙ в people, а переселение её
+      // сдвигает. Незакрытая форма после переселения гостя, стоящего выше по
+      // сырому индексу, записывала ФИО и телефон ЧУЖОМУ гостю и переименовывала
+      // его запись в реестре. Заметить нельзя: список отсортирован по алфавиту,
+      // сырой порядок пользователю не виден.
+      cancelEdit();
       setSelected([]);
       closeRelocate();
       onRefetch?.();
@@ -2318,6 +2324,8 @@ export default function FapHotelPage({
           ? "Член экипажа выселен"
           : "Пассажир выселен"
       );
+      // См. комментарий в handleRelocate: выселение сдвигает индексы так же.
+      cancelEdit();
       setSelected([]);
       setEvictState(null);
       onRefetch?.();
@@ -2992,7 +3000,20 @@ export default function FapHotelPage({
           <div className={classes.guestsPane}>
             <div className={classes.toolbar}>
               {showCrewToggle && (
-                <PersonTypeToggle value={personMode} onChange={setPersonMode} />
+                // Тот же сброс, что у переключателя в FapDriverPage. Панель
+                // массовых действий рисуется по одному только selected.length,
+                // поэтому выделение, пережившее переход на другую вкладку,
+                // показывало «Выбрано: 2» над списком экипажа, а «Выселить»
+                // выселяло пассажиров, которых на экране нет.
+                <PersonTypeToggle
+                  value={personMode}
+                  onChange={(v) => {
+                    setPersonMode(v);
+                    cancelEdit();
+                    clearSel();
+                    setSearch("");
+                  }}
+                />
               )}
               <div className={classes.searchWrap}>
                 <input

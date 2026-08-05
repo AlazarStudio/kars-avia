@@ -26,6 +26,16 @@ const TR = "#8B5CF6";
 const TR_BG = "#F5F3FF";
 const TR_DEP = "#7C3AED";
 
+// Идентичность поездки для React-ключа — та же, что у доставки багажа
+// (driverCardKey в FapBaggagePage). Раньше ключом было `driver.itemId || idx`,
+// но у PassengerServiceDriver поля itemId НЕТ вовсе, поэтому ключ всегда был
+// позиционным: после удаления водителя, стоящего выше, тот же инстанс карточки
+// начинал рендерить другого водителя вместе с чужим несохранённым черновиком
+// («Перевезено», «Сумма», «Тип ТС»), и «Сохранить» записывало ввод не тому.
+// Без id (записи старше его появления) падаем на позиционный ключ: сбросить
+// черновик безопаснее, чем записать его чужой поездке.
+const driverCardKey = (driver, index) => driver.id || `idx-${index}`;
+
 const PlusSvg = ({ size = 14, color = "#fff" }) => (
   <svg width={size} height={size} viewBox="0 0 24 24" fill="none">
     <path d="M12 5v14M5 12h14" stroke={color} strokeWidth="2.6" strokeLinecap="round" />
@@ -356,7 +366,7 @@ export default function FapTransferPage({
         ) : (
           drivers.map((driver, idx) => (
             <DriverCard
-              key={driver.itemId || idx}
+              key={driverCardKey(driver, idx)}
               driver={driver}
               index={idx}
               color={color}
