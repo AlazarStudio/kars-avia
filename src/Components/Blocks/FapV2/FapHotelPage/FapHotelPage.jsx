@@ -1227,7 +1227,12 @@ export default function FapHotelPage({
         }
       });
       const restored = [...byName.values(), ...tariffByKey.values()];
-      setTariffs(restored);
+      // Черновики переживают пересборку. Они существуют только на клиенте
+      // (buildReportRows их не сериализует), поэтому собранный из сохранённых
+      // строк массив их не содержит — и незаконченный тариф молча исчезал при
+      // любой пересборке: сохранение соседнего тарифа, удаление тарифа или
+      // сохранение отчёта другим клиентом. Воспроизведено на стенде.
+      setTariffs((prev) => [...restored, ...prev.filter((t) => t.draft)]);
 
       const data = {};
       people.forEach((p, i) => {
@@ -1314,7 +1319,9 @@ export default function FapHotelPage({
         data[i] = emptyPD(p, hotelIndex, plan);
       });
       setPersonData(data);
-      setTariffs([]);
+      // Та же защита черновиков: пустой отчёт — как раз тот момент, когда
+      // дописывается первый тариф.
+      setTariffs((prev) => prev.filter((t) => t.draft));
       setAirlineTariffOverrides({});
       placementOverridesRef.current = {};
       setPlacementOverrides({});
