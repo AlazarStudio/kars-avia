@@ -431,6 +431,11 @@ export default function FapHotelPage({
   // только что поставленный флаг.
   const inFlightSaveRef = useRef(null);
   const reconciledKeyRef = useRef(null);
+  // Заявка и гостиница, которым принадлежит текущий список тарифов. Отдельно от
+  // reconciledKeyRef: тот обнуляется live-синком при чужой правке, а здесь нужно
+  // именно «та же гостиница или другая» — маршрут при смене гостиницы компонент
+  // не пересоздаёт, и черновик иначе уезжает за пользователем в чужую гостиницу.
+  const tariffsKeyRef = useRef(null);
   // Снапшот ключей гостей — по нему personData переносится при сдвиге состава.
   const personKeysRef = useRef(null);
   // Снапшот строк, из которых собрано текущее состояние (реконсиляция) либо
@@ -1102,6 +1107,11 @@ export default function FapHotelPage({
     const reconcileKey = `${request?.id}:${hotelIndex}`;
     if (reconciledKeyRef.current === reconcileKey) return;
     reconciledKeyRef.current = reconcileKey;
+    // Черновики принадлежат гостинице, в которой их начали: переносим их через
+    // пересборку только если гостиница та же. При переходе в другую гостиницу
+    // список тарифов собирается с нуля, как и раньше.
+    const keepDrafts = tariffsKeyRef.current === reconcileKey;
+    tariffsKeyRef.current = reconcileKey;
     // Состояние пересобирается под текущий состав — фиксируем ключи гостей,
     // иначе перенос personData по сдвигу индексов затрёт результат реконсиляции.
     personKeysRef.current = personRosterKeys(people);
@@ -1232,7 +1242,9 @@ export default function FapHotelPage({
       // строк массив их не содержит — и незаконченный тариф молча исчезал при
       // любой пересборке: сохранение соседнего тарифа, удаление тарифа или
       // сохранение отчёта другим клиентом. Воспроизведено на стенде.
-      setTariffs((prev) => [...restored, ...prev.filter((t) => t.draft)]);
+      setTariffs((prev) =>
+        keepDrafts ? [...restored, ...prev.filter((t) => t.draft)] : restored
+      );
 
       const data = {};
       people.forEach((p, i) => {
@@ -1321,7 +1333,7 @@ export default function FapHotelPage({
       setPersonData(data);
       // Та же защита черновиков: пустой отчёт — как раз тот момент, когда
       // дописывается первый тариф.
-      setTariffs((prev) => prev.filter((t) => t.draft));
+      setTariffs((prev) => (keepDrafts ? prev.filter((t) => t.draft) : []));
       setAirlineTariffOverrides({});
       placementOverridesRef.current = {};
       setPlacementOverrides({});
