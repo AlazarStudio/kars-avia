@@ -24,6 +24,7 @@ import {
   getCookie,
 } from "../../../../../graphQL_requests";
 import { calculateCostDaysByDuration } from "../../../../utils/effectiveCostDays";
+import { getPersonDays } from "../fapPersonDays.js";
 import { hotelReportSubmittedAt, isHotelReportSubmitted } from "../fapReportAccess";
 import { hotelOverbookedBy, livingNameCollisions } from "../fapLivingMismatch";
 import HotelCapacityDialog from "../HotelCapacityDialog/HotelCapacityDialog";
@@ -183,20 +184,6 @@ export const resolveTariffPricePerDay = (tariff, places, category = null) => {
   const row = (tariff.placementPrices ?? []).find((p) => Number(p.places) === Number(places));
   return row ? toNum(row.pricePerDay) : null;
 };
-
-function getPersonDays(person, hotelIndex, plan) {
-  const chess =
-    (person?.accommodationChesses ?? []).find(
-      (c) => c != null && Number(c.hotelIndex) === Number(hotelIndex)
-    ) || (person?.accommodationChesses ?? [])[0];
-  if (chess?.startAt && chess?.endAt) {
-    return calculateCostDaysByDuration(chess.startAt, chess.endAt);
-  }
-  const planStart = plan?.plannedFromAt || plan?.plannedAt;
-  const planEnd = plan?.plannedToAt;
-  if (planStart && planEnd) return calculateCostDaysByDuration(planStart, planEnd);
-  return 0;
-}
 
 const emptyPD = (person, hotelIndex, plan) => ({
   roomNumber: person?.roomNumber ?? "",

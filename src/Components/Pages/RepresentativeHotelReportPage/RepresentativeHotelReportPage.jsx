@@ -14,7 +14,7 @@ import {
   SAVE_PASSENGER_REQUEST_HOTEL_REPORT,
   getCookie,
 } from "../../../../graphQL_requests";
-import { calculateEffectiveCostDays } from "../../../utils/effectiveCostDays";
+import { getPersonDays } from "../../Blocks/FapV2/fapPersonDays.js";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import MUITextField from "../../Blocks/MUITextField/MUITextField";
 import MUIAutocompleteColor from "../../Blocks/MUIAutocompleteColor/MUIAutocompleteColor";
@@ -32,22 +32,6 @@ function toNum(v) {
 
 function rowTotal(row) {
   return toNum(row.foodCost) + toNum(row.accommodationCost);
-}
-
-/** Сутки по датам заезда/выезда (эффективные: 0.5 и полные сутки). accommodationChesses этого отеля или plan */
-function getPersonDays(person, hotelIndex, plan) {
-  const chess = (person?.accommodationChesses ?? []).find(
-    (c) => c != null && Number(c.hotelIndex) === Number(hotelIndex)
-  ) || (person?.accommodationChesses ?? [])[0];
-  if (chess?.startAt && chess?.endAt) {
-    return calculateEffectiveCostDays(chess.startAt, chess.endAt);
-  }
-  const planStart = plan?.plannedFromAt || plan?.plannedAt;
-  const planEnd = plan?.plannedToAt;
-  if (planStart && planEnd) {
-    return calculateEffectiveCostDays(planStart, planEnd);
-  }
-  return 0;
 }
 
 const newGroup = () => ({
