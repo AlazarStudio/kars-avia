@@ -14,6 +14,7 @@ import {
   isAirlineRole as isAirlineRoleCheck,
   isExternalUser,
   canAccessMenu,
+  canSeeExternalLinks,
 } from "../../../utils/access";
 import { authService } from "../../../services/authService";
 import classes from "./FapServicePage.module.css";
@@ -78,7 +79,7 @@ export default function FapHotelDetailPage({ user }) {
               hotelIndex={hotelIndex}
               onRefetch={refetch}
               canEdit={canEdit}
-              showLinks={!isAirlineRole && !isExtHotel}
+              showLinks={canSeeExternalLinks(user)}
               isExtHotel={isExtHotel}
               showTariffs={!isAirlineRole}
               user={user}

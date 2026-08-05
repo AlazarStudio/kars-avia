@@ -14,6 +14,7 @@ import {
   isAirlineRole as isAirlineRoleCheck,
   isExternalUser,
   canAccessMenu,
+  canSeeExternalLinks,
 } from "../../../utils/access";
 import classes from "./FapServicePage.module.css";
 
@@ -69,7 +70,7 @@ export default function FapBaggageTripDetailPage({ user }) {
               driverIndex={driverIndex}
               onRefetch={refetch}
               canEdit={canEdit}
-              showLinks={!isAirlineRole}
+              showLinks={canSeeExternalLinks(user)}
               user={user}
             />
           </div>

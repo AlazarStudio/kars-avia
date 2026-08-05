@@ -29,6 +29,22 @@ export const isAirlineModerator = (user) =>
 export const isAirlineRole = (user) =>
   isAirlineAdmin(user) || isAirlineModerator(user);
 
+/**
+ * Кому в ФАП показывать ссылки-входы участников (linkCRM / linkPWA гостиниц и
+ * водителей).
+ *
+ * Список положительный, а не «все кроме авиакомпании». Прежний предикат
+ * `!isAirlineRole` открывал ссылки и гостиничным ролям: администратор одной
+ * гостиницы видел кнопки копирования для ЧУЖИХ гостиниц заявки и для всех
+ * водителей трансфера и багажа. Ссылка — это вход в чужую сессию, а не данные,
+ * и она не одноразовая, поэтому ошибка тут дороже обычной утечки поля.
+ *
+ * Ссылки выдаёт диспетчер — ему они и нужны. Гостиничной роли собственная
+ * ссылка не нужна: она уже внутри системы.
+ */
+export const canSeeExternalLinks = (user) =>
+  !isExternalUser(user) && (isSuperAdmin(user) || isDispatcherRole(user));
+
 export const hasAccessMenu = (accessMenu, key) => {
   if (!key) return true;
   const safeMenu = safeAccessMenu(accessMenu);

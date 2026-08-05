@@ -18,6 +18,7 @@ import {
   isAirlineRole as isAirlineRoleCheck,
   isExternalUser,
   canAccessMenu,
+  canSeeExternalLinks,
 } from "../../../utils/access";
 import { authService } from "../../../services/authService";
 import CopyIcon from "../../../shared/icons/CopyIcon";
@@ -31,6 +32,8 @@ export default function FapServicePage({ user }) {
   const token = getCookie("token");
 
   const isAirlineRole = isAirlineRoleCheck(user);
+  // Ссылки-входы участников — только диспетчеру: см. canSeeExternalLinks.
+  const showExternalLinks = canSeeExternalLinks(user);
 
   const { loading, data, refetch } = useQuery(GET_PASSENGER_REQUEST, {
     context: { headers: { Authorization: `Bearer ${token}` } },
@@ -102,7 +105,7 @@ export default function FapServicePage({ user }) {
             request={request}
             onRefetch={refetch}
             canEdit={canEdit}
-            showLinks={!isAirlineRole}
+            showLinks={showExternalLinks}
             user={user}
           />
         );
@@ -114,7 +117,7 @@ export default function FapServicePage({ user }) {
             direction="ARRIVAL"
             onRefetch={refetch}
             canEdit={canEdit}
-            showLinks={!isAirlineRole}
+            showLinks={showExternalLinks}
             user={user}
           />
         );
@@ -126,7 +129,7 @@ export default function FapServicePage({ user }) {
             direction="DEPARTURE"
             onRefetch={refetch}
             canEdit={canEdit}
-            showLinks={!isAirlineRole}
+            showLinks={showExternalLinks}
             user={user}
           />
         );
@@ -137,7 +140,7 @@ export default function FapServicePage({ user }) {
             request={request}
             onRefetch={refetch}
             canEdit={canEdit}
-            showLinks={!isAirlineRole}
+            showLinks={showExternalLinks}
             user={user}
           />
         );
