@@ -338,67 +338,14 @@ function AddRepresentativeService({
       setIsEdited(true);
 
       setFormData((prev) => {
-        if (name === "habitation") {
-          return {
-            ...prev,
-            habitation: checked,
-            habitationPeopleCount: checked ? prev.habitationPeopleCount : "",
-            habitationPlannedFromDate: checked ? prev.habitationPlannedFromDate : "",
-            habitationPlannedFromTime: checked ? prev.habitationPlannedFromTime : "",
-            habitationPlannedToDate: checked ? prev.habitationPlannedToDate : "",
-            habitationPlannedToTime: checked ? prev.habitationPlannedToTime : "",
-          };
-        }
-
-        if (name === "transferArrival") {
-          return {
-            ...prev,
-            transferArrival: checked,
-            transferArrivalPeopleCount: checked ? prev.transferArrivalPeopleCount : "",
-            transferArrivalPlannedDate: checked ? prev.transferArrivalPlannedDate : "",
-            transferArrivalPlannedAt: checked ? prev.transferArrivalPlannedAt : "",
-          };
-        }
-
-        if (name === "transferDeparture") {
-          return {
-            ...prev,
-            transferDeparture: checked,
-            transferDeparturePeopleCount: checked ? prev.transferDeparturePeopleCount : "",
-            transferDeparturePlannedDate: checked ? prev.transferDeparturePlannedDate : "",
-            transferDeparturePlannedAt: checked ? prev.transferDeparturePlannedAt : "",
-          };
-        }
-
-        if (name === "baggageDelivery") {
-          return {
-            ...prev,
-            baggageDelivery: checked,
-            baggageDeliveryPlannedDate: checked ? prev.baggageDeliveryPlannedDate : "",
-            baggageDeliveryPlannedAt: checked ? prev.baggageDeliveryPlannedAt : "",
-          };
-        }
-
-        if (name === "waterSupply") {
-          return {
-            ...prev,
-            waterSupply: checked,
-            waterPeopleCount: checked ? prev.waterPeopleCount : "",
-            waterPlannedDate: checked ? prev.waterPlannedDate : "",
-            waterPlannedAt: checked ? prev.waterPlannedAt : "",
-          };
-        }
-
-        if (name === "foodSupply") {
-          return {
-            ...prev,
-            foodSupply: checked,
-            foodPeopleCount: checked ? prev.foodPeopleCount : "",
-            foodPlannedDate: checked ? prev.foodPlannedDate : "",
-            foodPlannedAt: checked ? prev.foodPlannedAt : "",
-          };
-        }
-
+        // Снятие галочки НЕ обнуляет поля услуги. Раньше здесь стояли шесть
+        // одинаковых блоков вида `X: checked ? prev.X : ""`, и обратное
+        // включение значения не возвращало — в prev к тому моменту уже пусто.
+        // Цикл «снял → вернул → Сохранить» в одной сессии отправлял
+        // peopleCount: Number("") === 0 и плановые даты null. Ноль в плане бэк
+        // читает как «план выполнен» и заводит услугу сразу завершённой, пряча
+        // кнопки добавления. Оставляем поля как есть: они всё равно уходят в
+        // мутацию только под `if (formData.<услуга>)`.
         return {
           ...prev,
           [name]: checked,
