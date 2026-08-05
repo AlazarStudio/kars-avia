@@ -173,6 +173,10 @@ export default function FapBaggageTripPage({
   const isCancelled = service?.status === "CANCELLED";
   const isCompleted = service?.status === "COMPLETED" || isCancelled;
   const canAct = canEdit && !isCompleted;
+  // Отметка доставки от статуса услуги не зависит: COMPLETED у багажа означает
+  // «план по головам набран», а не «всё развезено». Подробнее — в комментарии
+  // у canCompleteDelivery в FapBaggagePage.
+  const canCompleteDelivery = canEdit && !isCancelled;
 
   const savedPassengers = useMemo(
     () => request?.savedPassengers || [],
@@ -511,7 +515,7 @@ export default function FapBaggageTripPage({
               <CheckSvg size={15} color="#10B981" strokeWidth={2.6} /> Завершён
             </span>
           ) : (
-            canAct && (
+            canCompleteDelivery && (
               <button
                 type="button"
                 className={classes.completeBtn}

@@ -199,6 +199,14 @@ export default function FapBaggagePage({
   const statusCfg = SERVICE_STATUS_CONFIG[service?.status] || {};
   const isCancelled = service?.status === "CANCELLED";
   const isCompleted = service?.status === "COMPLETED" || isCancelled;
+  // COMPLETED у доставки багажа означает «план по головам набран»: бэк считает
+  // статус услуги по числу пассажиров во всех поездках, а не по отметкам
+  // доставки. Поездка обычно заводится сразу со списком, поэтому услуга
+  // завершается ещё до первой отметки — и кнопка «Завершить» пропадала со всех
+  // карточек, а отметить доставку из CRM становилось нечем. Сама мутация
+  // completePassengerRequestBaggageDriverDelivery статус услуги не проверяет,
+  // так что гасим отметку только по отмене.
+  const canCompleteDelivery = canEdit && !isCancelled;
   const plannedAt = service?.plan?.plannedAt;
 
   const totals = useMemo(() => {
@@ -417,6 +425,7 @@ export default function FapBaggagePage({
               requestId={request.id}
               isCompleted={isCompleted}
               canEdit={canEdit}
+              canCompleteDelivery={canCompleteDelivery}
               showLinks={showLinks}
               saving={saving}
               onOpen={() =>
@@ -470,6 +479,7 @@ function TaskCard({
   requestId,
   isCompleted,
   canEdit,
+  canCompleteDelivery,
   showLinks,
   saving,
   onOpen,
@@ -613,7 +623,9 @@ function TaskCard({
             <CheckSvg size={15} color="#10B981" strokeWidth={2.6} /> Завершён
           </span>
         ) : (
-          canAct && (
+          // Отметка доставки — единственное действие карточки, не зависящее от
+          // статуса услуги: см. комментарий у canCompleteDelivery выше.
+          canCompleteDelivery && (
             <button
               type="button"
               className={classes.completeBtn}
