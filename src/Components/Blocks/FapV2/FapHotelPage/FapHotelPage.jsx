@@ -204,6 +204,10 @@ const emptyPD = (person, hotelIndex, plan) => ({
   accommodationCost: 0,
   // null — скидка не переопределена: берётся дефолт возрастной категории.
   accommodationDiscount: null,
+  // Снимок цены и вида размещения из сохранённой строки отчёта. У нового гостя
+  // снимка нет; читается только у отправленного отчёта — см. getEffectiveRow.
+  savedPricePerDay: null,
+  savedPlacementKind: null,
 });
 
 // Ключи гостей для сопоставления personData (адресуется индексом) со списком people.
@@ -648,12 +652,23 @@ export default function FapHotelPage({
     reportGroups.forEach((g) => {
       if (g.noRoom) return;
       const override = Number(placementOverrides[g.roomNumber]) || null;
+      // У ОТПРАВЛЕННОГО отчёта вид размещения берётся из сохранённой строки, а не
+      // выводится заново: иначе смена вместимости в фонде гостиницы или выселение
+      // соседа перецифровывают уже отправленный отчёт. Подставляем именно в `auto`,
+      // а не только в `kind`: подпись пункта «Авто» обязана называть ту величину,
+      // по которой реально считаются деньги (см. коммент выше).
+      const pinned = reportSubmitted
+        ? g.members.find((m) => Number(m.pd?.savedPlacementKind) > 0)?.pd
+            ?.savedPlacementKind ?? null
+        : null;
       const auto =
-        roomCapacity(matchHotelRoom(g.roomNumber, roomsIndex)) ?? g.members.length;
+        pinned ??
+        roomCapacity(matchHotelRoom(g.roomNumber, roomsIndex)) ??
+        g.members.length;
       map[g.roomNumber] = { kind: override ?? auto, auto };
     });
     return map;
-  }, [reportGroups, roomsIndex, placementOverrides]);
+  }, [reportGroups, roomsIndex, placementOverrides, reportSubmitted]);
 
   // Вид размещения гостя — вид его номера; null — гость без номера.
   const roomKindByIndex = useMemo(() => {
@@ -700,6 +715,18 @@ export default function FapHotelPage({
   // ручное значение pd.accommodationCost (как раньше).
   const getEffectiveRow = useCallback(
     (personIndex, pd) => {
+      // ОТПРАВЛЕННЫЙ отчёт — документ: цена за сутки и вид размещения берутся из
+      // сохранённой строки, а не выводятся заново. Без этого правка прайса
+      // гостиницы, договора АК или номерного фонда меняла суммы уже отправленного
+      // отчёта без единого действия пользователя — проверено на стенде: номер
+      // сматчился с фондом другой вместимости, и отчёт потерял 6000 при обычном
+      // сохранении. У черновика поведение прежнее, живой пересчёт: пока отчёт
+      // заполняют, он обязан следовать за тарифами. Переключается само — любая
+      // правка строк гасит отметку отправки (report.resolver.js), а сохранение,
+      // ничего не изменившее, её сохраняет.
+      // Вид размещения пиннится НЕ здесь, а в placementKindByRoom — он принадлежит
+      // номеру, и подпись в шапке обязана называть ту же величину, что оплачивается.
+      const pinnedPrice = reportSubmitted ? pd.savedPricePerDay ?? null : null;
       const room = roomBillingByIndex[personIndex];
       // Режим «Номер» задаётся тарифом несущего гостя и распространяется на ВЕСЬ номер:
       // проживание начисляется один раз на несущего, остальные гости номера — 0,
@@ -721,7 +748,9 @@ export default function FapHotelPage({
         // тариф может быть уже снят (removeTariff чистит pd и синхронно зовёт
         // buildReportRows) — тогда падаем на ручное значение общей веткой ниже.
         if (tariff) {
-          const price = resolveTariffPricePerDay(tariff, places, roomCategoryByIndex[personIndex] ?? null);
+          const price =
+            pinnedPrice ??
+            resolveTariffPricePerDay(tariff, places, roomCategoryByIndex[personIndex] ?? null);
           if (places == null) {
             return { tariffName: tariff.name ?? "", placementKind: 0, pricePerDay: 0, accommodationCost: 0, warning: "укажите номер" };
           }
@@ -755,7 +784,9 @@ export default function FapHotelPage({
           isLegacyFlat: true,
         };
       }
-      const price = resolveTariffPricePerDay(tariff, places, roomCategoryByIndex[personIndex] ?? null);
+      const price =
+        pinnedPrice ??
+        resolveTariffPricePerDay(tariff, places, roomCategoryByIndex[personIndex] ?? null);
       if (places == null) {
         return { tariffName: tariff.name ?? "", placementKind: 0, pricePerDay: 0, accommodationCost: 0, warning: "укажите номер" };
       }
@@ -778,7 +809,7 @@ export default function FapHotelPage({
         warning: null,
       };
     },
-    [findTariff, roomKindByIndex, roomCategoryByIndex, roomBillingByIndex, people]
+    [findTariff, roomKindByIndex, roomCategoryByIndex, roomBillingByIndex, people, reportSubmitted]
   );
 
   // Ref на getEffectiveRow: buildReportRows работает через refs (для флаш-сейва
@@ -1312,6 +1343,15 @@ export default function FapHotelPage({
           // Легаси-строки поля не несут — там null, то есть дефолт по категории.
           accommodationDiscount:
             row.accommodationDiscount != null ? toNum(row.accommodationDiscount) : null,
+          // Снимок цены и вида размещения. Порог «> 0» такой же, как у daysCount
+          // и по той же причине: бэк кладёт `pricePerDay: row.pricePerDay ?? 0`
+          // и `placementKind: row.placementKind ?? 0` (report.resolver.js), то
+          // есть у строки, сохранённой без этих полей, там ноль, а не null.
+          // Ноль здесь означает не «бесплатно», а «нечем пиннить»: у гостя без
+          // номера и у соседа по номеру с тарифом «Номер» обе величины и так 0.
+          savedPricePerDay: toNum(row.pricePerDay) > 0 ? toNum(row.pricePerDay) : null,
+          savedPlacementKind:
+            Number(row.placementKind) > 0 ? Number(row.placementKind) : null,
         };
       });
       setPersonData(data);
