@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useMutation, useQuery } from "@apollo/client";
+import { composeHotelAddress } from "../../../utils/hotelAddress";
 import classes from "./AddRepresentativeHotel.module.css";
 import Sidebar from "../Sidebar/Sidebar.jsx";
 import {
@@ -205,6 +206,14 @@ function AddRepresentativeHotel({ show, onClose, request }) {
           ...prev,
           hotelId: created.id,
           name: created.name,
+          // У созданной на лету гостиницы information.address пуст — адрес живёт
+          // в location. Собираем его из того, что ввели, иначе заявка получит
+          // гостиницу вообще без адреса.
+          address:
+            composeHotelAddress({
+              city: quickCreate.city,
+              address: quickCreate.locationAddress,
+            }) || prev.address,
         }));
         setShowQuickCreate(false);
         setQuickCreate({
@@ -328,7 +337,11 @@ function AddRepresentativeHotel({ show, onClose, request }) {
                     ...prev,
                     hotelId: newValue?.id ?? "",
                     name: newValue?.name ?? "",
-                    address: newValue?.information?.address ?? prev.address,
+                    // Город берём из справочника: в поле address лежит только улица,
+                    // и без города геокодер PWA не находит точку на карте.
+                    address: newValue?.information
+                      ? composeHotelAddress(newValue.information)
+                      : prev.address,
                   }));
                 }}
               />
