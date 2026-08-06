@@ -17,6 +17,7 @@ import { visibleHotelIndexes, hotelReportSubmittedAt } from "../fapReportAccess"
 import { useToast } from "../../../../contexts/ToastContext";
 import FapActionButton from "../FapActionButton/FapActionButton";
 import FapHeaderActions from "../FapHeaderActions/FapHeaderActions";
+import useServiceReopen from "../useServiceReopen";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import HotelCapacityDialog from "../HotelCapacityDialog/HotelCapacityDialog";
 import AddRepresentativeHotel from "../../AddRepresentativeHotel/AddRepresentativeHotel";
@@ -70,6 +71,15 @@ export default function FapLivingPage({
 
   const [showAddHotel, setShowAddHotel] = useState(false);
   const [showEarlyModal, setShowEarlyModal] = useState(false);
+  const reopen = useServiceReopen({
+    requestId: request?.id,
+    serviceKind: "LIVING",
+    user,
+    // Именно COMPLETED, а не общий isCompleted: отменённую услугу бэк
+    // переоткрывать отказывается, это другой переход.
+    isCompleted: service?.status === "COMPLETED",
+    onDone: onRefetch,
+  });
   const [removeHotelIndex, setRemoveHotelIndex] = useState(null);
   const [editHotelState, setEditHotelState] = useState(null); // { index, peopleCount }
   const [saving, setSaving] = useState(false);
@@ -269,6 +279,11 @@ export default function FapLivingPage({
                 onClick: () => setShowEarlyModal(true),
                 hidden: !(canEdit && !isCompleted && !isExtHotel),
               },
+              {
+                label: "Вернуть в работу",
+                onClick: reopen.openModal,
+                hidden: !reopen.canReopen,
+              },
             ]}
           />
         </div>
@@ -439,6 +454,19 @@ export default function FapLivingPage({
           request={request}
         />
       )}
+
+      <FapDestructiveModal
+        open={reopen.open}
+        onClose={reopen.closeModal}
+        onConfirm={reopen.confirm}
+        title="Вернуть услугу в работу"
+        description="Услуга вернётся в работу: дата завершения и причина досрочного закрытия будут сняты."
+        reasonLabel="Причина *"
+        placeholder="Укажите причину..."
+        confirmText="Вернуть"
+        cancelText="Отмена"
+        saving={reopen.saving}
+      />
 
       <FapDestructiveModal
         open={showEarlyModal}

@@ -20,6 +20,7 @@ import { useDialog } from "../../../../contexts/DialogContext";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import FapActionButton from "../FapActionButton/FapActionButton";
 import FapHeaderActions from "../FapHeaderActions/FapHeaderActions";
+import useServiceReopen from "../useServiceReopen";
 import CatalogPickerModal, { personKey } from "../CatalogPickerModal/CatalogPickerModal";
 import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
@@ -91,6 +92,13 @@ export default function FapWaterMealPage({
   const [saving, setSaving] = useState(false);
   const [search, setSearch] = useState("");
   const [showEarlyModal, setShowEarlyModal] = useState(false);
+  const reopen = useServiceReopen({
+    requestId: request?.id,
+    serviceKind,
+    user,
+    isCompleted: service?.status === "COMPLETED",
+    onDone: onRefetch,
+  });
   const [catalogOpen, setCatalogOpen] = useState(false);
 
   // editingIdx — индекс редактируемой строки (в исходном массиве people)
@@ -401,6 +409,11 @@ export default function FapWaterMealPage({
                 onClick: () => setShowEarlyModal(true),
                 hidden: !(canEdit && !isCancelled && !isFinished),
               },
+              {
+                label: "Вернуть в работу",
+                onClick: reopen.openModal,
+                hidden: !reopen.canReopen,
+              },
             ]}
           />
         </div>
@@ -696,6 +709,19 @@ export default function FapWaterMealPage({
           )}
         </div>
       </div>
+
+      <FapDestructiveModal
+        open={reopen.open}
+        onClose={reopen.closeModal}
+        onConfirm={reopen.confirm}
+        title="Вернуть услугу в работу"
+        description="Услуга вернётся в работу: дата завершения и причина досрочного закрытия будут сняты."
+        reasonLabel="Причина *"
+        placeholder="Укажите причину..."
+        confirmText="Вернуть"
+        cancelText="Отмена"
+        saving={reopen.saving}
+      />
 
       <FapDestructiveModal
         open={showEarlyModal}

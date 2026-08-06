@@ -45,6 +45,17 @@ export const isAirlineRole = (user) =>
 export const canSeeExternalLinks = (user) =>
   !isExternalUser(user) && (isSuperAdmin(user) || isDispatcherRole(user));
 
+/**
+ * Кому в ФАП возвращать в работу ЗАВЕРШЁННУЮ услугу.
+ *
+ * Откат завершения — административное действие: оно снимает дату завершения
+ * и причину досрочного закрытия. Гостиница и авиакомпания видят результат
+ * услуги, но не правят её жизненный цикл, поэтому список положительный —
+ * тот же, что у ссылок-входов.
+ */
+export const canReopenPassengerService = (user) =>
+  !isExternalUser(user) && (isSuperAdmin(user) || isDispatcherRole(user));
+
 export const hasAccessMenu = (accessMenu, key) => {
   if (!key) return true;
   const safeMenu = safeAccessMenu(accessMenu);

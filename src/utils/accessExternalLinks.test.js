@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { canSeeExternalLinks } from "./access.js";
+import { canSeeExternalLinks, canReopenPassengerService } from "./access.js";
 import { roles } from "../roles.js";
 
 const user = (role, extra = {}) => ({ role, ...extra });
@@ -46,4 +46,20 @@ test("пустой пользователь не роняет предикат",
   assert.equal(canSeeExternalLinks(null), false);
   assert.equal(canSeeExternalLinks(undefined), false);
   assert.equal(canSeeExternalLinks({}), false);
+});
+
+test("вернуть услугу в работу может диспетчер и супер-админ", () => {
+  assert.equal(canReopenPassengerService(user(roles.superAdmin)), true);
+  assert.equal(canReopenPassengerService(user(roles.dispatcerAdmin)), true);
+  assert.equal(canReopenPassengerService(user(roles.dispatcherModerator)), true);
+});
+
+test("гостиница, авиакомпания и внешний пользователь услугу не переоткрывают", () => {
+  // Откат завершения снимает дату и причину закрытия — это администрирование
+  // жизненного цикла, а не работа с результатом услуги.
+  assert.equal(canReopenPassengerService(user(roles.hotelAdmin)), false);
+  assert.equal(canReopenPassengerService(user(roles.hotelModerator)), false);
+  assert.equal(canReopenPassengerService(user(roles.airlineAdmin)), false);
+  assert.equal(canReopenPassengerService(external("HOTEL")), false);
+  assert.equal(canReopenPassengerService(null), false);
 });

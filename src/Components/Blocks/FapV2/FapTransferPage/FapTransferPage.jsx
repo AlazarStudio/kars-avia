@@ -14,6 +14,7 @@ import { SERVICE_STATUS_CONFIG, formatDateTime, VEHICLE_TYPES } from "../fapCons
 import { useToast } from "../../../../contexts/ToastContext";
 import FapActionButton from "../FapActionButton/FapActionButton";
 import FapHeaderActions from "../FapHeaderActions/FapHeaderActions";
+import useServiceReopen from "../useServiceReopen";
 import FapSelect from "../FapSelect/FapSelect";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import AddRepresentativeDriver from "../../AddRepresentativeDriver/AddRepresentativeDriver";
@@ -138,6 +139,15 @@ export default function FapTransferPage({
 
   const [showAddDriver, setShowAddDriver] = useState(false);
   const [showEarlyModal, setShowEarlyModal] = useState(false);
+  const reopen = useServiceReopen({
+    requestId: request?.id,
+    serviceKind: isDeparture ? "DEPARTURE_TRANSFER" : "TRANSFER",
+    user,
+    // Именно COMPLETED, а не общий isCompleted: отменённую услугу бэк
+    // переоткрывать отказывается, это другой переход.
+    isCompleted: service?.status === "COMPLETED",
+    onDone: onRefetch,
+  });
   const [deleteDriverConfirm, setDeleteDriverConfirm] = useState(null);
   const [saving, setSaving] = useState(false);
 
@@ -283,6 +293,11 @@ export default function FapTransferPage({
                 onClick: () => setShowEarlyModal(true),
                 hidden: !(canEdit && !isCompleted),
               },
+              {
+                label: "Вернуть в работу",
+                onClick: reopen.openModal,
+                hidden: !reopen.canReopen,
+              },
             ]}
           />
         </div>
@@ -404,6 +419,19 @@ export default function FapTransferPage({
           direction={direction}
         />
       )}
+
+      <FapDestructiveModal
+        open={reopen.open}
+        onClose={reopen.closeModal}
+        onConfirm={reopen.confirm}
+        title="Вернуть услугу в работу"
+        description="Услуга вернётся в работу: дата завершения и причина досрочного закрытия будут сняты."
+        reasonLabel="Причина *"
+        placeholder="Укажите причину..."
+        confirmText="Вернуть"
+        cancelText="Отмена"
+        saving={reopen.saving}
+      />
 
       <FapDestructiveModal
         open={showEarlyModal}

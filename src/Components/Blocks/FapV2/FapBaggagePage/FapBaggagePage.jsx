@@ -20,6 +20,7 @@ import FapBaggageTripFields, {
   deriveTripCost,
 } from "../FapBaggageTripFields/FapBaggageTripFields";
 import FapHeaderActions from "../FapHeaderActions/FapHeaderActions";
+import useServiceReopen from "../useServiceReopen";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import AddRepresentativeBaggageDriver from "../../AddRepresentativeBaggageDriver/AddRepresentativeBaggageDriver";
 import BaggageIcon from "../../../../shared/icons/BaggageIcon";
@@ -181,6 +182,13 @@ export default function FapBaggagePage({
 
   const [showAddDriver, setShowAddDriver] = useState(false);
   const [showEarlyModal, setShowEarlyModal] = useState(false);
+  const reopen = useServiceReopen({
+    requestId: request?.id,
+    serviceKind: "BAGGAGE_DELIVERY",
+    user,
+    isCompleted: service?.status === "COMPLETED",
+    onDone: onRefetch,
+  });
   const [saving, setSaving] = useState(false);
 
   const [completeDelivery] = useMutation(
@@ -329,6 +337,11 @@ export default function FapBaggagePage({
                 onClick: () => setShowEarlyModal(true),
                 hidden: !(canEdit && !isCompleted),
               },
+              {
+                label: "Вернуть в работу",
+                onClick: reopen.openModal,
+                hidden: !reopen.canReopen,
+              },
             ]}
           />
         </div>
@@ -451,6 +464,19 @@ export default function FapBaggagePage({
           request={request}
         />
       )}
+
+      <FapDestructiveModal
+        open={reopen.open}
+        onClose={reopen.closeModal}
+        onConfirm={reopen.confirm}
+        title="Вернуть услугу в работу"
+        description="Услуга вернётся в работу: дата завершения и причина досрочного закрытия будут сняты."
+        reasonLabel="Причина *"
+        placeholder="Укажите причину..."
+        confirmText="Вернуть"
+        cancelText="Отмена"
+        saving={reopen.saving}
+      />
 
       <FapDestructiveModal
         open={showEarlyModal}

@@ -2335,6 +2335,14 @@ export const SET_PASSENGER_SERVICE_STATUS = gql`
   }
 `;
 
+export const REOPEN_PASSENGER_REQUEST_SERVICE = gql`
+  mutation ReopenPassengerRequestService($requestId: ID!, $service: PassengerServiceKind!, $reason: String!) {
+    reopenPassengerRequestService(requestId: $requestId, service: $service, reason: $reason) {
+      id
+    }
+  }
+`;
+
 export const ADD_PASSENGER_REQUEST_HOTEL = gql`
   mutation AddPassengerRequestHotel($requestId: ID!, $hotel: PassengerServiceHotelInput!) {
     addPassengerRequestHotel(requestId: $requestId, hotel: $hotel) {
