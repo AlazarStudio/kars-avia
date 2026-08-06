@@ -2044,6 +2044,52 @@ export default function FapHotelPage({
     [groupTotals]
   );
 
+  // Предполётная сводка перед отправкой отчёта авиакомпании.
+  //
+  // Новых правил тут нет: собираются ровно те предупреждения, которые строка и так
+  // показывает (warning из getEffectiveRow, ⚠ ланчбокса из foodHintData). Смысл в
+  // том, чтобы диспетчер увидел их СУММОЙ до отправки: в отчёте на полсотни человек
+  // одна строка без цены теряется, а отчёт уходит авиакомпании молча — до этой
+  // проверки гвардов было два, «есть размещённые» и «сохранён».
+  //
+  // Номер с нулевой стоимостью считается по номерам, а не по гостям: при тарифе
+  // «Номер» проживание начисляется один раз на несущего гостя, и нули у соседей —
+  // норма, а не недочёт (замер стенда: 54 таких номера из 74).
+  const submitIssues = useMemo(() => {
+    let noPrice = 0;
+    let lunchbox = 0;
+    let zeroRooms = 0;
+    let zeroGuests = 0;
+    reportGroups.forEach((g) => {
+      let roomMoney = 0;
+      g.members.forEach((m) => {
+        const eff = getEffectiveRow(m.index, m.pd);
+        roomMoney += toNum(eff.accommodationCost) + toNum(m.food);
+        // ⚠️ warning приходит ТОЛЬКО когда тариф выбран: у гостя вообще без
+        // тарифа getEffectiveRow выходит раньше и warning не ставит. Поэтому
+        // «ничего не начислено» ловится нулевым итогом ниже, а не warning'ом —
+        // иначе самая населённая проблема (гость без тарифа) не попала бы в
+        // сводку вовсе. Проверено на стенде: отчёт из четырёх таких гостей
+        // давал единственный пункт «итог 0 ₽».
+        if (eff.warning) noPrice += 1;
+        if (foodHintData(m.pd, findTariff(m.pd.tariffId)).warn) lunchbox += 1;
+      });
+      // Гость без номера — сам себе номер: считаем его отдельно, чтобы в сводке
+      // было видно, что это не «пустой номер», а неразмещённый человек.
+      if (roomMoney === 0) {
+        if (g.noRoom) zeroGuests += g.members.length;
+        else zeroRooms += 1;
+      }
+    });
+    const items = [];
+    if (grandTotal === 0) items.push("итог отчёта — 0 ₽");
+    if (zeroGuests > 0) items.push(`гостей без номера и без начислений: ${zeroGuests}`);
+    if (zeroRooms > 0) items.push(`номеров с нулевой стоимостью: ${zeroRooms}`);
+    if (noPrice > 0) items.push(`строк с предупреждением о цене: ${noPrice}`);
+    if (lunchbox > 0) items.push(`строк с ланчбоксами без цены: ${lunchbox}`);
+    return items;
+  }, [reportGroups, getEffectiveRow, findTariff, grandTotal]);
+
   // Эффективные плановые сутки — та же величина, что и метрика «Суток» в шапке.
   const reportNights = useMemo(
     () =>
@@ -2485,6 +2531,28 @@ export default function FapHotelPage({
 
   const handleSubmitReport = async () => {
     if (submitting) return;
+    // Спрашиваем ДО автосейва: иначе отказ от отправки всё равно оставил бы
+    // сохранение, а вопрос выглядел бы запоздалым.
+    if (submitIssues.length > 0) {
+      const go = await confirm({
+        message: (
+          <span>
+            <span style={{ display: "block", marginBottom: 8 }}>
+              Отчёт не досчитан. Авиакомпания увидит его как есть.
+            </span>
+            {submitIssues.map((item) => (
+              <span key={item} style={{ display: "block" }}>
+                • {item}
+              </span>
+            ))}
+          </span>
+        ),
+        confirmText: "Всё равно отправить",
+        cancelText: "Вернуться к отчёту",
+        severity: "warning",
+      });
+      if (!go) return;
+    }
     try {
       setSubmitting(true);
       // Отложенный автосейв обязан улететь ДО отправки: иначе он прилетит следом,
