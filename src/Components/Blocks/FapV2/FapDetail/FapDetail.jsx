@@ -201,9 +201,13 @@ export default function FapDetail({ user, canEdit = true }) {
   const livingMismatch = useMemo(() => livingMismatches(request), [request]);
   // Перебор мест — установленный факт; совпадение ФИО без перебора — лишь подозрение
   // (см. предупреждение в fapLivingMismatch.js про ложные срабатывания на тёзках).
+  // Совпало ещё и место в самолёте — подозрение перестаёт быть слабым: место у
+  // тёзок разное, и такие пары правило отсеивает раньше.
   const livingMismatchText =
     livingMismatch.overbooked.length > 0
       ? "расхождение по факту"
+      : livingMismatch.collisions.some((c) => c.seatMatch)
+      ? "совпадают ФИО и место"
       : "проверьте совпадение ФИО";
 
   // Закрытие поповера по клику вне.

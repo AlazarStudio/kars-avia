@@ -120,3 +120,79 @@ test("livingMismatches на пустой заявке не падает", () => 
   const result = livingMismatches(null);
   assert.equal(result.hasAny, false);
 });
+
+// ── место как второй различитель ───────────────────────────────────────────
+// Место живёт только в реестре (savedPassengers.seat) и подтягивается по personId:
+// у гостя гостиницы такого поля в схеме нет.
+
+const roster = (...pairs) =>
+  pairs.map(([personId, seat]) => ({ personId, seat }));
+
+test("разные места у тёзок снимают совпадение", () => {
+  const collisions = livingNameCollisions(
+    {
+      hotels: [
+        { name: "Азия", people: [{ personId: "a", fullName: "ИВАНОВ ИВАН" }] },
+        { name: "Престиж", people: [{ personId: "b", fullName: "ИВАНОВ ИВАН" }] },
+      ],
+    },
+    roster(["a", "12A"], ["b", "31C"])
+  );
+  assert.deepEqual(collisions, []);
+});
+
+test("одинаковое место усиливает совпадение", () => {
+  const collisions = livingNameCollisions(
+    {
+      hotels: [
+        { name: "Азия", people: [{ personId: "a", fullName: "ИВАНОВ ИВАН" }] },
+        { name: "Престиж", people: [{ personId: "b", fullName: "ИВАНОВ ИВАН" }] },
+      ],
+    },
+    roster(["a", "12A"], ["b", " 12a "])
+  );
+  assert.equal(collisions.length, 1);
+  assert.equal(collisions[0].seatMatch, true, "регистр и пробелы в месте не мешают");
+});
+
+test("место известно не у всех — прежнее поведение", () => {
+  // Одно пустое место не доказывает ни совпадения, ни различия, поэтому
+  // предупреждение остаётся, но слабое. Это несущий случай: на дев-стенде ни в
+  // одной из 38 коллизий место не заполнено у всех участников.
+  const collisions = livingNameCollisions(
+    {
+      hotels: [
+        { name: "Азия", people: [{ personId: "a", fullName: "ИВАНОВ ИВАН" }] },
+        { name: "Престиж", people: [{ personId: "b", fullName: "ИВАНОВ ИВАН" }] },
+      ],
+    },
+    roster(["a", "12A"], ["b", ""])
+  );
+  assert.equal(collisions.length, 1);
+  assert.equal(collisions[0].seatMatch, false);
+});
+
+test("без реестра правило работает как раньше", () => {
+  const service = {
+    hotels: [
+      { name: "Азия", people: [{ personId: "a", fullName: "ИВАНОВ ИВАН" }] },
+      { name: "Престиж", people: [{ personId: "b", fullName: "ИВАНОВ ИВАН" }] },
+    ],
+  };
+  assert.equal(livingNameCollisions(service).length, 1);
+  assert.equal(livingNameCollisions(service, []).length, 1);
+});
+
+test("livingMismatches берёт места из реестра заявки", () => {
+  const result = livingMismatches({
+    savedPassengers: roster(["a", "5B"], ["b", "5B"]),
+    livingService: {
+      hotels: [
+        { name: "Азия", peopleCount: 5, people: [{ personId: "a", fullName: "ИВАНОВ ИВАН" }] },
+        { name: "Престиж", peopleCount: 5, people: [{ personId: "b", fullName: "ИВАНОВ ИВАН" }] },
+      ],
+    },
+  });
+  assert.equal(result.collisions.length, 1);
+  assert.equal(result.collisions[0].seatMatch, true);
+});

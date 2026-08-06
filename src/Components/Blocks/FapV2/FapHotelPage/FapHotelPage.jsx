@@ -981,15 +981,17 @@ export default function FapHotelPage({
   const pct = totalCap > 0 ? Math.min(100, Math.round((placed / totalCap) * 100)) : 0;
 
   const overBy = hotelOverbookedBy(hotel);
+  // Ключ → насколько уверенное совпадение: место в самолёте различает тёзок.
+  // Реестр передаём ради seat — у гостя гостиницы этого поля в схеме нет.
   const collisionKeys = useMemo(() => {
-    const keys = new Set();
-    livingNameCollisions(request?.livingService).forEach((c) => {
+    const keys = new Map();
+    livingNameCollisions(request?.livingService, request?.savedPassengers).forEach((c) => {
       c.places.forEach((p) => {
-        if (p.hotelIndex === Number(hotelIndex)) keys.add(p.personIndex);
+        if (p.hotelIndex === Number(hotelIndex)) keys.set(p.personIndex, c.seatMatch);
       });
     });
     return keys;
-  }, [request?.livingService, hotelIndex]);
+  }, [request?.livingService, request?.savedPassengers, hotelIndex]);
 
   const passengersCount = people.filter((p) => p?.personType !== "CREW").length;
   const crewCount = placed - passengersCount;
@@ -2768,7 +2770,11 @@ export default function FapHotelPage({
               {collisionKeys.has(p._idx) && (
                 <span
                   className={classes.collisionMark}
-                  title="Такое же ФИО есть ещё раз в этой заявке — проверьте, не заселён ли один человек дважды"
+                  title={
+                    collisionKeys.get(p._idx)
+                      ? "Такие же ФИО и место в самолёте есть ещё раз в этой заявке — похоже, один человек заселён дважды"
+                      : "Такое же ФИО есть ещё раз в этой заявке — проверьте, не заселён ли один человек дважды"
+                  }
                 >
                   ⚠
                 </span>

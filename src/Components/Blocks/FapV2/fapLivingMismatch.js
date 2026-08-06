@@ -10,15 +10,32 @@ export const hotelOverbookedBy = (hotel) => {
   return Math.max(0, placed - capacity);
 };
 
+const seatKey = (seat) => String(seat ?? "").trim().toUpperCase();
+
+// Место живёт ТОЛЬКО в реестре (PassengerRequestSavedPerson.seat); у гостя гостиницы
+// такого поля в схеме нет, поэтому место подтягивается по personId.
+const seatIndexOf = (savedPassengers) => {
+  const map = new Map();
+  (Array.isArray(savedPassengers) ? savedPassengers : []).forEach((person) => {
+    if (person?.personId) map.set(person.personId, seatKey(person.seat));
+  });
+  return map;
+};
+
 // Совпадения ФИО по ВСЕЙ услуге проживания, включая совпадения внутри одной гостиницы.
 // Ключ — manifestNameKey (зеркало бэкового normalizeFullNameKey). Искать по personId
-// бесполезно: сканирование посадочного personId не шлёт, бэк подставляет новый uuid
-// каждому, поэтому один человек в двух гостиницах имеет два разных id.
-// ⚠️ Тёзки дают ложное срабатывание — по манифестам зафиксировано, что близнецы с
-// одинаковым ФИО это разные люди. Принято осознанно, поэтому формулировка в UI —
-// «совпадает ФИО», а не «дубль».
-export const livingNameCollisions = (livingService) => {
+// бесполезно: сканер посадочного и ручное добавление personId не шлют, бэк выдаёт
+// каждому новый uuid, поэтому один человек, заведённый дважды, имеет два разных id.
+//
+// МЕСТО — второй различитель. Оно не ужесточает правило, а уточняет вердикт:
+//   • места известны у всех и РАЗНЫЕ  → это тёзки, совпадением не считаем;
+//   • места известны у всех и ОДНО    → почти наверняка один человек дважды (seatMatch);
+//   • место известно не у всех        → прежнее поведение, «совпадает ФИО, проверьте».
+// Требовать совпадения места было нельзя: замер дев-стенда показал, что ни в одной из
+// 38 текущих коллизий место не заполнено у всех участников — правило стало бы мёртвым.
+export const livingNameCollisions = (livingService, savedPassengers) => {
   const hotels = Array.isArray(livingService?.hotels) ? livingService.hotels : [];
+  const seats = seatIndexOf(savedPassengers);
   const byKey = new Map();
   hotels.forEach((hotel, hotelIndex) => {
     const people = Array.isArray(hotel?.people) ? hotel.people : [];
@@ -32,10 +49,26 @@ export const livingNameCollisions = (livingService) => {
         hotelIndex,
         personIndex,
         hotelName: hotel?.name || "",
+        seat: seats.get(person?.personId) || "",
       });
     });
   });
-  return [...byKey.values()].filter((item) => item.places.length > 1);
+
+  return [...byKey.values()]
+    .filter((item) => item.places.length > 1)
+    .map((item) => {
+      const known = item.places.map((p) => p.seat).filter(Boolean);
+      const allKnown = known.length === item.places.length;
+      const unique = new Set(known).size;
+      return {
+        ...item,
+        // Различить удалось только когда место есть у КАЖДОГО: одно пустое место
+        // ничего не доказывает ни в ту, ни в другую сторону.
+        seatMatch: allKnown && unique === 1,
+        seatConflict: allKnown && unique > 1,
+      };
+    })
+    .filter((item) => !item.seatConflict);
 };
 
 export const livingMismatches = (request) => {
@@ -50,7 +83,7 @@ export const livingMismatches = (request) => {
       by: hotelOverbookedBy(hotel),
     }))
     .filter((item) => item.by > 0);
-  const collisions = livingNameCollisions(livingService);
+  const collisions = livingNameCollisions(livingService, request?.savedPassengers);
   return {
     overbooked,
     collisions,

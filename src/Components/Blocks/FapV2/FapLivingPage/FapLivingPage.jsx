@@ -124,9 +124,15 @@ export default function FapLivingPage({
   const totalCapacity = planCap ?? hotels.reduce((s, h) => s + (h.peopleCount || 0), 0);
   const unplaced = planCap != null ? Math.max(0, planCap - totalGuests) : 0;
 
+  // Реестр нужен ради места: у гостя гостиницы поля seat нет, оно живёт только
+  // в savedPassengers и подтягивается по personId.
   const nameCollisions = useMemo(
-    () => livingNameCollisions(service),
-    [service]
+    () => livingNameCollisions(service, request?.savedPassengers),
+    [service, request?.savedPassengers]
+  );
+  const seatMatchCount = useMemo(
+    () => nameCollisions.filter((c) => c.seatMatch).length,
+    [nameCollisions]
   );
 
   const copyLink = (url) => {
@@ -315,7 +321,9 @@ export default function FapLivingPage({
             </div>
             {nameCollisions.length > 0 && (
               <div className={classes.collisionStrip}>
-                Совпадает ФИО — проверьте, не заселён ли один человек дважды:{" "}
+                {seatMatchCount > 0
+                  ? "Совпадает ФИО и место — похоже, один человек заселён дважды: "
+                  : "Совпадает ФИО — проверьте, не заселён ли один человек дважды: "}
                 {nameCollisions
                   .slice(0, 3)
                   .map(
