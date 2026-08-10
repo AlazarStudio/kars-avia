@@ -1,0 +1,59 @@
+.footer {
+  flex-shrink: 0;
+  height: 70px;
+  padding: 0 24px;
+  border-top: 1px solid #EEF1F8;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.summary {
+  min-width: 0;
+  font-size: 13.5px;
+  color: #8B90A5;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.totals {
+  flex-shrink: 0;
+  display: flex;
+  align-items: baseline;
+  gap: 22px;
+}
+
+.serverLine {
+  font-size: 13px;
+  color: #8B90A5;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.deltaZero {
+  color: #8B90A5;
+}
+.deltaPositive {
+  color: #2C63B8;
+}
+.deltaNegative {
+  color: #D9891F;
+}
+
+.totalLabel {
+  font-size: 15px;
+  color: #545873;
+  white-space: nowrap;
+}
+
+.totalValue {
+  font-size: 28px;
+  font-weight: 700;
+  color: #17C08C;
+  letter-spacing: -0.6px;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}

@@ -6693,6 +6693,189 @@ export const DELETE_REPORT = gql`
   }
 `;
 
+export const GET_REPORT_PARTIAL_DAY_SETTINGS = gql`
+  query ReportPartialDaySettings($level: ReportPartialDayLevel) {
+    reportPartialDaySettings(level: $level) {
+      id
+      level
+      arrivalFullBefore
+      arrivalHalfBefore
+      departureHalfAfter
+      departureFullAfter
+      arrivalFullDays
+      arrivalHalfDays
+      departureHalfDays
+      departureFullDays
+      updatedAt
+    }
+  }
+`;
+
+export const UPSERT_REPORT_PARTIAL_DAY_SETTING = gql`
+  mutation UpsertReportPartialDaySetting($input: UpsertReportPartialDaySettingInput!) {
+    upsertReportPartialDaySetting(input: $input) {
+      id
+      level
+      arrivalFullBefore
+      arrivalHalfBefore
+      departureHalfAfter
+      departureFullAfter
+      arrivalFullDays
+      arrivalHalfDays
+      departureHalfDays
+      departureFullDays
+      updatedAt
+    }
+  }
+`;
+
+export const GET_REPORT_DRAFTS = gql`
+  query ReportDrafts($filter: ReportDraftFilterInput) {
+    reportDrafts(filter: $filter) {
+      id
+      type
+      status
+      startDate
+      endDate
+      createdAt
+      updatedAt
+      airline {
+        id
+        name
+      }
+      hotel {
+        id
+        name
+      }
+      rows {
+        index
+      }
+    }
+  }
+`;
+
+export const GET_REPORT_DRAFT = gql`
+  query ReportDraft($id: ID!) {
+    reportDraft(id: $id) {
+      id
+      type
+      status
+      airlineId
+      hotelId
+      startDate
+      endDate
+      createdAt
+      updatedAt
+      filterJson {
+        startDate
+        endDate
+        airlineId
+        hotelId
+        airportId
+        personId
+        positionId
+        position
+        region
+        passengersReport
+        meal
+        living
+        format
+        companyName
+        companyNameFull
+        companyCity
+        contractName
+      }
+      rows {
+        index
+        requestId
+        arrival
+        departure
+        totalDays
+        category
+        personName
+        personPosition
+        roomName
+        roomId
+        shareNote
+        breakfastCount
+        lunchCount
+        dinnerCount
+        breakfastIncludedInPrice
+        totalMealCost
+        totalLivingCost
+        pricePerDay
+        totalDebt
+        hotelName
+      }
+    }
+  }
+`;
+
+export const CREATE_AIRLINE_REPORT_DRAFT = gql`
+  mutation CreateAirlineReportDraft($input: CreateReportInput!, $createFilterInput: createFilterInput) {
+    createAirlineReportDraft(input: $input, createFilterInput: $createFilterInput) {
+      id
+    }
+  }
+`;
+
+export const CREATE_HOTEL_REPORT_DRAFT = gql`
+  mutation CreateHotelReportDraft($input: CreateReportInput!, $createFilterInput: createFilterInput) {
+    createHotelReportDraft(input: $input, createFilterInput: $createFilterInput) {
+      id
+    }
+  }
+`;
+
+export const UPDATE_REPORT_DRAFT = gql`
+  mutation UpdateReportDraft($id: ID!, $rows: [ReportDraftRowInput!]!) {
+    updateReportDraft(id: $id, rows: $rows) {
+      id
+      updatedAt
+      rows {
+        index
+        requestId
+        arrival
+        departure
+        totalDays
+        category
+        personName
+        personPosition
+        roomName
+        roomId
+        shareNote
+        breakfastCount
+        lunchCount
+        dinnerCount
+        breakfastIncludedInPrice
+        totalMealCost
+        totalLivingCost
+        pricePerDay
+        totalDebt
+        hotelName
+      }
+    }
+  }
+`;
+
+export const CONFIRM_REPORT_DRAFT = gql`
+  mutation ConfirmReportDraft($id: ID!, $format: ReportFormat) {
+    confirmReportDraft(id: $id, format: $format) {
+      id
+      name
+      url
+      startDate
+      endDate
+      createdAt
+    }
+  }
+`;
+
+export const DELETE_REPORT_DRAFT = gql`
+  mutation DeleteReportDraft($id: ID!) {
+    deleteReportDraft(id: $id)
+  }
+`;
 
 // Отчеты
 

@@ -1,0 +1,254 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(25, 29, 48, 0.28);
+  z-index: 9999;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 28px 18px;
+}
+
+.headerTitle {
+  font-size: 22px;
+  font-weight: 700;
+  color: #191919;
+  letter-spacing: -0.3px;
+}
+
+.closeBtn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  border: none;
+  background: transparent;
+  color: #8B90A5;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.closeBtn:hover {
+  background: #F1F4FB;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: 0 28px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  box-sizing: border-box;
+}
+
+/* ── Плашка "нет прав на редактирование" ── */
+.noticeBlock {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 15px;
+  border-radius: 12px;
+  background: #F4F6FB;
+  border: 1px solid #E7EBF3;
+  box-sizing: border-box;
+}
+
+.noticeIcon {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.noticeText {
+  font-size: 13.5px;
+  color: #545873;
+  line-height: 1.55;
+}
+
+/* ── Группы ЗАЕЗД / ВЫЕЗД ── */
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.groupTitle {
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.09em;
+  color: #8B90A5;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.prefixLabel {
+  width: 56px;
+  font-size: 14.5px;
+  color: #545873;
+}
+
+.timeInput,
+.daysInput {
+  height: 44px;
+  border-radius: 11px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  text-align: center;
+  font-size: 15px;
+  font-family: inherit;
+  color: #191919;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.timeInput {
+  width: 92px;
+}
+
+.daysInput {
+  width: 74px;
+  font-variant-numeric: tabular-nums;
+}
+
+.timeInput:hover,
+.daysInput:hover {
+  border-color: #C9D2E4;
+}
+
+.timeInput:focus,
+.daysInput:focus {
+  border-color: #C9D2E4;
+}
+
+.timeInput:disabled,
+.daysInput:disabled {
+  background: #F8FAFD;
+  color: #191919;
+}
+
+.inputError {
+  border-color: #E1682B;
+}
+
+.arrow,
+.plus {
+  font-size: 16px;
+  color: #8B90A5;
+}
+
+.unit {
+  font-size: 14px;
+  color: #545873;
+}
+
+.groupErrors {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.errorText {
+  font-size: 12.5px;
+  color: #D2482C;
+  padding-left: 66px;
+}
+
+/* ── Блок-пояснение внизу ── */
+.infoBlock {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 13px 15px;
+  border-radius: 12px;
+  background: #FFFBF3;
+  border: 1px solid #F3E3CB;
+  box-sizing: border-box;
+}
+
+.infoIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #E09A3A;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  font-style: italic;
+  font-family: Georgia, serif;
+}
+
+.infoText {
+  font-size: 13px;
+  color: #8A6B3E;
+  line-height: 1.55;
+}
+
+/* ── Подвал ── */
+.footer {
+  display: flex;
+  gap: 12px;
+  padding: 16px 28px 22px;
+  border-top: 1px solid #F1F4FB;
+  box-sizing: border-box;
+}
+
+.cancelBtn {
+  height: 48px;
+  border-radius: 12px;
+  padding: 0 22px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  color: #2A2E45;
+  font-size: 15px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.cancelBtn:hover {
+  background: #F8FAFD;
+  border-color: #C9D2E4;
+}
+
+.mainBtn {
+  flex: 1;
+  height: 48px;
+  border-radius: 12px;
+  border: none;
+  background: #0057C3;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.mainBtn:hover:not(:disabled) {
+  background: #004aa8;
+}
+
+.mainBtn:disabled {
+  background: #F8FAFD;
+  color: #A2A6B7;
+  cursor: not-allowed;
+}

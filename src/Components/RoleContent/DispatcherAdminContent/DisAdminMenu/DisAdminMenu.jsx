@@ -70,6 +70,9 @@ const DisAdminMenu = ({
         canAccessMenu(accessMenu, "reportMenu", user) && {
           label: "Отчеты", to: "/reports", icon: MenuNavIcons.reports, active: id == "reports",
         },
+        canAccessMenu(accessMenu, "reportMenu", user) && {
+          label: "Отчеты v2", to: "/reportsV2", icon: MenuNavIcons.reports, active: id == "reportsV2",
+        },
         canAccessMenu(accessMenu, "analyticsMenu", user) && {
           label: "Аналитика", to: "/analytics", icon: MenuNavIcons.analytics, fill: true, active: id == "analytics",
         },

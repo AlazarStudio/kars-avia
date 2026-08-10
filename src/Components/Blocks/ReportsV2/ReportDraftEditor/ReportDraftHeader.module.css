@@ -1,0 +1,151 @@
+.bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.backBtn {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #0057C3;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.backBtn:hover {
+  text-decoration: underline;
+}
+
+.title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 17px;
+  font-weight: 700;
+  color: #191919;
+  letter-spacing: -0.2px;
+}
+
+.staleBadge {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 7px;
+  background: #FCEFDA;
+  color: #B8741A;
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.staleDot {
+  flex-shrink: 0;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #E09A3A;
+}
+
+.actions {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.actions button {
+  height: 44px;
+  border-radius: 12px;
+  font-size: 14.5px;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.recreateBtn {
+  padding: 0 14px;
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  color: #2A2E45;
+  font-weight: 500;
+}
+.recreateBtn:hover:not(:disabled) {
+  border-color: #C9D2E4;
+}
+
+.deleteBtn {
+  padding: 0 14px;
+  background: #fff;
+  border: 1px solid #F0B27A;
+  color: #D97A22;
+  font-weight: 500;
+}
+.deleteBtn:hover:not(:disabled) {
+  background: #FDF6EE;
+}
+
+.saveBtnActive {
+  padding: 0 16px;
+  font-weight: 600;
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  color: #2A2E45;
+}
+.saveBtnActive:hover:not(:disabled) {
+  border-color: #C9D2E4;
+}
+
+.saveDot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #0057C3;
+}
+
+.saveBtnDisabled {
+  padding: 0 16px;
+  font-weight: 600;
+  background: #F8FAFD;
+  border: 1px solid #EDF1F8;
+  color: #A2A6B7;
+  cursor: not-allowed;
+}
+
+.confirmBtnActive {
+  padding: 0 18px;
+  font-weight: 600;
+  background: #0057C3;
+  border: 1px solid #0057C3;
+  color: #fff;
+}
+.confirmBtnActive:hover:not(:disabled) {
+  background: #00489F;
+}
+
+.confirmBtnDisabled {
+  padding: 0 18px;
+  font-weight: 600;
+  background: #F8FAFD;
+  border: 1px solid #EDF1F8;
+  color: #A2A6B7;
+  cursor: not-allowed;
+}
+
+.actions button:disabled {
+  cursor: not-allowed;
+}

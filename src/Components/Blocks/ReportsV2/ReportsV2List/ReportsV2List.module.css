@@ -1,0 +1,221 @@
+.card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(25, 29, 48, 0.05);
+  overflow: hidden;
+}
+
+.headRow {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  height: 46px;
+  padding: 0 24px;
+  border-bottom: 1px solid #F1F4FB;
+  font-size: 14px;
+  color: #8B90A5;
+}
+
+.body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.row,
+.skeletonRow {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  height: 64px;
+  padding: 0 24px;
+  border-bottom: 1px solid #F5F7FC;
+}
+
+.row:hover {
+  background: #FAFBFE;
+}
+
+.colNum {
+  flex: 0 0 56px;
+  font-size: 14px;
+  color: #767C96;
+}
+
+.colName {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.colDate {
+  flex: 0 0 200px;
+  font-size: 14.5px;
+  color: #2A2E45;
+}
+
+.colPeriod {
+  flex: 0 0 240px;
+  font-size: 14.5px;
+  color: #2A2E45;
+}
+
+.colActions {
+  flex: 0 0 96px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.avatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: #EEF2F9;
+  color: #8B90A5;
+  font-size: 12.5px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 15px;
+  font-weight: 600;
+  color: #191919;
+}
+
+.downloadBtn,
+.deleteBtn {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.downloadBtn {
+  color: #0057C3;
+  background: #F2F6FD;
+}
+.downloadBtn:hover {
+  background: #E4EDFB;
+}
+
+.deleteBtn {
+  color: #C3C7D6;
+  background: transparent;
+}
+.deleteBtn:hover {
+  background: #FDF1EC;
+  color: #D97A22;
+}
+
+.footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  height: 50px;
+  padding: 0 24px;
+  border-top: 1px solid #F1F4FB;
+  font-size: 13.5px;
+  color: #8B90A5;
+}
+
+/* Скелетон загрузки */
+
+.skeletonAvatar {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  background: #EDF0F7;
+}
+
+.skeletonLine {
+  height: 11px;
+  border-radius: 5px;
+  background: #EDF0F7;
+}
+
+.skeletonSquare {
+  width: 32px;
+  height: 32px;
+  border-radius: 9px;
+  background: #F4F6FB;
+}
+
+/* Пустые состояния */
+
+.empty {
+  flex: 1;
+  min-height: 340px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 24px;
+  text-align: center;
+}
+
+.emptyIcon {
+  width: 76px;
+  height: 76px;
+  border-radius: 20px;
+  background: #F4F6FB;
+  color: #C3C9D8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emptyTitle {
+  font-size: 17px;
+  font-weight: 600;
+  color: #191919;
+}
+
+.emptyText {
+  max-width: 420px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: #8B90A5;
+}
+
+.emptyCreateBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 12px;
+  background: #0057C3;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.emptyCreateBtn:hover {
+  background: #004AA8;
+}

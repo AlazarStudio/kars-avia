@@ -1,0 +1,153 @@
+.bar {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 12px 24px;
+  border-bottom: 1px solid #EEF1F8;
+}
+
+.chips {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.chips button,
+.chipDeleted {
+  height: 32px;
+  padding: 0 13px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  font-family: inherit;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  box-sizing: border-box;
+}
+
+.chips button {
+  cursor: pointer;
+}
+
+.chipDot {
+  flex-shrink: 0;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+}
+
+.chipAll {
+  background: #F7F8FC;
+  border: 1px solid #E7EBF3;
+  color: #545873;
+}
+
+.chipAllActive {
+  background: #0057C3;
+  border: 1px solid #0057C3;
+  color: #fff;
+}
+
+.chipWarning {
+  background: #FFFBF3;
+  border: 1px solid #F3DCBB;
+  color: #B8741A;
+}
+.chipWarning .chipDot {
+  background: #E09A3A;
+}
+
+.chipWarningActive {
+  background: #E09A3A;
+  border: 1px solid #E09A3A;
+  color: #fff;
+}
+.chipWarningActive .chipDot {
+  background: #fff;
+}
+
+.chipEdited {
+  background: #F5F9FF;
+  border: 1px solid #D8E5F8;
+  color: #2C63B8;
+}
+.chipEdited .chipDot {
+  background: #0057C3;
+}
+
+.chipEditedActive {
+  background: #0057C3;
+  border: 1px solid #0057C3;
+  color: #fff;
+}
+.chipEditedActive .chipDot {
+  background: #fff;
+}
+
+.chipDeleted {
+  background: #F7F8FC;
+  border: 1px solid #E7EBF3;
+  color: #8B90A5;
+  cursor: default;
+}
+
+.tools {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.resetLink {
+  flex-shrink: 0;
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 13.5px;
+  color: #8B90A5;
+  text-decoration: underline;
+  cursor: pointer;
+  white-space: nowrap;
+  font-family: inherit;
+}
+.resetLink:hover {
+  color: #545873;
+}
+
+.searchBox {
+  flex-shrink: 0;
+  width: 290px;
+  height: 34px;
+  border-radius: 9px;
+  border: 1px solid #E7EBF3;
+  background: #fff;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 11px;
+  box-sizing: border-box;
+}
+
+.searchIcon {
+  flex-shrink: 0;
+  color: #AFB4C2;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: none;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: #191919;
+}
+.searchInput::placeholder {
+  color: #AFB4C2;
+}

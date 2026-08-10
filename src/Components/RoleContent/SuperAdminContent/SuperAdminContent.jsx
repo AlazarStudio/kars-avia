@@ -6,6 +6,7 @@ import Estafeta from '../../Blocks/Estafeta/Estafeta'
 import HotelPage from '../../Blocks/HotelPage/HotelPage'
 import HotelsList from '../../Blocks/HotelsList/HotelsList'
 import Reports from '../../Blocks/Reports/Reports'
+import ReportsV2 from '../../Blocks/ReportsV2/ReportsV2'
 import Reserve from '../../Blocks/Reserve/Reserve'
 import RepresentativeRequests from "../../Blocks/RepresentativeRequests/RepresentativeRequests";
 import FapV2 from "../../Pages/FapV2/FapV2";
@@ -45,6 +46,7 @@ const SuperAdminContent = ({ user }) => {
       {id === 'hotels' && <HotelsList user={user} />}
       {id === 'airlines' && <AirlinesList user={user} />}
       {id === 'reports' && <Reports user={user} />}
+      {id === 'reportsV2' && <ReportsV2 user={user} />}
       {id === 'analytics' && <Analytics user={user} />}
       {id === 'support' && <SupportPage user={user} />}
       {id === 'documentation' && <DocumentationList user={user} />}

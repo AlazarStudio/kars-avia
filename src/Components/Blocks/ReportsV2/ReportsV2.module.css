@@ -1,0 +1,133 @@
+.section {
+  width: 100%;
+  min-width: 1000px;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px 32px;
+  overflow: hidden;
+  position: relative;
+}
+
+.content {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Переключатель «Авиакомпании / Гостиницы».
+   Взят один в один из Reports.module.css (раздел «Отчёты» v1) по решению
+   владельца: раздел должен выглядеть как остальное приложение, а не как
+   отдельная система. Вариант из макета дизайнера — таблетка с синим
+   активным сегментом — отклонён. */
+.filter_wrapper {
+  position: relative;
+  align-self: flex-start;
+  display: flex;
+  padding: 0;
+  list-style-type: none;
+  gap: 10px;
+  align-items: center;
+}
+
+.filter_wrapper::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background-color: var(--no-active);
+  z-index: 1;
+}
+
+.filter_wrapper button {
+  position: relative;
+  font-size: 16px;
+  padding: 10px 20px;
+  cursor: pointer;
+  background-color: transparent;
+  color: var(--no-active);
+  transition: all 0.3s ease-in-out;
+  outline: none;
+  border: none;
+}
+
+.filter_wrapper button:hover {
+  color: var(--text);
+}
+
+.activeButton {
+  color: var(--text) !important;
+  background-color: transparent !important;
+}
+
+.activeButton::after {
+  content: '';
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background-color: var(--dark-blue);
+  z-index: 2;
+}
+
+/* Строка поиска и действий */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+/* Поиск — общий MUITextField, как в «Отчётах» v1 */
+.mainSearch {
+  width: 500px;
+}
+
+.rulesBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 20px;
+  border-radius: 12px;
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  color: #2A2E45;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.rulesBtn:hover {
+  border-color: #C9D2E4;
+}
+
+.createBtn {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 44px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 12px;
+  background: #0057C3;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.createBtn:hover {
+  background: #004AA8;
+}

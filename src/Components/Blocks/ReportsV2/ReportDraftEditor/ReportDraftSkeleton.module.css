@@ -1,0 +1,17 @@
+.bar {
+  height: 13px;
+  border-radius: 6px;
+  background: #EDF0F7;
+}
+
+.barSmall {
+  height: 11px;
+  border-radius: 5px;
+  background: #EDF0F7;
+}
+
+.barInput {
+  height: 34px;
+  border-radius: 9px;
+  background: #F4F6FB;
+}

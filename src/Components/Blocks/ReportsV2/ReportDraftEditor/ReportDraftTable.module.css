@@ -1,0 +1,361 @@
+/* Общая раскладка шапки/строк таблицы черновика — используется
+   ReportDraftTable (шапка, скелетон) и ReportDraftRow (строка).
+
+   Раскладка — flex, не grid, БЕЗ зазора между колонками: ширины ниже уже
+   заложены с расчётом на то, что первые две колонки закреплены (sticky) по
+   горизонтали строго на left:24 / left:68 (=24+44 — ширина колонки "№" без
+   единого пикселя лишнего зазора). Любая "воздушная" колонка-gap между ними
+   сдвинула бы 68 и разошлась бы с макетом. Визуальный отступ между колонками
+   поэтому живёт ВНУТРИ каждой ячейки как padding-right, а не как row gap.
+
+   min-width строки — сумма фиксированных колонок + минимума резиновой
+   "Пассажир" + горизонтальные паддинги строки:
+     фиксированные   44+116+168+82+100+112+112+106+66 = 906
+     Пассажир (min)                                    = 176
+     паддинги строки  24 + 24                           =  48
+     итого                                              = 1130
+   Меняешь ширину любой колонки — пересчитай эту сумму и поправь все три
+   min-width ниже (.headRow, .row, .body). Строго говоря, flex-shrink:0 на
+   каждой колонке и так не даёт им сжаться теснее суммы их ширин — min-width
+   здесь для явности и чтобы .body (пустой на скелетоне/empty-state, без
+   собственных колонок-детей) тоже держал горизонтальный скролл. */
+
+.headRow,
+.row {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  padding: 0 24px;
+  min-width: 1130px;
+}
+
+.headRow {
+  flex-shrink: 0;
+  height: 44px;
+  font-size: 14px;
+  color: #8B90A5;
+  background: #fff;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  box-shadow: 0 1px 0 #EEF1F8, 0 3px 8px rgba(25, 29, 48, 0.05);
+}
+
+.body {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-width: 1130px;
+}
+
+.row {
+  position: relative;
+  height: 68px;
+  border-bottom: 1px solid #F5F7FC;
+  background: var(--row-bg, #fff);
+}
+
+.rowWarning {
+  --row-bg: #FFFCF6;
+}
+
+.rowEdited {
+  --row-bg: #F7FAFF;
+}
+
+.stripe {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 3px;
+  background: transparent;
+}
+.rowWarning .stripe {
+  background: #E09A3A;
+}
+.rowEdited .stripe {
+  background: #0057C3;
+}
+
+/* Колонки — общие для шапки и строк, задают порядок и ширину (flex-basis).
+   flex-shrink:0 держит ширины точными; padding-right — визуальный зазор
+   между колонками (см. комментарий сверху про отсутствие row gap). */
+.colIndex,
+.colPassenger,
+.colRoom,
+.colStay,
+.colDays,
+.colPrice,
+.colLiving,
+.colMeal,
+.colTotal,
+.colActions {
+  flex-shrink: 0;
+  padding-right: 12px;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.colIndex {
+  flex-basis: 44px;
+}
+
+.colPassenger {
+  flex: 1 1 176px;
+  min-width: 176px;
+}
+
+.colRoom {
+  flex-basis: 116px;
+}
+
+.colStay {
+  flex-basis: 168px;
+}
+
+.colDays {
+  flex-basis: 82px;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+}
+
+.colPrice {
+  flex-basis: 100px;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+}
+
+.colLiving {
+  flex-basis: 112px;
+  display: flex;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.colMeal {
+  flex-basis: 112px;
+  display: flex;
+  justify-content: center;
+  text-align: center;
+}
+
+.colTotal {
+  flex-basis: 106px;
+  display: flex;
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.colActions {
+  flex-basis: 66px;
+  padding-right: 0;
+  display: flex;
+  justify-content: center;
+}
+
+/* Первые две колонки закреплены по горизонтали — и в шапке, и в строке.
+   Фон строки прокидывается через переменную --row-bg (см. .rowWarning /
+   .rowEdited выше), у шапки переменной нет — она остаётся белой. */
+.stickyIndex,
+.stickyPassenger {
+  position: sticky;
+  z-index: 4;
+  background: var(--row-bg, #fff);
+}
+.stickyIndex {
+  left: 24px;
+}
+.stickyPassenger {
+  left: 68px;
+}
+
+/* Пассажир / Номер: основное значение + вторичное под ним. */
+.cellStack {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.personName,
+.personPosition,
+.roomName,
+.roomCategory {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.personName {
+  font-size: 15px;
+  font-weight: 600;
+  color: #191919;
+}
+
+.personPosition {
+  font-size: 13px;
+  color: #0057C3;
+}
+
+.roomName {
+  font-size: 15px;
+  color: #191919;
+}
+
+.roomCategory {
+  font-size: 13px;
+  color: #8B90A5;
+}
+
+/* Проживание: заезд/выезд второй строкой. */
+.cellStay {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stayLine {
+  font-size: 14px;
+  color: #2A2E45;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.stayTimeWarn {
+  color: #D9891F;
+  font-weight: 600;
+}
+
+/* Редактируемые поля: Сут. / Цена/сут. / Питание. */
+.cellField {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.fieldWrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.inputDays,
+.inputPrice,
+.inputMeal {
+  height: 34px;
+  border-radius: 9px;
+  text-align: center;
+  font-size: 14.5px;
+  font-family: inherit;
+  color: #191919;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  outline: none;
+  box-sizing: border-box;
+  font-variant-numeric: tabular-nums;
+}
+.inputDays:focus-visible,
+.inputPrice:focus-visible,
+.inputMeal:focus-visible {
+  border-color: #0057C3;
+}
+
+.inputDays {
+  width: 62px;
+}
+
+.inputPrice {
+  width: 88px;
+}
+
+.inputMeal {
+  width: 96px;
+}
+
+.inputNeedsValue {
+  border-color: #E7A94E;
+  background: #FFFBF3;
+  color: #C9903E;
+}
+
+.inputMealEdited {
+  border-color: #B9D2F5;
+}
+
+.editedDot {
+  position: absolute;
+  top: -3px;
+  right: -3px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #0057C3;
+  border: 2px solid #fff;
+}
+
+.needCaption {
+  font-size: 11px;
+  font-weight: 600;
+  color: #B8741A;
+  white-space: nowrap;
+}
+
+.mealCounts {
+  font-size: 12px;
+  color: #9AA0B4;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.livingValue {
+  font-size: 15px;
+  color: #191919;
+  font-variant-numeric: tabular-nums;
+}
+.livingZero {
+  color: #C9903E;
+}
+
+.totalValue {
+  font-size: 16px;
+  font-weight: 600;
+  color: #191919;
+  font-variant-numeric: tabular-nums;
+}
+
+.actionsCell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.iconBtn {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.revertBtn {
+  color: #0057C3;
+}
+.revertBtn:hover {
+  background: #EFF4FE;
+}
+
+.deleteBtn {
+  color: #C3C7D6;
+}
+.deleteBtn:hover {
+  background: #FDF1EC;
+  color: #D97A22;
+}

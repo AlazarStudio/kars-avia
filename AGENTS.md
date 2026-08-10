@@ -166,7 +166,7 @@ src/
 
 | Функция | Описание |
 |---------|---------|
-| `convertToDate(dateStr, includeTime?)` | ISO → `"DD.MM.YYYY [HH:MM]"` (московское время) |
+| `convertToDate(dateStr, includeTime?)` | ISO → `"DD.MM.YYYY"` (московское время). ⚠️ С `includeTime: true` возвращает **только `"HH:MM"`, без даты** — вопреки комментарию в коде. Дата со временем собирается двумя вызовами: `` `${convertToDate(x)} ${convertToDate(x, true)}` ``, см. `InfoTableDataReports.jsx` |
 | `convertToDateNew(dateStr, includeTime?)` | Аналог, UTC-вариант |
 | `buildScheduledISO(date, time)` | Локальные дату/время → UTC ISO-строка |
 | `generateTimestampId()` | Уникальный ID: timestamp + random |
@@ -268,6 +268,26 @@ reportMenu, reportCreate
 - `FapDetail` — детальная страница заявки, управляет переходами статусов (`CREATED → ACCEPTED → IN_PROGRESS → COMPLETED`)
 - Каждая услуга — отдельный компонент: `FapLivingPage` + `FapHotelPage` (проживание), `FapTransferPage` + `FapDriverPage` (трансфер), `FapWaterMealPage` (вода/питание), `FapBaggagePage` + `FapBaggageTripPage` (багаж). Маппинг `serviceKey` → компонент — в `src/Components/Pages/FapV2/FapServicePage.jsx`
 - `FapHotelPage` + `FapReportView` — отчёт по проживанию: группировка по `roomCategory + roomKind`, редактируемые цены и тарифы, экспорт в XLSX (`reports/buildReportSheets.js`)
+
+## Раздел «Отчёты v2»
+
+`src/Components/Blocks/ReportsV2/` — отчёты по заявкам **эскадрильи** (не ФАП): период, сутки проживания, цена, питание, выгрузка в Excel. Маршрут `/reportsV2`, доступен `SUPERADMIN` и `DISPATCHERADMIN`. Стоит рядом со старым разделом «Отчёты» — тот работает без изменений, как ФАП v1 и v2 сосуществуют.
+
+Две функции поверх обычного создания отчёта:
+
+- **Черновики** — `createAirlineReportDraft` / `createHotelReportDraft` → правка строк → `confirmReportDraft`. Включаются галкой «Проверить строки перед выгрузкой» в форме создания; без неё отчёт выпускается одним шагом, как раньше
+- **Пороги частичных суток** — модель `ReportPartialDaySetting`, используем только уровень `GLOBAL`. Правит `SUPERADMIN`, `DISPATCHERADMIN` видит в режиме просмотра (поля `disabled`, кнопки сохранения нет)
+
+Раскладка: `ReportsV2.jsx` (контейнер: состояние, запросы, гейты по ролям), `ReportsV2List/`, `ReportDraftsPanel/`, `ReportDraftEditor/` (редактор строк + хук `useReportDraft.js`), `ReportCreateSidebar/`, `ReportRulesSidebar/`. Доменная логика без JSX вынесена в `reportRules.js`, `reportDraftRows.js`, `reportDraftAge.js` — у всех тесты рядом (`node --test src/Components/Blocks/ReportsV2/`).
+
+**Что нельзя ломать:**
+
+- границы периода уходят на бэк как `…T00:10:00` и `…T23:50:00` — это не форматирование, а часть расчёта: бэк обрезает по ним заявку, и обрезанный край попадает в спецветки суток. Причём `23:50` берёт настраиваемое `departureFullDays`, а `00:10` захардкожен нулём
+- `recalcRow` применяется **только к строкам, которые правил пользователь**: у нетронутых сумма приходит с бэка, где стоимость номера делится между соседями по временным сегментам, и наивное «сутки × цена» переписало бы чужие деньги
+- `confirmReportDraft` печатает то, что лежит в базе, поэтому подтверждение при несохранённых правках сначала сохраняет
+- пересоздание черновика создаёт новый **до** удаления старого
+- `pricePerDay: null` не подменять нулём; `__typename` снимать перед отправкой строк
+- `updateReportDraft` перезаписывает весь массив строк целиком, без версии — отсюда сохранение явной кнопкой, а не автосейвом
 
 ## Ключевые паттерны
 

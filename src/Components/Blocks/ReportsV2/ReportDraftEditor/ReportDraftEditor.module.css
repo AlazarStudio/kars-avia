@@ -1,0 +1,46 @@
+/* Верхнеуровневая раскладка редактора: шапка/баннер/фильтры закреплены,
+   прокручивается только тело таблицы (см. .scroll ниже и ReportDraftTable) —
+   у .wrap и .card поэтому flex:1;min-height:0, а не просто flex:1. */
+.wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.card {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid #E4E4EF;
+  border-radius: 14px;
+  background: #fff;
+  overflow: hidden;
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Показывается вместо шапки, пока не пришёл первый ответ по черновику —
+   без него заголовок/бейдж/кнопки некому строить (нужны поля draft). */
+.loadingBar {
+  flex-shrink: 0;
+}
+
+.loadingBack {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 14.5px;
+  font-weight: 500;
+  color: #0057C3;
+  cursor: pointer;
+}
+.loadingBack:hover {
+  text-decoration: underline;
+}
