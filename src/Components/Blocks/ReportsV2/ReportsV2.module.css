@@ -26,6 +26,7 @@
 .filter_wrapper {
   position: relative;
   align-self: flex-start;
+  width: 100%;
   display: flex;
   padding: 0;
   list-style-type: none;
@@ -92,42 +93,5 @@
   width: 500px;
 }
 
-.rulesBtn {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 44px;
-  padding: 0 20px;
-  border-radius: 12px;
-  background: #fff;
-  border: 1px solid #E4E4EF;
-  color: #2A2E45;
-  font-size: 15px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: border-color 0.15s ease;
-}
-.rulesBtn:hover {
-  border-color: #C9D2E4;
-}
-
-.createBtn {
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 44px;
-  padding: 0 24px;
-  border: none;
-  border-radius: 12px;
-  background: #0057C3;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-.createBtn:hover {
-  background: #004AA8;
-}
+/* Кнопки действий — общий `Standart/Button`, как в «Отчётах» v1
+   (там он приходит из `Filter`). Своих классов у них нет. */

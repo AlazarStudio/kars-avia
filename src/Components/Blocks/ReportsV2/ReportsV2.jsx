@@ -9,7 +9,7 @@ import ReportDraftEditor from "./ReportDraftEditor/ReportDraftEditor";
 import ReportCreateSidebar from "./ReportCreateSidebar/ReportCreateSidebar";
 import ReportRulesSidebar from "./ReportRulesSidebar/ReportRulesSidebar";
 import MUITextField from "../MUITextField/MUITextField";
-import { GearIcon, PlusIcon } from "./ReportsV2Icons";
+import Button from "../../Standart/Button/Button";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
 import { roles } from "../../../roles";
@@ -231,25 +231,26 @@ export default function ReportsV2({ user, accessMenu }) {
             <div className={classes.spacer} />
 
             {canOpenRules && (
-              <button
+              <Button
                 type="button"
-                className={classes.rulesBtn}
                 onClick={() => setShowRules(true)}
+                minwidth={"170px"}
+                backgroundcolor={"#fff"}
+                color={"var(--text)"}
+                border={"1px solid #E4E4EF"}
               >
-                <GearIcon size={17} />
                 Правила расчёта
-              </button>
+              </Button>
             )}
 
             {canCreate && (
-              <button
+              <Button
                 type="button"
-                className={classes.createBtn}
                 onClick={() => setShowCreate(true)}
+                minwidth={"170px"}
               >
-                <PlusIcon size={17} />
                 Создать отчёт
-              </button>
+              </Button>
             )}
           </div>
 

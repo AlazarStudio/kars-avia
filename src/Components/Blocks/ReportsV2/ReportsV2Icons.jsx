@@ -55,45 +55,6 @@ export function GearIcon({ size = 17, className }) {
 }
 GearIcon.propTypes = iconPropTypes;
 
-export function PlusIcon({ size = 17, className }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 17 17"
-      fill="none"
-      className={className}
-      aria-hidden="true"
-      focusable="false"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path d="M8.5 2.5V14.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-      <path d="M2.5 8.5H14.5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
-    </svg>
-  );
-}
-PlusIcon.propTypes = iconPropTypes;
-
-export function DownloadIcon({ size = 17, className }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 18 18"
-      fill="none"
-      className={className}
-      aria-hidden="true"
-      focusable="false"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path d="M9 2V11.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M5 8L9 12L13 8" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M3 14.5H15" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-    </svg>
-  );
-}
-DownloadIcon.propTypes = iconPropTypes;
-
 export function TrashIcon({ size = 17, className }) {
   return (
     <svg

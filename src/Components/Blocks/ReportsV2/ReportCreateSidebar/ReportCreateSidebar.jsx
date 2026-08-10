@@ -390,7 +390,7 @@ export default function ReportCreateSidebar({
             onClick={closeButton}
             aria-label="Закрыть"
           >
-            <CloseIcon color="#8B90A5" />
+            <CloseIcon />
           </button>
         </div>
 

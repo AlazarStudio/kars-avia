@@ -130,20 +130,19 @@
   border-color: #0057C3;
 }
 
+/* Иконка та же, что в таблице отчётов и в разделе v1 (`shared/icons/DeleteIcon`):
+   цвет задан внутри SVG, поэтому кнопка без фона и рамки. */
 .deleteBtn {
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 9px;
-  background: transparent;
-  color: #C3C7D6;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0 4px;
+  border: none;
+  background: transparent;
   cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
+  opacity: 1;
+  transition: opacity 0.15s ease;
 }
 .deleteBtn:hover {
-  background: #FDF1EC;
-  color: #D97A22;
+  opacity: 0.6;
 }

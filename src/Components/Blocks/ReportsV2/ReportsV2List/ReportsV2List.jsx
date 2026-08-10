@@ -1,25 +1,16 @@
 import PropTypes from "prop-types";
 import classes from "./ReportsV2List.module.css";
 import { convertToDate, getMediaUrl } from "../../../../../graphQL_requests";
-import { DownloadIcon, TrashIcon, DocIcon, PlusIcon } from "../ReportsV2Icons";
+import { DocIcon } from "../ReportsV2Icons";
+import Button from "../../../Standart/Button/Button";
+import DeleteIcon from "../../../../shared/icons/DeleteIcon";
+import DownloadReportIcon from "../../../../shared/icons/DownloadReportIcon";
 
 // Ширины полосок скелетона строки — намеренно разные, чтобы 6 строк
 // загрузки не выглядели машинным повтором одного и того же прямоугольника.
 const SKELETON_NAME_WIDTHS = [150, 190, 120, 170, 140, 200];
 
-/**
- * Две заглавные буквы для монограммы организации: по первой букве от двух
- * первых слов названия, либо первые два символа, если слово одно.
- */
-function getInitials(name) {
-  const clean = (name || "").trim();
-  if (!clean) return "?";
-  const words = clean.split(/\s+/).filter(Boolean);
-  if (words.length >= 2) {
-    return (words[0][0] + words[1][0]).toUpperCase();
-  }
-  return clean.slice(0, 2).toUpperCase();
-}
+const NO_AVATAR = "/no-avatar.png";
 
 /** Родительный падеж числительного при слове «отчёт» (1 отчёт, 2 отчёта, 5 отчётов). */
 function reportsWord(n) {
@@ -57,107 +48,118 @@ export default function ReportsV2List({
 
   return (
     <div className={classes.card}>
-      <div className={classes.headRow}>
-        <div className={classes.colNum}>№</div>
-        <div className={classes.colName}>{objectLabel}</div>
-        <div className={classes.colDate}>Дата формирования</div>
-        <div className={classes.colPeriod}>Период</div>
-        <div className={classes.colActions} />
-      </div>
+      {/* Шапка колонок лежит ВНУТРИ области прокрутки и закреплена sticky —
+          тот же приём, что в таблице редактора черновика. Если вынести её
+          наружу, полоса прокрутки (8px) сузит строки, и все колонки правее
+          резиновой разъедутся с заголовками. */}
+      <div className={classes.scroll}>
+        <div className={classes.headRow}>
+          <div className={classes.colNum}>№</div>
+          <div className={classes.colName}>{objectLabel}</div>
+          <div className={classes.colDate}>Дата формирования</div>
+          <div className={classes.colPeriod}>Период</div>
+          <div className={classes.colActions} />
+        </div>
 
-      <div className={classes.body}>
-        {loading &&
-          SKELETON_NAME_WIDTHS.map((width, i) => (
-            <div className={classes.skeletonRow} key={i}>
-              <div className={classes.colNum} />
-              <div className={classes.colName}>
-                <div className={classes.skeletonAvatar} />
-                <div className={classes.skeletonLine} style={{ width }} />
-              </div>
-              <div className={classes.colDate}>
-                <div className={classes.skeletonLine} style={{ width: 90 }} />
-              </div>
-              <div className={classes.colPeriod}>
-                <div className={classes.skeletonLine} style={{ width: 110 }} />
-              </div>
-              <div className={classes.colActions}>
-                <div className={classes.skeletonSquare} />
-                <div className={classes.skeletonSquare} />
-              </div>
-            </div>
-          ))}
-
-        {showEmptyNoReports && (
-          <div className={classes.empty}>
-            <div className={classes.emptyIcon}>
-              <DocIcon size={34} />
-            </div>
-            <div className={classes.emptyTitle}>Отчётов пока нет</div>
-            <div className={classes.emptyText}>
-              Здесь появятся выпущенные отчёты. Соберите первый — по авиакомпании или по
-              гостинице, за нужный период.
-            </div>
-            {canCreate && (
-              <button type="button" className={classes.emptyCreateBtn} onClick={onCreateClick}>
-                <PlusIcon size={17} />
-                Создать отчёт
-              </button>
-            )}
-          </div>
-        )}
-
-        {showEmptySearchMiss && (
-          <div className={classes.empty}>
-            <div className={classes.emptyIcon}>
-              <DocIcon size={34} />
-            </div>
-            <div className={classes.emptyTitle}>Ничего не найдено</div>
-            <div className={classes.emptyText}>
-              По запросу «{searchQuery}» отчётов нет. Проверьте написание или очистите поиск.
-            </div>
-          </div>
-        )}
-
-        {showRows &&
-          items.map((item, index) => {
-            const name = isAirline ? item?.airline?.name : item?.hotel?.name;
-            return (
-              <div className={classes.row} key={item.id}>
-                <div className={classes.colNum}>{index + 1}</div>
+        <div className={classes.body}>
+          {loading &&
+            SKELETON_NAME_WIDTHS.map((width, i) => (
+              <div className={classes.skeletonRow} key={i}>
+                <div className={classes.colNum} />
                 <div className={classes.colName}>
-                  <div className={classes.avatar}>{getInitials(name)}</div>
-                  <div className={classes.name} title={name || "—"}>
-                    {name || "—"}
-                  </div>
+                  <div className={classes.skeletonAvatar} />
+                  <div className={classes.skeletonLine} style={{ width }} />
                 </div>
                 <div className={classes.colDate}>
-                  {convertToDate(item?.createdAt)} {convertToDate(item?.createdAt, true)}
+                  <div className={classes.skeletonLine} style={{ width: 90 }} />
                 </div>
                 <div className={classes.colPeriod}>
-                  {convertToDate(item?.startDate)} - {convertToDate(item?.endDate)}
+                  <div className={classes.skeletonLine} style={{ width: 110 }} />
                 </div>
                 <div className={classes.colActions}>
-                  <a
-                    className={classes.downloadBtn}
-                    href={getMediaUrl(item.url)}
-                    target="_blank"
-                    rel="noreferrer"
-                    title="Скачать"
-                  >
-                    <DownloadIcon size={17} />
-                  </a>
-                  <button
-                    type="button"
-                    className={classes.deleteBtn}
-                    onClick={() => onDelete(item.id)}
-                    title="Удалить"
-                  >
-                    <TrashIcon size={17} />
-                  </button>
+                  <div className={classes.skeletonSquare} />
+                  <div className={classes.skeletonSquare} />
                 </div>
               </div>
-            );
-          })}
+            ))}
+
+          {showEmptyNoReports && (
+            <div className={classes.empty}>
+              <div className={classes.emptyIcon}>
+                <DocIcon size={34} />
+              </div>
+              <div className={classes.emptyTitle}>Отчётов пока нет</div>
+              <div className={classes.emptyText}>
+                Здесь появятся выпущенные отчёты. Соберите первый — по авиакомпании или по
+                гостинице, за нужный период.
+              </div>
+              {canCreate && (
+                <Button type="button" onClick={onCreateClick} minwidth={"170px"}>
+                  Создать отчёт
+                </Button>
+              )}
+            </div>
+          )}
+
+          {showEmptySearchMiss && (
+            <div className={classes.empty}>
+              <div className={classes.emptyIcon}>
+                <DocIcon size={34} />
+              </div>
+              <div className={classes.emptyTitle}>Ничего не найдено</div>
+              <div className={classes.emptyText}>
+                По запросу «{searchQuery}» отчётов нет. Проверьте написание или очистите поиск.
+              </div>
+            </div>
+          )}
+
+          {showRows &&
+            items.map((item, index) => {
+              const name = isAirline ? item?.airline?.name : item?.hotel?.name;
+              // Логотип организации — тем же способом, что в `InfoTableDataReports.jsx`:
+              // путь из `images[0]` через `getMediaUrl` (он подставляет токен),
+              // заглушка `/no-avatar.png`, когда логотипа нет.
+              const image = isAirline ? item?.airline?.images?.[0] : item?.hotel?.images?.[0];
+              return (
+                <div className={classes.row} key={item.id}>
+                  <div className={classes.colNum}>{index + 1}</div>
+                  <div className={classes.colName}>
+                    <div className={classes.avatar}>
+                      <img src={getMediaUrl(image) ?? NO_AVATAR} alt="" />
+                    </div>
+                    <div className={classes.name} title={name || "—"}>
+                      {name || "—"}
+                    </div>
+                  </div>
+                  <div className={classes.colDate}>
+                    {convertToDate(item?.createdAt)} {convertToDate(item?.createdAt, true)}
+                  </div>
+                  <div className={classes.colPeriod}>
+                    {convertToDate(item?.startDate)} - {convertToDate(item?.endDate)}
+                  </div>
+                  <div className={classes.colActions}>
+                    <a
+                      className={classes.downloadBtn}
+                      href={getMediaUrl(item.url)}
+                      target="_blank"
+                      rel="noreferrer"
+                      title="Скачать"
+                    >
+                      <DownloadReportIcon />
+                    </a>
+                    <button
+                      type="button"
+                      className={classes.deleteBtn}
+                      onClick={() => onDelete(item.id)}
+                      title="Удалить"
+                    >
+                      <DeleteIcon cursor="pointer" />
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+        </div>
       </div>
 
       <div className={classes.footer}>

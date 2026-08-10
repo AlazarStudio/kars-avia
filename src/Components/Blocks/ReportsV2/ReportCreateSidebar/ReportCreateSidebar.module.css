@@ -10,6 +10,9 @@
   justify-content: space-between;
   align-items: center;
   padding: 24px 28px 18px;
+  /* Разделители шапки и подвала — как во всех сайдбарах проекта
+     (`CreateRequestReport.module.css` и ещё ~20 таких же). */
+  border-bottom: 1px solid #54587380;
 }
 
 .headerTitle {
@@ -19,29 +22,27 @@
   letter-spacing: -0.3px;
 }
 
+/* Без подложки и подсветки — крестик как во всех сайдбарах проекта.
+   Размер оставлен ради площади нажатия. */
 .closeBtn {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 34px;
   height: 34px;
-  border-radius: 9px;
+  padding: 0;
   border: none;
   background: transparent;
-  color: #8B90A5;
   cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.closeBtn:hover {
-  background: #F1F4FB;
 }
 
 .body {
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: 0 28px 20px;
+  /* 20px сверху — как отступ тела в сайдбарах v1 (`.requestData`):
+     без него первое поле упирается в разделитель под заголовком. */
+  padding: 20px 28px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -82,7 +83,7 @@
 }
 
 /* ── Поле-селект (обёртка над MUIAutocomplete/MUIAutocompleteColor) ── */
-.selectWrap {
+/* .selectWrap {
   border-radius: 11px;
 }
 
@@ -106,7 +107,7 @@
 .selectWrap :global(.MuiInputLabel-root) {
   color: #B4B9C8 !important;
   font-size: 14.5px !important;
-}
+} */
 
 /* ── Поле-дата (кастомная обёртка с иконкой) ── */
 .dateField {
@@ -298,11 +299,12 @@ input[type="checkbox"].srOnly::after {
   display: flex;
   gap: 12px;
   padding: 16px 28px 22px;
-  border-top: 1px solid #F1F4FB;
+  border-top: 1px solid #54587380;
   box-sizing: border-box;
 }
 
 .cancelBtn {
+  flex-basis: 50%;
   height: 48px;
   border-radius: 12px;
   padding: 0 22px;
@@ -322,7 +324,7 @@ input[type="checkbox"].srOnly::after {
 }
 
 .mainBtn {
-  flex: 1;
+  flex-basis: 50%;
   height: 48px;
   border-radius: 12px;
   border: none;

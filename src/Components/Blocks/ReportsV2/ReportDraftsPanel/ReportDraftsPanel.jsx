@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import classes from "./ReportDraftsPanel.module.css";
 import { convertToDate } from "../../../../../graphQL_requests";
 import { isDraftStale } from "../reportDraftAge";
-import { TrashIcon } from "../ReportsV2Icons";
+import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 
 // Плашка незавершённых черновиков раздела «Отчёты v2»: висит над таблицей
 // готовых отчётов и даёт вернуться к черновику или удалить его. Черновик —
@@ -79,7 +79,7 @@ export default function ReportDraftsPanel({ drafts, isAirline, onOpen, onDelete 
                   onClick={() => onDelete(draft.id)}
                   title="Удалить"
                 >
-                  <TrashIcon size={17} />
+                  <DeleteIcon cursor="pointer" />
                 </button>
               </div>
             </div>

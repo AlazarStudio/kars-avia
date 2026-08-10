@@ -9,21 +9,37 @@
   overflow: hidden;
 }
 
+/* Прокручивается вся таблица целиком — вместе с шапкой колонок, которая
+   держится сверху через sticky. Так шапка и строки лежат в одной и той же
+   ширине контента: полоса прокрутки съедает её у обоих одинаково. */
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
 .headRow {
+  position: sticky;
+  top: 0;
+  z-index: 2;
   flex-shrink: 0;
   display: flex;
   align-items: center;
   height: 46px;
   padding: 0 24px;
+  background: #fff;
   border-bottom: 1px solid #F1F4FB;
   font-size: 14px;
   color: #8B90A5;
 }
 
+/* Растём, чтобы пустое состояние занимало высоту карточки, но не сжимаемся:
+   при полном списке высоту задаёт содержимое, а прокрутку берёт на себя
+   родительский .scroll. */
 .body {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
+  flex: 1 0 auto;
   display: flex;
   flex-direction: column;
 }
@@ -72,21 +88,24 @@
   flex: 0 0 96px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  justify-content: flex-end;
+  gap: 15px;
 }
 
 .avatar {
   flex-shrink: 0;
   width: 36px;
   height: 36px;
-  border-radius: 9px;
-  background: #EEF2F9;
-  color: #8B90A5;
-  font-size: 12.5px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  border-radius: 50%;
+  border: 1px solid var(--no-active);
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  user-select: none;
 }
 
 .name {
@@ -99,34 +118,25 @@
   color: #191919;
 }
 
+/* Иконки действий берутся из `src/shared/icons/` — те же, что в разделе
+   «Отчёты» v1. Свой цвет у них задан внутри SVG, поэтому кнопка остаётся
+   без фона и рамки: подложка спорила бы с их серым штрихом. */
 .downloadBtn,
 .deleteBtn {
-  width: 36px;
-  height: 36px;
-  border-radius: 9px;
-  border: none;
   display: flex;
   align-items: center;
   justify-content: center;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.downloadBtn {
-  color: #0057C3;
-  background: #F2F6FD;
-}
-.downloadBtn:hover {
-  background: #E4EDFB;
-}
-
-.deleteBtn {
-  color: #C3C7D6;
+  padding: 0;
+  border: none;
   background: transparent;
+  cursor: pointer;
+  opacity: 1;
+  transition: opacity 0.15s ease;
 }
+
+.downloadBtn:hover,
 .deleteBtn:hover {
-  background: #FDF1EC;
-  color: #D97A22;
+  opacity: 0.6;
 }
 
 .footer {
@@ -146,7 +156,7 @@
   flex-shrink: 0;
   width: 36px;
   height: 36px;
-  border-radius: 9px;
+  border-radius: 50%;
   background: #EDF0F7;
 }
 
@@ -157,9 +167,9 @@
 }
 
 .skeletonSquare {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
+  width: 19px;
+  height: 20px;
+  border-radius: 5px;
   background: #F4F6FB;
 }
 
@@ -201,21 +211,3 @@
   color: #8B90A5;
 }
 
-.emptyCreateBtn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 44px;
-  padding: 0 24px;
-  border: none;
-  border-radius: 12px;
-  background: #0057C3;
-  color: #fff;
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-.emptyCreateBtn:hover {
-  background: #004AA8;
-}
