@@ -80,7 +80,9 @@ export default function ReportCreateSidebar({
   const [selectedAirline, setSelectedAirline] = useState(null);
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [withReview, setWithReview] = useState(false);
+  // Включено по умолчанию — как «Проживание» и «Питание». Отчёт по умолчанию
+  // проходит через редактор строк, быстрый выпуск остаётся снятием галки.
+  const [withReview, setWithReview] = useState(true);
 
   const [formData, setFormData] = useState({
     startDate: "",
@@ -126,7 +128,7 @@ export default function ReportCreateSidebar({
     setSelectedHotel(null);
     setAirOrHotel(getDefaultAirOrHotel());
     setCategory(categories[0]);
-    setWithReview(false);
+    setWithReview(true);
     setIsEdited(false);
   }, [user.airlineId, user.hotelId, getDefaultAirOrHotel]);
 
