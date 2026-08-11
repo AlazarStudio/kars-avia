@@ -23,6 +23,14 @@
 
 /* Без подложки и подсветки — крестик как во всех сайдбарах проекта.
    Размер оставлен ради площади нажатия. */
+/* Три точки и крестик в одной строке — тот же зазор, что в остальных
+   сайдбарах с этим меню (TransferPriceSidebarForm.module.css:18). */
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
 .closeBtn {
   display: flex;
   align-items: center;
@@ -47,30 +55,6 @@
 }
 
 /* ── Плашка "нет прав на редактирование" ── */
-.noticeBlock {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 13px 15px;
-  border-radius: 12px;
-  background: #F4F6FB;
-  border: 1px solid #E7EBF3;
-  box-sizing: border-box;
-}
-
-.noticeIcon {
-  display: flex;
-  align-items: center;
-  flex-shrink: 0;
-  margin-top: 1px;
-}
-
-.noticeText {
-  font-size: 13.5px;
-  color: #545873;
-  line-height: 1.55;
-}
-
 /* ── Группы ЗАЕЗД / ВЫЕЗД ── */
 .group {
   display: flex;
@@ -208,7 +192,9 @@
   box-sizing: border-box;
 }
 
+/* Кнопки подвала делят ширину поровну — как в сайдбаре создания отчёта. */
 .cancelBtn {
+  flex-basis: 50%;
   height: 48px;
   border-radius: 12px;
   padding: 0 22px;
@@ -228,7 +214,7 @@
 }
 
 .mainBtn {
-  flex: 1;
+  flex-basis: 50%;
   height: 48px;
   border-radius: 12px;
   border: none;

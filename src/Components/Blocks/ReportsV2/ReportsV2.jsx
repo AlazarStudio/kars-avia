@@ -49,8 +49,14 @@ export default function ReportsV2({ user, accessMenu }) {
   const { confirm } = useDialog();
   const { success, error: notifyError } = useToast();
 
+  // Правила расчёта суток открывает и правит и супер, и диспетчер-админ.
+  // Это ровно то, что разрешает бэк: `upsertReportPartialDaySetting` стоит под
+  // `adminMiddleware`, а он пускает ["SUPERADMIN", "DISPATCHERADMIN"] — то есть
+  // ту же пару, что и чтение. Раньше запись была закрыта только здесь.
+  // roles.dispatcerAdmin — опечатка в ключе живёт в src/roles.js; «исправление»
+  // даёт undefined и молча выключает гейт.
   const canOpenRules = me?.role === roles.superAdmin || me?.role === roles.dispatcerAdmin;
-  const canEditRules = me?.role === roles.superAdmin;
+  const canEditRules = canOpenRules;
   const canCreate = !me?.airlineId || accessMenu?.reportCreate;
   const showTypeToggle = me?.role === roles.superAdmin || me?.role === roles.dispatcerAdmin;
 

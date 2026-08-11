@@ -5,6 +5,7 @@ import classes from "./ReportRulesSidebar.module.css";
 import Sidebar from "../../Sidebar/Sidebar";
 import MUILoader from "../../MUILoader/MUILoader";
 import CloseIcon from "../../../../shared/icons/CloseIcon";
+import AdditionalMenu from "../../../Standart/AdditionalMenu/AdditionalMenu";
 import { useDialog } from "../../../../contexts/DialogContext";
 import { useToast } from "../../../../contexts/ToastContext";
 import {
@@ -13,21 +14,6 @@ import {
   getCookie,
 } from "../../../../../graphQL_requests";
 import { toRulesForm, validateRules, rulesChanged, toUpsertInput } from "../reportRules";
-
-// Иконка замка в плашке "нет прав на редактирование".
-function LockIcon() {
-  return (
-    <svg width="17" height="17" viewBox="0 0 17 17" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <rect x="3.5" y="7.5" width="10" height="7" rx="1.6" stroke="#8B90A5" strokeWidth="1.3" />
-      <path
-        d="M5.7 7.5V5.3C5.7 3.75 6.95 2.5 8.5 2.5C10.05 2.5 11.3 3.75 11.3 5.3V7.5"
-        stroke="#8B90A5"
-        strokeWidth="1.3"
-        strokeLinecap="round"
-      />
-    </svg>
-  );
-}
 
 // Порядок групп/строк — контрактный: заезд (полный, половина), затем
 // выезд (половина, полный). Именно так их видит бэкенд в toUpsertInput.
@@ -78,6 +64,13 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
   const { success, error: notifyError } = useToast();
 
   const sidebarRef = useRef();
+  // Меню MUI рисуется в портале — вне узла сайдбара, поэтому его нужно уметь
+  // отличить в обработчике клика снаружи (иначе клик по «Редактировать»
+  // закрывает панель).
+  const menuRef = useRef(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  // Панель открывается в режиме просмотра; правка включается пунктом меню.
+  const [isEditing, setIsEditing] = useState(false);
 
   // form и initial живут в одном стейте, чтобы при повторном ответе с бэка
   // (cache-and-network отвечает дважды) можно было синхронно сравнить их
@@ -108,6 +101,9 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
     if (!show) {
       const emptyForm = toRulesForm(null);
       setState({ form: emptyForm, initial: emptyForm });
+      // Закрыли панель — следующее открытие снова начинается с просмотра.
+      setIsEditing(false);
+      setAnchorEl(null);
       return;
     }
     const next = toRulesForm(setting);
@@ -128,6 +124,21 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
     setState((prev) => ({ ...prev, form: { ...prev.form, [key]: value } }));
   }, []);
 
+  const handleMenuOpen = (event) => setAnchorEl(event.currentTarget);
+  const handleMenuClose = () => setAnchorEl(null);
+
+  const handleEditFromMenu = () => {
+    handleMenuClose();
+    setIsEditing(true);
+  };
+
+  // «Отмена» возвращает к просмотру и откатывает правки, но панель не
+  // закрывает — так же, как в остальных сайдбарах с этим меню.
+  const handleCancelEdit = () => {
+    setState((prev) => ({ ...prev, form: prev.initial }));
+    setIsEditing(false);
+  };
+
   const closeSidebar = useCallback(async () => {
     if (isDialogOpen) return;
     if (!hasChanges) {
@@ -144,6 +155,9 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
     const handleClickOutside = (event) => {
       if (isDialogOpen) return;
       if (event.target.closest(".MuiSnackbar-root")) return;
+      // Выпадающее меню живёт в портале, вне узла сайдбара: без этой проверки
+      // клик по «Редактировать» считается кликом снаружи и закрывает панель.
+      if (anchorEl && menuRef.current?.contains(event.target)) return;
       if (sidebarRef.current?.contains(event.target)) return;
       closeSidebar();
     };
@@ -154,7 +168,7 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
       document.removeEventListener("mousedown", handleClickOutside);
     }
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [show, closeSidebar, isDialogOpen]);
+  }, [show, closeSidebar, isDialogOpen, anchorEl]);
 
   const handleSave = async () => {
     try {
@@ -164,6 +178,8 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
         const next = toRulesForm(saved);
         setState((prev) => ({ ...prev, initial: next }));
       }
+      // Сохранили — возвращаемся к просмотру, панель остаётся открытой.
+      setIsEditing(false);
       success("Правила сохранены");
     } catch (e) {
       notifyError(e?.graphQLErrors?.[0]?.message || "Не удалось сохранить правила");
@@ -187,14 +203,27 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
       <Sidebar show={show} sidebarRef={sidebarRef}>
         <div className={classes.header}>
           <div className={classes.headerTitle}>Правила расчёта суток</div>
-          <button
-            type="button"
-            className={classes.closeBtn}
-            onClick={closeSidebar}
-            aria-label="Закрыть"
-          >
-            <CloseIcon />
-          </button>
+          <div className={classes.headerActions}>
+            {/* Три точки видны только тем, кто вправе править: у остальных
+                панель просто остаётся справочной. */}
+            {canEdit && !isEditing && (
+              <AdditionalMenu
+                anchorEl={anchorEl}
+                onOpen={handleMenuOpen}
+                onClose={handleMenuClose}
+                menuRef={menuRef}
+                onEdit={handleEditFromMenu}
+              />
+            )}
+            <button
+              type="button"
+              className={classes.closeBtn}
+              onClick={closeSidebar}
+              aria-label="Закрыть"
+            >
+              <CloseIcon />
+            </button>
+          </div>
         </div>
 
         {loading ? (
@@ -202,18 +231,6 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
         ) : (
           <>
             <div className={classes.body}>
-              {!canEdit && (
-                <div className={classes.noticeBlock}>
-                  <span className={classes.noticeIcon}>
-                    <LockIcon />
-                  </span>
-                  <div className={classes.noticeText}>
-                    Изменять правила может только супер-администратор. Значения показаны для
-                    справки — они уже применены ко всем новым отчётам.
-                  </div>
-                </div>
-              )}
-
               {FIELD_GROUPS.map((group) => {
                 const groupErrors = groupErrorMessages(group);
                 return (
@@ -229,7 +246,7 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
                             errors[row.timeKey] ? classes.inputError : ""
                           }`}
                           value={form[row.timeKey] ?? ""}
-                          disabled={!canEdit}
+                          disabled={!canEdit || !isEditing}
                           aria-label={row.timeLabel}
                           onChange={(e) => handleFieldChange(row.timeKey, e.target.value)}
                         />
@@ -245,7 +262,7 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
                             errors[row.daysKey] ? classes.inputError : ""
                           }`}
                           value={form[row.daysKey] ?? ""}
-                          disabled={!canEdit}
+                          disabled={!canEdit || !isEditing}
                           aria-label={row.daysLabel}
                           onChange={(e) => handleFieldChange(row.daysKey, e.target.value)}
                         />
@@ -277,9 +294,10 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
               </div>
             </div>
 
-            {canEdit && (
+            {/* Подвал — только в режиме правки: в просмотре сохранять нечего. */}
+            {canEdit && isEditing && (
               <div className={classes.footer}>
-                <button type="button" className={classes.cancelBtn} onClick={closeSidebar}>
+                <button type="button" className={classes.cancelBtn} onClick={handleCancelEdit}>
                   Отмена
                 </button>
                 <button
