@@ -1,3 +1,6 @@
+/* Строка редактора черновика под общим Header: «назад», название черновика,
+   бейдж устаревания и действия справа. Заголовок раздела остаётся наверху
+   («Отчеты v2»), здесь — только сам черновик. */
 .bar {
   flex-shrink: 0;
   display: flex;
@@ -5,29 +8,16 @@
   gap: 16px;
 }
 
-.backBtn {
-  flex-shrink: 0;
-  border: none;
-  background: none;
-  padding: 0;
-  font-size: 14.5px;
-  font-weight: 500;
-  color: #0057C3;
-  cursor: pointer;
-  white-space: nowrap;
-}
-.backBtn:hover {
-  text-decoration: underline;
-}
-
+/* 18px/600 — намеренно мельче заголовка раздела (32px/500) в Header:
+   это подзаголовок, он не должен с ним спорить. */
 .title {
   flex: 1;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font-size: 17px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 600;
   color: #191919;
   letter-spacing: -0.2px;
 }
@@ -62,51 +52,74 @@
   gap: 8px;
 }
 
+/* Габариты по норме проекта: 40px и радиус 10px — так выглядят кнопки
+   и в Standart/Button, и в панелях действий на детальных экранах.
+   Рамку здесь НЕ задаём: каждый вариант ниже объявляет свою целиком
+   (у заливной она того же цвета, что фон, — чтобы filled и outline
+   совпадали по высоте до пикселя). Общий `border` в этом правиле
+   перекрывал `border-color` вариантов, и рамки пропадали. */
 .actions button {
-  height: 44px;
-  border-radius: 12px;
-  font-size: 14.5px;
+  height: 40px;
+  padding: 0 16px;
+  border-radius: 10px;
   font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   white-space: nowrap;
   box-sizing: border-box;
+  transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
 }
 
-.recreateBtn {
-  padding: 0 14px;
+/* Единственное правило на disabled: гасим прозрачностью поверх родных цветов.
+   Отдельная серая палитра для выключенной кнопки — то, чего в проекте нет
+   нигде, и из-за неё «Сохранить» в покое читалась как чужой элемент. */
+.actions button:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.actions button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.actions .secondaryBtn {
   background: #fff;
+  color: var(--main-gray);
   border: 1px solid #E4E4EF;
-  color: #2A2E45;
-  font-weight: 500;
 }
-.recreateBtn:hover:not(:disabled) {
-  border-color: #C9D2E4;
+.actions .secondaryBtn:hover:not(:disabled) {
+  background: var(--gray);
+  border-color: #CBD2E4;
 }
 
-.deleteBtn {
-  padding: 0 14px;
+/* Деструктив в строке действий — outline красный, а не заливка: заливкой
+   в проекте отмечено подтверждение в модалке, а не кнопка на экране.
+   Прежний оранжевый #F0B27A/#D97A22 в палитре не встречался больше нигде. */
+.actions .dangerBtn {
   background: #fff;
-  border: 1px solid #F0B27A;
-  color: #D97A22;
-  font-weight: 500;
+  color: var(--red);
+  border: 1px solid #F1C4BD;
 }
-.deleteBtn:hover:not(:disabled) {
-  background: #FDF6EE;
+.actions .dangerBtn:hover:not(:disabled) {
+  background: #FEF2F2;
+  border-color: var(--red);
 }
 
-.saveBtnActive {
-  padding: 0 16px;
+.actions .primaryBtn {
+  background: #0057C3;
+  border: 1px solid #0057C3;
+  color: #fff;
   font-weight: 600;
-  background: #fff;
-  border: 1px solid #E4E4EF;
-  color: #2A2E45;
 }
-.saveBtnActive:hover:not(:disabled) {
-  border-color: #C9D2E4;
+.actions .primaryBtn:hover:not(:disabled) {
+  background: #00489F;
+  border-color: #00489F;
 }
 
 .saveDot {
@@ -115,37 +128,4 @@
   height: 7px;
   border-radius: 50%;
   background: #0057C3;
-}
-
-.saveBtnDisabled {
-  padding: 0 16px;
-  font-weight: 600;
-  background: #F8FAFD;
-  border: 1px solid #EDF1F8;
-  color: #A2A6B7;
-  cursor: not-allowed;
-}
-
-.confirmBtnActive {
-  padding: 0 18px;
-  font-weight: 600;
-  background: #0057C3;
-  border: 1px solid #0057C3;
-  color: #fff;
-}
-.confirmBtnActive:hover:not(:disabled) {
-  background: #00489F;
-}
-
-.confirmBtnDisabled {
-  padding: 0 18px;
-  font-weight: 600;
-  background: #F8FAFD;
-  border: 1px solid #EDF1F8;
-  color: #A2A6B7;
-  cursor: not-allowed;
-}
-
-.actions button:disabled {
-  cursor: not-allowed;
 }

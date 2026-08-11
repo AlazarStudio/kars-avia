@@ -190,8 +190,9 @@ export default function ReportsV2({ user, accessMenu }) {
 
   return (
     <div className={classes.section}>
-      <Header>Отчеты v2</Header>
-
+      {/* Header в режиме редактора рендерит сам редактор: заголовок тот же
+          «Отчеты v2», но со стрелкой «назад» рядом — а обработчик у неё свой,
+          с проверкой несохранённых правок, и жить он должен там же. */}
       {draftId ? (
         <ReportDraftEditor
           draftId={draftId}
@@ -200,6 +201,8 @@ export default function ReportsV2({ user, accessMenu }) {
           onConfirmed={handleDraftConfirmed}
         />
       ) : (
+        <>
+        <Header>Отчеты v2</Header>
         <div className={classes.content}>
           {showTypeToggle && (
             <div className={classes.filter_wrapper}>
@@ -272,6 +275,7 @@ export default function ReportsV2({ user, accessMenu }) {
             onDelete={handleDeleteReport}
           />
         </div>
+        </>
       )}
 
       <ReportCreateSidebar

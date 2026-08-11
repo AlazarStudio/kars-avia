@@ -1,7 +1,7 @@
 import PropTypes from "prop-types";
 import classes from "./ReportDraftTable.module.css";
 import RestoreIcon from "../../../../shared/icons/RestoreIcon";
-import { TrashIcon } from "../ReportsV2Icons";
+import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 import { rowNeedsDays, rowNeedsPrice } from "../reportDraftRows";
 import {
   formatMoney,
@@ -20,9 +20,18 @@ export default function ReportDraftRow({
   isEdited,
   fieldEdited,
   onCellChange,
+  onCellFocus,
+  onCellBlur,
   onResetRow,
   onRequestDelete,
 }) {
+  // Пока курсор в любом поле строки, строка держится в выборке, даже если
+  // перестала подходить под фильтр (см. useEditingPins). Без этого строка без
+  // цены исчезает из «Предупреждений» на первой же введённой цифре.
+  const cellFocusProps = {
+    onFocus: () => onCellFocus?.(row._uid),
+    onBlur: () => onCellBlur?.(row._uid),
+  };
   const needsDays = rowNeedsDays(row);
   const needsPrice = rowNeedsPrice(row);
   const hasWarning = needsDays || needsPrice;
@@ -107,6 +116,7 @@ export default function ReportDraftRow({
               value={row.totalDays ?? ""}
               aria-label={`Сутки проживания — ${personLabel}`}
               onChange={(e) => onCellChange(row._uid, "totalDays", e.target.value)}
+              {...cellFocusProps}
             />
             {daysEdited && <span className={classes.editedDot} />}
           </div>
@@ -131,6 +141,7 @@ export default function ReportDraftRow({
               value={row.pricePerDay ?? ""}
               aria-label={`Цена за сутки — ${personLabel}`}
               onChange={(e) => onCellChange(row._uid, "pricePerDay", e.target.value)}
+              {...cellFocusProps}
             />
             {priceEdited && <span className={classes.editedDot} />}
           </div>
@@ -162,6 +173,7 @@ export default function ReportDraftRow({
               value={row.totalMealCost ?? ""}
               aria-label={`Стоимость питания — ${personLabel}`}
               onChange={(e) => onCellChange(row._uid, "totalMealCost", e.target.value)}
+              {...cellFocusProps}
             />
             {mealEdited && <span className={classes.editedDot} />}
           </div>
@@ -195,7 +207,11 @@ export default function ReportDraftRow({
             aria-label={`Удалить строку — ${personLabel}`}
             onClick={() => onRequestDelete(row)}
           >
-            <TrashIcon size={16} />
+            {/* color="currentColor" обязателен: DeleteIcon по умолчанию зашивает
+                #545873 в stroke, и без этого перекрашивание при наведении
+                (.deleteBtn:hover в ReportDraftTable.module.css) перестало бы
+                работать. */}
+            <DeleteIcon width={16} height={16} color="currentColor" cursor="pointer" />
           </button>
         </div>
       </div>
@@ -209,6 +225,8 @@ ReportDraftRow.propTypes = {
   isEdited: PropTypes.bool,
   fieldEdited: PropTypes.func.isRequired,
   onCellChange: PropTypes.func.isRequired,
+  onCellFocus: PropTypes.func,
+  onCellBlur: PropTypes.func,
   onResetRow: PropTypes.func.isRequired,
   onRequestDelete: PropTypes.func.isRequired,
 };

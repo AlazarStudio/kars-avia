@@ -9,6 +9,39 @@
   gap: 16px;
 }
 
+/* Кнопка «назад» рядом с заголовком раздела внутри общего Header — ровно тот
+   же приём и те же размеры, что на остальных вложенных экранах системы
+   (эталон — PositionAccessPage.module.css:14 и :25). */
+.titleHeader {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.backButton {
+  flex: none;
+  width: 35px;
+  height: 35px;
+  padding: 6px;
+  border: 1px dotted #545873;
+  border-radius: 10px;
+  background: transparent;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.backButton:hover {
+  background: #f1f4fb;
+}
+
+.backButton img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .card {
   flex: 1;
   min-height: 0;
@@ -28,19 +61,3 @@
 
 /* Показывается вместо шапки, пока не пришёл первый ответ по черновику —
    без него заголовок/бейдж/кнопки некому строить (нужны поля draft). */
-.loadingBar {
-  flex-shrink: 0;
-}
-
-.loadingBack {
-  border: none;
-  background: none;
-  padding: 0;
-  font-size: 14.5px;
-  font-weight: 500;
-  color: #0057C3;
-  cursor: pointer;
-}
-.loadingBack:hover {
-  text-decoration: underline;
-}

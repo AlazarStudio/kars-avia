@@ -11,6 +11,8 @@ import {
   sumTotalDebt,
   rowNeedsPrice,
   rowNeedsDays,
+  measureSavePayload,
+  SAVE_PAYLOAD_LIMIT_BYTES,
 } from "./reportDraftRows.js";
 
 const baseRow = {
@@ -145,4 +147,62 @@ test("sumTotalDebt adds up and survives junk", () => {
 
 test("editable fields are exactly the three agreed ones", () => {
   assert.deepEqual(EDITABLE_FIELDS, ["totalDays", "pricePerDay", "totalMealCost"]);
+});
+
+test("save payload limit mirrors JSON_BODY_LIMIT=2mb on the backend", () => {
+  assert.equal(SAVE_PAYLOAD_LIMIT_BYTES, 2 * 1024 * 1024);
+});
+
+test("measureSavePayload counts UTF-8 bytes, not string length", () => {
+  // Кириллица занимает два байта на символ вместо одного, поэтому три русские
+  // буквы вместо трёх латинских дают ровно три лишних байта. String.length
+  // такой разницы не видит и занизил бы размер.
+  const ascii = measureSavePayload([{ ...baseRow, personName: "AAA" }]);
+  const cyrillic = measureSavePayload([{ ...baseRow, personName: "ЯЯЯ" }]);
+  assert.equal(cyrillic.bytes, ascii.bytes + 3);
+
+  const asLength = JSON.stringify(prepareRowsForSave([{ ...baseRow, personName: "ЯЯЯ" }])).length;
+  assert.ok(cyrillic.bytes > asLength);
+});
+
+test("measureSavePayload flags only payloads over the limit", () => {
+  const small = measureSavePayload([baseRow]);
+  assert.equal(small.exceeds, false);
+  assert.equal(small.limit, SAVE_PAYLOAD_LIMIT_BYTES);
+  assert.ok(small.bytes > 0);
+
+  // 227 строк — реальный черновик владельца. На лимите 2mb он проходит; до
+  // подъёма лимита на бэке падал, и тест на это же число тогда ждал обратного.
+  const real = measureSavePayload(Array.from({ length: 227 }, () => ({ ...baseRow })));
+  assert.equal(real.exceeds, false);
+  assert.equal(real.rowCount, 227);
+
+  const huge = measureSavePayload(Array.from({ length: 6000 }, () => ({ ...baseRow })));
+  assert.equal(huge.exceeds, true);
+  assert.ok(huge.bytes > SAVE_PAYLOAD_LIMIT_BYTES);
+});
+
+test("measureSavePayload derives the row cap from the actual row weight", () => {
+  const huge = measureSavePayload(Array.from({ length: 6000 }, () => ({ ...baseRow })));
+  // Столько строк такого же веса влезает в лимит — меньше, чем есть сейчас.
+  assert.ok(huge.maxRows > 0);
+  assert.ok(huge.maxRows < huge.rowCount);
+
+  // Строки тяжелее — влезает меньше. Число не задано константой, а считается.
+  const heavy = measureSavePayload(
+    Array.from({ length: 6000 }, () => ({ ...baseRow, personName: "Я".repeat(200) }))
+  );
+  assert.ok(heavy.maxRows < huge.maxRows);
+});
+
+test("measureSavePayload survives junk input", () => {
+  const empty = measureSavePayload([]);
+  assert.equal(empty.bytes, 2); // "[]"
+  assert.equal(empty.exceeds, false);
+  assert.equal(empty.rowCount, 0);
+  assert.equal(empty.maxRows, 0); // без строк делить не на что — не NaN и не Infinity
+
+  const junk = measureSavePayload(null);
+  assert.equal(junk.exceeds, false);
+  assert.equal(junk.maxRows, 0);
 });

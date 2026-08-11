@@ -7,6 +7,7 @@ import RestoreIcon from "../../../../shared/icons/RestoreIcon";
 // клику, какие диалоги открывать) живёт в ReportDraftEditor.
 export default function ReportDraftHeader({
   title,
+  loading = false,
   isStale,
   dirty,
   hasRows,
@@ -14,7 +15,6 @@ export default function ReportDraftHeader({
   deleting,
   saving,
   confirming,
-  onBack,
   onRecreate,
   onDelete,
   onSave,
@@ -22,10 +22,8 @@ export default function ReportDraftHeader({
 }) {
   return (
     <div className={classes.bar}>
-      <button type="button" className={classes.backBtn} onClick={onBack}>
-        ← Назад
-      </button>
-
+      {/* Кнопка «назад» живёт в общем Header рядом с «Отчеты v2» — как на всех
+          вложенных экранах системы. Здесь только сам черновик и действия. */}
       <div className={classes.title} title={title}>
         {title}
       </div>
@@ -37,24 +35,32 @@ export default function ReportDraftHeader({
         </span>
       )}
 
+      {/* Пока черновик грузится, показывать нечего, кроме «назад»: действия
+          без данных ни на что не подействуют. */}
+      {loading ? null : (
       <div className={classes.actions}>
         <button
           type="button"
-          className={classes.recreateBtn}
+          className={classes.secondaryBtn}
           disabled={recreating}
           onClick={onRecreate}
         >
-          <RestoreIcon width={16} height={16} color="#2A2E45" cursor="pointer" />
+          {/* currentColor, а не захардкоженный hex: иначе иконка не потускнеет
+              вместе с текстом в disabled и не сменит цвет при наведении. */}
+          <RestoreIcon width={16} height={16} color="currentColor" cursor="pointer" />
           {recreating ? "Пересоздание…" : "Пересоздать"}
         </button>
 
-        <button type="button" className={classes.deleteBtn} disabled={deleting} onClick={onDelete}>
+        <button type="button" className={classes.dangerBtn} disabled={deleting} onClick={onDelete}>
           {deleting ? "Удаление…" : "Удалить"}
         </button>
 
+        {/* Один класс на оба состояния: disabled выражается прозрачностью
+            поверх родных цветов, как во всём проекте, а не подменой палитры.
+            Синяя точка остаётся — это маркер несохранённых правок. */}
         <button
           type="button"
-          className={dirty ? classes.saveBtnActive : classes.saveBtnDisabled}
+          className={classes.secondaryBtn}
           disabled={!dirty || saving}
           onClick={onSave}
         >
@@ -64,19 +70,21 @@ export default function ReportDraftHeader({
 
         <button
           type="button"
-          className={hasRows ? classes.confirmBtnActive : classes.confirmBtnDisabled}
+          className={classes.primaryBtn}
           disabled={!hasRows || confirming}
           onClick={onConfirm}
         >
           {confirming ? "Выгрузка…" : "Подтвердить и выгрузить"}
         </button>
       </div>
+      )}
     </div>
   );
 }
 
 ReportDraftHeader.propTypes = {
   title: PropTypes.string.isRequired,
+  loading: PropTypes.bool,
   isStale: PropTypes.bool,
   dirty: PropTypes.bool,
   hasRows: PropTypes.bool,
@@ -84,9 +92,8 @@ ReportDraftHeader.propTypes = {
   deleting: PropTypes.bool,
   saving: PropTypes.bool,
   confirming: PropTypes.bool,
-  onBack: PropTypes.func.isRequired,
-  onRecreate: PropTypes.func.isRequired,
-  onDelete: PropTypes.func.isRequired,
-  onSave: PropTypes.func.isRequired,
-  onConfirm: PropTypes.func.isRequired,
+  onRecreate: PropTypes.func,
+  onDelete: PropTypes.func,
+  onSave: PropTypes.func,
+  onConfirm: PropTypes.func,
 };

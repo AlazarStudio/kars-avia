@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import classes from "./ReportDraftEditor.module.css";
 import useReportDraft from "./useReportDraft";
+import useEditingPins from "./useEditingPins";
+import Header from "../../Header/Header";
 import ReportDraftHeader from "./ReportDraftHeader";
 import ReportDraftErrorBanner from "./ReportDraftErrorBanner";
 import ReportDraftFilters from "./ReportDraftFilters";
@@ -11,7 +13,7 @@ import ReportDraftDialog from "./ReportDraftDialog";
 import { DRAFT_FILTERS, pluralizeRows, rowMatchesSearch } from "./reportDraftEditorUtils";
 import { useToast } from "../../../../contexts/ToastContext";
 import { convertToDate } from "../../../../../graphQL_requests";
-import { rowNeedsPrice, rowNeedsDays } from "../reportDraftRows";
+import { measureSavePayload, rowNeedsPrice, rowNeedsDays } from "../reportDraftRows";
 import { isDraftStale, getDraftAgeDays } from "../reportDraftAge";
 
 // Редактор строк черновика отчёта: таблица правки перед подтверждением.
@@ -49,9 +51,34 @@ export default function ReportDraftEditor({ draftId, onBack, onDraftReplaced, on
   const [filter, setFilter] = useState(DRAFT_FILTERS.ALL);
   const [search, setSearch] = useState("");
   const [saveFailed, setSaveFailed] = useState(false);
+  // Замер строк на момент неудачного сохранения: {bytes, limit} — если строки
+  // не влезли в лимит тела запроса, и null во всех остальных случаях.
+  const [oversize, setOversize] = useState(null);
   // dialog: null | { type: "leave" | "delete" | "recreate" | "stale" } | { type: "deleteRow", row }
   const [dialog, setDialog] = useState(null);
   const closeDialog = () => setDialog(null);
+
+  // Строки, которые правят прямо сейчас, держим в выборке даже когда они
+  // перестали подходить под фильтр — иначе строка исчезает из-под курсора на
+  // первой же введённой цифре (см. useEditingPins).
+  const { pinned, pin, hold, release, clear: clearPins } = useEditingPins();
+
+  const handleCellChange = (uid, field, value) => {
+    pin(uid);
+    setCell(uid, field, value);
+  };
+
+  // Смена фильтра или поиска — пользователь сам пересобрал выборку, прошлые
+  // закрепления в ней только мешали бы.
+  const handleFilterChange = (next) => {
+    clearPins();
+    setFilter(next);
+  };
+
+  const handleSearchChange = (next) => {
+    clearPins();
+    setSearch(next);
+  };
 
   // Бэк вернул reportDraft: null (черновик удалён/не существует) — сообщаем
   // и уходим назад к списку, показывать тут больше нечего.
@@ -63,19 +90,50 @@ export default function ReportDraftEditor({ draftId, onBack, onDraftReplaced, on
   }, [loading, draftId, draft, notifyError, onBack]);
 
   const handleResetFilters = () => {
+    clearPins();
     setFilter(DRAFT_FILTERS.ALL);
     setSearch("");
   };
+
+  // Число строк изменилось (удалили лишние) — прошлый вердикт о размере
+  // устарел, баннер прячем: следующая попытка посчитает заново.
+  useEffect(() => {
+    setSaveFailed(false);
+    setOversize(null);
+  }, [rows.length]);
 
   const runSave = async () => {
     try {
       await save();
       setSaveFailed(false);
+      setOversize(null);
       success("Черновик сохранён");
       return true;
     } catch (e) {
+      // Размер меряем только на неудаче: JSON по всем строкам стоит заметно
+      // дороже показа баннера, и на успешном пути он не нужен.
+      //
+      // Когда строки не влезают в лимит, бэк рвёт соединение без CORS-ответа,
+      // браузер отдаёт «Failed to fetch», и у Apollo не остаётся ни
+      // graphQLErrors, ни статуса — отличить это от настоящего отказа сети
+      // по самой ошибке нельзя. Отсюда замер: он даёт причину, которой в
+      // ошибке нет.
+      const payload = measureSavePayload(rows);
+      // Байты и лимит — для того, кто будет разбираться, а не для диспетчера:
+      // в интерфейсе он видит только строки и совет сузить период.
+      console.error(
+        `[reportDraft] сохранение не прошло: ${payload.rowCount} строк, ` +
+          `${payload.bytes} Б при лимите тела запроса ${payload.limit} Б`,
+        e
+      );
+      setOversize(payload.exceeds ? payload : null);
       setSaveFailed(true);
-      notifyError(e?.graphQLErrors?.[0]?.message || "Не удалось сохранить черновик");
+      notifyError(
+        e?.graphQLErrors?.[0]?.message ||
+          (payload.exceeds
+            ? "Черновик не сохранён: слишком много строк"
+            : "Не удалось сохранить черновик")
+      );
       return false;
     }
   };
@@ -157,12 +215,20 @@ export default function ReportDraftEditor({ draftId, onBack, onDraftReplaced, on
   const warningRows = searchedRows.filter((row) => rowNeedsPrice(row) || rowNeedsDays(row));
   const editedRows = searchedRows.filter((row) => editedUids.has(row._uid));
 
-  const displayedRows =
+  // Счётчики чипов считаются по warningRows/editedRows — то есть честно, без
+  // закреплений. А вот показываем строку, если она либо подходит под фильтр,
+  // либо закреплена как правящаяся: порядок при этом сохраняется сам, потому
+  // что фильтруется исходный searchedRows, а не склеиваются два списка.
+  const matchesFilter = (row) =>
     filter === DRAFT_FILTERS.WARNINGS
-      ? warningRows
+      ? rowNeedsPrice(row) || rowNeedsDays(row)
       : filter === DRAFT_FILTERS.EDITED
-      ? editedRows
-      : searchedRows;
+      ? editedUids.has(row._uid)
+      : true;
+
+  const displayedRows = searchedRows.filter(
+    (row) => matchesFilter(row) || pinned.has(row._uid)
+  );
 
   // Подвал, в отличие от чипов, — сводка по ВСЕМУ черновику, а не по
   // текущему поиску: иначе "показано 3 из 12 · изменено 5" читалось бы как
@@ -171,12 +237,18 @@ export default function ReportDraftEditor({ draftId, onBack, onDraftReplaced, on
 
   if (!draft) {
     return (
-      <div className={classes.wrap}>
-        <div className={classes.loadingBar}>
-          <button type="button" className={classes.loadingBack} onClick={onBack}>
-            ← Назад
+      <>
+      <Header>
+        <div className={classes.titleHeader}>
+          <button type="button" className={classes.backButton} onClick={onBack} aria-label="Назад">
+            <img src="/arrow.png" alt="" />
           </button>
+          Отчеты v2
         </div>
+      </Header>
+
+      <div className={classes.wrap}>
+        <ReportDraftHeader title="Черновик" loading />
         <div className={classes.card}>
           <div className={classes.scroll}>
             <ReportDraftTable
@@ -193,6 +265,7 @@ export default function ReportDraftEditor({ draftId, onBack, onDraftReplaced, on
           </div>
         </div>
       </div>
+      </>
     );
   }
 
@@ -204,6 +277,21 @@ export default function ReportDraftEditor({ draftId, onBack, onDraftReplaced, on
   const unsavedRowsCount = editedUids.size + deletedCount;
 
   return (
+    <>
+    <Header>
+      <div className={classes.titleHeader}>
+        <button
+          type="button"
+          className={classes.backButton}
+          onClick={handleBackClick}
+          aria-label="Назад"
+        >
+          <img src="/arrow.png" alt="" />
+        </button>
+        Отчеты v2
+      </div>
+    </Header>
+
     <div className={classes.wrap}>
       <ReportDraftHeader
         title={title}
@@ -214,19 +302,24 @@ export default function ReportDraftEditor({ draftId, onBack, onDraftReplaced, on
         deleting={deleting}
         saving={saving}
         confirming={confirming}
-        onBack={handleBackClick}
         onRecreate={handleRecreateClick}
         onDelete={handleDeleteDraftClick}
         onSave={runSave}
         onConfirm={handleConfirmClick}
       />
 
-      {saveFailed && <ReportDraftErrorBanner onRetry={runSave} retrying={saving} />}
+      {saveFailed && (
+        <ReportDraftErrorBanner
+          onRetry={runSave}
+          retrying={saving}
+          oversize={oversize}
+        />
+      )}
 
       <div className={classes.card}>
         <ReportDraftFilters
           filter={filter}
-          onFilterChange={setFilter}
+          onFilterChange={handleFilterChange}
           counts={{
             all: searchedRows.length,
             warnings: warningRows.length,
@@ -236,7 +329,7 @@ export default function ReportDraftEditor({ draftId, onBack, onDraftReplaced, on
           dirty={dirty}
           onResetAll={resetAll}
           search={search}
-          onSearchChange={setSearch}
+          onSearchChange={handleSearchChange}
         />
 
         <div className={classes.scroll}>
@@ -246,7 +339,9 @@ export default function ReportDraftEditor({ draftId, onBack, onDraftReplaced, on
             displayedRows={displayedRows}
             editedUids={editedUids}
             fieldEdited={fieldEdited}
-            onCellChange={setCell}
+            onCellChange={handleCellChange}
+            onCellFocus={hold}
+            onCellBlur={release}
             onResetRow={resetRow}
             onRequestDeleteRow={handleRequestDeleteRow}
             onResetFilters={handleResetFilters}
@@ -348,6 +443,7 @@ export default function ReportDraftEditor({ draftId, onBack, onDraftReplaced, on
         onPrimary={handleConfirmDeleteRow}
       />
     </div>
+    </>
   );
 }
 

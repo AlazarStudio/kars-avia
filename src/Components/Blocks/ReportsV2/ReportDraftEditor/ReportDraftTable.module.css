@@ -48,8 +48,14 @@
   min-width: 1130px;
 }
 
+/* z-index: 0 обязателен, а не украшение. Без него `position: relative` не
+   создаёт stacking context, и `z-index: 4` липких ячеек строки (.stickyIndex /
+   .stickyPassenger) соперничает напрямую с `z-index: 3` шапки в общем контексте
+   родителя — 4 > 3, и при прокрутке колонки «№» и «Пассажир» проступают поверх
+   заголовков. С z-index: 0 дети строки заперты внутри неё и уходят под шапку. */
 .row {
   position: relative;
+  z-index: 0;
   height: 68px;
   border-bottom: 1px solid #F5F7FC;
   background: var(--row-bg, #fff);

@@ -16,6 +16,8 @@ export default function ReportDraftTable({
   editedUids,
   fieldEdited,
   onCellChange,
+  onCellFocus,
+  onCellBlur,
   onResetRow,
   onRequestDeleteRow,
   onResetFilters,
@@ -38,6 +40,8 @@ export default function ReportDraftTable({
         isEdited={editedUids.has(row._uid)}
         fieldEdited={fieldEdited}
         onCellChange={onCellChange}
+        onCellFocus={onCellFocus}
+        onCellBlur={onCellBlur}
         onResetRow={onResetRow}
         onRequestDelete={onRequestDeleteRow}
       />
@@ -71,6 +75,8 @@ ReportDraftTable.propTypes = {
   editedUids: PropTypes.instanceOf(Set).isRequired,
   fieldEdited: PropTypes.func.isRequired,
   onCellChange: PropTypes.func.isRequired,
+  onCellFocus: PropTypes.func,
+  onCellBlur: PropTypes.func,
   onResetRow: PropTypes.func.isRequired,
   onRequestDeleteRow: PropTypes.func.isRequired,
   onResetFilters: PropTypes.func.isRequired,
