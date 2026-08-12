@@ -24,8 +24,6 @@ import {
 
 const SIDEBAR_TAKE = 500;
 
-const sameId = (a, b) => String(a) === String(b);
-
 export const usePlacementData = ({
   hotelId,
   token,
@@ -135,16 +133,9 @@ export const usePlacementData = ({
     REQUEST_CREATED_SUBSCRIPTION,
     {
       context: authContext,
-      onData: ({ data }) => {
-        const created = data?.data?.requestCreated;
-        if (created?.airport?.id && airportId && created.airport.id !== airportId) {
-          return;
-        }
-        if (created?.hotelId && hotelId && created.hotelId !== hotelId) {
-          // still may need sidebar for same airport; refresh lists scoped below
-        }
+      onData: () => {
         bronRefetch();
-        if (airportId) refetchBrons();
+        refetchBrons();
       },
     }
   );
@@ -153,13 +144,7 @@ export const usePlacementData = ({
     REQUEST_UPDATED_SUBSCRIPTION,
     {
       context: authContext,
-      onData: ({ data }) => {
-        const updated = data?.data?.requestUpdated;
-        const updatedHotelId =
-          updated?.hotelId || updated?.hotelChess?.[0]?.hotelId;
-        if (updatedHotelId && hotelId && updatedHotelId !== hotelId) {
-          return;
-        }
+      onData: () => {
         bronRefetch();
       },
     }
@@ -173,9 +158,7 @@ export const usePlacementData = ({
 
       setRequests((prevRequests) =>
         prevRequests.map((req) =>
-          sameId(req.requestID, updatedRequest.requestID)
-            ? { ...req, ...updatedRequest, id: req.id, chessID: req.chessID }
-            : req
+          req.id === updatedRequest.id ? updatedRequest : req
         )
       );
     }
@@ -183,13 +166,12 @@ export const usePlacementData = ({
 
   useEffect(() => {
     if (subscriptionData?.requestCreated) {
-      const created = subscriptionData.requestCreated;
-      if (airportId && created.airport?.id && created.airport.id !== airportId) {
-        return;
-      }
-      setNewRequests((prev) => [...prev, mapRequestToPlacement(created)]);
+      setNewRequests((prev) => [
+        ...prev,
+        mapRequestToPlacement(subscriptionData.requestCreated),
+      ]);
     }
-  }, [subscriptionData, airportId]);
+  }, [subscriptionData]);
 
   useEffect(() => {
     if (dataBrons?.requests?.requests) {
