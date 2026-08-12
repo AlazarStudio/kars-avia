@@ -49,6 +49,7 @@ import MealIcon from "../../../../shared/icons/MealIcon";
 import HotelBedIcon from "../../../../shared/icons/HotelBedIcon";
 import BusIcon from "../../../../shared/icons/BusIcon";
 import BusDownIcon from "../../../../shared/icons/BusDownIcon";
+import BaggageIcon from "../../../../shared/icons/BaggageIcon";
 
 // Порядок и иконки колонки «Услуги». Цвета/подписи берём из SERVICE_CONFIG.
 const SERVICE_PRESENCE = [
@@ -57,6 +58,7 @@ const SERVICE_PRESENCE = [
   { key: "living", Icon: HotelBedIcon },
   { key: "transfer", Icon: BusIcon },
   { key: "transferDeparture", Icon: BusDownIcon },
+  { key: "baggage", Icon: BaggageIcon },
 ];
 
 const emptyForm = {
@@ -209,6 +211,14 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
     (request?.transferService?.drivers || []).forEach((d) => addFrom(d.people, "transfer"));
     (request?.departureTransferService?.drivers || []).forEach((d) =>
       addFrom(d.people, "transferDeparture")
+    );
+    // Доставка багажа набирает пассажиров из этого же реестра (поездка принимает
+    // только людей с personId), но в карту присутствия не попадала: в колонке
+    // «Услуги» у такого человека стоял прочерк, а модалка удаления не называла
+    // багаж среди размещений — из услуги он при этом не удаляется и остаётся
+    // сиротой.
+    (request?.baggageDeliveryService?.drivers || []).forEach((d) =>
+      addFrom(d.people, "baggage")
     );
     return map;
   }, [request]);

@@ -1605,6 +1605,21 @@ export default function FapHotelPage({
   // Синк-ref для cleanup на unmount.
   useEffect(() => { persistReportRef.current = persistReport; }, [persistReport]);
 
+  // Запись отчёта для гостя, которого в personData ещё нет. Договорный тариф
+  // назначается автоматически, поэтому его цены питания надо и перенести — иначе
+  // у гостя стоит тариф, счётчики приёмов 1/1/1 и «Питание» ноль, как у
+  // applyTariffToPerson, только молча. Проживание не копируем: оно производное.
+  const buildPdForNewPerson = (person) => {
+    const t = airlineTariffs[0] ?? null;
+    const pd = { ...emptyPD(person, hotelIndex, plan), tariffId: t?.id ?? null };
+    if (!t) return pd;
+    pd.breakfast = toNum(t.breakfast);
+    pd.lunch = toNum(t.lunch);
+    pd.dinner = toNum(t.dinner);
+    pd.foodCost = computePdFood(pd, t);
+    return pd;
+  };
+
   // Гостя удалили/выселили из середины списка — индексы people сдвинулись, а
   // personData адресуется индексом. Без переноса данные (тариф, сутки, питание)
   // достались бы соседу, и автосейв записал бы их под чужим personId.
@@ -1623,11 +1638,7 @@ export default function FapHotelPage({
     const next = {};
     people.forEach((person, i) => {
       const from = prevIndexByKey.get(keys[i]);
-      next[i] =
-        (from != null && prevPD[from]) || {
-          ...emptyPD(person, hotelIndex, plan),
-          tariffId: airlineTariffs[0]?.id ?? null,
-        };
+      next[i] = (from != null && prevPD[from]) || buildPdForNewPerson(person);
     });
     personDataRef.current = next;
     setPersonData(next);
@@ -1645,10 +1656,7 @@ export default function FapHotelPage({
       let changed = false;
       people.forEach((person, i) => {
         if (!next[i]) {
-          next[i] = {
-            ...emptyPD(person, hotelIndex, plan),
-            tariffId: airlineTariffs[0]?.id ?? null,
-          };
+          next[i] = buildPdForNewPerson(person);
           changed = true;
         }
       });

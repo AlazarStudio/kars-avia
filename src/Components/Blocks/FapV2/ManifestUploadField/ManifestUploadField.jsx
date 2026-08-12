@@ -26,12 +26,18 @@ export default function ManifestUploadField({
     try {
       result = await parseManifestXlsx(file);
     } catch {
+      // Разбор нового файла провалился — прежний обязан уйти. Иначе на экране
+      // остаётся карточка старого файла со своим счётчиком, а вместе с ней и
+      // кнопка «Добавить N в реестр» от него: оператор читает ошибку про новый
+      // файл и импортирует старый.
+      onClear();
       setError("Не удалось прочитать файл");
       return;
     } finally {
       setParsing(false);
     }
     if (result.error) {
+      onClear();
       setError(result.error);
       return;
     }
