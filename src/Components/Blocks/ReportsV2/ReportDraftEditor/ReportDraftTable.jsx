@@ -3,6 +3,7 @@ import classes from "./ReportDraftTable.module.css";
 import ReportDraftRow from "./ReportDraftRow";
 import ReportDraftSkeleton from "./ReportDraftSkeleton";
 import ReportDraftEmptyState from "./ReportDraftEmptyState";
+import { buildShareClusters } from "../reportDraftRows";
 
 // Таблица строк черновика: закреплённая шапка колонок + прокручиваемое тело.
 // Тело — скелетон (первая загрузка), одно из двух пустых состояний или
@@ -21,8 +22,13 @@ export default function ReportDraftTable({
   onResetRow,
   onRequestDeleteRow,
   onResetFilters,
+  hoveredCluster,
+  onHoverCluster,
 }) {
   const rowNumbers = new Map(rows.map((row, i) => [row._uid, i + 1]));
+  // Группы считаем по ПОЛНОМУ списку строк, а не по отфильтрованному: номер
+  // группы не должен меняться от того, что часть соседей отсеял фильтр.
+  const clusters = buildShareClusters(rows);
 
   let body;
   if (loading && rows.length === 0) {
@@ -44,22 +50,38 @@ export default function ReportDraftTable({
         onCellBlur={onCellBlur}
         onResetRow={onResetRow}
         onRequestDelete={onRequestDeleteRow}
+        cluster={clusters.get(row.shareClusterId)}
+        clusterHighlighted={
+          Boolean(hoveredCluster) && row.shareClusterId === hoveredCluster
+        }
+        onHoverCluster={onHoverCluster}
       />
     ));
   }
 
   return (
     <>
+      {/* Заголовки — дословно из печатной формы реестра, чтобы экран сверялся
+          с Excel без перевода. Порядок тоже её, кроме «Сотрудника» (закреплён
+          вторым ради прокрутки) и «Цены/сут.» (поля редактора в форме нет). */}
       <div className={classes.headRow}>
         <div className={`${classes.colIndex} ${classes.stickyIndex}`}>№</div>
-        <div className={`${classes.colPassenger} ${classes.stickyPassenger}`}>Пассажир</div>
-        <div className={classes.colRoom}>Номер</div>
-        <div className={classes.colStay}>Проживание</div>
-        <div className={classes.colDays}>Сут.</div>
+        <div className={`${classes.colPassenger} ${classes.stickyPassenger}`}>Сотрудник</div>
+        <div className={classes.colArrival}>Дата/время заезда</div>
+        <div className={classes.colDeparture}>Дата/время выезда</div>
+        <div className={classes.colDays}>Кол-во суток</div>
+        <div className={classes.colCategory}>Категория номера</div>
+        <div className={classes.colRoom}>Комната</div>
+        <div className={classes.colShare}>Вид проживания</div>
+        <div className={classes.colPosition}>Должность</div>
+        <div className={classes.colBreakfast}>Завтрак</div>
+        <div className={classes.colLunch}>Обед</div>
+        <div className={classes.colDinner}>Ужин</div>
+        <div className={classes.colMeal}>Стоимость питания</div>
         <div className={classes.colPrice}>Цена/сут.</div>
-        <div className={classes.colLiving}>Проживание ₽</div>
-        <div className={classes.colMeal}>Питание</div>
-        <div className={classes.colTotal}>Итого</div>
+        <div className={classes.colLiving}>Стоимость проживания</div>
+        <div className={classes.colTotal}>Итоговая стоимость</div>
+        <div className={classes.colHotel}>Гостиница</div>
         <div className={classes.colActions} />
       </div>
 
@@ -80,4 +102,6 @@ ReportDraftTable.propTypes = {
   onResetRow: PropTypes.func.isRequired,
   onRequestDeleteRow: PropTypes.func.isRequired,
   onResetFilters: PropTypes.func.isRequired,
+  hoveredCluster: PropTypes.string,
+  onHoverCluster: PropTypes.func,
 };

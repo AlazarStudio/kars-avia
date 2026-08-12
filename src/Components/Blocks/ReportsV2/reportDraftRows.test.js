@@ -15,7 +15,80 @@ import {
   SAVE_PAYLOAD_LIMIT_BYTES,
   readPrintedTotals,
   compareWithPrintedTotal,
+  summarizeHotels,
+  buildShareClusters,
 } from "./reportDraftRows.js";
+
+test("buildShareClusters groups roommates and skips solo stays", () => {
+  const rows = [
+    { _uid: 0, shareClusterId: "room1::a" },
+    { _uid: 1, shareClusterId: "solo::x" },
+    { _uid: 2, shareClusterId: "room1::a" },
+    { _uid: 3, shareClusterId: "room2::b" },
+    { _uid: 4, shareClusterId: "room2::b" },
+  ];
+  const clusters = buildShareClusters(rows);
+
+  // одиночка в результат не попадает — связывать не с кем
+  assert.equal(clusters.has("solo::x"), false);
+  assert.equal(clusters.size, 2);
+  assert.deepEqual(clusters.get("room1::a"), { number: 1, uids: [0, 2] });
+  assert.deepEqual(clusters.get("room2::b"), { number: 2, uids: [3, 4] });
+});
+
+test("buildShareClusters numbers groups by first appearance, not by id", () => {
+  const rows = [
+    { _uid: 0, shareClusterId: "zzz" },
+    { _uid: 1, shareClusterId: "aaa" },
+    { _uid: 2, shareClusterId: "zzz" },
+    { _uid: 3, shareClusterId: "aaa" },
+  ];
+  const clusters = buildShareClusters(rows);
+  assert.equal(clusters.get("zzz").number, 1);
+  assert.equal(clusters.get("aaa").number, 2);
+});
+
+test("buildShareClusters survives missing ids and junk", () => {
+  assert.equal(buildShareClusters(null).size, 0);
+  assert.equal(buildShareClusters([{ _uid: 0 }, { _uid: 1, shareClusterId: null }]).size, 0);
+
+  // тройное подселение — одна группа на три строки
+  const trio = buildShareClusters([
+    { _uid: 0, shareClusterId: "t" },
+    { _uid: 1, shareClusterId: "t" },
+    { _uid: 2, shareClusterId: "t" },
+  ]);
+  assert.deepEqual(trio.get("t"), { number: 1, uids: [0, 1, 2] });
+});
+
+test("summarizeHotels counts rows per hotel, biggest first", () => {
+  const rows = [
+    { hotelName: "Европа" },
+    { hotelName: "Апартаменты Карс" },
+    { hotelName: "Европа" },
+    { hotelName: "Апартаменты Карс" },
+    { hotelName: "Апартаменты Карс" },
+  ];
+  assert.deepEqual(summarizeHotels(rows), [
+    { name: "Апартаменты Карс", count: 3 },
+    { name: "Европа", count: 2 },
+  ]);
+});
+
+test("summarizeHotels trims names and skips empty ones", () => {
+  // «Даниэль » с хвостовым пробелом реально лежит в данных стенда
+  const rows = [{ hotelName: "Даниэль " }, { hotelName: "Даниэль" }, { hotelName: "" }, {}];
+  assert.deepEqual(summarizeHotels(rows), [{ name: "Даниэль", count: 2 }]);
+});
+
+test("summarizeHotels breaks ties alphabetically and survives junk", () => {
+  const rows = [{ hotelName: "Пегасас" }, { hotelName: "Авантаж" }];
+  assert.deepEqual(summarizeHotels(rows), [
+    { name: "Авантаж", count: 1 },
+    { name: "Пегасас", count: 1 },
+  ]);
+  assert.deepEqual(summarizeHotels(null), []);
+});
 
 // Форма строки «ИТОГО» — как её отдаёт стенд: value отформатирован под Excel,
 // raw — голое число.

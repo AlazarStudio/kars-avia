@@ -11,6 +11,7 @@ import ReportDraftTable from "./ReportDraftTable";
 import ReportDraftFooter from "./ReportDraftFooter";
 import ReportDraftDialog from "./ReportDraftDialog";
 import ReportDraftPreview from "./ReportDraftPreview";
+import ReportDraftSummary from "./ReportDraftSummary";
 import { DRAFT_FILTERS, pluralizeRows, rowMatchesSearch } from "./reportDraftEditorUtils";
 import { useToast } from "../../../../contexts/ToastContext";
 import { convertToDate } from "../../../../../graphQL_requests";
@@ -22,7 +23,13 @@ import { isDraftStale, getDraftAgeDays } from "../reportDraftAge";
 // поэтому "Подтвердить" сначала сохраняет несохранённые правки (см.
 // confirmAndExport в useReportDraft), а не полагается на то, что их кто-то
 // заметит.
-export default function ReportDraftEditor({ draftId, onBack, onDraftReplaced, onConfirmed }) {
+export default function ReportDraftEditor({
+  draftId,
+  onBack,
+  onDraftReplaced,
+  onConfirmed,
+  airports,
+}) {
   const {
     draft,
     rows,
@@ -59,6 +66,8 @@ export default function ReportDraftEditor({ draftId, onBack, onDraftReplaced, on
   const [dialog, setDialog] = useState(null);
   const closeDialog = () => setDialog(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  // Наведённая группа соседей по номеру — подсвечивает все её строки разом.
+  const [hoveredCluster, setHoveredCluster] = useState(null);
 
   // Строки, которые правят прямо сейчас, держим в выборке даже когда они
   // перестали подходить под фильтр — иначе строка исчезает из-под курсора на
@@ -319,6 +328,8 @@ export default function ReportDraftEditor({ draftId, onBack, onDraftReplaced, on
         />
       )}
 
+      <ReportDraftSummary filterJson={draft.filterJson} rows={rows} airports={airports} />
+
       <div className={classes.card}>
         <ReportDraftFilters
           filter={filter}
@@ -348,6 +359,8 @@ export default function ReportDraftEditor({ draftId, onBack, onDraftReplaced, on
             onResetRow={resetRow}
             onRequestDeleteRow={handleRequestDeleteRow}
             onResetFilters={handleResetFilters}
+            hoveredCluster={hoveredCluster}
+            onHoverCluster={setHoveredCluster}
           />
         </div>
 
@@ -463,4 +476,5 @@ ReportDraftEditor.propTypes = {
   onBack: PropTypes.func.isRequired,
   onDraftReplaced: PropTypes.func.isRequired,
   onConfirmed: PropTypes.func.isRequired,
+  airports: PropTypes.array,
 };

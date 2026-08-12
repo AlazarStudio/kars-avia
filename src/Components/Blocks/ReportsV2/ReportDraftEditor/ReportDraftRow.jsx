@@ -16,6 +16,18 @@ import {
 // Одна строка таблицы черновика. Чисто UI: получает уже готовую строку и
 // колбэки, всю логику (что такое "правлено", что сохранять) решает вызывающий
 // код (ReportDraftEditor/useReportDraft).
+//
+// Набор и порядок колонок повторяют печатную форму реестра (см. `presentation`
+// с бэка): заезд, выезд, сутки, категория, комната, вид проживания, должность,
+// завтрак/обед/ужин по отдельности, стоимости, гостиница. Свёрнутых пар вроде
+// «ФИО + должность в одной ячейке» больше нет — заказчик сверяет экран с Excel
+// построчно, и склейка ему мешала.
+//
+// Два отступления от формы, оба намеренные:
+//  - ФИО стоит вторым и закреплено по горизонтали: таблица шире экрана, и без
+//    закреплённого имени при прокрутке вправо непонятно, чья это строка;
+//  - «Цена/сут.» в форме нет вовсе — это поле редактора, из которого считается
+//    стоимость проживания. Стоит рядом с ней.
 export default function ReportDraftRow({
   row,
   number,
@@ -26,6 +38,9 @@ export default function ReportDraftRow({
   onCellBlur,
   onResetRow,
   onRequestDelete,
+  cluster,
+  clusterHighlighted,
+  onHoverCluster,
 }) {
   // Пока курсор в любом поле строки, строка держится в выборке, даже если
   // перестала подходить под фильтр (см. useEditingPins). Без этого строка без
@@ -64,6 +79,8 @@ export default function ReportDraftRow({
   const rowClassName = [
     classes.row,
     hasWarning ? classes.rowWarning : isEdited ? classes.rowEdited : "",
+    // Подсветка всей группы соседей — включается наведением на любую её строку.
+    clusterHighlighted ? classes.rowClusterMatch : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -74,54 +91,30 @@ export default function ReportDraftRow({
 
       <div className={`${classes.colIndex} ${classes.stickyIndex}`}>{number}</div>
 
-      <div
-        className={`${classes.colPassenger} ${classes.stickyPassenger}`}
-        title={shareTitle}
-      >
-        <div className={classes.cellStack}>
-          <div className={classes.personName}>{row.personName || "—"}</div>
-          <div className={classes.personPosition}>{row.personPosition || "—"}</div>
+      <div className={`${classes.colPassenger} ${classes.stickyPassenger}`}>
+        <div className={classes.personName} title={row.personName || undefined}>
+          {row.personName || "—"}
         </div>
       </div>
 
-      <div className={classes.colRoom}>
-        <div className={classes.cellStack}>
-          <div className={classes.roomName}>{row.roomName || "—"}</div>
-          {/* Соседи по номеру вместо категории, когда они есть: именно из-за
-              совместного проживания стоимость номера делится между жильцами,
-              и без этого непонятно, почему у соседей разные суммы. Категория
-              при этом не теряется — она уходит в подсказку. */}
-          {cohabitants.length > 0 ? (
-            <div className={classes.roomShared} title={shareTitle}>
-              с {cohabitants.join(", ")}
-            </div>
-          ) : (
-            <div className={classes.roomCategory}>{row.category || "—"}</div>
-          )}
-        </div>
+      <div className={classes.colArrival}>
+        {arrival.date}{" "}
+        <span
+          className={arrivalHighlight.highlighted ? classes.stayTimeWarn : undefined}
+          title={arrivalHighlight.title}
+        >
+          {arrival.time}
+        </span>
       </div>
 
-      <div className={classes.colStay}>
-        <div className={classes.cellStay}>
-          <div className={classes.stayLine}>
-            {arrival.date}{" "}
-            <span
-              className={arrivalHighlight.highlighted ? classes.stayTimeWarn : undefined}
-              title={arrivalHighlight.title}
-            >
-              {arrival.time}
-            </span>
-          </div>
-          <div className={classes.stayLine}>
-            {departure.date}{" "}
-            <span
-              className={departureHighlight.highlighted ? classes.stayTimeWarn : undefined}
-              title={departureHighlight.title}
-            >
-              {departure.time}
-            </span>
-          </div>
-        </div>
+      <div className={classes.colDeparture}>
+        {departure.date}{" "}
+        <span
+          className={departureHighlight.highlighted ? classes.stayTimeWarn : undefined}
+          title={departureHighlight.title}
+        >
+          {departure.time}
+        </span>
       </div>
 
       <div className={classes.colDays}>
@@ -144,6 +137,64 @@ export default function ReportDraftRow({
             {daysEdited && <span className={classes.editedDot} />}
           </div>
           {needsDays && <span className={classes.needCaption}>нет суток</span>}
+        </div>
+      </div>
+
+      <div className={classes.colCategory} title={row.category || undefined}>
+        {row.category || "—"}
+      </div>
+
+      <div className={classes.colRoom} title={row.roomName || undefined}>
+        {row.roomName || "—"}
+      </div>
+
+      {/* «Вид проживания» — с кем именно делили номер. Именно из-за подселения
+          стоимость номера делится между жильцами, поэтому это не украшение,
+          а объяснение суммы в строке. */}
+      <div
+        className={cohabitants.length > 0 ? classes.colShareWith : classes.colShare}
+        title={shareTitle}
+        onMouseEnter={cluster ? () => onHoverCluster?.(row.shareClusterId) : undefined}
+        onMouseLeave={cluster ? () => onHoverCluster?.(null) : undefined}
+      >
+        {/* Номер группы совместного проживания: одинаковый у всех жильцов
+            номера. Строки в таблице стоят в порядке реестра и вперемешку,
+            поэтому без метки соседей глазами не сопоставить. */}
+        {cluster && (
+          <span className={classes.clusterBadge} title="Группа совместного проживания">
+            {cluster.number}
+          </span>
+        )}
+        {cohabitants.length > 0 ? `с ${cohabitants.join(", ")}` : "жил один"}
+      </div>
+
+      <div className={classes.colPosition} title={row.personPosition || undefined}>
+        {row.personPosition || "—"}
+      </div>
+
+      <div className={classes.colBreakfast}>{row.breakfastCount ?? 0}</div>
+      <div className={classes.colLunch}>{row.lunchCount ?? 0}</div>
+      <div className={classes.colDinner}>{row.dinnerCount ?? 0}</div>
+
+      <div className={classes.colMeal}>
+        <div className={classes.cellField}>
+          <div className={classes.fieldWrap}>
+            <input
+              type="number"
+              name="mealCost"
+              inputMode="decimal"
+              step={1}
+              min={0}
+              className={
+                mealEdited ? `${classes.inputMeal} ${classes.inputMealEdited}` : classes.inputMeal
+              }
+              value={row.totalMealCost ?? ""}
+              aria-label={`Стоимость питания — ${personLabel}`}
+              onChange={(e) => onCellChange(row._uid, "totalMealCost", e.target.value)}
+              {...cellFocusProps}
+            />
+            {mealEdited && <span className={classes.editedDot} />}
+          </div>
         </div>
       </div>
 
@@ -172,42 +223,22 @@ export default function ReportDraftRow({
         </div>
       </div>
 
-      <div
-        className={classes.colLiving}
-        title={livingCostTooltip(row, isEdited)}
-      >
-        <span className={livingCost === 0 ? `${classes.livingValue} ${classes.livingZero}` : classes.livingValue}>
+      <div className={classes.colLiving} title={livingCostTooltip(row, isEdited)}>
+        <span
+          className={
+            livingCost === 0 ? `${classes.livingValue} ${classes.livingZero}` : classes.livingValue
+          }
+        >
           {formatMoney(row.totalLivingCost)}
         </span>
       </div>
 
-      <div className={classes.colMeal}>
-        <div className={classes.cellField}>
-          <div className={classes.fieldWrap}>
-            <input
-              type="number"
-              name="mealCost"
-              inputMode="decimal"
-              step={1}
-              min={0}
-              className={
-                mealEdited ? `${classes.inputMeal} ${classes.inputMealEdited}` : classes.inputMeal
-              }
-              value={row.totalMealCost ?? ""}
-              aria-label={`Стоимость питания — ${personLabel}`}
-              onChange={(e) => onCellChange(row._uid, "totalMealCost", e.target.value)}
-              {...cellFocusProps}
-            />
-            {mealEdited && <span className={classes.editedDot} />}
-          </div>
-          <div className={classes.mealCounts}>
-            {row.breakfastCount ?? 0}/{row.lunchCount ?? 0}/{row.dinnerCount ?? 0}
-          </div>
-        </div>
-      </div>
-
       <div className={classes.colTotal}>
         <span className={classes.totalValue}>{formatMoney(row.totalDebt)}</span>
+      </div>
+
+      <div className={classes.colHotel} title={row.hotelName || undefined}>
+        {row.hotelName || "—"}
       </div>
 
       <div className={classes.colActions}>
@@ -252,4 +283,7 @@ ReportDraftRow.propTypes = {
   onCellBlur: PropTypes.func,
   onResetRow: PropTypes.func.isRequired,
   onRequestDelete: PropTypes.func.isRequired,
+  cluster: PropTypes.shape({ number: PropTypes.number }),
+  clusterHighlighted: PropTypes.bool,
+  onHoverCluster: PropTypes.func,
 };

@@ -135,14 +135,14 @@ export const usePlacementData = ({
     REQUEST_CREATED_SUBSCRIPTION,
     {
       context: authContext,
-      onData: ({ data }) => {
-        const created = data?.data?.requestCreated;
-        if (created?.airport?.id && airportId && created.airport.id !== airportId) {
-          return;
-        }
-        if (created?.hotelId && hotelId && created.hotelId !== hotelId) {
-          // still may need sidebar for same airport; refresh lists scoped below
-        }
+      onData: () => {
+        // const created = data?.data?.requestCreated;
+        // if (created?.airport?.id && airportId && created.airport.id !== airportId) {
+        //   return;
+        // }
+        // if (created?.hotelId && hotelId && created.hotelId !== hotelId) {
+        //   // still may need sidebar for same airport; refresh lists scoped below
+        // }
         bronRefetch();
         if (airportId) refetchBrons();
       },
@@ -153,43 +153,43 @@ export const usePlacementData = ({
     REQUEST_UPDATED_SUBSCRIPTION,
     {
       context: authContext,
-      onData: ({ data }) => {
-        const updated = data?.data?.requestUpdated;
-        const updatedHotelId =
-          updated?.hotelId || updated?.hotelChess?.[0]?.hotelId;
-        if (updatedHotelId && hotelId && updatedHotelId !== hotelId) {
-          return;
-        }
+      onData: () => {
+        // const updated = data?.data?.requestUpdated;
+        // const updatedHotelId =
+        //   updated?.hotelId || updated?.hotelChess?.[0]?.hotelId;
+        // if (updatedHotelId && hotelId && updatedHotelId !== hotelId) {
+        //   return;
+        // }
         bronRefetch();
       },
     }
   );
 
-  useEffect(() => {
-    if (subscriptionUpdateData?.requestUpdated) {
-      const updatedRequest = mapUpdatedRequestFromSubscription(
-        subscriptionUpdateData.requestUpdated
-      );
+  // useEffect(() => {
+  //   if (subscriptionUpdateData?.requestUpdated) {
+  //     const updatedRequest = mapUpdatedRequestFromSubscription(
+  //       subscriptionUpdateData.requestUpdated
+  //     );
 
-      setRequests((prevRequests) =>
-        prevRequests.map((req) =>
-          sameId(req.requestID, updatedRequest.requestID)
-            ? { ...req, ...updatedRequest, id: req.id, chessID: req.chessID }
-            : req
-        )
-      );
-    }
-  }, [subscriptionUpdateData]);
+  //     setRequests((prevRequests) =>
+  //       prevRequests.map((req) =>
+  //         sameId(req.requestID, updatedRequest.requestID)
+  //           ? { ...req, ...updatedRequest, id: req.id, chessID: req.chessID }
+  //           : req
+  //       )
+  //     );
+  //   }
+  // }, [subscriptionUpdateData]);
 
-  useEffect(() => {
-    if (subscriptionData?.requestCreated) {
-      const created = subscriptionData.requestCreated;
-      if (airportId && created.airport?.id && created.airport.id !== airportId) {
-        return;
-      }
-      setNewRequests((prev) => [...prev, mapRequestToPlacement(created)]);
-    }
-  }, [subscriptionData, airportId]);
+  // useEffect(() => {
+  //   if (subscriptionData?.requestCreated) {
+  //     const created = subscriptionData.requestCreated;
+  //     if (airportId && created.airport?.id && created.airport.id !== airportId) {
+  //       return;
+  //     }
+  //     setNewRequests((prev) => [...prev, mapRequestToPlacement(created)]);
+  //   }
+  // }, [subscriptionData, airportId]);
 
   useEffect(() => {
     if (dataBrons?.requests?.requests) {

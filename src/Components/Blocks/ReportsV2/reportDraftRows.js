@@ -209,6 +209,64 @@ export function sumTotalDebt(rows) {
 }
 
 /**
+ * Собирает группы совместного проживания по `shareClusterId`.
+ *
+ * Бэк ставит одинаковый `shareClusterId` жильцам одного номера с пересечением
+ * периодов. Группы из одной строки отбрасываются: человек жил один, связывать
+ * не с кем, а бейдж у каждой второй строки был бы шумом.
+ *
+ * Номера групп выдаются по порядку первого появления в списке — то есть в
+ * порядке реестра. Строки при этом не переставляются: их порядок и `index`
+ * контрактны, по ним печатается файл.
+ *
+ * @param {Array<object>|null|undefined} rows - строки черновика (с `_uid`)
+ * @returns {Map<string, {number: number, uids: Array<number>}>} только группы из 2+ строк
+ */
+export function buildShareClusters(rows) {
+  const byCluster = new Map();
+  if (!Array.isArray(rows)) return byCluster;
+
+  for (const row of rows) {
+    const id = row?.shareClusterId;
+    if (!id) continue;
+    if (!byCluster.has(id)) byCluster.set(id, []);
+    byCluster.get(id).push(row._uid);
+  }
+
+  const clusters = new Map();
+  let number = 0;
+  for (const [id, uids] of byCluster) {
+    if (uids.length < 2) continue;
+    number += 1;
+    clusters.set(id, { number, uids });
+  }
+  return clusters;
+}
+
+/**
+ * Считает, какие гостиницы вошли в отчёт и сколько в каждой строк.
+ *
+ * Отчёт по авиакомпании собирается по всем гостиницам аэропорта сразу — на
+ * живом черновике их девять, — поэтому «какая гостиница в отчёте» без такой
+ * сводки не ответить: в строке видна одна, а в файле их десяток.
+ *
+ * @param {Array<object>|null|undefined} rows - строки черновика
+ * @returns {Array<{name: string, count: number}>} по убыванию числа строк
+ */
+export function summarizeHotels(rows) {
+  if (!Array.isArray(rows)) return [];
+  const counts = new Map();
+  for (const row of rows) {
+    const name = (row?.hotelName || "").trim();
+    if (!name) continue;
+    counts.set(name, (counts.get(name) || 0) + 1);
+  }
+  return [...counts.entries()]
+    .map(([name, count]) => ({ name, count }))
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "ru"));
+}
+
+/**
  * Достаёт итоговые суммы из строки «ИТОГО» предпросмотра (`presentation`).
  *
  * Берётся `raw` («1459450»), а не `value` («1 459 450,00»): value — уже

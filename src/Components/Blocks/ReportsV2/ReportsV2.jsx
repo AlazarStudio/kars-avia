@@ -202,6 +202,7 @@ export default function ReportsV2({ user, accessMenu }) {
       {draftId ? (
         <ReportDraftEditor
           draftId={draftId}
+          airports={airports}
           onBack={handleDraftBack}
           onDraftReplaced={handleDraftReplaced}
           onConfirmed={handleDraftConfirmed}
