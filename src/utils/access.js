@@ -29,6 +29,39 @@ export const isAirlineModerator = (user) =>
 export const isAirlineRole = (user) =>
   isAirlineAdmin(user) || isAirlineModerator(user);
 
+export const isHotelAdmin = (user) => user?.role === roles.hotelAdmin;
+
+export const isHotelModerator = (user) => user?.role === roles.hotelModerator;
+
+export const isHotelRole = (user) => isHotelAdmin(user) || isHotelModerator(user);
+
+/**
+ * Пользователь, которому в заявке ФАП видна ТОЛЬКО своя гостиница.
+ *
+ * Ограничение уже действовало для входа по магик-ссылке (`scope: HOTEL`), но не
+ * для внутренней роли гостиницы: администратор гостиницы «А» открывал в общей
+ * заявке карточку гостиницы «Б», заходил внутрь и выгружал её отчёт — с ФИО
+ * гостей, номерами комнат, тарифами и суммами. Правка — не запись, у гостиничных
+ * ролей `accessMenu` пуст, но чтение чужих денег это не оправдывает.
+ *
+ * ⚠️ `FAP_SCOPE_ENFORCE` этого не закрывает: серверный флаг решает, какие ЗАЯВКИ
+ * видны субъекту, а не какие блоки внутри заявки, и гостиницу-участника он к её
+ * заявке пустит законно.
+ */
+export const isHotelScoped = (user) =>
+  (isExternalUser(user) && user?.scope === "HOTEL") || isHotelRole(user);
+
+/**
+ * Идентификатор той самой гостиницы, либо null.
+ *
+ * ⚠️ null у ограниченного пользователя означает «не видно ничего», а не «видно
+ * всё»: спрашивать надо парой с `isHotelScoped`, иначе аккаунт без привязки
+ * получил бы доступ шире, чем привязанный. Замер 06.08: гостиничных аккаунтов
+ * без привязки в системе нет.
+ */
+export const scopedHotelId = (user) =>
+  isHotelScoped(user) ? user?.hotelId ?? null : null;
+
 /**
  * Кому в ФАП показывать ссылки-входы участников (linkCRM / linkPWA гостиниц и
  * водителей).

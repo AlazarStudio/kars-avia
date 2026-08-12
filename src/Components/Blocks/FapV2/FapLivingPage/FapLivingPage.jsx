@@ -11,7 +11,12 @@ import {
 import { SERVICE_STATUS_CONFIG, formatDate, formatDateTime } from "../fapConstants";
 import { hotelOverbookedBy, livingNameCollisions } from "../fapLivingMismatch";
 import { calculateCostDaysByDuration } from "../../../../utils/effectiveCostDays";
-import { isExternalUser, isAirlineRole } from "../../../../utils/access";
+import {
+  isExternalUser,
+  isAirlineRole,
+  isHotelScoped,
+  scopedHotelId,
+} from "../../../../utils/access";
 import { downloadLivingReport } from "../reports/buildReportSheets";
 import { visibleHotelIndexes, hotelReportSubmittedAt } from "../fapReportAccess";
 import { useToast } from "../../../../contexts/ToastContext";
@@ -68,6 +73,11 @@ export default function FapLivingPage({
   const { success, error: notifyError } = useToast();
 
   const isExtHotel = isExternalUser(user) && user?.scope === "HOTEL";
+  // Чужие гостиницы скрываем и от ВНУТРЕННЕЙ роли гостиницы, не только от входа
+  // по магик-ссылке — см. isHotelScoped. Гейты кнопок ниже остаются на isExtHotel:
+  // они про магик-линк, а внутренней роли правку и так закрывает пустой accessMenu.
+  const hotelScoped = isHotelScoped(user);
+  const ownHotelId = scopedHotelId(user);
 
   const [showAddHotel, setShowAddHotel] = useState(false);
   const [showEarlyModal, setShowEarlyModal] = useState(false);
@@ -102,8 +112,12 @@ export default function FapLivingPage({
     () =>
       hotels
         .map((hotel, idx) => ({ hotel, origIdx: idx }))
-        .filter(({ hotel }) => !isExtHotel || String(hotel.hotelId) === String(user?.hotelId)),
-    [hotels, isExtHotel, user?.hotelId]
+        .filter(
+          ({ hotel }) =>
+            !hotelScoped ||
+            (ownHotelId != null && String(hotel.hotelId) === String(ownHotelId))
+        ),
+    [hotels, hotelScoped, ownHotelId]
   );
 
   // Внешний пользователь гостиницы видит только свою страницу — пропускаем

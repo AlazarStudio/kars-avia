@@ -18,11 +18,21 @@ import CloseIcon from "../../../shared/icons/CloseIcon";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
 
+// `id` уходит на бэк в `filter.position` и обязан совпадать с enum
+// PositionFilter { all, squadron, technician } — «engineers» бэк отвергает
+// на валидации, и отчёт по инженерам не создавался вовсе.
+//
+// Не путать с `Position.category` у самих должностей: там значения другие
+// («squadron» и «engineers»), и по ним фильтруется выпадающий список
+// должностей ниже — см. specialPositions.
 const categories = [
   { id: "squadron", name: "Эскадрилья" },
-  { id: "engineers", name: "Инженеры" },
+  { id: "technician", name: "Инженеры" },
   { id: "all", name: "Все" },
 ];
+
+/** Значение `Position.category`, соответствующее категории отчёта «Инженеры». */
+const ENGINEER_POSITION_CATEGORY = "engineers";
 
 function CreateRequestReport({ show, onClose, positions, airports, isAirline }) {
   const token = getCookie("token");
@@ -115,11 +125,13 @@ function CreateRequestReport({ show, onClose, positions, airports, isAirline }) 
     }
   }, [airOrHotel, user.airlineId, user.hotelId, airlines, hotels]);
 
+  // Слева — категория отчёта (значение enum для бэка), справа — значение
+  // `Position.category` в данных должностей. У инженеров они не совпадают.
   const specialPositions =
     category.id === "squadron"
       ? positions.filter((p) => p.category === "squadron")
-      : category.id === "engineers"
-      ? positions.filter((p) => p.category === "engineers")
+      : category.id === "technician"
+      ? positions.filter((p) => p.category === ENGINEER_POSITION_CATEGORY)
       : positions;
 
   const [createReport] = useMutation(

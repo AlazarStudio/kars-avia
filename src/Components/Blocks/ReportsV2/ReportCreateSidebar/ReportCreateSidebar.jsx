@@ -20,11 +20,21 @@ import {
   getCookie,
 } from "../../../../../graphQL_requests";
 
+// `id` уходит на бэк в `filter.position` и обязан совпадать с enum
+// PositionFilter { all, squadron, technician } — «engineers» бэк отвергает
+// на валидации, и отчёт по инженерам не создавался вовсе.
+//
+// Не путать с `Position.category` у самих должностей: там значения другие
+// («squadron» и «engineers»), и по ним фильтруется выпадающий список
+// должностей ниже — см. specialPositions.
 const categories = [
   { id: "squadron", name: "Эскадрилья" },
-  { id: "engineers", name: "Инженеры" },
+  { id: "technician", name: "Инженеры" },
   { id: "all", name: "Все" },
 ];
+
+/** Значение `Position.category`, соответствующее категории отчёта «Инженеры». */
+const ENGINEER_POSITION_CATEGORY = "engineers";
 
 // Белая галка внутри квадрата-флажка ("Включить в отчёт" и блок проверки).
 function CheckMark() {
@@ -155,11 +165,13 @@ export default function ReportCreateSidebar({
     }
   }, [airOrHotel, user.airlineId, user.hotelId, airlines, hotels]);
 
+  // Слева — категория отчёта (значение enum для бэка), справа — значение
+  // `Position.category` в данных должностей. У инженеров они не совпадают.
   const specialPositions =
     category.id === "squadron"
       ? positions.filter((p) => p.category === "squadron")
-      : category.id === "engineers"
-      ? positions.filter((p) => p.category === "engineers")
+      : category.id === "technician"
+      ? positions.filter((p) => p.category === ENGINEER_POSITION_CATEGORY)
       : positions;
 
   const reportDocument =

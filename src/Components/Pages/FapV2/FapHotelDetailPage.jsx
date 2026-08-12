@@ -17,6 +17,8 @@ import {
   isExternalUser,
   canAccessMenu,
   canSeeExternalLinks,
+  isHotelScoped,
+  scopedHotelId,
 } from "../../../utils/access";
 import { authService } from "../../../services/authService";
 import classes from "./FapServicePage.module.css";
@@ -40,6 +42,27 @@ export default function FapHotelDetailPage({ user }) {
   });
 
   const request = data?.passengerRequest;
+
+  // Прямой адрес чужой гостиницы (`.../living/hotel/3`) открывался у любой
+  // гостиничной роли, минуя фильтр списка. Уводим на свою гостиницу, а если её
+  // в заявке нет — на список проживания (он для такого пользователя пуст).
+  const hotelScoped = isHotelScoped(user);
+  const ownHotelId = scopedHotelId(user);
+  React.useEffect(() => {
+    if (!request || !hotelScoped) return;
+    const hotels = request?.livingService?.hotels ?? [];
+    const current = hotels[Number(hotelIndex)];
+    if (current && String(current.hotelId) === String(ownHotelId)) return;
+    const ownIdx = hotels.findIndex(
+      (h) => String(h?.hotelId) === String(ownHotelId)
+    );
+    navigate(
+      ownIdx >= 0
+        ? `/far/${requestId}/service/living/hotel/${ownIdx}`
+        : `/far/${requestId}/service/living`,
+      { replace: true }
+    );
+  }, [request, hotelScoped, ownHotelId, hotelIndex, requestId, navigate]);
 
   // Отмена заявки закрывает правку и гостинице по магик-линку: услуга у неё
   // осталась «в работе», а заявки уже нет — см. isRequestCancelled.

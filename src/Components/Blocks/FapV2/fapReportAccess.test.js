@@ -48,3 +48,50 @@ test("без гостиниц список пустой у всех", () => {
   assert.deepEqual(visibleHotelIndexes({}, airline), []);
   assert.deepEqual(visibleHotelIndexes({}, dispatcher), []);
 });
+
+// ── Гостиница видит только свою ──
+// Заявка с тремя гостиницами, из которых пользователю принадлежит одна.
+const requestWithIds = {
+  livingService: {
+    hotels: [{ hotelId: "h-1" }, { hotelId: "h-2" }, { hotelId: "h-3" }],
+  },
+  hotelReports: [{ hotelIndex: 1, submittedAt: null }],
+};
+
+const hotelAdmin = { role: "HOTELADMIN", hotelId: "h-2" };
+const hotelModerator = { role: "HOTELMODERATOR", hotelId: "h-3" };
+const extHotel = {
+  subjectType: "EXTERNAL_USER",
+  scope: "HOTEL",
+  hotelId: "h-2",
+};
+
+test("внутренняя роль гостиницы видит только свою — и отправка отчёта тут ни при чём", () => {
+  // У h-2 отчёт НЕ отправлен, и это ничего не меняет: правило отправки — про
+  // авиакомпанию, а гостиница свой отчёт сама и заполняет.
+  assert.deepEqual(visibleHotelIndexes(requestWithIds, hotelAdmin), [1]);
+  assert.deepEqual(visibleHotelIndexes(requestWithIds, hotelModerator), [2]);
+});
+
+test("вход по магик-ссылке ограничен так же", () => {
+  assert.deepEqual(visibleHotelIndexes(requestWithIds, extHotel), [1]);
+});
+
+test("гостиничный аккаунт без привязки не видит ничего", () => {
+  // Именно ничего, а не всё: иначе аккаунт без hotelId получил бы доступ шире
+  // привязанного. Строковое сравнение без этой проверки склеило бы его
+  // `undefined` с гостиницей, у которой hotelId не проставлен.
+  assert.deepEqual(visibleHotelIndexes(requestWithIds, { role: "HOTELADMIN" }), []);
+  assert.deepEqual(
+    visibleHotelIndexes(
+      { livingService: { hotels: [{ name: "без id" }] } },
+      { role: "HOTELADMIN" }
+    ),
+    []
+  );
+});
+
+test("диспетчера и авиакомпанию новое правило не задело", () => {
+  assert.deepEqual(visibleHotelIndexes(requestWithIds, dispatcher), [0, 1, 2]);
+  assert.deepEqual(visibleHotelIndexes(requestWithIds, airline), []);
+});

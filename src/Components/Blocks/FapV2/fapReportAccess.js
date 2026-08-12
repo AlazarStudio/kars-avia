@@ -1,4 +1,4 @@
-import { isAirlineRole } from "../../../utils/access.js";
+import { isAirlineRole, isHotelScoped, scopedHotelId } from "../../../utils/access.js";
 
 // Единственное правило «кому какой отчёт по гостинице виден».
 //
@@ -23,9 +23,23 @@ export function isHotelReportSubmitted(request, hotelIndex) {
 }
 
 // Индексы гостиниц, отчёты которых этот пользователь имеет право видеть.
-// Диспетчер и гостиница — все; авиакомпания — только отправленные.
+// Диспетчер — все; авиакомпания — только отправленные; гостиница — только свою.
+//
+// Через эту функцию проходят ВСЕ выгрузки: кнопка в шапке заявки (FapDetail),
+// меню внутренних страниц (FapHeaderActions), отчёт по проживанию
+// (FapLivingPage) и книга аналитики пассажиров — поэтому гостиничное правило
+// достаточно завести здесь, отдельного гейта в каждой выгрузке не нужно.
 export function visibleHotelIndexes(request, user) {
-  const all = (request?.livingService?.hotels ?? []).map((_, i) => i);
+  const hotels = request?.livingService?.hotels ?? [];
+  const all = hotels.map((_, i) => i);
+  if (isHotelScoped(user)) {
+    const ownId = scopedHotelId(user);
+    // Без привязки не видно ничего. Сравнение строками иначе склеило бы
+    // `undefined` пользователя с `undefined` гостиницы и показало бы аккаунту
+    // без привязки как раз те гостиницы, у которых hotelId не проставлен.
+    if (ownId == null) return [];
+    return all.filter((i) => String(hotels[i]?.hotelId) === String(ownId));
+  }
   if (!isAirlineRole(user)) return all;
   return all.filter((i) => isHotelReportSubmitted(request, i));
 }
