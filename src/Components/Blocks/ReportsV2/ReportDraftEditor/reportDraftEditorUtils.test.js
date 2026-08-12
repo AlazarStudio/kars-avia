@@ -9,7 +9,68 @@ import {
   livingCostTooltip,
   pluralizeRows,
   rowMatchesSearch,
+  describeShareSegments,
+  listCohabitants,
 } from "./reportDraftEditorUtils.js";
+
+// Формат границ — как на стенде: "DD.MM.YYYY HH:MM:SS", уже отформатирован бэком.
+const segments = [
+  {
+    start: "01.08.2026 00:10:00",
+    end: "07.08.2026 12:00:00",
+    alone: false,
+    cohabitants: [{ requestId: "r1", personName: "Котов Д.С." }],
+  },
+  {
+    start: "09.08.2026 14:00:00",
+    end: "10.08.2026 23:50:00",
+    alone: false,
+    cohabitants: [{ requestId: "r2", personName: "Еремин А.П." }],
+  },
+];
+
+test("describeShareSegments trims seconds and pulls out cohabitant names", () => {
+  assert.deepEqual(describeShareSegments(segments), [
+    {
+      period: "01.08.2026 00:10 — 07.08.2026 12:00",
+      names: ["Котов Д.С."],
+      alone: false,
+    },
+    {
+      period: "09.08.2026 14:00 — 10.08.2026 23:50",
+      names: ["Еремин А.П."],
+      alone: false,
+    },
+  ]);
+});
+
+test("describeShareSegments marks a solo stay as alone", () => {
+  const solo = [
+    { start: "03.08.2026 19:00:00", end: "10.08.2026 23:50:00", alone: true, cohabitants: [] },
+  ];
+  const [only] = describeShareSegments(solo);
+  assert.equal(only.alone, true);
+  assert.deepEqual(only.names, []);
+});
+
+test("describeShareSegments survives junk", () => {
+  assert.deepEqual(describeShareSegments(null), []);
+  assert.deepEqual(describeShareSegments(undefined), []);
+  const [broken] = describeShareSegments([{}]);
+  assert.equal(broken.period, "");
+  assert.equal(broken.alone, true); // соседей нет — значит жил один
+});
+
+test("listCohabitants collects names once, in order", () => {
+  assert.deepEqual(listCohabitants(segments), ["Котов Д.С.", "Еремин А.П."]);
+
+  const repeated = [
+    { start: "a", end: "b", cohabitants: [{ personName: "Котов Д.С." }] },
+    { start: "c", end: "d", cohabitants: [{ personName: "Котов Д.С." }] },
+  ];
+  assert.deepEqual(listCohabitants(repeated), ["Котов Д.С."]);
+  assert.deepEqual(listCohabitants(null), []);
+});
 
 test("formatMoney rounds and groups thousands the way ru-RU toLocaleString does", () => {
   // toLocaleString("ru-RU") groups with a non-breaking space (U+00A0), not a

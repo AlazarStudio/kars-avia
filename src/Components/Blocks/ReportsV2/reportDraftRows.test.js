@@ -13,7 +13,55 @@ import {
   rowNeedsDays,
   measureSavePayload,
   SAVE_PAYLOAD_LIMIT_BYTES,
+  readPrintedTotals,
+  compareWithPrintedTotal,
 } from "./reportDraftRows.js";
+
+// Форма строки «ИТОГО» — как её отдаёт стенд: value отформатирован под Excel,
+// raw — голое число.
+const totalsRow = {
+  cells: [
+    { key: "personPosition", value: "ИТОГО:", raw: "ИТОГО:" },
+    { key: "totalMealCost", value: "243 100,00", raw: "243100" },
+    { key: "totalLivingCost", value: "1 216 350,00", raw: "1216350" },
+    { key: "totalDebt", value: "1 459 450,00", raw: "1459450" },
+  ],
+};
+
+test("readPrintedTotals reads raw numbers, not the formatted value", () => {
+  assert.deepEqual(readPrintedTotals(totalsRow), {
+    meal: 243100,
+    living: 1216350,
+    debt: 1459450,
+  });
+});
+
+test("readPrintedTotals survives a missing or malformed totals row", () => {
+  assert.equal(readPrintedTotals(null), null);
+  assert.equal(readPrintedTotals({}), null);
+  assert.deepEqual(readPrintedTotals({ cells: [] }), { meal: 0, living: 0, debt: 0 });
+  // «ИТОГО:» в числовой ячейке не должно превращаться в NaN
+  assert.deepEqual(readPrintedTotals({ cells: [{ key: "totalDebt", raw: "ИТОГО:" }] }), {
+    meal: 0,
+    living: 0,
+    debt: 0,
+  });
+});
+
+test("compareWithPrintedTotal ignores float noise but catches real gaps", () => {
+  assert.deepEqual(compareWithPrintedTotal(1459450, 1459450), { matches: true, diff: 0 });
+
+  // сумма дробных суток даёт классический хвост 1e-10 — это не расхождение
+  const noisy = 0.1 + 0.2 + 1459449.7;
+  assert.equal(compareWithPrintedTotal(noisy, 1459450).matches, true);
+
+  const gap = compareWithPrintedTotal(1461650, 1459450);
+  assert.equal(gap.matches, false);
+  assert.equal(gap.diff, 2200);
+
+  // экран меньше файла — разница отрицательная
+  assert.equal(compareWithPrintedTotal(1459450, 1461650).diff, -2200);
+});
 
 const baseRow = {
   index: 1,

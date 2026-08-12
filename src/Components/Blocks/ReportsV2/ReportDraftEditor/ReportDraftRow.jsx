@@ -9,6 +9,8 @@ import {
   getDepartureHighlight,
   livingCostTooltip,
   splitDateTime,
+  describeShareSegments,
+  listCohabitants,
 } from "./reportDraftEditorUtils";
 
 // Одна строка таблицы черновика. Чисто UI: получает уже готовую строку и
@@ -48,6 +50,17 @@ export default function ReportDraftRow({
 
   const livingCost = Number(row.totalLivingCost) || 0;
 
+  // Структурные данные о подселении (shareSegments) вместо разбора текстового
+  // shareNote: из них видно и кто сосед, и в какие именно интервалы.
+  const cohabitants = listCohabitants(row.shareSegments);
+  const shareSegments = describeShareSegments(row.shareSegments);
+  const shareTitle =
+    shareSegments.length > 0
+      ? shareSegments
+          .map((s) => `${s.period}: ${s.alone ? "жил один" : `с ${s.names.join(", ")}`}`)
+          .join("\n")
+      : row.shareNote || undefined;
+
   const rowClassName = [
     classes.row,
     hasWarning ? classes.rowWarning : isEdited ? classes.rowEdited : "",
@@ -63,7 +76,7 @@ export default function ReportDraftRow({
 
       <div
         className={`${classes.colPassenger} ${classes.stickyPassenger}`}
-        title={row.shareNote || undefined}
+        title={shareTitle}
       >
         <div className={classes.cellStack}>
           <div className={classes.personName}>{row.personName || "—"}</div>
@@ -74,7 +87,17 @@ export default function ReportDraftRow({
       <div className={classes.colRoom}>
         <div className={classes.cellStack}>
           <div className={classes.roomName}>{row.roomName || "—"}</div>
-          <div className={classes.roomCategory}>{row.category || "—"}</div>
+          {/* Соседи по номеру вместо категории, когда они есть: именно из-за
+              совместного проживания стоимость номера делится между жильцами,
+              и без этого непонятно, почему у соседей разные суммы. Категория
+              при этом не теряется — она уходит в подсказку. */}
+          {cohabitants.length > 0 ? (
+            <div className={classes.roomShared} title={shareTitle}>
+              с {cohabitants.join(", ")}
+            </div>
+          ) : (
+            <div className={classes.roomCategory}>{row.category || "—"}</div>
+          )}
         </div>
       </div>
 

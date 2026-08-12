@@ -216,6 +216,17 @@
   color: #8B90A5;
 }
 
+/* Соседи по номеру. Синим, а не серым: это не справочная подпись, а причина,
+   по которой стоимость номера у этой строки поделена. */
+.roomShared {
+  font-size: 13px;
+  color: #0057C3;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: help;
+}
+
 /* Проживание: заезд/выезд второй строкой. */
 .cellStay {
   display: flex;

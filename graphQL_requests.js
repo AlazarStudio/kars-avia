@@ -6766,6 +6766,17 @@ export const GET_REPORT_DRAFT = gql`
         roomName
         roomId
         shareNote
+        roomGroupId
+        shareClusterId
+        shareSegments {
+          start
+          end
+          alone
+          cohabitants {
+            requestId
+            personName
+          }
+        }
         breakfastCount
         lunchCount
         dinnerCount
@@ -6775,6 +6786,46 @@ export const GET_REPORT_DRAFT = gql`
         pricePerDay
         totalDebt
         hotelName
+      }
+    }
+  }
+`;
+
+// Предпросмотр черновика «как в Excel». Отдельный документ, а не поле в
+// GET_REPORT_DRAFT: `presentation` считается на лету из строк в БАЗЕ и на
+// большом черновике весит столько же, сколько сами строки — тянуть его при
+// каждой загрузке редактора незачем. Запрашивается только при открытии
+// предпросмотра.
+export const GET_REPORT_DRAFT_PRESENTATION = gql`
+  query ReportDraftPresentation($id: ID!) {
+    reportDraft(id: $id) {
+      id
+      updatedAt
+      presentation {
+        header {
+          title
+          companyNameFull
+          contractName
+          city
+        }
+        columns {
+          key
+          header
+          width
+        }
+        dataRows {
+          cells {
+            key
+            value
+          }
+        }
+        totalsRow {
+          cells {
+            key
+            value
+            raw
+          }
+        }
       }
     }
   }

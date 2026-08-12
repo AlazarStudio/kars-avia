@@ -15,6 +15,7 @@ export default function ReportDraftHeader({
   deleting,
   saving,
   confirming,
+  onPreview,
   onRecreate,
   onDelete,
   onSave,
@@ -39,6 +40,15 @@ export default function ReportDraftHeader({
           без данных ни на что не подействуют. */}
       {loading ? null : (
       <div className={classes.actions}>
+        <button
+          type="button"
+          className={classes.secondaryBtn}
+          disabled={!hasRows}
+          onClick={onPreview}
+        >
+          Предпросмотр
+        </button>
+
         <button
           type="button"
           className={classes.secondaryBtn}
@@ -92,6 +102,7 @@ ReportDraftHeader.propTypes = {
   deleting: PropTypes.bool,
   saving: PropTypes.bool,
   confirming: PropTypes.bool,
+  onPreview: PropTypes.func,
   onRecreate: PropTypes.func,
   onDelete: PropTypes.func,
   onSave: PropTypes.func,

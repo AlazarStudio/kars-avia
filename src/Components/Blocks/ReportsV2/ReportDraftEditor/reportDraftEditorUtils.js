@@ -40,6 +40,53 @@ export function splitDateTime(value) {
 }
 
 /**
+ * Раскладывает `shareSegments` строки черновика в готовые к показу отрезки
+ * совместного проживания.
+ *
+ * Бэк отдаёт границы уже отформатированными («01.08.2026 00:10:00»), поэтому
+ * здесь только отрезаются секунды и вытаскиваются фамилии соседей — разбора
+ * дат нет и быть не должно.
+ *
+ * Это структурная замена текстовому `shareNote`: та же информация лежит в нём
+ * одной строкой («жил с Котов Д.С., …»), но по ней нельзя ни выделить соседа,
+ * ни посчитать отрезки.
+ *
+ * @param {Array<object>|null|undefined} segments - `row.shareSegments`
+ * @returns {Array<{period: string, names: string[], alone: boolean}>}
+ */
+export function describeShareSegments(segments) {
+  if (!Array.isArray(segments)) return [];
+  return segments.map((segment) => {
+    const start = trimSeconds(segment?.start) || "";
+    const end = trimSeconds(segment?.end) || "";
+    const names = (segment?.cohabitants || [])
+      .map((person) => person?.personName)
+      .filter(Boolean);
+    return {
+      period: start && end ? `${start} — ${end}` : start || end,
+      names,
+      // `alone` с бэка — источник истины; пустой список соседей лишь его
+      // подтверждает, но сам по себе решением не является.
+      alone: Boolean(segment?.alone) || names.length === 0,
+    };
+  });
+}
+
+/**
+ * Собирает уникальные фамилии соседей по всем отрезкам строки.
+ *
+ * @param {Array<object>|null|undefined} segments - `row.shareSegments`
+ * @returns {string[]} фамилии без повторов, в порядке появления
+ */
+export function listCohabitants(segments) {
+  const seen = new Set();
+  for (const segment of describeShareSegments(segments)) {
+    for (const name of segment.names) seen.add(name);
+  }
+  return [...seen];
+}
+
+/**
  * Определяет, подсвечивать ли время заезда: срабатывает правило "полных суток"
  * (заезд раньше `PARTIAL_DAY_DEFAULTS.arrivalFullBefore`). Порог берётся из
  * общих дефолтов расчёта суток — не хардкодится заново.

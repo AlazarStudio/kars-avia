@@ -207,3 +207,45 @@ export function sumTotalDebt(rows) {
   if (!Array.isArray(rows)) return 0;
   return rows.reduce((acc, row) => acc + (Number(row?.totalDebt) || 0), 0);
 }
+
+/**
+ * Достаёт итоговые суммы из строки «ИТОГО» предпросмотра (`presentation`).
+ *
+ * Берётся `raw` («1459450»), а не `value` («1 459 450,00»): value — уже
+ * отформатированная под Excel строка с неразрывными пробелами и запятой,
+ * парсить её обратно в число значит воспроизводить форматирование бэка
+ * задом наперёд.
+ *
+ * @param {object|null|undefined} totalsRow - `presentation.totalsRow`
+ * @returns {{meal: number, living: number, debt: number}|null} null, если строки нет
+ */
+export function readPrintedTotals(totalsRow) {
+  const cells = totalsRow?.cells;
+  if (!Array.isArray(cells)) return null;
+  const pick = (key) => {
+    const cell = cells.find((c) => c?.key === key);
+    const value = Number(cell?.raw);
+    return Number.isFinite(value) ? value : 0;
+  };
+  return {
+    meal: pick("totalMealCost"),
+    living: pick("totalLivingCost"),
+    debt: pick("totalDebt"),
+  };
+}
+
+/**
+ * Сходятся ли итог на экране и итог, который уйдёт в файл.
+ *
+ * Сравнение в копейках: суммы складываются из дробных сотых долей суток,
+ * поэтому прямое сравнение double даёт ложные расхождения в 1e-10.
+ *
+ * @param {number} localTotal - итог, посчитанный в редакторе
+ * @param {number} printedTotal - итог из `presentation.totalsRow`
+ * @returns {{matches: boolean, diff: number}} diff = экран − файл, в рублях
+ */
+export function compareWithPrintedTotal(localTotal, printedTotal) {
+  const local = Math.round((Number(localTotal) || 0) * 100);
+  const printed = Math.round((Number(printedTotal) || 0) * 100);
+  return { matches: local === printed, diff: (local - printed) / 100 };
+}

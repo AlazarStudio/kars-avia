@@ -1,0 +1,158 @@
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  background: rgba(25, 29, 48, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+  box-sizing: border-box;
+}
+
+/* Ширина под 16 колонок реестра: карточка занимает почти весь экран, а сама
+   таблица прокручивается внутри — наружу горизонтальная прокрутка не выходит. */
+.card {
+  width: 100%;
+  max-width: 1500px;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background: #fff;
+  border-radius: 14px;
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.top {
+  flex-shrink: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #54587380;
+}
+
+.topText {
+  min-width: 0;
+}
+
+.title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #191919;
+}
+
+.subtitle {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #6B7189;
+  line-height: 1.45;
+}
+
+.closeBtn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: transparent;
+  color: #353B55;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.warn {
+  flex-shrink: 0;
+  margin: 16px 24px 0;
+  padding: 12px 16px;
+  border-radius: 10px;
+  background: #FDF1EC;
+  border: 1px solid #F3C4A6;
+  color: #8A3D12;
+  font-size: 13.5px;
+  line-height: 1.5;
+}
+
+.error {
+  margin: 24px;
+  color: #C03B28;
+  font-size: 14px;
+}
+
+.header {
+  flex-shrink: 0;
+  padding: 16px 24px 0;
+  font-size: 13.5px;
+  color: #2A2E45;
+  line-height: 1.5;
+}
+
+.headerMuted {
+  color: #6B7189;
+}
+
+.scroll {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  margin: 16px 24px 0;
+  border: 1px solid #EEF1F8;
+  border-radius: 10px;
+}
+
+.table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: 12.5px;
+  white-space: nowrap;
+}
+
+.table th {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  background: #F4F6FB;
+  color: #545873;
+  font-weight: 600;
+  text-align: left;
+  padding: 9px 10px;
+  border-bottom: 1px solid #E4E4EF;
+}
+
+.table td {
+  padding: 8px 10px;
+  border-bottom: 1px solid #F5F7FC;
+  color: #191919;
+}
+
+.table tfoot td {
+  position: sticky;
+  bottom: 0;
+  background: #F4F6FB;
+  font-weight: 700;
+  border-top: 1px solid #E4E4EF;
+}
+
+.foot {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 24px 18px;
+  font-size: 13.5px;
+  color: #6B7189;
+}
+
+.totalsOk {
+  color: #1F8A50;
+  font-weight: 600;
+}
+
+/* Расхождение итогов — это не косметика: в файл уйдёт другая сумма. */
+.totalsGap {
+  color: #C03B28;
+  font-weight: 600;
+}

@@ -10,6 +10,7 @@ import ReportDraftFilters from "./ReportDraftFilters";
 import ReportDraftTable from "./ReportDraftTable";
 import ReportDraftFooter from "./ReportDraftFooter";
 import ReportDraftDialog from "./ReportDraftDialog";
+import ReportDraftPreview from "./ReportDraftPreview";
 import { DRAFT_FILTERS, pluralizeRows, rowMatchesSearch } from "./reportDraftEditorUtils";
 import { useToast } from "../../../../contexts/ToastContext";
 import { convertToDate } from "../../../../../graphQL_requests";
@@ -57,6 +58,7 @@ export default function ReportDraftEditor({ draftId, onBack, onDraftReplaced, on
   // dialog: null | { type: "leave" | "delete" | "recreate" | "stale" } | { type: "deleteRow", row }
   const [dialog, setDialog] = useState(null);
   const closeDialog = () => setDialog(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   // Строки, которые правят прямо сейчас, держим в выборке даже когда они
   // перестали подходить под фильтр — иначе строка исчезает из-под курсора на
@@ -302,6 +304,7 @@ export default function ReportDraftEditor({ draftId, onBack, onDraftReplaced, on
         deleting={deleting}
         saving={saving}
         confirming={confirming}
+        onPreview={() => setPreviewOpen(true)}
         onRecreate={handleRecreateClick}
         onDelete={handleDeleteDraftClick}
         onSave={runSave}
@@ -441,6 +444,14 @@ export default function ReportDraftEditor({ draftId, onBack, onDraftReplaced, on
         primaryLabel="Удалить строку"
         primaryColor="#D2482C"
         onPrimary={handleConfirmDeleteRow}
+      />
+
+      <ReportDraftPreview
+        open={previewOpen}
+        draftId={draftId}
+        onClose={() => setPreviewOpen(false)}
+        localTotal={total}
+        unsavedCount={unsavedRowsCount}
       />
     </div>
     </>
