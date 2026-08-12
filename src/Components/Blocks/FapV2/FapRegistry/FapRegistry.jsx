@@ -26,6 +26,7 @@ import {
   groupColor,
   groupDisplayLabel,
   groupOrder,
+  groupTogetherLevel,
   nextGroupColor,
   requestGroups,
 } from "../fapGroups";
@@ -571,6 +572,34 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
     }
   };
 
+  // Обратная сторона «Так и надо»: вернуть требование «в одном номере».
+  // Показывается только там, где требование и было понижено, — новых
+  // возможностей для «Коллег» и «Орг. группы» (у них дефолт «гостиница») не даёт.
+  const handleGroupLevelRoom = async (group) => {
+    try {
+      setSaving(true);
+      await saveGroup({
+        variables: {
+          requestId: request.id,
+          group: {
+            groupId: group.groupId,
+            label: group.label,
+            kind: group.kind,
+            color: group.color,
+            memberPersonIds: group.memberPersonIds || [],
+            togetherLevel: "ROOM",
+          },
+        },
+      });
+      success("Требование возвращено: группа селится в одном номере");
+      onRefetch?.();
+    } catch (err) {
+      notifyError(err?.graphQLErrors?.[0]?.message || "Ошибка при сохранении группы");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const dismissSuggestion = (key) =>
     setDismissedSuggestions((prev) => new Set(prev).add(key));
 
@@ -697,6 +726,13 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
               {groups.map((g) => {
                 const members = membersByGroupId.get(g.groupId) || [];
                 const warn = warnings.byGroupId.get(g.groupId);
+                // Требование понижено кнопкой «Так и надо»: тип группы просит
+                // один номер, а у самой группы стоит «достаточно гостиницы».
+                // Показываем это в строке — иначе непонятно, почему у семьи в
+                // разных номерах нет предупреждения, — и даём вернуть обратно.
+                const levelLowered =
+                  GROUP_KIND_CONFIG[g.kind]?.defaultLevel === "ROOM" &&
+                  groupTogetherLevel(g) === "HOTEL";
                 return (
                   <div key={g.groupId} className={classes.groupRow}>
                     <span
@@ -720,6 +756,11 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
                           .join(" · ")}
                         {members.length === 1 && (
                           <span className={classes.groupNote}>остался 1 человек</span>
+                        )}
+                        {levelLowered && (
+                          <span className={classes.groupNote}>
+                            номера не важны
+                          </span>
                         )}
                       </div>
                       {warn && (
@@ -746,6 +787,12 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
                             label: "Изменить",
                             icon: EditPencilIcon,
                             onClick: () => openGroupEdit(g),
+                          },
+                          {
+                            label: "Требовать один номер",
+                            icon: HotelBedIcon,
+                            onClick: () => handleGroupLevelRoom(g),
+                            hidden: !levelLowered,
                           },
                           {
                             label: "Расформировать",
