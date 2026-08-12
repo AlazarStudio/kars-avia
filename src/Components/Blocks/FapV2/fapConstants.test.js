@@ -3,7 +3,24 @@ import assert from "node:assert/strict";
 import {
   accommodationChargeFactor,
   accommodationDiscountPercent,
+  isRequestCancelled,
 } from "./fapConstants.js";
+
+test("закрытой для правок считается только ОТМЕНЁННАЯ заявка", () => {
+  assert.equal(isRequestCancelled({ status: "CANCELLED" }), true);
+  // Завершённая заявка правки не запрещает: отчёт по проживанию дозаполняют
+  // и после завершения. Решение владельца — закрываем только отмену.
+  assert.equal(isRequestCancelled({ status: "COMPLETED" }), false);
+  assert.equal(isRequestCancelled({ status: "IN_PROGRESS" }), false);
+});
+
+test("отсутствующая заявка не считается отменённой", () => {
+  // Данные приходят асинхронно: пока запрос грузится, request === undefined.
+  // Ответ true запер бы экран на время загрузки у всех заявок подряд.
+  assert.equal(isRequestCancelled(null), false);
+  assert.equal(isRequestCancelled(undefined), false);
+  assert.equal(isRequestCancelled({}), false);
+});
 
 test("процент скидки по возрастной категории", () => {
   assert.equal(accommodationDiscountPercent("ADULT"), 0);

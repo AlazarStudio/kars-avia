@@ -8,6 +8,8 @@ import {
 } from "../../../../graphQL_requests";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import Header from "../../Blocks/Header/Header";
+import { isRequestCancelled } from "../../Blocks/FapV2/fapConstants";
+import FapCancelledBanner from "../../Blocks/FapV2/FapCancelledBanner/FapCancelledBanner";
 import FapHotelPage from "../../Blocks/FapV2/FapHotelPage/FapHotelPage";
 import FapChat from "../../Blocks/FapV2/FapChat/FapChat";
 import {
@@ -39,9 +41,12 @@ export default function FapHotelDetailPage({ user }) {
 
   const request = data?.passengerRequest;
 
+  // Отмена заявки закрывает правку и гостинице по магик-линку: услуга у неё
+  // осталась «в работе», а заявки уже нет — см. isRequestCancelled.
   const canEdit =
-    (canAccessMenu(accessMenu, "reserveUpdate", user) && !isAirlineRole) ||
-    (isExternalUser(user) && user?.scope === "HOTEL");
+    !isRequestCancelled(request) &&
+    ((canAccessMenu(accessMenu, "reserveUpdate", user) && !isAirlineRole) ||
+      (isExternalUser(user) && user?.scope === "HOTEL"));
 
   const handleExternalLogout = () => {
     document.cookie = "externalUserContext=; Max-Age=0; Path=/";
@@ -66,6 +71,8 @@ export default function FapHotelDetailPage({ user }) {
           </span>
         </div>
       </Header>
+
+      <FapCancelledBanner request={request} />
 
       {loading ? (
         <div className={classes.loader}>

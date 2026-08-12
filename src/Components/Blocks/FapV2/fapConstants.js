@@ -61,6 +61,16 @@ export const REQUEST_STATUS_CONFIG = {
   CANCELLED: { label: "Отменён", color: "#EF4444", bg: "#FEF2F2" },
 };
 
+// Отменённая заявка правкам не подлежит.
+//
+// ⚠️ Отмена НЕ каскадит на услуги: `cancelPassengerRequest` пишет только шапку
+// (status, statusTimes, cancelReason), и услуги остаются в тех статусах, в
+// которых их застала отмена. Поэтому единственный признак закрытости — статус
+// самой заявки, и экраны услуг обязаны спрашивать именно его: их собственные
+// гейты смотрят на статус УСЛУГИ и отмены не видят. В ФАП v1 такая проверка
+// была на каждой вкладке услуги и потерялась при переходе на v2.
+export const isRequestCancelled = (request) => request?.status === "CANCELLED";
+
 export const SERVICE_STATUS_CONFIG = {
   NEW: { label: "Новый", color: "#94A3B8", bg: "#F1F5F9" },
   ACCEPTED: { label: "Принят", color: "#3B82F6", bg: "#EFF6FF" },

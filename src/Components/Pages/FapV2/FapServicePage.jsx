@@ -6,7 +6,8 @@ import {
   PASSENGER_REQUEST_UPDATED_SUBSCRIPTION,
   getCookie,
 } from "../../../../graphQL_requests";
-import { SERVICE_CONFIG } from "../../Blocks/FapV2/fapConstants";
+import { SERVICE_CONFIG, isRequestCancelled } from "../../Blocks/FapV2/fapConstants";
+import FapCancelledBanner from "../../Blocks/FapV2/FapCancelledBanner/FapCancelledBanner";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import Header from "../../Blocks/Header/Header";
 import FapWaterMealPage from "../../Blocks/FapV2/FapWaterMealPage/FapWaterMealPage";
@@ -58,8 +59,12 @@ export default function FapServicePage({ user }) {
     copy: handleCopyRepresentativeLink,
   } = useRepresentativeLink(user, request);
 
+  // Статус ЗАЯВКИ спрашиваем здесь: внутри экраны услуг смотрят только на статус
+  // своей услуги, а отмена его не меняет — см. isRequestCancelled.
   const canEdit =
-    canAccessMenu(accessMenu, "reserveUpdate", user) && !isAirlineRole;
+    canAccessMenu(accessMenu, "reserveUpdate", user) &&
+    !isAirlineRole &&
+    !isRequestCancelled(request);
 
   const handleExternalLogout = () => {
     document.cookie = "externalUserContext=; Max-Age=0; Path=/";
@@ -176,6 +181,8 @@ export default function FapServicePage({ user }) {
           )}
         </div>
       </Header>
+
+      <FapCancelledBanner request={request} />
 
       {loading ? (
         <div className={classes.loader}>

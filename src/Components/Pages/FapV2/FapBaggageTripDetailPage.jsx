@@ -8,6 +8,8 @@ import {
 } from "../../../../graphQL_requests";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import Header from "../../Blocks/Header/Header";
+import { isRequestCancelled } from "../../Blocks/FapV2/fapConstants";
+import FapCancelledBanner from "../../Blocks/FapV2/FapCancelledBanner/FapCancelledBanner";
 import FapBaggageTripPage from "../../Blocks/FapV2/FapBaggageTripPage/FapBaggageTripPage";
 import FapChat from "../../Blocks/FapV2/FapChat/FapChat";
 import {
@@ -37,7 +39,9 @@ export default function FapBaggageTripDetailPage({ user }) {
 
   const request = data?.passengerRequest;
   const canEdit =
-    canAccessMenu(accessMenu, "reserveUpdate", user) && !isAirlineRole;
+    canAccessMenu(accessMenu, "reserveUpdate", user) &&
+    !isAirlineRole &&
+    !isRequestCancelled(request);
 
   return (
     <div className={classes.page}>
@@ -57,6 +61,8 @@ export default function FapBaggageTripDetailPage({ user }) {
           </span>
         </div>
       </Header>
+
+      <FapCancelledBanner request={request} />
 
       {loading ? (
         <div className={classes.loader}>
