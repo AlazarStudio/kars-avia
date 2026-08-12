@@ -182,7 +182,16 @@ export const resolveTariffPricePerDay = (tariff, places, category = null) => {
   if (tariff.source === "airline") return airlineTariffPricePerDay(tariff, places, category);
   if (!Number.isFinite(Number(places)) || Number(places) <= 0) return null;
   const row = (tariff.placementPrices ?? []).find((p) => Number(p.places) === Number(places));
-  return row ? toNum(row.pricePerDay) : null;
+  // Ноль — это «цена не заполнена», а не «бесплатно». `newTariff()` заводит пары
+  // {1: 0} и {2: 0} по умолчанию, а удалить строку можно только начиная с третьей,
+  // поэтому у одноместного и двухместного размещения незаполненная цена была
+  // структурно неотличима от заполненной нулём: строка молча считалась по 0 ₽ за
+  // сутки, ⚠ не загоралось и в предполётную проверку такой номер не попадал.
+  // Договорный источник ведёт себя ровно так же — airlineTariffPricePerDay не
+  // кладёт в карту категории с нулевой ценой. Деньги от этого не меняются: ветка
+  // `price == null` в getEffectiveRow даёт те же нули, но с предупреждением.
+  const price = row ? toNum(row.pricePerDay) : null;
+  return price > 0 ? price : null;
 };
 
 const emptyPD = (person, hotelIndex, plan) => ({
@@ -1868,6 +1877,16 @@ export default function FapHotelPage({
           lunch: toNum(t.lunch),
           dinner: toNum(t.dinner),
           // Проживание не копируем — оно производное (getEffectiveRow).
+          // Снимок ЦЕНЫ снимаем: он защищает отправленный отчёт от ЧУЖИХ
+          // изменений (прайс гостиницы, номерной фонд), а смена тарифа —
+          // осознанное действие диспетчера. Без этого в строку уходило новое
+          // название тарифа со старой ценой.
+          // ⚠️ savedPlacementKind НЕ трогаем: вид размещения принадлежит НОМЕРУ
+          // (placementKindByRoom берёт снимок у любого жильца), и его сброс
+          // пересчитал бы основание начисления всего номера — ровно то, от чего
+          // пиннинг и заводился. Цена пересчитается по новому тарифу при том же
+          // виде размещения.
+          savedPricePerDay: null,
         };
         p.foodCost = computePdFood(p, t);
         next[i] = p;
@@ -1887,6 +1906,9 @@ export default function FapHotelPage({
       const nextPd = {
         ...base,
         tariffId: tariffId || null,
+        // Снимок цены принадлежит ПРЕЖНЕМУ тарифу — см. тот же сброс и оговорку
+        // про вид размещения в applyTariffToAll.
+        savedPricePerDay: null,
         ...(t
           ? {
               // Проживание не копируем — оно производное (getEffectiveRow:
