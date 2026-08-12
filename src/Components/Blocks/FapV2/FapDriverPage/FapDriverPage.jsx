@@ -552,6 +552,12 @@ export default function FapDriverPage({
         },
       });
       success(isCrew ? `Снято: ${selected.length}` : `Удалено: ${selected.length}`);
+      // То же, что и у одиночного удаления ниже, и по той же причине: открытая
+      // правка адресует человека индексом `_realIdx`, а удаление строк выше его
+      // сдвигает — сохранение уехало бы соседу и пересобрало его из одного лишь
+      // входа формы.
+      cancelAdd();
+      cancelEdit();
       clearSel();
       onRefetch?.();
     } catch (e) {

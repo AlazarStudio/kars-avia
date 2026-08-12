@@ -217,6 +217,10 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  /* См. тот же комментарий у .hotelCard: список поездок — колонка с определённой
+     высотой, и без запрета на сжатие у карточек срезался блок «Тип ТС / Сумма /
+     Сохранить», а прокрутка не появлялась. */
+  flex-shrink: 0;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 

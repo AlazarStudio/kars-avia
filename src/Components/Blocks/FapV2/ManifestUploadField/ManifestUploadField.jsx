@@ -4,14 +4,7 @@ import { parseManifestXlsx, isSameFlight } from "../../../../utils/parseManifest
 import CategoryBadge from "../CategoryBadge/CategoryBadge.jsx";
 import ChevronIcon from "../../../../shared/icons/ChevronIcon.jsx";
 import FileDropzone from "../../FileDropzone/FileDropzone.jsx";
-
-const plural = (n, forms) => {
-  const mod10 = n % 10;
-  const mod100 = n % 100;
-  if (mod10 === 1 && mod100 !== 11) return forms[0];
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) return forms[1];
-  return forms[2];
-};
+import { plural } from "../../../../utils/plural.js";
 
 // Загрузка пассажирского манифеста (форма ПМ) с превью.
 // parsed = { people, flightNumber, lapInfants, fileName } | null — владеет родитель.

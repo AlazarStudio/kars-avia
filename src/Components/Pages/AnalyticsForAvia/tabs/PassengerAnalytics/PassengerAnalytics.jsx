@@ -616,10 +616,11 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                 <span className={classes.kpiValue}>{formatInt(totals.linkedPeopleCount)}</span>
               </div>
               <div className={classes.kpi}>
-                <span className={classes.kpiLabel}>Дети</span>
+                {/* Порядок чисел задаёт подпись — так же, как в колонке сводки. */}
+                <span className={classes.kpiLabel}>Дети · млад.</span>
                 <span className={classes.kpiValue}>
-                  {formatInt((totals.childrenCount || 0) + (totals.infantsCount || 0))}
-                  {totals.infantsCount > 0 ? ` (+${formatInt(totals.infantsCount)} млад.)` : ""}
+                  {formatInt(totals.childrenCount || 0)} ·{" "}
+                  {formatInt(totals.infantsCount || 0)}
                 </span>
               </div>
               <div className={classes.kpi}>
@@ -735,7 +736,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                         <SortHead label={DIMENSIONS.find((d) => d.key === dimension).col} columnKey="label" sort={summarySort} onSort={onSummarySort} />
                         <SortHead label="Заявок" columnKey="requestsCount" sort={summarySort} onSort={onSummarySort} num />
                         <SortHead label="Чел." columnKey="peopleCount" sort={summarySort} onSort={onSummarySort} num />
-                        <SortHead label="Дети" columnKey="kids" sort={summarySort} onSort={onSummarySort} num />
+                        <SortHead label="Дети · млад." columnKey="kids" sort={summarySort} onSort={onSummarySort} num />
                         <SortHead label="Суток" columnKey="roomNights" sort={summarySort} onSort={onSummarySort} num />
                         <SortHead label="Проживание" columnKey="living" sort={summarySort} onSort={onSummarySort} num />
                         <SortHead label="Питание" columnKey="meal" sort={summarySort} onSort={onSummarySort} num />
@@ -752,9 +753,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                           <td className={classes.num}>{formatInt(g.peopleCount)}</td>
                           <td className={classes.num}>
                             {g.childrenCount + g.infantsCount > 0
-                              ? g.infantsCount > 0
-                                ? `${g.childrenCount}+${g.infantsCount}`
-                                : `${g.childrenCount}`
+                              ? `${g.childrenCount} · ${g.infantsCount}`
                               : "—"}
                           </td>
                           <td className={classes.num}>{g.roomNights > 0 ? formatNights(g.roomNights) : "—"}</td>
@@ -771,7 +770,8 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                           <td className={classes.num}>{formatInt(totals.requestsCount)}</td>
                           <td className={classes.num}>{formatInt(totals.peopleCount)}</td>
                           <td className={classes.num}>
-                            {formatInt((totals.childrenCount || 0) + (totals.infantsCount || 0))}
+                            {formatInt(totals.childrenCount || 0)} ·{" "}
+                            {formatInt(totals.infantsCount || 0)}
                           </td>
                           <td className={classes.num}>{formatNights(totals.roomNights)}</td>
                           <td className={classes.num}>{formatRub(totals.living)}</td>
@@ -871,10 +871,12 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                                 <span>{formatInt(r.peopleCount)}</span>
                                 {(r.childrenCount || 0) + (r.infantsCount || 0) > 0 && (
                                   <span className={classes.cellSub}>
-                                    {r.infantsCount > 0
-                                      ? `${r.childrenCount || 0}+${r.infantsCount}`
-                                      : `${r.childrenCount}`}{" "}
-                                    дет.
+                                    {[
+                                      r.childrenCount ? `${r.childrenCount} дет` : null,
+                                      r.infantsCount ? `${r.infantsCount} млад` : null,
+                                    ]
+                                      .filter(Boolean)
+                                      .join(" · ")}
                                   </span>
                                 )}
                               </span>

@@ -1946,18 +1946,39 @@ export default function FapHotelPage({
   // «Отчёте»: синхронизируем pd.roomNumber с person.roomNumber на каждое
   // изменение people (в т.ч. очистку номера).
   useEffect(() => {
-    setPersonData((prev) => {
-      let changed = false;
-      const next = { ...prev };
-      people.forEach((person, i) => {
-        const rn = person.roomNumber ?? "";
-        if (next[i] && (next[i].roomNumber ?? "") !== rn) {
-          next[i] = { ...next[i], roomNumber: rn };
-          changed = true;
-        }
+    // Расхождение считаем по ref (он синхронизируется эффектом выше), а не внутри
+    // апдейтера: апдейтер вызывается повторно в StrictMode и решение о сохранении
+    // не должно от этого зависеть.
+    const prev = personDataRef.current;
+    const changed = people.some(
+      (person, i) => prev[i] && (prev[i].roomNumber ?? "") !== (person.roomNumber ?? "")
+    );
+    if (changed) {
+      setPersonData((cur) => {
+        const next = { ...cur };
+        people.forEach((person, i) => {
+          const rn = person.roomNumber ?? "";
+          if (next[i] && (next[i].roomNumber ?? "") !== rn) {
+            next[i] = { ...next[i], roomNumber: rn };
+          }
+        });
+        return next;
       });
-      return changed ? next : prev;
-    });
+    }
+    // Номер комнаты меняется отдельной мутацией (assignPassengerRequestHotelRoom),
+    // а СТРОКИ отчёта она не трогает; «Отправить на проверку» их тоже не
+    // переписывает (report.resolver.js ставит только submittedAt). Без сохранения
+    // здесь в базе оставался прежний номер и посчитанная по нему стоимость, и
+    // именно её печатала выгрузка авиакомпании. Сохраняем из эффекта, а не из
+    // обработчиков присвоения: сюда мы попадаем уже ПОСЛЕ refetch, поэтому строка
+    // пересчитывается по актуальным данным.
+    // Условия узкие намеренно: canEdit — чтобы сохранение не ушло из вкладки
+    // авиакомпании, которой номер приехал live-синком; hasSavedReport — чтобы
+    // присвоение номера на вкладке «Гости» не создавало отчёт, которого ещё нет
+    // (нечего и расходиться); !reportSubmitted — чтобы простое открытие страницы
+    // не снимало отметку отправки (бэк гасит её при изменении строк). Присвоение
+    // номера отметку снимает само, поэтому штатный путь сюда доходит.
+    if (changed && canEdit && hasSavedReport && !reportSubmitted) scheduleSave();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [people]);
 

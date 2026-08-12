@@ -623,13 +623,18 @@ export default function FapWaterMealPage({
                       onChange={(e) => setEditForm((f) => ({ ...f, seat: e.target.value }))}
                       placeholder="Место"
                     />
-                    <FapSelect
-                      className={classes.fSeat}
-                      accent={color}
-                      value={editForm.personCategory}
-                      onChange={(v) => setEditForm((f) => ({ ...f, personCategory: v }))}
-                      options={PERSON_CATEGORY_OPTIONS}
-                    />
+                    {/* Обёртка обязательна: .fSeat на корне FapSelect проигрывает его
+                        собственному .wrap { width: 100% } — стиль селекта подключается
+                        позже, а flex-shrink: 0 от .fSeat остаётся, и селект съедает
+                        всю строку, схлопывая ФИО и телефон. */}
+                    <div className={classes.fSeat}>
+                      <FapSelect
+                        accent={color}
+                        value={editForm.personCategory}
+                        onChange={(v) => setEditForm((f) => ({ ...f, personCategory: v }))}
+                        options={PERSON_CATEGORY_OPTIONS}
+                      />
+                    </div>
                     <button
                       type="button"
                       className={classes.editSaveBtn}

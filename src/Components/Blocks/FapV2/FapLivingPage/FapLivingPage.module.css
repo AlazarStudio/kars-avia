@@ -365,6 +365,11 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  /* Без этого карточки сжимались вместо прокрутки списка: `.hotels` — колонка
+     с определённой высотой, и её дети по умолчанию shrink:1. С шести гостиниц
+     у всех карточек срезалась нижняя полоса, а полоса прокрутки не появлялась
+     вовсе. Так же сделано у карточки водителя (FapTransferPage.module.css). */
+  flex-shrink: 0;
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 

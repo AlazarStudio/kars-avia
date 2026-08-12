@@ -94,6 +94,18 @@
   color: #94A3B8;
 }
 
+/* Отдельная строка поиска над списком пассажиров. Правила ниже .searchWrap
+   намеренно: специфичность та же, побеждает порядок. */
+.searchBar {
+  width: 100%;
+}
+
+.searchBar input {
+  flex: 1;
+  min-width: 0;
+  width: auto;
+}
+
 /* ── Manifest card ── */
 .manifestCard {
   background: #fff;

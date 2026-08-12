@@ -39,6 +39,7 @@ import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import ManifestUploadField from "../ManifestUploadField/ManifestUploadField";
 import { manifestNameKey, isSameFlight } from "../../../../utils/parseManifestXlsx";
+import { plural } from "../../../../utils/plural";
 import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
@@ -250,10 +251,15 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
     ? suggestions.filter((s) => !dismissedSuggestions.has(s.key))
     : [];
 
-  const kidsCount = savedPassengers.filter((p) => {
-    const c = normalizeCategory(p.personCategory);
-    return c === "CHILD" || c === "INFANT";
-  }).length;
+  // Дети и инфанты считаются раздельно: у них разные правила начисления
+  // проживания (ребёнок — 50%, инфант — бесплатно), поэтому общее число
+  // диспетчеру ничего не говорит.
+  const childrenCount = savedPassengers.filter(
+    (p) => normalizeCategory(p.personCategory) === "CHILD"
+  ).length;
+  const infantsCount = savedPassengers.filter(
+    (p) => normalizeCategory(p.personCategory) === "INFANT"
+  ).length;
   const total = savedPassengers.length + crewMembers.length;
 
   const q = search.trim().toLowerCase();
@@ -608,7 +614,9 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
             </span>
             <span className={classes.counter}>
               <span className={classes.counterValue}>{savedPassengers.length}</span>
-              <span className={classes.counterLabel}>пассажиров</span>
+              <span className={classes.counterLabel}>
+                {plural(savedPassengers.length, ["пассажир", "пассажира", "пассажиров"])}
+              </span>
             </span>
             {includesCrew && (
               <span className={classes.counter}>
@@ -617,17 +625,18 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
               </span>
             )}
             <span className={classes.counter}>
-              <span className={classes.counterValue}>{kidsCount}</span>
-              <span className={classes.counterLabel}>дети и инфанты</span>
+              <span className={classes.counterValue}>{childrenCount}</span>
+              <span className={classes.counterLabel}>
+                {plural(childrenCount, ["ребёнок", "ребёнка", "детей"])}
+              </span>
+            </span>
+            <span className={classes.counter}>
+              <span className={classes.counterValue}>{infantsCount}</span>
+              <span className={classes.counterLabel}>
+                {plural(infantsCount, ["инфант", "инфанта", "инфантов"])}
+              </span>
             </span>
           </div>
-        </div>
-        <div className={classes.searchWrap}>
-          <input
-            placeholder="Поиск по ФИО, телефону, месту"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
         </div>
       </div>
 
@@ -786,6 +795,17 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
           )}
         </div>
       )}
+
+      {/* Поиск стоит вплотную над списком, а не в шапке: между шапкой и списком
+          лежат импорт манифеста и группы, и результаты поиска приходилось искать
+          прокруткой. */}
+      <div className={`${classes.searchWrap} ${classes.searchBar}`}>
+        <input
+          placeholder="Поиск по ФИО, телефону, месту"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+      </div>
 
       {/* Passengers */}
       <div className={classes.listCard}>
