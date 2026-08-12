@@ -12,7 +12,7 @@ import ReportDraftFooter from "./ReportDraftFooter";
 import ReportDraftDialog from "./ReportDraftDialog";
 import ReportDraftPreview from "./ReportDraftPreview";
 import ReportDraftSummary from "./ReportDraftSummary";
-import { DRAFT_FILTERS, pluralizeRows, rowMatchesSearch } from "./reportDraftEditorUtils";
+import { DRAFT_FILTERS, pluralizeDays, pluralizeRows, rowMatchesSearch } from "./reportDraftEditorUtils";
 import { useToast } from "../../../../contexts/ToastContext";
 import { convertToDate } from "../../../../../graphQL_requests";
 import { measureSavePayload, rowNeedsPrice, rowNeedsDays } from "../reportDraftRows";
@@ -432,7 +432,7 @@ export default function ReportDraftEditor({
         symbol="!"
         symbolBg="#FFF6E8"
         symbolColor="#D9891F"
-        title={`Черновику ${staleDays} дней`}
+        title={`Черновику ${staleDays} ${pluralizeDays(staleDays)}`}
         message="Данные заявок за это время могли измениться, а черновик их не увидит. Выгруженный файл может разойтись с фактическим размещением."
         note="Надёжнее сначала нажать «Пересоздать» — правки при этом потеряются, зато цифры будут актуальными."
         cancelLabel="Отмена"

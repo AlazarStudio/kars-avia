@@ -4,7 +4,7 @@ import { useQuery } from "@apollo/client";
 import classes from "./ReportDraftPreview.module.css";
 import MUILoader from "../../MUILoader/MUILoader";
 import { formatMoney, pluralizeRows } from "./reportDraftEditorUtils";
-import { readPrintedTotals, compareWithPrintedTotal } from "../reportDraftRows";
+import { readPrintedTotals, compareWithPrintedTotal, buildTotalsCells } from "../reportDraftRows";
 import {
   GET_REPORT_DRAFT_PRESENTATION,
   getCookie,
@@ -14,6 +14,11 @@ import {
 // колонки и строка ИТОГО приходят с бэка полем `presentation`, значения в нём
 // уже отформатированы. Своего форматирования тут нет и быть не должно — иначе
 // предпросмотр начнёт расходиться с файлом, ради чего всё и затевалось.
+//
+// Ровно одно намеренное исключение: подпись «ИТОГО:» дублируется в первой
+// колонке строки итогов (см. buildTotalsCells). В файле она стоит в девятой,
+// слева от неё пусто, и без дубля строка итогов читается как пустая, пока
+// таблицу не прокрутят. Значения самих ячеек при этом не трогаются.
 //
 // Важное свойство: `presentation` считается из строк В БАЗЕ. Несохранённые
 // правки в него не попадают — ровно как и в сам файл, который печатает
@@ -54,6 +59,7 @@ export default function ReportDraftPreview({ open, draftId, onClose, localTotal,
     for (const cell of row?.cells || []) map.set(cell.key, cell.value);
     return map;
   };
+  const totalsCells = buildTotalsCells(presentation?.totalsRow, columns);
 
   return (
     <div
@@ -127,9 +133,7 @@ export default function ReportDraftPreview({ open, draftId, onClose, localTotal,
                   <tfoot>
                     <tr>
                       {columns.map((column) => (
-                        <td key={column.key}>
-                          {cellByKey(presentation.totalsRow).get(column.key) ?? ""}
-                        </td>
+                        <td key={column.key}>{totalsCells.get(column.key) ?? ""}</td>
                       ))}
                     </tr>
                   </tfoot>

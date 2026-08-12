@@ -293,6 +293,38 @@ export function readPrintedTotals(totalsRow) {
 }
 
 /**
+ * Значения строки «ИТОГО» по ключам колонок — для отрисовки `tfoot`
+ * в предпросмотре.
+ *
+ * Бэк кладёт подпись в ту же колонку, что и Excel: `personPosition` для
+ * авиакомпании, `shareNote` для гостиницы — то есть в девятую и восьмую.
+ * Позиция подписи не трогается, иначе предпросмотр разойдётся с файлом,
+ * ради сверки с которым он и сделан. Вместо этого та же подпись
+ * дублируется в первой колонке: слева от неё в строке нет ничего, и без
+ * дубля строка итогов читается как пустая, пока таблицу не прокрутят.
+ * Текст подписи берётся из той же ячейки, куда её положил бэк
+ * (`personPosition` или `shareNote`) — литерал «ИТОГО:» подставляется
+ * только запасным вариантом, если её там не оказалось.
+ *
+ * `raw` не читается и не меняется — на нём стоит сверка итога
+ * (`readPrintedTotals`).
+ *
+ * @param {object|null|undefined} totalsRow - `presentation.totalsRow`
+ * @param {Array<{key: string}>} columns - `presentation.columns`
+ * @returns {Map<string, string>} значения ячеек по ключу колонки
+ */
+export function buildTotalsCells(totalsRow, columns) {
+  const cells = new Map();
+  for (const cell of totalsRow?.cells || []) cells.set(cell.key, cell.value);
+  const firstKey = columns?.[0]?.key;
+  if (totalsRow && firstKey && !cells.get(firstKey)) {
+    const label = cells.get("personPosition") || cells.get("shareNote") || "ИТОГО:";
+    cells.set(firstKey, label);
+  }
+  return cells;
+}
+
+/**
  * Сходятся ли итог на экране и итог, который уйдёт в файл.
  *
  * Сравнение в копейках: суммы складываются из дробных сотых долей суток,

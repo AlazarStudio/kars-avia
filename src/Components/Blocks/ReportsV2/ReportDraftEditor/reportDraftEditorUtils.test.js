@@ -8,6 +8,7 @@ import {
   getDepartureHighlight,
   livingCostTooltip,
   pluralizeRows,
+  pluralizeDays,
   rowMatchesSearch,
   describeShareSegments,
   listCohabitants,
@@ -152,4 +153,19 @@ test("rowMatchesSearch matches name, position, room and category case-insensitiv
   assert.equal(rowMatchesSearch(row, "101"), true);
   assert.equal(rowMatchesSearch(row, "двухместный"), true);
   assert.equal(rowMatchesSearch(row, "нет такого"), false);
+});
+
+test("pluralizeDays follows the standard Russian plural rule", () => {
+  assert.equal(pluralizeDays(1), "день");
+  assert.equal(pluralizeDays(21), "день");
+  assert.equal(pluralizeDays(2), "дня");
+  assert.equal(pluralizeDays(3), "дня");
+  assert.equal(pluralizeDays(4), "дня");
+  assert.equal(pluralizeDays(22), "дня");
+  assert.equal(pluralizeDays(5), "дней");
+  assert.equal(pluralizeDays(8), "дней");
+  assert.equal(pluralizeDays(11), "дней");
+  assert.equal(pluralizeDays(12), "дней");
+  assert.equal(pluralizeDays(14), "дней");
+  assert.equal(pluralizeDays(0), "дней");
 });

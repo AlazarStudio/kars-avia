@@ -17,6 +17,7 @@ import {
   compareWithPrintedTotal,
   summarizeHotels,
   buildShareClusters,
+  buildTotalsCells,
 } from "./reportDraftRows.js";
 
 test("buildShareClusters groups roommates and skips solo stays", () => {
@@ -326,4 +327,79 @@ test("measureSavePayload survives junk input", () => {
   const junk = measureSavePayload(null);
   assert.equal(junk.exceeds, false);
   assert.equal(junk.maxRows, 0);
+});
+
+const TOTALS_COLUMNS = [
+  { key: "index" },
+  { key: "personPosition" },
+  { key: "totalDebt" },
+];
+
+const TOTALS_ROW = {
+  cells: [
+    { key: "index", value: "", raw: null },
+    { key: "personPosition", value: "ИТОГО:", raw: "ИТОГО:" },
+    { key: "totalMealCost", value: "243 100,00", raw: "243100" },
+    { key: "totalLivingCost", value: "1 216 350,00", raw: "1216350" },
+    { key: "totalDebt", value: "1 459 450,00", raw: "1459450" },
+  ],
+};
+
+test("buildTotalsCells fills the empty first column with the totals label", () => {
+  const cells = buildTotalsCells(TOTALS_ROW, TOTALS_COLUMNS);
+  assert.equal(cells.get("index"), "ИТОГО:");
+});
+
+test("buildTotalsCells leaves the backend-supplied cells untouched", () => {
+  const cells = buildTotalsCells(TOTALS_ROW, TOTALS_COLUMNS);
+  assert.equal(cells.get("personPosition"), "ИТОГО:");
+  assert.equal(cells.get("totalDebt"), "1 459 450,00");
+});
+
+test("buildTotalsCells does not overwrite a non-empty first column", () => {
+  const row = {
+    cells: [
+      { key: "index", value: "17", raw: "17" },
+      { key: "totalDebt", value: "1 459 450,00", raw: "1459450" },
+    ],
+  };
+  const cells = buildTotalsCells(row, TOTALS_COLUMNS);
+  assert.equal(cells.get("index"), "17");
+});
+
+test("buildTotalsCells copies a custom label from personPosition into the first column", () => {
+  // Подпись читается из ячейки бэка, а не хардкодится: если бэк однажды
+  // назовёт её иначе, дубль в первой колонке должен повторить именно это имя.
+  const row = {
+    cells: [
+      { key: "index", value: "", raw: null },
+      { key: "personPosition", value: "ВСЕГО:", raw: "ВСЕГО:" },
+      { key: "totalDebt", value: "1 459 450,00", raw: "1459450" },
+    ],
+  };
+  const cells = buildTotalsCells(row, TOTALS_COLUMNS);
+  assert.equal(cells.get("index"), "ВСЕГО:");
+});
+
+test("buildTotalsCells returns an empty map when totalsRow is missing", () => {
+  assert.equal(buildTotalsCells(null, TOTALS_COLUMNS).size, 0);
+});
+
+test("buildTotalsCells skips the injection when columns are empty", () => {
+  assert.equal(buildTotalsCells(TOTALS_ROW, []).size, 5);
+});
+
+test("buildTotalsCells only injects the label when totalsRow has no cells", () => {
+  const cells = buildTotalsCells({}, TOTALS_COLUMNS);
+  assert.equal(cells.size, 1);
+  assert.equal(cells.get("index"), "ИТОГО:");
+});
+
+test("buildTotalsCells does not disturb the raw values readPrintedTotals relies on", () => {
+  buildTotalsCells(TOTALS_ROW, TOTALS_COLUMNS);
+  assert.deepEqual(readPrintedTotals(TOTALS_ROW), {
+    meal: 243100,
+    living: 1216350,
+    debt: 1459450,
+  });
 });

@@ -1,4 +1,5 @@
 import { parseHhMm, PARTIAL_DAY_DEFAULTS } from "../reportRules.js";
+import { plural } from "../../../../utils/plural.js";
 
 /** Вкладки клиентского фильтра таблицы строк черновика (см. ReportDraftFilters). */
 export const DRAFT_FILTERS = {
@@ -151,19 +152,23 @@ export function livingCostTooltip(row, isEdited) {
 /**
  * Склоняет "строка" под число — для диалогов, которые называют количество
  * незасохранённых/потерянных строк ("N строка"/"N строки"/"N строк").
- * Стандартное русское правило: 11–14 всегда "строк", иначе по последней цифре.
  *
  * @param {number} n - количество строк
  * @returns {"строка"|"строки"|"строк"} нужная форма слова
  */
 export function pluralizeRows(n) {
-  const abs = Math.abs(Math.trunc(Number(n) || 0));
-  const mod10 = abs % 10;
-  const mod100 = abs % 100;
-  if (mod100 >= 11 && mod100 <= 14) return "строк";
-  if (mod10 === 1) return "строка";
-  if (mod10 >= 2 && mod10 <= 4) return "строки";
-  return "строк";
+  return plural(n, ["строка", "строки", "строк"]);
+}
+
+/**
+ * Склоняет "день" под число — для заголовка диалога, который называет
+ * возраст черновика ("Черновику 21 день", а не "21 дней").
+ *
+ * @param {number} n - возраст в сутках, целое
+ * @returns {"день"|"дня"|"дней"} нужная форма слова
+ */
+export function pluralizeDays(n) {
+  return plural(n, ["день", "дня", "дней"]);
 }
 
 /**
