@@ -39,17 +39,26 @@ export const filterRequestsBySearch = ({
 export const buildFilteredRooms = ({ rooms, filteredRequests, searchQuery }) => {
   const query = searchQuery?.toLowerCase();
 
+  const requestsByRoomId = new Map();
+  for (const req of filteredRequests) {
+    const roomId = req.room?.id;
+    if (!roomId) continue;
+    const list = requestsByRoomId.get(roomId);
+    if (list) list.push(req);
+    else requestsByRoomId.set(roomId, [req]);
+  }
+
   const baseFiltered = !query
     ? rooms
     : rooms.filter(
         (room) =>
-          filteredRequests.some((request) => request.room?.id === room.roomId) ||
+          requestsByRoomId.has(room.roomId) ||
           room.id.toLowerCase().includes(query)
       );
 
   const withRequests = baseFiltered.map((room) => ({
     ...room,
-    requests: filteredRequests.filter((req) => req.room?.id === room.roomId),
+    requests: requestsByRoomId.get(room.roomId) || [],
   }));
 
   return withRequests.sort((a, b) => {

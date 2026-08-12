@@ -1,5 +1,3 @@
-import { generateTimestampId } from "../../../../graphQL_requests";
-
 export const translateStatus = (status) => {
   switch (status) {
     case "done":
@@ -44,7 +42,7 @@ export const mapRooms = (rooms = []) =>
     });
 
 export const mapHotelChessToRequest = (chess) => ({
-  id: generateTimestampId(),
+  id: chess.id,
   room: {
     id: chess.room?.id,
     name: chess.room?.name,
@@ -72,7 +70,7 @@ export const mapHotelChessToRequest = (chess) => ({
 });
 
 export const mapRequestToPlacement = (request) => ({
-  id: generateTimestampId(),
+  id: `pending-${request.id}`,
   checkInDate: new Date(request.arrival).toISOString().split("T")[0],
   checkInTime: new Date(request.arrival).toISOString().split("T")[1].slice(0, 5),
   checkOutDate: new Date(request.departure).toISOString().split("T")[0],

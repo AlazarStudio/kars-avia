@@ -2850,9 +2850,6 @@ export const GET_BRONS_HOTEL = gql`
           places
           active
           reserve
-          description
-          descriptionSecond
-          images
         }
         client {
           id
@@ -2872,49 +2869,21 @@ export const GET_BRONS_HOTEL = gql`
         }
         request {
           id
-          airport {
-            city
-            code
-            name
-            address
-          }
-          arrival
-          departure
-          mealPlan {
-            included
-            breakfast
-            lunch
-            dinner
-          }
+          status
+          requestNumber
           airline {
             name
             images
           }
-          status
-          requestNumber
         }
         reserve {
           id
-          airport {
-            city
-            code
-            name
-            address
-          }
-          arrival
-          departure
-          mealPlan {
-            included
-            breakfast
-            lunch
-            dinner
-          }
+          status
+          reserveNumber
           airline {
             name
             images
           }
-          status
-          reserveNumber
         }
       }
     }

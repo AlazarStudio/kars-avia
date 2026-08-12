@@ -47,6 +47,8 @@ const LEFT_WIDTH = 220;
 const WEEKEND_COLOR = "#efefef";
 const MONTH_COLOR = "#ddd";
 
+const sameId = (a, b) => String(a) === String(b);
+
 const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
   const { idHotel, requestId } = useParams();
 
@@ -104,10 +106,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
     hotelInfo,
     loadingHotel,
     loadingRooms,
-    loadingRequests,
-    loadingReserves,
-    loadingReserveOne,
-    loadingHotelReserveOne,
     rooms,
     roomsRefetch,
     requests,
@@ -133,14 +131,7 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
   });
 
   const initialLoading =
-    Boolean(hotelId) &&
-    (loadingHotel ||
-      loadingRooms ||
-      bronLoading ||
-      loadingRequests ||
-      loadingReserves ||
-      loadingReserveOne ||
-      loadingHotelReserveOne);
+    Boolean(hotelId) && (loadingHotel || loadingRooms || bronLoading);
 
   useEffect(() => {
     if (!initialLoading && !hasInitialLoadCompleted) {
@@ -210,11 +201,9 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
   const handleDragStart = (event) => {
     const { active } = event;
     const draggedItem =
-      newRequests.find((req) => req.id === parseInt(active.id, 10)) ||
-      newReservePassangers.find((req) => req.id === parseInt(active.id, 10));
-    const draggedItemOld = requests.find(
-      (req) => req.id === parseInt(active.id, 10)
-    );
+      newRequests.find((req) => sameId(req.id, active.id)) ||
+      newReservePassangers.find((req) => sameId(req.id, active.id));
+    const draggedItemOld = requests.find((req) => sameId(req.id, active.id));
     const activeItem = draggedItemOld || draggedItem;
     setActiveDragItem(activeItem);
     setActiveDragItemOld(draggedItemOld);
@@ -241,9 +230,9 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
     }
 
     const draggedRequest =
-      newReservePassangers.find((req) => req.id === parseInt(active.id, 10)) ||
-      newRequests.find((req) => req.id === parseInt(active.id, 10)) ||
-      requests.find((req) => req.id === parseInt(active.id, 10));
+      newReservePassangers.find((req) => sameId(req.id, active.id)) ||
+      newRequests.find((req) => sameId(req.id, active.id)) ||
+      requests.find((req) => sameId(req.id, active.id));
 
     const [targetRoomId, targetPositionStr] = over.id.split("-");
     const targetPosition = parseInt(targetPositionStr, 10);
