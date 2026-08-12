@@ -143,6 +143,7 @@ export default function FapTransferPage({
     requestId: request?.id,
     serviceKind: isDeparture ? "DEPARTURE_TRANSFER" : "TRANSFER",
     user,
+    canEdit,
     // Именно COMPLETED, а не общий isCompleted: отменённую услугу бэк
     // переоткрывать отказывается, это другой переход.
     isCompleted: service?.status === "COMPLETED",

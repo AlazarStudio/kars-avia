@@ -704,7 +704,14 @@ export function addRequestReportSheets(wb, request, opts = {}) {
   const livingEnabled = request?.livingService?.plan?.enabled;
   const arrEnabled = request?.transferService?.plan?.enabled;
   const depEnabled = request?.departureTransferService?.plan?.enabled;
-  if (!livingEnabled && !arrEnabled && !depEnabled) {
+  // Пустой белый список = ни одной доступной гостиницы (авиакомпания, пока
+  // отчёты не отправлены; гостиница, которой в этой заявке нет). Проживание в
+  // такой книге не даст ни листов, ни строк в сводке, поэтому считаем его
+  // выключенным: иначе молча скачивалась книга из одной пустой шапки.
+  // null — ограничения нет, старое поведение.
+  const livingVisible =
+    livingEnabled && !(Array.isArray(hotelIndexes) && hotelIndexes.length === 0);
+  if (!livingVisible && !arrEnabled && !depEnabled) {
     notifyError?.("Нет данных для отчёта");
     return false;
   }

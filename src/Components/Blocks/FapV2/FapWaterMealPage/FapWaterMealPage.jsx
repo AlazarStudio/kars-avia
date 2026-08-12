@@ -96,6 +96,7 @@ export default function FapWaterMealPage({
     requestId: request?.id,
     serviceKind,
     user,
+    canEdit,
     isCompleted: service?.status === "COMPLETED",
     onDone: onRefetch,
   });

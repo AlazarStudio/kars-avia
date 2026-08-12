@@ -85,6 +85,7 @@ export default function FapLivingPage({
     requestId: request?.id,
     serviceKind: "LIVING",
     user,
+    canEdit,
     // Именно COMPLETED, а не общий isCompleted: отменённую услугу бэк
     // переоткрывать отказывается, это другой переход.
     isCompleted: service?.status === "COMPLETED",

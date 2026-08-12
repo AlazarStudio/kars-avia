@@ -542,6 +542,10 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
 
   // Понижение уровня «вместе» до гостиницы — единственный UI togetherLevel в v1
   // (гасит ворнинг «группа разнесена по номерам»).
+  //
+  // ⚠️ В подписи кнопки «уровень» не упоминается сознательно: это внутренний
+  // термин, а диспетчеру нужно сказать одно — «так и надо, не предупреждай».
+  // Сам флаг хранится на заявке, поэтому отметка общая для всех диспетчеров.
   const handleGroupLevelHotel = async (group) => {
     try {
       setSaving(true);
@@ -558,7 +562,7 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
           },
         },
       });
-      success("Группа селится в одной гостинице");
+      success("Предупреждение снято: группе достаточно одной гостиницы");
       onRefetch?.();
     } catch (err) {
       notifyError(err?.graphQLErrors?.[0]?.message || "Ошибка при сохранении группы");
@@ -727,8 +731,9 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
                               className={classes.groupWarnBtn}
                               onClick={() => handleGroupLevelHotel(g)}
                               disabled={saving}
+                              title="Группе достаточно жить в одной гостинице. Людей кнопка не переселяет — только убирает это предупреждение, у всех диспетчеров."
                             >
-                              Считать уровнем «гостиница»
+                              Так и надо
                             </button>
                           )}
                         </div>

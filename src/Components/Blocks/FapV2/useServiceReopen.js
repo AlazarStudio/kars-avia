@@ -22,6 +22,7 @@ export default function useServiceReopen({
   requestId,
   serviceKind,
   user,
+  canEdit = true,
   isCompleted,
   onDone,
 }) {
@@ -49,8 +50,13 @@ export default function useServiceReopen({
   };
 
   return {
-    // Пункт меню появляется только у завершённой услуги и только у диспетчера.
-    canReopen: Boolean(isCompleted) && canReopenPassengerService(user),
+    // Пункт меню появляется только у завершённой услуги, только у диспетчера и
+    // только там, где вообще разрешено править. Без canEdit пункт оставался
+    // единственным действием на экране, открытом на чтение: у отдела без
+    // reserveUpdate и у отменённой заявки всё остальное скрыто, а откат
+    // завершения — нет.
+    canReopen:
+      Boolean(isCompleted) && Boolean(canEdit) && canReopenPassengerService(user),
     open,
     openModal: () => setOpen(true),
     closeModal: () => setOpen(false),

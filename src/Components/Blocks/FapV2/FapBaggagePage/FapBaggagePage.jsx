@@ -186,6 +186,7 @@ export default function FapBaggagePage({
     requestId: request?.id,
     serviceKind: "BAGGAGE_DELIVERY",
     user,
+    canEdit,
     isCompleted: service?.status === "COMPLETED",
     onDone: onRefetch,
   });
