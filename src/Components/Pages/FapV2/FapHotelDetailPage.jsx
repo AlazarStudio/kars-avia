@@ -8,7 +8,7 @@ import {
 } from "../../../../graphQL_requests";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import Header from "../../Blocks/Header/Header";
-import { isRequestCancelled } from "../../Blocks/FapV2/fapConstants";
+import { isRequestEditLocked } from "../../Blocks/FapV2/fapEditAccess";
 import FapCancelledBanner from "../../Blocks/FapV2/FapCancelledBanner/FapCancelledBanner";
 import FapHotelPage from "../../Blocks/FapV2/FapHotelPage/FapHotelPage";
 import FapChat from "../../Blocks/FapV2/FapChat/FapChat";
@@ -65,9 +65,11 @@ export default function FapHotelDetailPage({ user }) {
   }, [request, hotelScoped, ownHotelId, hotelIndex, requestId, navigate]);
 
   // Отмена заявки закрывает правку и гостинице по магик-линку: услуга у неё
-  // осталась «в работе», а заявки уже нет — см. isRequestCancelled.
+  // осталась «в работе», а заявки уже нет. Завершение запирает её так же:
+  // право «править завершённую» внешнему пользователю выдать нечем, у него
+  // нет accessMenu. Оба правила живут в isRequestEditLocked.
   const canEdit =
-    !isRequestCancelled(request) &&
+    !isRequestEditLocked(request, accessMenu, user) &&
     ((canAccessMenu(accessMenu, "reserveUpdate", user) && !isAirlineRole) ||
       (isExternalUser(user) && user?.scope === "HOTEL"));
 

@@ -16,7 +16,7 @@ const ALL_ACCESS_ENABLED = {
   requestMenu: true, requestCreate: true, requestUpdate: true, requestChat: true,
   transferMenu: true, transferCreate: true, transferUpdate: true, transferChat: true,
   personalMenu: true, personalCreate: true, personalUpdate: true,
-  reserveMenu: true, reserveCreate: true, reserveUpdate: true,
+  reserveMenu: true, reserveCreate: true, reserveUpdate: true, reserveUpdateCompleted: true,
   analyticsMenu: true, analyticsUpload: true,
   reportMenu: true, reportCreate: true,
   userMenu: true, userCreate: true, userUpdate: true,

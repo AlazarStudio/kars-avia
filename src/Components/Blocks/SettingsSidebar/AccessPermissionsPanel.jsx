@@ -31,6 +31,7 @@ export default function AccessPermissionsPanel({
         access: b(accessMenu?.reserveMenu),
         create: b(accessMenu?.reserveCreate),
         edit: b(accessMenu?.reserveUpdate),
+        editCompleted: b(accessMenu?.reserveUpdateCompleted),
       },
       users: {
         access: b(accessMenu?.userMenu),
@@ -80,6 +81,19 @@ export default function AccessPermissionsPanel({
 
   const sectionKeys = useMemo(() => defaultSectionKeys(type), [type]);
 
+  // Ключи, которыми «Взаимодействие с разделом» не управляет: они выдаются
+  // отдельными переключателями, иначе право включалось бы вместе с обычной
+  // правкой и умолчание стало бы «можно».
+  const extraKeys = useMemo(() => {
+    const map = {};
+    for (const section of ACCESS_SECTIONS) {
+      map[section.key] = new Set((section.extras || []).map((e) => e.key));
+    }
+    return map;
+  }, []);
+
+  const isExtra = (section, key) => !!extraKeys[section]?.has(key);
+
   // доступ к разделу с каскадом: выключение гасит все действия
   const setAccess = (section, value) =>
     setState((s) => ({
@@ -99,7 +113,7 @@ export default function AccessPermissionsPanel({
         ...s[section],
         ...Object.fromEntries(
           Object.keys(s[section])
-            .filter((k) => k !== "access")
+            .filter((k) => k !== "access" && !isExtra(section, k))
             .map((k) => [k, value]),
         ),
       },
@@ -107,7 +121,7 @@ export default function AccessPermissionsPanel({
 
   const interactChecked = (section) =>
     Object.entries(state[section])
-      .filter(([k]) => k !== "access")
+      .filter(([k]) => k !== "access" && !isExtra(section, k))
       .every(([, v]) => !!v);
 
   const allEnabled = Object.values(state).every((section) =>
@@ -168,6 +182,22 @@ export default function AccessPermissionsPanel({
                   disabled={!isEditing || !state[key].access}
                 />
               )}
+
+              {(config.extras || []).map((extra) => (
+                <RowSwitch
+                  key={extra.key}
+                  classes={classes}
+                  label={extra.label}
+                  checked={state[key][extra.key]}
+                  onChange={(v) =>
+                    setState((s) => ({
+                      ...s,
+                      [key]: { ...s[key], [extra.key]: v },
+                    }))
+                  }
+                  disabled={!isEditing || !state[key].access}
+                />
+              ))}
             </SectionCard>
           );
         })}

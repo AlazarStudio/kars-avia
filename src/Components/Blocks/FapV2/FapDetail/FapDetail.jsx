@@ -21,6 +21,7 @@ import {
   getServiceByKey,
   formatDate,
   formatDateTime,
+  isRequestCompleted,
 } from "../fapConstants";
 import { calculateCostDaysByDuration } from "../../../../utils/effectiveCostDays";
 import { transferFactCount } from "../fapTransferFact";
@@ -29,6 +30,7 @@ import MUILoader from "../../MUILoader/MUILoader";
 import Button from "../../../Standart/Button/Button";
 import Header from "../../Header/Header";
 import { useToast } from "../../../../contexts/ToastContext";
+import { useDialog } from "../../../../contexts/DialogContext";
 import AddRepresentativeService from "../../AddRepresentativeService/AddRepresentativeService";
 import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
 import CopyIcon from "../../../../shared/icons/CopyIcon";
@@ -152,11 +154,12 @@ function getTileMetrics(serviceKey, request) {
   };
 }
 
-export default function FapDetail({ user, canEdit = true }) {
+export default function FapDetail({ user, canEdit = true, canEditCompleted = false }) {
   const { requestId } = useParams();
   const navigate = useNavigate();
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
+  const { confirm } = useDialog();
 
   const [showAddService, setShowAddService] = useState(false);
   const [showCancelModal, setShowCancelModal] = useState(false);
@@ -253,6 +256,14 @@ export default function FapDetail({ user, canEdit = true }) {
   const popoverEnabled = canEdit && !isFinal;
   const canChangeStatus = canEdit && !isAirlineRole(user);
 
+  // isFinal закрывает поповер статуса: из COMPLETED переходов вперёд нет.
+  // Правку же завершённой заявки закрывает только отсутствие права.
+  const editLocked = isRequestCompleted(request)
+    ? !canEditCompleted
+    : isFinal;
+  const canReopenRequest =
+    isRequestCompleted(request) && canEditCompleted && canChangeStatus;
+
   const handleConfirmStatus = async () => {
     if (!pendingStatus) return;
     try {
@@ -264,6 +275,29 @@ export default function FapDetail({ user, canEdit = true }) {
       success("Статус обновлён");
     } catch {
       notifyError("Ошибка при смене статуса");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Возврат заявки из «Завершён». Отдельной мутации нет: общий сеттер статуса
+  // такой переход принимает (переходы он не валидирует), а автор и новый статус
+  // попадают в историю заявки. Причину не спрашиваем — аргумента под неё у
+  // сеттера в схеме нет.
+  const handleReopenRequest = async () => {
+    const ok = await confirm({
+      message: "Вернуть заявку в работу? Статус сменится с «Завершён» на «В работе».",
+      confirmText: "Вернуть",
+      cancelText: "Отмена",
+    });
+    if (!ok) return;
+    try {
+      setSaving(true);
+      await setStatus({ variables: { id: request.id, status: "IN_PROGRESS" } });
+      await refetch();
+      success("Заявка возвращена в работу");
+    } catch (e) {
+      notifyError(e?.message || "Не удалось вернуть заявку в работу");
     } finally {
       setSaving(false);
     }
@@ -671,8 +705,9 @@ export default function FapDetail({ user, canEdit = true }) {
               items={
                 canChangeStatus
                   ? [
-                      { label: "Редактировать", icon: EditIcon, onClick: () => setShowAddService(true), hidden: isFinal },
+                      { label: "Редактировать", icon: EditIcon, onClick: () => setShowAddService(true), hidden: editLocked },
                       { label: "История", icon: ScheduleIcon, onClick: () => setShowLogs((v) => !v) },
+                      { label: "Вернуть в работу", onClick: handleReopenRequest, hidden: !canReopenRequest },
                       { sep: true },
                       { label: "Отменить заявку", icon: CancelIcon, tone: "danger", onClick: () => setShowCancelModal(true), hidden: isFinal },
                     ]
@@ -700,7 +735,7 @@ export default function FapDetail({ user, canEdit = true }) {
         requestNumber={request.requestNumber}
       />
 
-      {canEdit && showAddService && (
+      {canEdit && !editLocked && showAddService && (
         <AddRepresentativeService
           show={showAddService}
           onClose={() => {

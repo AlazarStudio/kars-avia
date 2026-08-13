@@ -1,5 +1,5 @@
 // Конвертер внутреннего секционного состояния AccessPermissionsPanel
-// в плоский accessMenu (все 31 ключа) для бэка.
+// в плоский accessMenu (все 32 ключа) для бэка.
 export const buildAccessPayload = (s) => ({
   requestMenu: !!s?.squadron?.access,
   requestCreate: !!s?.squadron?.create,
@@ -14,6 +14,7 @@ export const buildAccessPayload = (s) => ({
   reserveMenu: !!s?.passengers?.access,
   reserveCreate: !!s?.passengers?.create,
   reserveUpdate: !!s?.passengers?.edit,
+  reserveUpdateCompleted: !!s?.passengers?.editCompleted,
 
   userMenu: !!s?.users?.access,
   userCreate: !!s?.users?.add,
@@ -49,6 +50,7 @@ export const ALL_TRUE_ACCESS = {
   transferMenu: true, transferCreate: true, transferUpdate: true, transferChat: true,
   personalMenu: true, personalCreate: true, personalUpdate: true,
   reserveMenu: true, reserveCreate: true, reserveUpdate: true,
+  reserveUpdateCompleted: true,
   analyticsMenu: true, analyticsUpload: true,
   reportMenu: true, reportCreate: true,
   userMenu: true, userCreate: true, userUpdate: true,

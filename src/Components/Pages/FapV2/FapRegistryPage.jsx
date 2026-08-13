@@ -8,7 +8,7 @@ import {
 } from "../../../../graphQL_requests";
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import Header from "../../Blocks/Header/Header";
-import { isRequestCancelled } from "../../Blocks/FapV2/fapConstants";
+import { isRequestEditLocked } from "../../Blocks/FapV2/fapEditAccess";
 import FapCancelledBanner from "../../Blocks/FapV2/FapCancelledBanner/FapCancelledBanner";
 import FapChat from "../../Blocks/FapV2/FapChat/FapChat";
 import FapRegistry from "../../Blocks/FapV2/FapRegistry/FapRegistry";
@@ -47,7 +47,7 @@ export default function FapRegistryPage({ user }) {
   const canEdit =
     canAccessMenu(accessMenu, "reserveUpdate", user) &&
     !isAirlineRole &&
-    !isRequestCancelled(request);
+    !isRequestEditLocked(request, accessMenu, user);
 
   return (
     <div className={classes.page}>

@@ -71,6 +71,11 @@ export const REQUEST_STATUS_CONFIG = {
 // была на каждой вкладке услуги и потерялась при переходе на v2.
 export const isRequestCancelled = (request) => request?.status === "CANCELLED";
 
+// Завершённая заявка. Отдельно от isRequestCancelled: отмена запирает правку
+// всегда, а завершение — только у того, кому не выдано право
+// reserveUpdateCompleted (см. fapEditAccess.js).
+export const isRequestCompleted = (request) => request?.status === "COMPLETED";
+
 export const SERVICE_STATUS_CONFIG = {
   NEW: { label: "Новый", color: "#94A3B8", bg: "#F1F5F9" },
   ACCEPTED: { label: "Принят", color: "#3B82F6", bg: "#EFF6FF" },

@@ -88,3 +88,27 @@ test("секция пассажиров называется «ФАП»", () => 
   const passengers = ACCESS_SECTIONS.find((s) => s.key === "passengers");
   assert.equal(passengers.title, "ФАП");
 });
+
+test("extras описаны отдельно от rows и не пересекаются с ними", () => {
+  for (const section of ACCESS_SECTIONS) {
+    const extras = section.extras || [];
+    assert.ok(Array.isArray(extras), `${section.key}: extras должен быть массивом`);
+    const rowKeys = new Set(section.rows.map((r) => r.key));
+    for (const extra of extras) {
+      assert.equal(typeof extra.label, "string");
+      assert.ok(extra.label.length > 0);
+      assert.ok(
+        !rowKeys.has(extra.key),
+        `${section.key}: ключ "${extra.key}" объявлен и в rows, и в extras`,
+      );
+    }
+  }
+});
+
+test("правка завершённой заявки — отдельный переключатель секции ФАП", () => {
+  const passengers = ACCESS_SECTIONS.find((s) => s.key === "passengers");
+  assert.deepEqual(
+    (passengers.extras || []).map((e) => e.key),
+    ["editCompleted"],
+  );
+});

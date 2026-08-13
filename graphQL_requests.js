@@ -1237,6 +1237,7 @@ export const GET_AIRLINE_USERS_POSITIONS = gql`
         reserveMenu
         reserveCreate
         reserveUpdate
+        reserveUpdateCompleted
         analyticsMenu
         analyticsUpload
         reportMenu
@@ -1302,6 +1303,7 @@ export const GET_DISPATCHER_POSITIONS = gql`
         reserveMenu
         reserveCreate
         reserveUpdate
+        reserveUpdateCompleted
         analyticsMenu
         analyticsUpload
         reportMenu
@@ -1376,6 +1378,7 @@ export const GET_USER_EFFECTIVE_ACCESS_MENU = gql`
         reserveMenu
         reserveCreate
         reserveUpdate
+        reserveUpdateCompleted
         analyticsMenu
         analyticsUpload
         reportMenu
@@ -5430,6 +5433,7 @@ export const GET_AIRLINES = gql`
             reserveMenu
             reserveCreate
             reserveUpdate
+            reserveUpdateCompleted
             analyticsMenu
             analyticsUpload
             reportMenu
@@ -5616,6 +5620,7 @@ export const GET_AIRLINE = gql`
           reserveMenu
           reserveCreate
           reserveUpdate
+          reserveUpdateCompleted
           analyticsMenu
           analyticsUpload
           reportMenu
@@ -5944,6 +5949,7 @@ export const GET_AIRLINE_COMPANY = gql`
           reserveMenu
           reserveCreate
           reserveUpdate
+          reserveUpdateCompleted
           analyticsMenu
           analyticsUpload
           reportMenu
@@ -6072,6 +6078,7 @@ export const CREATE_AIRLINE_DEPARTMERT = gql`
           reserveMenu
           reserveCreate
           reserveUpdate
+          reserveUpdateCompleted
           analyticsMenu
           analyticsUpload
           reportMenu
@@ -6229,6 +6236,7 @@ export const GET_AIRLINE_DEPARTMENT = gql`
         reserveMenu
         reserveCreate
         reserveUpdate
+        reserveUpdateCompleted
         analyticsMenu
         analyticsUpload
         reportMenu
@@ -6374,6 +6382,7 @@ export const GET_DISPATCHER_DEPARTMENTS = gql`
           reserveMenu
           reserveCreate
           reserveUpdate
+          reserveUpdateCompleted
           analyticsMenu
           analyticsUpload
           reportMenu
