@@ -15,6 +15,8 @@ export default function ReportDraftFilters({
   onResetAll,
   search,
   onSearchChange,
+  groupBy,
+  onGroupByChange,
 }) {
   return (
     <div className={classes.bar}>
@@ -53,6 +55,27 @@ export default function ReportDraftFilters({
       </div>
 
       <div className={classes.tools}>
+        {/* Порядок строк в файле — контрактный, поэтому по умолчанию таблица
+            открывается как печатная форма, а группировка включается руками. */}
+        <div className={classes.segmented} role="group" aria-label="Порядок строк">
+          <button
+            type="button"
+            className={groupBy === "file" ? classes.segActive : classes.seg}
+            aria-pressed={groupBy === "file"}
+            onClick={() => onGroupByChange("file")}
+          >
+            Файл
+          </button>
+          <button
+            type="button"
+            className={groupBy === "hotel" ? classes.segActive : classes.seg}
+            aria-pressed={groupBy === "hotel"}
+            onClick={() => onGroupByChange("hotel")}
+          >
+            Гостиницы
+          </button>
+        </div>
+
         {dirty && (
           <button type="button" className={classes.resetLink} onClick={onResetAll}>
             Сбросить все правки
@@ -86,4 +109,6 @@ ReportDraftFilters.propTypes = {
   onResetAll: PropTypes.func.isRequired,
   search: PropTypes.string.isRequired,
   onSearchChange: PropTypes.func.isRequired,
+  groupBy: PropTypes.oneOf(["file", "hotel"]).isRequired,
+  onGroupByChange: PropTypes.func.isRequired,
 };

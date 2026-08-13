@@ -2,7 +2,7 @@ import PropTypes from "prop-types";
 import classes from "./ReportDraftTable.module.css";
 import RestoreIcon from "../../../../shared/icons/RestoreIcon";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
-import { rowNeedsDays, rowNeedsPrice } from "../reportDraftRows";
+import { rowHasWarning, rowNeedsDays, rowNeedsPrice } from "../reportDraftRows";
 import {
   formatMoney,
   getArrivalHighlight,
@@ -51,7 +51,7 @@ export default function ReportDraftRow({
   };
   const needsDays = rowNeedsDays(row);
   const needsPrice = rowNeedsPrice(row);
-  const hasWarning = needsDays || needsPrice;
+  const hasWarning = rowHasWarning(row);
   const personLabel = row.personName || "без имени";
 
   const arrival = splitDateTime(row.arrival);
@@ -87,8 +87,6 @@ export default function ReportDraftRow({
 
   return (
     <div className={rowClassName}>
-      <span className={classes.stripe} />
-
       <div className={`${classes.colIndex} ${classes.stickyIndex}`}>{number}</div>
 
       <div className={`${classes.colPassenger} ${classes.stickyPassenger}`}>

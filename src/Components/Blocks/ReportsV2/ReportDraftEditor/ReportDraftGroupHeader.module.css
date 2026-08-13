@@ -1,0 +1,102 @@
+/* Полоса группы лежит внутри .body (ReportDraftTable.module.css) и растягивается
+   по его min-width сама — собственного min-width ей не нужно.
+
+   Липнет под шапкой колонок: у той position: sticky; top: 0 и min-height 56px.
+   z-index: 2 ставит полосу выше строк (у .row z-index: 0) и ниже шапки
+   колонок (z-index: 3). */
+.band {
+  box-sizing: border-box;
+  position: sticky;
+  top: 56px;
+  z-index: 2;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  background: #F4F6FB;
+  border-top: 1px solid #E4E4EF;
+  border-bottom: 1px solid #E4E4EF;
+}
+
+/* Содержимое липнет к левому краю по границе паддинга строки (24px), иначе
+   при прокрутке вправо название гостиницы уедет вместе с полосой. */
+.inner {
+  position: sticky;
+  left: 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.chevron,
+.chevronCollapsed {
+  flex: none;
+  color: #6B7189;
+  transition: transform 0.12s ease;
+}
+.chevronCollapsed {
+  transform: rotate(-90deg);
+}
+
+.hotel {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: #191919;
+}
+
+.count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 20px;
+  height: 19px;
+  padding: 0 6px;
+  border-radius: 5px;
+  background: #E4ECFB;
+  color: #0057C3;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.warnings {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 19px;
+  padding: 0 7px;
+  border-radius: 5px;
+  background: #FFFBF3;
+  color: #B8741A;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.warnDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #E09A3A;
+}
+
+.divider {
+  width: 1px;
+  height: 14px;
+  background: #D5DCEA;
+}
+
+.days {
+  font-size: 12.5px;
+  color: #8B90A5;
+}
+
+.total {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2A2E45;
+}

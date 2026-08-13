@@ -3,7 +3,8 @@ import classes from "./ReportDraftTable.module.css";
 import ReportDraftRow from "./ReportDraftRow";
 import ReportDraftSkeleton from "./ReportDraftSkeleton";
 import ReportDraftEmptyState from "./ReportDraftEmptyState";
-import { buildShareClusters } from "../reportDraftRows";
+import { buildShareClusters, groupRowsByHotel } from "../reportDraftRows";
+import ReportDraftGroupHeader from "./ReportDraftGroupHeader";
 
 // Таблица строк черновика: закреплённая шапка колонок + прокручиваемое тело.
 // Тело — скелетон (первая загрузка), одно из двух пустых состояний или
@@ -24,11 +25,37 @@ export default function ReportDraftTable({
   onResetFilters,
   hoveredCluster,
   onHoverCluster,
+  groupBy,
+  collapsedHotels,
+  onToggleHotel,
+  narrowed,
 }) {
   const rowNumbers = new Map(rows.map((row, i) => [row._uid, i + 1]));
   // Группы считаем по ПОЛНОМУ списку строк, а не по отфильтрованному: номер
   // группы не должен меняться от того, что часть соседей отсеял фильтр.
   const clusters = buildShareClusters(rows);
+
+  // Отрисовка строки одна на оба режима — плоский список и группы отличаются
+  // только обёрткой, а набор пропсов у строки один и тот же.
+  const renderRow = (row) => (
+    <ReportDraftRow
+      key={row._uid}
+      row={row}
+      number={rowNumbers.get(row._uid)}
+      isEdited={editedUids.has(row._uid)}
+      fieldEdited={fieldEdited}
+      onCellChange={onCellChange}
+      onCellFocus={onCellFocus}
+      onCellBlur={onCellBlur}
+      onResetRow={onResetRow}
+      onRequestDelete={onRequestDeleteRow}
+      cluster={clusters.get(row.shareClusterId)}
+      clusterHighlighted={
+        Boolean(hoveredCluster) && row.shareClusterId === hoveredCluster
+      }
+      onHoverCluster={onHoverCluster}
+    />
+  );
 
   let body;
   if (loading && rows.length === 0) {
@@ -37,26 +64,27 @@ export default function ReportDraftTable({
     body = <ReportDraftEmptyState variant="no-rows" />;
   } else if (displayedRows.length === 0) {
     body = <ReportDraftEmptyState variant="no-match" onResetFilters={onResetFilters} />;
+  } else if (groupBy === "hotel") {
+    // В состоянии загрузки таблица рендерится без новых пропсов
+    // (ReportDraftEditor.jsx), поэтому Set может не прийти.
+    const collapsed = collapsedHotels || new Set();
+    // Группируем ПОКАЗАННЫЕ строки: пустых групп при фильтре быть не должно.
+    // withMoney выключается на суженном наборе — см. groupRowsByHotel.
+    body = groupRowsByHotel(displayedRows, { withMoney: !narrowed }).map((group) => {
+      const isCollapsed = collapsed.has(group.hotel);
+      return (
+        <div key={group.hotel}>
+          <ReportDraftGroupHeader
+            group={group}
+            collapsed={isCollapsed}
+            onToggle={() => onToggleHotel?.(group.hotel)}
+          />
+          {!isCollapsed && group.rows.map(renderRow)}
+        </div>
+      );
+    });
   } else {
-    body = displayedRows.map((row) => (
-      <ReportDraftRow
-        key={row._uid}
-        row={row}
-        number={rowNumbers.get(row._uid)}
-        isEdited={editedUids.has(row._uid)}
-        fieldEdited={fieldEdited}
-        onCellChange={onCellChange}
-        onCellFocus={onCellFocus}
-        onCellBlur={onCellBlur}
-        onResetRow={onResetRow}
-        onRequestDelete={onRequestDeleteRow}
-        cluster={clusters.get(row.shareClusterId)}
-        clusterHighlighted={
-          Boolean(hoveredCluster) && row.shareClusterId === hoveredCluster
-        }
-        onHoverCluster={onHoverCluster}
-      />
-    ));
+    body = displayedRows.map(renderRow);
   }
 
   return (
@@ -104,4 +132,8 @@ ReportDraftTable.propTypes = {
   onResetFilters: PropTypes.func.isRequired,
   hoveredCluster: PropTypes.string,
   onHoverCluster: PropTypes.func,
+  groupBy: PropTypes.oneOf(["file", "hotel"]),
+  collapsedHotels: PropTypes.instanceOf(Set),
+  onToggleHotel: PropTypes.func,
+  narrowed: PropTypes.bool,
 };

@@ -2,6 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
   formatMoney,
+  formatDays,
   trimSeconds,
   splitDateTime,
   getArrivalHighlight,
@@ -81,6 +82,14 @@ test("formatMoney rounds and groups thousands the way ru-RU toLocaleString does"
   assert.equal(formatMoney(1234.6), (1235).toLocaleString("ru-RU"));
   assert.equal(formatMoney(null), "0");
   assert.equal(formatMoney("abc"), "0");
+});
+
+test("formatDays trims binary tails and uses the Russian decimal comma", () => {
+  assert.equal(formatDays(4.5), "4,5");
+  assert.equal(formatDays(12), "12");
+  assert.equal(formatDays(3.3000000000000003), "3,3");
+  assert.equal(formatDays(0), "0");
+  assert.equal(formatDays(null), "0");
 });
 
 test("trimSeconds strips :SS and tolerates missing/short values", () => {

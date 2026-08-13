@@ -15,7 +15,7 @@ import ReportDraftSummary from "./ReportDraftSummary";
 import { DRAFT_FILTERS, pluralizeDays, pluralizeRows, rowMatchesSearch } from "./reportDraftEditorUtils";
 import { useToast } from "../../../../contexts/ToastContext";
 import { convertToDate } from "../../../../../graphQL_requests";
-import { measureSavePayload, rowNeedsPrice, rowNeedsDays } from "../reportDraftRows";
+import { measureSavePayload, rowHasWarning } from "../reportDraftRows";
 import { isDraftStale, getDraftAgeDays } from "../reportDraftAge";
 
 // Редактор строк черновика отчёта: таблица правки перед подтверждением.
@@ -68,6 +68,21 @@ export default function ReportDraftEditor({
   const [previewOpen, setPreviewOpen] = useState(false);
   // Наведённая группа соседей по номеру — подсвечивает все её строки разом.
   const [hoveredCluster, setHoveredCluster] = useState(null);
+
+  // Режим и свёрнутость сознательно не сохраняются между открытиями: черновик
+  // всегда открывается как печатная форма, чтобы первое, что видит диспетчер,
+  // совпадало с файлом, который он сверяет.
+  const [groupBy, setGroupBy] = useState("file");
+  const [collapsedHotels, setCollapsedHotels] = useState(() => new Set());
+
+  const toggleHotel = (hotel) => {
+    setCollapsedHotels((prev) => {
+      const next = new Set(prev);
+      if (next.has(hotel)) next.delete(hotel);
+      else next.add(hotel);
+      return next;
+    });
+  };
 
   // Строки, которые правят прямо сейчас, держим в выборке даже когда они
   // перестали подходить под фильтр — иначе строка исчезает из-под курсора на
@@ -223,7 +238,7 @@ export default function ReportDraftEditor({
   // результат поиска. Переключение вкладки фильтра само по себе числа на
   // других вкладках не двигает (см. ReportDraftFilters).
   const searchedRows = rows.filter((row) => rowMatchesSearch(row, search));
-  const warningRows = searchedRows.filter((row) => rowNeedsPrice(row) || rowNeedsDays(row));
+  const warningRows = searchedRows.filter((row) => rowHasWarning(row));
   const editedRows = searchedRows.filter((row) => editedUids.has(row._uid));
 
   // Счётчики чипов считаются по warningRows/editedRows — то есть честно, без
@@ -232,7 +247,7 @@ export default function ReportDraftEditor({
   // что фильтруется исходный searchedRows, а не склеиваются два списка.
   const matchesFilter = (row) =>
     filter === DRAFT_FILTERS.WARNINGS
-      ? rowNeedsPrice(row) || rowNeedsDays(row)
+      ? rowHasWarning(row)
       : filter === DRAFT_FILTERS.EDITED
       ? editedUids.has(row._uid)
       : true;
@@ -244,7 +259,7 @@ export default function ReportDraftEditor({
   // Подвал, в отличие от чипов, — сводка по ВСЕМУ черновику, а не по
   // текущему поиску: иначе "показано 3 из 12 · изменено 5" читалось бы как
   // противоречие (изменённых больше, чем показано).
-  const totalWarningsCount = rows.filter((row) => rowNeedsPrice(row) || rowNeedsDays(row)).length;
+  const totalWarningsCount = rows.filter((row) => rowHasWarning(row)).length;
 
   if (!draft) {
     return (
@@ -344,6 +359,8 @@ export default function ReportDraftEditor({
           onResetAll={resetAll}
           search={search}
           onSearchChange={handleSearchChange}
+          groupBy={groupBy}
+          onGroupByChange={setGroupBy}
         />
 
         <div className={classes.scroll}>
@@ -361,6 +378,10 @@ export default function ReportDraftEditor({
             onResetFilters={handleResetFilters}
             hoveredCluster={hoveredCluster}
             onHoverCluster={setHoveredCluster}
+            groupBy={groupBy}
+            collapsedHotels={collapsedHotels}
+            onToggleHotel={toggleHotel}
+            narrowed={filter !== DRAFT_FILTERS.ALL || search.trim() !== ""}
           />
         </div>
 

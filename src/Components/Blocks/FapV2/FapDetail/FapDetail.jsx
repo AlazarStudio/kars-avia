@@ -32,6 +32,7 @@ import { useToast } from "../../../../contexts/ToastContext";
 import AddRepresentativeService from "../../AddRepresentativeService/AddRepresentativeService";
 import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
 import CopyIcon from "../../../../shared/icons/CopyIcon";
+import LinkIcon from "../../../../shared/icons/LinkIcon";
 import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
 import CancelIcon from "../../../../shared/icons/CancelIcon";
 import ChevronIcon from "../../../../shared/icons/ChevronIcon";
@@ -611,7 +612,7 @@ export default function FapDetail({ user, canEdit = true }) {
               onClick={handleCopyRepresentativeLink}
               title="Скопировать ссылку для представительства"
             >
-              Ссылка <CopyIcon />
+              <LinkIcon /> Ссылка <CopyIcon />
             </button>
           )}
         </div>

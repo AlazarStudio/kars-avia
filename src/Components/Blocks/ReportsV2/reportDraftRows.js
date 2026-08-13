@@ -95,6 +95,16 @@ export function rowNeedsDays(row) {
 }
 
 /**
+ * Есть ли у строки предупреждение — нет цены при ненулевых сутках либо нет самих суток.
+ *
+ * @param {object|null|undefined} row - строка черновика
+ * @returns {boolean} true, если строку нужно показать как проблемную
+ */
+export function rowHasWarning(row) {
+  return rowNeedsPrice(row) || rowNeedsDays(row);
+}
+
+/**
  * Приводит строку к чистому формату `ReportDraftRow` для отправки на бэк: оставляет только
  * поля из `DRAFT_ROW_FIELDS`, отбрасывая клиентские (`_uid`) и apollo-служебные (`__typename`)
  * ключи и любой посторонний мусор.
@@ -264,6 +274,54 @@ export function summarizeHotels(rows) {
   return [...counts.entries()]
     .map(([name, count]) => ({ name, count }))
     .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name, "ru"));
+}
+
+/**
+ * Собирает строки в группы по гостинице — для режима «Гостиницы» в таблице.
+ *
+ * Порядок групп — по первому появлению гостиницы при проходе сверху вниз:
+ * алфавит и сортировка по сумме рвут связь с печатной формой, по которой
+ * строки и сверяют. Сама группировка чисто визуальная: массив строк и их
+ * `index` не трогаются, на сохранение она не влияет.
+ *
+ * Деньги суммируются из готового `totalDebt` каждой строки, где сервер уже
+ * поделил стоимость номера между соседями по временным сегментам. Считать
+ * «сутки × цена» здесь нельзя — это переписало бы суммы соседям.
+ *
+ * @param {Array<object>|null|undefined} rows - строки черновика
+ * @param {{withMoney?: boolean}} [options] - `withMoney: false` убирает сутки
+ *   и деньги: при активном фильтре или поиске сумма считалась бы по части
+ *   строк, а рядом с названием гостиницы её прочитают как итог по гостинице
+ * @returns {Array<{hotel: string, rows: object[], count: number,
+ *   warnings: number, days: number|null, total: number|null}>}
+ */
+export function groupRowsByHotel(rows, { withMoney = true } = {}) {
+  if (!Array.isArray(rows)) return [];
+
+  const order = [];
+  const byHotel = new Map();
+  for (const row of rows) {
+    const name = (row?.hotelName || "").trim() || "Без гостиницы";
+    if (!byHotel.has(name)) {
+      byHotel.set(name, []);
+      order.push(name);
+    }
+    byHotel.get(name).push(row);
+  }
+
+  return order.map((hotel) => {
+    const groupRows = byHotel.get(hotel);
+    return {
+      hotel,
+      rows: groupRows,
+      count: groupRows.length,
+      warnings: groupRows.filter((row) => rowHasWarning(row)).length,
+      days: withMoney
+        ? groupRows.reduce((acc, row) => acc + (Number(row?.totalDays) || 0), 0)
+        : null,
+      total: withMoney ? sumTotalDebt(groupRows) : null,
+    };
+  });
 }
 
 /**

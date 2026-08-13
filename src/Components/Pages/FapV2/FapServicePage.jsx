@@ -23,6 +23,7 @@ import {
 } from "../../../utils/access";
 import { authService } from "../../../services/authService";
 import CopyIcon from "../../../shared/icons/CopyIcon";
+import LinkIcon from "../../../shared/icons/LinkIcon";
 import FapChat from "../../Blocks/FapV2/FapChat/FapChat";
 import classes from "./FapServicePage.module.css";
 
@@ -176,7 +177,7 @@ export default function FapServicePage({ user }) {
               onClick={handleCopyRepresentativeLink}
               title="Скопировать ссылку для представительства"
             >
-              Ссылка <CopyIcon />
+              <LinkIcon /> Ссылка <CopyIcon />
             </button>
           )}
         </div>

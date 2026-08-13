@@ -18,6 +18,7 @@ import {
   summarizeHotels,
   buildShareClusters,
   buildTotalsCells,
+  groupRowsByHotel,
 } from "./reportDraftRows.js";
 
 test("buildShareClusters groups roommates and skips solo stays", () => {
@@ -402,4 +403,51 @@ test("buildTotalsCells does not disturb the raw values readPrintedTotals relies 
     living: 1216350,
     debt: 1459450,
   });
+});
+
+const GROUP_ROWS = [
+  { _uid: 0, hotelName: "Авантаж", totalDays: 3, pricePerDay: 3400, totalDebt: 12000 },
+  { _uid: 1, hotelName: "Пегас", totalDays: 2, pricePerDay: 2500, totalDebt: 7000 },
+  { _uid: 2, hotelName: "Авантаж", totalDays: 1.5, pricePerDay: 3400, totalDebt: 5100 },
+  { _uid: 3, hotelName: "Пегас", totalDays: 0, pricePerDay: 2500, totalDebt: 0 },
+];
+
+test("groupRowsByHotel keeps the order of first appearance", () => {
+  const groups = groupRowsByHotel(GROUP_ROWS);
+  assert.deepEqual(groups.map((g) => g.hotel), ["Авантаж", "Пегас"]);
+  assert.deepEqual(groups[0].rows.map((r) => r._uid), [0, 2]);
+  assert.deepEqual(groups[1].rows.map((r) => r._uid), [1, 3]);
+  // Группировка визуальная — строки в группах должны быть теми же объектами,
+  // а не копиями.
+  assert.equal(groups[0].rows[0], GROUP_ROWS[0]);
+});
+
+test("groupRowsByHotel counts rows, warnings, days and money", () => {
+  const [avantazh, pegas] = groupRowsByHotel(GROUP_ROWS);
+  assert.equal(avantazh.count, 2);
+  assert.equal(avantazh.warnings, 0);
+  assert.equal(avantazh.days, 4.5);
+  assert.equal(avantazh.total, 17100);
+  // У «Пегаса» вторая строка без суток — это предупреждение rowNeedsDays.
+  assert.equal(pegas.warnings, 1);
+  assert.equal(pegas.total, 7000);
+});
+
+test("groupRowsByHotel hides days and money when the set is narrowed", () => {
+  const groups = groupRowsByHotel(GROUP_ROWS, { withMoney: false });
+  assert.equal(groups[0].days, null);
+  assert.equal(groups[0].total, null);
+  // Счётчики при этом остаются: они честны для показанного набора.
+  assert.equal(groups[0].count, 2);
+});
+
+test("groupRowsByHotel puts rows without a hotel into a named group", () => {
+  const groups = groupRowsByHotel([{ _uid: 9, hotelName: "  ", totalDays: 1, totalDebt: 100 }]);
+  assert.equal(groups.length, 1);
+  assert.equal(groups[0].hotel, "Без гостиницы");
+});
+
+test("groupRowsByHotel on empty input gives an empty list", () => {
+  assert.deepEqual(groupRowsByHotel([]), []);
+  assert.deepEqual(groupRowsByHotel(null), []);
 });
