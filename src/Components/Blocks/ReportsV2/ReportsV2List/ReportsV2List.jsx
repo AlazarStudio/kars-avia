@@ -5,7 +5,7 @@ import { DocIcon } from "../ReportsV2Icons";
 import Button from "../../../Standart/Button/Button";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 import DownloadReportIcon from "../../../../shared/icons/DownloadReportIcon";
-import EyeIcon from "../../../../shared/icons/EyeIcon";
+import ViewReportIcon from "../../../../shared/icons/ViewReportIcon";
 
 // Ширины полосок скелетона строки — намеренно разные, чтобы 6 строк
 // загрузки не выглядели машинным повтором одного и того же прямоугольника.
@@ -148,7 +148,7 @@ export default function ReportsV2List({
                         title="Открыть на экране"
                         onClick={() => onOpenReleased(item.id)}
                       >
-                        <EyeIcon size={16} color="#545873" />
+                        <ViewReportIcon />
                       </button>
                     )}
                     <a
