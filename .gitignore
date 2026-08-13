@@ -26,5 +26,6 @@ dist-ssr
 
 .claude/
 docs/superpowers/
+docs/internal/
 .superpowers
 graphify-out/
