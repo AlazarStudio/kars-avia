@@ -8,6 +8,27 @@
   gap: 16px;
 }
 
+/* Логотип авиакомпании перед названием черновика. 28px под кегль заголовка
+   в 18px: крупнее — начинает спорить с ним, мельче — не читается. Картинка
+   вписывается по contain, чтобы широкие логотипы не обрезались. */
+.logo {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #F1F4FB;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 /* 18px/600 — намеренно мельче заголовка раздела (32px/500) в Header:
    это подзаголовок, он не должен с ним спорить. */
 .title {

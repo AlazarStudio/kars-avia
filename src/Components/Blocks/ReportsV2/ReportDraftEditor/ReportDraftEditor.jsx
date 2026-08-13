@@ -332,8 +332,12 @@ export default function ReportDraftEditor({
     </Header>
 
     <div className={classes.wrap}>
+      {/* Логотип показываем только у отчёта по авиакомпании: у неё он есть
+          в справочнике. В отчёте по гостинице показывать нечего — гостиница
+          в строках лежит только именем, без ссылки на карточку. */}
       <ReportDraftHeader
         title={title}
+        logo={draft.airline ? draft.airline.images?.[0] ?? null : undefined}
         isStale={stale}
         dirty={dirty}
         hasRows={rows.length > 0}

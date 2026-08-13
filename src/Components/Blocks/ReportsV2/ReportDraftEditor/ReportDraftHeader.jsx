@@ -4,11 +4,14 @@ import RestoreIcon from "../../../../shared/icons/RestoreIcon";
 import DownloadReportIcon from "../../../../shared/icons/DownloadReportIcon";
 import { getMediaUrl } from "../../../../../graphQL_requests";
 
+const NO_AVATAR = "/no-avatar.png";
+
 // Строка управления редактором черновика: назад, заголовок (+ бейдж
 // устаревания), действия справа. Чисто UI — вся логика (что дёргать по
 // клику, какие диалоги открывать) живёт в ReportDraftEditor.
 export default function ReportDraftHeader({
   title,
+  logo,
   loading = false,
   isStale,
   dirty,
@@ -29,6 +32,14 @@ export default function ReportDraftHeader({
     <div className={classes.bar}>
       {/* Кнопка «назад» живёт в общем Header рядом с «Отчеты v2» — как на всех
           вложенных экранах системы. Здесь только сам черновик и действия. */}
+      {/* Логотип авиакомпании — тем же способом, что в списке отчётов:
+          путь из `images[0]` через getMediaUrl, заглушка при отсутствии. */}
+      {logo !== undefined && (
+        <div className={classes.logo}>
+          <img src={getMediaUrl(logo) ?? NO_AVATAR} alt="" />
+        </div>
+      )}
+
       <div className={classes.title} title={title}>
         {title}
       </div>
@@ -116,6 +127,7 @@ export default function ReportDraftHeader({
 
 ReportDraftHeader.propTypes = {
   title: PropTypes.string.isRequired,
+  logo: PropTypes.string,
   loading: PropTypes.bool,
   isStale: PropTypes.bool,
   dirty: PropTypes.bool,

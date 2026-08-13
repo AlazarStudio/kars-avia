@@ -6741,6 +6741,11 @@ export const GET_REPORT_DRAFT = gql`
       status
       airlineId
       hotelId
+      airline {
+        id
+        name
+        images
+      }
       startDate
       endDate
       createdAt

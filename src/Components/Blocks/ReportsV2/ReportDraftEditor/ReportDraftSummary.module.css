@@ -20,10 +20,100 @@
   min-width: 0;
 }
 
-/* Гостиницы и договор — длинные, им отдаём остаток строки и режем многоточием;
-   полный список остаётся в подсказке. */
-.itemWide {
-  flex: 1 1 260px;
+/* Кружок «?» — триггер подсказки. Геометрия и цвета совпадают с .foodHint
+   в ФАПе (FapHotelPage.module.css:1388-1401): это одна и та же сущность
+   в системе. cursor: help говорит, что элемент не кликается, а поясняет. */
+.hint {
+  flex-shrink: 0;
+  width: 15px;
+  height: 15px;
+  margin-left: 7px;
+  border-radius: 50%;
+  background: #EAF1FB;
+  color: #0057C2;
+  font-size: 10px;
+  font-weight: 800;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: help;
+  vertical-align: middle;
+}
+
+.hint:hover,
+.hint:focus-visible {
+  background: #0057C2;
+  color: #fff;
+  outline: none;
+}
+
+/* Тело подсказки по гостиницам: строка на гостиницу «название · строк · сумма»
+   и итог внизу. Тот же приём, что у .hintBody в ФАПе. */
+.hintBody {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 260px;
+}
+
+.hintRow {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.hintName {
+  flex: 1;
+  color: #2E355D;
+}
+
+.hintCount {
+  color: #94A3B8;
+  white-space: nowrap;
+}
+
+.hintSum {
+  min-width: 78px;
+  text-align: right;
+  font-weight: 700;
+  color: #2E355D;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.hintTotal {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid #E4E4EF;
+  font-weight: 700;
+  color: #2E355D;
+}
+
+.hintTotal span:last-child {
+  font-variant-numeric: tabular-nums;
+}
+
+.hintContract {
+  max-width: 300px;
+  line-height: 1.45;
+}
+
+/* Название договора длинное всегда, поэтому режем его, а полное показываем
+   в подсказке. Кружок «?» при этом не должен уезжать вместе с текстом. */
+.contract {
+  display: inline-block;
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+
+.muted {
+  color: #8B90A5;
 }
 
 .label {
@@ -52,9 +142,19 @@
   letter-spacing: 0;
 }
 
+/* Ряд, а не просто текст: рядом со значением стоит кружок «?», и он не должен
+   ни уезжать под многоточие, ни обрезаться вместе с текстом. Поэтому обрезка
+   живёт на самих текстовых элементах (.hotelName, .contract), а не здесь. */
 .value {
+  display: flex;
+  align-items: center;
+  min-width: 0;
   font-size: 14px;
   color: #191919;
+  white-space: nowrap;
+}
+
+.hotelName {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
