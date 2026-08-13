@@ -17,6 +17,7 @@ export default function ReportDraftFilters({
   onSearchChange,
   groupBy,
   onGroupByChange,
+  canEdit = true,
 }) {
   return (
     <div className={classes.bar}>
@@ -40,16 +41,18 @@ export default function ReportDraftFilters({
           Предупреждения · {counts.warnings}
         </button>
 
-        <button
-          type="button"
-          className={filter === DRAFT_FILTERS.EDITED ? classes.chipEditedActive : classes.chipEdited}
-          onClick={() => onFilterChange(DRAFT_FILTERS.EDITED)}
-        >
-          <span className={classes.chipDot} />
-          Изменено · {counts.edited}
-        </button>
+        {canEdit && (
+          <button
+            type="button"
+            className={filter === DRAFT_FILTERS.EDITED ? classes.chipEditedActive : classes.chipEdited}
+            onClick={() => onFilterChange(DRAFT_FILTERS.EDITED)}
+          >
+            <span className={classes.chipDot} />
+            Изменено · {counts.edited}
+          </button>
+        )}
 
-        {counts.deleted > 0 && (
+        {canEdit && counts.deleted > 0 && (
           <span className={classes.chipDeleted}>Удалено · {counts.deleted}</span>
         )}
       </div>
@@ -76,7 +79,7 @@ export default function ReportDraftFilters({
           </button>
         </div>
 
-        {dirty && (
+        {canEdit && dirty && (
           <button type="button" className={classes.resetLink} onClick={onResetAll}>
             Сбросить все правки
           </button>
@@ -111,4 +114,5 @@ ReportDraftFilters.propTypes = {
   onSearchChange: PropTypes.func.isRequired,
   groupBy: PropTypes.oneOf(["file", "hotel"]).isRequired,
   onGroupByChange: PropTypes.func.isRequired,
+  canEdit: PropTypes.bool,
 };

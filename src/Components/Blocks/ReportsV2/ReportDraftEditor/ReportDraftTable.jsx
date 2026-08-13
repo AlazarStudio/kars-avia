@@ -29,6 +29,7 @@ export default function ReportDraftTable({
   collapsedHotels,
   onToggleHotel,
   narrowed,
+  canEdit = true,
 }) {
   const rowNumbers = new Map(rows.map((row, i) => [row._uid, i + 1]));
   // Группы считаем по ПОЛНОМУ списку строк, а не по отфильтрованному: номер
@@ -54,6 +55,7 @@ export default function ReportDraftTable({
         Boolean(hoveredCluster) && row.shareClusterId === hoveredCluster
       }
       onHoverCluster={onHoverCluster}
+      canEdit={canEdit}
     />
   );
 
@@ -136,4 +138,5 @@ ReportDraftTable.propTypes = {
   collapsedHotels: PropTypes.instanceOf(Set),
   onToggleHotel: PropTypes.func,
   narrowed: PropTypes.bool,
+  canEdit: PropTypes.bool,
 };

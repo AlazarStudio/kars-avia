@@ -29,7 +29,12 @@ export default function ReportDraftEditor({
   onDraftReplaced,
   onConfirmed,
   airports,
+  mode = "edit",
 }) {
+  // Выпущенный отчёт открывается тем же экраном, но править его нельзя —
+  // на бэке подтверждение необратимо (Only DRAFT reports can be confirmed).
+  const canEdit = mode === "edit";
+
   const {
     draft,
     rows,
@@ -165,6 +170,11 @@ export default function ReportDraftEditor({
   };
 
   const handleBackClick = () => {
+    // В режиме просмотра правок не бывает — выходим сразу, без диалога.
+    if (!canEdit) {
+      onBack();
+      return;
+    }
     if (dirty) {
       setDialog({ type: "leave" });
       return;
@@ -297,7 +307,10 @@ export default function ReportDraftEditor({
 
   const period = `${convertToDate(draft.startDate)} – ${convertToDate(draft.endDate)}`;
   const companyName = draft.filterJson?.companyName || "—";
-  const title = `Черновик · ${companyName} · ${period}`;
+  // Экран один на две роли, поэтому и подпись разная: черновик правят, а
+  // выпущенный отчёт только смотрят — называть его черновиком нельзя, он уже
+  // напечатан и в базе лежит со статусом CONFIRMED.
+  const title = `${canEdit ? "Черновик" : "Отчёт"} · ${companyName} · ${period}`;
   const stale = isDraftStale(draft.createdAt);
   const staleDays = Math.floor(getDraftAgeDays(draft.createdAt) ?? 0);
   const unsavedRowsCount = editedUids.size + deletedCount;
@@ -328,6 +341,8 @@ export default function ReportDraftEditor({
         deleting={deleting}
         saving={saving}
         confirming={confirming}
+        canEdit={canEdit}
+        downloadUrl={draft.savedReport?.url}
         onPreview={() => setPreviewOpen(true)}
         onRecreate={handleRecreateClick}
         onDelete={handleDeleteDraftClick}
@@ -361,6 +376,7 @@ export default function ReportDraftEditor({
           onSearchChange={handleSearchChange}
           groupBy={groupBy}
           onGroupByChange={setGroupBy}
+          canEdit={canEdit}
         />
 
         <div className={classes.scroll}>
@@ -382,6 +398,7 @@ export default function ReportDraftEditor({
             collapsedHotels={collapsedHotels}
             onToggleHotel={toggleHotel}
             narrowed={filter !== DRAFT_FILTERS.ALL || search.trim() !== ""}
+            canEdit={canEdit}
           />
         </div>
 
@@ -393,6 +410,7 @@ export default function ReportDraftEditor({
           deletedCount={deletedCount}
           total={total}
           serverTotal={serverTotal}
+          canEdit={canEdit}
         />
       </div>
 
@@ -498,4 +516,5 @@ ReportDraftEditor.propTypes = {
   onDraftReplaced: PropTypes.func.isRequired,
   onConfirmed: PropTypes.func.isRequired,
   airports: PropTypes.array,
+  mode: PropTypes.oneOf(["edit", "view"]),
 };

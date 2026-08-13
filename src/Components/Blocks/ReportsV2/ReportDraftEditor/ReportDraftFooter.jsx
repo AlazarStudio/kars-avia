@@ -13,6 +13,7 @@ export default function ReportDraftFooter({
   deletedCount,
   total,
   serverTotal,
+  canEdit = true,
 }) {
   const delta = total - serverTotal;
   const deltaClass =
@@ -23,16 +24,18 @@ export default function ReportDraftFooter({
   return (
     <div className={classes.footer}>
       <div className={classes.summary}>
-        Показано {shownCount} из {totalCount} · изменено {editedCount} · с предупреждениями{" "}
-        {warningsCount}
-        {deletedCount > 0 ? ` · удалено ${deletedCount}` : ""}
+        Показано {shownCount} из {totalCount}
+        {canEdit ? ` · изменено ${editedCount}` : ""} · с предупреждениями {warningsCount}
+        {canEdit && deletedCount > 0 ? ` · удалено ${deletedCount}` : ""}
       </div>
 
       <div className={classes.totals}>
-        <div className={classes.serverLine}>
-          Расчёт сервера {formatMoney(serverTotal)} ₽ · правки{" "}
-          <span className={deltaClass}>{deltaText}</span>
-        </div>
+        {canEdit && (
+          <div className={classes.serverLine}>
+            Расчёт сервера {formatMoney(serverTotal)} ₽ · правки{" "}
+            <span className={deltaClass}>{deltaText}</span>
+          </div>
+        )}
         <div className={classes.totalLabel}>Итого к оплате</div>
         <div className={classes.totalValue}>{formatMoney(total)} ₽</div>
       </div>
@@ -48,4 +51,5 @@ ReportDraftFooter.propTypes = {
   deletedCount: PropTypes.number.isRequired,
   total: PropTypes.number.isRequired,
   serverTotal: PropTypes.number.isRequired,
+  canEdit: PropTypes.bool,
 };

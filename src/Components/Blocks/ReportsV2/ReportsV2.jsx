@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import classes from "./ReportsV2.module.css";
@@ -13,6 +13,7 @@ import Button from "../../Standart/Button/Button";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
 import { roles } from "../../../roles";
+import { buildDraftByReport } from "./releasedReports";
 import {
   convertToDate,
   decodeJWT,
@@ -71,6 +72,10 @@ export default function ReportsV2({ user, accessMenu }) {
 
   const [searchQuery, setSearchQuery] = useState("");
   const [draftId, setDraftId] = useState(null);
+  // Один и тот же экран открывается в двух ролях: черновик правят, выпущенный
+  // отчёт только смотрят. Отдельного маршрута не заводим — раздел живёт на
+  // одном /reportsV2.
+  const [draftMode, setDraftMode] = useState("edit");
   const [showCreate, setShowCreate] = useState(false);
   const [showRules, setShowRules] = useState(false);
 
@@ -97,6 +102,11 @@ export default function ReportsV2({ user, accessMenu }) {
   const { data: draftsData, refetch: refetchDrafts } = useQuery(GET_REPORT_DRAFTS, {
     context: { headers: { Authorization: `Bearer ${token}` } },
     variables: { filter: { type: isAirline ? "AIRLINE" : "HOTEL", status: "DRAFT" } },
+  });
+
+  const { data: confirmedDraftsData } = useQuery(GET_REPORT_DRAFTS, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    variables: { filter: { type: isAirline ? "AIRLINE" : "HOTEL", status: "CONFIRMED" } },
   });
 
   useSubscription(GET_REPORTS_SUBSCRIPTION, {
@@ -127,6 +137,13 @@ export default function ReportsV2({ user, accessMenu }) {
     : reportsData?.getHotelReport?.[0]?.reports || [];
 
   const drafts = draftsData?.reportDrafts || [];
+
+  // Список отчётов сам не знает, у какой строки есть экранный вид: связь живёт
+  // на стороне черновика (savedReportId). Карту строим здесь и отдаём в список.
+  const draftByReport = useMemo(
+    () => buildDraftByReport(confirmedDraftsData?.reportDrafts),
+    [confirmedDraftsData]
+  );
 
   const q = searchQuery.trim().toLowerCase();
   const filteredReports = reports.filter((report) => {
@@ -178,8 +195,21 @@ export default function ReportsV2({ user, accessMenu }) {
     refetchDrafts();
   };
 
+  const handleOpenDraft = (id) => {
+    setDraftMode("edit");
+    setDraftId(id);
+  };
+
+  const handleOpenReleased = (reportId) => {
+    const id = draftByReport.get(reportId);
+    if (!id) return;
+    setDraftMode("view");
+    setDraftId(id);
+  };
+
   const handleDraftBack = () => {
     setDraftId(null);
+    setDraftMode("edit");
     refetchDrafts();
   };
 
@@ -190,6 +220,7 @@ export default function ReportsV2({ user, accessMenu }) {
 
   const handleDraftConfirmed = () => {
     setDraftId(null);
+    setDraftMode("edit");
     refetchDrafts();
     refetchReports();
   };
@@ -202,6 +233,7 @@ export default function ReportsV2({ user, accessMenu }) {
       {draftId ? (
         <ReportDraftEditor
           draftId={draftId}
+          mode={draftMode}
           airports={airports}
           onBack={handleDraftBack}
           onDraftReplaced={handleDraftReplaced}
@@ -267,7 +299,7 @@ export default function ReportsV2({ user, accessMenu }) {
           <ReportDraftsPanel
             drafts={drafts}
             isAirline={isAirline}
-            onOpen={setDraftId}
+            onOpen={handleOpenDraft}
             onDelete={handleDeleteDraft}
           />
 
@@ -280,6 +312,8 @@ export default function ReportsV2({ user, accessMenu }) {
             canCreate={canCreate}
             onCreateClick={() => setShowCreate(true)}
             onDelete={handleDeleteReport}
+            draftByReport={draftByReport}
+            onOpenReleased={handleOpenReleased}
           />
         </div>
         </>

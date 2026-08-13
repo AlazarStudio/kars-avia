@@ -5,6 +5,7 @@ import { DocIcon } from "../ReportsV2Icons";
 import Button from "../../../Standart/Button/Button";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 import DownloadReportIcon from "../../../../shared/icons/DownloadReportIcon";
+import EyeIcon from "../../../../shared/icons/EyeIcon";
 
 // Ширины полосок скелетона строки — намеренно разные, чтобы 6 строк
 // загрузки не выглядели машинным повтором одного и того же прямоугольника.
@@ -39,6 +40,8 @@ export default function ReportsV2List({
   canCreate = false,
   onCreateClick = () => {},
   onDelete,
+  draftByReport,
+  onOpenReleased,
 }) {
   const objectLabel = isAirline ? "Авиакомпания" : "Гостиница";
 
@@ -138,6 +141,16 @@ export default function ReportsV2List({
                     {convertToDate(item?.startDate)} - {convertToDate(item?.endDate)}
                   </div>
                   <div className={classes.colActions}>
+                    {draftByReport?.has(item.id) && (
+                      <button
+                        type="button"
+                        className={classes.viewBtn}
+                        title="Открыть на экране"
+                        onClick={() => onOpenReleased(item.id)}
+                      >
+                        <EyeIcon size={16} color="#545873" />
+                      </button>
+                    )}
                     <a
                       className={classes.downloadBtn}
                       href={getMediaUrl(item.url)}
@@ -182,4 +195,6 @@ ReportsV2List.propTypes = {
   canCreate: PropTypes.bool,
   onCreateClick: PropTypes.func,
   onDelete: PropTypes.func.isRequired,
+  draftByReport: PropTypes.instanceOf(Map),
+  onOpenReleased: PropTypes.func,
 };

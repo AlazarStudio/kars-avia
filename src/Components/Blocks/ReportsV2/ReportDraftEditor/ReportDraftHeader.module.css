@@ -58,7 +58,8 @@
    (у заливной она того же цвета, что фон, — чтобы filled и outline
    совпадали по высоте до пикселя). Общий `border` в этом правиле
    перекрывал `border-color` вариантов, и рамки пропадали. */
-.actions button {
+.actions button,
+.actions a {
   height: 40px;
   padding: 0 16px;
   border-radius: 10px;
@@ -73,6 +74,7 @@
   gap: 8px;
   white-space: nowrap;
   box-sizing: border-box;
+  text-decoration: none;
   transition: background 0.15s ease, border-color 0.15s ease, opacity 0.15s ease;
 }
 

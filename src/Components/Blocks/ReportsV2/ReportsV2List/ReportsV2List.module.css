@@ -121,6 +121,7 @@
 /* Иконки действий берутся из `src/shared/icons/` — те же, что в разделе
    «Отчёты» v1. Свой цвет у них задан внутри SVG, поэтому кнопка остаётся
    без фона и рамки: подложка спорила бы с их серым штрихом. */
+.viewBtn,
 .downloadBtn,
 .deleteBtn {
   display: flex;
@@ -134,6 +135,7 @@
   transition: opacity 0.15s ease;
 }
 
+.viewBtn:hover,
 .downloadBtn:hover,
 .deleteBtn:hover {
   opacity: 0.6;

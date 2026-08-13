@@ -6713,6 +6713,7 @@ export const GET_REPORT_DRAFTS = gql`
       id
       type
       status
+      savedReportId
       startDate
       endDate
       createdAt
@@ -6744,6 +6745,10 @@ export const GET_REPORT_DRAFT = gql`
       endDate
       createdAt
       updatedAt
+      savedReport {
+        id
+        url
+      }
       filterJson {
         startDate
         endDate

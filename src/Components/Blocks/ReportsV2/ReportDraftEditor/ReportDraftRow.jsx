@@ -4,6 +4,7 @@ import RestoreIcon from "../../../../shared/icons/RestoreIcon";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 import { rowHasWarning, rowNeedsDays, rowNeedsPrice } from "../reportDraftRows";
 import {
+  formatDays,
   formatMoney,
   getArrivalHighlight,
   getDepartureHighlight,
@@ -41,6 +42,7 @@ export default function ReportDraftRow({
   cluster,
   clusterHighlighted,
   onHoverCluster,
+  canEdit = true,
 }) {
   // Пока курсор в любом поле строки, строка держится в выборке, даже если
   // перестала подходить под фильтр (см. useEditingPins). Без этого строка без
@@ -117,23 +119,27 @@ export default function ReportDraftRow({
 
       <div className={classes.colDays}>
         <div className={classes.cellField}>
-          <div className={classes.fieldWrap}>
-            <input
-              type="number"
-              name="days"
-              inputMode="decimal"
-              step={0.5}
-              min={0}
-              className={
-                needsDays ? `${classes.inputDays} ${classes.inputNeedsValue}` : classes.inputDays
-              }
-              value={row.totalDays ?? ""}
-              aria-label={`Сутки проживания — ${personLabel}`}
-              onChange={(e) => onCellChange(row._uid, "totalDays", e.target.value)}
-              {...cellFocusProps}
-            />
-            {daysEdited && <span className={classes.editedDot} />}
-          </div>
+          {canEdit ? (
+            <div className={classes.fieldWrap}>
+              <input
+                type="number"
+                name="days"
+                inputMode="decimal"
+                step={0.5}
+                min={0}
+                className={
+                  needsDays ? `${classes.inputDays} ${classes.inputNeedsValue}` : classes.inputDays
+                }
+                value={row.totalDays ?? ""}
+                aria-label={`Сутки проживания — ${personLabel}`}
+                onChange={(e) => onCellChange(row._uid, "totalDays", e.target.value)}
+                {...cellFocusProps}
+              />
+              {daysEdited && <span className={classes.editedDot} />}
+            </div>
+          ) : (
+            <span>{formatDays(row.totalDays)}</span>
+          )}
           {needsDays && <span className={classes.needCaption}>нет суток</span>}
         </div>
       </div>
@@ -176,47 +182,55 @@ export default function ReportDraftRow({
 
       <div className={classes.colMeal}>
         <div className={classes.cellField}>
-          <div className={classes.fieldWrap}>
-            <input
-              type="number"
-              name="mealCost"
-              inputMode="decimal"
-              step={1}
-              min={0}
-              className={
-                mealEdited ? `${classes.inputMeal} ${classes.inputMealEdited}` : classes.inputMeal
-              }
-              value={row.totalMealCost ?? ""}
-              aria-label={`Стоимость питания — ${personLabel}`}
-              onChange={(e) => onCellChange(row._uid, "totalMealCost", e.target.value)}
-              {...cellFocusProps}
-            />
-            {mealEdited && <span className={classes.editedDot} />}
-          </div>
+          {canEdit ? (
+            <div className={classes.fieldWrap}>
+              <input
+                type="number"
+                name="mealCost"
+                inputMode="decimal"
+                step={1}
+                min={0}
+                className={
+                  mealEdited ? `${classes.inputMeal} ${classes.inputMealEdited}` : classes.inputMeal
+                }
+                value={row.totalMealCost ?? ""}
+                aria-label={`Стоимость питания — ${personLabel}`}
+                onChange={(e) => onCellChange(row._uid, "totalMealCost", e.target.value)}
+                {...cellFocusProps}
+              />
+              {mealEdited && <span className={classes.editedDot} />}
+            </div>
+          ) : (
+            <span>{formatMoney(row.totalMealCost)}</span>
+          )}
         </div>
       </div>
 
       <div className={classes.colPrice}>
         <div className={classes.cellField}>
-          <div className={classes.fieldWrap}>
-            <input
-              type="number"
-              name="pricePerDay"
-              inputMode="decimal"
-              step={1}
-              min={0}
-              className={
-                needsPrice
-                  ? `${classes.inputPrice} ${classes.inputNeedsValue}`
-                  : classes.inputPrice
-              }
-              value={row.pricePerDay ?? ""}
-              aria-label={`Цена за сутки — ${personLabel}`}
-              onChange={(e) => onCellChange(row._uid, "pricePerDay", e.target.value)}
-              {...cellFocusProps}
-            />
-            {priceEdited && <span className={classes.editedDot} />}
-          </div>
+          {canEdit ? (
+            <div className={classes.fieldWrap}>
+              <input
+                type="number"
+                name="pricePerDay"
+                inputMode="decimal"
+                step={1}
+                min={0}
+                className={
+                  needsPrice
+                    ? `${classes.inputPrice} ${classes.inputNeedsValue}`
+                    : classes.inputPrice
+                }
+                value={row.pricePerDay ?? ""}
+                aria-label={`Цена за сутки — ${personLabel}`}
+                onChange={(e) => onCellChange(row._uid, "pricePerDay", e.target.value)}
+                {...cellFocusProps}
+              />
+              {priceEdited && <span className={classes.editedDot} />}
+            </div>
+          ) : (
+            <span>{formatMoney(row.pricePerDay)}</span>
+          )}
           {needsPrice && <span className={classes.needCaption}>нет цены</span>}
         </div>
       </div>
@@ -240,32 +254,34 @@ export default function ReportDraftRow({
       </div>
 
       <div className={classes.colActions}>
-        <div className={classes.actionsCell}>
-          {isEdited && (
+        {canEdit && (
+          <div className={classes.actionsCell}>
+            {isEdited && (
+              <button
+                type="button"
+                className={`${classes.iconBtn} ${classes.revertBtn}`}
+                title="Вернуть расчёт сервера"
+                aria-label={`Вернуть расчёт сервера — ${personLabel}`}
+                onClick={() => onResetRow(row._uid)}
+              >
+                <RestoreIcon width={16} height={16} color="#0057C3" cursor="pointer" />
+              </button>
+            )}
             <button
               type="button"
-              className={`${classes.iconBtn} ${classes.revertBtn}`}
-              title="Вернуть расчёт сервера"
-              aria-label={`Вернуть расчёт сервера — ${personLabel}`}
-              onClick={() => onResetRow(row._uid)}
+              className={`${classes.iconBtn} ${classes.deleteBtn}`}
+              title="Удалить строку"
+              aria-label={`Удалить строку — ${personLabel}`}
+              onClick={() => onRequestDelete(row)}
             >
-              <RestoreIcon width={16} height={16} color="#0057C3" cursor="pointer" />
+              {/* color="currentColor" обязателен: DeleteIcon по умолчанию зашивает
+                  #545873 в stroke, и без этого перекрашивание при наведении
+                  (.deleteBtn:hover в ReportDraftTable.module.css) перестало бы
+                  работать. */}
+              <DeleteIcon width={16} height={16} color="currentColor" cursor="pointer" />
             </button>
-          )}
-          <button
-            type="button"
-            className={`${classes.iconBtn} ${classes.deleteBtn}`}
-            title="Удалить строку"
-            aria-label={`Удалить строку — ${personLabel}`}
-            onClick={() => onRequestDelete(row)}
-          >
-            {/* color="currentColor" обязателен: DeleteIcon по умолчанию зашивает
-                #545873 в stroke, и без этого перекрашивание при наведении
-                (.deleteBtn:hover в ReportDraftTable.module.css) перестало бы
-                работать. */}
-            <DeleteIcon width={16} height={16} color="currentColor" cursor="pointer" />
-          </button>
-        </div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -284,4 +300,5 @@ ReportDraftRow.propTypes = {
   cluster: PropTypes.shape({ number: PropTypes.number }),
   clusterHighlighted: PropTypes.bool,
   onHoverCluster: PropTypes.func,
+  canEdit: PropTypes.bool,
 };
