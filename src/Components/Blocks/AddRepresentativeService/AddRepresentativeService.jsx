@@ -159,9 +159,12 @@ function AddRepresentativeService({
 
   // Дата рейса: ISO из request → значение для <input type="date">
   const [flightDate, setFlightDate] = useState("");
+  // Номер рейса вводился только при создании, а опечатку править было нечем.
+  const [flightNumber, setFlightNumber] = useState("");
   useEffect(() => {
     if (!show) return;
     setFlightDate(isoToDate(request?.flightDate));
+    setFlightNumber(request?.flightNumber ?? "");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [show, request?.id]);
 
@@ -506,6 +509,19 @@ function AddRepresentativeService({
         : null;
     }
 
+    // Номер рейса — тоже только при изменении. Пустым не отправляем: в схеме
+    // поле обязательное (`flightNumber String` без `?`), пустая строка сделала бы
+    // заявку безымянной, а null не примет валидация.
+    const nextFlightNumber = flightNumber.trim();
+    if (!nextFlightNumber) {
+      alert("Укажите номер рейса.");
+      setIsLoading(false);
+      return;
+    }
+    if (nextFlightNumber !== (request?.flightNumber ?? "")) {
+      input.flightNumber = nextFlightNumber;
+    }
+
     const hasManifest = !!manifest?.people?.length;
 
     // Если нет изменений
@@ -515,9 +531,12 @@ function AddRepresentativeService({
       return;
     }
 
-    if (hasManifest && !isSameFlight(manifest.flightNumber, request?.flightNumber)) {
+    // Сверяем манифест с ТЕМ номером, который сейчас в форме: если оператор
+    // правит опечатку в рейсе и тут же грузит манифест, сравнение со старым
+    // значением дало бы ложное расхождение.
+    if (hasManifest && !isSameFlight(manifest.flightNumber, nextFlightNumber)) {
       const ok = await confirm({
-        message: `Рейс в манифесте (${manifest.flightNumber}) не совпадает с рейсом заявки (${request?.flightNumber}). Импортировать всё равно?`,
+        message: `Рейс в манифесте (${manifest.flightNumber}) не совпадает с рейсом заявки (${nextFlightNumber}). Импортировать всё равно?`,
         confirmText: "Импортировать",
         cancelText: "Отмена",
       });
@@ -606,6 +625,17 @@ function AddRepresentativeService({
           <>
             <div className={classes.requestMiddle}>
               <div className={classes.requestData}>
+                <label>Номер рейса</label>
+                <input
+                  type="text"
+                  value={flightNumber}
+                  placeholder="SU1177"
+                  onChange={(e) => {
+                    setFlightNumber(e.target.value);
+                    setIsEdited(true);
+                  }}
+                />
+
                 <label>Дата рейса</label>
                 <input
                   type="date"
