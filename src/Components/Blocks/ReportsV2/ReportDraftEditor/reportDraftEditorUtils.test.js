@@ -9,6 +9,7 @@ import {
   getDepartureHighlight,
   livingCostTooltip,
   pluralizeRows,
+  editableValue,
   pluralizeDays,
   rowMatchesSearch,
   describeShareSegments,
@@ -177,4 +178,15 @@ test("pluralizeDays follows the standard Russian plural rule", () => {
   assert.equal(pluralizeDays(12), "дней");
   assert.equal(pluralizeDays(14), "дней");
   assert.equal(pluralizeDays(0), "дней");
+});
+
+test("editableValue blanks a zero so typing over it does not prepend it", () => {
+  assert.equal(editableValue(0), "");
+  assert.equal(editableValue("0"), "");
+  assert.equal(editableValue(null), "");
+  assert.equal(editableValue(undefined), "");
+  assert.equal(editableValue(""), "");
+  assert.equal(editableValue(866), 866);
+  assert.equal(editableValue(2.5), 2.5);
+  assert.equal(editableValue("3400"), "3400");
 });

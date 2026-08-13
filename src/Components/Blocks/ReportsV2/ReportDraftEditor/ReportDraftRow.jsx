@@ -12,6 +12,7 @@ import {
   splitDateTime,
   describeShareSegments,
   listCohabitants,
+  editableValue,
 } from "./reportDraftEditorUtils";
 
 // Одна строка таблицы черновика. Чисто UI: получает уже готовую строку и
@@ -130,7 +131,8 @@ export default function ReportDraftRow({
                 className={
                   needsDays ? `${classes.inputDays} ${classes.inputNeedsValue}` : classes.inputDays
                 }
-                value={row.totalDays ?? ""}
+                value={editableValue(row.totalDays)}
+                placeholder="0"
                 aria-label={`Сутки проживания — ${personLabel}`}
                 onChange={(e) => onCellChange(row._uid, "totalDays", e.target.value)}
                 {...cellFocusProps}
@@ -193,7 +195,8 @@ export default function ReportDraftRow({
                 className={
                   mealEdited ? `${classes.inputMeal} ${classes.inputMealEdited}` : classes.inputMeal
                 }
-                value={row.totalMealCost ?? ""}
+                value={editableValue(row.totalMealCost)}
+                placeholder="0"
                 aria-label={`Стоимость питания — ${personLabel}`}
                 onChange={(e) => onCellChange(row._uid, "totalMealCost", e.target.value)}
                 {...cellFocusProps}
@@ -221,7 +224,8 @@ export default function ReportDraftRow({
                     ? `${classes.inputPrice} ${classes.inputNeedsValue}`
                     : classes.inputPrice
                 }
-                value={row.pricePerDay ?? ""}
+                value={editableValue(row.pricePerDay)}
+                placeholder="0"
                 aria-label={`Цена за сутки — ${personLabel}`}
                 onChange={(e) => onCellChange(row._uid, "pricePerDay", e.target.value)}
                 {...cellFocusProps}
