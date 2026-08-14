@@ -1,11 +1,19 @@
 import React from "react";
-import Checkbox from "@mui/material/Checkbox";
 import classes from './InfoTableDataNomerFond.module.css';
 import InfoTable from "../InfoTable/InfoTable";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import DeleteIcon from "../../../shared/icons/DeleteIcon";
 
-function InfoTableDataNomerFond({ children, user, type, toggleRequestSidebar, requests, openDeleteComponent, toggleRequestEditNumber, onViewNomer, openDeleteNomerComponent, filter, selectionMode, selectedIds, onToggleRoom, onToggleCategory, ...props }) {
+// Чекбокс нативный, а не из MUI: в src/index.css уже описан вид
+// input[type="checkbox"] для всего проекта, и он ставит инпуту
+// width/height: 20px !important. MUI от этого теряет свой абсолютный оверлей —
+// скрытый инпут встаёт в поток РЯДОМ с иконкой, и клик по видимой галке
+// пролетает мимо (замер: инпут x=140…160, иконка x=160…180).
+const setIndeterminate = (some) => (el) => {
+    if (el) el.indeterminate = some;
+};
+
+function InfoTableDataNomerFond({ children, user, type, toggleRequestSidebar, requests, openDeleteComponent, toggleRequestEditNumber, onViewNomer, openDeleteNomerComponent, filter, selectedIds, onToggleRoom, onToggleCategory, ...props }) {
     const buildFilteredRequests = (reserveFilter) => {
         const result = [];
         requests.forEach((item) => {
@@ -30,15 +38,19 @@ function InfoTableDataNomerFond({ children, user, type, toggleRequestSidebar, re
     const categorySelection = (rooms) => {
         const total = rooms.length;
         const picked = rooms.filter((room) => selectedIds?.has(room.id)).length;
-        return { all: total > 0 && picked === total, some: picked > 0 && picked < total };
+        return {
+            all: total > 0 && picked === total,
+            some: picked > 0 && picked < total,
+            picked,
+        };
     };
 
     return (
         <>
             <InfoTable>
-                <div className={classes.bottom} style={user?.hotelId ? {height: 'calc(100vh - 210px)'} : {}}>
+                <div className={classes.bottom} style={user?.hotelId ? {height: 'calc(100vh - 210px - var(--selection-bar-offset, 0px))'} : {}}>
                     {filteredRequests.map((item, index) => {
-                        const selection = selectionMode ? categorySelection(item.rooms) : null;
+                        const selection = categorySelection(item.rooms);
 
                         return (
                         <div key={index}>
@@ -46,17 +58,20 @@ function InfoTableDataNomerFond({ children, user, type, toggleRequestSidebar, re
                                 className={classes.InfoTable_data}
                             >
                                 <div className={`${classes.InfoTable_data_elem}`}>
-                                    <div className={classes.InfoTable_data_elem_title}>
-                                        {selectionMode && (
-                                            <Checkbox
-                                                size="small"
-                                                checked={selection.all}
-                                                indeterminate={selection.some}
-                                                onChange={() => onToggleCategory(item.rooms, !selection.all)}
-                                                sx={{ padding: "0 8px 0 0" }}
-                                            />
+                                    <div className={classes.categoryTitle}>
+                                        <input
+                                            type="checkbox"
+                                            checked={selection.all}
+                                            ref={setIndeterminate(selection.some)}
+                                            onChange={() => onToggleCategory(item.rooms, !selection.all)}
+                                            title="Выделить категорию"
+                                        />
+                                        <span className={classes.InfoTable_data_elem_title}>{item.name}</span>
+                                        {selection.picked > 0 && (
+                                            <span className={classes.categoryCount}>
+                                                выбрано {selection.picked} из {item.rooms.length}
+                                            </span>
                                         )}
-                                        {item.name}
                                     </div>
                                 </div>
 
@@ -68,37 +83,38 @@ function InfoTableDataNomerFond({ children, user, type, toggleRequestSidebar, re
                             </div>
                             <div className={classes.InfoTable_BottomInfo}>
                                 <div className={`${classes.InfoTable_BottomInfo__item}`}>
-                                    {item.rooms.map((elem, index) => (
-                                        <div className={`${classes.InfoTable_BottomInfo__item___elem}`} key={index}>
-                                            {selectionMode && (
-                                                <Checkbox
-                                                    size="small"
-                                                    checked={!!selectedIds?.has(elem.id)}
-                                                    onChange={() => onToggleRoom(elem.id)}
-                                                    sx={{ padding: "0 8px 0 0" }}
-                                                />
-                                            )}
+                                    {item.rooms.map((elem, index) => {
+                                        const picked = !!selectedIds?.has(elem.id);
+
+                                        return (
+                                        <div
+                                            className={`${classes.InfoTable_BottomInfo__item___elem} ${picked ? classes.rowPicked : ""}`}
+                                            key={index}
+                                        >
+                                            <input
+                                                type="checkbox"
+                                                checked={picked}
+                                                onChange={() => onToggleRoom(elem.id)}
+                                            />
                                             <span
-                                            style={onViewNomer && !selectionMode ? { cursor: "pointer" } : undefined}
-                                            onClick={onViewNomer && !selectionMode ? () => onViewNomer(elem, item) : undefined}
+                                            style={onViewNomer ? { cursor: "pointer" } : undefined}
+                                            onClick={onViewNomer ? () => onViewNomer(elem, item) : undefined}
                                         >
                                             {elem.type !== 'apartment' ? "№" : ""} {elem.name} {!elem.active && '(не работает)'} {elem?.roomKind?.name}
                                         </span>
-                                            {!selectionMode && (
-                                                <div className={classes.infoTable_buttons}>
-                                                    <EditPencilIcon
-                                                        cursor="pointer"
-                                                        onClick={() => toggleRequestEditNumber(elem, item)}
-                                                    />
-                                                    <DeleteIcon
-                                                        cursor="pointer"
-                                                        onClick={() => openDeleteNomerComponent(elem, item.name)}
-                                                    />
-                                                </div>
-                                            )}
+                                            <div className={classes.infoTable_buttons}>
+                                                <EditPencilIcon
+                                                    cursor="pointer"
+                                                    onClick={() => toggleRequestEditNumber(elem, item)}
+                                                />
+                                                <DeleteIcon
+                                                    cursor="pointer"
+                                                    onClick={() => openDeleteNomerComponent(elem, item.name)}
+                                                />
+                                            </div>
                                         </div>
-
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             </div>
 

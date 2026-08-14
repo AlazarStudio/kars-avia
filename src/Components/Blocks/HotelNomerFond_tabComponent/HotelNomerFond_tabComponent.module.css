@@ -2,23 +2,61 @@
 .section_searchAndFilter {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    gap: 16px;
 }
 
-.section_searchAndFilter_filter{    
+.listBlock {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    min-height: 0;
+}
+
+/* Высота прокрутки списка зашита в calc(100vh - ...), про панель выбора он не
+   знает — без поправки список уезжал под нижний край на её высоту с отступом. */
+.listBlockWithBar {
+    --selection-bar-offset: 68px;
+}
+
+.selectionBar {
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 20px;
+    padding: 10px 20px;
+    border-radius: 10px;
+    background-color: #E9F1FD;
 }
 
-.section_actions {
+.selectionBar_count {
+    font-family: Nunito Sans;
+    font-size: 15px;
+    color: var(--main-gray);
+    white-space: nowrap;
+}
+
+.selectionBar_actions {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 16px;
+}
+
+.selectionBar_clear {
+    background: none;
+    border: none;
+    padding: 0;
+    font-family: Nunito Sans;
+    font-size: 15px;
+    color: var(--dark-blue);
+    cursor: pointer;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.selectionBar_clear:hover {
+    opacity: 0.7;
 }
 
 .mainSearch {
-    width: 500px;
+    flex: 1;
 }
 @media (min-width: 0px) and (max-width: 1299px) {}

@@ -255,6 +255,12 @@ function CreateRequestNomerFond({
         // Если не выбрано множество комнат, используем только updateHotel
         let response_update_room;
 
+        // Тот же refetchQueries, что у ветки нескольких номеров: без него
+        // список ждал события подписки, а оно приходит не всегда.
+        const refetchRooms = [
+          { query: GET_HOTEL_ROOMS, variables: { hotelId: id } },
+        ];
+
         if (formData.roomImages) {
           response_update_room = await updateHotel({
             variables: {
@@ -264,6 +270,7 @@ function CreateRequestNomerFond({
               },
               roomImages: imagesArray,
             },
+            refetchQueries: refetchRooms,
           });
         } else {
           response_update_room = await updateHotel({
@@ -273,6 +280,7 @@ function CreateRequestNomerFond({
                 rooms: [roomInput],
               },
             },
+            refetchQueries: refetchRooms,
           });
         }
 

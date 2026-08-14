@@ -115,7 +115,9 @@
 }
 
 .bottom {
-    height: calc(100vh - 288px);
+    /* --selection-bar-offset задаёт родитель, когда над списком показана
+       панель выбранных номеров; по умолчанию 0. */
+    height: calc(100vh - 288px - var(--selection-bar-offset, 0px));
     overflow: hidden;
     overflow-y: auto;
 }
@@ -160,6 +162,50 @@
     text-align: left;
     position: relative;
     transition: all 0.3s ease-in-out;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+/* Отдельный голубой тон, а не --hover-gray: иначе выбранная строка и строка
+   под курсором выглядят одинаково. */
+.rowPicked,
+.rowPicked:hover {
+    background-color: #E9F1FD;
+}
+
+.categoryTitle {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    user-select: none;
+    padding: 0 10px;
+}
+
+.categoryTitle .InfoTable_data_elem_title {
+    padding: 0;
+}
+
+/* Частичный выбор: тот же вид, что у отмеченного из index.css, только галочка
+   превращается в тире. Глобальных стилей :indeterminate в проекте нет. */
+.categoryTitle input[type="checkbox"]:indeterminate {
+    background-color: var(--light-blue);
+    border-color: var(--light-blue);
+}
+
+.categoryTitle input[type="checkbox"]:indeterminate::after {
+    opacity: 1;
+    width: 8px;
+    height: 0;
+    border-width: 0 0 2px 0;
+    transform: translate(-50%, -50%);
+}
+
+.categoryCount {
+    font-family: Nunito Sans;
+    font-size: 13px;
+    line-height: 20px;
+    color: var(--dark-blue);
 }
 
 .InfoTable_BottomInfo__item___elem img {

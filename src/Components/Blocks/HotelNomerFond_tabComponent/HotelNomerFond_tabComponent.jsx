@@ -31,6 +31,7 @@ import {
   categoryLabel,
 } from "../../../utils/roomCategories.js";
 import { plural } from "../../../utils/plural.js";
+import FilterPopoverButton from "../FilterPopoverButton/FilterPopoverButton.jsx";
 
 const getCategoryLabel = categoryLabel;
 
@@ -48,19 +49,19 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
     },
     variables: { hotelId: id },
   });
-  const { data: dataSubscriptionUpd } = useSubscription(
-    GET_HOTELS_UPDATE_SUBSCRIPTION,
-    {
-      context: {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  // hotelUpdated приходит по ВСЕМ гостиницам сразу — перезапрашиваем только
+  // свою, иначе список дёргается на любое чужое изменение.
+  useSubscription(GET_HOTELS_UPDATE_SUBSCRIPTION, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
-      onData: () => {
-        refetch();
-      },
-    }
-  );
+    },
+    onData: ({ data: subscriptionData }) => {
+      const updatedId = subscriptionData?.data?.hotelUpdated?.id;
+      if (String(updatedId) === String(id)) refetch();
+    },
+  });
 
   // console.log(data);
 
@@ -84,8 +85,8 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
   const [selectedNomer, setSelectedNomer] = useState({});
   const [nomerEditMode, setNomerEditMode] = useState(false);
 
-  // Режим выбора для удаления пачкой: пока выключен, экран работает как раньше.
-  const [selectionMode, setSelectionMode] = useState(false);
+  // Выделение для удаления пачкой: режима нет, отметки стоят всегда, панель
+  // действий появляется, как только выбран хотя бы один номер.
   const [selectedRoomIds, setSelectedRoomIds] = useState(() => new Set());
   const [deletingMany, setDeletingMany] = useState(false);
 
@@ -149,9 +150,9 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
 
       setAddTarif(sortedTarifs);
     }
-
-    if (dataSubscriptionUpd) refetch();
-  }, [data, dataSubscriptionUpd, refetch]);
+    // refetch отсюда убран: он висел на изменении data и запускал лишний круг
+    // запросов после каждого обновления списка. Перезапрашивает подписка.
+  }, [data]);
   // console.log(data?.hotel?.rooms);
 
   useEffect(() => {
@@ -251,10 +252,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
     }
   };
 
-  const toggleSelectionMode = () => {
-    setSelectedRoomIds(new Set());
-    setSelectionMode((prev) => !prev);
-  };
+  const clearSelection = () => setSelectedRoomIds(new Set());
 
   const toggleRoomSelection = (roomId) => {
     setSelectedRoomIds((prev) => {
@@ -291,7 +289,6 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
       // очищаем только после успеха.
       await deleteManyRooms({ variables: { ids } });
       setSelectedRoomIds(new Set());
-      setSelectionMode(false);
       await refetch();
       success(
         `Удалено ${ids.length} ${plural(ids.length, ["номер", "номера", "номеров"])}.`
@@ -367,6 +364,14 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
   const [categoryFilter, setCategoryFilter] = useState(null);
 
   const categoryOptions = Object.values(CATEGORY_LABELS);
+
+  const activeFilterCount = (categoryFilter ? 1 : 0) + (filter ? 1 : 0);
+
+  const handleResetFilters = () => {
+    setCategoryFilter(null);
+    setFilter(null);
+  };
+
   const categoryFilteredRequests = categoryFilter
     ? filteredRequestsTarif.filter((item) => item.name === categoryFilter)
     : filteredRequestsTarif;
@@ -381,9 +386,13 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
       {!loading && !error && addTarif && (
         <>
           <div className={classes.section_searchAndFilter}>
-            <div className={classes.section_searchAndFilter_filter}>
+            <FilterPopoverButton
+                activeCount={activeFilterCount}
+                onReset={handleResetFilters}
+                width={320}
+              >
               <MUIAutocomplete
-                dropdownWidth="170px"
+                dropdownWidth={"100%"}
                 hideLabelOnFocus={false}
                 label="Категория"
                 options={categoryOptions}
@@ -394,7 +403,7 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
               />
               {type !== "apartment" && (
                 <MUIAutocomplete
-                  dropdownWidth="170px"
+                  dropdownWidth={"100%"}
                   hideLabelOnFocus={false}
                   label="Квота / Резерв"
                   options={["Квота", "Резерв"]}
@@ -416,72 +425,71 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                   }}
                 />
               )}
-              <MUITextField
-                label={"Поиск по номеру"}
-                className={classes.mainSearch}
-                value={searchTarif}
-                onChange={handleSearchTarif}
-              />
-            </div>
-            <div className={classes.section_actions}>
-              {selectionMode ? (
-                <>
-                  <Button
-                    onClick={deleteSelectedRooms}
-                    disabled={deletingMany || selectedRoomIds.size === 0}
-                    padding="0 18px"
-                  >
-                    {deletingMany
-                      ? "Удаление…"
-                      : `Удалить выбранные (${selectedRoomIds.size})`}
-                  </Button>
-                  <Button
-                    onClick={toggleSelectionMode}
-                    disabled={deletingMany}
-                    padding="0 18px"
-                    backgroundcolor="#fff"
-                    color="#0057C3"
-                    border="1px solid #0057C3"
-                  >
-                    Отмена
-                  </Button>
-                </>
-              ) : (
-                <>
-                  <Button
-                    onClick={toggleSelectionMode}
-                    padding="0 18px"
-                    backgroundcolor="#fff"
-                    color="#0057C3"
-                    border="1px solid #0057C3"
-                  >
-                    Выбрать
-                  </Button>
-                  <Filter
-                    toggleSidebar={toggleTarifs}
-                    handleChange={""}
-                    buttonTitle={"Добавить номер"}
-                  />
-                </>
-              )}
-            </div>
+            </FilterPopoverButton>
+            <MUITextField
+              label={"Поиск по номеру"}
+              className={classes.mainSearch}
+              value={searchTarif}
+              onChange={handleSearchTarif}
+            />
+            <Filter
+              toggleSidebar={toggleTarifs}
+              handleChange={""}
+              buttonTitle={"Добавить номер"}
+            />
           </div>
 
-          <InfoTableDataNomerFond
-            type={type}
-            filter={filter}
-            user={user}
-            toggleRequestSidebar={toggleEditCategory}
-            toggleRequestEditNumber={toggleEditNomer}
-            onViewNomer={toggleViewNomer}
-            requests={categoryFilteredRequests}
-            openDeleteComponent={openDeleteComponent}
-            openDeleteNomerComponent={openDeleteNomerComponent}
-            selectionMode={selectionMode}
-            selectedIds={selectedRoomIds}
-            onToggleRoom={toggleRoomSelection}
-            onToggleCategory={toggleCategorySelection}
-          />
+          {/* Панель и список — один блок: вкладка раскладывает детей колонкой
+              с gap: 40px, и отдельным ребёнком панель разносила фильтры и
+              список на 140px. Своя строка, а не довесок к фильтрам: в один ряд
+              поиск, фильтры, «Добавить номер» и панель не помещаются —
+              «Добавить номер» уезжал за край экрана. */}
+          <div
+            className={`${classes.listBlock} ${selectedRoomIds.size > 0 ? classes.listBlockWithBar : ""}`}
+          >
+            {selectedRoomIds.size > 0 && (
+              <div className={classes.selectionBar}>
+                <span className={classes.selectionBar_count}>
+                  Выбрано {selectedRoomIds.size}{" "}
+                  {plural(selectedRoomIds.size, ["номер", "номера", "номеров"])}
+                </span>
+                <div className={classes.selectionBar_actions}>
+                  <button
+                    type="button"
+                    className={classes.selectionBar_clear}
+                    onClick={clearSelection}
+                    disabled={deletingMany}
+                  >
+                    Снять выделение
+                  </button>
+                  <Button
+                    onClick={deleteSelectedRooms}
+                    disabled={deletingMany}
+                    padding="0 20px"
+                    height="36px"
+                    backgroundcolor="#C03B28"
+                  >
+                    {deletingMany ? "Удаление…" : "Удалить"}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            <InfoTableDataNomerFond
+              type={type}
+              filter={filter}
+              user={user}
+              toggleRequestSidebar={toggleEditCategory}
+              toggleRequestEditNumber={toggleEditNomer}
+              onViewNomer={toggleViewNomer}
+              requests={categoryFilteredRequests}
+              openDeleteComponent={openDeleteComponent}
+              openDeleteNomerComponent={openDeleteNomerComponent}
+              selectedIds={selectedRoomIds}
+              onToggleRoom={toggleRoomSelection}
+              onToggleCategory={toggleCategorySelection}
+            />
+          </div>
 
           <CreateRequestNomerFond
             type={type}
