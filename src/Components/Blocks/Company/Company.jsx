@@ -33,6 +33,9 @@ function Company({ user, accessMenu }) {
   const { success, error: notifyError } = useToast();
   const canCreate = canAccessMenu(accessMenu, "userCreate", user);
   const canEdit = canAccessMenu(accessMenu, "userUpdate", user);
+  // Выдача доступов отделена от обычного взаимодействия с разделом: право
+  // accessManage выдаёт суперадмин, canAccessMenu пропускает его по роли.
+  const canManageAccess = canAccessMenu(accessMenu, "accessManage", user);
 
   const {
     loading: dispatchersLoading,
@@ -208,7 +211,7 @@ function Company({ user, accessMenu }) {
   };
 
   const openAccessDepartment = (department) => {
-    if (!canEdit) return;
+    if (!canManageAccess) return;
     setSelectedDepartmentForSettings(department);
     setShowSettingsSidebar(true);
   };
@@ -344,23 +347,27 @@ function Company({ user, accessMenu }) {
             value={searchQuery}
             onChange={handleSearch}
           />
-          {canCreate && (
+          {(canCreate || canManageAccess) && (
             <div className={classes.section_searchAndFilter_filter}>
-              <PositionsAccessButton
-                onClick={() =>
-                  navigate("/positions", {
-                    state: {
-                      type: "dispatcher",
-                      seedAccessMenu: departments?.[0]?.accessMenu,
-                    },
-                  })
-                }
-              />
-              <AddMenuButton
-                onAddDepartment={() => setShowCreateDepartment(true)}
-                onAddUser={() => setShowCreateDispatcher(true)}
-                userSubtitle="Аккаунт диспетчера"
-              />
+              {canManageAccess && (
+                <PositionsAccessButton
+                  onClick={() =>
+                    navigate("/positions", {
+                      state: {
+                        type: "dispatcher",
+                        seedAccessMenu: departments?.[0]?.accessMenu,
+                      },
+                    })
+                  }
+                />
+              )}
+              {canCreate && (
+                <AddMenuButton
+                  onAddDepartment={() => setShowCreateDepartment(true)}
+                  onAddUser={() => setShowCreateDispatcher(true)}
+                  userSubtitle="Аккаунт диспетчера"
+                />
+              )}
             </div>
           )}
         </div>

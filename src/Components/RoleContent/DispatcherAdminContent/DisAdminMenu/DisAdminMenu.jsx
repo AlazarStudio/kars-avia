@@ -44,7 +44,10 @@ const DisAdminMenu = ({
           active: id == "airlines",
         },
         { label: "Гостиницы", to: "/hotels", icon: MenuNavIcons.hotels, active: id == "hotels" },
-        { label: "TravelLine", to: "/travelline", icon: MenuNavIcons.travelline, active: id == "travelline" },
+        canAccessMenu(accessMenu, "travellineMenu", user) && {
+          label: "TravelLine", to: "/travelline", icon: MenuNavIcons.travelline,
+          active: id == "travelline",
+        },
         canAccessMenu(accessMenu, "organizationMenu", user) && {
           label: "Автопарк", to: "/driversCompany", icon: MenuNavIcons.drivers, fill: true,
           active: id == "driversCompany" || id == "driversList",

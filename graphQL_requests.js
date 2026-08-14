@@ -1238,6 +1238,8 @@ export const GET_AIRLINE_USERS_POSITIONS = gql`
         reserveCreate
         reserveUpdate
         reserveUpdateCompleted
+        accessManage
+        travellineMenu
         analyticsMenu
         analyticsUpload
         reportMenu
@@ -1304,6 +1306,8 @@ export const GET_DISPATCHER_POSITIONS = gql`
         reserveCreate
         reserveUpdate
         reserveUpdateCompleted
+        accessManage
+        travellineMenu
         analyticsMenu
         analyticsUpload
         reportMenu
@@ -1379,6 +1383,8 @@ export const GET_USER_EFFECTIVE_ACCESS_MENU = gql`
         reserveCreate
         reserveUpdate
         reserveUpdateCompleted
+        accessManage
+        travellineMenu
         analyticsMenu
         analyticsUpload
         reportMenu
@@ -5434,6 +5440,8 @@ export const GET_AIRLINES = gql`
             reserveCreate
             reserveUpdate
             reserveUpdateCompleted
+            accessManage
+            travellineMenu
             analyticsMenu
             analyticsUpload
             reportMenu
@@ -5621,6 +5629,8 @@ export const GET_AIRLINE = gql`
           reserveCreate
           reserveUpdate
           reserveUpdateCompleted
+          accessManage
+          travellineMenu
           analyticsMenu
           analyticsUpload
           reportMenu
@@ -5950,6 +5960,8 @@ export const GET_AIRLINE_COMPANY = gql`
           reserveCreate
           reserveUpdate
           reserveUpdateCompleted
+          accessManage
+          travellineMenu
           analyticsMenu
           analyticsUpload
           reportMenu
@@ -6079,6 +6091,8 @@ export const CREATE_AIRLINE_DEPARTMERT = gql`
           reserveCreate
           reserveUpdate
           reserveUpdateCompleted
+          accessManage
+          travellineMenu
           analyticsMenu
           analyticsUpload
           reportMenu
@@ -6237,6 +6251,8 @@ export const GET_AIRLINE_DEPARTMENT = gql`
         reserveCreate
         reserveUpdate
         reserveUpdateCompleted
+        accessManage
+        travellineMenu
         analyticsMenu
         analyticsUpload
         reportMenu
@@ -6383,6 +6399,8 @@ export const GET_DISPATCHER_DEPARTMENTS = gql`
           reserveCreate
           reserveUpdate
           reserveUpdateCompleted
+          accessManage
+          travellineMenu
           analyticsMenu
           analyticsUpload
           reportMenu

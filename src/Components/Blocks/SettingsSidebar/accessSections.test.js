@@ -19,6 +19,8 @@ test("порядок секций диспетчера совпадает с т�
     "analytics",
     "aboutAirlines",
     "reports",
+    "travelline",
+    "accessManagement",
   ]);
 });
 
@@ -32,6 +34,8 @@ test("у авиакомпании скрыты автопарк и реестр 
     "analytics",
     "aboutAirlines",
     "reports",
+    "travelline",
+    "accessManagement",
   ]);
 });
 
@@ -42,7 +46,7 @@ test("defaultSectionKeys выбирает набор по типу", () => {
 });
 
 test("каждая секция описана полностью и ключи строк уникальны", () => {
-  assert.equal(ACCESS_SECTIONS.length, 10);
+  assert.equal(ACCESS_SECTIONS.length, 12);
   for (const section of ACCESS_SECTIONS) {
     assert.equal(typeof section.key, "string");
     assert.equal(typeof section.title, "string");
@@ -111,4 +115,19 @@ test("правка завершённой заявки — отдельный п
     (passengers.extras || []).map((e) => e.key),
     ["editCompleted"],
   );
+});
+
+test("новые секции описаны и показываются", () => {
+  const tl = ACCESS_SECTIONS.find((s) => s.key === "travelline");
+  assert.equal(tl.title, "TravelLine");
+  assert.deepEqual(tl.rows, []);
+
+  const am = ACCESS_SECTIONS.find((s) => s.key === "accessManagement");
+  assert.equal(am.title, "Управление доступами");
+  assert.equal(am.superAdminOnly, true);
+});
+
+test("секцию управления доступами видит только суперадмин", () => {
+  const restricted = ACCESS_SECTIONS.filter((s) => s.superAdminOnly).map((s) => s.key);
+  assert.deepEqual(restricted, ["accessManagement"]);
 });

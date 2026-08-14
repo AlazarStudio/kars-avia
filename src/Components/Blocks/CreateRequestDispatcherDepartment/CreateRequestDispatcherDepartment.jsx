@@ -24,6 +24,7 @@ const ALL_ACCESS_ENABLED = {
   contracts: true, contractCreate: true, contractUpdate: true,
   organizationMenu: true, organizationCreate: true, organizationUpdate: true,
   organizationAddDrivers: true, organizationAcceptDrivers: true,
+  travellineMenu: true, accessManage: false,
 };
 
 const ALL_NOTIFICATIONS_ENABLED = {

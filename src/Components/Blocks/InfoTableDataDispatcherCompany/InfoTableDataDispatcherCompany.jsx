@@ -34,6 +34,9 @@ function InfoTableDataDispatcherCompany({
   accessMenu,
 }) {
   const canEdit = canAccessMenu(accessMenu, "userUpdate", user);
+  // Выдача доступов отделена от обычного взаимодействия с разделом: право
+  // accessManage выдаёт суперадмин, canAccessMenu пропускает его по роли.
+  const canManageAccess = canAccessMenu(accessMenu, "accessManage", user);
   const [collapsed, setCollapsed] = useState({});
   const toggleCollapse = (key) =>
     setCollapsed((c) => ({ ...c, [key]: !c[key] }));
@@ -72,20 +75,26 @@ function InfoTableDataDispatcherCompany({
                   const { done, total, groups: rGroups } = computeDepartmentReadiness(group);
                   return <ReadinessIndicator done={done} total={total} groups={rGroups} />;
                 })()}
-                {!group.isNoDepartment && canEdit && (
+                {!group.isNoDepartment && (
                   <>
-                    <EditPencilIcon
-                      cursor="pointer"
-                      onClick={() => onEditDepartment?.(group)}
-                    />
-                    <SettingsIcon
-                      cursor="pointer"
-                      onClick={() => onOpenAccess?.(group)}
-                    />
-                    <DeleteIcon
-                      cursor="pointer"
-                      onClick={() => onDeleteDepartment?.(group)}
-                    />
+                    {canEdit && (
+                      <EditPencilIcon
+                        cursor="pointer"
+                        onClick={() => onEditDepartment?.(group)}
+                      />
+                    )}
+                    {canManageAccess && (
+                      <SettingsIcon
+                        cursor="pointer"
+                        onClick={() => onOpenAccess?.(group)}
+                      />
+                    )}
+                    {canEdit && (
+                      <DeleteIcon
+                        cursor="pointer"
+                        onClick={() => onDeleteDepartment?.(group)}
+                      />
+                    )}
                   </>
                 )}
               </div>

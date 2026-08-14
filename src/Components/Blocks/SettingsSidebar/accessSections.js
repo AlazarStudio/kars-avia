@@ -83,6 +83,20 @@ export const ACCESS_SECTIONS = [
     title: "Отчёты",
     rows: [{ key: "create", label: "Создание" }],
   },
+  {
+    key: "travelline",
+    title: "TravelLine",
+    rows: [],
+  },
+  {
+    key: "accessManagement",
+    title: "Управление доступами",
+    rows: [],
+    // Выдать это право может только суперадмин — бэк отбивает чужую попытку.
+    // Остальным секция не рисуется, но её значение всё равно уходит в payload,
+    // иначе сохранение чужой панелью погасило бы флаг (см. buildAccessPayload).
+    superAdminOnly: true,
+  },
 ];
 
 // Порядок карточек в сайдбаре и на страницах доступов диспетчера/должности.
@@ -97,6 +111,8 @@ export const DISPATCHER_SECTION_KEYS = [
   "analytics",
   "aboutAirlines",
   "reports",
+  "travelline",
+  "accessManagement",
 ];
 
 // У отделов авиакомпаний автопарк и реестр договоров сейчас скрыты.

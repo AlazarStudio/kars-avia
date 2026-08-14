@@ -6,6 +6,7 @@ import SettingsIcon from "../../../shared/icons/SettingsIcon";
 import DeleteIcon from "../../../shared/icons/DeleteIcon";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import { menuAccess, roles } from "../../../roles";
+import { canAccessMenu } from "../../../utils/access";
 import ReadinessIndicator from "../ReadinessIndicator/ReadinessIndicator";
 import { computeDepartmentReadiness } from "../../../utils/dispatcherDepartmentReadiness";
 
@@ -21,6 +22,10 @@ const collapseBtnStyle = {
 };
 
 function InfoTableDataAirlineCompany({ children, user, representative, accessMenu, airlineId, toggleRequestSidebar, onViewOtdel, requests, openDeleteComponent, toggleRequestEditNumber, onViewEmployee, openDeleteNomerComponent, onOpenSettings, ...props }) {
+    const canEditDepartment = !user?.airlineId || accessMenu.userUpdate;
+    // Выдача доступов отделена от обычного взаимодействия с разделом: право
+    // accessManage выдаёт суперадмин, canAccessMenu пропускает его по роли.
+    const canManageAccess = canAccessMenu(accessMenu, "accessManage", user);
     const [collapsed, setCollapsed] = useState({});
     const toggleCollapse = (key) =>
         setCollapsed((c) => ({ ...c, [key]: !c[key] }));
@@ -59,10 +64,10 @@ function InfoTableDataAirlineCompany({ children, user, representative, accessMen
                                   const { done, total, groups: rGroups } = computeDepartmentReadiness(item);
                                   return <ReadinessIndicator done={done} total={total} groups={rGroups} />;
                                 })()}
-                                {(!user?.airlineId || accessMenu.userUpdate) && !item.isNoDepartment &&
-                                <><EditPencilIcon cursor="pointer" strokeWidth={0.5} onClick={() => toggleRequestSidebar(item)} />
-                                {!representative && (<SettingsIcon cursor={"pointer"} onClick={() => onOpenSettings?.(item)} />)}
-                                <DeleteIcon cursor="pointer" strokeWidth={0.5} onClick={() => openDeleteComponent(index, item.id)} /></>}
+                                {!item.isNoDepartment && <>
+                                {canEditDepartment && (<EditPencilIcon cursor="pointer" strokeWidth={0.5} onClick={() => toggleRequestSidebar(item)} />)}
+                                {canManageAccess && !representative && (<SettingsIcon cursor={"pointer"} onClick={() => onOpenSettings?.(item)} />)}
+                                {canEditDepartment && (<DeleteIcon cursor="pointer" strokeWidth={0.5} onClick={() => openDeleteComponent(index, item.id)} />)}</>}
                             </div>
 
                         </div>

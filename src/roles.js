@@ -136,6 +136,9 @@ export const menuAccess = {
 
   reportMenu: true,
   reportCreate: true,
+
+  travellineMenu: true,
+  accessManage: false,
 };
 
 export const exampleData = [

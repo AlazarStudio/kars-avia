@@ -255,6 +255,7 @@ export default function SettingsSidebar({
                   stateRef={accessStateRef}
                   isEditing={isEditing}
                   type={type}
+                  user={user}
                 />
               </div>
               <div style={{ display: activeTab === "notifications" ? "" : "none" }}>
