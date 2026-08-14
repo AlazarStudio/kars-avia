@@ -104,7 +104,10 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
       },
       {
         ids: ["positions"],
-        guardKey: "userUpdate",
+        // Редактор доступов должностей закрыт тем же правом, что и кнопка на
+        // него: без этого гейт кнопки был бы косметическим — страница
+        // открывалась по прямой ссылке.
+        guardKey: "accessManage",
         Comp: PositionAccessPage,
         props: () => ({ user, accessMenu: safeAccessMenu }),
       },
