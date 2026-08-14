@@ -75,6 +75,14 @@ export default function AccessPermissionsPanel({
 
   useEffect(() => setState(initial), [initial]);
 
+  // «Отмена» accessMenu не трогает, поэтому initial остаётся прежним и эффект
+  // выше не срабатывает: панель продолжала показывать отменённые переключатели
+  // до закрытия сайдбара (в базу при этом ничего не уходило). Выход из режима
+  // правки возвращает сохранённые значения.
+  useEffect(() => {
+    if (!isEditing) setState(initial);
+  }, [isEditing, initial]);
+
   useEffect(() => {
     if (stateRef) stateRef.current = state;
   }, [state, stateRef]);
