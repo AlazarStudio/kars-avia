@@ -101,15 +101,10 @@ export default function SearchBookingTab() {
   const { data: corporatesData } = useQuery(TL_CORPORATES, { fetchPolicy: "cache-first" })
   const corporates = corporatesData?.tlCorporates ?? []
 
-  const QA_CORPORATES = [
-    { id: "109", label: "QA 109" },
-    { id: "110", label: "QA 110" },
-    { id: "118", label: "QA 118" },
-    { id: "119", label: "QA 119" }
-  ]
-  const corporateOptions = corporates.length > 0
-    ? corporates.map((c) => ({ id: c.id, label: c.legalName || `ID: ${c.id}` }))
-    : QA_CORPORATES
+  const corporateOptions = corporates.map((c) => ({
+    id: c.id,
+    label: c.companyName || c.legalName || `ID: ${c.id}`
+  }))
 
   const handleSearch = () => {
     if (!datesReady) return

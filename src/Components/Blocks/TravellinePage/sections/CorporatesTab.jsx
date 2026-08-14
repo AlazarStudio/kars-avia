@@ -1,19 +1,18 @@
-import React, { useState } from "react"
-import { useLazyQuery, useMutation } from "@apollo/client"
+import React, { useEffect, useState } from "react"
+import { useLazyQuery, useMutation, useQuery } from "@apollo/client"
 
-import { TL_CREATE_CORPORATE, TL_GET_CORPORATE, TL_CORPORATES } from "../../../../../graphQL_requests"
+import {
+  GET_ALL_COMPANIES,
+  TL_CREATE_CORPORATE,
+  TL_GET_CORPORATE,
+  TL_CORPORATES,
+  TL_SET_CORPORATE_COMPANY
+} from "../../../../../graphQL_requests"
 import classes from "../TravellinePage.module.css"
 import { Btn, SectionCard } from "../shared/ui"
 
-const QA_CORPORATE_IDS = [
-  { id: "109", note: "тарифы 450787, 450799" },
-  { id: "110", note: "тарифы 450787, 450800" },
-  { id: "118", note: "тарифы 450787, 450799" },
-  { id: "119", note: "тарифы 450787, 450800" }
-]
-
 export default function CorporatesTab() {
-  const [form, setForm] = useState({ inn: "", kpp: "" })
+  const [form, setForm] = useState({ inn: "", kpp: "", companyId: "" })
   const [createError, setCreateError] = useState("")
   const [created, setCreated] = useState(null)
 
@@ -24,9 +23,23 @@ export default function CorporatesTab() {
   const [corporatesList, setCorporatesList] = useState(null)
   const [listError, setListError] = useState("")
 
+  const { data: companiesData } = useQuery(GET_ALL_COMPANIES, { fetchPolicy: "cache-first" })
+  const companies = companiesData?.getAllCompany ?? []
+
   const [createCorporate, { loading: creating }] = useMutation(TL_CREATE_CORPORATE)
+  const [setCorporateCompany] = useMutation(TL_SET_CORPORATE_COMPANY)
   const [getCorporate, { loading: looking }] = useLazyQuery(TL_GET_CORPORATE)
   const [listCorporates, { loading: listing }] = useLazyQuery(TL_CORPORATES, { fetchPolicy: "network-only" })
+
+  // ИНН выбранного юрлица подставляем в форму — TL сверяет его по реестру ФНС
+  const handlePickCompany = (companyId) => {
+    const company = companies.find((c) => c.id === companyId)
+    setForm((prev) => ({
+      ...prev,
+      companyId,
+      inn: company?.information?.inn || prev.inn
+    }))
+  }
 
   const handleCreate = async () => {
     setCreateError("")
@@ -45,14 +58,29 @@ export default function CorporatesTab() {
       setCreateError("КПП должен содержать ровно 9 цифр")
       return
     }
+    if (!form.companyId) {
+      setCreateError("Выберите юрлицо — без него корпоративный тариф не подставится в бронирование")
+      return
+    }
     try {
       const res = await createCorporate({
-        variables: { input: { inn, kpp } }
+        variables: { input: { inn, kpp, companyId: form.companyId } }
       })
       setCreated(res.data?.tlCreateCorporate)
-      setForm({ inn: "", kpp: "" })
+      setForm({ inn: "", kpp: "", companyId: "" })
+      handleList()
     } catch (err) {
       setCreateError(err.message)
+    }
+  }
+
+  const handleBind = async (corporateId, companyId) => {
+    setListError("")
+    try {
+      await setCorporateCompany({ variables: { corporateId, companyId: companyId || null } })
+      handleList()
+    } catch (err) {
+      setListError(err.message)
     }
   }
 
@@ -63,11 +91,16 @@ export default function CorporatesTab() {
       const res = await listCorporates()
       const items = res.data?.tlCorporates ?? []
       setCorporatesList(items)
-      if (items.length === 0) setListError("Нет созданных клиентов. Создайте нового или используйте тестовые ID ниже.")
+      if (items.length === 0) setListError("Нет созданных клиентов. Создайте нового в блоке ниже.")
     } catch (err) {
       setListError(err.message)
     }
   }
+
+  useEffect(() => {
+    handleList()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const handleLookup = async () => {
     setLookupError("")
@@ -85,45 +118,14 @@ export default function CorporatesTab() {
   return (
     <div className={classes.flexCol} style={{ gap: 20 }}>
 
-      <SectionCard title="Тестовые корп. клиенты QA (уже готовы к использованию)">
-        <p style={{ fontSize: 13, color: "#475569", marginBottom: 12, lineHeight: 1.5 }}>
-          В QA-среде TravelLine уже есть корпоративные клиенты, привязанные к тарифам отеля <strong>13090</strong>.
-          Используйте их ID прямо сейчас — создавать ничего не нужно.
-        </p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-          {QA_CORPORATE_IDS.map((c) => (
-            <div key={c.id} style={{
-              background: "#f0fdf4", border: "1px solid #86efac", borderRadius: 8,
-              padding: "8px 14px", display: "flex", alignItems: "center", gap: 12
-            }}>
-              <div>
-                <p style={{ fontSize: 11, color: "#64748b", margin: 0 }}>Corporate ID</p>
-                <code style={{ fontSize: 15, fontWeight: 700, color: "#0f172a" }}>{c.id}</code>
-                <p style={{ fontSize: 11, color: "#64748b", margin: "2px 0 0" }}>{c.note}</p>
-              </div>
-              <button
-                type="button"
-                onClick={() => navigator.clipboard.writeText(c.id)}
-                style={{ padding: "4px 10px", border: "1px solid #d1fae5", borderRadius: 6, background: "#fff", fontSize: 12, cursor: "pointer", color: "#475569" }}
-              >
-                Копировать
-              </button>
-            </div>
-          ))}
-        </div>
-        <p style={{ fontSize: 12, color: "#64748b", marginTop: 12, lineHeight: 1.5 }}>
-          Вкладка «Поиск и бронирование» → выберите даты → откройте отель <strong>13090</strong> → «Бронировать» →
-          выберите корп. клиента → нажмите <strong>«Обновить тарифы»</strong>.
-        </p>
-      </SectionCard>
-
       <SectionCard title="Мои корпоративные клиенты">
         <p style={{ fontSize: 13, color: "#475569", marginBottom: 12, lineHeight: 1.5 }}>
           Клиенты, созданные через эту систему. TravelLine не предоставляет API для получения полного списка,
-          поэтому здесь отображаются только те, что были созданы здесь.
+          поэтому здесь отображаются только те, что были созданы здесь. Корпоративный тариф подставляется
+          в бронирование по юрлицу, к которому привязан клиент.
         </p>
         <Btn variant="secondary" onClick={handleList} loading={listing}>
-          Загрузить список
+          Обновить список
         </Btn>
 
         {listError && (
@@ -150,10 +152,23 @@ export default function CorporatesTab() {
                     <span style={{ fontSize: 13 }}>{c.inn}</span>
                   </div>
                 )}
+                <div style={{ marginLeft: "auto", minWidth: 220 }}>
+                  <p style={{ fontSize: 11, color: "#64748b", margin: "0 0 2px" }}>Юрлицо</p>
+                  <select
+                    value={c.companyId || ""}
+                    onChange={(e) => handleBind(c.id, e.target.value)}
+                    className={classes.input}
+                  >
+                    <option value="">Не привязан</option>
+                    {companies.map((company) => (
+                      <option key={company.id} value={company.id}>{company.name}</option>
+                    ))}
+                  </select>
+                </div>
                 <button
                   type="button"
                   onClick={() => navigator.clipboard.writeText(c.id)}
-                  style={{ marginLeft: "auto", padding: "4px 10px", border: "1px solid #e2e8f0", borderRadius: 6, background: "#fff", fontSize: 12, cursor: "pointer", color: "#475569" }}
+                  style={{ padding: "4px 10px", border: "1px solid #e2e8f0", borderRadius: 6, background: "#fff", fontSize: 12, cursor: "pointer", color: "#475569" }}
                 >
                   Копировать ID
                 </button>
@@ -168,6 +183,22 @@ export default function CorporatesTab() {
           TravelLine создаёт корп. клиента по ИНН+КПП — проверяет их по реестру ФНС и возвращает <strong>Corporate ID</strong>.
           Нужны реальные ИНН и КПП существующей организации.
         </p>
+
+        <div className={classes.fieldGroup} style={{ marginBottom: 12 }}>
+          <label className={classes.fieldLabel}>Юрлицо *</label>
+          <select
+            value={form.companyId}
+            onChange={(e) => handlePickCompany(e.target.value)}
+            className={classes.input}
+          >
+            <option value="">Выберите юрлицо</option>
+            {companies.map((company) => (
+              <option key={company.id} value={company.id}>
+                {company.name}{company.information?.inn ? ` — ИНН ${company.information.inn}` : ""}
+              </option>
+            ))}
+          </select>
+        </div>
 
         <div className={classes.gridForm2} style={{ marginBottom: 12 }}>
           <div className={classes.fieldGroup}>

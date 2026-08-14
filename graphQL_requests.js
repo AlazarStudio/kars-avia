@@ -8836,6 +8836,7 @@ export const TL_CREATE_CORPORATE = gql`
       legalName
       inn
       kpp
+      companyId
       raw
     }
   }
@@ -8860,6 +8861,21 @@ export const TL_CORPORATES = gql`
       legalName
       inn
       kpp
+      companyId
+      companyName
+    }
+  }
+`;
+
+export const TL_SET_CORPORATE_COMPANY = gql`
+  mutation TlSetCorporateCompany($corporateId: ID!, $companyId: ID) {
+    tlSetCorporateCompany(corporateId: $corporateId, companyId: $companyId) {
+      id
+      legalName
+      inn
+      kpp
+      companyId
+      companyName
     }
   }
 `;

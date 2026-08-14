@@ -1,10 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useApolloClient, useLazyQuery, useMutation } from "@apollo/client";
+import { useApolloClient, useLazyQuery, useMutation, useQuery } from "@apollo/client";
 
 import {
   CREATE_TL_RESERVATION,
   GET_REQUEST,
   TL_AVAILABILITY,
+  TL_CORPORATES,
   getCookie,
   mediaSrc,
 } from "../../../../graphQL_requests";
@@ -123,6 +124,23 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
 
   useEffect(() => setGuest(initialGuest), [initialGuest]);
 
+  // Корпоративные клиенты: закрытые тарифы приходят только если предъявить их ID.
+  // Клиент привязан к юрлицу (Company), поэтому выбираем, по чьему договору селим.
+  const { data: corporatesData } = useQuery(TL_CORPORATES, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+    skip: !show,
+  });
+  const corporates = useMemo(
+    () => (corporatesData?.tlCorporates ?? []).filter((c) => c.companyId),
+    [corporatesData]
+  );
+  const [corporateId, setCorporateId] = useState("");
+
+  // Единственный корпорат подставляем сами — выбирать не из чего
+  useEffect(() => {
+    if (corporates.length === 1) setCorporateId(corporates[0].id);
+  }, [corporates]);
+
   const [
     fetchAvail,
     { data: availData, loading: availLoading, error: availError },
@@ -141,11 +159,12 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
             departure,
             adults: 1,
             childAges: [],
+            ...(corporateId ? { corporateIds: [corporateId] } : {}),
           },
         },
       });
     }
-  }, [show, property?.id, arrival, departure, fetchAvail]);
+  }, [show, property?.id, arrival, departure, corporateId, fetchAvail]);
 
   const allRates = availData?.tlAvailability?.rates ?? [];
 
@@ -274,6 +293,7 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
               : null,
             comment: guest.comment || null,
             checksum,
+            corporateId: corporateId || null,
             requestId: request?.id,
             checkInTime: selectedRate.checkInTime ?? null,
             checkOutTime: selectedRate.checkOutTime ?? null,
@@ -399,6 +419,30 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
 
         {!bookResult && (
           <>
+            {corporates.length > 0 && (
+              <div className={classes.field} style={{ marginBottom: 8 }}>
+                <label className={classes.fieldLabel}>
+                  Корпоративный договор — по нему подставляются закрытые тарифы
+                </label>
+                <select
+                  className={classes.fieldInput}
+                  value={corporateId}
+                  onChange={(e) => {
+                    setCorporateId(e.target.value);
+                    setSelectedRate(null);
+                  }}
+                  disabled={!!selectedRate}
+                >
+                  <option value="">Без корпоративного тарифа</option>
+                  {corporates.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.companyName || c.legalName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
+
             {/* Loading / error / list */}
             {availLoading ? (
               <div className={classes.loader}>
