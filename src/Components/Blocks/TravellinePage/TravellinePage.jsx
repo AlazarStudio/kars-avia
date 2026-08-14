@@ -10,7 +10,7 @@ import {
 import SyncProgressModal from "./modals/SyncProgressModal"
 import { useAuth } from "../../../AuthContext"
 import { useEffectiveAccessMenu } from "../../../hooks/useEffectiveAccessMenu"
-import { isDispatcherAdmin, isSuperAdmin } from "../../../utils/access"
+import { canAccessMenu, isSuperAdmin } from "../../../utils/access"
 import MenuDispetcher from "../MenuDispetcher/MenuDispetcher"
 import Header from "../Header/Header"
 import classes from "./TravellinePage.module.css"
@@ -100,7 +100,30 @@ export default function TravellinePage() {
     setSyncStatus(r?.data?.tlSyncCatalog)
   }
 
-  if (!user || (!isSuperAdmin(user) && !isDispatcherAdmin(user))) {
+  // Страница закрыта тем же правом, что и пункт меню: раньше здесь стояла
+  // проверка по ролям, и диспетчер без travellineMenu видел меню без пункта,
+  // но открывал раздел по прямой ссылке.
+  // ⚠️ Пока права едут, отказ не показываем: useEffectiveAccessMenu отдаёт
+  // пустой объект до ответа сервера, и делегат моргал бы «Доступ запрещён».
+  // Суперадмина это не задевает — canAccessMenu пропускает его по роли.
+  const accessLoaded = Object.keys(accessMenu || {}).length > 0
+  const allowed = canAccessMenu(accessMenu, "travellineMenu", user)
+
+  if (user && !allowed && !accessLoaded) {
+    return (
+      <div className={classes.layout}>
+        <MenuDispetcher id="travelline" user={user} accessMenu={accessMenu} />
+        <div className={classes.page}>
+          <Header>TravelLine</Header>
+          <div className={classes.root}>
+            <p>Загрузка…</p>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!user || !allowed) {
     return (
       <div className={classes.layout}>
         <MenuDispetcher id="travelline" user={user} accessMenu={accessMenu} />
