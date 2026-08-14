@@ -140,7 +140,7 @@ const DisAdminMenu = ({
           className={`${classes.alazar} ${!menuOpen ? classes.jcc : ""} ${id == "patchNotes" ? classes.menu_items__activeElem___bottom : ""} ${classes.menuLink}`}
           style={menuOpen ? {} : { padding: 0 }}
         >
-          ver 4.2.0
+          ver 4.3.0
         </Link>
         <div className={classes.alazar} style={menuOpen ? {} : { display: "none", padding: 0, flexWrap: "wrap", fontSize: "12px" }}>
           Powered by{" "}

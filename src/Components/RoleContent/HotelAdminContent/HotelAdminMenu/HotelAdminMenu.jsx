@@ -79,7 +79,7 @@ const HotelAdminMenu = ({ id, menuOpen }) => {
           className={`${classes.alazar} ${!menuOpen ? classes.jcc : ""} ${id == "patchNotes" ? classes.menu_items__activeElem___bottom : ""} ${classes.menuLink}`}
           style={menuOpen ? {} : { padding: 0 }}
         >
-          ver 4.2.0
+          ver 4.3.0
         </Link>
         <div
           className={classes.alazar}
