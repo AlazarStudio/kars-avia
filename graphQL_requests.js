@@ -1,14 +1,14 @@
 import { gql } from "@apollo/client";
 
 
-export const path = import.meta.env.VITE_PRODUCTION_PATH;
-export const server = import.meta.env.VITE_PRODUCTION_SERVER;
+// export const path = import.meta.env.VITE_PRODUCTION_PATH;
+// export const server = import.meta.env.VITE_PRODUCTION_SERVER;
 
 // export const path = import.meta.env.VITE_DEMO_PATH;
 // export const server = import.meta.env.VITE_DEMO_SERVER;
 
-// export const path = import.meta.env.VITE_DEV_PATH;
-// export const server = import.meta.env.VITE_DEV_SERVER;
+export const path = import.meta.env.VITE_DEV_PATH;
+export const server = import.meta.env.VITE_DEV_SERVER;
 
 
 export const YMAPS_KEY = import.meta.env.VITE_YMAPS_KEY;
@@ -5316,6 +5316,17 @@ export const DELETE_HOTEL_ROOM = gql`
   }
 `;
 
+// Удаление пачкой: всё или ничего — если хотя бы один id не найден,
+// бэкенд отклоняет весь запрос и не удаляет ничего.
+export const DELETE_MANY_ROOMS = gql`
+  mutation DeleteManyRooms($ids: [ID!]!) {
+    deleteManyRooms(ids: $ids) {
+      id
+      name
+    }
+  }
+`;
+
 export const DELETE_HOTEL = gql`
   mutation DeleteHotel($deleteHotelId: ID!) {
     deleteHotel(id: $deleteHotelId) {
@@ -5547,6 +5558,10 @@ export const GET_AIRLINES_UPDATE_SUBSCRIPTION = gql`
           priceApartment
           priceStudio
           priceLuxe
+          priceEconomySingle
+          priceStandardSingle
+          priceStandardDouble
+          priceDeluxe
           priceOneCategory
           priceTwoCategory
           priceThreeCategory
@@ -5781,6 +5796,10 @@ export const GET_AIRLINE_TARIFS = gql`
           priceLuxe
           priceComfort
           priceImprovedComfort
+          priceEconomySingle
+          priceStandardSingle
+          priceStandardDouble
+          priceDeluxe
           priceOneCategory
           priceTwoCategory
           priceThreeCategory
@@ -7967,6 +7986,10 @@ export const GET_ALL_TARIFFS = gql`
           priceLuxe
           priceComfort
           priceImprovedComfort
+          priceEconomySingle
+          priceStandardSingle
+          priceStandardDouble
+          priceDeluxe
           priceOneCategory
           priceTwoCategory
           priceThreeCategory
@@ -8045,6 +8068,10 @@ export const PRICE_CATEGORY_CHANGE_SUBSCRIPTION = gql`
           priceApartment
           priceStudio
           priceLuxe
+          priceEconomySingle
+          priceStandardSingle
+          priceStandardDouble
+          priceDeluxe
           priceOneCategory
           priceTwoCategory
           priceThreeCategory

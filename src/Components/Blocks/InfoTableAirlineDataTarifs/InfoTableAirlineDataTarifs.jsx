@@ -6,6 +6,7 @@ import DeleteIcon from "../../../shared/icons/DeleteIcon";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import { getContractType } from "../../../utils/airlineTariffGeography.js";
 import { appliesToLabel } from "../../../utils/airlineTariffPrices";
+import { AIRLINE_PRICE_ROWS } from "../../../utils/roomCategories";
 
 const SHOW_LIMIT = 20;
 
@@ -135,23 +136,10 @@ function InfoTableAirlineDataTarifs({
                 <div className={classes.airportListTitle}>Категории — цены</div>
                 {user?.role !== roles.hotelAdmin && (
                   <div className={classes.pricesRow}>
-                    {[
-                      { label: "Апартаменты",    value: item.prices?.priceApartment },
-                      { label: "Студия",          value: item.prices?.priceStudio },
-                      { label: "Люкс",            value: item.prices?.priceLuxe },
-                      { label: "Комфорт",          value: item.prices?.priceComfort },
-                      { label: "Улучшенный комфорт", value: item.prices?.priceImprovedComfort },
-                      { label: "Одноместный",     value: item.prices?.priceOneCategory },
-                      { label: "Двухместный",     value: item.prices?.priceTwoCategory },
-                      { label: "Трёхместный",     value: item.prices?.priceThreeCategory },
-                      { label: "Четырёхместный",  value: item.prices?.priceFourCategory },
-                      { label: "Пятиместный",     value: item.prices?.priceFiveCategory },
-                      { label: "Шестиместный",    value: item.prices?.priceSixCategory },
-                      { label: "Семиместный",     value: item.prices?.priceSevenCategory },
-                      { label: "Восьмиместный",   value: item.prices?.priceEightCategory },
-                      { label: "Девятиместный",   value: item.prices?.priceNineCategory },
-                      { label: "Десятиместный",   value: item.prices?.priceTenCategory },
-                    ]
+                    {AIRLINE_PRICE_ROWS.map(({ key, label }) => ({
+                      label,
+                      value: item.prices?.[key],
+                    }))
                       .filter(({ value }) => value !== undefined)
                       .sort((a, b) => (b.value > 0 ? 1 : 0) - (a.value > 0 ? 1 : 0))
                       .map(({ label, value }) => (

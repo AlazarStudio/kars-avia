@@ -6,21 +6,7 @@ import Button from "../../Standart/Button/Button";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import DeleteIcon from "../../../shared/icons/DeleteIcon";
 
-const categoryMap = {
-  luxe: "Люкс",
-  apartment: "Апартаменты",
-  studio: "Студия",
-  onePlace: "Одноместный",
-  twoPlace: "Двухместный",
-  threePlace: "Трехместный",
-  fourPlace: "Четырехместный",
-  fivePlace: "Пятиместный",
-  sixPlace: "Шестиместный",
-  sevenPlace: "Семиместный",
-  eightPlace: "Восьмиместный",
-  ninePlace: "Девятиместный",
-  tenPlace: "Десятиместный",
-};
+import { CATEGORY_LABELS as categoryMap } from "../../../utils/roomCategories.js";
 
 const VAT_RATE = 0.05;
 const VAT_PERCENT = Math.round(VAT_RATE * 100);

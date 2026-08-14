@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import classes from "./HotelNomerFond_tabComponent.module.css";
 import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import Filter from "../Filter/Filter";
+import Button from "../../Standart/Button/Button";
 
 import { requestsNomerFond, requestsTarifs } from "../../../requests";
 import InfoTableDataNomerFond from "../InfoTableDataNomerFond/InfoTableDataNomerFond";
@@ -15,6 +16,7 @@ import {
   GET_HOTEL_ROOMS,
   DELETE_HOTEL_ROOM,
   DELETE_HOTEL_CATEGORY,
+  DELETE_MANY_ROOMS,
   GET_HOTELS_UPDATE_SUBSCRIPTION,
   decodeJWT,
 } from "../../../../graphQL_requests.js";
@@ -23,30 +25,20 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUITextField from "../MUITextField/MUITextField.jsx";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import { useToast } from "../../../contexts/ToastContext";
+import { useDialog } from "../../../contexts/DialogContext";
+import {
+  CATEGORY_LABELS,
+  categoryLabel,
+} from "../../../utils/roomCategories.js";
+import { plural } from "../../../utils/plural.js";
 
-const CATEGORY_LABELS = {
-  onePlace: "Одноместный",
-  twoPlace: "Двухместный",
-  threePlace: "Трехместный",
-  fourPlace: "Четырехместный",
-  fivePlace: "Пятиместный",
-  sixPlace: "Шестиместный",
-  sevenPlace: "Семиместный",
-  eightPlace: "Восьмиместный",
-  ninePlace: "Девятиместный",
-  tenPlace: "Десятиместный",
-  apartment: "Апартаменты",
-  studio: "Студия",
-  luxe: "Люкс",
-};
-
-const getCategoryLabel = (category) =>
-  CATEGORY_LABELS[category] ?? category;
+const getCategoryLabel = categoryLabel;
 
 function HotelNomerFond_tabComponent({ children, id, ...props }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
   const { success, error: notifyError } = useToast();
+  const { confirm: confirmDialog } = useDialog();
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_ROOMS, {
     context: {
@@ -92,6 +84,11 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
   const [selectedNomer, setSelectedNomer] = useState({});
   const [nomerEditMode, setNomerEditMode] = useState(false);
 
+  // Режим выбора для удаления пачкой: пока выключен, экран работает как раньше.
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedRoomIds, setSelectedRoomIds] = useState(() => new Set());
+  const [deletingMany, setDeletingMany] = useState(false);
+
   const [deleteHotelRoom] = useMutation(DELETE_HOTEL_ROOM, {
     context: {
       headers: {
@@ -105,6 +102,13 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
       headers: {
         Authorization: `Bearer ${token}`,
         // 'Apollo-Require-Preflight': 'true',
+      },
+    },
+  });
+  const [deleteManyRooms] = useMutation(DELETE_MANY_ROOMS, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
       },
     },
   });
@@ -247,6 +251,59 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
     }
   };
 
+  const toggleSelectionMode = () => {
+    setSelectedRoomIds(new Set());
+    setSelectionMode((prev) => !prev);
+  };
+
+  const toggleRoomSelection = (roomId) => {
+    setSelectedRoomIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(roomId)) next.delete(roomId);
+      else next.add(roomId);
+      return next;
+    });
+  };
+
+  const toggleCategorySelection = (rooms, select) => {
+    setSelectedRoomIds((prev) => {
+      const next = new Set(prev);
+      rooms.forEach((room) => {
+        if (select) next.add(room.id);
+        else next.delete(room.id);
+      });
+      return next;
+    });
+  };
+
+  const deleteSelectedRooms = async () => {
+    const ids = [...selectedRoomIds];
+    if (!ids.length) return;
+
+    const isConfirmed = await confirmDialog(
+      `Удалить ${ids.length} ${plural(ids.length, ["номер", "номера", "номеров"])}? Действие необратимо.`
+    );
+    if (!isConfirmed) return;
+
+    setDeletingMany(true);
+    try {
+      // Мутация всё-или-ничего: частичного удаления не бывает, поэтому список
+      // очищаем только после успеха.
+      await deleteManyRooms({ variables: { ids } });
+      setSelectedRoomIds(new Set());
+      setSelectionMode(false);
+      await refetch();
+      success(
+        `Удалено ${ids.length} ${plural(ids.length, ["номер", "номера", "номеров"])}.`
+      );
+    } catch (err) {
+      console.error(err);
+      notifyError("Не удалось удалить выбранные номера.");
+    } finally {
+      setDeletingMany(false);
+    }
+  };
+
   const openDeleteComponent = (index, item) => {
     setShowDelete(true);
     setDeleteIndex({ index, item });
@@ -366,11 +423,48 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
                 onChange={handleSearchTarif}
               />
             </div>
-            <Filter
-              toggleSidebar={toggleTarifs}
-              handleChange={""}
-              buttonTitle={"Добавить номер"}
-            />
+            <div className={classes.section_actions}>
+              {selectionMode ? (
+                <>
+                  <Button
+                    onClick={deleteSelectedRooms}
+                    disabled={deletingMany || selectedRoomIds.size === 0}
+                    padding="0 18px"
+                  >
+                    {deletingMany
+                      ? "Удаление…"
+                      : `Удалить выбранные (${selectedRoomIds.size})`}
+                  </Button>
+                  <Button
+                    onClick={toggleSelectionMode}
+                    disabled={deletingMany}
+                    padding="0 18px"
+                    backgroundcolor="#fff"
+                    color="#0057C3"
+                    border="1px solid #0057C3"
+                  >
+                    Отмена
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    onClick={toggleSelectionMode}
+                    padding="0 18px"
+                    backgroundcolor="#fff"
+                    color="#0057C3"
+                    border="1px solid #0057C3"
+                  >
+                    Выбрать
+                  </Button>
+                  <Filter
+                    toggleSidebar={toggleTarifs}
+                    handleChange={""}
+                    buttonTitle={"Добавить номер"}
+                  />
+                </>
+              )}
+            </div>
           </div>
 
           <InfoTableDataNomerFond
@@ -383,6 +477,10 @@ function HotelNomerFond_tabComponent({ children, id, ...props }) {
             requests={categoryFilteredRequests}
             openDeleteComponent={openDeleteComponent}
             openDeleteNomerComponent={openDeleteNomerComponent}
+            selectionMode={selectionMode}
+            selectedIds={selectedRoomIds}
+            onToggleRoom={toggleRoomSelection}
+            onToggleCategory={toggleCategorySelection}
           />
 
           <CreateRequestNomerFond

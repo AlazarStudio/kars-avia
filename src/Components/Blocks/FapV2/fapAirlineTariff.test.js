@@ -7,13 +7,17 @@ import {
   airlinePriceToTariff,
 } from "./fapAirlineTariff.js";
 
-test("13 пар категорий отображаются на поля ценника", () => {
-  assert.equal(Object.keys(CATEGORY_TO_PRICE_FIELD).length, 13);
+// Карта пришла из utils/roomCategories.js и покрывает энум Category целиком —
+// все 19 категорий, включая «Комфорт» и четыре добавленные бэком 10.08.
+test("категории отображаются на поля ценника", () => {
+  assert.equal(Object.keys(CATEGORY_TO_PRICE_FIELD).length, 19);
   assert.equal(CATEGORY_TO_PRICE_FIELD.onePlace, "priceOneCategory");
   assert.equal(CATEGORY_TO_PRICE_FIELD.tenPlace, "priceTenCategory");
   assert.equal(CATEGORY_TO_PRICE_FIELD.luxe, "priceLuxe");
   assert.equal(CATEGORY_TO_PRICE_FIELD.apartment, "priceApartment");
   assert.equal(CATEGORY_TO_PRICE_FIELD.studio, "priceStudio");
+  assert.equal(CATEGORY_TO_PRICE_FIELD.standardDouble, "priceStandardDouble");
+  assert.equal(CATEGORY_TO_PRICE_FIELD.deluxe, "priceDeluxe");
 });
 
 test("число мест переводится в ключ категории", () => {

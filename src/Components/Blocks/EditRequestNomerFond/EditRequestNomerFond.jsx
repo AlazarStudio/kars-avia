@@ -18,6 +18,10 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+import {
+  APARTMENT_CATEGORIES,
+  ROOM_FUND_CATEGORIES,
+} from "../../../utils/roomCategories.js";
 
 function EditRequestNomerFond({
   type,
@@ -534,52 +538,6 @@ function EditRequestNomerFond({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [show, closeButton, anchorEl, isDialogOpen]);
 
-  const categories = [
-    {
-      value: "onePlace",
-      label: "Одноместный",
-    },
-    {
-      value: "twoPlace",
-      label: "Двухместный",
-    },
-    {
-      value: "threePlace",
-      label: "Трехместный",
-    },
-    {
-      value: "fourPlace",
-      label: "Четырехместный",
-    },
-    {
-      value: "fivePlace",
-      label: "Пятиместный",
-    },
-    {
-      value: "sixPlace",
-      label: "Шестиместный",
-    },
-    {
-      value: "sevenPlace",
-      label: "Семиместный",
-    },
-    {
-      value: "eightPlace",
-      label: "Восьмиместный",
-    },
-  ];
-
-  const apartmentCategories = [
-    {
-      value: "apartment",
-      label: "Апартаменты",
-    },
-    {
-      value: "studio",
-      label: "Студия",
-    },
-  ];
-
   const bedsCategories = [
     {
       value: 1.0,
@@ -615,7 +573,8 @@ function EditRequestNomerFond({
     },
   ];
 
-  const useCategories = type === "apartment" ? apartmentCategories : categories;
+  const useCategories =
+    type === "apartment" ? APARTMENT_CATEGORIES : ROOM_FUND_CATEGORIES;
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>

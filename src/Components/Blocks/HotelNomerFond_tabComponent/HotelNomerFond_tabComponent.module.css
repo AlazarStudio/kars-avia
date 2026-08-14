@@ -12,6 +12,12 @@
     gap: 20px;
 }
 
+.section_actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
 .mainSearch {
     width: 500px;
 }

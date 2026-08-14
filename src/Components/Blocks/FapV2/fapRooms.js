@@ -3,27 +3,20 @@
 // что использует группировка отчёта.
 
 import { roomKey } from "./fapGroups.js";
+import {
+  CATEGORY_STATED_PLACES,
+  categoryShortLabel,
+} from "../../../utils/roomCategories.js";
 
-// Категория «N-местный» → вместимость числом.
-const PLACE_CATEGORY_COUNT = {
-  onePlace: 1, twoPlace: 2, threePlace: 3, fourPlace: 4, fivePlace: 5,
-  sixPlace: 6, sevenPlace: 7, eightPlace: 8, ninePlace: 9, tenPlace: 10,
-};
-
-const ROOM_CATEGORY_LABEL = {
-  onePlace: "1-местный", twoPlace: "2-местный", threePlace: "3-местный",
-  fourPlace: "4-местный", fivePlace: "5-местный", sixPlace: "6-местный",
-  sevenPlace: "7-местный", eightPlace: "8-местный", ninePlace: "9-местный",
-  tenPlace: "10-местный", apartment: "Апартаменты", studio: "Студия", luxe: "Люкс",
-};
-
-export const roomCategoryLabel = (category) =>
-  ROOM_CATEGORY_LABEL[category] ?? (category || "");
+export const roomCategoryLabel = categoryShortLabel;
 
 // Вместимость номера: из категории, иначе places, иначе beds, иначе null.
+// Берём только те категории, где число мест названо в самой категории
+// («3-местный», «Стандарт дабл»). У «Люкса» и апартаментов серверные 2 места —
+// это дефолт, а не факт о номере, и places самого номера точнее.
 export const roomCapacity = (room) => {
   if (!room) return null;
-  const byCat = PLACE_CATEGORY_COUNT[room.category];
+  const byCat = CATEGORY_STATED_PLACES[room.category];
   if (byCat != null) return byCat;
   const places = Number(room.places);
   if (Number.isFinite(places) && places > 0) return places;

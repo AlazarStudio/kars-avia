@@ -7,17 +7,7 @@ import Button from "../../Standart/Button/Button";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { getCookie, UPDATE_HOTEL } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
-
-const categories = [
-  { value: "onePlace", label: "Одноместный" },
-  { value: "twoPlace", label: "Двухместный" },
-  { value: "threePlace", label: "Трехместный" },
-  { value: "fourPlace", label: "Четырехместный" },
-  { value: "fivePlace", label: "Пятиместный" },
-  { value: "sixPlace", label: "Шестиместный" },
-  { value: "sevenPlace", label: "Семиместный" },
-  { value: "eightPlace", label: "Восьмиместный" },
-];
+import { ROOM_FUND_CATEGORIES as categories } from "../../../utils/roomCategories";
 
 const bedsCategories = [
   { value: 1.0, label: "Одна кровать" },

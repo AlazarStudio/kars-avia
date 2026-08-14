@@ -8,27 +8,18 @@
  */
 
 import { geographyToRows, rowsToGeographyInput } from "./airlineTariffGeography.js";
+import { PRICE_FIELDS } from "./roomCategories.js";
 
-/** Список числовых полей цен (порядок как в формах). */
-const PRICE_FIELDS = [
-  "priceOneCategory",
-  "priceTwoCategory",
-  "priceThreeCategory",
-  "priceFourCategory",
-  "priceFiveCategory",
-  "priceSixCategory",
-  "priceSevenCategory",
-  "priceEightCategory",
-  "priceLuxe",
-  "priceApartment",
-  "priceStudio",
-  "priceComfort",
-  "priceImprovedComfort",
-  "priceNineCategory",
-  "priceTenCategory",
-];
+export { PRICE_FIELDS };
 
 const MEAL_FIELDS = ["breakfast", "dinner", "lunch"];
+
+/** Строки полей питания в формах цен (порядок отображения — исторический). */
+export const MEAL_ROWS = [
+  { key: "breakfast", title: "Завтрак" },
+  { key: "lunch", title: "Обед" },
+  { key: "dinner", title: "Ужин" },
+];
 
 /**
  * Значения бэкенд-поля AirlinePrice.contractType (энум AirlinePriceContractType).

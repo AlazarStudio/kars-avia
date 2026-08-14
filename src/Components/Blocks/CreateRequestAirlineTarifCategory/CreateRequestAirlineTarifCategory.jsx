@@ -16,6 +16,11 @@ import TariffGeographyList from "../TariffGeographyList/TariffGeographyList.jsx"
 import ContractTypeToggle from "../ContractTypeToggle/ContractTypeToggle.jsx";
 import { rowsToGeographyInput, findDuplicateGeoRow } from "../../../utils/airlineTariffGeography.js";
 import { createEmptyTariffInput, tariffInputToPayload, tariffFormToDisplayItem, PRICE_APPLIES_TO_OPTIONS, DEFAULT_APPLIES_TO, collectUsedLocations, pruneUsedSelections } from "../../../utils/airlineTariffPrices.js";
+import {
+  AIRLINE_PRICE_ROWS,
+  APARTMENT_CATEGORIES,
+  TARIF_ROOM_CATEGORIES,
+} from "../../../utils/roomCategories.js";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
 
@@ -249,53 +254,10 @@ function CreateRequestAirlineTarifCategory({
   }, [show, closeButton, isDialogOpen]);
 
 
-  const categories = [
-    {
-      value: "onePlace",
-      label: "Одноместный",
-    },
-    {
-      value: "twoPlace",
-      label: "Двухместный",
-    },
-    {
-      value: "threePlace",
-      label: "Трехместный",
-    },
-    {
-      value: "fourPlace",
-      label: "Четырехместный",
-    },
-    {
-      value: "fivePlace",
-      label: "Пятиместный",
-    },
-    {
-      value: "sixPlace",
-      label: "Шестиместный",
-    },
-    {
-      value: "sevenPlace",
-      label: "Семиместный",
-    },
-    {
-      value: "eightPlace",
-      label: "Восьмиместный",
-    },
-  ];
-
-  const apartmentCategories = [
-    {
-      value: "apartment",
-      label: "Апартаменты",
-    },
-    {
-      value: "studio",
-      label: "Студия",
-    },
-  ];
-
-  const useCategories = type === "apartment" ? apartmentCategories : categories;
+  // Списки живут в utils/roomCategories.js; сам селект категории здесь
+  // закомментирован, но копию справочника держать незачем.
+  const useCategories =
+    type === "apartment" ? APARTMENT_CATEGORIES : TARIF_ROOM_CATEGORIES;
 
   const geoHasData = rowsToGeographyInput(formData.geography).length > 0;
   const airportsHasData = (formData.airportIds?.length || 0) > 0;
@@ -451,128 +413,18 @@ function CreateRequestAirlineTarifCategory({
                 />
               )}
 
-              <label>Стоимость одноместного</label>
-              <input
-                type="number"
-                name="priceOneCategory"
-                value={formData.priceOneCategory}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-              />
-
-              <label>Стоимость двухместного</label>
-              <input
-                type="number"
-                name="priceTwoCategory"
-                value={formData.priceTwoCategory}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-              />
-
-              <label>Стоимость трехместного</label>
-              <input
-                type="number"
-                name="priceThreeCategory"
-                value={formData.priceThreeCategory}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-              />
-              <label>Стоимость четырехместного</label>
-              <input
-                type="number"
-                name="priceFourCategory"
-                value={formData.priceFourCategory}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-              />
-              <label>Стоимость пятиместного</label>
-              <input
-                type="number"
-                name="priceFiveCategory"
-                value={formData.priceFiveCategory}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-              />
-              <label>Стоимость шестиместного</label>
-              <input
-                type="number"
-                name="priceSixCategory"
-                value={formData.priceSixCategory}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-              />
-              <label>Стоимость семиместного</label>
-              <input
-                type="number"
-                name="priceSevenCategory"
-                value={formData.priceSevenCategory}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-              />
-              <label>Стоимость восьмиместного</label>
-              <input
-                type="number"
-                name="priceEightCategory"
-                value={formData.priceEightCategory}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-              />
-              <label>Стоимость девятиместного</label>
-              <input
-                type="number"
-                name="priceNineCategory"
-                value={formData.priceNineCategory}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-              />
-              <label>Стоимость десятиместного</label>
-              <input
-                type="number"
-                name="priceTenCategory"
-                value={formData.priceTenCategory}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-              />
-              <label>Стоимость люкса</label>
-              <input
-                type="number"
-                name="priceLuxe"
-                value={formData.priceLuxe}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-              />
-              <label>Стоимость комфорт</label>
-              <input
-                type="number"
-                name="priceComfort"
-                value={formData.priceComfort}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-              />
-              <label>Стоимость улучшенный комфорт</label>
-              <input
-                type="number"
-                name="priceImprovedComfort"
-                value={formData.priceImprovedComfort}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-              />
-              <label>Стоимость апартаментов</label>
-              <input
-                type="number"
-                name="priceApartment"
-                value={formData.priceApartment}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-              />
-              <label>Стоимость студии</label>
-              <input
-                type="number"
-                name="priceStudio"
-                value={formData.priceStudio}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-              />
+              {AIRLINE_PRICE_ROWS.map(({ key, title }) => (
+                <React.Fragment key={key}>
+                  <label>{title}</label>
+                  <input
+                    type="number"
+                    name={key}
+                    value={formData[key]}
+                    onChange={handleChange}
+                    placeholder="Введите стоимость"
+                  />
+                </React.Fragment>
+              ))}
               <label>Завтрак</label>
               <input
                 type="number"

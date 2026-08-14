@@ -33,6 +33,7 @@ import {
   isSuperAdmin,
 } from "../../../utils/access";
 import { normalizeAppliesTo } from "../../../utils/airlineTariffPrices";
+import { CATEGORY_LABELS, pickCategories } from "../../../utils/roomCategories";
 import { Link } from "react-router-dom";
 import ReactPaginate from "react-paginate";
 import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff";
@@ -130,28 +131,28 @@ function ExistRequest({
       time: dateObj.toISOString().split("T")[1].slice(0, 5), // HH:MM
     };
   };
-  const categoryMap = {
-    luxe: "Люкс", apartment: "Апартаменты", studio: "Студия",
-    comfort: "Комфорт", improvedComfort: "Улучшенный комфорт",
-    onePlace: "Одноместный", twoPlace: "Двухместный", threePlace: "Трёхместный",
-    fourPlace: "Четырёхместный", fivePlace: "Пятиместный", sixPlace: "Шестиместный",
-    sevenPlace: "Семиместный", eightPlace: "Восьмиместный", ninePlace: "Девятиместный",
-    tenPlace: "Десятиместный",
-  };
+  const categoryMap = CATEGORY_LABELS;
 
-  const airlinePriceFields = [
-    { key: "priceApartment", label: "Апартаменты" },
-    { key: "priceStudio", label: "Студия" },
-    { key: "priceLuxe", label: "Люкс" },
-    { key: "priceOneCategory", label: "Одноместный" },
-    { key: "priceTwoCategory", label: "Двухместный" },
-    { key: "priceThreeCategory", label: "Трёхместный" },
-    { key: "priceFourCategory", label: "Четырёхместный" },
-    { key: "priceFiveCategory", label: "Пятиместный" },
-    { key: "priceSixCategory", label: "Шестиместный" },
-    { key: "priceSevenCategory", label: "Семиместный" },
-    { key: "priceEightCategory", label: "Восьмиместный" },
-  ];
+  // Тот же набор категорий, что показывали раньше, плюс четыре добавленные
+  // бэком 10.08. «Комфорт», девяти- и десятиместные здесь не показывали и
+  // не показываем — это отдельное продуктовое решение.
+  const airlinePriceFields = pickCategories([
+    "apartment",
+    "studio",
+    "luxe",
+    "onePlace",
+    "twoPlace",
+    "threePlace",
+    "fourPlace",
+    "fivePlace",
+    "sixPlace",
+    "sevenPlace",
+    "eightPlace",
+    "economySingle",
+    "standardSingle",
+    "standardDouble",
+    "deluxe",
+  ]).map(({ priceField, label }) => ({ key: priceField, label }));
 
   const [activeTab, setActiveTab] = useState("Общая");
   const [formData, setFormData] = useState(null);

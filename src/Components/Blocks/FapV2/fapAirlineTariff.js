@@ -1,28 +1,14 @@
 // Ценник авиакомпании как источник тарифа проживания ФАП.
 // Чистый модуль: без React и без запросов.
 //
-// Категории номера ФАП (ROOM_CATEGORY_LABEL в fapRooms.js) сопоставляются с полями
-// ценника АК (PRICE_FIELDS в utils/airlineTariffPrices.js). Пар ровно 13.
-// priceComfort и priceImprovedComfort не используются: категории «Комфорт» нет
-// ни в одном справочнике номеров гостиницы.
+// Категория номера → поле ценника АК. Карта общая (utils/roomCategories.js) и
+// повторяет серверную getCategoryPriceFromContract: расхождение означало бы, что
+// фронт и бэк берут из договора разные цены за один и тот же номер.
 
 import { normalizeAppliesTo } from "../../../utils/airlineTariffPrices.js";
+import { CATEGORY_TO_PRICE_FIELD } from "../../../utils/roomCategories.js";
 
-export const CATEGORY_TO_PRICE_FIELD = {
-  onePlace: "priceOneCategory",
-  twoPlace: "priceTwoCategory",
-  threePlace: "priceThreeCategory",
-  fourPlace: "priceFourCategory",
-  fivePlace: "priceFiveCategory",
-  sixPlace: "priceSixCategory",
-  sevenPlace: "priceSevenCategory",
-  eightPlace: "priceEightCategory",
-  ninePlace: "priceNineCategory",
-  tenPlace: "priceTenCategory",
-  luxe: "priceLuxe",
-  apartment: "priceApartment",
-  studio: "priceStudio",
-};
+export { CATEGORY_TO_PRICE_FIELD };
 
 const PLACES_TO_CATEGORY = [
   null, "onePlace", "twoPlace", "threePlace", "fourPlace", "fivePlace",

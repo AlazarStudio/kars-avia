@@ -5,21 +5,9 @@ import { getMediaUrl } from "../../../../graphQL_requests";
 import classes from "./HotelAboutRoomBlock.module.css";
 import TextEditorOutput from "../TextEditorOutput/TextEditorOutput";
 
-// Код категории → вместимость («до N чел.»). Для apartment берём props.places.
-const categoryPlaces = {
-  luxe: 2,
-  studio: 2,
-  onePlace: 1,
-  twoPlace: 2,
-  threePlace: 3,
-  fourPlace: 4,
-  fivePlace: 5,
-  sixPlace: 6,
-  sevenPlace: 7,
-  eightPlace: 8,
-  ninePlace: 9,
-  tenPlace: 10,
-};
+// Код категории → вместимость («до N чел.») как запасной вариант: places
+// самого номера точнее и имеет приоритет.
+import { CATEGORY_PLACES as categoryPlaces } from "../../../utils/roomCategories.js";
 
 const declension = (number, forms) => {
   const n = Math.abs(Number(number));

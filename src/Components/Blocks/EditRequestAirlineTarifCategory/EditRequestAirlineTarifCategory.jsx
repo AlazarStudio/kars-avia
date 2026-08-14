@@ -14,7 +14,8 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import TariffGeographyList from "../TariffGeographyList/TariffGeographyList.jsx";
 import ContractTypeToggle from "../ContractTypeToggle/ContractTypeToggle.jsx";
 import { rowsToGeographyInput, findDuplicateGeoRow, getContractType } from "../../../utils/airlineTariffGeography.js";
-import { airlineTariffToInput, tariffInputToPayload, tariffFormToDisplayItem, PRICE_APPLIES_TO_OPTIONS, DEFAULT_APPLIES_TO, normalizeAppliesTo, appliesToLabel, collectUsedLocations, pruneUsedSelections } from "../../../utils/airlineTariffPrices.js";
+import { airlineTariffToInput, tariffInputToPayload, tariffFormToDisplayItem, PRICE_APPLIES_TO_OPTIONS, DEFAULT_APPLIES_TO, normalizeAppliesTo, appliesToLabel, collectUsedLocations, pruneUsedSelections, PRICE_FIELDS, MEAL_ROWS } from "../../../utils/airlineTariffPrices.js";
+import { AIRLINE_PRICE_ROWS } from "../../../utils/roomCategories.js";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
@@ -52,21 +53,7 @@ function EditRequestAirlineTarifCategory({
     name: "",
     airportIds: [],
     geography: [],
-    priceOneCategory: 0,
-    priceTwoCategory: 0,
-    priceThreeCategory: 0,
-    priceFourCategory: 0,
-    priceFiveCategory: 0,
-    priceSixCategory: 0,
-    priceSevenCategory: 0,
-    priceEightCategory: 0,
-    priceLuxe: 0,
-    priceApartment: 0,
-    priceStudio: 0,
-    priceComfort: 0,
-    priceImprovedComfort: 0,
-    priceNineCategory: 0,
-    priceTenCategory: 0,
+    ...Object.fromEntries(PRICE_FIELDS.map((field) => [field, 0])),
     breakfast: 0,
     dinner: 0,
     lunch: 0,
@@ -508,32 +495,7 @@ function EditRequestAirlineTarifCategory({
                 />
               )}
 
-              {[
-                { key: "priceOneCategory", title: "Стоимость одноместного" },
-                { key: "priceTwoCategory", title: "Стоимость двухместного" },
-                { key: "priceThreeCategory", title: "Стоимость трехместного" },
-                {
-                  key: "priceFourCategory",
-                  title: "Стоимость четырехместного",
-                },
-                { key: "priceFiveCategory", title: "Стоимость пятиместного" },
-                { key: "priceSixCategory", title: "Стоимость шестиместного" },
-                { key: "priceSevenCategory", title: "Стоимость семиместного" },
-                {
-                  key: "priceEightCategory",
-                  title: "Стоимость восьмиместного",
-                },
-                { key: "priceNineCategory", title: "Стоимость девятиместного" },
-                { key: "priceTenCategory", title: "Стоимость десятиместного" },
-                { key: "priceLuxe", title: "Стоимость люкса" },
-                { key: "priceComfort", title: "Стоимость комфорт" },
-                { key: "priceImprovedComfort", title: "Стоимость улучшенный комфорт" },
-                { key: "priceApartment", title: "Стоимость апартаментов" },
-                { key: "priceStudio", title: "Стоимость студии" },
-                { key: "breakfast", title: "Завтрак" },
-                { key: "lunch", title: "Обед" },
-                { key: "dinner", title: "Ужин" },
-              ].map(({ key, title }) => (
+              {[...AIRLINE_PRICE_ROWS, ...MEAL_ROWS].map(({ key, title }) => (
                 <div key={key} className={classes.requestDataInfo}>
                   <div className={classes.requestDataInfo_title}>{title}</div>
                   {isEditing ? (
