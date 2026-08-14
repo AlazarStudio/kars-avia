@@ -41,11 +41,14 @@ export async function parseManifestXlsx(file) {
       people: [],
       flightNumber: "",
       error:
-        "Файл не распознан как манифест (ведомость ПМ, список PNL или выгрузка PLI)",
+        "Файл не распознан как манифест (ведомость ПМ, текстовая ведомость, список PNL или выгрузка PLI)",
     };
   }
 
-  const people = extractPeople(rows, detected.profile, detected.cols);
+  // Профиль мог привести файл к таблице сам (текстовая ведомость). Дальше по
+  // файлу ходим только через source: и люди, и номер рейса читаются оттуда же.
+  const source = detected.rows ?? rows;
+  const people = extractPeople(source, detected.profile, detected.cols);
   if (!people.length) {
     return {
       people: [],
@@ -54,11 +57,11 @@ export async function parseManifestXlsx(file) {
     };
   }
 
-  const lapInfants = detected.profile.lapInfants?.(rows, detected.cols) ?? null;
+  const lapInfants = detected.profile.lapInfants?.(source, detected.cols) ?? null;
 
   return {
     people: [...people, ...expandLapInfants(lapInfants)],
-    flightNumber: detected.profile.flight(rows),
+    flightNumber: detected.profile.flight(source),
     // Отдаём и отдельно — плашка называет сопровождающих поимённо.
     lapInfants,
     error: null,

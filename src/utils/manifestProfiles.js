@@ -2,8 +2,18 @@
 // какие колонки искать, как определить строку-пассажира, категорию и номер рейса.
 // Новый формат = ещё один профиль в массиве PROFILES.
 import { s, isMark, cleanFullName, firstLine } from "./manifestCore.js";
+import { prepareFixedWidthManifest } from "./manifestFixedWidth.js";
 
 const isInt = (v) => /^\d+$/.test(s(v));
+
+// Категория по отметкам «РБ»/«РМ». Общая у ПМ и текстовой ведомости: форма одна
+// и та же, различается только доставка — таблицей или текстом.
+const markCategory = (row, c) =>
+  c.inf !== undefined && isMark(row[c.inf])
+    ? "INFANT"
+    : c.chd !== undefined && isMark(row[c.chd])
+      ? "CHILD"
+      : "ADULT";
 
 // № рейса PM — первая непустая ячейка ниже заголовка «FLIGHT …» в той же колонке
 // (пропуская русскую подпись «№ Рейса»).
@@ -84,6 +94,26 @@ const lapInfantsPLI = (rows, cols) => {
   return { count, carriers };
 };
 
+// № рейса текстовой ведомости — под заголовком «№ рейса» в блоке страницы:
+//   № рейса   № ВС     ТипВС Ст. А/п вылета   Дата  Время
+//   5N596     RA73656    738     ГЕЛЕНДЖИК    06.08 14:00
+// Режем по офсету следующего заголовка, а не по первому пробелу: номер с
+// пробелом внутри («ФВ 6346» в PNL такие уже встречались) иначе обрезался бы.
+const flightPMText = (rows) => {
+  for (const row of rows || []) {
+    for (const cell of row || []) {
+      const lines = String(cell ?? "").split(/\r?\n/);
+      const at = lines.findIndex((line) => /№\s*рейса/i.test(line));
+      if (at < 0 || at + 1 >= lines.length) continue;
+      const end = lines[at].indexOf("№ ВС");
+      const field = end > 0 ? lines[at + 1].slice(0, end) : lines[at + 1];
+      const flight = s(field).split(/\s{2,}/)[0];
+      if (flight) return s(flight);
+    }
+  }
+  return "";
+};
+
 export const PROFILES = [
   {
     id: "PM", // Пассажирская ведомость (форма ПМ)
@@ -99,12 +129,7 @@ export const PROFILES = [
     },
     required: ["sec", "name", "chd", "inf"],
     isPassenger: (row, c) => isInt(row[c.sec]),
-    category: (row, c) =>
-      c.inf !== undefined && isMark(row[c.inf])
-        ? "INFANT"
-        : c.chd !== undefined && isMark(row[c.chd])
-          ? "CHILD"
-          : "ADULT",
+    category: markCategory,
     flight: flightPM,
   },
   {
@@ -139,5 +164,22 @@ export const PROFILES = [
     readSeat: (row, c) => firstLine(row[c.seat]),
     flight: flightPLI,
     lapInfants: lapInfantsPLI,
+  },
+  {
+    id: "PM_TEXT", // Та же форма ПМ, но доставленная текстовым отчётом в одной колонке
+    // Профиль сам приводит файл к таблице: см. manifestFixedWidth.js. Порядок в
+    // массиве роли не играет — detectProfile проверяет prepare-профили первыми.
+    prepare: prepareFixedWidthManifest,
+    columns: {
+      sec: ["РЕГ"],
+      name: ["ФАМИЛИЯ"],
+      seat: ["МЕСТО"],
+      chd: ["РБ"],
+      inf: ["РМ"],
+    },
+    required: ["sec", "name", "chd", "inf"],
+    isPassenger: (row, c) => isInt(row[c.sec]),
+    category: markCategory,
+    flight: flightPMText,
   },
 ];

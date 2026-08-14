@@ -78,9 +78,8 @@ const matchRowColumns = (row, columns) => {
   return found;
 };
 
-// Детекция формата: первый профиль, у которого в некоторой строке нашлись ВСЕ
-// required-колонки. Возвращает { profile, cols, headerRow } | null.
-export const detectProfile = (rows, profiles) => {
+// Первый профиль, у которого в некоторой строке нашлись ВСЕ required-колонки.
+const findColumns = (rows, profiles) => {
   for (let r = 0; r < rows.length; r++) {
     const row = rows[r] || [];
     for (const profile of profiles) {
@@ -91,6 +90,24 @@ export const detectProfile = (rows, profiles) => {
     }
   }
   return null;
+};
+
+// Детекция формата. Возвращает { profile, cols, headerRow, rows? } | null.
+//
+// Профиль может объявить prepare и сам привести файл к таблице: текстовая
+// ведомость лежит одной колонкой, и сопоставлять в ней нечего. Такие профили
+// проверяются первыми — на сыром файле обычное сопоставление всё равно ничего не
+// найдёт. Подготовленные строки возвращаются вызывающему: по ним идут и
+// extractPeople, и чтение номера рейса.
+export const detectProfile = (rows, profiles) => {
+  for (const profile of profiles) {
+    if (!profile.prepare) continue;
+    const prepared = profile.prepare(rows);
+    if (!prepared) continue;
+    const found = findColumns(prepared, [profile]);
+    if (found) return { ...found, rows: prepared };
+  }
+  return findColumns(rows, profiles);
 };
 
 // Инфанты на руках → такие же записи, как обычные пассажиры. Своих строк в файле у

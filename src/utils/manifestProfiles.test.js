@@ -221,3 +221,75 @@ test("регресс PNL: профиль и категория ADULT не пер
     { fullName: "ИВАНОВ ИВАН", seat: "12A", personCategory: "ADULT" },
   ]);
 });
+
+// ── Текстовая пассажирская ведомость (PM_TEXT) ──
+// Формат приходит одной колонкой: в ячейке лежит кусок отчёта с фиксированной
+// шириной. Фикстура собирается по офсетам шапки, чтобы не считать пробелы руками.
+const VED_COLUMNS =
+  "ПАССАЖИРЫ (зарег)\n" +
+  "Рег  Фамилия       Пол Кл № м  РБ  РМ  Багаж  Р/кл  №№ баг.бирок  Ремарки  \n" +
+  "---------------------------------------------------------------------------";
+
+const VED_FLIGHT =
+  'Владелец или Оператор: АО "АК СМАРТАВИА"\n' +
+  "№ рейса   № ВС     ТипВС Ст. А/п вылета                         Дата  Время\n" +
+  "5N596     RA73656    738     ГЕЛЕНДЖИК                          06.08 14:00\n" +
+  "Вылет: 07.08.26 17:02";
+
+const VED_AT = { reg: 0, name: 5, sex: 19, cls: 23, seat: 28, chd: 31, inf: 35 };
+
+const vedLine = (parts) => {
+  const chars = Array(45).fill(" ");
+  for (const [key, value] of Object.entries(parts)) {
+    [...String(value)].forEach((ch, i) => {
+      chars[VED_AT[key] + i] = ch;
+    });
+  }
+  return chars.join("");
+};
+
+const VED_ROWS = [
+  ["ПАССАЖИРСКАЯ ВЕДОМОСТЬ                                   АЭРОПОРТ ГЕЛЕНДЖИК"],
+  [VED_FLIGHT],
+  [VED_COLUMNS],
+  [
+    [
+      vedLine({ reg: 1, name: "MELNIKOVA", sex: "F", cls: "Э", seat: "8D" }),
+      vedLine({ name: "IULIIA" }),
+    ].join("\n"),
+  ],
+  [
+    [
+      vedLine({ reg: 2, name: "MELNIKOV", cls: "Э", seat: "8F", chd: "X" }),
+      vedLine({ name: "MAKAR" }),
+    ].join("\n"),
+  ],
+  [
+    [
+      vedLine({ reg: 3, name: "PESTEROV", cls: "Э", inf: "X" }),
+      vedLine({ name: "VLADIMIR" }),
+    ].join("\n"),
+  ],
+];
+
+test("PM_TEXT: текстовая ведомость распознаётся и даёт людей с категориями", () => {
+  const detected = detectProfile(VED_ROWS, PROFILES);
+  assert.equal(detected.profile.id, "PM_TEXT");
+
+  const people = extractPeople(detected.rows, detected.profile, detected.cols);
+  assert.deepEqual(people, [
+    { fullName: "MELNIKOVA IULIIA", seat: "8D", personCategory: "ADULT" },
+    { fullName: "MELNIKOV MAKAR", seat: "8F", personCategory: "CHILD" },
+    { fullName: "PESTEROV VLADIMIR", seat: null, personCategory: "INFANT" },
+  ]);
+});
+
+test("PM_TEXT: номер рейса читается из блока страницы", () => {
+  const detected = detectProfile(VED_ROWS, PROFILES);
+  assert.equal(detected.profile.flight(detected.rows), "5N596");
+});
+
+test("PM_TEXT: инфанты идут своими строками, механизм lapInfants не подключается", () => {
+  const detected = detectProfile(VED_ROWS, PROFILES);
+  assert.equal(detected.profile.lapInfants, undefined);
+});
