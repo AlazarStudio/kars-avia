@@ -20,7 +20,6 @@ test("порядок секций диспетчера совпадает с т�
     "aboutAirlines",
     "reports",
     "travelline",
-    "accessManagement",
   ]);
 });
 
@@ -35,7 +34,6 @@ test("у авиакомпании скрыты автопарк и реестр 
     "aboutAirlines",
     "reports",
     "travelline",
-    "accessManagement",
   ]);
 });
 
@@ -46,7 +44,7 @@ test("defaultSectionKeys выбирает набор по типу", () => {
 });
 
 test("каждая секция описана полностью и ключи строк уникальны", () => {
-  assert.equal(ACCESS_SECTIONS.length, 12);
+  assert.equal(ACCESS_SECTIONS.length, 11);
   for (const section of ACCESS_SECTIONS) {
     assert.equal(typeof section.key, "string");
     assert.equal(typeof section.title, "string");
@@ -117,17 +115,29 @@ test("правка завершённой заявки — отдельный п
   );
 });
 
-test("новые секции описаны и показываются", () => {
+test("секция TravelLine описана одной строкой доступа", () => {
   const tl = ACCESS_SECTIONS.find((s) => s.key === "travelline");
   assert.equal(tl.title, "TravelLine");
   assert.deepEqual(tl.rows, []);
-
-  const am = ACCESS_SECTIONS.find((s) => s.key === "accessManagement");
-  assert.equal(am.title, "Управление доступами");
-  assert.equal(am.superAdminOnly, true);
 });
 
-test("секцию управления доступами видит только суперадмин", () => {
-  const restricted = ACCESS_SECTIONS.filter((s) => s.superAdminOnly).map((s) => s.key);
-  assert.deepEqual(restricted, ["accessManagement"]);
+test("управление доступами — строка внутри «Пользователей», а не своя секция", () => {
+  // Право гейтит шестерёнку отдела и кнопку «Должности и доступ» именно в этом
+  // разделе, поэтому визуально оно относится к нему.
+  assert.equal(ACCESS_SECTIONS.some((s) => s.key === "accessManagement"), false);
+
+  const users = ACCESS_SECTIONS.find((s) => s.key === "users");
+  const extra = (users.extras || []).find((e) => e.key === "manageAccess");
+  assert.ok(extra, "у секции «Пользователи» нет строки manageAccess");
+  assert.equal(extra.label, "Управление доступами");
+  assert.equal(extra.requiresAccessManage, true);
+});
+
+test("под собственным правом скрывается ровно одна строка", () => {
+  const restricted = ACCESS_SECTIONS.flatMap((s) =>
+    (s.extras || [])
+      .filter((e) => e.requiresAccessManage)
+      .map((e) => `${s.key}.${e.key}`),
+  );
+  assert.deepEqual(restricted, ["users.manageAccess"]);
 });

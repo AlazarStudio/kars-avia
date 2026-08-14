@@ -472,7 +472,7 @@ function Company({ user, accessMenu }) {
             setShowSettingsSidebar(false);
             setSelectedDepartmentForSettings(null);
           }}
-          user={user}
+          canManageAccess={canManageAccess}
           departmentId={selectedDepartmentForSettings?.id}
           departmentItem={selectedDepartmentForSettings}
           type="dispatcher"

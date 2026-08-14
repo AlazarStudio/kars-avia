@@ -106,7 +106,7 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
         ids: ["positions"],
         guardKey: "userUpdate",
         Comp: PositionAccessPage,
-        props: () => ({ user }),
+        props: () => ({ user, accessMenu: safeAccessMenu }),
       },
       {
         ids: ["updates"],

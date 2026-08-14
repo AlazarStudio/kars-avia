@@ -499,7 +499,7 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
           setShowSettingsSidebar(false);
           setSelectedDepartmentForSettings(null);
         }}
-        user={user}
+        canManageAccess={canManageAccess}
         airlineId={id}
         departmentItem={selectedDepartmentForSettings}
         type="airline"

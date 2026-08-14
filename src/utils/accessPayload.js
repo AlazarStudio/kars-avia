@@ -44,7 +44,7 @@ export const buildAccessPayload = (s) => ({
   organizationAcceptDrivers: !!s?.organization?.acceptDrivers,
 
   travellineMenu: !!s?.travelline?.access,
-  accessManage: !!s?.accessManagement?.access,
+  accessManage: !!s?.users?.manageAccess,
 });
 
 // Сид для новой должности, когда нет меню отдела: включено всё, кроме прав,

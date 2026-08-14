@@ -21,8 +21,9 @@ import DeleteIcon from "../../../shared/icons/DeleteIcon";
 import { useToast } from "../../../contexts/ToastContext";
 import { useDialog } from "../../../contexts/DialogContext";
 import { buildAccessPayload, ALL_TRUE_ACCESS } from "../../../utils/accessPayload";
+import { canAccessMenu } from "../../../utils/access";
 
-export default function PositionAccessPage({ user }) {
+export default function PositionAccessPage({ user, accessMenu }) {
   const token = getCookie("token");
   const ctx = {
     headers: { Authorization: `Bearer ${token}`, "Apollo-Require-Preflight": true },
@@ -38,6 +39,9 @@ export default function PositionAccessPage({ user }) {
   const airlineId = location.state?.airlineId || user?.airlineId;
   const seedAccessMenu = location.state?.seedAccessMenu;
   const isAirline = type === "airline";
+  // Секцию «Управление доступами» видит тот, у кого само право есть: суперадмин
+  // проходит по роли внутри canAccessMenu, делегат — по флагу.
+  const canManageAccess = canAccessMenu(accessMenu, "accessManage", user);
 
   const { data, loading, refetch } = useQuery(
     isAirline ? GET_AIRLINE_USERS_POSITIONS : GET_DISPATCHER_POSITIONS,
@@ -352,7 +356,7 @@ export default function PositionAccessPage({ user }) {
                     stateRef={panelRef}
                     isEditing={!inherit}
                     type={type}
-                    user={user}
+                    canManageAccess={canManageAccess}
                   />
                   {inherit && (
                     <div className={classes.lockOverlay}>

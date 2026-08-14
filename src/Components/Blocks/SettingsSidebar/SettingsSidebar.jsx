@@ -23,11 +23,13 @@ export default function SettingsSidebar({
   show,
   sidebarRef,
   onClose,
-  user,
   departmentId,
   airlineId,
   departmentItem,
   type = "dispatcher", // "dispatcher" или "airline"
+  // Право «Управление доступами» у текущего пользователя — считает вызывающая
+  // сторона, у неё есть его собственный accessMenu.
+  canManageAccess = false,
 }) {
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
@@ -255,7 +257,7 @@ export default function SettingsSidebar({
                   stateRef={accessStateRef}
                   isEditing={isEditing}
                   type={type}
-                  user={user}
+                  canManageAccess={canManageAccess}
                 />
               </div>
               <div style={{ display: activeTab === "notifications" ? "" : "none" }}>

@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo } from "react";
 import classes from "./SettingsSidebar.module.css";
 import MUISwitch from "../MUISwitch/MUISwitch";
 import { ACCESS_SECTIONS, defaultSectionKeys } from "./accessSections";
-import { isSuperAdmin } from "../../../utils/access";
 
 const EMPTY_MENU = {};
 
@@ -11,7 +10,10 @@ export default function AccessPermissionsPanel({
   stateRef,
   isEditing,
   type = "dispatcher",
-  user,
+  // Есть ли право «Управление доступами» у ТОГО, КТО СЕЙЧАС ПРАВИТ. Считает
+  // вызывающая сторона: панель получает accessMenu редактируемого отдела или
+  // должности, а не свой собственный.
+  canManageAccess = false,
 }) {
   const b = (v) => !!v;
 
@@ -39,6 +41,9 @@ export default function AccessPermissionsPanel({
         access: b(accessMenu?.userMenu),
         add: b(accessMenu?.userCreate),
         edit: b(accessMenu?.userUpdate),
+        // Строится всегда, даже когда её не рисуем: buildAccessPayload пишет все
+        // ключи, а accessMenu: { set } заменяет composite целиком.
+        manageAccess: b(accessMenu?.accessManage),
       },
       employees: {
         access: b(accessMenu?.personalMenu),
@@ -72,11 +77,6 @@ export default function AccessPermissionsPanel({
       travelline: {
         access: b(accessMenu?.travellineMenu),
       },
-      // Секция строится всегда, даже когда её не рисуем: buildAccessPayload
-      // пишет все ключи, а accessMenu: { set } заменяет composite целиком.
-      accessManagement: {
-        access: b(accessMenu?.accessManage),
-      },
     }),
     [accessMenu],
   );
@@ -97,16 +97,7 @@ export default function AccessPermissionsPanel({
     if (stateRef) stateRef.current = state;
   }, [state, stateRef]);
 
-  // ⚠️ Видимость решает, ЧТО рисуем и чем управляют кнопки «всё», но НЕ то, что
-  // уходит в payload: buildAccessPayload пишет все ключи, а accessMenu: { set }
-  // заменяет composite целиком, поэтому пропущенный ключ молча стал бы false.
-  const visibleSectionKeys = useMemo(() => {
-    const canSeeRestricted = isSuperAdmin(user);
-    return defaultSectionKeys(type).filter((key) => {
-      const config = ACCESS_SECTIONS.find((s) => s.key === key);
-      return canSeeRestricted || !config?.superAdminOnly;
-    });
-  }, [type, user]);
+  const visibleSectionKeys = useMemo(() => defaultSectionKeys(type), [type]);
 
   // Ключи, которыми «Взаимодействие с разделом» не управляет: они выдаются
   // отдельными переключателями, иначе право включалось бы вместе с обычной
@@ -121,6 +112,21 @@ export default function AccessPermissionsPanel({
 
   const isExtra = (section, key) => !!extraKeys[section]?.has(key);
 
+  // ⚠️⚠️ Строки, которых текущий пользователь не видит. Видимость решает, ЧТО
+  // рисуем и чего касаются каскады и кнопки «всё», но НЕ то, что уходит в
+  // payload: buildAccessPayload пишет все ключи, а accessMenu: { set } заменяет
+  // composite целиком, поэтому пропущенный ключ молча стал бы false. Диспетчер
+  // без права «Управление доступами» не должен погасить его ни «Выключить всё»,
+  // ни выключением доступа к разделу.
+  const isHidden = (section, key) => {
+    const config = ACCESS_SECTIONS.find((s) => s.key === section);
+    const extra = (config?.extras || []).find((e) => e.key === key);
+    return !!extra?.requiresAccessManage && !canManageAccess;
+  };
+
+  const visibleExtras = (config) =>
+    (config?.extras || []).filter((extra) => !isHidden(config.key, extra.key));
+
   // доступ к разделу с каскадом: выключение гасит все действия
   const setAccess = (section, value) =>
     setState((s) => ({
@@ -128,7 +134,13 @@ export default function AccessPermissionsPanel({
       [section]: Object.fromEntries(
         Object.keys(s[section]).map((k) => [
           k,
-          k === "access" ? value : value ? s[section][k] : false,
+          k === "access"
+            ? value
+            : isHidden(section, k)
+              ? s[section][k]
+              : value
+                ? s[section][k]
+                : false,
         ]),
       ),
     }));
@@ -152,19 +164,24 @@ export default function AccessPermissionsPanel({
       .every(([, v]) => !!v);
 
   const allEnabled = visibleSectionKeys.every((key) =>
-    Object.values(state[key] || {}).every((v) => v),
+    Object.entries(state[key] || {})
+      .filter(([k]) => !isHidden(key, k))
+      .every(([, v]) => v),
   );
 
-  // Кнопки «всё» проходят только по видимым секциям: иначе диспетчер, нажав
-  // «Выключить всё», снял бы accessManage, которого он даже не видит.
+  // Кнопки «всё» не трогают невидимые строки: иначе диспетчер, нажав «Выключить
+  // всё», снял бы accessManage, которого он даже не видит.
   const setAllVisible = (value) =>
     setState((s) =>
       Object.fromEntries(
         Object.keys(s).map((section) => [
           section,
-          visibleSectionKeys.includes(section)
-            ? Object.fromEntries(Object.keys(s[section]).map((k) => [k, value]))
-            : s[section],
+          Object.fromEntries(
+            Object.keys(s[section]).map((k) => [
+              k,
+              isHidden(section, k) ? s[section][k] : value,
+            ]),
+          ),
         ]),
       ),
     );
@@ -207,7 +224,7 @@ export default function AccessPermissionsPanel({
                 />
               )}
 
-              {(config.extras || []).map((extra) => (
+              {visibleExtras(config).map((extra) => (
                 <RowSwitch
                   key={extra.key}
                   classes={classes}

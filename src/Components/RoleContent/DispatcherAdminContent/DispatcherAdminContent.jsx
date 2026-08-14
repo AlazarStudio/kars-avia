@@ -112,7 +112,7 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
         ids: ["positions"],
         guardKey: "userUpdate",
         Comp: PositionAccessPage,
-        props: () => ({ user }),
+        props: () => ({ user, accessMenu: safeAccessMenu }),
       },
       { ids: ["hotels"], guardKey: null, Comp: HotelsList, props: () => ({ user }) },
       {
