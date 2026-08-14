@@ -11,12 +11,31 @@
 .menuMain {
   flex: 1 1 auto;
   min-height: 0;
-  /* overflow-y: auto; */
   overflow-x: visible;
   padding-right: 4px;
   scrollbar-width: thin;
   scrollbar-color: transparent transparent;
   transition: scrollbar-color 0.25s ease-in-out;
+}
+
+.menuMainScroll {
+  overflow-y: auto;
+}
+
+/* Свёрнутый рельс скроллится так же, но пункты рисуют тултипы абсолютом
+   вправо за пределы колонки, а overflow их обрежет. Клип идёт по padding-box —
+   поэтому выдаём тултипам место отступом справа, а ширину колонки возвращаем
+   отрицательным margin. Полосу прокрутки прячем: она встала бы правее рельса,
+   поверх контента страницы. */
+.menuMainScrollRail {
+  overflow-y: auto;
+  padding-right: 60px;
+  margin-right: -60px;
+  scrollbar-width: none;
+}
+
+.menuMainScrollRail::-webkit-scrollbar {
+  display: none;
 }
 
 .menuMain:hover {
@@ -146,10 +165,13 @@
   color: #fff;
 }
 
-/* Класс для подсказки */
+/* Класс для подсказки.
+   По вертикали держим по центру пункта: в свёрнутом рельсе колонка скроллится,
+   и подсказка, выпадающая ниже пункта, обрезалась бы на нижнем краю. */
 .tooltip {
   position: absolute;
-  top: 30px;
+  top: 50%;
+  transform: translateY(-50%);
   right: -44px;
   background-color: #4e4e4e;
   color: #fff;
@@ -356,7 +378,7 @@
 
 }
 
-@media (min-height: 0px) and (max-height: 900px) {
+@media (min-height: 0px) and (max-height: 1000px) {
   .menu_items__elem,
   .menu_items__elem___fill {
     padding: 7px 14px;

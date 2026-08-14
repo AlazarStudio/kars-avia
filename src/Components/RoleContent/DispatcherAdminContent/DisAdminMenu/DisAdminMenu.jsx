@@ -44,6 +44,7 @@ const DisAdminMenu = ({
           active: id == "airlines",
         },
         { label: "Гостиницы", to: "/hotels", icon: MenuNavIcons.hotels, active: id == "hotels" },
+        { label: "TravelLine", to: "/travelline", icon: MenuNavIcons.travelline, active: id == "travelline" },
         canAccessMenu(accessMenu, "organizationMenu", user) && {
           label: "Автопарк", to: "/driversCompany", icon: MenuNavIcons.drivers, fill: true,
           active: id == "driversCompany" || id == "driversList",
@@ -94,7 +95,7 @@ const DisAdminMenu = ({
 
   return (
     <div className={classes.menuContainer}>
-      <div className={classes.menuMain}>
+      <div className={`${classes.menuMain} ${menuOpen ? classes.menuMainScroll : classes.menuMainScrollRail}`}>
         {groups.map((group, gi) => (
           <div className={classes.group} key={group.title}>
             {menuOpen ? (

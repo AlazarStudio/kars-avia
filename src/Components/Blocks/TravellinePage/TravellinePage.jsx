@@ -2,8 +2,6 @@ import React, { useEffect, useRef, useState } from "react"
 import { useMutation, useQuery } from "@apollo/client"
 
 import {
-  GET_AIRLINE_DEPARTMENT,
-  GET_DISPATCHER_DEPARTMENTS,
   GET_TL_CONFIG,
   TL_SYNC_CATALOG,
   TL_SYNC_STATUS,
@@ -11,13 +9,10 @@ import {
 } from "../../../../graphQL_requests"
 import SyncProgressModal from "./modals/SyncProgressModal"
 import { useAuth } from "../../../AuthContext"
-import {
-  isAirlineRole as isAirlineRoleCheck,
-  isDispatcherAdmin,
-  isDispatcherRole as isDispatcherRoleCheck,
-  isSuperAdmin
-} from "../../../utils/access"
+import { useEffectiveAccessMenu } from "../../../hooks/useEffectiveAccessMenu"
+import { isDispatcherAdmin, isSuperAdmin } from "../../../utils/access"
 import MenuDispetcher from "../MenuDispetcher/MenuDispetcher"
+import Header from "../Header/Header"
 import classes from "./TravellinePage.module.css"
 import { Badge } from "./shared/ui"
 import { cn } from "./shared/helpers"
@@ -39,43 +34,7 @@ export default function TravellinePage() {
   const { user } = useAuth()
   const token = getCookie("token")
 
-  const isDispatcherRole = isDispatcherRoleCheck(user)
-  const isAirlineRole = isAirlineRoleCheck(user)
-
-  const { data: airlineDepartmentData } = useQuery(GET_AIRLINE_DEPARTMENT, {
-    context: { headers: { Authorization: `Bearer ${token}` } },
-    variables: { airlineDepartmentId: user?.airlineDepartmentId },
-    skip: !isAirlineRole || !user?.airlineDepartmentId
-  })
-
-  const { data: dispatcherDepartmentsData } = useQuery(GET_DISPATCHER_DEPARTMENTS, {
-    context: { headers: { Authorization: `Bearer ${token}` } },
-    variables: { pagination: { all: true } }
-  })
-
-  const [accessMenu, setAccessMenu] = useState({})
-
-  useEffect(() => {
-    if (isDispatcherRole) {
-      const department =
-        dispatcherDepartmentsData?.dispatcherDepartments?.departments?.find(
-          (item) => item.id === user?.dispatcherDepartmentId
-        )
-      setAccessMenu(department?.accessMenu || {})
-      return
-    }
-    if (isAirlineRole) {
-      setAccessMenu(airlineDepartmentData?.airlineDepartment?.accessMenu || {})
-      return
-    }
-    setAccessMenu({})
-  }, [
-    isDispatcherRole,
-    isAirlineRole,
-    user?.dispatcherDepartmentId,
-    dispatcherDepartmentsData,
-    airlineDepartmentData
-  ])
+  const accessMenu = useEffectiveAccessMenu(user)
 
   const { data } = useQuery(GET_TL_CONFIG, { skip: !user })
   const isConfigured = data?.tlConfig?.isConfigured
@@ -145,8 +104,11 @@ export default function TravellinePage() {
     return (
       <div className={classes.layout}>
         <MenuDispetcher id="travelline" user={user} accessMenu={accessMenu} />
-        <div className={classes.root}>
-          <p>Доступ запрещён.</p>
+        <div className={classes.page}>
+          <Header>TravelLine</Header>
+          <div className={classes.root}>
+            <p>Доступ запрещён.</p>
+          </div>
         </div>
       </div>
     )
@@ -155,15 +117,14 @@ export default function TravellinePage() {
   return (
     <div className={classes.layout}>
       <MenuDispetcher id="travelline" user={user} accessMenu={accessMenu} />
-      <div className={classes.scrollArea}>
+      <div className={classes.page}>
+        <Header>TravelLine</Header>
+        <div className={classes.scrollArea}>
         <div className={classes.root}>
           <div className={classes.headerRow}>
-            <div>
-              <h1>TravelLine Integration</h1>
-              <p className={classes.subtitle}>
-                Интеграция с Channel Manager TravelLine — получение цен и бронирование номеров
-              </p>
-            </div>
+            <p className={classes.subtitle}>
+              Интеграция с Channel Manager TravelLine — получение цен и бронирование номеров
+            </p>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               {isSuperAdmin(user) && (
                 <>
@@ -229,6 +190,7 @@ export default function TravellinePage() {
           {tab === "booking" && <SearchBookingTab />}
           {tab === "corporates" && <CorporatesTab />}
           {tab === "console" && <RawConsoleTab />}
+        </div>
         </div>
       </div>
 
