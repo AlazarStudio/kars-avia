@@ -118,7 +118,7 @@ export const menuAccess = {
   reserveMenu: true,
   reserveCreate: true,
   reserveUpdate: true,
-  reserveUpdateCompleted: true,
+  reserveUpdateCompleted: false,
 
   userMenu: true,
   userCreate: true,

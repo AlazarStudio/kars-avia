@@ -44,13 +44,16 @@ export const buildAccessPayload = (s) => ({
   organizationAcceptDrivers: !!s?.organization?.acceptDrivers,
 });
 
-// Полный набор «всё включено» — сид для новой должности, когда нет меню отдела.
+// Сид для новой должности, когда нет меню отдела: включено всё, кроме прав,
+// которые выдаются осознанно. ⚠️ Имя историческое — набор уже не сплошные true.
 export const ALL_TRUE_ACCESS = {
   requestMenu: true, requestCreate: true, requestUpdate: true, requestChat: true,
   transferMenu: true, transferCreate: true, transferUpdate: true, transferChat: true,
   personalMenu: true, personalCreate: true, personalUpdate: true,
   reserveMenu: true, reserveCreate: true, reserveUpdate: true,
-  reserveUpdateCompleted: true,
+  // Правка завершённой заявки — осознанно выдаваемое право, а не часть «полного
+  // доступа»: посев новой должности его не включает.
+  reserveUpdateCompleted: false,
   analyticsMenu: true, analyticsUpload: true,
   reportMenu: true, reportCreate: true,
   userMenu: true, userCreate: true, userUpdate: true,
