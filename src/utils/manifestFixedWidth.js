@@ -130,3 +130,57 @@ export const prepareFixedWidthManifest = (rows) => {
 
   return [...service, FIXED_WIDTH_HEADER, ...people];
 };
+
+// ── ICAO-манифест (ПАССАЖИРСКИЙ МАНИФЕСТ, ICAO ANNEX 9 APPENDIX 2) ──
+// Вторая текстовая раскладка. Строки-шапки колонок в ней нет вовсе, а строка
+// несёт ДВУХ пассажиров подряд — «место + ФИО» дважды. Снимать офсеты не с чего,
+// поэтому записи режутся по самим токенам мест: способ однозначен ровно потому,
+// что цифр внутри ФИО не бывает (проверено на обоих образцах). Заодно раскладка
+// в одну или три колонки разберётся тем же кодом.
+
+export const ICAO_HEADER = ["Место", "Фамилия"];
+
+const SEAT_TOKEN = /(?:^|\s)(\d{1,3}[A-Z])(?=\s)/g;
+
+const readIcaoRecords = (value) => {
+  const text = String(value ?? "");
+  const hits = [...text.matchAll(SEAT_TOKEN)];
+  const records = [];
+
+  for (let i = 0; i < hits.length; i++) {
+    const from = hits[i].index + hits[i][0].length;
+    const to = i + 1 < hits.length ? hits[i + 1].index : text.length;
+    const name = text.slice(from, to).trim();
+    if (name) records.push([hits[i][1], name]);
+  }
+  return records;
+};
+
+/**
+ * Строки листа → строки таблицы, либо null, если это не ICAO-манифест.
+ * Выдача устроена так же, как у ведомости: служебные строки, шапка, пассажиры.
+ */
+export const prepareIcaoManifest = (rows) => {
+  const isManifest = (rows || []).some((row) =>
+    (row || []).some((value) =>
+      /ПАССАЖИРСКИЙ\s+МАНИФЕСТ/i.test(String(value ?? ""))
+    )
+  );
+  if (!isManifest) return null;
+
+  const service = [];
+  const people = [];
+
+  for (const row of rows || []) {
+    const records = readIcaoRecords(row?.[0]);
+    if (!records.length) {
+      service.push(row);
+      continue;
+    }
+    people.push(...records);
+  }
+
+  if (!people.length) return null;
+
+  return [...service, ICAO_HEADER, ...people];
+};

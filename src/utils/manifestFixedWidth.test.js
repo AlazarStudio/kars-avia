@@ -1,6 +1,9 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { prepareFixedWidthManifest } from "./manifestFixedWidth.js";
+import {
+  prepareFixedWidthManifest,
+  prepareIcaoManifest,
+} from "./manifestFixedWidth.js";
 
 // Шапка колонок ведомости — она же источник офсетов для всего разбора.
 const COLUMNS =
@@ -88,4 +91,47 @@ test("ведомость: перенос слова склеивается вп�
 test("ведомость: чужой файл не распознаётся", () => {
   assert.equal(prepareFixedWidthManifest([["какой-то текст"], ["ещё строка"]]), null);
   assert.equal(prepareFixedWidthManifest([["Рег", "Фамилия", "РБ", "РМ"]]), null);
+});
+
+// ── ICAO-манифест: две записи в строке, шапки колонок нет ──
+const ICAO_TITLE = [
+  "                             ПАССАЖИРСКИЙ МАНИФЕСТ",
+  "                            ICAO ANNEX 9 APPENDIX 2",
+  "                                  АО РЕД ВИНГС",
+  "                             RA89143 ИН1082 10AUG26",
+].join("\n");
+
+const ICAO_SHEET = [
+  [ICAO_TITLE],
+  ["                                                                     Стр. 1 из 1"],
+  ["ОТ НОВЫЙ УРЕНГОЙ НОВЫЙ УРЕНГОЙ-РОССИЙСКАЯ ФЕДЕРАЦИЯ                .ДО СМ. НИЖЕ"],
+  ["ФАМИЛИЯ, ИМЯ"],
+  ["УФА-РОССИЙСКАЯ ФЕДЕРАЦИЯ"],
+  ["   7A ABDULIN AIRAT ISMAGILOVICH           9E AGAFONOV ALEKSANDR VASILEVICH"],
+  ["   8C ASFANDIIAROV VLADISLAV VASILEVIC     8E ASHIEV KIRILL ALEKSANDROVICH"],
+  ["   7F ZIYAPOV ILSHAT TIMERIANOVICH"],
+  ["Сформировано 11.08.26 17:11"],
+];
+
+test("ICAO: строка режется на две записи, последняя одиночная сохраняется", () => {
+  const rows = prepareIcaoManifest(ICAO_SHEET);
+
+  assert.ok(rows);
+  assert.deepEqual(rows.at(-6), ["Место", "Фамилия"]);
+  assert.deepEqual(rows.at(-5), ["7A", "ABDULIN AIRAT ISMAGILOVICH"]);
+  assert.deepEqual(rows.at(-4), ["9E", "AGAFONOV ALEKSANDR VASILEVICH"]);
+  assert.deepEqual(rows.at(-3), ["8C", "ASFANDIIAROV VLADISLAV VASILEVIC"]);
+  assert.deepEqual(rows.at(-2), ["8E", "ASHIEV KIRILL ALEKSANDROVICH"]);
+  assert.deepEqual(rows.at(-1), ["7F", "ZIYAPOV ILSHAT TIMERIANOVICH"]);
+});
+
+test("ICAO: служебные строки пассажирами не становятся", () => {
+  const rows = prepareIcaoManifest(ICAO_SHEET);
+  const people = rows.slice(rows.findIndex((row) => row[0] === "Место") + 1);
+  assert.equal(people.length, 5);
+});
+
+test("раскладки не перехватывают файлы друг друга", () => {
+  assert.equal(prepareIcaoManifest(SHEET), null);
+  assert.equal(prepareFixedWidthManifest(ICAO_SHEET), null);
 });

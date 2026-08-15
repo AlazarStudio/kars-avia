@@ -293,3 +293,41 @@ test("PM_TEXT: инфанты идут своими строками, механ
   const detected = detectProfile(VED_ROWS, PROFILES);
   assert.equal(detected.profile.lapInfants, undefined);
 });
+
+// ── ICAO-манифест (Ред Вингс) ──
+const ICAO_ROWS = [
+  [
+    [
+      "                             ПАССАЖИРСКИЙ МАНИФЕСТ",
+      "                            ICAO ANNEX 9 APPENDIX 2",
+      "                                  АО РЕД ВИНГС",
+      "                             RA89143 ИН1082 10AUG26",
+    ].join("\n"),
+  ],
+  ["ФАМИЛИЯ, ИМЯ"],
+  ["УФА-РОССИЙСКАЯ ФЕДЕРАЦИЯ"],
+  ["   7A ABDULIN AIRAT ISMAGILOVICH           9E AGAFONOV ALEKSANDR VASILEVICH"],
+  ["   7F ZIYAPOV ILSHAT TIMERIANOVICH"],
+];
+
+test("ICAO: манифест распознаётся, все пассажиры взрослые, места на местах", () => {
+  const detected = detectProfile(ICAO_ROWS, PROFILES);
+  assert.equal(detected.profile.id, "ICAO");
+
+  const people = extractPeople(detected.rows, detected.profile, detected.cols);
+  assert.deepEqual(people, [
+    { fullName: "ABDULIN AIRAT ISMAGILOVICH", seat: "7A", personCategory: "ADULT" },
+    { fullName: "AGAFONOV ALEKSANDR VASILEVICH", seat: "9E", personCategory: "ADULT" },
+    { fullName: "ZIYAPOV ILSHAT TIMERIANOVICH", seat: "7F", personCategory: "ADULT" },
+  ]);
+});
+
+test("ICAO: номер рейса берётся перед датой, а не бортовой номер", () => {
+  const detected = detectProfile(ICAO_ROWS, PROFILES);
+  assert.equal(detected.profile.flight(detected.rows), "ИН1082");
+});
+
+test("ICAO и ведомость не перехватывают файлы друг друга", () => {
+  assert.equal(detectProfile(ICAO_ROWS, PROFILES).profile.id, "ICAO");
+  assert.equal(detectProfile(VED_ROWS, PROFILES).profile.id, "PM_TEXT");
+});

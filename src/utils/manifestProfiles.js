@@ -2,7 +2,10 @@
 // какие колонки искать, как определить строку-пассажира, категорию и номер рейса.
 // Новый формат = ещё один профиль в массиве PROFILES.
 import { s, isMark, cleanFullName, firstLine } from "./manifestCore.js";
-import { prepareFixedWidthManifest } from "./manifestFixedWidth.js";
+import {
+  prepareFixedWidthManifest,
+  prepareIcaoManifest,
+} from "./manifestFixedWidth.js";
 
 const isInt = (v) => /^\d+$/.test(s(v));
 
@@ -114,6 +117,21 @@ const flightPMText = (rows) => {
   return "";
 };
 
+// № рейса ICAO-манифеста — в титульном блоке: «RA89143 ИН1082 10AUG26».
+// Берём токен ПЕРЕД датой: бортовой номер и код рейса выглядят одинаково, и
+// единственный надёжный якорь здесь — дата вида 10AUG26.
+const flightIcao = (rows) => {
+  for (const row of rows || []) {
+    for (const cell of row || []) {
+      for (const line of String(cell ?? "").split(/\r?\n/)) {
+        const found = line.match(/(\S+)\s+\d{1,2}[A-ZА-ЯЁ]{3}\d{2}\s*$/);
+        if (found) return found[1];
+      }
+    }
+  }
+  return "";
+};
+
 export const PROFILES = [
   {
     id: "PM", // Пассажирская ведомость (форма ПМ)
@@ -181,5 +199,21 @@ export const PROFILES = [
     isPassenger: (row, c) => isInt(row[c.sec]),
     category: markCategory,
     flight: flightPMText,
+  },
+  {
+    id: "ICAO", // ПАССАЖИРСКИЙ МАНИФЕСТ по ICAO ANNEX 9 APPENDIX 2
+    prepare: prepareIcaoManifest,
+    columns: {
+      seat: ["МЕСТО"],
+      name: ["ФАМИЛИЯ"],
+    },
+    required: ["name", "seat"],
+    // Признак — форма МЕСТА, а не непустое ФИО: иначе строкой-пассажиром стала бы
+    // сама синтетическая шапка, у которой в колонке ФИО стоит слово «Фамилия».
+    isPassenger: (row, c) => /^\d{1,3}[A-Z]$/.test(s(row[c.seat])),
+    // Возрастной категории в этом манифесте нет вовсе — ни колонки, ни отметки,
+    // поэтому все пассажиры взрослые. Это отсутствие источника, а не решение.
+    category: () => "ADULT",
+    flight: flightIcao,
   },
 ];
