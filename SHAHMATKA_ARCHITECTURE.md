@@ -1,561 +1,356 @@
-# Архитектура компонента шахматки размещения (NewPlacement)
+# Архитектура шахматки размещения (PlacementDNDV2)
 
-> **Версия:** документ описывает шахматку **v1** — `src/Components/PlacementDND/` (`NewPlacement`, `Timeline`, `RoomRow`, `DraggableRequest`, `EditRequestModal`, `ConfirmBookingModal`, `AddPassengersModal`).
-> Текущий модуль — **v2**: `src/Components/PlacementDNDV2/` (`TimelineV2`, `RoomRowV2`, `DraggableRequestV2`, `EditRequestModalV2`, данные через `hooks/usePlacementData.js`, утилиты в `utils/placementFilters|placementPositions|placementOverlap|placementTransforms`).
-> Архитектурные принципы (DnD-поток, виртуализация, подписки, расчёт пересечений и позиций) совпадают; имена файлов и часть структуры — нет.
+> **Версия:** документ описывает **v2** — `src/Components/PlacementDNDV2/`, актуальный модуль (проверено по коду 2026-08-17).
+> v1 (`src/Components/PlacementDND/`) недостижим из маршрутов, но всё ещё статически импортируется из `src/App.jsx:23` и `HotelShahmatka_tabComponent.jsx:7` — жив только лист `EditReserveDate` (через `ReservePlacementRepresentative`).
+> Известные дефекты, мёртвый код и инварианты, которые нельзя ломать при рефакторинге: `docs/superpowers/2026-08-17-placement-v2-frontend-study.md`.
 
 ## Обзор
 
-Компонент `NewPlacement` представляет собой интерактивную систему управления размещением гостей в номерах отеля с визуализацией в виде шахматки (timeline-календаря). Система поддерживает drag-and-drop операции, реальное время обновлений через GraphQL подписки и виртуализацию для производительности.
+Шахматка — timeline-календарь размещения экипажей и пассажиров резерва по номерам гостиницы. Строки — номера, колонки — дни месяца, плашки — брони. Перетаскивание меняет **номер и койку**; даты меняются только ручками resize по краям плашки. Обновления приходят через GraphQL-подписки, список номеров виртуализован.
+
+Размер: 3 273 строки в 14 файлах, из них `NewPlacementV2.jsx` — 1 701 (52 %).
 
 ---
 
-## Основные технологии и библиотеки
+## Точки входа
 
-### 1. **React** (v18.2.0)
-- Основной фреймворк для UI
-- Используются хуки: `useState`, `useEffect`, `useMemo`, `useRef`, `useCallback`
+| Где | Пропсы | Живая |
+|---|---|---|
+| `src/Components/Blocks/HotelShahmatka_tabComponent/HotelShahmatka_tabComponent.jsx:252` | `idHotelInfo`, `searchQuery`, `user`, `accessMenu` | да, боевая |
+| `src/App.jsx:215` — `/newPlacementV2/:idHotel` | **нет ни одного** | зарегистрирован, но ни на что не ссылается |
 
-### 2. **@dnd-kit/core** (v6.1.0)
-- Библиотека для drag-and-drop функциональности
-- Компоненты:
-  - `DndContext` - контекст для управления перетаскиванием
-  - `DragOverlay` - визуальное отображение перетаскиваемого элемента
-  - `useDraggable` - хук для элементов, которые можно перетаскивать
-  - `useDroppable` - хук для зон, куда можно бросать элементы
+Таб лениво грузится из четырёх RoleContent-оболочек: `SuperAdminHotelContent`, `DisAdminHotelContent`, `HotelAdminHotelContent`, `TransferAdminOrders` (последняя без импортеров).
 
-### 3. **react-window** (v1.8.11)
-- Виртуализация списка комнат для оптимизации производительности
-- `VariableSizeList` - список с переменной высотой элементов
-- Позволяет рендерить только видимые элементы при большом количестве комнат
-
-### 4. **@apollo/client** (v3.11.8)
-- GraphQL клиент для работы с API
-- Используется для:
-  - `useQuery` - получение данных (комнаты, бронирования, заявки)
-  - `useMutation` - обновление данных (бронирования, заявки)
-  - `useSubscription` - подписки на изменения в реальном времени
-
-### 5. **date-fns** (v4.1.0)
-- Работа с датами
-- Функции: `startOfMonth`, `endOfMonth`, `eachDayOfInterval`, `differenceInDays`, `isWithinInterval`, `format`, `isToday`, `isWeekend`
-
-### 6. **@mui/material** (v6.1.10)
-- UI компоненты Material-UI
-- Используется: `Box`, `Typography`, `Tooltip`, `Dialog`, `Button`, `TextField`, `IconButton`
-
-### 7. **react-router-dom** (v6.22.1)
-- Маршрутизация
-- `useParams` - получение параметров URL (idHotel, requestId)
-- `useNavigate` - программная навигация
+`hotelId = idHotelInfo ?? useParams().idHotel`. `requestId` берётся из `useParams` и приходит только с маршрута `/hotels/:hotelID/:requestId` — он включает 4-секундное мигание плашки и `scrollToItem(roomIndex, "center")`.
 
 ---
 
-## Структура компонентов
+## Технологии
 
-### Главный компонент: `NewPlacement.jsx`
+| Библиотека | Что делает здесь |
+|---|---|
+| `@dnd-kit/core` | `DndContext`, `DragOverlay`, `useDraggable`, `useDroppable`. **Сенсоры не заданы** → дефолтные Pointer + Keyboard без activation constraint, поэтому drag стартует на любом pointerdown и click-vs-drag разруливается вручную |
+| `react-window` | `VariableSizeList` — виртуализация строк номеров |
+| `@apollo/client` | 6 `useQuery` + 4 `useSubscription` в хуке, 2 `useMutation` в оркестраторе |
+| `date-fns` | `startOfMonth`, `endOfMonth`, `eachDayOfInterval`, `differenceInMilliseconds`, `isWithinInterval`, `isToday`, `isWeekend`, `format` + локаль `ru` |
+| `@mui/material` | `Box`, `Typography`, `Tooltip`, `Dialog`, `Button`, `TextField`, `IconButton` |
+
+---
+
+## Структура
 
 ```
-NewPlacement
-├── Timeline (верхняя панель с календарем)
-├── VariableSizeList (виртуализированный список комнат)
-│   └── RoomRow (строка комнаты)
-│       └── DraggableRequest (перетаскиваемая заявка)
-├── Sidebar (боковая панель с заявками)
-│   └── DraggableRequest (новые заявки для размещения)
-├── DragOverlay (визуализация перетаскивания)
-└── Модальные окна:
-    ├── EditRequestModal (редактирование заявки)
-    ├── ConfirmBookingModal (подтверждение бронирования)
-    ├── AddPassengersModal (добавление пассажиров)
-    └── EditRequestNomerFond (редактирование номера)
+PlacementDNDV2/
+├── NewPlacementV2.jsx              1701  оркестратор
+├── components/
+│   ├── TimelineV2.jsx               198  липкая шапка: Квота/Резерв, месяц, полоса дней
+│   ├── RoomRowV2.jsx                191  строка номера: фон дней + плашки + дроп-зоны
+│   ├── DraggableRequestV2.jsx       728  плашка: 4 режима, drag, resize, портальный тултип
+│   ├── EditRequestModalV2.jsx        91  правка дат
+│   ├── ConfirmBookingModalV2.jsx     33  подтверждение брони
+│   ├── AddPassengersModalV2.jsx     284  пассажир/сотрудник в резерв
+│   ├── TimelineV2.module.css         26
+│   └── DraggableRequestV2.module.css  6
+├── hooks/
+│   └── usePlacementData.js          437  весь слой данных
+└── utils/
+    ├── placementTransforms.js       102  сервер → «карточка размещения»
+    ├── placementFilters.js           70  поиск + сборка filteredRooms
+    ├── placementOverlap.js           63  две проверки пересечений
+    └── placementPositions.js          4  выбор свободной койки
+```
+
+Дерево рендера:
+
+```
+NewPlacementV2
+└── DndContext
+    ├── TimelineV2                       (sticky, зависит от dayWidth)
+    ├── VariableSizeList                 (itemSize = 50 * room.places)
+    │   └── [строка] ячейка имени номера (220px, инлайн ~120 строк JSX)
+    │       └── RoomRowV2
+    │           ├── ячейки дней (фон: выходной/сегодня/неактивен/подсветка)
+    │           ├── DraggableRequestV2 × N (absolute: left, top, width)
+    │           └── дроп-зоны × room.places (id `${roomId}-${position}`)
+    ├── правая панель: Квота | Резерв | детали резерва
+    └── DragOverlay → DraggableRequestV2 (isOverlay)
+модалки (смонтированы всегда): EditRequestModalV2, AddPassengersModalV2,
+ConfirmBookingModalV2, ExistRequest (за accessMenu-гейтом),
+AddNewPassengerPlacement, ExistReserveMess; EditRequestNomerFond — по флагу
 ```
 
 ---
 
-## Детальная структура компонентов
+## Модель данных
 
-### 1. **Timeline** (`Timeline.jsx`)
-**Назначение:** Верхняя панель с календарем месяца
+`placementTransforms.js` сводит две серверные формы к одной плоской записи.
 
-**Функциональность:**
-- Отображение дней месяца
-- Навигация по месяцам (предыдущий/следующий)
-- Подсветка выходных дней
-- Подсветка текущего дня
-- Переключение режимов: "Квота" / "Резерв"
-- Hover-эффекты для дней
+| | `mapHotelChessToRequest` | `mapRequestToPlacement` |
+|---|---|---|
+| источник | `hotel.hotelChesses` (`GET_BRONS_HOTEL`) | `requests.requests` (`GET_REQUESTS`) |
+| `id` | `chess.id` | `` `pending-${request.id}` `` |
+| `room` | объект `{id, name, category, places, active, reserve}` | **нет** |
+| `position` | `chess.place - 1` | **нет** |
+| `status` | `translateStatus(...)` | литерал `"Ожидает"` |
+| `requestID` | `request.id` **или** `reserve.id` | `request.id` |
+| `isRequest` | `Boolean(chess.request)` | `true` |
 
-**Пропсы:**
-- `currentMonth` - текущий месяц
-- `setCurrentMonth` - функция изменения месяца
-- `dayWidth` - ширина одного дня (40px)
-- `weekendColor`, `monthColor` - цвета для стилизации
-- `leftWidth` - ширина левой колонки (220px)
+Инварианты, которые легко сломать по незнанию:
 
----
-
-### 2. **RoomRow** (`RoomRow.jsx`)
-**Назначение:** Строка одной комнаты в шахматке
-
-**Функциональность:**
-- Отображение дней месяца как ячеек
-- Создание droppable зон для каждой позиции в комнате (для двухместных комнат)
-- Рендеринг заявок (`DraggableRequest`) в соответствующих позициях
-- Подсветка дат при перетаскивании
-- Обработка hover-событий
-
-**Ключевые особенности:**
-- Для двухместных комнат создается несколько droppable зон (по количеству мест)
-- Каждая зона имеет ID вида: `${room.roomId}-${position}`
-- Высота строки зависит от типа комнаты: `50px * room.type`
-
-**Пропсы:**
-- `room` - объект комнаты
-- `requests` - массив заявок для этой комнаты
-- `dayWidth` - ширина одного дня
-- `currentMonth` - текущий месяц
-- `isDraggingGlobal` - глобальное состояние перетаскивания
-- `activeDragItem` - перетаскиваемый элемент
-- `highlightedDatesOld` - подсвеченные даты
-
----
-
-### 3. **DraggableRequest** (`DraggableRequest.jsx`)
-**Назначение:** Перетаскиваемая заявка/бронирование
-
-**Функциональность:**
-- Drag-and-drop через `useDraggable`
-- Позиционирование на timeline по датам заезда/выезда
-- Изменение размера (resize) через ручки слева/справа
-- Отображение информации о госте, авиакомпании, статусе
-- Тултип с детальной информацией при hover
-- Анимация мерцания для целевой заявки (если передан `requestId`)
-- Разные цвета в зависимости от статуса
-
-**Статусы и цвета:**
-- "Забронирован" - зеленый (#4caf50)
-- "Продлен" - синий (#2196f3)
-- "Сокращен" - красный (#f44336)
-- "Перенесен" - оранжевый (#ff9800)
-- "Ранний заезд" - фиолетовый (#9575cd)
-- "Архив" - темно-зеленый (#3b653d)
-- "Готов к архиву" - серо-синий (#638ea4)
-- "Ожидает" - серый с анимацией мерцания
-
-**Позиционирование:**
-```javascript
-left = (checkIn - startOfMonth) * dayWidth
-width = (checkOut - checkIn) * dayWidth
-top = position * 50px (для многоместных комнат)
-```
-
-**Пропсы:**
-- `request` - объект заявки
-- `dayWidth` - ширина одного дня
-- `currentMonth` - текущий месяц
-- `position` - позиция в комнате (0, 1, 2...)
-- `onUpdateRequest` - callback для обновления заявки
-- `onOpenModal` - открытие модального окна редактирования
-- `isDraggingGlobal` - глобальное состояние перетаскивания
-
----
-
-### 4. **EditRequestModal** (`EditRequestModal.jsx`)
-**Назначение:** Модальное окно для редактирования дат заезда/выезда
-
-**Функциональность:**
-- Изменение даты и времени заезда
-- Изменение даты и времени выезда
-- Валидация (выезд не может быть раньше заезда)
-- Автоматическое определение статуса при изменении дат
-
----
-
-### 5. **ConfirmBookingModal** (`ConfirmBookingModal.jsx`)
-**Назначение:** Подтверждение бронирования новой заявки
-
-**Функциональность:**
-- Отображение информации о госте и датах
-- Подтверждение или отмена бронирования
+- **`mapRooms` инвертирует имена:** `room.id` — человекочитаемое **имя** номера, `room.roomId` — id в БД. В домене заявок `req.room.id` — это **id в БД**.
+- **`place` на бэке 1-based, `position` на фронте 0-based.**
+- **`request.room` полиморфен:** объект у серверных строк, **голая строка-id** у оптимистично вставленных при дропе (`NewPlacementV2.jsx:275`).
+- **Даты живут в «UTC-цифрах»:** читаются через `new Date(x).toISOString().split("T")`, пишутся обратно приклеиванием `Z`. Остальное приложение форматирует через `convertToDate` (московское время).
+- **Сортировка `mapRooms`** (reserve → численно по имени) выживает **только** как tiebreak стабильной сортировки внутри корзин `buildFilteredRooms` (reserve → вместимость).
 
 ---
 
 ## Поток данных
 
-### 1. Загрузка данных
+```
+hotelId + token (cookie)
+  ├─ GET_HOTEL_MIN      (cache-and-network, skip !hotelId)  → hotelInfo → airportId
+  ├─ GET_HOTEL_ROOMS    (cache-and-network)                 → mapRooms → rooms
+  ├─ GET_BRONS_HOTEL    (network-only, hcPagination: месяц) → mapHotelChessToRequest → requests
+  ├─ GET_REQUESTS       (skip до airportId; take 500;
+  │                      status ["created","opened"])       → newRequests   (правая панель «Квота»)
+  ├─ GET_RESERVE_REQUESTS (skip до airportId; take 500)     → requestsReserves («Резерв»)
+  └─ [openReserveId] GET_RESERVE_REQUEST
+                     GET_RESERVE_REQUEST_HOTELS            → newReservePassangers
 
-```javascript
-// Комнаты отеля
-GET_HOTEL_ROOMS (hotelId) → rooms
-
-// Бронирования отеля (шахматка)
-GET_BRONS_HOTEL (hotelId, dateRange) → hotelChesses → requests
-
-// Новые заявки для размещения
-GET_REQUESTS (status: ["created", "opened"]) → filtered by city → newRequests
-
-// Резервы
-GET_RESERVE_REQUESTS → filtered by city → requestsReserves
+requests → filterRequestsBySearch(searchQuery, границы месяца) → filteredRequests
+        → buildFilteredRooms(rooms, filteredRequests, searchQuery) → filteredRooms
+        → VariableSizeList
 ```
 
-### 2. Подписки (real-time обновления)
+**Хук не даёт Apollo управлять UI:** каждый результат запроса копируется в `useState` через `useEffect`.
 
-```javascript
-// Создание новой заявки
-REQUEST_CREATED_SUBSCRIPTION → добавляется в newRequests
+**Заявки и резервы матчатся с гостиницей по `airport.id`, а не по названию города** — фильтрация серверная, через `pagination.airportId`.
 
-// Обновление заявки
-REQUEST_UPDATED_SUBSCRIPTION → обновляется в requests
+Мутации:
 
-// Обновление резерва
-REQUEST_RESERVE_UPDATED_SUBSCRIPTION → обновление резервов
+| Мутация | Когда | Что шлёт |
+|---|---|---|
+| `UPDATE_HOTEL_BRON` | дроп в номер / подтверждение брони | `updateHotelId` + `input.hotelChesses[0]` |
+| `UPDATE_REQUEST_RELAY` | сохранение дат из `EditRequestModalV2` | `updateRequestId` + `input {arrival, departure, status}` |
 
-// Изменение пассажиров в резерве
-GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS_PLACEMENT → обновление пассажиров
-```
-
-### 3. Мутации (изменение данных)
-
-```javascript
-// Обновление бронирования (перемещение, изменение позиции)
-UPDATE_HOTEL_BRON (hotelId, hotelChesses) → обновление на сервере
-
-// Обновление заявки (изменение дат, статуса)
-UPDATE_REQUEST_RELAY (requestId, input) → обновление на сервере
-```
+Обе объявлены без `optimisticResponse`, без `refetchQueries` и без `update`; серверная правда возвращается общим `onCompleted → refetchBrons() + bronRefetch()`.
 
 ---
 
-## Логика Drag-and-Drop
+## Подписки
 
-### Процесс перетаскивания:
+Четыре подписки без переменных: `REQUEST_CREATED_SUBSCRIPTION`, `REQUEST_UPDATED_SUBSCRIPTION`, `REQUEST_RESERVE_UPDATED_SUBSCRIPTION`, `GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS_PLACEMENT`.
 
-1. **handleDragStart** (начало перетаскивания)
-   - Определяется перетаскиваемый элемент (`activeDragItem`)
-   - Подсвечиваются даты заявки
-   - Устанавливается `isDraggingGlobal = true`
+**Все `onData` игнорируют payload и просто зовут `bronRefetch()`** (у `requestCreated` дополнительно `refetchBrons()`). Код, который патчил стейт из payload, и фильтры по отелю/аэропорту закомментированы (`usePlacementData.js:139-192`), поэтому `mapUpdatedRequestFromSubscription` жив только внутри комментария. Практическое следствие: изменение любой заявки в системе вызывает `network-only` перезапрос доски.
 
-2. **handleDragEnd** (окончание перетаскивания)
-   - Определяется целевая зона (`over.id` формата `ROOM123-2`)
-   - Парсится `targetRoomId` и `targetPosition`
-   - Выполняются проверки:
-     - Комната активна?
-     - Есть свободные позиции?
-     - Нет пересечений с другими заявками?
-   - Выполняется мутация `UPDATE_HOTEL_BRON`
-
-### Сценарии перетаскивания:
-
-#### 1. Новая заявка → Комната
-- Проверка доступных позиций
-- Создание нового бронирования
-- Открытие модального окна подтверждения
-
-#### 2. Существующая заявка → Другая комната
-- Проверка пересечений
-- Поиск свободной позиции
-- Обновление `roomId` и `place`
-
-#### 3. Существующая заявка → Та же комната, другая позиция
-- Проверка занятости позиции
-- Обновление только `place`
-
-#### 4. Существующая заявка → Та же комната, та же позиция
-- Ничего не происходит
+Исключение — `reservePersons`: её payload дополнительно дописывает новые карточки пассажиров в `newReservePassangers` (дедуп по `personID`) и вызывает `refetchHotelReserveOne()`.
 
 ---
 
-## Алгоритм проверки пересечений
+## Геометрия
 
-```javascript
-function isOverlap(updatedRequest) {
-  // 1. Фильтруем заявки в той же комнате
-  const roomRequests = requests.filter(
-    req => req.room?.id === updatedRequest.room.id
-  );
-  
-  // 2. Проверяем пересечение интервалов
-  return roomRequests.some(otherRequest => {
-    // Пропускаем саму заявку
-    if (otherRequest.id === updatedRequest.id) return false;
-    
-    // Пропускаем разные позиции
-    if (otherRequest.position !== updatedRequest.position) return false;
-    
-    // Проверяем пересечение дат
-    const otherStart = new Date(`${otherRequest.checkInDate}T${otherRequest.checkInTime}`);
-    const otherEnd = new Date(`${otherRequest.checkOutDate}T${otherRequest.checkOutTime}`);
-    const updatedStart = new Date(`${updatedRequest.checkInDate}T${updatedRequest.checkInTime}`);
-    const updatedEnd = new Date(`${updatedRequest.checkOutDate}T${updatedRequest.checkOutTime}`);
-    
-    // Пересечение есть, если интервалы не разделены
-    return !(otherEnd <= updatedStart || otherStart >= updatedEnd);
-  });
-}
+```
+dayWidth   = containerRef.offsetWidth / daysInMonth.length     // ResizeObserver
+rowHeight  = 50 * room.type                                    // room.type = room.places
+droppable  = { id: `${roomId}-${position}`, top: position * 50, height: 50 }
+bar.left   = (checkIn  - startOfMonth(currentMonth)) / 86400000 * dayWidth
+bar.width  = (checkOut - checkIn)                    / 86400000 * dayWidth
+bar.top    = position * 50 + 2
+bar.height = status === "Ожидает" ? 65 : 45
 ```
 
+- `DAY_WIDTH = 40` — **только** начальное значение стейта и масштаб карточек в правой панели; сетка работает на измеренной ширине.
+- **Горизонтального скролла нет:** кастомный `outerElementType` сбрасывает `scrollLeft` в 0 на каждом событии скролла и ставит `overflowX: hidden` (`NewPlacementV2.jsx:881-897`). Колонка имён не уезжает потому, что уехать некуда.
+- **Шапка и тело выравниваются общим скаляром `dayWidth`**, а не синхронизацией скролла. `TimelineV2:120` при этом хардкодит `calc(100% - 228px)` = `LEFT_WIDTH` (220) + 8 px скроллбара из `src/index.css:143`.
+- **Высота строки не реагирует на пересечения.** Две заявки с одинаковым `position` и пересекающимися датами рисуются друг на друге; пересечение только предотвращается при дропе/резайзе, но никогда не разрешается укладкой в полосы.
+
 ---
 
-## Виртуализация списка комнат
+## Drag-and-drop
 
-### Проблема:
-При большом количестве комнат (100+) рендеринг всех строк одновременно приводит к проблемам производительности.
+`over.id` формата `` `${roomId}-${position}` `` разбирается в `handleDragEnd` через `over.id.split("-")`. **Горизонтальная координата дропа не читается никогда** — DnD меняет только номер и койку.
 
-### Решение:
-Использование `react-window` с `VariableSizeList`:
+Шесть веток `handleDragEnd`:
 
-```javascript
+| Ветка | Условие | Действие |
+|---|---|---|
+| A | `!currentRoom` — любой элемент из правой панели | занять нижнюю свободную койку, оптимистично вставить строку (`room` = строка), открыть `ConfirmBookingModalV2`. Мутации ещё нет |
+| B | тот же номер, другая койка | своя инлайновая проверка занятости → `UPDATE_HOTEL_BRON` с `status: "done"` |
+| C1 | `newRequests.includes(...)` | **недостижима** |
+| C2 | `newReservePassangers.includes(...)` | **недостижима** |
+| C3 | другой номер | требует `targetRoom.active`; **игнорирует койку, на которую целились** — берёт нижнюю свободную; `UPDATE_HOTEL_BRON` без `status` |
+| C4 | `room?.id === targetRoomId` внутри C | **недостижима** (перехвачено веткой B) |
+
+C1/C2 недостижимы, потому что попасть в них можно только при истинном `currentRoom`, а ни `mapRequestToPlacement`, ни маппер пассажиров резерва не выставляют `room`. **В этих мёртвых ветках лежит единственная проверка `targetRoom.active` для неразмещённых заявок** — при рефакторинге её надо перенести, а не удалить.
+
+`onDragCancel` не объявлен: Escape, resize окна и `visibilitychange` не очищают `isDraggingGlobal` / `activeDragItem` / `highlightedDatesOld`.
+
+Правка дат идёт отдельным треком, мимо dnd-kit: ручка → нативные `document` mousemove/mouseup → `deltaDays = Math.round(deltaX / dayWidth)` → `handleResize` (живой предпросмотр через `onUpdateRequest`) → на mouseup открывается `EditRequestModalV2` → `handleSaveChanges` → `UPDATE_REQUEST_RELAY`.
+
+---
+
+## Проверка пересечений
+
+Две функции в `placementOverlap.js`, **намеренно не взаимозаменяемые**:
+
+```js
+// валидирует правку: та же комната И ТА ЖЕ КОЙКА
+hasOverlap({ requests, updatedRequest })
+
+// выдаёт множество занятых койек: та же комната, КОЙКА ИГНОРИРУЕТСЯ
+getOverlappingRequests({ requests, targetRoomId, draggedRequest })
+```
+
+Интервалы полуоткрытые `[in, out)` — выезд и заезд в один момент разрешены осознанно. `hasOverlap` нормализует и объектный, и строковый `room`; `getOverlappingRequests` матчит только `req.room?.id`.
+
+Выбор койки — целиком `placementPositions.js`:
+
+```js
+export const getAvailablePosition = (roomType, occupiedPositions) => {
+  const maxPositions = Array.from({ length: roomType }, (_, i) => i);
+  return maxPositions.find((pos) => !occupiedPositions.includes(pos));
+};
+```
+
+Возвращает `undefined` при заполненности, а `0` — валидная койка. Все четыре вызывающих корректно пишут `=== undefined`; проверка на falsy молча забракует койку 0.
+
+---
+
+## Виртуализация
+
+```jsx
 <VariableSizeList
   ref={listRef}
+  outerElementType={ListOuterElement}   // сбрасывает scrollLeft в 0
   itemCount={filteredRooms.length}
-  itemSize={getRoomHeight}  // Динамическая высота
-  itemKey={itemKey}          // Уникальный ключ
+  itemSize={getRoomHeight}              // 50 * room.type
+  itemKey={itemKey}                     // room.roomId
   width="100%"
-  height={530}               // Высота контейнера
-  overscanCount={5}          // Рендерить +5 элементов вне видимости
+  height={/* 6-ветвевой тернарник по роли и window.innerHeight */}
+  overscanCount={5}
+  style={{ overflowY: "scroll", overflowX: "hidden" }}
 >
-  {({ index, style }) => <RoomRow ... />}
-</VariableSizeList>
 ```
 
-**Преимущества:**
-- Рендерится только видимые элементы + небольшой буфер
-- Плавная прокрутка даже при 1000+ комнатах
-- Экономия памяти
+`resetAfterIndex(0, true)` вызывается при смене `filteredRooms`, при смене месяца, на старте и на конце перетаскивания. `itemData` не используется — рендерер строки пересоздаётся каждый рендер.
 
 ---
 
 ## Режимы работы
 
-### 1. Режим "Квота" (`checkRoomsType = false`)
-- Отображаются заявки типа `isRequest = true`
-- Показываются новые заявки из `newRequests`
-- Фильтрация по городу отеля
+Тумблер «Квота» / «Резерв» живёт в `TimelineV2` (собственный `activeButton` + колбэк в родительский `checkRoomsType`).
 
-### 2. Режим "Резерв" (`checkRoomsType = true`)
-- Отображаются заявки типа `isRequest = false`
-- Показываются резервы из `requestsReserves`
-- Возможность открытия детальной информации о резерве
-- Добавление пассажиров из резерва
+| Режим | Правая панель | Плашки |
+|---|---|---|
+| Квота (`false`) | «Заявки по эскадрильи в городе …» из `newRequests` | `isRequest === true` в полную непрозрачность, остальные — `opacity 0.3` без ручек |
+| Резерв (`true`) | «Заявки по пассажирам» из `requestsReserves`; по клику — панель деталей резерва с пассажирами | наоборот |
 
 ---
 
 ## Фильтрация и поиск
 
-### Фильтрация заявок:
-```javascript
-filteredRequests = requests.filter(request => 
-  // Поиск по тексту
-  request.guest?.toLowerCase().includes(searchQuery) ||
-  request.room?.name?.toLowerCase().includes(searchQuery) ||
-  request.requestID.toLowerCase().includes(searchQuery) ||
-  request.airline?.name.toLowerCase().includes(searchQuery)
-  &&
-  // В пределах текущего месяца
-  isWithinInterval(request.checkInDate, { start, end }) ||
-  isWithinInterval(request.checkOutDate, { start, end })
-)
-```
+`filterRequestsBySearch` — **при пустом `searchQuery` возвращает `requests` как есть** (фильтр по месяцу пропускается; окно и так задано запросом). При непустом — текстовый матч по `guest`, `guestPosition`, `room.name`, `requestID`, `airline.name` **И** пересечение с текущим месяцем.
 
-### Фильтрация комнат:
-```javascript
-filteredRooms = rooms.filter(room =>
-  // Комната содержит отфильтрованные заявки
-  filteredRequests.some(req => req.room?.id === room.roomId) ||
-  // Или название комнаты совпадает с поиском
-  room.id.toLowerCase().includes(searchQuery)
-)
+`buildFilteredRooms` — раскладывает заявки по `Map` (ключ `req.room?.id`), отбрасывает номера без совпадений, вешает на каждый `room.requests` и сортирует: сначала не-резервные, затем по вместимости. Приклеенный `room.requests` рендером **не используется** — строка заново фильтрует `filteredRequests` полным проходом (`NewPlacementV2.jsx:1213`); массив нужен только для дип-линка.
+
+---
+
+## Состояние
+
+25 `useState` в `NewPlacementV2`, по смыслу:
+
+```js
+// данные приходят из usePlacementData (requests, newRequests, rooms, hotelInfo, …)
+currentMonth                                   // окно: и запрос, и сетка
+checkRoomsType                                 // Квота / Резерв
+activeDragItem, activeDragItemOld, isDraggingGlobal, highlightedDatesOld, isClick
+isModalOpen, editableRequest, originalRequest  // правка дат
+isConfirmModalOpen, selectedRequest            // подтверждение брони
+showEditNomer, selectedNomer                   // EditRequestNomerFond
+showRequestSidebar, selectedRequestID          // ExistRequest
+showReserveInfo, openReserveId, showModalForAddHotelInReserve,
+showCreateSidebarReserveOne, showChooseHotels, showRequestSidebarMess,
+isAddPassengersModalOpen                       // ветка резерва
+notifications                                  // собственная очередь тостов
+hasInitialLoadCompleted                        // лоадер показывается только один раз
+dayWidthLength, hoveredDayInMonth, hoveredRoom
 ```
 
 ---
 
-## Управление состоянием
+## Права доступа
 
-### Основные состояния:
+- `canAccessMenu(accessMenu, "requestMenu", user)` — **единственный живой гейт**, монтирует `ExistRequest` (`NewPlacementV2.jsx:1609`). SUPERADMIN проходит по короткому замыканию роли.
+- `getDispatcherAccess(accessMenu, "requestChat" | "requestUpdate", user)` — трёхзначные флаги (`undefined` для не-диспетчеров), пробрасываются в `ExistRequest`, где читаются через `??` как «мнения диспетчера нет, применяй правило авиакомпании».
+- `hotelInfo?.access` + `user?.hotelId` — гейт ручек resize и списка заявок в правой панели.
+- `room.active` — неактивный номер красится серым; блокировка дропа работает только в ветке C3.
+- `user?.role === roles.hotelAdmin` — используется **только** для подбора пиксельных высот; `HOTELMODERATOR` не покрыт ни одной веткой.
 
-```javascript
-// Данные
-const [rooms, setRooms] = useState([])              // Комнаты отеля
-const [requests, setRequests] = useState([])          // Бронирования в шахматке
-const [newRequests, setNewRequests] = useState([])   // Новые заявки для размещения
-const [hotelInfo, setHotelInfo] = useState(null)     // Информация об отеле
-
-// UI состояние
-const [currentMonth, setCurrentMonth] = useState()    // Текущий месяц
-const [isDraggingGlobal, setIsDraggingGlobal] = useState(false)
-const [activeDragItem, setActiveDragItem] = useState(null)
-const [highlightedDatesOld, setHighlightedDatesOld] = useState([])
-
-// Модальные окна
-const [isModalOpen, setIsModalOpen] = useState(false)
-const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false)
-const [editableRequest, setEditableRequest] = useState(null)
-
-// Режимы
-const [checkRoomsType, setCheckRoomsType] = useState(false)  // Квота/Резерв
-```
+**`accessMenu` доходит не везде:** дальше по цепочке его передаёт только `DispatcherAdminContent.jsx:159`. `SuperAdminContent`, `HotelAdminContent`, `RepresentativeAdminContent` и голый маршрут отдают `undefined`, и `HotelPage` подставляет дефолт `{}`.
 
 ---
 
-## Оптимизации производительности
+## Константы и магические числа
 
-### 1. **useMemo для вычислений**
-```javascript
-const filteredRequests = useMemo(() => {
-  // Тяжелые вычисления фильтрации
-}, [requests, searchQuery, currentMonth]);
-
-const filteredRooms = useMemo(() => {
-  // Фильтрация и сортировка комнат
-}, [rooms, filteredRequests, searchQuery]);
+```js
+const DAY_WIDTH = 40;              // начальное значение / масштаб правой панели
+const LEFT_WIDTH = 220;            // колонка имён номеров
+const WEEKEND_COLOR = "#efefef";
+const MONTH_COLOR = "#ddd";        // передаётся двум детям, не читается никем
 ```
 
-### 2. **React.memo для компонентов**
-- `RoomRow` обернут в `memo()` для предотвращения лишних ререндеров
-- `Timeline` обернут в `memo()`
+Не вынесены и продублированы: `50` (высота койки — 5 мест в 3 файлах), `228` в `TimelineV2` (= 220 + 8 px скроллбара), `86400000`, высоты списка `610/530/460/420/390`, высоты лоадера `82vh/75vh/83vh/68vh`, таймаут тоста `5300` (= 5000 из `Notification` + 300 на анимацию выхода).
 
-### 3. **Виртуализация списка**
-- Использование `react-window` для больших списков
+Цвета статусов (`DraggableRequestV2.jsx:52-71`, ключи — **русские** строки после `translateStatus`):
 
-### 4. **Условный рендеринг**
-- Компоненты рендерятся только при необходимости
-- Модальные окна монтируются только при открытии
+| Статус | Фон | Рамка |
+|---|---|---|
+| Забронирован | `#4caf50` | `#388e3c` |
+| Продлен | `#2196f3` | `#1976d2` |
+| Сокращен | `#f44336` | `#d32f2f` |
+| Перенесен | `#ff9800` | `#e9831a` |
+| Ранний заезд | `#9575cd` | `#865ecc` |
+| Архив | `#3b653d` | `#1b5e20` |
+| Готов к архиву | `#638ea4` | `#78909c` |
+| прочее («Ожидает», «Неизвестно») | `#fff` | `#E4E4EF` |
+
+⚠ `translateStatus` расходится с проектным `src/roles.js`: `done` → «Забронирован» здесь и «Размещен» там.
 
 ---
 
-## Обработка ошибок
+## Ошибки и уведомления
 
-### Уведомления:
-```javascript
-const addNotification = (text, status) => {
-  // status: "success" | "error" | "info"
-  // Автоматическое удаление через 5.3 секунды
-}
-```
+Модуль **не использует** глобальный `ToastContext` — у него своя очередь (`NewPlacementV2.jsx:796-805`) поверх `src/Components/Notification/Notification.jsx`, с хардкодом 5300 мс.
 
-### Типичные ошибки:
-- "Все позиции заняты в этой комнате!"
-- "Комната не активна!"
-- "Место занято в комнате!"
-- "Эту заявку нельзя перемещать, так как она в архиве"
-- "Изменение заявки недопустимо: пересечение с другой заявкой!"
+Тексты (17 штук), основные:
+
+- «Целевая комната не определена!» / «Текущая или целевая комната не найдена»
+- «Все позиции заняты в этой комнате!» / «Место занято в комнате!»
+- «Комната не активна!»
+- «Эту заявку нельзя перемещать, так как она в архиве»
+- «Изменение заявки недопустимо: пересечение с другой заявкой!»
+- «Бронь успешно добавлена» / «Бронь успешно перемещена» / «Заявка перемещена в комнату N»
+
+Ни один `useQuery` в модуле не деструктурирует `error`. `ErrorBoundary` в проекте отсутствует.
 
 ---
 
-## Интеграция с другими компонентами
+## Связанные компоненты
 
-### Связанные компоненты:
-
-1. **ExistRequest** - детальная информация о заявке
-2. **ExistReserveMess** - сообщения по резерву
-3. **AddNewPassengerPlacement** - добавление нового размещения из резерва
-4. **EditRequestNomerFond** - редактирование номера фонда
-5. **AddPassengersModal** - добавление пассажиров в резерв
-
----
-
-## Особенности реализации
-
-### 1. **Автоматический скролл к заявке**
-```javascript
-// Если передан requestId в URL, автоматически скроллится к нужной комнате
-useEffect(() => {
-  if (roomIndex >= 0 && listRef.current) {
-    listRef.current.scrollToItem(roomIndex, "center");
-  }
-}, [roomIndex, requestId]);
-```
-
-### 2. **Динамическая ширина дней**
-```javascript
-// Ширина дня вычисляется на основе ширины контейнера
-useEffect(() => {
-  const updateDayWidth = () => {
-    const containerWidth = containerRef.current.offsetWidth;
-    const newDayWidth = containerWidth / daysInMonth.length;
-    setDayWidthLength(newDayWidth);
-  };
-  // Используется ResizeObserver для отслеживания изменений
-}, [daysInMonth]);
-```
-
-### 3. **Подсветка при перетаскивании**
-- При начале перетаскивания подсвечиваются даты заявки
-- При наведении на комнату подсвечиваются даты перетаскиваемой заявки
-
-### 4. **Мерцание целевой заявки**
-- Если в URL есть `requestId`, соответствующая заявка мерцает 4 секунды
-- Используется CSS анимация `blinkBackground`
+| Компонент | Роль |
+|---|---|
+| `Blocks/ExistRequest` | карточка заявки (за `requestMenu`-гейтом) |
+| `Blocks/ExistReserveMess` | чат по резерву |
+| `Blocks/AddNewPassengerPlacement` | добавление гостиницы в резерв |
+| `Blocks/EditRequestNomerFond` | правка номера по клику на имя |
+| `Blocks/MUILoader` | лоадер первой загрузки |
+| `Components/Notification` | всплывающие уведомления |
 
 ---
 
-## Граф зависимостей данных
+## Известные расхождения с конвенциями репозитория
 
-```
-GET_HOTEL_MIN
-    ↓
-hotelInfo (city, access, id)
-    ↓
-GET_REQUESTS (filter by city)
-    ↓
-newRequests
+Перечислены здесь, чтобы не воспроизводить их в новом коде: у `NewPlacementV2.jsx` нет CSS-модуля (100 % инлайн `sx`), тосты переизобретены вместо `useToast`, `useDialog`/`MUIConfirm`/`MUIAlert` не используются (в `EditRequestModalV2` — нативный `alert()`), кнопки в диалогах — сырой MUI вместо `Standart/Button`, иконки — MUI вместо `src/shared/icons`, тестов нет.
 
-GET_BRONS_HOTEL (hotelId, dateRange)
-    ↓
-requests (hotelChesses)
-
-GET_HOTEL_ROOMS (hotelId)
-    ↓
-rooms
-
-GET_RESERVE_REQUESTS
-    ↓
-requestsReserves (filter by city)
-    ↓
-handleOpenReserveInfo
-    ↓
-GET_RESERVE_REQUEST_HOTELS
-    ↓
-newReservePassangers
-```
-
----
-
-## Константы
-
-```javascript
-const DAY_WIDTH = 40;              // Ширина одного дня в пикселях
-const LEFT_WIDTH = 220;            // Ширина левой колонки с названиями комнат
-const WEEKEND_COLOR = "#efefef";   // Цвет выходных дней
-const MONTH_COLOR = "#ddd";        // Цвет границ месяцев
-```
-
----
-
-## Безопасность и права доступа
-
-### Проверки доступа:
-- `hotelInfo?.access` - доступ к редактированию отеля
-- `user?.hotelId` - проверка принадлежности отеля пользователю
-- `user?.role` - роль пользователя (hotelAdmin, superAdmin, etc.)
-- `room.active` - активность комнаты
-
-### Ограничения:
-- Заявки в архиве нельзя перемещать (кроме superAdmin)
-- Неактивные комнаты нельзя использовать для размещения
-- Редактирование доступно только при наличии прав
-
----
-
-## Заключение
-
-Компонент `NewPlacement` представляет собой сложную систему управления размещением с:
-- Интерактивным drag-and-drop интерфейсом
-- Real-time обновлениями через GraphQL подписки
-- Оптимизацией производительности через виртуализацию
-- Гибкой системой фильтрации и поиска
-- Поддержкой различных режимов работы (Квота/Резерв)
-- Интеграцией с множеством связанных компонентов
-
-Архитектура построена на современных React-практиках с использованием специализированных библиотек для каждой задачи.
+Полный перечень дефектов, дубликатов и мёртвого кода с якорями `файл:строка` — в `docs/superpowers/2026-08-17-placement-v2-frontend-study.md`.

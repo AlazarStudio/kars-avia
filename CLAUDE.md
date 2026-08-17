@@ -210,12 +210,13 @@ Main_Page (запрашивает GET_AUTH_USER_ACCESS / GET_DISPATCHER_DEPARTME
 
 ```
 requestMenu, requestCreate, requestUpdate, requestChat
-reserveMenu, reserveCreate, reserveUpdate
+reserveMenu, reserveCreate, reserveUpdate, reserveUpdateCompleted
 userMenu, userCreate, userUpdate
 personalMenu, personalCreate, personalUpdate
 analyticsMenu
 airlineMenu, airlineUpdate, airlineContracts
 reportMenu, reportCreate
+travellineMenu, accessManage
 ```
 
 ## Настройки доступа отдела (SettingsSidebar)
@@ -243,7 +244,8 @@ reportMenu, reportCreate
 - Drag-and-drop заявок по номерам и датам (`@dnd-kit/core`)
 - Виртуализация строк номеров (`react-window`, `VariableSizeList`)
 - Real-time обновления через GraphQL subscriptions
-- Документация архитектуры: `SHAHMATKA_ARCHITECTURE.md` — описывает **v1** (`PlacementDND/`): принципы (DnD, виртуализация, подписки) актуальны, имена компонентов — нет
+- Документация архитектуры: `SHAHMATKA_ARCHITECTURE.md` — описывает **v2** (актуален на 2026-08-17)
+- Разбор фронта с якорями `файл:строка`, известные дефекты, мёртвый код и инварианты, которые нельзя ломать: `docs/superpowers/2026-08-17-placement-v2-frontend-study.md`
 
 ## Статусы заявок
 
