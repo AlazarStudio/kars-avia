@@ -25,6 +25,7 @@ import {
 } from "../../../../../graphQL_requests";
 import { calculateCostDaysByDuration } from "../../../../utils/effectiveCostDays";
 import { getPersonDays } from "../fapPersonDays.js";
+import { tariffNameKey, findTariffByName } from "../fapTariffNames.js";
 import { hotelReportSubmittedAt, isHotelReportSubmitted } from "../fapReportAccess";
 import { hotelOverbookedBy, livingNameCollisions } from "../fapLivingMismatch";
 import HotelCapacityDialog from "../HotelCapacityDialog/HotelCapacityDialog";
@@ -1165,11 +1166,14 @@ export default function FapHotelPage({
     const priceKey = (r) =>
       [toNum(r.breakfast), toNum(r.lunch), toNum(r.dinner), toNum(r.foodCost), toNum(r.accommodationCost ?? r.legacyFlatAccommodation)].join("|");
 
+    // Имена сравниваем приведёнными с ОБЕИХ сторон: в карточке гостиницы название
+    // вида номера бывает с хвостовым пробелом, а в строке отчёта оно обрезано —
+    // строгое сравнение не находило совпадения и заводило тариф-двойник.
     const matchHotelTariff = (row) => {
       const rowName = [row.roomCategory, row.roomKind].filter(Boolean).join(" / ");
       return (
-        hotelTariffs.find((ht) => ht.name === rowName) ||
-        airlineTariffs.find((at) => at.name === rowName) ||
+        findTariffByName(hotelTariffs, rowName) ||
+        findTariffByName(airlineTariffs, rowName) ||
         null
       );
     };
@@ -1180,11 +1184,11 @@ export default function FapHotelPage({
       const byName = new Map();
       // Тарифы гостиницы не дублируем.
       const isHotelName = (nm) =>
-        hotelTariffs.some((ht) => ht.name === nm) ||
-        airlineTariffs.some((at) => at.name === nm);
+        Boolean(findTariffByName(hotelTariffs, nm) || findTariffByName(airlineTariffs, nm));
       const ensureShell = (nm, r) => {
-        if (!byName.has(nm)) {
-          byName.set(nm, {
+        const key = tariffNameKey(nm);
+        if (!byName.has(key)) {
+          byName.set(key, {
             ...newTariff(false),
             name: nm,
             breakfast: toNum(r.breakfast),
@@ -1195,7 +1199,7 @@ export default function FapHotelPage({
             placementPrices: [],
           });
         }
-        return byName.get(nm);
+        return byName.get(key);
       };
       // 1a) Теневые строки (пустой fullName) — единственный авторитетный источник
       //     таблицы цен по видам и meal-полей тарифа.
@@ -1207,7 +1211,7 @@ export default function FapHotelPage({
       savedRows.forEach((r) => {
         const nm = (r.tariffName ?? "").trim();
         if (!nm || (r.fullName ?? "").trim()) return;
-        const at = airlineTariffs.find((a) => a.name === nm);
+        const at = findTariffByName(airlineTariffs, nm);
         if (at) {
           nextAirlineOverrides[at.id] = {
             billingMode: (r.roomKind ?? "") === "PER_ROOM" ? "PER_ROOM" : "PER_BED",
@@ -1217,7 +1221,7 @@ export default function FapHotelPage({
         }
         // Теневая строка тарифа гостиницы несёт только цену ланчбокса — она уходит
         // в оверлей; пользовательским тарифом такая строка не становится (как у АК).
-        const ht = hotelTariffs.find((h) => h.name === nm);
+        const ht = findTariffByName(hotelTariffs, nm);
         if (ht) {
           nextHotelOverrides[ht.id] = { lunchboxPrice: toNum(r.lunchboxPrice) };
           return;
@@ -1261,7 +1265,7 @@ export default function FapHotelPage({
         if (!hasName) return;
         if (matchHotelTariff(r)) return;
         const legacyName = [r.roomCategory, legacyRoomKind].filter(Boolean).join(" / ") || "";
-        if (byName.has(legacyName)) return;
+        if (byName.has(tariffNameKey(legacyName))) return;
 
         const k = priceKey(r);
         if (!tariffByKey.has(k)) {
@@ -1307,9 +1311,9 @@ export default function FapHotelPage({
         const nm = (row.tariffName ?? "").trim();
         const t =
           (nm &&
-            (hotelTariffs.find((ht) => ht.name === nm) ||
-              airlineTariffs.find((at) => at.name === nm) ||
-              restored.find((tt) => tt.name === nm))) ||
+            (findTariffByName(hotelTariffs, nm) ||
+              findTariffByName(airlineTariffs, nm) ||
+              findTariffByName(restored, nm))) ||
           matchHotelTariff(row) ||
           restored.find((tt) => priceKey(tt) === k);
         data[idx] = {
