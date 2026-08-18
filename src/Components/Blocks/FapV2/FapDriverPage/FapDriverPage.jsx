@@ -20,6 +20,7 @@ import PersonBadge from "../PersonBadge/PersonBadge";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
 import CatalogPickerModal, { personKey } from "../CatalogPickerModal/CatalogPickerModal";
 import { driverFactCount } from "../fapTransferFact";
+import { canManageServicePeople } from "../fapEditAccess";
 import FapActionButton from "../FapActionButton/FapActionButton";
 import FapSelect from "../FapSelect/FapSelect";
 import FapHeaderActions from "../FapHeaderActions/FapHeaderActions";
@@ -383,6 +384,8 @@ export default function FapDriverPage({
   const remainingSlots = cap > 0 ? cap - placed : null;
   const isCancelled = service?.status === "CANCELLED";
   const isCompleted = service?.status === "COMPLETED" || isCancelled;
+  // Состав поездки ведут и после завершения — правило в fapEditAccess.
+  const canManagePeople = canManageServicePeople(service, canEdit);
 
   // Открыть пикер с предвыбранными жильцами привязанной гостиницы (в пределах свободных мест).
   const openResidentsPicker = () => {
@@ -1150,7 +1153,7 @@ export default function FapDriverPage({
                 />
               </div>
               <span style={{ flex: 1 }} />
-              {canEdit && !isCompleted && !adding && (
+              {canManagePeople && !adding && (
                 <button
                   type="button"
                   className={classes.primaryBtn}
@@ -1171,7 +1174,7 @@ export default function FapDriverPage({
                     : "Добавить пассажира"}
                 </button>
               )}
-              {canEdit && !isCompleted && personMode !== "CREW" && savedPassengers.length > 0 && (
+              {canManagePeople && personMode !== "CREW" && savedPassengers.length > 0 && (
                 <button
                   type="button"
                   className={classes.primaryBtn}
@@ -1184,8 +1187,7 @@ export default function FapDriverPage({
                   <PlusSvg color={color} /> Из реестра
                 </button>
               )}
-              {canEdit &&
-                !isCompleted &&
+              {canManagePeople &&
                 !addDisabled &&
                 personMode !== "CREW" &&
                 linkedHotel &&
@@ -1201,7 +1203,7 @@ export default function FapDriverPage({
                     {residentCandidates.length})
                   </button>
                 )}
-              {canEdit && !isCompleted && personMode === "CREW" && availableCrew.length > 0 && (
+              {canManagePeople && personMode === "CREW" && availableCrew.length > 0 && (
                 <button
                   type="button"
                   className={classes.primaryBtn}

@@ -27,3 +27,21 @@ export const canEditCompletedRequest = (accessMenu, user) =>
 export const isRequestEditLocked = (request, accessMenu, user) =>
   isRequestCancelled(request) ||
   (isRequestCompleted(request) && !canEditCompletedRequest(accessMenu, user));
+
+/**
+ * Можно ли вести поимённый состав поездки (пассажиры водителя трансфера).
+ *
+ * Завершение услуги состав НЕ запирает. Услуга завершается сама, как только
+ * факт добит числом «перевезено N» (факт = max(список, transportedCount)),
+ * а поимённый список после этого как раз и дозаполняют — иначе диспетчер
+ * оказывается заперт на странице, которая сама зовёт «вести состав поимённо».
+ *
+ * Это уже действующее правило услуги, а не послабление: удаление и правка
+ * пассажира на завершённой поездке и так открыты, а денежные поля водителя
+ * заперты только отменой (FapTransferPage.jsx).
+ *
+ * Отмена запирает всегда. Защита завершённой ЗАЯВКИ живёт выше, в canEdit
+ * страницы, — через isRequestEditLocked.
+ */
+export const canManageServicePeople = (service, canEdit) =>
+  Boolean(canEdit) && service?.status !== "CANCELLED";

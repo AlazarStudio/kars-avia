@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { canEditCompletedRequest, isRequestEditLocked } from "./fapEditAccess.js";
+import {
+  canEditCompletedRequest,
+  canManageServicePeople,
+  isRequestEditLocked,
+} from "./fapEditAccess.js";
 
 const DISPATCHER = { role: "DISPATCHERADMIN" };
 const SUPER = { role: "SUPERADMIN" };
@@ -54,4 +58,36 @@ test("незавершённые статусы правило не трогае
 test("пока заявка грузится, экран не запирается", () => {
   // request пуст при loading; true запер бы экран у всех заявок подряд
   assert.equal(isRequestEditLocked(undefined, WITHOUT, DISPATCHER), false);
+});
+
+// ── Состав поездки: завершение услуги его не запирает ──
+// Услуга завершается сама, как только факт добит числом «перевезено N»,
+// и поимённый список после этого дозаполняют.
+test("завершённая услуга состав не запирает", () => {
+  assert.equal(canManageServicePeople({ status: "COMPLETED" }, true), true);
+});
+
+test("отменённая услуга состав запирает", () => {
+  assert.equal(canManageServicePeople({ status: "CANCELLED" }, true), false);
+});
+
+test("без права на правку состав закрыт при любом статусе услуги", () => {
+  for (const status of ["NEW", "ACCEPTED", "IN_PROGRESS", "COMPLETED", "CANCELLED"]) {
+    assert.equal(
+      canManageServicePeople({ status }, false),
+      false,
+      `статус ${status} не должен открываться без canEdit`,
+    );
+  }
+});
+
+test("рабочие статусы услуги состав не трогают", () => {
+  for (const status of ["NEW", "ACCEPTED", "IN_PROGRESS"]) {
+    assert.equal(canManageServicePeople({ status }, true), true, `статус ${status}`);
+  }
+});
+
+test("услуга ещё не загружена — состав не запираем", () => {
+  // service приходит undefined на первом рендере; false спрятал бы кнопки на загрузке
+  assert.equal(canManageServicePeople(undefined, true), true);
 });
