@@ -533,17 +533,19 @@ function HotelSettings_tabComponent({ id }) {
                     className={classes.fieldInput}
                   />
                 </div>
-                <div className={classes.fieldRow}>
-                  <span className={classes.fieldLabel}>Рейтинг</span>
-                  <StarRatingFilter
-                    value={hotel.stars || ""}
-                    onChange={(val) =>
-                      handleChange({ target: { name: "stars", value: val } })
-                    }
-                    disabled={user?.hotelId ? true : !isEditing}
-                    width="420px"
-                  />
-                </div>
+                {!user?.hotelId && (
+                  <div className={classes.fieldRow}>
+                    <span className={classes.fieldLabel}>Рейтинг</span>
+                    <StarRatingFilter
+                      value={hotel.stars || ""}
+                      onChange={(val) =>
+                        handleChange({ target: { name: "stars", value: val } })
+                      }
+                      disabled={user?.hotelId ? true : !isEditing}
+                      width="420px"
+                    />
+                  </div>
+                )}
                 <div className={classes.fieldRow}>
                   <span className={classes.fieldLabel}>Звёздность</span>
                   <StarRatingFilter
@@ -555,17 +557,19 @@ function HotelSettings_tabComponent({ id }) {
                     width="420px"
                   />
                 </div>
-                <div className={classes.fieldRow}>
-                  <span className={classes.fieldLabel}>Скидка</span>
-                  <input
-                    type="text"
-                    name="discount"
-                    value={hotel.discount || ""}
-                    onChange={handleChange}
-                    disabled={user?.hotelId ? true : !isEditing}
-                    className={classes.fieldInput}
-                  />
-                </div>
+                {!user?.hotelId && (
+                  <div className={classes.fieldRow}>
+                    <span className={classes.fieldLabel}>Скидка</span>
+                    <input
+                      type="text"
+                      name="discount"
+                      value={hotel.discount || ""}
+                      onChange={handleChange}
+                      disabled={user?.hotelId ? true : !isEditing}
+                      className={classes.fieldInput}
+                    />
+                  </div>
+                )}
                 <div className={classes.fieldRow}>
                   <span className={classes.fieldLabel}>Аэропорт</span>
                   <MUIAutocompleteColor
@@ -734,15 +738,17 @@ function HotelSettings_tabComponent({ id }) {
               <div className={classes.formSection}>
                 <div className={classes.sectionTitle}>Параметры</div>
                 <div className={classes.switchGroup}>
-                  <MUISwitch
-                    label="Видимость гостиницы"
-                    checked={hotel.show}
-                    onChange={(e) =>
-                      setHotel((prev) => ({ ...prev, show: e.target.checked }))
-                    }
-                    width={"350px"}
-                    disabled={!isEditing}
-                  />
+                  {!user?.hotelId && (
+                    <MUISwitch
+                      label="Видимость гостиницы"
+                      checked={hotel.show}
+                      onChange={(e) =>
+                        setHotel((prev) => ({ ...prev, show: e.target.checked }))
+                      }
+                      width={"350px"}
+                      disabled={!isEditing}
+                    />
+                  )}
                   <MUISwitch
                     label="Наличие питания"
                     checked={hotel.meal}
@@ -923,17 +929,10 @@ function HotelSettings_tabComponent({ id }) {
                     <span className={classes.fieldLabel}>Почта</span>
                     <input
                       type="email"
-                      value="booking@kars-avia.ru"
-                      disabled
-                      className={`${classes.fieldInput} ${classes.fieldInputWide}`}
-                    />
-                  </div>
-                  <div className={classes.fieldRow}>
-                    <span className={classes.fieldLabel}>Почта</span>
-                    <input
-                      type="email"
-                      value="booking@aniaero.ru"
-                      disabled
+                      name="email"
+                      value={hotel.information?.email || ""}
+                      onChange={handleChange}
+                      disabled={!isEditing}
                       className={`${classes.fieldInput} ${classes.fieldInputWide}`}
                     />
                   </div>
@@ -941,8 +940,10 @@ function HotelSettings_tabComponent({ id }) {
                     <span className={classes.fieldLabel}>Телефон</span>
                     <input
                       type="tel"
-                      value="8 (800) 550-04-88"
-                      disabled
+                      name="number"
+                      value={hotel.information?.number || ""}
+                      onChange={handleChange}
+                      disabled={!isEditing}
                       className={`${classes.fieldInput} ${classes.fieldInputWide}`}
                     />
                   </div>

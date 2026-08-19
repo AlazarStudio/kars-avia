@@ -204,6 +204,15 @@
   color: #9aa0b5;
 }
 
+.railSubLabel {
+  text-transform: uppercase;
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  font-weight: 600;
+  color: #b3b8ca;
+  margin-bottom: -6px;
+}
+
 .railRows {
   display: flex;
   flex-direction: column;

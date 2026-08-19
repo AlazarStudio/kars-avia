@@ -41,8 +41,12 @@ export default function HotelAboutRoomBlock({ mediaToken, ...props }) {
 
   const roomsCount = Number(props.roomsCount) || 0;
   const places = props.places ?? categoryPlaces[props.category];
-  const priceByReq = props.priceForAirReq;
-  const price = props.priceForAirline;
+  // Сторону (гостиница / АК) выбирает родитель и передаёт готовые значения;
+  // без них остаётся прежнее поведение — цены для авиакомпании.
+  const priceByReq =
+    props.displayByReq !== undefined ? props.displayByReq : props.priceForAirReq;
+  const price =
+    props.displayPrice !== undefined ? props.displayPrice : props.priceForAirline;
 
   const roomsLabel = roomsCount
     ? `${roomsCount} ${declension(roomsCount, ["номер", "номера", "номеров"])}`

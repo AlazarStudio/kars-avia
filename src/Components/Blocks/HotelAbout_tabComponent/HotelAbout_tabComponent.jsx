@@ -17,6 +17,7 @@ import TextEditorOutput from "../TextEditorOutput/TextEditorOutput.jsx";
 import HotelAboutTariffs from "../HotelAboutTariffs/HotelAboutTariffs.jsx";
 import HotelAboutGallery from "./HotelAboutGallery.jsx";
 import PinIcon from "../../../shared/icons/PinIcon.jsx";
+import { hotelProvidesTransfer } from "../../../utils/hotelTransfer.js";
 
 const TABS = [
   { key: "about", label: "Общая информация", icon: DocIcon },
@@ -100,6 +101,25 @@ function PhoneIcon() {
   );
 }
 
+function HotelContactRows({ email, number }) {
+  return (
+    <>
+      {email ? <RailRow label="" value={email} icon={<MailIcon />} strong /> : null}
+      {number ? <RailRow label="" value={number} icon={<PhoneIcon />} strong /> : null}
+    </>
+  );
+}
+
+function KarsContactRows() {
+  return (
+    <>
+      <RailRow label="" value="booking@kars-avia.ru" icon={<MailIcon />} strong />
+      <RailRow label="" value="booking@aniaero.ru" icon={<MailIcon />} strong />
+      <RailRow label="" value="8 (800) 550-04-88" icon={<PhoneIcon />} strong />
+    </>
+  );
+}
+
 function RailRow({ label, value, strong, icon }) {
   return (
     <div className={classes.railRow}>
@@ -162,11 +182,13 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
     dinner: 0,
   });
   const [mealPriceForAirReq, setMealPriceForAirReq] = useState(false);
+  const [mealPricesHotel, setMealPricesHotel] = useState(null);
   const [transferPricesAirline, setTransferPricesAirline] = useState({
     arrival: 0,
     departure: 0,
   });
   const [transferPriceForAirReq, setTransferPriceForAirReq] = useState(false);
+  const [transferPricesHotel, setTransferPricesHotel] = useState(null);
 
   useEffect(() => {
     if (data) {
@@ -202,6 +224,7 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
         dinner: mealPriceData.hotel?.mealPriceForAir?.dinner,
       });
       setMealPriceForAirReq(Boolean(mealPriceData.hotel?.mealPriceForAirReq));
+      setMealPricesHotel(mealPriceData.hotel?.mealPrice ?? null);
     }
   }, [mealPriceData]);
 
@@ -214,6 +237,7 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
       setTransferPriceForAirReq(
         Boolean(transferPriceData.hotel?.transferPriceForAirReq)
       );
+      setTransferPricesHotel(transferPriceData.hotel?.transferPrice ?? null);
     }
   }, [transferPriceData]);
 
@@ -243,6 +267,13 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
   const fmtMeal = (m) =>
     m?.start && m?.end ? `${m.start}–${m.end}` : "—";
 
+  // Гостиница видит свою сторону данных, диспетчер — обе, АК и превью — как раньше.
+  const isHotel = Boolean(user?.hotelId);
+  const isStaff = Boolean(user && !user.hotelId && !user.airlineId);
+  const hotelEmail = hotel.information?.email;
+  const hotelNumber = hotel.information?.number;
+  const hasHotelContacts = Boolean(hotelEmail || hotelNumber);
+
   const cardStyle = isPreview
     ? { height: "auto" }
     : user?.hotelId || user?.airlineId
@@ -259,14 +290,14 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
         <div className={classes.identityText}>
           <div className={classes.nameRow}>
             <div className={classes.name}>{hotel.name}</div>
-            {hotel.discount > 0 && (
+            {!isHotel && hotel.discount > 0 && (
               <span className={classes.discountBadge}>
                 Выгода от {hotel.discount} %
               </span>
             )}
           </div>
           <div className={classes.identityMeta}>
-            <StarRow value={hotel.stars} />
+            {!isHotel && <StarRow value={hotel.stars} />}
             {locationLine && (
               <span className={classes.locationLine}>
                 <PinIcon />
@@ -314,7 +345,7 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
                   {hotel.usStars ? (
                     <RailRow label="Звёздность" value={<StarRow value={hotel.usStars} />} />
                   ) : null}
-                  {hotel.stars ? (
+                  {!isHotel && hotel.stars ? (
                     <RailRow label="Рейтинг" value={<StarRow value={hotel.stars} />} />
                   ) : null}
                   {!isPreview && hotel.capacity ? (
@@ -329,14 +360,42 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
                 </div>
               </div>
 
-              <div className={classes.railCard}>
-                <div className={classes.railTitle}>Контакты</div>
-                <div className={classes.railRows}>
-                  <RailRow label="" value="booking@kars-avia.ru" icon={<MailIcon />} strong />
-                  <RailRow label="" value="booking@aniaero.ru" icon={<MailIcon />} strong />
-                  <RailRow label="" value="8 (800) 550-04-88" icon={<PhoneIcon />} strong />
+              {isHotel ? (
+                hasHotelContacts && (
+                  <div className={classes.railCard}>
+                    <div className={classes.railTitle}>Контакты</div>
+                    <div className={classes.railRows}>
+                      <HotelContactRows email={hotelEmail} number={hotelNumber} />
+                    </div>
+                  </div>
+                )
+              ) : (
+                <div className={classes.railCard}>
+                  <div className={classes.railTitle}>Контакты</div>
+                  {isStaff ? (
+                    <>
+                      <div className={classes.railSubLabel}>Гостиница</div>
+                      <div className={classes.railRows}>
+                        {hasHotelContacts ? (
+                          <HotelContactRows email={hotelEmail} number={hotelNumber} />
+                        ) : (
+                          <div className={classes.railRow}>
+                            <span className={classes.railRowLabel}>Не заполнены</span>
+                          </div>
+                        )}
+                      </div>
+                      <div className={classes.railSubLabel}>KARS AVIA</div>
+                      <div className={classes.railRows}>
+                        <KarsContactRows />
+                      </div>
+                    </>
+                  ) : (
+                    <div className={classes.railRows}>
+                      <KarsContactRows />
+                    </div>
+                  )}
                 </div>
-              </div>
+              )}
 
               {locationLine && (
                 <div className={classes.railCard}>
@@ -370,6 +429,8 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
                   user={user}
                   mediaToken={mediaToken}
                   {...room}
+                  displayPrice={isHotel ? room.price ?? null : room.priceForAirline}
+                  displayByReq={isHotel ? false : room.priceForAirReq}
                 />
               ))
             ) : (
@@ -382,10 +443,23 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
           <HotelAboutTariffs
             user={user}
             tariffs={rooms || {}}
-            mealPrices={hotel?.meal ? mealPricesAirline : null}
-            mealPriceForAirReq={mealPriceForAirReq}
-            transferPrices={transferPricesAirline}
-            transferPriceForAirReq={transferPriceForAirReq}
+            hotelSide={isHotel}
+            mealPrices={
+              hotel?.meal
+                ? isHotel
+                  ? mealPricesHotel
+                  : mealPricesAirline
+                : null
+            }
+            mealPriceForAirReq={isHotel ? false : mealPriceForAirReq}
+            transferPrices={
+              isHotel
+                ? hotelProvidesTransfer(transferPricesHotel)
+                  ? transferPricesHotel
+                  : null
+                : transferPricesAirline
+            }
+            transferPriceForAirReq={isHotel ? false : transferPriceForAirReq}
             additionalServices={additionalServices || {}}
           />
         )}

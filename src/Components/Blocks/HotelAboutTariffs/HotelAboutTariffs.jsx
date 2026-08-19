@@ -34,7 +34,7 @@ const declension = (number, forms) => {
   ];
 };
 
-function TariffSection({ title, items }) {
+function TariffSection({ title, items, hotelSide = false }) {
   if (!items.length) return null;
   return (
     <section className={classes.section}>
@@ -47,23 +47,39 @@ function TariffSection({ title, items }) {
       <table className={classes.table}>
         <colgroup>
           <col className={classes.colName} />
-          <col className={classes.colNet} />
-          <col className={classes.colVat} />
-          <col className={classes.colGross} />
+          {hotelSide ? (
+            <col className={classes.colGross} />
+          ) : (
+            <>
+              <col className={classes.colNet} />
+              <col className={classes.colVat} />
+              <col className={classes.colGross} />
+            </>
+          )}
         </colgroup>
         <thead>
           <tr>
             <th>Наименование</th>
-            <th className={classes.num}>Цена без НДС</th>
-            <th className={classes.num}>НДС</th>
-            <th className={classes.num}>Цена с НДС</th>
+            {hotelSide ? (
+              <th className={classes.num}>Цена</th>
+            ) : (
+              <>
+                <th className={classes.num}>Цена без НДС</th>
+                <th className={classes.num}>НДС</th>
+                <th className={classes.num}>Цена с НДС</th>
+              </>
+            )}
           </tr>
         </thead>
         <tbody>
           {items.map((item, i) => (
             <tr key={i}>
               <td className={classes.name}>{item.name}</td>
-              {item.byReq ? (
+              {hotelSide ? (
+                <td className={`${classes.num} ${classes.gross}`}>
+                  {fmt(item.net)}
+                </td>
+              ) : item.byReq ? (
                 <td className={classes.byRequest} colSpan={3}>
                   <span className={classes.byRequestValue}>По запросу</span>
                   <span className={classes.priceHint}>
@@ -94,6 +110,9 @@ export default function HotelAboutTariffs({
   transferPrices = null,
   transferPriceForAirReq = false,
   additionalServices,
+  // Гостиница смотрит свои цены: без разбивки по НДС и без «по запросу» —
+  // это логика счёта для авиакомпании.
+  hotelSide = false,
 }) {
   const mealKeys = ["breakfast", "lunch", "dinner"];
   const transferKeys = ["arrival", "departure"];
@@ -119,8 +138,8 @@ export default function HotelAboutTariffs({
 
   const extraItems = extras.map((s) => ({
     name: s.name,
-    net: s.priceForAirline,
-    byReq: s.priceForAirReq,
+    net: hotelSide ? s.price : s.priceForAirline,
+    byReq: hotelSide ? false : s.priceForAirReq,
   }));
 
   const transferItems = hasTransfer
@@ -140,9 +159,13 @@ export default function HotelAboutTariffs({
 
   return (
     <div className={classes.tariffs}>
-      <TariffSection title="Питание" items={mealItems} />
-      <TariffSection title="Дополнительные услуги" items={extraItems} />
-      <TariffSection title="Трансфер" items={transferItems} />
+      <TariffSection title="Питание" items={mealItems} hotelSide={hotelSide} />
+      <TariffSection
+        title="Дополнительные услуги"
+        items={extraItems}
+        hotelSide={hotelSide}
+      />
+      <TariffSection title="Трансфер" items={transferItems} hotelSide={hotelSide} />
     </div>
   );
 }

@@ -63,6 +63,7 @@ function InfoTableDataTarifs({
   additionalServices,
   mealPrices,
   transferPrices,
+  hotelProvidesOwnTransfer,
   openDeleteComponent,
   openDeleteComponentCategory,
   openDeleteComponentAS,
@@ -73,6 +74,16 @@ function InfoTableDataTarifs({
 }) {
   // console.log(requests);
 
+  // Сторона гостиницы: колонки «Цена для АК» нет, поэтому имя тарифа шире.
+  const isHotelView = Boolean(user?.hotelId);
+  const nameCell = isHotelView ? classes.w50 : classes.w30;
+  const showAirlinePrice = !isHotelView && user?.role != roles.hotelAdmin;
+  // Гостиница видит блок трансфера, только если возит его сама.
+  const showTransferSection =
+    transferPrices &&
+    transferPrices.length > 0 &&
+    (!isHotelView || hotelProvidesOwnTransfer);
+
   return (
     <div
       className={classes.tarifsWrapper}
@@ -80,17 +91,15 @@ function InfoTableDataTarifs({
     >
       <div className={classes.section}>
       <div className={classes.tarifsHeader}>
-        <div className={`${classes.headCell} ${classes.w30}`}>Тарифы</div>
+        <div className={`${classes.headCell} ${nameCell}`}>Тарифы</div>
         <div className={`${classes.headCell} ${classes.w8}`}>НДС</div>
+        <div className={`${classes.headCell} ${classes.w20}`}>
+          Цена по договору
+        </div>
         {user?.hotelId ? null : (
-          <>
-            <div className={`${classes.headCell} ${classes.w20}`}>
-              Цена по договору
-            </div>
-            <div className={`${classes.headCell} ${classes.w20}`}>
-              Цена для АК
-            </div>
-          </>
+          <div className={`${classes.headCell} ${classes.w20}`}>
+            Цена для АК
+          </div>
         )}
         <div className={classes.headButtonCell}>
           <Button
@@ -106,7 +115,7 @@ function InfoTableDataTarifs({
         <div className={classes.bottom}>
           {requests?.map((item, index) => (
             <div className={classes.InfoTable_data} key={index}>
-              <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
+              <div className={`${classes.InfoTable_data_elem} ${nameCell}`}>
                 <div className={classes.InfoTable_data_elem_title}>
                   Тариф "{item.name}"
                 </div>
@@ -127,7 +136,7 @@ function InfoTableDataTarifs({
                 </div>
               )}
 
-              {user?.role != roles.hotelAdmin && (
+              {showAirlinePrice && (
                 <div
                   className={`${classes.InfoTable_data_elem} ${classes.w20}`}
                 >
@@ -158,17 +167,15 @@ function InfoTableDataTarifs({
       {meal && (
         <div className={classes.section}>
           <div className={classes.tarifsHeader}>
-            <div className={`${classes.headCell} ${classes.w30}`}>Питание</div>
+            <div className={`${classes.headCell} ${nameCell}`}>Питание</div>
             <div className={`${classes.headCell} ${classes.w8}`}>НДС</div>
+            <div className={`${classes.headCell} ${classes.w20}`}>
+              Цена по договору
+            </div>
             {user?.hotelId ? null : (
-              <>
-                <div className={`${classes.headCell} ${classes.w20}`}>
-                  Цена по договору
-                </div>
-                <div className={`${classes.headCell} ${classes.w20}`}>
-                  Цена для АК
-                </div>
-              </>
+              <div className={`${classes.headCell} ${classes.w20}`}>
+                Цена для АК
+              </div>
             )}
             <div className={classes.headButtonCell}>
               <Button
@@ -196,7 +203,7 @@ function InfoTableDataTarifs({
               {mealPrices.map((item, index) => (
                 <div className={classes.InfoTable_data} key={index}>
                   <div
-                    className={`${classes.InfoTable_data_elem} ${classes.w30}`}
+                    className={`${classes.InfoTable_data_elem} ${nameCell}`}
                   >
                     <div className={classes.InfoTable_data_elem_title}>
                       {item.name}
@@ -217,7 +224,7 @@ function InfoTableDataTarifs({
                     </div>
                   )}
 
-                  {user?.role != roles.hotelAdmin && (
+                  {showAirlinePrice && (
                     <div
                       className={`${classes.InfoTable_data_elem} ${classes.w20}`}
                     >
@@ -233,20 +240,18 @@ function InfoTableDataTarifs({
           </InfoTable>
         </div>
       )}
-      {transferPrices && transferPrices.length > 0 && (
+      {showTransferSection && (
         <div className={classes.section}>
           <div className={classes.tarifsHeader}>
-            <div className={`${classes.headCell} ${classes.w30}`}>Трансфер</div>
+            <div className={`${classes.headCell} ${nameCell}`}>Трансфер</div>
             <div className={`${classes.headCell} ${classes.w8}`}>НДС</div>
+            <div className={`${classes.headCell} ${classes.w20}`}>
+              Цена по договору
+            </div>
             {user?.hotelId ? null : (
-              <>
-                <div className={`${classes.headCell} ${classes.w20}`}>
-                  Цена по договору
-                </div>
-                <div className={`${classes.headCell} ${classes.w20}`}>
-                  Цена для АК
-                </div>
-              </>
+              <div className={`${classes.headCell} ${classes.w20}`}>
+                Цена для АК
+              </div>
             )}
             <div className={classes.headButtonCell}>
               <Button
@@ -274,7 +279,7 @@ function InfoTableDataTarifs({
               {transferPrices.map((item, index) => (
                 <div className={classes.InfoTable_data} key={index}>
                   <div
-                    className={`${classes.InfoTable_data_elem} ${classes.w30}`}
+                    className={`${classes.InfoTable_data_elem} ${nameCell}`}
                   >
                     <div className={classes.InfoTable_data_elem_title}>
                       {item.name}
@@ -295,7 +300,7 @@ function InfoTableDataTarifs({
                     </div>
                   )}
 
-                  {user?.role != roles.hotelAdmin && (
+                  {showAirlinePrice && (
                     <div
                       className={`${classes.InfoTable_data_elem} ${classes.w20}`}
                     >
@@ -313,19 +318,17 @@ function InfoTableDataTarifs({
       )}
       <div className={classes.section}>
       <div className={classes.tarifsHeader}>
-        <div className={`${classes.headCell} ${classes.w30}`}>
+        <div className={`${classes.headCell} ${nameCell}`}>
           Дополнительные услуги
         </div>
         <div className={`${classes.headCell} ${classes.w8}`}>НДС</div>
+        <div className={`${classes.headCell} ${classes.w20}`}>
+          Цена по договору
+        </div>
         {user?.hotelId ? null : (
-          <>
-            <div className={`${classes.headCell} ${classes.w20}`}>
-              Цена по договору
-            </div>
-            <div className={`${classes.headCell} ${classes.w20}`}>
-              Цена для АК
-            </div>
-          </>
+          <div className={`${classes.headCell} ${classes.w20}`}>
+            Цена для АК
+          </div>
         )}
         <div className={classes.headButtonCell}>
           <Button onClick={toggleAS} minwidth={"220px"}>
@@ -337,7 +340,7 @@ function InfoTableDataTarifs({
         <div className={classes.bottom}>
           {additionalServices.map((item, index) => (
             <div className={classes.InfoTable_data} key={index}>
-              <div className={`${classes.InfoTable_data_elem} ${classes.w30}`}>
+              <div className={`${classes.InfoTable_data_elem} ${nameCell}`}>
                 <div className={classes.InfoTable_data_elem_title}>
                   {item.name}
                 </div>
@@ -355,7 +358,7 @@ function InfoTableDataTarifs({
                 </div>
               )}
 
-              {user?.role != roles.hotelAdmin && (
+              {showAirlinePrice && (
                 <div
                   className={`${classes.InfoTable_data_elem} ${classes.w20}`}
                 >

@@ -8,6 +8,7 @@ import DeleteComponent from "../DeleteComponent/DeleteComponent";
 import Filter from "../Filter/Filter";
 
 import { requestsTarifs } from "../../../requests";
+import { hotelProvidesTransfer } from "../../../utils/hotelTransfer.js";
 
 import {
   getCookie,
@@ -490,6 +491,11 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
     },
   ];
 
+  // Считаем по сырому ответу запроса, до подстановки ?? 0 в стейт.
+  const hotelProvidesOwnTransfer = hotelProvidesTransfer(
+    transferPriceData?.hotel?.transferPrice
+  );
+
   const filteredRequestsTransferTarif = [
     {
       name: "Аэропорт → гостиница",
@@ -546,6 +552,7 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
           additionalServices={additionalServices}
           mealPrices={filteredRequestsMealTarif}
           transferPrices={filteredRequestsTransferTarif}
+          hotelProvidesOwnTransfer={hotelProvidesOwnTransfer}
           openDeleteComponent={openDeleteComponent}
           openDeleteComponentCategory={openDeleteComponentCategory}
           openDeleteComponentAS={openDeleteComponentAS}

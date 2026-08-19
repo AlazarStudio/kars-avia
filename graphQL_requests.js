@@ -4764,6 +4764,7 @@ export const GET_HOTEL = gql`
         reserve
         description
         images
+        price
         priceForAirline
       }
       breakfastIncluded

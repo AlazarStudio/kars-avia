@@ -29,7 +29,7 @@ import { tariffNameKey, findTariffByName } from "../fapTariffNames.js";
 import { hotelReportSubmittedAt, isHotelReportSubmitted } from "../fapReportAccess";
 import { hotelOverbookedBy, livingNameCollisions } from "../fapLivingMismatch";
 import HotelCapacityDialog from "../HotelCapacityDialog/HotelCapacityDialog";
-import { isAirlineRole } from "../../../../utils/access";
+import { isAirlineRole, isHotelScoped } from "../../../../utils/access";
 import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
 import { formatDateTime, normalizeCategory, PERSON_CATEGORY_OPTIONS, accommodationDiscountPercent, placementKindLabel } from "../fapConstants";
 import CategoryBadge from "../CategoryBadge/CategoryBadge";
@@ -510,6 +510,10 @@ export default function FapHotelPage({
 
   // Видимость отчёта авиакомпании: пока диспетчер не отправил — заглушка.
   const isAirline = isAirlineRole(user);
+  // Гостиничный аккаунт считает в своих деньгах: цены «для АК» содержат наценку
+  // Kars Avia, во вкладке «Тарифы» своей карточки гостиница их не видит и здесь
+  // видеть не должна — ни договорным тарифом АК, ни собственными ценами.
+  const hotelScoped = isHotelScoped(user);
   const reportSubmittedAt = hotelReportSubmittedAt(request, hotelIndex);
   const reportSubmitted = isHotelReportSubmitted(request, hotelIndex);
   const reportHidden = isAirline && !reportSubmitted;
@@ -532,17 +536,24 @@ export default function FapHotelPage({
   const hotelTariffs = useMemo(() => {
     const h = hotelTariffData?.hotel;
     if (!h || !Array.isArray(h.roomKind)) return [];
-    // Тарифы гостиницы берём только по ценам для авиакомпании (АК).
-    // Питание входит в каждый тариф, поэтому если АК-цены питания не заполнены
+    // Тарифы гостиницы берём по ценам для авиакомпании (АК), а гостиничному
+    // аккаунту — по её собственным (price / mealPrice): те же числа, что у неё
+    // во вкладке «Тарифы», без наценки Kars Avia.
+    const meal = hotelScoped ? h.mealPrice : h.mealPriceForAir;
+    // Питание входит в каждый тариф, поэтому если цены питания не заполнены
     // (стоят «по запросу» или отсутствуют) — тарифов из гостиницы нет вообще.
-    if (h.mealPriceForAirReq || !h.mealPriceForAir) return [];
-    const b = toNum(h.mealPriceForAir.breakfast);
-    const l = toNum(h.mealPriceForAir.lunch);
-    const d = toNum(h.mealPriceForAir.dinner);
+    if ((!hotelScoped && h.mealPriceForAirReq) || !meal) return [];
+    const b = toNum(meal.breakfast);
+    const l = toNum(meal.lunch);
+    const d = toNum(meal.dinner);
     return h.roomKind
-      // Показываем тариф только с заполненной АК-ценой проживания
+      // Показываем тариф только с заполненной ценой проживания
       // (не «по запросу» и больше нуля). Иначе тариф неполный — пропускаем.
-      .filter((rk) => !rk.priceForAirReq && toNum(rk.priceForAirline) > 0)
+      .filter((rk) =>
+        hotelScoped
+          ? toNum(rk.price) > 0
+          : !rk.priceForAirReq && toNum(rk.priceForAirline) > 0
+      )
       .map((rk) => ({
         id: rk.id,
         name: rk.name || "Без названия",
@@ -552,11 +563,11 @@ export default function FapHotelPage({
         lunch: l,
         dinner: d,
         foodCost: b + l + d,
-        pricePerDay: toNum(rk.priceForAirline),
+        pricePerDay: toNum(hotelScoped ? rk.price : rk.priceForAirline),
         // Поверх прайса гостиницы — правки отчёта (цена ланчбокса). Прайс не меняют.
         ...(hotelTariffOverrides[rk.id] ?? {}),
       }));
-  }, [hotelTariffData, hotelTariffOverrides]);
+  }, [hotelTariffData, hotelTariffOverrides, hotelScoped]);
   useEffect(() => { hotelTariffsRef.current = hotelTariffs; }, [hotelTariffs]);
 
   // Договорный тариф авиакомпании: ценник с типом «ФАП»/«Все типы» по аэропорту заявки.
@@ -610,11 +621,14 @@ export default function FapHotelPage({
       opts.push({ groupLabel });
       list.forEach((t) => opts.push({ value: t.id, label: t.name || "Без названия" }));
     };
-    push("По договору авиакомпании", airlineTariffs);
+    // Договорный тариф АК гостинице не предлагаем — это цена Kars Avia для
+    // авиакомпании. На поиск тарифа по имени в сохранённых строках это не
+    // влияет: findTariff/findTariffByName ищут в тех же трёх источниках.
+    if (!hotelScoped) push("По договору авиакомпании", airlineTariffs);
     push("Тарифы заявки", tariffs.filter((t) => !t.draft));
     push("Тарифы гостиницы", hotelTariffs);
     return opts;
-  }, [airlineTariffs, tariffs, hotelTariffs]);
+  }, [airlineTariffs, tariffs, hotelTariffs, hotelScoped]);
 
   const reportGroups = useMemo(() => {
     const groups = [];
@@ -3482,7 +3496,7 @@ export default function FapHotelPage({
                 </div>
               ))
             )}
-            {airlineTariffs.length > 0 && (
+            {!hotelScoped && airlineTariffs.length > 0 && (
               <>
                 <div className={classes.tariffsHead} style={{ marginTop: 16 }}>
                   <p className={classes.tariffsHint}>
