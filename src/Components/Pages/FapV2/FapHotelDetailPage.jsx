@@ -84,7 +84,11 @@ export default function FapHotelDetailPage({ user }) {
         <div className={classes.headerNav}>
           <button
             className={classes.backBtn}
-            onClick={() => navigate(`/far/${requestId}/service/living`)}
+            // Гостинице — сразу в список заявок: обзор проживания ей
+            // промежуточным шагом не нужен (решение владельца 19.08).
+            onClick={() =>
+              navigate(hotelScoped ? "/far" : `/far/${requestId}/service/living`)
+            }
             aria-label="Назад"
           >
             <img src="/arrow.png" alt="" />

@@ -232,6 +232,25 @@ export default function FapDetail({ user, canEdit = true, canEditCompleted = fal
     );
   }, [request, user, providesTransfer]);
 
+  // Гостиница почти всегда видит одну услугу — проживание, и деталка с
+  // единственной плиткой лишняя: уводим сразу на страницу своей гостиницы.
+  // Решение принимаем только после ответа о трансфер-ценах — у гостиницы со
+  // своим трансфером плиток больше, её не трогаем.
+  const livingOnlyRedirect =
+    isHotelScoped(user) &&
+    !transferPriceLoading &&
+    Boolean(request) &&
+    enabledKeys.length === 1 &&
+    enabledKeys[0] === "living";
+  useEffect(() => {
+    if (!livingOnlyRedirect) return;
+    const ownIndexes = visibleHotelIndexes(request, user);
+    if (!ownIndexes?.length) return;
+    navigate(`/far/${request.id}/service/living/hotel/${ownIndexes[0]}`, {
+      replace: true,
+    });
+  }, [livingOnlyRedirect, request, user, navigate]);
+
   const livingMismatch = useMemo(() => livingMismatches(request), [request]);
   // Перебор мест — установленный факт; совпадение ФИО без перебора — лишь подозрение
   // (см. предупреждение в fapLivingMismatch.js про ложные срабатывания на тёзках).
@@ -264,7 +283,7 @@ export default function FapDetail({ user, canEdit = true, canEditCompleted = fal
     copy: handleCopyRepresentativeLink,
   } = useRepresentativeLink(user, request);
 
-  if (loading) {
+  if (loading || livingOnlyRedirect) {
     return (
       <div className={classes.loader}>
         <MUILoader />

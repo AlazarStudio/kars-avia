@@ -203,7 +203,15 @@ export default function FapServicePage({ user }) {
         <div className={classes.headerNav}>
           <button
             className={classes.backBtn}
-            onClick={() => navigate(`/far/${requestId}`)}
+            // Гостинице с проживания — сразу в список: деталка для неё
+            // редиректит обратно на страницу гостиницы, и «Назад» зацикливался.
+            onClick={() =>
+              navigate(
+                hotelScoped && serviceKey === "living"
+                  ? "/far"
+                  : `/far/${requestId}`
+              )
+            }
           >
             <img src="/arrow.png" alt="" />
           </button>

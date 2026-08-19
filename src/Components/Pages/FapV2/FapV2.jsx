@@ -32,7 +32,11 @@ import DateRangeModalSelector from "../../Blocks/DateRangeModalSelector/DateRang
 import Header from "../../Blocks/Header/Header";
 import ServiceProgressDot from "../../Blocks/FapV2/ServiceProgressDot/ServiceProgressDot";
 import { roles } from "../../../roles";
-import { canAccessMenu, isAirlineRole } from "../../../utils/access";
+import {
+  canAccessMenu,
+  isAirlineRole,
+  isHotelScoped,
+} from "../../../utils/access";
 
 const SERVICE_ORDER = [
   "water",
@@ -418,22 +422,28 @@ export default function FapV2({ user, accessMenu }) {
                   )}
                 </div>
 
-                <div className={classes.serviceRow}>
-                  <div className={classes.serviceDots}>
-                    {dots.map((d) => (
-                      <ServiceProgressDot
-                        key={d.key}
-                        serviceKey={d.key}
-                        status={d.status}
-                        disabled={!d.enabled}
-                        size={32}
-                      />
-                    ))}
+                {/* Гостинице ряд услуг не показываем: она работает только со
+                    своим проживанием, чужие услуги заявки — не её зона. */}
+                {(!isHotelScoped(user) || showCrew) && (
+                  <div className={classes.serviceRow}>
+                    {!isHotelScoped(user) && (
+                      <div className={classes.serviceDots}>
+                        {dots.map((d) => (
+                          <ServiceProgressDot
+                            key={d.key}
+                            serviceKey={d.key}
+                            status={d.status}
+                            disabled={!d.enabled}
+                            size={32}
+                          />
+                        ))}
+                      </div>
+                    )}
+                    {showCrew && (
+                      <span className={classes.cardCrew}>экипаж {crewCount}</span>
+                    )}
                   </div>
-                  {showCrew && (
-                    <span className={classes.cardCrew}>экипаж {crewCount}</span>
-                  )}
-                </div>
+                )}
               </div>
             );
           })
