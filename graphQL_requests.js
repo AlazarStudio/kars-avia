@@ -6745,10 +6745,20 @@ export const DELETE_REPORT = gql`
 `;
 
 export const GET_REPORT_PARTIAL_DAY_SETTINGS = gql`
-  query ReportPartialDaySettings($level: ReportPartialDayLevel) {
-    reportPartialDaySettings(level: $level) {
+  query ReportPartialDaySettings {
+    reportPartialDaySettings {
       id
       level
+      airlineId
+      hotelId
+      airline {
+        id
+        name
+      }
+      hotel {
+        id
+        name
+      }
       arrivalFullBefore
       arrivalHalfBefore
       departureHalfAfter
@@ -6767,6 +6777,8 @@ export const UPSERT_REPORT_PARTIAL_DAY_SETTING = gql`
     upsertReportPartialDaySetting(input: $input) {
       id
       level
+      airlineId
+      hotelId
       arrivalFullBefore
       arrivalHalfBefore
       departureHalfAfter
@@ -6777,6 +6789,12 @@ export const UPSERT_REPORT_PARTIAL_DAY_SETTING = gql`
       departureFullDays
       updatedAt
     }
+  }
+`;
+
+export const DELETE_REPORT_PARTIAL_DAY_SETTING = gql`
+  mutation DeleteReportPartialDaySetting($id: ID!) {
+    deleteReportPartialDaySetting(id: $id)
   }
 `;
 

@@ -121,15 +121,49 @@ export function rulesChanged(form, initial) {
 }
 
 /**
- * Конвертирует форму в payload для upsert-мутации: уровень GLOBAL,
- * времена как есть, коэффициенты приведены к числу.
+ * Конвертирует форму в payload для upsert-мутации: уровень и id сущности
+ * для не-общих уровней, времена как есть, коэффициенты приведены к числу.
+ * `id` записи не отправляется никогда: дедупликация на бэке работает только
+ * на пути без id, а путь с id может наплодить дубликаты записей уровня.
+ * Для не-общих уровней вызывающий обязан передать entityId — без него
+ * в payload уйдёт явный null.
  *
  * @param {object} form - форма настроек
+ * @param {string} [level] - "GLOBAL" | "AIRLINE" | "HOTEL"
+ * @param {string|null} [entityId] - id авиакомпании (AIRLINE) или гостиницы (HOTEL)
  * @returns {object} payload для GraphQL-мутации
  */
-export function toUpsertInput(form) {
-  const input = { level: "GLOBAL" };
+export function toUpsertInput(form, level = "GLOBAL", entityId = null) {
+  const input = { level };
+  if (level === "AIRLINE") input.airlineId = entityId;
+  if (level === "HOTEL") input.hotelId = entityId;
   for (const key of RULE_TIME_FIELDS) input[key] = form[key];
   for (const key of RULE_DAY_FIELDS) input[key] = Number(form[key]);
   return input;
+}
+
+/**
+ * Выбирает запись настроек по уровню и сущности. Порядок массива не важен:
+ * бэк сортирует уровни по алфавиту строки enum (AIRLINE < GLOBAL < HOTEL),
+ * поэтому глобальная запись в нефильтрованном ответе не обязательно первая —
+ * выбирать по индексу нельзя.
+ *
+ * @param {Array<object>|null|undefined} settings - записи ReportPartialDaySetting
+ * @param {string} level - "GLOBAL" | "AIRLINE" | "HOTEL"
+ * @param {string|null} [entityId] - id сущности для не-GLOBAL уровней
+ * @returns {object|null} запись или null
+ */
+export function pickSetting(settings, level, entityId = null) {
+  const list = Array.isArray(settings) ? settings : [];
+  if (level === "GLOBAL") {
+    return list.find((s) => s?.level === "GLOBAL") || null;
+  }
+  if (!entityId) return null;
+  if (level === "AIRLINE") {
+    return list.find((s) => s?.level === "AIRLINE" && s?.airlineId === entityId) || null;
+  }
+  if (level === "HOTEL") {
+    return list.find((s) => s?.level === "HOTEL" && s?.hotelId === entityId) || null;
+  }
+  return null;
 }

@@ -236,3 +236,80 @@
   color: #A2A6B7;
   cursor: not-allowed;
 }
+
+/* --- Уровни и выбор сущности --- */
+
+.entityBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.statusRow {
+  display: flex;
+  align-items: center;
+}
+
+.overrideBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #B8741A;
+  background: #FFFBF3;
+  border: 1px solid #F3E3CB;
+}
+
+.inheritNote {
+  font-size: 13px;
+  color: #8B90A5;
+}
+
+.entityOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.entityOptionName {
+  color: #191919;
+}
+
+.entityOptionCity {
+  color: #8B90A5;
+}
+
+.optionBadge {
+  margin-left: auto;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  color: #B8741A;
+  background: #FFFBF3;
+  border: 1px solid #F3E3CB;
+  white-space: nowrap;
+}
+
+.resetLink {
+  align-self: flex-start;
+  padding: 0;
+  border: none;
+  background: none;
+  color: #0057C3;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.resetLink:hover {
+  color: #004AA8;
+  text-decoration: underline;
+}
+
+.resetLink:disabled {
+  color: #A2A6B7;
+  cursor: default;
+  text-decoration: none;
+}

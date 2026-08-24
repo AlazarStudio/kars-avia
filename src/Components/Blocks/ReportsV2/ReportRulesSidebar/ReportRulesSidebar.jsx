@@ -1,19 +1,31 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useMutation, useQuery } from "@apollo/client";
 import classes from "./ReportRulesSidebar.module.css";
 import Sidebar from "../../Sidebar/Sidebar";
 import MUILoader from "../../MUILoader/MUILoader";
+import MUIAutocompleteColor from "../../MUIAutocompleteColor/MUIAutocompleteColor";
+import ContractTypeToggle from "../../ContractTypeToggle/ContractTypeToggle";
 import CloseIcon from "../../../../shared/icons/CloseIcon";
 import AdditionalMenu from "../../../Standart/AdditionalMenu/AdditionalMenu";
 import { useDialog } from "../../../../contexts/DialogContext";
 import { useToast } from "../../../../contexts/ToastContext";
+import { apolloErrorText } from "../../../../utils/apolloErrorText";
 import {
   GET_REPORT_PARTIAL_DAY_SETTINGS,
   UPSERT_REPORT_PARTIAL_DAY_SETTING,
+  DELETE_REPORT_PARTIAL_DAY_SETTING,
+  GET_AIRLINES_LIGHT,
+  GET_HOTELS_RELAY,
   getCookie,
 } from "../../../../../graphQL_requests";
-import { toRulesForm, validateRules, rulesChanged, toUpsertInput } from "../reportRules";
+import {
+  toRulesForm,
+  validateRules,
+  rulesChanged,
+  toUpsertInput,
+  pickSetting,
+} from "../reportRules";
 
 // Порядок групп/строк — контрактный: заезд (полный, половина), затем
 // выезд (половина, полный). Именно так их видит бэкенд в toUpsertInput.
@@ -58,6 +70,31 @@ const FIELD_GROUPS = [
   },
 ];
 
+const LEVEL_OPTIONS = [
+  { key: "GLOBAL", label: "Общие" },
+  { key: "AIRLINE", label: "По авиакомпании" },
+  { key: "HOTEL", label: "По гостинице" },
+];
+
+const PERIOD_EDGE_NOTE =
+  "То же правило применяется к заявкам, которые выходят за конец периода отчёта: " +
+  "сутки за последний день считаются по времени выезда из заявки, а не по дате " +
+  "окончания периода.";
+
+// Переопределение накладывается бэком по типу отчёта: AIRLINE — только в отчётах
+// по этой АК, HOTEL — только в отчётах по этой гостинице (resolvePartialDayRules).
+const LEVEL_INFO_TEXT = {
+  GLOBAL: PERIOD_EDGE_NOTE,
+  AIRLINE:
+    "Эти правила действуют только при формировании отчётов и черновиков по этой " +
+    "авиакомпании. В отчётах по гостиницам применяются правила гостиницы или общие. " +
+    PERIOD_EDGE_NOTE,
+  HOTEL:
+    "Эти правила действуют только при формировании отчётов и черновиков по этой " +
+    "гостинице. В отчётах по авиакомпаниям применяются правила авиакомпании или общие. " +
+    PERIOD_EDGE_NOTE,
+};
+
 export default function ReportRulesSidebar({ show, onClose, canEdit }) {
   const token = getCookie("token");
   const { confirm, isDialogOpen } = useDialog();
@@ -72,6 +109,11 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
   // Панель открывается в режиме просмотра; правка включается пунктом меню.
   const [isEditing, setIsEditing] = useState(false);
 
+  // Цель настройки: уровень и выбранная сущность для не-общих уровней.
+  const [level, setLevel] = useState("GLOBAL");
+  const [selectedAirline, setSelectedAirline] = useState(null);
+  const [selectedHotel, setSelectedHotel] = useState(null);
+
   // form и initial живут в одном стейте, чтобы при повторном ответе с бэка
   // (cache-and-network отвечает дважды) можно было синхронно сравнить их
   // актуальные значения внутри функционального апдейтера — без гонки между
@@ -82,43 +124,92 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
   });
   const { form, initial } = state;
 
-  const { data, loading } = useQuery(GET_REPORT_PARTIAL_DAY_SETTINGS, {
-    variables: { level: "GLOBAL" },
+  const { data, loading, refetch } = useQuery(GET_REPORT_PARTIAL_DAY_SETTINGS, {
     fetchPolicy: "cache-and-network",
     skip: !show,
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
 
-  const setting = data?.reportPartialDaySettings?.[0] || null;
+  const { data: airlinesData } = useQuery(GET_AIRLINES_LIGHT, {
+    skip: !show || level !== "AIRLINE",
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
 
-  // Синхронизация формы: при открытии сайдбара и при каждом приходе свежей
-  // настройки с бэка (в т.ч. второй раз — из сети, после кэша) initial всегда
-  // подтягивается к серверным данным. form обновляется вместе с ним только
-  // если пользователь ещё ничего не поменял (rulesChanged(prev.form, prev.initial)
-  // ложно) — иначе правки не трогаем. При закрытии сайдбара стейт сбрасывается,
-  // поэтому повторное открытие всегда стартует с серверных значений.
+  const { data: hotelsData } = useQuery(GET_HOTELS_RELAY, {
+    skip: !show || level !== "HOTEL",
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const settings = useMemo(() => data?.reportPartialDaySettings || [], [data]);
+  const airlines = airlinesData?.airlines?.airlines || [];
+  const hotels = hotelsData?.hotels?.hotels || [];
+
+  const entityId =
+    level === "AIRLINE"
+      ? selectedAirline?.id || null
+      : level === "HOTEL"
+        ? selectedHotel?.id || null
+        : null;
+
+  const globalSetting = useMemo(() => pickSetting(settings, "GLOBAL"), [settings]);
+  const targetSetting = useMemo(
+    () => (level === "GLOBAL" ? globalSetting : pickSetting(settings, level, entityId)),
+    [settings, level, entityId, globalSetting]
+  );
+  // Не-общий уровень без своей записи наследует значения глобальной.
+  const baseSetting = targetSetting || globalSetting;
+  const hasOverride = level !== "GLOBAL" && Boolean(targetSetting);
+
+  const overriddenAirlineIds = useMemo(
+    () => new Set(settings.filter((s) => s.level === "AIRLINE").map((s) => s.airlineId)),
+    [settings]
+  );
+  const overriddenHotelIds = useMemo(
+    () => new Set(settings.filter((s) => s.level === "HOTEL").map((s) => s.hotelId)),
+    [settings]
+  );
+
+  // Синхронизация формы: initial всегда подтягивается к серверным данным цели,
+  // form — только пока пользователь не правил. Смена цели (уровня или сущности)
+  // пересобирает форму принудительно: правки не переживают переключение —
+  // переключение с несохранёнными правками гейтится confirm'ом в обработчиках.
+  const targetKey = `${level}:${entityId || ""}`;
+  const prevTargetKeyRef = useRef(targetKey);
   useEffect(() => {
     if (!show) {
       const emptyForm = toRulesForm(null);
       setState({ form: emptyForm, initial: emptyForm });
-      // Закрыли панель — следующее открытие снова начинается с просмотра.
+      // Закрыли панель — следующее открытие снова начинается с просмотра общих.
       setIsEditing(false);
       setAnchorEl(null);
+      setLevel("GLOBAL");
+      setSelectedAirline(null);
+      setSelectedHotel(null);
+      prevTargetKeyRef.current = "GLOBAL:";
       return;
     }
-    const next = toRulesForm(setting);
+    const targetChanged = prevTargetKeyRef.current !== targetKey;
+    prevTargetKeyRef.current = targetKey;
+    const next = toRulesForm(baseSetting);
     setState((prev) => {
-      const userEdited = rulesChanged(prev.form, prev.initial);
+      const userEdited = !targetChanged && rulesChanged(prev.form, prev.initial);
       return { form: userEdited ? prev.form : next, initial: next };
     });
-  }, [show, setting]);
+  }, [show, baseSetting, targetKey]);
 
   const [upsertRules, { loading: saving }] = useMutation(UPSERT_REPORT_PARTIAL_DAY_SETTING, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const [deleteRules, { loading: deleting }] = useMutation(DELETE_REPORT_PARTIAL_DAY_SETTING, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
 
   const { errors, isValid } = validateRules(form);
   const hasChanges = rulesChanged(form, initial);
+  // Не-общий уровень без выбранной сущности: форма показывает наследуемую
+  // базу, но править и сохранять нечего.
+  const needsEntity = level !== "GLOBAL" && !entityId;
+  const fieldsLocked = !canEdit || !isEditing || needsEntity;
 
   const handleFieldChange = useCallback((key, value) => {
     setState((prev) => ({ ...prev, form: { ...prev.form, [key]: value } }));
@@ -137,6 +228,29 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
   const handleCancelEdit = () => {
     setState((prev) => ({ ...prev, form: prev.initial }));
     setIsEditing(false);
+  };
+
+  const confirmDiscardEdits = useCallback(async () => {
+    if (!isEditing || !hasChanges) return true;
+    return confirm("Вы уверены? Все несохраненные данные будут удалены.");
+  }, [isEditing, hasChanges, confirm]);
+
+  const handleLevelChange = async (nextLevel) => {
+    if (nextLevel === level) return;
+    if (!(await confirmDiscardEdits())) return;
+    setLevel(nextLevel);
+    setSelectedAirline(null);
+    setSelectedHotel(null);
+  };
+
+  const handleAirlineSelect = async (nextValue) => {
+    if (!(await confirmDiscardEdits())) return;
+    setSelectedAirline(nextValue || null);
+  };
+
+  const handleHotelSelect = async (nextValue) => {
+    if (!(await confirmDiscardEdits())) return;
+    setSelectedHotel(nextValue || null);
   };
 
   const closeSidebar = useCallback(async () => {
@@ -172,7 +286,9 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
 
   const handleSave = async () => {
     try {
-      const { data: result } = await upsertRules({ variables: { input: toUpsertInput(form) } });
+      const { data: result } = await upsertRules({
+        variables: { input: toUpsertInput(form, level, entityId) },
+      });
       const saved = result?.upsertReportPartialDaySetting;
       if (saved) {
         const next = toRulesForm(saved);
@@ -181,8 +297,32 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
       // Сохранили — возвращаемся к просмотру, панель остаётся открытой.
       setIsEditing(false);
       success("Правила сохранены");
+      // Список настроек перечитываем: от него живут бейджи «переопределено».
+      // Отказ refetch не превращаем в «не удалось сохранить» — запись уже в базе.
+      refetch().catch(() => {});
     } catch (e) {
-      notifyError(e?.graphQLErrors?.[0]?.message || "Не удалось сохранить правила");
+      notifyError(apolloErrorText(e, "Не удалось сохранить правила"));
+    }
+  };
+
+  const handleResetToGlobal = async () => {
+    if (!targetSetting) return;
+    const isConfirmed = await confirm({
+      message: "Сбросить правила к общим? Переопределение будет удалено.",
+      confirmText: "Сбросить",
+      cancelText: "Отмена",
+    });
+    if (!isConfirmed) return;
+    try {
+      await deleteRules({ variables: { id: targetSetting.id } });
+      // Несохранённые правки не должны пережить сброс: форма возвращается к
+      // initial, а после refetch синк-эффект подтянет унаследованные общие.
+      setState((prev) => ({ ...prev, form: prev.initial }));
+      setIsEditing(false);
+      success("Правила сброшены к общим");
+      refetch().catch(() => {});
+    } catch (e) {
+      notifyError(apolloErrorText(e, "Не удалось сбросить правила"));
     }
   };
 
@@ -196,6 +336,59 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
       if (errors[row.daysKey]) messages.push(errors[row.daysKey]);
       return messages;
     });
+
+  const airlinePicker = (
+    <MUIAutocompleteColor
+      dropdownWidth="100%"
+      label="Выберите авиакомпанию"
+      isDisabled={saving || deleting}
+      options={airlines}
+      getOptionLabel={(option) => (option ? option.name || "" : "")}
+      renderOption={(optionProps, option) => (
+        <li
+          {...optionProps}
+          className={`${optionProps.className || ""} ${classes.entityOption}`}
+          key={option.id}
+        >
+          <span className={classes.entityOptionName}>{option.name}</span>
+          {overriddenAirlineIds.has(option.id) && (
+            <span className={classes.optionBadge}>переопределено</span>
+          )}
+        </li>
+      )}
+      value={selectedAirline || ""}
+      onChange={(event, newValue) => handleAirlineSelect(newValue)}
+    />
+  );
+
+  const hotelPicker = (
+    <MUIAutocompleteColor
+      dropdownWidth="100%"
+      label="Выберите гостиницу"
+      isDisabled={saving || deleting}
+      options={hotels}
+      getOptionLabel={(option) =>
+        option ? `${option.name}, город: ${option?.information?.city || ""}`.trim() : ""
+      }
+      renderOption={(optionProps, option) => (
+        <li
+          {...optionProps}
+          className={`${optionProps.className || ""} ${classes.entityOption}`}
+          key={option.id}
+        >
+          <span className={classes.entityOptionName}>{option.name}</span>
+          <span className={classes.entityOptionCity}>
+            {option?.information?.city || ""}
+          </span>
+          {overriddenHotelIds.has(option.id) && (
+            <span className={classes.optionBadge}>переопределено</span>
+          )}
+        </li>
+      )}
+      value={selectedHotel || ""}
+      onChange={(event, newValue) => handleHotelSelect(newValue)}
+    />
+  );
 
   return (
     <>
@@ -231,6 +424,30 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
         ) : (
           <>
             <div className={classes.body}>
+              <ContractTypeToggle
+                value={level}
+                onChange={handleLevelChange}
+                disabled={saving || deleting}
+                options={LEVEL_OPTIONS}
+              />
+
+              {level !== "GLOBAL" && (
+                <div className={classes.entityBlock}>
+                  {level === "AIRLINE" ? airlinePicker : hotelPicker}
+                  {entityId && (
+                    <div className={classes.statusRow}>
+                      {hasOverride ? (
+                        <span className={classes.overrideBadge}>Переопределено</span>
+                      ) : (
+                        <span className={classes.inheritNote}>
+                          Наследует общие правила
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {FIELD_GROUPS.map((group) => {
                 const groupErrors = groupErrorMessages(group);
                 return (
@@ -246,7 +463,7 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
                             errors[row.timeKey] ? classes.inputError : ""
                           }`}
                           value={form[row.timeKey] ?? ""}
-                          disabled={!canEdit || !isEditing}
+                          disabled={fieldsLocked}
                           aria-label={row.timeLabel}
                           onChange={(e) => handleFieldChange(row.timeKey, e.target.value)}
                         />
@@ -262,7 +479,7 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
                             errors[row.daysKey] ? classes.inputError : ""
                           }`}
                           value={form[row.daysKey] ?? ""}
-                          disabled={!canEdit || !isEditing}
+                          disabled={fieldsLocked}
                           aria-label={row.daysLabel}
                           onChange={(e) => handleFieldChange(row.daysKey, e.target.value)}
                         />
@@ -284,13 +501,20 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
                 );
               })}
 
+              {isEditing && hasOverride && (
+                <button
+                  type="button"
+                  className={classes.resetLink}
+                  onClick={handleResetToGlobal}
+                  disabled={saving || deleting}
+                >
+                  Сбросить к общим
+                </button>
+              )}
+
               <div className={classes.infoBlock}>
                 <span className={classes.infoIcon}>i</span>
-                <div className={classes.infoText}>
-                  То же правило применяется к заявкам, которые выходят за конец периода отчёта:
-                  сутки за последний день считаются по времени выезда из заявки, а не по дате
-                  окончания периода.
-                </div>
+                <div className={classes.infoText}>{LEVEL_INFO_TEXT[level]}</div>
               </div>
             </div>
 
@@ -303,7 +527,7 @@ export default function ReportRulesSidebar({ show, onClose, canEdit }) {
                 <button
                   type="button"
                   className={classes.mainBtn}
-                  disabled={!hasChanges || !isValid || saving}
+                  disabled={!hasChanges || !isValid || saving || needsEntity || deleting}
                   onClick={handleSave}
                 >
                   Сохранить правила

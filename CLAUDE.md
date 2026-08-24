@@ -278,7 +278,7 @@ travellineMenu, accessManage
 Две функции поверх обычного создания отчёта:
 
 - **Черновики** — `createAirlineReportDraft` / `createHotelReportDraft` → правка строк → `confirmReportDraft`. Включаются галкой «Проверить строки перед выгрузкой» в форме создания; без неё отчёт выпускается одним шагом, как раньше
-- **Пороги частичных суток** — модель `ReportPartialDaySetting`, используем только уровень `GLOBAL`. Правит `SUPERADMIN`, `DISPATCHERADMIN` видит в режиме просмотра (поля `disabled`, кнопки сохранения нет)
+- **Пороги частичных суток** — модель `ReportPartialDaySetting`, уровни `GLOBAL / AIRLINE / HOTEL`: переопределение по АК действует только в отчётах по этой АК, по гостинице — только в отчётах по этой гостинице; уровень и сущность выбираются в панели «Правила расчёта суток». Правят обе админ-роли (`SUPERADMIN` и `DISPATCHERADMIN`) — так же гейтит бэк
 
 Раскладка: `ReportsV2.jsx` (контейнер: состояние, запросы, гейты по ролям), `ReportsV2List/`, `ReportDraftsPanel/`, `ReportDraftEditor/` (редактор строк + хук `useReportDraft.js`), `ReportCreateSidebar/`, `ReportRulesSidebar/`. Доменная логика без JSX вынесена в `reportRules.js`, `reportDraftRows.js`, `reportDraftAge.js` — у всех тесты рядом (`node --test src/Components/Blocks/ReportsV2/`).
 

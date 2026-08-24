@@ -7,6 +7,7 @@ import {
   validateRules,
   rulesChanged,
   toUpsertInput,
+  pickSetting,
 } from "./reportRules.js";
 
 test("toRulesForm returns defaults when setting is missing", () => {
@@ -147,4 +148,52 @@ test("validateRules still accepts zero and numeric strings", () => {
 test("rulesChanged treats two empty inputs as unchanged", () => {
   assert.equal(rulesChanged(null, null), false);
   assert.equal(rulesChanged({}, {}), false);
+});
+
+const LEVEL_SETTINGS = [
+  { id: "a1", level: "AIRLINE", airlineId: "air-1", hotelId: null },
+  { id: "g1", level: "GLOBAL", airlineId: null, hotelId: null },
+  { id: "h1", level: "HOTEL", airlineId: null, hotelId: "hot-1" },
+];
+
+test("pickSetting finds GLOBAL even when an AIRLINE row comes first", () => {
+  assert.equal(pickSetting(LEVEL_SETTINGS, "GLOBAL")?.id, "g1");
+});
+
+test("pickSetting finds AIRLINE by airlineId and HOTEL by hotelId", () => {
+  assert.equal(pickSetting(LEVEL_SETTINGS, "AIRLINE", "air-1")?.id, "a1");
+  assert.equal(pickSetting(LEVEL_SETTINGS, "HOTEL", "hot-1")?.id, "h1");
+});
+
+test("pickSetting does not cross levels when ids collide", () => {
+  const collide = [
+    { id: "x", level: "AIRLINE", airlineId: "same", hotelId: null },
+    { id: "y", level: "HOTEL", airlineId: null, hotelId: "same" },
+  ];
+  assert.equal(pickSetting(collide, "HOTEL", "same")?.id, "y");
+  assert.equal(pickSetting(collide, "AIRLINE", "same")?.id, "x");
+});
+
+test("pickSetting returns null without an entity or a match", () => {
+  assert.equal(pickSetting(LEVEL_SETTINGS, "AIRLINE"), null);
+  assert.equal(pickSetting(LEVEL_SETTINGS, "AIRLINE", "missing"), null);
+  assert.equal(pickSetting([], "GLOBAL"), null);
+  assert.equal(pickSetting(null, "GLOBAL"), null);
+  assert.equal(pickSetting(LEVEL_SETTINGS, "UNKNOWN", "air-1"), null);
+});
+
+test("toUpsertInput carries the level and only the matching entity id", () => {
+  const airline = toUpsertInput(PARTIAL_DAY_DEFAULTS, "AIRLINE", "air-1");
+  assert.equal(airline.level, "AIRLINE");
+  assert.equal(airline.airlineId, "air-1");
+  assert.equal("hotelId" in airline, false);
+  assert.equal("id" in airline, false);
+
+  const hotel = toUpsertInput(PARTIAL_DAY_DEFAULTS, "HOTEL", "hot-1");
+  assert.equal(hotel.level, "HOTEL");
+  assert.equal(hotel.hotelId, "hot-1");
+  assert.equal("airlineId" in hotel, false);
+  assert.equal("id" in hotel, false);
+
+  assert.equal(toUpsertInput(PARTIAL_DAY_DEFAULTS, "AIRLINE").airlineId, null);
 });
