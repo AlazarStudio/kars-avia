@@ -1,0 +1,222 @@
+/* Сезонные цены категории номера.
+
+   Палитра и размеры не свои: разделитель #54587380 — из
+   EditRequestTarifCategory.module.css (сайдбар, куда встраивается блок),
+   подписи #545873, границы #E4E4EF, ошибка #D2482C и приглушённый #6B7189 —
+   из ReportCreateSidebar.module.css, янтарный #B45309 — из
+   FapV2/GroupChip.module.css (.warn) и FapReportView.module.css (.warnText).
+
+   Шрифт — Inter, осознанно: у сайдбара-хозяина Inter только в заголовке
+   (.requestTitle_name), тело набрано Nunito Sans, а Inter — семейство новых
+   модулей (FapV2) и глобального `input, select`. Оговорка: сегодня
+   объявление не действует ни у нас, ни у хозяина — src/index.css:3-8 задаёт
+   `* { font-family: 'Open Sans', sans-serif !important }`, и всё, что не
+   !important, этой звёздочкой перебито. Строку держим, чтобы блок не
+   разошёлся с соседями, если глобальный !important однажды уберут.
+
+   Разметочные правила намеренно вложены в .block — оба раза из-за
+   специфичности, а не для красоты:
+   - `.requestData label { display: flex; gap: 15px }` у хозяина — [0,1,1];
+     одиночный `.field` ([0,1,0]) его не перебивает, и метка с полем встали
+     бы в ряд вместо колонки. `.block .field` даёт [0,2,0] и выигрывает.
+   - `.requestData input, select` (EditRequestTarifCategory.module.css:151-156)
+     задаёт height/outline/padding и весит [0,1,1] — ровно столько же, сколько
+     весил бы `.field input`. При равенстве исход решал бы порядок подключения
+     CSS-модулей, то есть случай; `.block .field input` даёт [0,2,1] и
+     закрывает вопрос.
+   Правило `.requestDataInfo input { width: 60% }` здесь ни при чём: блок
+   встраивается соседом `.requestDataInfo`, а не потомком, и до наших полей
+   этот селектор не дотягивается. */
+
+.block {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-top: 16px;
+    border-top: 1px solid #54587380;
+    font-family: Inter, sans-serif;
+}
+
+.head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.hint {
+    font-size: 13px;
+    line-height: 1.5;
+    color: #6B7189;
+}
+
+.empty {
+    font-size: 13px;
+    color: #9AA0B4;
+}
+
+.error {
+    font-size: 13px;
+    color: #D2482C;
+}
+
+.retry {
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #0057C3;
+    font-family: inherit;
+    font-size: 13px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+/* ── Строка сезона ── */
+
+.row {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 14px;
+    border: 1px solid #E4E4EF;
+    border-radius: 10px;
+    background: #fff;
+}
+
+.rowMain {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+}
+
+.range {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+
+.name {
+    font-size: 12px;
+    color: #6B7189;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.price {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+    flex-shrink: 0;
+}
+
+.priceLabel {
+    font-size: 11px;
+    color: #9AA0B4;
+}
+
+.priceValue {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--text);
+    font-variant-numeric: tabular-nums;
+}
+
+/* Пустая цена для АК: отчёт возьмёт цену по договору, без наценки Kars Avia */
+.warn {
+    font-size: 12px;
+    color: #B45309;
+    cursor: help;
+}
+
+.rowButtons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-shrink: 0;
+}
+
+/* ── Форма сезона ── */
+
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 14px;
+    border: 1px solid #E4E4EF;
+    border-radius: 12px;
+    background: #F8FAFC;
+}
+
+.fieldRow {
+    display: flex;
+    gap: 12px;
+}
+
+.block .field {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    flex: 1;
+    min-width: 0;
+}
+
+.fieldTitle {
+    font-size: 13px;
+    color: #545873;
+}
+
+/* Ширина и шрифт полей — свои; высота, рамка и радиус приходят из
+   глобального `input, select` в src/index.css, как во всём сайдбаре. */
+.block .field input {
+    width: 100%;
+    box-sizing: border-box;
+    font-size: 14px;
+    background: #fff;
+}
+
+.fieldError {
+    font-size: 12px;
+    color: #D2482C;
+}
+
+.formButtons {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.cancel {
+    height: 40px;
+    padding: 0 22px;
+    border: 1px solid #E4E4EF;
+    border-radius: 10px;
+    background: #fff;
+    color: #2A2E45;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.cancel:hover {
+    background: #F8FAFD;
+    border-color: #C9D2E4;
+}
+
+.cancel:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}

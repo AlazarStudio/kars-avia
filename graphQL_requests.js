@@ -5277,6 +5277,41 @@ export const UPDATE_HOTEL_TRANSFER_TARIF = gql`
   }
 `;
 
+export const GET_ROOM_KIND_SEASONS = gql`
+  query RoomKindSeasons($roomKindId: ID!) {
+    roomKindSeasons(roomKindId: $roomKindId) {
+      id
+      name
+      startDate
+      endDate
+      price
+      priceForAirline
+    }
+  }
+`;
+
+export const CREATE_ROOM_KIND_SEASON = gql`
+  mutation CreateRoomKindSeason($input: RoomKindSeasonInput!) {
+    createRoomKindSeason(input: $input) {
+      id
+    }
+  }
+`;
+
+export const UPDATE_ROOM_KIND_SEASON = gql`
+  mutation UpdateRoomKindSeason($id: ID!, $input: RoomKindSeasonUpdateInput!) {
+    updateRoomKindSeason(id: $id, input: $input) {
+      id
+    }
+  }
+`;
+
+export const DELETE_ROOM_KIND_SEASON = gql`
+  mutation DeleteRoomKindSeason($id: ID!) {
+    deleteRoomKindSeason(id: $id)
+  }
+`;
+
 export const DELETE_HOTEL_CATEGORY = gql`
   mutation DeleteCategory($deleteCategoryId: ID!) {
     deleteCategory(id: $deleteCategoryId) {

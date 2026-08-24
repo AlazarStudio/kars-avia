@@ -15,6 +15,7 @@ import { useMutation, useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import TextEditor from "../TextEditor/TextEditor.jsx";
+import RoomKindSeasons from "../RoomKindSeasons/RoomKindSeasons.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
 import {
@@ -540,6 +541,12 @@ function EditRequestTarifCategory({
                   </div>
                 </>
               )}
+
+              <RoomKindSeasons
+                roomKindId={formData.id}
+                canEdit={isEditing}
+                showAirlinePrice={!user?.hotelId}
+              />
 
               <div className={classes.requestDataInfo}>
                 <div className={classes.requestDataInfo_title}>Квадратура</div>

@@ -5,17 +5,10 @@ import {
   getCookie,
 } from "../../../../../graphQL_requests";
 import { useToast } from "../../../../contexts/ToastContext";
-
-// Патч отбивается сервером до GraphQL-слоя (невалидные переменные → HTTP 400),
-// и тогда graphQLErrors пуст, а причина лежит в networkError.result.errors.
-// Показывать в этом случае голый фолбэк — значит скрыть от диспетчера ровно тот
-// текст, который объясняет отказ.
-const saveErrorText = (e) =>
-  e?.graphQLErrors?.[0]?.message ||
-  e?.networkError?.result?.errors?.[0]?.message ||
-  e?.networkError?.message ||
-  e?.message ||
-  "Ошибка при сохранении";
+// Цепочка разбора ошибки переехала в src/utils/apolloErrorText.js — там же
+// осталось обоснование про HTTP 400 до GraphQL-слоя. Фолбэк по умолчанию
+// у хелпера тот же, что был здесь: «Ошибка при сохранении».
+import { apolloErrorText } from "../../../../utils/apolloErrorText.js";
 
 // Дополнительные поля патча принимаем только обычным объектом. Хук вызывают из
 // нескольких мест, и колбэк, попавший прямо в onClick, приносит первым
@@ -93,7 +86,7 @@ export function useBaggageTripDraft({
       onRefetch?.();
       return true;
     } catch (e) {
-      notifyError(saveErrorText(e));
+      notifyError(apolloErrorText(e));
       return false;
     } finally {
       setSaving(false);
