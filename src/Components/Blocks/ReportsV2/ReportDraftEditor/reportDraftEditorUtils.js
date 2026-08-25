@@ -103,44 +103,92 @@ export function listCohabitants(segments) {
 }
 
 /**
+ * Достаёт порог подсветки из правил, а если он не разбирается — подставляет
+ * дефолт (и в сравнение, и в текст подсказки).
+ *
+ * Фолбэк, а не «выключить подсветку»: фронтовый разбор времени строже бэкового
+ * (`^([01]\d|…)` против `^([01]?\d|…)` в `services/report/partialDaySettings.js:14`),
+ * поэтому сохранённое через API «6:00» бэк посчитает как 06:00, а `parseHhMm`
+ * вернёт null. Погасить на этом подсветку — вернуть ровно тот дефект, который
+ * чинили: экран перестанет показывать границу, по которой идёт расчёт. Бэк на
+ * непарсящемся значении делает то же самое (`rulesToCalcConfig`,
+ * `partialDaySettings.js:46-49`: `parseHhMmToMinutes(...) ?? 6*60`).
+ *
+ * @param {string|null|undefined} value - порог из правил
+ * @param {string} key - имя поля правил (источник дефолта)
+ * @returns {{limit: string, threshold: number}} порог строкой и в минутах
+ */
+function resolveThreshold(value, key) {
+  const parsed = parseHhMm(value);
+  if (parsed != null) return { limit: value, threshold: parsed };
+  const fallback = PARTIAL_DAY_DEFAULTS[key];
+  return { limit: fallback, threshold: parseHhMm(fallback) };
+}
+
+/**
  * Определяет, подсвечивать ли время заезда: срабатывает правило "полных суток"
- * (заезд раньше `PARTIAL_DAY_DEFAULTS.arrivalFullBefore`). Порог берётся из
- * общих дефолтов расчёта суток — не хардкодится заново.
+ * (заезд раньше `rules.arrivalFullBefore`).
+ *
+ * Порог берётся из действующих правил черновика (`resolveDraftPartialDayRules`),
+ * а не из константы: диспетчер, поменявший порог в настройке, получал расчёт по
+ * новому порогу и подсветку по старому. Дефолты остаются фолбэком — вызов без
+ * `rules` ведёт себя как раньше.
+ *
+ * Сравнение строгое (`<`), как на бэке: заезд ровно в пороговое время надбавки
+ * не даёт.
  *
  * @param {string|null|undefined} arrival - "Заезд" строки черновика
+ * @param {object} [rules] - правила частичных суток; по умолчанию общие дефолты
  * @returns {{highlighted: boolean, title: string|undefined}}
  */
-export function getArrivalHighlight(arrival) {
+export function getArrivalHighlight(arrival, rules = PARTIAL_DAY_DEFAULTS) {
   const { time } = splitDateTime(arrival);
   const minutes = parseHhMm(time);
-  const threshold = parseHhMm(PARTIAL_DAY_DEFAULTS.arrivalFullBefore);
-  const highlighted = minutes != null && threshold != null && minutes < threshold;
+  const { limit, threshold } = resolveThreshold(rules?.arrivalFullBefore, "arrivalFullBefore");
+  const highlighted = minutes != null && minutes < threshold;
   return {
     highlighted,
     title: highlighted
-      ? `Заезд раньше ${PARTIAL_DAY_DEFAULTS.arrivalFullBefore} — начисляются полные сутки проживания`
+      ? `Заезд раньше ${limit} — начисляются полные сутки проживания`
       : undefined,
   };
 }
 
 /**
  * Определяет, подсвечивать ли время выезда: срабатывает правило "половины суток"
- * (выезд позже `PARTIAL_DAY_DEFAULTS.departureHalfAfter`).
+ * (выезд позже `rules.departureHalfAfter`). Порог — из действующих правил
+ * черновика, дефолты как фолбэк; сравнение строгое (`>`), как на бэке.
  *
  * @param {string|null|undefined} departure - "Выезд" строки черновика
+ * @param {object} [rules] - правила частичных суток; по умолчанию общие дефолты
  * @returns {{highlighted: boolean, title: string|undefined}}
  */
-export function getDepartureHighlight(departure) {
+export function getDepartureHighlight(departure, rules = PARTIAL_DAY_DEFAULTS) {
   const { time } = splitDateTime(departure);
   const minutes = parseHhMm(time);
-  const threshold = parseHhMm(PARTIAL_DAY_DEFAULTS.departureHalfAfter);
-  const highlighted = minutes != null && threshold != null && minutes > threshold;
+  const { limit, threshold } = resolveThreshold(rules?.departureHalfAfter, "departureHalfAfter");
+  const highlighted = minutes != null && minutes > threshold;
   return {
     highlighted,
     title: highlighted
-      ? `Выезд позже ${PARTIAL_DAY_DEFAULTS.departureHalfAfter} — начисляются дополнительные сутки проживания`
+      ? `Выезд позже ${limit} — начисляются дополнительные сутки проживания`
       : undefined,
   };
+}
+
+/**
+ * Текст ячейки "Завтрак" — копия печатной формулы бэка
+ * (`services/report/reportPresentation.js:79`), правится парой с ней.
+ *
+ * Когда завтрак включён в стоимость номера, в файле печатается "вкл", а не
+ * количество; редактор в той же колонке выводил число, и диспетчер, сверяющий
+ * черновик с выгрузкой построчно, видел расхождение в каждой такой строке.
+ *
+ * @param {object} row - строка черновика
+ * @returns {string} "вкл" либо количество завтраков строкой
+ */
+export function breakfastCellText(row) {
+  return row?.breakfastIncludedInPrice ? "вкл" : String(row?.breakfastCount ?? 0);
 }
 
 /**

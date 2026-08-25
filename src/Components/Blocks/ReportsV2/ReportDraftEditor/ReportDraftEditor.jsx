@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
+import { useQuery } from "@apollo/client";
 import classes from "./ReportDraftEditor.module.css";
 import useReportDraft from "./useReportDraft";
 import useEditingPins from "./useEditingPins";
@@ -14,9 +15,10 @@ import ReportDraftPreview from "./ReportDraftPreview";
 import ReportDraftSummary from "./ReportDraftSummary";
 import { DRAFT_FILTERS, pluralizeDays, pluralizeRows, rowMatchesSearch } from "./reportDraftEditorUtils";
 import { useToast } from "../../../../contexts/ToastContext";
-import { convertToDate } from "../../../../../graphQL_requests";
+import { convertToDate, GET_REPORT_PARTIAL_DAY_SETTINGS, getCookie } from "../../../../../graphQL_requests";
 import { measureSavePayload, rowHasWarning } from "../reportDraftRows";
 import { isDraftStale, getDraftAgeDays } from "../reportDraftAge";
+import { resolveDraftPartialDayRules } from "../reportRules";
 
 // Редактор строк черновика отчёта: таблица правки перед подтверждением.
 // confirmReportDraft печатает строки ровно такими, как они лежат в базе —
@@ -60,6 +62,34 @@ export default function ReportDraftEditor({
   } = useReportDraft(draftId);
 
   const { success, error: notifyError } = useToast();
+
+  // Действующие пороги частичных суток — для подсветки заезда/выезда в
+  // таблице. Отдельный запрос (не поднят в ReportsV2.jsx): список нужен только
+  // здесь и в ReportRulesSidebar, а редактор рендерится ВМЕСТО списка, так что
+  // одновременно они не смонтированы — общая у них только запись в кэше
+  // Apollo, in-flight дедупликации тут не бывает.
+  //
+  // cache-and-network, как в ReportRulesSidebar: запись в кэше общая, и на
+  // cache-first редактор весь сеанс SPA рисовал бы по порогам, которые кто-то
+  // уже поменял в другой вкладке, ни разу не сходив в сеть.
+  const token = getCookie("token");
+  const { data: rulesData, loading: rulesLoading } = useQuery(GET_REPORT_PARTIAL_DAY_SETTINGS, {
+    fetchPolicy: "cache-and-network",
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const rules = useMemo(
+    () => resolveDraftPartialDayRules(rulesData?.reportPartialDaySettings, draft),
+    [rulesData, draft]
+  );
+  // Пока действующий порог неизвестен, вниз уходит null — «ещё не знаем», а не
+  // «считай по дефолтам»: иначе строки сначала красятся по 06:00/12:00 и
+  // перекрашиваются после ответа, то есть вспышка случается ровно там, где
+  // порог переопределён и подсветка нужнее всего.
+  // Одного `loading` мало: cache-and-network держит его true и во время
+  // фоновой проверки поверх уже показанных данных — подсветка гасла бы на
+  // каждом обновлении. Ошибка запроса тоже считается ответом: правил нет,
+  // работаем по дефолтам.
+  const rulesKnown = Boolean(rulesData) || !rulesLoading;
 
   const [filter, setFilter] = useState(DRAFT_FILTERS.ALL);
   const [search, setSearch] = useState("");
@@ -398,6 +428,7 @@ export default function ReportDraftEditor({
             onResetFilters={handleResetFilters}
             hoveredCluster={hoveredCluster}
             onHoverCluster={setHoveredCluster}
+            rules={rulesKnown ? rules : null}
             groupBy={groupBy}
             collapsedHotels={collapsedHotels}
             onToggleHotel={toggleHotel}

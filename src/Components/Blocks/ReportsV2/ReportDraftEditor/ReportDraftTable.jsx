@@ -25,6 +25,7 @@ export default function ReportDraftTable({
   onResetFilters,
   hoveredCluster,
   onHoverCluster,
+  rules,
   groupBy,
   collapsedHotels,
   onToggleHotel,
@@ -55,6 +56,7 @@ export default function ReportDraftTable({
         Boolean(hoveredCluster) && row.shareClusterId === hoveredCluster
       }
       onHoverCluster={onHoverCluster}
+      rules={rules}
       canEdit={canEdit}
     />
   );
@@ -134,6 +136,7 @@ ReportDraftTable.propTypes = {
   onResetFilters: PropTypes.func.isRequired,
   hoveredCluster: PropTypes.string,
   onHoverCluster: PropTypes.func,
+  rules: PropTypes.object,
   groupBy: PropTypes.oneOf(["file", "hotel"]),
   collapsedHotels: PropTypes.instanceOf(Set),
   onToggleHotel: PropTypes.func,

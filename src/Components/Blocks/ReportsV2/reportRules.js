@@ -167,3 +167,49 @@ export function pickSetting(settings, level, entityId = null) {
   }
   return null;
 }
+
+/**
+ * Возвращает правила частичных суток, действующие для конкретного черновика:
+ * общая настройка, накрытая переопределением по авиакомпании (для отчёта АК)
+ * или по гостинице (для отчёта гостиницы).
+ *
+ * Это зеркало бэкового `resolvePartialDayRules`
+ * (`services/report/partialDaySettings.js:75`) — правится парой с ним, иначе
+ * экран разойдётся с расчётом: диспетчер увидит подсветку по одному порогу,
+ * а сутки будут посчитаны по другому.
+ *
+ * Мёрдж идёт целой записью, а не отдельными полями: все восемь полей правил в
+ * БД non-null с дефолтами (`prisma/schema.prisma:1469-1476`), поэтому
+ * переопределение всегда заменяет все восемь — «частичного» override не бывает.
+ * Поля правил из записи достаёт `toRulesForm`, так что `id`, `level`,
+ * `airlineId`, `hotel`, `__typename` в правила не протекают.
+ *
+ * @param {Array<object>|null|undefined} settings - записи ReportPartialDaySetting (все уровни)
+ * @param {object|null|undefined} draft - черновик отчёта: `type`, `airlineId`, `hotelId`
+ * @returns {object} правила из 8 полей
+ */
+export function resolveDraftPartialDayRules(settings, draft) {
+  // Нечем накрывать (нет настроек) — работаем по общим дефолтам, как до
+  // появления настроек.
+  if (!Array.isArray(settings) || settings.length === 0) {
+    return { ...PARTIAL_DAY_DEFAULTS };
+  }
+
+  let rules = toRulesForm(pickSetting(settings, "GLOBAL"));
+
+  // Без черновика (неизвестен тип отчёта и сущность) накрывать переопределением
+  // нечем — но общая настройка действует и тут: это и есть «общие правила».
+  if (!draft) return rules;
+
+  // `else if`, как на бэке: у черновика АК может быть заполнен и hotelId,
+  // но переопределение по гостинице в отчёте АК не участвует.
+  let override = null;
+  if (draft.type === "AIRLINE" && draft.airlineId) {
+    override = pickSetting(settings, "AIRLINE", draft.airlineId);
+  } else if (draft.type === "HOTEL" && draft.hotelId) {
+    override = pickSetting(settings, "HOTEL", draft.hotelId);
+  }
+  if (override) rules = { ...rules, ...toRulesForm(override) };
+
+  return rules;
+}

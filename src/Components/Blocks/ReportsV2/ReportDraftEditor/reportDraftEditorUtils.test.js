@@ -14,6 +14,7 @@ import {
   rowMatchesSearch,
   describeShareSegments,
   listCohabitants,
+  breakfastCellText,
 } from "./reportDraftEditorUtils.js";
 
 // Формат границ — как на стенде: "DD.MM.YYYY HH:MM:SS", уже отформатирован бэком.
@@ -189,4 +190,56 @@ test("editableValue blanks a zero so typing over it does not prepend it", () => 
   assert.equal(editableValue(866), 866);
   assert.equal(editableValue(2.5), 2.5);
   assert.equal(editableValue("3400"), "3400");
+});
+
+test("getArrivalHighlight uses the threshold from the passed rules", () => {
+  const rules = { arrivalFullBefore: "07:00" };
+  assert.equal(getArrivalHighlight("07.07.2026 06:30:00", rules).highlighted, true);
+  assert.equal(getArrivalHighlight("07.07.2026 07:00:00", rules).highlighted, false);
+  assert.equal(getArrivalHighlight("07.07.2026 07:30:00", rules).highlighted, false);
+  assert.ok(getArrivalHighlight("07.07.2026 06:30:00", rules).title.includes("07:00"));
+});
+
+test("getDepartureHighlight uses the threshold from the passed rules", () => {
+  const rules = { departureHalfAfter: "13:00" };
+  assert.equal(getDepartureHighlight("07.07.2026 13:30:00", rules).highlighted, true);
+  assert.equal(getDepartureHighlight("07.07.2026 13:00:00", rules).highlighted, false);
+  assert.equal(getDepartureHighlight("07.07.2026 12:30:00", rules).highlighted, false);
+  assert.ok(getDepartureHighlight("07.07.2026 13:30:00", rules).title.includes("13:00"));
+});
+
+test("highlights fall back to the defaults without rules", () => {
+  assert.equal(getArrivalHighlight("07.07.2026 05:30:00").highlighted, true);
+  assert.ok(getArrivalHighlight("07.07.2026 05:30:00").title.includes("06:00"));
+  assert.equal(getDepartureHighlight("07.07.2026 12:30:00").highlighted, true);
+  assert.ok(getDepartureHighlight("07.07.2026 12:30:00").title.includes("12:00"));
+});
+
+test("highlights fall back to the defaults when the rules object lacks the key", () => {
+  // Правила без нужного поля не должны ни гасить подсветку, ни ронять расчёт.
+  assert.equal(getArrivalHighlight("07.07.2026 05:30:00", {}).highlighted, true);
+  assert.ok(getArrivalHighlight("07.07.2026 05:30:00", {}).title.includes("06:00"));
+  assert.equal(getDepartureHighlight("07.07.2026 12:30:00", {}).highlighted, true);
+  assert.ok(getDepartureHighlight("07.07.2026 12:30:00", {}).title.includes("12:00"));
+});
+
+test("highlights fall back to the defaults when the stored threshold does not parse", () => {
+  // Бэковый регексп допускает час без ведущего нуля: "6:00" он сохранит и
+  // посчитает как 06:00, а фронтовый parseHhMm вернёт null. Подсветка должна
+  // остаться (по дефолту), а не пропасть молча.
+  const arrival = getArrivalHighlight("07.07.2026 05:30:00", { arrivalFullBefore: "6:00" });
+  assert.equal(arrival.highlighted, true);
+  assert.ok(arrival.title.includes("06:00"));
+  assert.equal(getArrivalHighlight("07.07.2026 06:30:00", { arrivalFullBefore: "6:00" }).highlighted, false);
+
+  const departure = getDepartureHighlight("07.07.2026 12:30:00", { departureHalfAfter: "2:00" });
+  assert.equal(departure.highlighted, true);
+  assert.ok(departure.title.includes("12:00"));
+});
+
+test("breakfastCellText prints 'вкл' when breakfast is included in the room price", () => {
+  assert.equal(breakfastCellText({ breakfastIncludedInPrice: true, breakfastCount: 3 }), "вкл");
+  assert.equal(breakfastCellText({ breakfastIncludedInPrice: false, breakfastCount: 2 }), "2");
+  assert.equal(breakfastCellText({ breakfastIncludedInPrice: false }), "0");
+  assert.equal(breakfastCellText({}), "0");
 });

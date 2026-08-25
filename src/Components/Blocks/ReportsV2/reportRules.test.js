@@ -8,6 +8,7 @@ import {
   rulesChanged,
   toUpsertInput,
   pickSetting,
+  resolveDraftPartialDayRules,
 } from "./reportRules.js";
 
 test("toRulesForm returns defaults when setting is missing", () => {
@@ -196,4 +197,147 @@ test("toUpsertInput carries the level and only the matching entity id", () => {
   assert.equal("id" in hotel, false);
 
   assert.equal(toUpsertInput(PARTIAL_DAY_DEFAULTS, "AIRLINE").airlineId, null);
+});
+
+// Записи как с бэка: все восемь полей правил заполнены (в БД они non-null),
+// плюс служебные поля, которые в правила протекать не должны.
+const RULE_SETTINGS = [
+  {
+    id: "g1",
+    level: "GLOBAL",
+    airlineId: null,
+    hotelId: null,
+    __typename: "ReportPartialDaySetting",
+    arrivalFullBefore: "05:00",
+    arrivalHalfBefore: "13:00",
+    departureHalfAfter: "11:00",
+    departureFullAfter: "17:00",
+    arrivalFullDays: 1,
+    arrivalHalfDays: 0.5,
+    departureHalfDays: 0.5,
+    departureFullDays: 1,
+  },
+  {
+    id: "a1",
+    level: "AIRLINE",
+    airlineId: "air-1",
+    hotelId: null,
+    __typename: "ReportPartialDaySetting",
+    arrivalFullBefore: "07:00",
+    arrivalHalfBefore: "15:00",
+    departureHalfAfter: "13:00",
+    departureFullAfter: "19:00",
+    arrivalFullDays: 1,
+    arrivalHalfDays: 0.5,
+    departureHalfDays: 0.5,
+    departureFullDays: 1,
+  },
+  {
+    id: "h1",
+    level: "HOTEL",
+    airlineId: null,
+    hotelId: "hot-1",
+    __typename: "ReportPartialDaySetting",
+    arrivalFullBefore: "08:00",
+    arrivalHalfBefore: "16:00",
+    departureHalfAfter: "14:00",
+    departureFullAfter: "20:00",
+    arrivalFullDays: 1,
+    arrivalHalfDays: 0.5,
+    departureHalfDays: 0.5,
+    departureFullDays: 1,
+  },
+];
+
+test("resolveDraftPartialDayRules puts the GLOBAL setting over the defaults", () => {
+  const rules = resolveDraftPartialDayRules(RULE_SETTINGS, { type: "AIRLINE", airlineId: "air-9" });
+  assert.equal(rules.arrivalFullBefore, "05:00");
+  assert.equal(rules.departureHalfAfter, "11:00");
+});
+
+test("resolveDraftPartialDayRules applies the AIRLINE override to that airline's draft", () => {
+  const rules = resolveDraftPartialDayRules(RULE_SETTINGS, {
+    type: "AIRLINE",
+    airlineId: "air-1",
+    hotelId: "hot-1",
+  });
+  assert.equal(rules.arrivalFullBefore, "07:00");
+  assert.equal(rules.departureHalfAfter, "13:00");
+});
+
+test("resolveDraftPartialDayRules ignores an AIRLINE override for another airline or a hotel draft", () => {
+  const otherAirline = resolveDraftPartialDayRules(RULE_SETTINGS, {
+    type: "AIRLINE",
+    airlineId: "air-2",
+  });
+  assert.equal(otherAirline.arrivalFullBefore, "05:00");
+
+  // Черновик гостиницы с заполненным airlineId: переопределение по АК в
+  // hotel-отчёте не участвует — так же, как на бэке.
+  const hotelDraft = resolveDraftPartialDayRules(RULE_SETTINGS, {
+    type: "HOTEL",
+    airlineId: "air-1",
+    hotelId: "hot-9",
+  });
+  assert.equal(hotelDraft.arrivalFullBefore, "05:00");
+});
+
+test("resolveDraftPartialDayRules applies the HOTEL override only to that hotel's draft", () => {
+  const own = resolveDraftPartialDayRules(RULE_SETTINGS, { type: "HOTEL", hotelId: "hot-1" });
+  assert.equal(own.arrivalFullBefore, "08:00");
+  assert.equal(own.departureHalfAfter, "14:00");
+
+  const other = resolveDraftPartialDayRules(RULE_SETTINGS, { type: "HOTEL", hotelId: "hot-2" });
+  assert.equal(other.arrivalFullBefore, "05:00");
+
+  const airlineDraft = resolveDraftPartialDayRules(RULE_SETTINGS, {
+    type: "AIRLINE",
+    airlineId: "air-2",
+    hotelId: "hot-1",
+  });
+  assert.equal(airlineDraft.arrivalFullBefore, "05:00");
+});
+
+test("resolveDraftPartialDayRules falls back to defaults without settings", () => {
+  assert.deepEqual(resolveDraftPartialDayRules(null, { type: "AIRLINE", airlineId: "air-1" }), PARTIAL_DAY_DEFAULTS);
+  assert.deepEqual(resolveDraftPartialDayRules([], { type: "HOTEL", hotelId: "hot-1" }), PARTIAL_DAY_DEFAULTS);
+  assert.deepEqual(resolveDraftPartialDayRules(null, null), PARTIAL_DAY_DEFAULTS);
+});
+
+test("resolveDraftPartialDayRules without a draft still applies the GLOBAL setting", () => {
+  // Общая настройка — это и есть «общие правила»: без черновика накрывать
+  // переопределением нечего, но GLOBAL применяется, а не отбрасывается.
+  const rules = resolveDraftPartialDayRules(RULE_SETTINGS, null);
+  assert.equal(rules.arrivalFullBefore, "05:00");
+  assert.equal(rules.departureHalfAfter, "11:00");
+});
+
+test("resolveDraftPartialDayRules builds on the defaults when there is no GLOBAL setting", () => {
+  // Общая запись создаётся на бэке лениво (ensureGlobalPartialDaySetting), так
+  // что список из одних override'ов — рабочее состояние, а не мусор.
+  const onlyOverride = RULE_SETTINGS.filter((s) => s.level === "AIRLINE");
+  const rules = resolveDraftPartialDayRules(onlyOverride, { type: "AIRLINE", airlineId: "air-1" });
+  assert.equal(rules.arrivalFullBefore, "07:00");
+  assert.equal(rules.departureHalfAfter, "13:00");
+
+  // Черновик другой АК накрывать нечем — остаются чистые дефолты.
+  const other = resolveDraftPartialDayRules(onlyOverride, { type: "AIRLINE", airlineId: "air-2" });
+  assert.deepEqual(other, PARTIAL_DAY_DEFAULTS);
+});
+
+test("resolveDraftPartialDayRules returns a copy, not the shared defaults object", () => {
+  // Фолбэк-ветка (нет настроек) — самое место вернуть саму константу; если
+  // это когда-нибудь случится, правка результата испортит дефолты всему приложению.
+  const rules = resolveDraftPartialDayRules([], null);
+  rules.arrivalFullBefore = "23:59";
+  assert.equal(PARTIAL_DAY_DEFAULTS.arrivalFullBefore, "06:00");
+  assert.equal(resolveDraftPartialDayRules([], null).arrivalFullBefore, "06:00");
+});
+
+test("resolveDraftPartialDayRules returns only rule fields", () => {
+  const rules = resolveDraftPartialDayRules(RULE_SETTINGS, { type: "AIRLINE", airlineId: "air-1" });
+  assert.deepEqual(Object.keys(rules).sort(), Object.keys(PARTIAL_DAY_DEFAULTS).sort());
+  for (const key of ["id", "level", "airlineId", "hotelId", "__typename", "updatedAt"]) {
+    assert.equal(key in rules, false, `лишний ключ в правилах: ${key}`);
+  }
 });

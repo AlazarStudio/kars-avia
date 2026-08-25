@@ -13,6 +13,7 @@ import {
   describeShareSegments,
   listCohabitants,
   editableValue,
+  breakfastCellText,
 } from "./reportDraftEditorUtils";
 
 // Одна строка таблицы черновика. Чисто UI: получает уже готовую строку и
@@ -43,6 +44,7 @@ export default function ReportDraftRow({
   cluster,
   clusterHighlighted,
   onHoverCluster,
+  rules,
   canEdit = true,
 }) {
   // Пока курсор в любом поле строки, строка держится в выборке, даже если
@@ -59,8 +61,16 @@ export default function ReportDraftRow({
 
   const arrival = splitDateTime(row.arrival);
   const departure = splitDateTime(row.departure);
-  const arrivalHighlight = getArrivalHighlight(row.arrival);
-  const departureHighlight = getDepartureHighlight(row.departure);
+  // rules === null — «действующие пороги ещё не приехали» (см.
+  // ReportDraftEditor): подсветки нет вовсе. Красить по дефолтам, пока порог
+  // может быть переопределён, значит показать заведомо неверную границу и
+  // перекрасить строку после ответа.
+  const arrivalHighlight = rules
+    ? getArrivalHighlight(row.arrival, rules)
+    : { highlighted: false };
+  const departureHighlight = rules
+    ? getDepartureHighlight(row.departure, rules)
+    : { highlighted: false };
 
   const daysEdited = fieldEdited(row, "totalDays");
   const priceEdited = fieldEdited(row, "pricePerDay");
@@ -178,7 +188,7 @@ export default function ReportDraftRow({
         {row.personPosition || "—"}
       </div>
 
-      <div className={classes.colBreakfast}>{row.breakfastCount ?? 0}</div>
+      <div className={classes.colBreakfast}>{breakfastCellText(row)}</div>
       <div className={classes.colLunch}>{row.lunchCount ?? 0}</div>
       <div className={classes.colDinner}>{row.dinnerCount ?? 0}</div>
 
@@ -304,5 +314,6 @@ ReportDraftRow.propTypes = {
   cluster: PropTypes.shape({ number: PropTypes.number }),
   clusterHighlighted: PropTypes.bool,
   onHoverCluster: PropTypes.func,
+  rules: PropTypes.object,
   canEdit: PropTypes.bool,
 };
