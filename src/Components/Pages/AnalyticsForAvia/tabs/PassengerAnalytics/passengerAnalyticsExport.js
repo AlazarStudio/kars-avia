@@ -303,7 +303,10 @@ export async function exportPassengerAnalyticsFullXlsx({
       },
       sheetNames,
       sheetPrefix: requestSheetPrefix(request, index),
-      includeTransfer: arrEnabled || depEnabled,
+      // Без !! отсутствующая услуга (arrEnabled и depEnabled оба undefined)
+      // даёт includeTransfer: undefined, а дефолт деструктуризации в
+      // addCombinedSheet (= true) включает пустой блок «Трансфер».
+      includeTransfer: !!(arrEnabled || depEnabled),
       hotelIndexes: visibleHotelIndexes(request, user),
     });
   });

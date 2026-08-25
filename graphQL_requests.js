@@ -3885,6 +3885,7 @@ export const GET_PASSENGER_REQUEST = gql`
       airline {
         id
         name
+        nameFull
         images
       }
       airport {

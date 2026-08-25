@@ -1,7 +1,7 @@
 import ExcelJS from "exceljs";
-import { PERSON_CATEGORY_LABEL, normalizeCategory, placementKindLabel } from "../fapConstants";
+import { PERSON_CATEGORY_LABEL, normalizeCategory, placementKindLabel } from "../fapConstants.js";
 import { driverFactCount } from "../fapTransferFact.js";
-import { findRowIndexForPerson } from "./reportRowMatch";
+import { findRowIndexForPerson } from "./reportRowMatch.js";
 
 // ── helpers ──
 
@@ -38,6 +38,16 @@ export function chooseSheetName(rawName, existingNames) {
 
 const fmtDate = "dd.mm.yyyy";
 const fmtTime = "hh:mm";
+
+const BASE_FONT = { name: "Times New Roman", size: 12 };
+const HEADER_FONT = { ...BASE_FONT, bold: true };
+const FMT_MONEY = "#,##0.00";
+const THIN_BORDER = {
+  top: { style: "thin" },
+  left: { style: "thin" },
+  bottom: { style: "thin" },
+  right: { style: "thin" },
+};
 
 // Сдвигает Date так, чтобы при сериализации в Excel-serial (UTC-based) ячейка
 // показала локальное время браузера, а не UTC. Без этого «12:12 MSK» в БД
@@ -89,6 +99,60 @@ function applyHotelColumnWidths(ws) {
   ws.getColumn(23).width = 10;    // W = Скидка
   ws.getColumn(24).width = 15;    // X = Стоимость проживания
   ws.getColumn(25).width = 12;    // Y = Итого
+}
+
+// Применить ширины колонок раскладки TRANSFER_HEADERS —
+// общей для листов трансфера и доставки багажа.
+function applyTransferColumnWidths(ws) {
+  ws.getColumn(1).width = 6;      // №
+  ws.getColumn(2).width = 26;     // ФИО водителя
+  ws.getColumn(3).width = 16;     // Телефон
+  ws.getColumn(4).width = 30;     // Адрес отправления
+  ws.getColumn(5).width = 30;     // Адрес прибытия
+  ws.getColumn(6).width = 13;     // Дата подачи
+  ws.getColumn(7).width = 11;     // Время подачи
+  ws.getColumn(8).width = 22;     // Тип ТС
+  ws.getColumn(9).width = 12;     // Перевезено
+  ws.getColumn(10).width = 12;    // Сумма
+}
+
+// Финальный проход по телу листа: шрифт, выравнивание, сетка, формат денег.
+//
+// Почему по ячейкам, а не через `ws.getColumn(n).font` / `ws.getRow(n).font`:
+// их `_applyStyle` перетирает стиль КАЖДОЙ ячейки безусловно — ломается контракт
+// «докрашиваем только незаданное»; к тому же стиль колонки в XML красит колонку
+// целиком до конца листа, а не диапазон таблицы.
+// Осознанные стили (жирные заголовки и «Итого», right у Y1, left у сабхедера
+// гостиницы, центр у «Трансфера», numFmt дат/времени) проход не трогает.
+// Границы ставятся всем ячейкам диапазона, включая пустые: таблица должна
+// выглядеть сеткой. Но строки из `skipRows` — разделители между таблицами, они
+// вне таблицы: сетка на них склеила бы два блока в один.
+function finishSheet(ws, { lastCol, moneyCols, leftCols, headerRow = 4, skipRows = [] }) {
+  const money = new Set(moneyCols);
+  const left = new Set(leftCols);
+  const skip = new Set(skipRows);
+  for (let r = headerRow; r <= ws.rowCount; r += 1) {
+    if (skip.has(r)) continue;
+    const row = ws.getRow(r);
+    for (let c = 1; c <= lastCol; c += 1) {
+      const cell = row.getCell(c);
+      if (!cell.font) cell.font = BASE_FONT;
+      if (!cell.alignment) {
+        cell.alignment = {
+          vertical: "middle",
+          wrapText: true,
+          horizontal: left.has(c) ? "left" : "center",
+        };
+      }
+      cell.border = THIN_BORDER;
+      // `cell.master === cell` истинно для обычных ячеек и master merged-региона,
+      // ложно для slave: в exceljs 4.4 slave делит ОБЪЕКТ стиля с master, и запись
+      // numFmt через slave протекла бы в формат сабхедера «Гостиница: …».
+      if (money.has(c) && cell.master === cell && !cell.numFmt) cell.numFmt = FMT_MONEY;
+    }
+  }
+  // Шапка (строки 1..headerRow) остаётся на экране при прокрутке списка гостей.
+  ws.views = [{ state: "frozen", ySplit: headerRow }];
 }
 
 const HOTEL_HEADERS = [
@@ -170,7 +234,7 @@ export function addHotelSheet(wb, opts) {
   const ws = wb.addWorksheet(chooseSheetName(prefixedSheetName(hotelName, sheetPrefix), sheetNames));
 
   // ── Шапка ──
-  ws.getCell("A1").value = request?.airline?.name ?? "";
+  ws.getCell("A1").value = request?.airline?.nameFull || request?.airline?.name || "";
   ws.getCell("Y1").value = "Договор № или \"по согласованию\"";
   ws.getCell("Y1").alignment = { horizontal: "right" };
   const flightPart = request?.flightDate
@@ -179,14 +243,14 @@ export function addHotelSheet(wb, opts) {
   ws.getCell("C3").value =
     `Детализация оказанных услуг пассажиров задержанного рейса № ${request?.flightNumber ?? ""}${flightPart} г. ${city} гостиница ${hotelName}`;
   [ws.getCell("A1"), ws.getCell("Y1"), ws.getCell("C3")].forEach((c) => {
-    c.font = { name: "Calibri", size: 12, bold: true };
+    c.font = HEADER_FONT;
   });
 
   // ── Заголовки колонок (row 4) ──
   HOTEL_HEADERS.forEach((label, i) => {
     const cell = ws.getCell(4, i + 1);
     cell.value = label;
-    cell.font = { name: "Calibri", size: 12, bold: true };
+    cell.font = HEADER_FONT;
     cell.alignment = { wrapText: true, vertical: "middle", horizontal: "center" };
   });
   ws.getRow(4).height = 51;
@@ -287,12 +351,13 @@ export function addHotelSheet(wb, opts) {
   const lastPersonRow = rowIdx - 1;
 
   // ── Блок «Трансфер» (одна пустая строка + 3 строки) ──
-  rowIdx += 1; // gap
+  const gapRow = rowIdx; // строка-разделитель: остаётся без сетки
+  rowIdx += 1;
   const tHeaderRow = rowIdx;
   ws.mergeCells(`B${tHeaderRow}:H${tHeaderRow}`);
   const tHdr = ws.getCell(`B${tHeaderRow}`);
   tHdr.value = "Трансфер";
-  tHdr.font = { name: "Calibri", size: 12, bold: true };
+  tHdr.font = HEADER_FONT;
   tHdr.alignment = { horizontal: "center" };
   rowIdx += 1;
 
@@ -305,7 +370,6 @@ export function addHotelSheet(wb, opts) {
     ? aDrivers.reduce((s, d) => s + (d.reportCost ?? 0), 0)
     : null;
   const aRow = ws.getRow(rowIdx);
-  aRow.height = 34;
   aRow.getCell(2).value = `аэропорт-гостиница ${hotelName}`;
   aRow.getCell(3).value = aFirstType;
   if (arrival?.plan?.plannedAt) {
@@ -327,7 +391,6 @@ export function addHotelSheet(wb, opts) {
     ? dDrivers.reduce((s, d) => s + (d.reportCost ?? 0), 0)
     : null;
   const dRow = ws.getRow(rowIdx);
-  dRow.height = 34;
   dRow.getCell(2).value = `гостиница ${hotelName}-аэропорт`;
   dRow.getCell(3).value = dFirstType;
   if (departure?.plan?.plannedAt) {
@@ -344,7 +407,10 @@ export function addHotelSheet(wb, opts) {
   // ── Строка «Итого:» ──
   const totalRow = ws.getRow(rowIdx);
   totalRow.getCell(1).value = "Итого:";
-  totalRow.getCell(1).font = { name: "Calibri", size: 12, bold: true };
+  totalRow.getCell(1).font = HEADER_FONT;
+  // Явное выравнивание: иначе проход центрирует с переносом и в колонке шириной 6
+  // слово уезжает на две строки.
+  totalRow.getCell(1).alignment = { vertical: "middle", horizontal: "left" };
   if (lastPersonRow >= 5) {
     totalRow.getCell(13).value = { formula: `SUM(M5:M${lastPersonRow})` };
     totalRow.getCell(14).value = { formula: `SUM(N5:N${lastPersonRow})` };
@@ -366,6 +432,12 @@ export function addHotelSheet(wb, opts) {
   };
 
   applyHotelColumnWidths(ws);
+  finishSheet(ws, {
+    lastCol: 25,
+    moneyCols: [12, 15, 17, 19, 21, 22, 24, 25],
+    leftCols: [2],
+    skipRows: [gapRow],
+  });
   return ws;
 }
 
@@ -386,29 +458,20 @@ export function addTransferSheet(wb, opts) {
   const ws = wb.addWorksheet(chooseSheetName(prefixedSheetName(baseName, sheetPrefix), sheetNames));
   const city = pickCity(request, request?.livingService?.hotels?.[0]);
 
-  ws.getCell("A1").value = request?.airline?.name ?? "";
-  ws.getCell("A1").font = { name: "Calibri", size: 12, bold: true };
+  ws.getCell("A1").value = request?.airline?.nameFull || request?.airline?.name || "";
+  ws.getCell("A1").font = HEADER_FONT;
   ws.getCell("C3").value =
     `${baseName} по рейсу № ${request?.flightNumber ?? ""} г. ${city}`;
-  ws.getCell("C3").font = { name: "Calibri", size: 12, bold: true };
+  ws.getCell("C3").font = HEADER_FONT;
 
   TRANSFER_HEADERS.forEach((label, i) => {
     const cell = ws.getCell(4, i + 1);
     cell.value = label;
-    cell.font = { name: "Calibri", size: 12, bold: true };
+    cell.font = HEADER_FONT;
     cell.alignment = { wrapText: true, vertical: "middle", horizontal: "center" };
   });
   ws.getRow(4).height = 51;
-  ws.getColumn(1).width = 6;      // №
-  ws.getColumn(2).width = 26;     // ФИО водителя
-  ws.getColumn(3).width = 16;     // Телефон
-  ws.getColumn(4).width = 30;     // Адрес отправления
-  ws.getColumn(5).width = 30;     // Адрес прибытия
-  ws.getColumn(6).width = 13;     // Дата подачи
-  ws.getColumn(7).width = 11;     // Время подачи
-  ws.getColumn(8).width = 22;     // Тип ТС
-  ws.getColumn(9).width = 12;     // Перевезено
-  ws.getColumn(10).width = 12;    // Сумма
+  applyTransferColumnWidths(ws);
 
   const drivers = service?.drivers ?? [];
   drivers.forEach((d, i) => {
@@ -435,11 +498,113 @@ export function addTransferSheet(wb, opts) {
   const last = drivers.length > 0 ? 4 + drivers.length : 4;
   const totalRow = ws.getRow(last + 1);
   totalRow.getCell(1).value = "Итого:";
-  totalRow.getCell(1).font = { name: "Calibri", size: 12, bold: true };
+  totalRow.getCell(1).font = HEADER_FONT;
+  // Явное выравнивание: иначе проход центрирует с переносом в узкой колонке A.
+  totalRow.getCell(1).alignment = { vertical: "middle", horizontal: "left" };
   if (drivers.length > 0) {
     totalRow.getCell(9).value = { formula: `SUM(I5:I${last})` };
     totalRow.getCell(10).value = { formula: `SUM(J5:J${last})` };
   }
+  finishSheet(ws, { lastCol: 10, moneyCols: [10], leftCols: [2, 4, 5] });
+  return ws;
+}
+
+/**
+ * Лист «Доставка багажа» — раскладка «водитель + его пассажиры».
+ *
+ * Колонки те же, что у трансфера (TRANSFER_HEADERS): поездка багажа — это тот же
+ * рейс водителя. Под строкой водителя идёт мини-таблица его пассажиров, которая
+ * зеркалит экран поездки (ФИО / адрес доставки / номера бирок / сумма), поэтому у
+ * пассажирских строк заполнены только B, E, H, J — остальные колонки водительские.
+ * Сабхедер мини-таблицы пишется только при непустом списке пассажиров.
+ */
+export function addBaggageSheet(wb, opts) {
+  const { request, sheetNames, sheetPrefix = "" } = opts;
+  const ws = wb.addWorksheet(
+    chooseSheetName(prefixedSheetName("Доставка багажа", sheetPrefix), sheetNames)
+  );
+  const city = pickCity(request, request?.livingService?.hotels?.[0]);
+
+  ws.getCell("A1").value = request?.airline?.nameFull || request?.airline?.name || "";
+  ws.getCell("A1").font = HEADER_FONT;
+  ws.getCell("C3").value =
+    `Доставка багажа по рейсу № ${request?.flightNumber ?? ""} г. ${city}`;
+  ws.getCell("C3").font = HEADER_FONT;
+
+  TRANSFER_HEADERS.forEach((label, i) => {
+    const cell = ws.getCell(4, i + 1);
+    cell.value = label;
+    cell.font = HEADER_FONT;
+    cell.alignment = { wrapText: true, vertical: "middle", horizontal: "center" };
+  });
+  ws.getRow(4).height = 51;
+  applyTransferColumnWidths(ws);
+
+  const drivers = request?.baggageDeliveryService?.drivers ?? [];
+  const driverRows = []; // номера строк водителей — для формул итога
+  let rowIdx = 5;
+
+  drivers.forEach((d, i) => {
+    const row = ws.getRow(rowIdx);
+    driverRows.push(rowIdx);
+    row.getCell(1).value = i + 1;               // A № (сквозной по водителям)
+    row.getCell(2).value = d.fullName ?? "";    // B
+    row.getCell(3).value = d.phone ?? "";       // C
+    row.getCell(4).value = d.addressFrom ?? ""; // D
+    row.getCell(5).value = d.addressTo ?? "";   // E
+    if (d.pickupAt) {
+      const dt = toExcelLocal(new Date(d.pickupAt));
+      row.getCell(6).value = dt;
+      row.getCell(6).numFmt = fmtDate;
+      row.getCell(7).value = dt;
+      row.getCell(7).numFmt = fmtTime;
+    }
+    row.getCell(8).value = d.vehicleType ?? ""; // H
+    const people = d.people ?? [];
+    // «Перевезено» багажного водителя = число его пассажиров: у доставки багажа
+    // поимённый список — это и есть факт (сумма поездки и состав считаются от
+    // пассажиров, см. deriveTripCost на бэке), чужое transportedCount тут не факт.
+    if (people.length > 0) row.getCell(9).value = people.length; // I
+    if (d.reportCost != null) row.getCell(10).value = d.reportCost; // J
+    rowIdx += 1;
+
+    if (people.length === 0) return;
+
+    const subRow = ws.getRow(rowIdx);
+    [[2, "Пассажир"], [5, "Адрес доставки"], [8, "Номера бирок"], [10, "Сумма"]].forEach(
+      ([col, label]) => {
+        subRow.getCell(col).value = label;
+        subRow.getCell(col).font = HEADER_FONT;
+        // Явное выравнивание: иначе finishSheet раздаёт B/E/H влево (leftCols),
+        // а J по центру — заголовочная строка мини-таблицы разъезжается.
+        subRow.getCell(col).alignment = { vertical: "middle", horizontal: "center" };
+      }
+    );
+    rowIdx += 1;
+
+    people.forEach((p) => {
+      const pRow = ws.getRow(rowIdx);
+      pRow.getCell(2).value = p.fullName ?? "";                    // B Пассажир
+      pRow.getCell(5).value = p.addressTo ?? "";                   // E Адрес доставки
+      pRow.getCell(8).value = (p.baggageTags ?? []).join(", ");    // H Номера бирок
+      if (p.reportCost != null) pRow.getCell(10).value = p.reportCost; // J Сумма
+      rowIdx += 1;
+    });
+  });
+
+  const totalRow = ws.getRow(rowIdx);
+  totalRow.getCell(1).value = "Итого:";
+  totalRow.getCell(1).font = HEADER_FONT;
+  // Явное выравнивание: иначе проход центрирует с переносом в узкой колонке A.
+  totalRow.getCell(1).alignment = { vertical: "middle", horizontal: "left" };
+  if (driverRows.length > 0) {
+    // Перечисление водительских строк, а не SUM диапазона: сумма поездки на бэке —
+    // производная (Σ reportCost её пассажиров), и диапазон задвоил бы деньги.
+    totalRow.getCell(9).value = { formula: driverRows.map((r) => `I${r}`).join("+") };
+    totalRow.getCell(10).value = { formula: driverRows.map((r) => `J${r}`).join("+") };
+  }
+
+  finishSheet(ws, { lastCol: 10, moneyCols: [10], leftCols: [2, 4, 5, 8] });
   return ws;
 }
 
@@ -483,7 +648,7 @@ export function addCombinedSheet(wb, opts) {
   const city = pickCity(request, request?.livingService?.hotels?.[0]);
 
   // ── Шапка ──
-  ws.getCell("A1").value = request?.airline?.name ?? "";
+  ws.getCell("A1").value = request?.airline?.nameFull || request?.airline?.name || "";
   ws.getCell("Y1").value = "Договор № или \"по согласованию\"";
   ws.getCell("Y1").alignment = { horizontal: "right" };
   const flightPart = request?.flightDate
@@ -492,14 +657,14 @@ export function addCombinedSheet(wb, opts) {
   ws.getCell("C3").value =
     `Детализация оказанных услуг пассажиров задержанного рейса № ${request?.flightNumber ?? ""}${flightPart} г. ${city}`;
   [ws.getCell("A1"), ws.getCell("Y1"), ws.getCell("C3")].forEach((c) => {
-    c.font = { name: "Calibri", size: 12, bold: true };
+    c.font = HEADER_FONT;
   });
 
   // ── Заголовки колонок (row 4) ──
   HOTEL_HEADERS.forEach((label, i) => {
     const cell = ws.getCell(4, i + 1);
     cell.value = label;
-    cell.font = { name: "Calibri", size: 12, bold: true };
+    cell.font = HEADER_FONT;
     cell.alignment = { wrapText: true, vertical: "middle", horizontal: "center" };
   });
   ws.getRow(4).height = 51;
@@ -522,7 +687,7 @@ export function addCombinedSheet(wb, opts) {
     ws.mergeCells(`A${rowIdx}:Y${rowIdx}`);
     const hdr = ws.getCell(`A${rowIdx}`);
     hdr.value = `Гостиница: ${pickHotelName(hotel)}${hotel?.address ? ` · ${hotel.address}` : ""}`;
-    hdr.font = { name: "Calibri", size: 12, bold: true };
+    hdr.font = HEADER_FONT;
     hdr.alignment = { horizontal: "left" };
     hdr.fill = {
       type: "pattern",
@@ -591,13 +756,15 @@ export function addCombinedSheet(wb, opts) {
 
   // ── Блок «Трансфер» ──
   let lastTransferRow = null;
+  let gapRow = null; // строка-разделитель есть только вместе с блоком трансфера
   if (includeTransfer) {
-    rowIdx += 1; // gap
+    gapRow = rowIdx;
+    rowIdx += 1;
     const tHeaderRow = rowIdx;
     ws.mergeCells(`B${tHeaderRow}:H${tHeaderRow}`);
     const tHdr = ws.getCell(`B${tHeaderRow}`);
     tHdr.value = "Трансфер";
-    tHdr.font = { name: "Calibri", size: 12, bold: true };
+    tHdr.font = HEADER_FONT;
     tHdr.alignment = { horizontal: "center" };
     rowIdx += 1;
 
@@ -609,7 +776,6 @@ export function addCombinedSheet(wb, opts) {
     const aCost = aHasAnyCost ? aDrivers.reduce((s, d) => s + (d.reportCost ?? 0), 0) : null;
     if (arrival?.plan?.enabled) {
       const aRow = ws.getRow(rowIdx);
-      aRow.height = 34;
       aRow.getCell(2).value = "аэропорт → гостиницы";
       aRow.getCell(3).value = aFirstType;
       if (arrival?.plan?.plannedAt) {
@@ -630,7 +796,6 @@ export function addCombinedSheet(wb, opts) {
     const dCost = dHasAnyCost ? dDrivers.reduce((s, d) => s + (d.reportCost ?? 0), 0) : null;
     if (departure?.plan?.enabled) {
       const dRow = ws.getRow(rowIdx);
-      dRow.height = 34;
       dRow.getCell(2).value = "гостиницы → аэропорт";
       dRow.getCell(3).value = dFirstType;
       if (departure?.plan?.plannedAt) {
@@ -647,7 +812,9 @@ export function addCombinedSheet(wb, opts) {
   // ── Итого ──
   const totalRow = ws.getRow(rowIdx);
   totalRow.getCell(1).value = "Итого:";
-  totalRow.getCell(1).font = { name: "Calibri", size: 12, bold: true };
+  totalRow.getCell(1).font = HEADER_FONT;
+  // Явное выравнивание: иначе проход центрирует с переносом в узкой колонке A.
+  totalRow.getCell(1).alignment = { vertical: "middle", horizontal: "left" };
   if (firstPersonRow != null && lastPersonRow != null) {
     totalRow.getCell(13).value = { formula: `SUM(M${firstPersonRow}:M${lastPersonRow})` };
     totalRow.getCell(14).value = { formula: `SUM(N${firstPersonRow}:N${lastPersonRow})` };
@@ -669,6 +836,12 @@ export function addCombinedSheet(wb, opts) {
   totalRow.getCell(25).value = { formula: `SUM(Y${sumStart}:Y${sumEnd})` };
 
   applyHotelColumnWidths(ws);
+  finishSheet(ws, {
+    lastCol: 25,
+    moneyCols: [12, 15, 17, 19, 21, 22, 24, 25],
+    leftCols: [2],
+    skipRows: gapRow == null ? [] : [gapRow],
+  });
   return ws;
 }
 
@@ -704,28 +877,38 @@ export function addRequestReportSheets(wb, request, opts = {}) {
   const livingEnabled = request?.livingService?.plan?.enabled;
   const arrEnabled = request?.transferService?.plan?.enabled;
   const depEnabled = request?.departureTransferService?.plan?.enabled;
+  const bagEnabled = request?.baggageDeliveryService?.plan?.enabled;
   // Пустой белый список = ни одной доступной гостиницы (авиакомпания, пока
   // отчёты не отправлены; гостиница, которой в этой заявке нет). Проживание в
   // такой книге не даст ни листов, ни строк в сводке, поэтому считаем его
   // выключенным: иначе молча скачивалась книга из одной пустой шапки.
   // null — ограничения нет, старое поведение.
+  // Используется вместо livingEnabled и в гейте, и ниже (сводка, листы гостиниц):
+  // иначе заявка «проживание включено + пустой белый список + багаж включён»
+  // проходит гейт благодаря багажу, а «Сводка» всё равно добавляется по
+  // livingEnabled — в книге появляется пустая «Сводка» без единой строки.
   const livingVisible =
     livingEnabled && !(Array.isArray(hotelIndexes) && hotelIndexes.length === 0);
-  if (!livingVisible && !arrEnabled && !depEnabled) {
+  if (!livingVisible && !arrEnabled && !depEnabled && !bagEnabled) {
     notifyError?.("Нет данных для отчёта");
     return false;
   }
 
-  if (livingEnabled || arrEnabled || depEnabled) {
+  // Сводка — про проживание и трансфер; багаж в неё не входит, поэтому условие
+  // сюда не расширяется: багаж-only книга состоит из одного листа багажа.
+  if (livingVisible || arrEnabled || depEnabled) {
     addCombinedSheet(wb, {
       request,
       sheetNames,
       sheetPrefix,
       hotelIndexes,
-      includeTransfer: arrEnabled || depEnabled,
+      // Без !! отсутствующая услуга (arrEnabled и depEnabled оба undefined)
+      // даёт includeTransfer: undefined, а дефолт деструктуризации в
+      // addCombinedSheet (= true) включает пустой блок «Трансфер».
+      includeTransfer: !!(arrEnabled || depEnabled),
     });
   }
-  if (livingEnabled) {
+  if (livingVisible) {
     (request?.livingService?.hotels ?? []).forEach((_, hotelIndex) => {
       if (hotelIndexes && !hotelIndexes.includes(hotelIndex)) return;
       addHotelSheet(wb, { request, hotelIndex, sheetNames, sheetPrefix });
@@ -736,6 +919,10 @@ export function addRequestReportSheets(wb, request, opts = {}) {
   }
   if (depEnabled) {
     addTransferSheet(wb, { request, direction: "DEPARTURE", sheetNames, sheetPrefix });
+  }
+  // Белый список гостиниц багаж не гейтит — как и трансфер.
+  if (bagEnabled) {
+    addBaggageSheet(wb, { request, sheetNames, sheetPrefix });
   }
 
   return true;
