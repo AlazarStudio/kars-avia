@@ -3,7 +3,6 @@ import { useNavigate, useParams, useOutletContext } from "react-router-dom";
 import { useQuery, useSubscription } from "@apollo/client";
 import {
   GET_PASSENGER_REQUEST,
-  GET_HOTEL_TRANSFER_PRICE,
   PASSENGER_REQUEST_UPDATED_SUBSCRIPTION,
   getCookie,
 } from "../../../../graphQL_requests";
@@ -23,13 +22,8 @@ import {
   canAccessMenu,
   canSeeExternalLinks,
   isHotelScoped,
-  scopedHotelId,
 } from "../../../utils/access";
-import { hotelProvidesTransfer } from "../../../utils/hotelTransfer";
-import {
-  isServiceHiddenForUser,
-  TRANSFER_SERVICE_KEYS,
-} from "../../Blocks/FapV2/fapServiceVisibility";
+import { useHotelServiceVisibility } from "../../Blocks/FapV2/useHotelServiceVisibility";
 import { authService } from "../../../services/authService";
 import CopyIcon from "../../../shared/icons/CopyIcon";
 import LinkIcon from "../../../shared/icons/LinkIcon";
@@ -64,38 +58,21 @@ export default function FapServicePage({ user }) {
   const request = data?.passengerRequest;
   const cfg = SERVICE_CONFIG[serviceKey];
 
-  // Прямой адрес `.../service/transfer` открывался у гостиницы, которая трансфер
-  // не возит, — плитку в деталке ей уже не показывают, а страницу нет. Правило
-  // одно на оба места, см. fapServiceVisibility.
+  // Прямой адрес `.../service/transfer` (и `.../service/baggage`) открывался у
+  // гостиницы, которая трансфер не возит, — плитку в деталке ей уже не
+  // показывают, а страницу нет. Правило одно на оба места, см.
+  // fapServiceVisibility.
   const hotelScoped = isHotelScoped(user);
-  const ownHotelId = scopedHotelId(user);
-  const { data: transferPriceData, loading: transferPriceLoading } = useQuery(
-    GET_HOTEL_TRANSFER_PRICE,
-    {
-      context: { headers: { Authorization: `Bearer ${token}` } },
-      variables: { hotelId: ownHotelId },
-      skip:
-        !hotelScoped ||
-        !ownHotelId ||
-        !TRANSFER_SERVICE_KEYS.includes(serviceKey),
-    }
-  );
-  const serviceHidden = isServiceHiddenForUser(
-    serviceKey,
-    user,
-    !transferPriceLoading &&
-      hotelProvidesTransfer(transferPriceData?.hotel?.transferPrice)
-  );
-  // Уводим только когда цена уже пришла: пока грузится, `serviceHidden` верен
-  // «в запас» и редирект по нему выкинул бы и ту гостиницу, что трансфер возит.
-  const transferGateReady =
-    !hotelScoped ||
-    !TRANSFER_SERVICE_KEYS.includes(serviceKey) ||
-    !transferPriceLoading;
+  // Уводим только когда цена уже пришла (`ready`): пока грузится,
+  // `serviceHidden` верен «в запас» и редирект по нему выкинул бы и ту
+  // гостиницу, что трансфер возит.
+  const { ready: serviceGateReady, isHidden } =
+    useHotelServiceVisibility(user);
+  const serviceHidden = isHidden(serviceKey);
   React.useEffect(() => {
-    if (!serviceHidden || !transferGateReady) return;
+    if (!serviceHidden || !serviceGateReady) return;
     navigate(`/far/${requestId}`, { replace: true });
-  }, [serviceHidden, transferGateReady, requestId, navigate]);
+  }, [serviceHidden, serviceGateReady, requestId, navigate]);
 
   const {
     canCopy: canCopyRepresentativeLink,
@@ -235,7 +212,7 @@ export default function FapServicePage({ user }) {
 
       <FapCancelledBanner request={request} />
 
-      {loading || !transferGateReady ? (
+      {loading || !serviceGateReady ? (
         <div className={classes.loader}>
           <MUILoader />
         </div>

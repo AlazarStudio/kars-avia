@@ -643,7 +643,13 @@ export function addCombinedSheet(wb, opts) {
     includeTransfer = true,
     sheetPrefix = "",
     hotelIndexes = null,
+    hiddenServiceKeys = [],
   } = opts;
+  // includeTransfer отвечает за блок целиком, hiddenServiceKeys — за каждое
+  // направление отдельно: скрыть могут только прилёт или только вылет, а блок
+  // при этом остаётся. Поэтому видимость проверяется и здесь, а не только на
+  // уровне листов: строки блока несут тот же тип ТС, время подачи и суммы.
+  const hidden = new Set(hiddenServiceKeys);
   const ws = wb.addWorksheet(chooseSheetName(prefixedSheetName("Сводка", sheetPrefix), sheetNames));
   const city = pickCity(request, request?.livingService?.hotels?.[0]);
 
@@ -774,7 +780,7 @@ export function addCombinedSheet(wb, opts) {
     const aFirstType = aDrivers.find((d) => d.vehicleType)?.vehicleType ?? "";
     const aHasAnyCost = aDrivers.some((d) => d.reportCost != null);
     const aCost = aHasAnyCost ? aDrivers.reduce((s, d) => s + (d.reportCost ?? 0), 0) : null;
-    if (arrival?.plan?.enabled) {
+    if (arrival?.plan?.enabled && !hidden.has("transfer")) {
       const aRow = ws.getRow(rowIdx);
       aRow.getCell(2).value = "аэропорт → гостиницы";
       aRow.getCell(3).value = aFirstType;
@@ -794,7 +800,7 @@ export function addCombinedSheet(wb, opts) {
     const dFirstType = dDrivers.find((d) => d.vehicleType)?.vehicleType ?? "";
     const dHasAnyCost = dDrivers.some((d) => d.reportCost != null);
     const dCost = dHasAnyCost ? dDrivers.reduce((s, d) => s + (d.reportCost ?? 0), 0) : null;
-    if (departure?.plan?.enabled) {
+    if (departure?.plan?.enabled && !hidden.has("transferDeparture")) {
       const dRow = ws.getRow(rowIdx);
       dRow.getCell(2).value = "гостиницы → аэропорт";
       dRow.getCell(3).value = dFirstType;
@@ -873,11 +879,25 @@ export function addRequestReportSheets(wb, request, opts = {}) {
     sheetNames = new Set(),
     sheetPrefix = "",
     hotelIndexes = null,
+    hiddenServiceKeys = [],
   } = opts;
   const livingEnabled = request?.livingService?.plan?.enabled;
   const arrEnabled = request?.transferService?.plan?.enabled;
   const depEnabled = request?.departureTransferService?.plan?.enabled;
   const bagEnabled = request?.baggageDeliveryService?.plan?.enabled;
+  // Ключи услуг (SERVICE_CONFIG), скрытых от текущего пользователя правилом
+  // fapServiceVisibility: гостинице, которая сама трансфер не возит, на экранах
+  // не показывают трансфер и багаж — в книге они тоже не должны появляться,
+  // иначе по кнопке «Скачать отчёт» уезжают чужие водители, рейсы и деньги.
+  // Скрытая услуга дальше везде равна выключенной.
+  // Ключи — те же строки, что в HOTEL_RESTRICTED_SERVICE_KEYS
+  // (src/Components/Blocks/FapV2/fapServiceVisibility.js); импорт не делаем,
+  // чтобы модуль отчётов не зависел от модуля видимости — при переименовании
+  // ключа править оба файла парой.
+  const hidden = new Set(hiddenServiceKeys);
+  const arrVisible = arrEnabled && !hidden.has("transfer");
+  const depVisible = depEnabled && !hidden.has("transferDeparture");
+  const bagVisible = bagEnabled && !hidden.has("baggage");
   // Пустой белый список = ни одной доступной гостиницы (авиакомпания, пока
   // отчёты не отправлены; гостиница, которой в этой заявке нет). Проживание в
   // такой книге не даст ни листов, ни строк в сводке, поэтому считаем его
@@ -889,14 +909,14 @@ export function addRequestReportSheets(wb, request, opts = {}) {
   // livingEnabled — в книге появляется пустая «Сводка» без единой строки.
   const livingVisible =
     livingEnabled && !(Array.isArray(hotelIndexes) && hotelIndexes.length === 0);
-  if (!livingVisible && !arrEnabled && !depEnabled && !bagEnabled) {
+  if (!livingVisible && !arrVisible && !depVisible && !bagVisible) {
     notifyError?.("Нет данных для отчёта");
     return false;
   }
 
   // Сводка — про проживание и трансфер; багаж в неё не входит, поэтому условие
   // сюда не расширяется: багаж-only книга состоит из одного листа багажа.
-  if (livingVisible || arrEnabled || depEnabled) {
+  if (livingVisible || arrVisible || depVisible) {
     addCombinedSheet(wb, {
       request,
       sheetNames,
@@ -905,7 +925,13 @@ export function addRequestReportSheets(wb, request, opts = {}) {
       // Без !! отсутствующая услуга (arrEnabled и depEnabled оба undefined)
       // даёт includeTransfer: undefined, а дефолт деструктуризации в
       // addCombinedSheet (= true) включает пустой блок «Трансфер».
-      includeTransfer: !!(arrEnabled || depEnabled),
+      // Считаем по *Visible, а не по *Enabled: это обязательная часть гейта —
+      // блок «Трансфер» внутри «Сводки» отдаёт направления, типы ТС, время
+      // подачи и суммы, то есть ровно то, что убрали с отдельных листов.
+      includeTransfer: !!(arrVisible || depVisible),
+      // includeTransfer говорит только «есть ли блок»; какие из двух
+      // направлений внутри него рисовать, решает тот же список ключей.
+      hiddenServiceKeys,
     });
   }
   if (livingVisible) {
@@ -914,14 +940,14 @@ export function addRequestReportSheets(wb, request, opts = {}) {
       addHotelSheet(wb, { request, hotelIndex, sheetNames, sheetPrefix });
     });
   }
-  if (arrEnabled) {
+  if (arrVisible) {
     addTransferSheet(wb, { request, direction: "ARRIVAL", sheetNames, sheetPrefix });
   }
-  if (depEnabled) {
+  if (depVisible) {
     addTransferSheet(wb, { request, direction: "DEPARTURE", sheetNames, sheetPrefix });
   }
   // Белый список гостиниц багаж не гейтит — как и трансфер.
-  if (bagEnabled) {
+  if (bagVisible) {
     addBaggageSheet(wb, { request, sheetNames, sheetPrefix });
   }
 

@@ -1,13 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  TRANSFER_SERVICE_KEYS,
+  HOTEL_RESTRICTED_SERVICE_KEYS,
   isServiceHiddenForUser,
   visibleServiceKeys,
 } from "./fapServiceVisibility.js";
 
 const ALL = ["water", "meal", "living", "transfer", "transferDeparture", "baggage"];
-const WITHOUT_TRANSFER = ["water", "meal", "living", "baggage"];
+const WITHOUT_RESTRICTED = ["water", "meal", "living"];
 
 const SUPER = { role: "SUPERADMIN" };
 const DISPATCHER = { role: "DISPATCHERADMIN" };
@@ -17,9 +17,9 @@ const HOTEL_MODERATOR = { role: "HOTELMODERATOR", hotelId: "h1" };
 const EXT_HOTEL = { subjectType: "EXTERNAL_USER", scope: "HOTEL", hotelId: "h1" };
 const EXT_DRIVER = { subjectType: "EXTERNAL_USER", scope: "DRIVER" };
 
-test("гостиница без трансфера теряет обе услуги трансфера", () => {
-  assert.deepEqual(visibleServiceKeys(ALL, HOTEL, false), WITHOUT_TRANSFER);
-  assert.deepEqual(visibleServiceKeys(ALL, HOTEL_MODERATOR, false), WITHOUT_TRANSFER);
+test("гостиница без трансфера теряет трансфер и багаж", () => {
+  assert.deepEqual(visibleServiceKeys(ALL, HOTEL, false), WITHOUT_RESTRICTED);
+  assert.deepEqual(visibleServiceKeys(ALL, HOTEL_MODERATOR, false), WITHOUT_RESTRICTED);
 });
 
 test("гостиница с трансфером видит всё", () => {
@@ -27,7 +27,7 @@ test("гостиница с трансфером видит всё", () => {
 });
 
 test("вход по магик-ссылке гостиницы — то же правило", () => {
-  assert.deepEqual(visibleServiceKeys(ALL, EXT_HOTEL, false), WITHOUT_TRANSFER);
+  assert.deepEqual(visibleServiceKeys(ALL, EXT_HOTEL, false), WITHOUT_RESTRICTED);
   assert.deepEqual(visibleServiceKeys(ALL, EXT_HOTEL, true), ALL);
 });
 
@@ -54,11 +54,11 @@ test("пользователь ещё не загружен — ничего н�
 });
 
 // ── Предикат для роут-гейта ──
-test("предикат закрывает ровно ключи трансфера", () => {
-  for (const key of TRANSFER_SERVICE_KEYS) {
+test("предикат закрывает ровно ключи трансфера и багажа", () => {
+  for (const key of HOTEL_RESTRICTED_SERVICE_KEYS) {
     assert.equal(isServiceHiddenForUser(key, HOTEL, false), true, key);
   }
-  for (const key of WITHOUT_TRANSFER) {
+  for (const key of WITHOUT_RESTRICTED) {
     assert.equal(isServiceHiddenForUser(key, HOTEL, false), false, key);
   }
 });
@@ -66,6 +66,7 @@ test("предикат закрывает ровно ключи трансфер
 test("гостинице с трансфером роут открыт", () => {
   assert.equal(isServiceHiddenForUser("transfer", HOTEL, true), false);
   assert.equal(isServiceHiddenForUser("transferDeparture", HOTEL, true), false);
+  assert.equal(isServiceHiddenForUser("baggage", HOTEL, true), false);
 });
 
 test("неизвестный ключ услуги не закрываем", () => {
@@ -75,7 +76,33 @@ test("неизвестный ключ услуги не закрываем", () 
 
 test("порядок и состав остальных ключей не меняются", () => {
   const partial = ["baggage", "transfer", "water"];
-  assert.deepEqual(visibleServiceKeys(partial, HOTEL, false), ["baggage", "water"]);
+  assert.deepEqual(visibleServiceKeys(partial, HOTEL, false), ["water"]);
   assert.deepEqual(visibleServiceKeys([], HOTEL, false), []);
   assert.deepEqual(visibleServiceKeys(undefined, HOTEL, false), []);
+});
+
+// ── Багаж отдельно ──
+test("багаж скрыт от гостиницы без трансфера", () => {
+  assert.equal(isServiceHiddenForUser("baggage", HOTEL, false), true);
+  assert.deepEqual(visibleServiceKeys(["baggage"], HOTEL, false), []);
+});
+
+test("багаж виден гостинице с трансфером", () => {
+  assert.equal(isServiceHiddenForUser("baggage", HOTEL, true), false);
+  assert.deepEqual(visibleServiceKeys(["baggage"], HOTEL, true), ["baggage"]);
+});
+
+test("багаж виден диспетчеру и авиакомпании независимо от providesTransfer", () => {
+  for (const user of [DISPATCHER, AIRLINE]) {
+    for (const provides of [false, true]) {
+      assert.equal(isServiceHiddenForUser("baggage", user, provides), false, `${user.role} / provides=${provides}`);
+    }
+  }
+});
+
+test("visibleServiceKeys выкидывает baggage вместе с трансфером", () => {
+  assert.deepEqual(
+    visibleServiceKeys(["water", "meal", "living", "transfer", "transferDeparture", "baggage"], HOTEL, false),
+    ["water", "meal", "living"]
+  );
 });

@@ -10,6 +10,7 @@ import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
 import { isExternalUser } from "../../../../utils/access";
 import { downloadRequestReport } from "../reports/buildReportSheets";
 import { visibleHotelIndexes } from "../fapReportAccess";
+import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
 import { useToast } from "../../../../contexts/ToastContext";
 
 // Единый набор действий шапки услуги / внутренней страницы ФАП: чип «Реестр»
@@ -46,6 +47,7 @@ export default function FapHeaderActions({
   const [showLogs, setShowLogs] = useState(false);
 
   const external = isExternalUser(user);
+  const { hiddenServiceKeys } = useHotelServiceVisibility(user);
 
   const handleDownloadReport = async () => {
     try {
@@ -53,6 +55,7 @@ export default function FapHeaderActions({
       else
         await downloadRequestReport(request, notifyError, {
           hotelIndexes: visibleHotelIndexes(request, user),
+          hiddenServiceKeys,
         });
     } catch (e) {
       notifyError("Ошибка экспорта");

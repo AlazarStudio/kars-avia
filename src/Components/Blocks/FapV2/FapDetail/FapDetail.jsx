@@ -8,7 +8,6 @@ import DialogActions from "@mui/material/DialogActions";
 import classes from "./FapDetail.module.css";
 import {
   GET_PASSENGER_REQUEST,
-  GET_HOTEL_TRANSFER_PRICE,
   SET_PASSENGER_REQUEST_STATUS,
   CANCEL_PASSENGER_REQUEST,
   PASSENGER_REQUEST_UPDATED_SUBSCRIPTION,
@@ -54,10 +53,9 @@ import {
   isExternalUser,
   isAirlineRole,
   isHotelScoped,
-  scopedHotelId,
 } from "../../../../utils/access";
-import { hotelProvidesTransfer } from "../../../../utils/hotelTransfer";
 import { visibleServiceKeys } from "../fapServiceVisibility";
+import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
 import { downloadRequestReport } from "../reports/buildReportSheets";
 import { visibleHotelIndexes } from "../fapReportAccess";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
@@ -205,23 +203,11 @@ export default function FapDetail({ user, canEdit = true, canEditCompleted = fal
 
   const request = data?.passengerRequest;
 
-  // Возит ли трансфер гостиница самого пользователя. Спрашиваем только у
-  // гостиничных аккаунтов — у остальных запрос пропускается и правило не
-  // включается вовсе (см. fapServiceVisibility).
-  const ownHotelId = scopedHotelId(user);
-  const { data: transferPriceData, loading: transferPriceLoading } = useQuery(
-    GET_HOTEL_TRANSFER_PRICE,
-    {
-      context: { headers: { Authorization: `Bearer ${token}` } },
-      variables: { hotelId: ownHotelId },
-      skip: !isHotelScoped(user) || !ownHotelId,
-    }
-  );
-  // Пока цена не пришла, считаем «не возит»: иначе у гостиницы без трансфера
-  // плитка успевала бы мигнуть и исчезнуть.
-  const providesTransfer =
-    !transferPriceLoading &&
-    hotelProvidesTransfer(transferPriceData?.hotel?.transferPrice);
+  // Какие услуги видит гостиница пользователя (см. fapServiceVisibility):
+  // `ready` — пришёл ли ответ о её ценах трансфера, `providesTransfer` — возит
+  // ли она трансфер сама. У негостиничных аккаунтов правило не включается.
+  const { ready: serviceGateReady, providesTransfer, hiddenServiceKeys } =
+    useHotelServiceVisibility(user);
 
   const enabledKeys = useMemo(() => {
     if (!request) return [];
@@ -238,7 +224,7 @@ export default function FapDetail({ user, canEdit = true, canEditCompleted = fal
   // своим трансфером плиток больше, её не трогаем.
   const livingOnlyRedirect =
     isHotelScoped(user) &&
-    !transferPriceLoading &&
+    serviceGateReady &&
     Boolean(request) &&
     enabledKeys.length === 1 &&
     enabledKeys[0] === "living";
@@ -742,6 +728,7 @@ export default function FapDetail({ user, canEdit = true, canEditCompleted = fal
                   try {
                     await downloadRequestReport(request, notifyError, {
                       hotelIndexes: visibleHotelIndexes(request, user),
+                      hiddenServiceKeys,
                     });
                   }
                   catch (e) { notifyError("Ошибка экспорта"); console.error(e); }

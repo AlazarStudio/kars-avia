@@ -18,6 +18,7 @@ import {
   canAccessMenu,
   canSeeExternalLinks,
 } from "../../../utils/access";
+import { useHotelServiceVisibility } from "../../Blocks/FapV2/useHotelServiceVisibility";
 import classes from "./FapServicePage.module.css";
 
 export default function FapBaggageTripDetailPage({ user }) {
@@ -36,6 +37,18 @@ export default function FapBaggageTripDetailPage({ user }) {
   useSubscription(PASSENGER_REQUEST_UPDATED_SUBSCRIPTION, {
     onData: () => refetch(),
   });
+
+  // Поездка багажа — то же правило, что у страницы услуги и водителя: гостинице
+  // без своего трансфера сюда нельзя и по прямой ссылке (см.
+  // fapServiceVisibility). Уводим только когда ответ о ценах уже пришёл
+  // (`ready`), иначе редирект выкинул бы и гостиницу-перевозчика.
+  const { ready: serviceGateReady, isHidden } =
+    useHotelServiceVisibility(user);
+  const serviceHidden = isHidden("baggage");
+  React.useEffect(() => {
+    if (!serviceHidden || !serviceGateReady) return;
+    navigate(`/far/${requestId}`, { replace: true });
+  }, [serviceHidden, serviceGateReady, requestId, navigate]);
 
   const request = data?.passengerRequest;
   const canEdit =
@@ -64,7 +77,7 @@ export default function FapBaggageTripDetailPage({ user }) {
 
       <FapCancelledBanner request={request} />
 
-      {loading ? (
+      {loading || !serviceGateReady || serviceHidden ? (
         <div className={classes.loader}>
           <MUILoader />
         </div>

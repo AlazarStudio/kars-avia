@@ -347,3 +347,116 @@ test("книга заявки: без услуг — false и уведомлен
   assert.deepEqual(errors, ["Нет данных для отчёта"]);
   assert.equal(wb.worksheets.length, 0);
 });
+
+// ── T3: гейт услуг в книге (hiddenServiceKeys) ──
+//
+// Гостиница, которая сама трансфер не возит, не видит на экранах плитки
+// трансфера и багажа — книга обязана вести себя так же.
+function makeFullServiceRequest() {
+  const request = makeRequestWithGuest();
+  request.transferService = {
+    plan: { enabled: true, plannedAt: "2026-08-01T08:00:00.000Z" },
+    drivers: [{ fullName: "Петров П.П.", vehicleType: "Автобус", reportCost: 3000 }],
+  };
+  request.departureTransferService = {
+    plan: { enabled: true, plannedAt: "2026-08-03T08:00:00.000Z" },
+    drivers: [{ fullName: "Сидоров С.С.", vehicleType: "Микроавтобус", reportCost: 2500 }],
+  };
+  request.baggageDeliveryService = makeBaggageRequest().baggageDeliveryService;
+  return request;
+}
+
+const throwOnError = (msg) => {
+  throw new Error(`notifyError не должен вызываться: ${msg}`);
+};
+
+const buildBook = (request, opts) => {
+  const wb = new ExcelJS.Workbook();
+  const ok = addRequestReportSheets(wb, request, { notifyError: throwOnError, ...opts });
+  return { ok, names: wb.worksheets.map((w) => w.name), wb };
+};
+
+// Блок «Трансфер» живёт внутри «Сводки», отдельным листом он не отражается —
+// проверить его можно только обходом ячеек.
+const hasCellValue = (ws, value) => {
+  let found = false;
+  ws.eachRow({ includeEmpty: false }, (row) => {
+    row.eachCell({ includeEmpty: false }, (cell) => {
+      if (cell.value === value) found = true;
+    });
+  });
+  return found;
+};
+
+test("книга заявки: без hiddenServiceKeys состав листов прежний", () => {
+  const { ok, names, wb } = buildBook(makeFullServiceRequest());
+  assert.equal(ok, true);
+  assert.deepEqual(names, [
+    "Сводка",
+    "Гостиница Тест",
+    "Трансфер (в гостиницу)",
+    "Трансфер (в аэропорт)",
+    "Доставка багажа",
+  ]);
+  // Позитивный контроль к тестам ниже: в умолчании блок «Трансфер» в «Сводке»
+  // есть. Без этой проверки захардкоженный includeTransfer: false оставил бы
+  // весь набор зелёным, а диспетчер молча потерял бы блок.
+  assert.equal(hasCellValue(wb.getWorksheet("Сводка"), "Трансфер"), true);
+});
+
+test("книга заявки: скрыты трансфер и багаж — только «Сводка» и лист гостиницы, и в «Сводке» нет блока «Трансфер»", () => {
+  const { ok, names, wb } = buildBook(makeFullServiceRequest(), {
+    hiddenServiceKeys: ["transfer", "transferDeparture", "baggage"],
+  });
+  assert.equal(ok, true);
+  assert.deepEqual(names, ["Сводка", "Гостиница Тест"]);
+
+  // Обход всех ячеек, а не только состава листов: без includeTransfer блок
+  // «Трансфер» внутри «Сводки» вернул бы те же рейсы, ТС и суммы.
+  assert.equal(hasCellValue(wb.getWorksheet("Сводка"), "Трансфер"), false);
+});
+
+test("книга заявки: скрыт только трансфер-прилёт — в «Сводке» осталось одно направление", () => {
+  const { ok, names, wb } = buildBook(makeFullServiceRequest(), {
+    hiddenServiceKeys: ["transfer"],
+  });
+  assert.equal(ok, true);
+  assert.deepEqual(names, [
+    "Сводка",
+    "Гостиница Тест",
+    "Трансфер (в аэропорт)",
+    "Доставка багажа",
+  ]);
+  // Скрытие по одному ключу: блок «Трансфер» в «Сводке» остаётся ради видимого
+  // направления, но строка скрытого направления из него уходит.
+  const combined = wb.getWorksheet("Сводка");
+  assert.equal(hasCellValue(combined, "Трансфер"), true);
+  assert.equal(hasCellValue(combined, "аэропорт → гостиницы"), false);
+  assert.equal(hasCellValue(combined, "гостиницы → аэропорт"), true);
+});
+
+test("книга заявки: скрыт только багаж — листы трансфера на месте", () => {
+  const { ok, names } = buildBook(makeFullServiceRequest(), {
+    hiddenServiceKeys: ["baggage"],
+  });
+  assert.equal(ok, true);
+  assert.deepEqual(names, [
+    "Сводка",
+    "Гостиница Тест",
+    "Трансфер (в гостиницу)",
+    "Трансфер (в аэропорт)",
+  ]);
+});
+
+test("книга заявки: всё скрыто и белый список гостиниц пуст — false и уведомление", () => {
+  const wb = new ExcelJS.Workbook();
+  const errors = [];
+  const ok = addRequestReportSheets(wb, makeFullServiceRequest(), {
+    hotelIndexes: [],
+    hiddenServiceKeys: ["transfer", "transferDeparture", "baggage"],
+    notifyError: (msg) => errors.push(msg),
+  });
+  assert.equal(ok, false);
+  assert.deepEqual(errors, ["Нет данных для отчёта"]);
+  assert.equal(wb.worksheets.length, 0);
+});

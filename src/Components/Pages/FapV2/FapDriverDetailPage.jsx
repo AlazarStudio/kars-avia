@@ -3,7 +3,6 @@ import { useNavigate, useParams, useOutletContext } from "react-router-dom";
 import { useQuery, useSubscription } from "@apollo/client";
 import {
   GET_PASSENGER_REQUEST,
-  GET_HOTEL_TRANSFER_PRICE,
   PASSENGER_REQUEST_UPDATED_SUBSCRIPTION,
   getCookie,
 } from "../../../../graphQL_requests";
@@ -18,11 +17,8 @@ import {
   isExternalUser,
   canAccessMenu,
   canSeeExternalLinks,
-  isHotelScoped,
-  scopedHotelId,
 } from "../../../utils/access";
-import { hotelProvidesTransfer } from "../../../utils/hotelTransfer";
-import { isServiceHiddenForUser } from "../../Blocks/FapV2/fapServiceVisibility";
+import { useHotelServiceVisibility } from "../../Blocks/FapV2/useHotelServiceVisibility";
 import classes from "./FapServicePage.module.css";
 
 export default function FapDriverDetailPage({ user }) {
@@ -46,27 +42,15 @@ export default function FapDriverDetailPage({ user }) {
 
   // Страница водителя всегда трансферная: гостинице без своего трансфера
   // сюда нельзя и по прямой ссылке — правило то же, что в FapServicePage.
-  const hotelScoped = isHotelScoped(user);
-  const ownHotelId = scopedHotelId(user);
-  const { data: transferPriceData, loading: transferPriceLoading } = useQuery(
-    GET_HOTEL_TRANSFER_PRICE,
-    {
-      context: { headers: { Authorization: `Bearer ${token}` } },
-      variables: { hotelId: ownHotelId },
-      skip: !hotelScoped || !ownHotelId,
-    }
-  );
-  const serviceHidden = isServiceHiddenForUser(
-    backKey,
-    user,
-    !transferPriceLoading &&
-      hotelProvidesTransfer(transferPriceData?.hotel?.transferPrice)
-  );
-  const transferGateReady = !hotelScoped || !transferPriceLoading;
+  // Уводим только когда ответ о ценах уже пришёл (`ready`), иначе редирект
+  // выкинул бы и гостиницу-перевозчика.
+  const { ready: serviceGateReady, isHidden } =
+    useHotelServiceVisibility(user);
+  const serviceHidden = isHidden(backKey);
   React.useEffect(() => {
-    if (!serviceHidden || !transferGateReady) return;
+    if (!serviceHidden || !serviceGateReady) return;
     navigate(`/far/${requestId}`, { replace: true });
-  }, [serviceHidden, transferGateReady, requestId, navigate]);
+  }, [serviceHidden, serviceGateReady, requestId, navigate]);
 
   const request = data?.passengerRequest;
   const canEdit =
@@ -95,7 +79,7 @@ export default function FapDriverDetailPage({ user }) {
 
       <FapCancelledBanner request={request} />
 
-      {loading || !transferGateReady || serviceHidden ? (
+      {loading || !serviceGateReady || serviceHidden ? (
         <div className={classes.loader}>
           <MUILoader />
         </div>
