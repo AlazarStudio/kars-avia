@@ -19,6 +19,7 @@ import {
 } from "../../../../utils/access";
 import { downloadLivingReport } from "../reports/buildReportSheets";
 import { visibleHotelIndexes, hotelReportSubmittedAt } from "../fapReportAccess";
+import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
 import { useToast } from "../../../../contexts/ToastContext";
 import FapActionButton from "../FapActionButton/FapActionButton";
 import FapHeaderActions from "../FapHeaderActions/FapHeaderActions";
@@ -78,6 +79,9 @@ export default function FapLivingPage({
   // они про магик-линк, а внутренней роли правку и так закрывает пустой accessMenu.
   const hotelScoped = isHotelScoped(user);
   const ownHotelId = scopedHotelId(user);
+  // Скрытые правилом видимости услуги: их блок «Трансфер» не должен уезжать в
+  // листы гостиницы. Диспетчеру и авиакомпании хук отдаёт пустой список.
+  const { hiddenServiceKeys } = useHotelServiceVisibility(user);
 
   const [showAddHotel, setShowAddHotel] = useState(false);
   const [showEarlyModal, setShowEarlyModal] = useState(false);
@@ -271,7 +275,13 @@ export default function FapLivingPage({
               <FapActionButton
                 variant="primary"
                 onClick={async () => {
-                  try { await downloadLivingReport(request, { hotelIndexes: exportHotelIndexes }); }
+                  try {
+                    await downloadLivingReport(request, {
+                      hotelIndexes: exportHotelIndexes,
+                      hideMoney: hotelScoped,
+                      hiddenServiceKeys,
+                    });
+                  }
                   catch (e) { notifyError("Ошибка экспорта"); console.error(e); }
                 }}
               >
@@ -285,7 +295,11 @@ export default function FapLivingPage({
             canEdit={canEdit && !isCompleted && !isExtHotel}
             onRefetch={onRefetch}
             onDownloadReport={() =>
-              downloadLivingReport(request, { hotelIndexes: exportHotelIndexes })
+              downloadLivingReport(request, {
+                hotelIndexes: exportHotelIndexes,
+                hideMoney: hotelScoped,
+                hiddenServiceKeys,
+              })
             }
             // Кнопка отчёта в шапке показывается ровно в обратном условии —
             // два пути к одному действию в одной шапке не нужны. Без гостиниц

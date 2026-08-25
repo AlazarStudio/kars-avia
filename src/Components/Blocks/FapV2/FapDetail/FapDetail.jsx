@@ -729,6 +729,9 @@ export default function FapDetail({ user, canEdit = true, canEditCompleted = fal
                     await downloadRequestReport(request, notifyError, {
                       hotelIndexes: visibleHotelIndexes(request, user),
                       hiddenServiceKeys,
+                      // Гостинице деньги отчёта проживания не показываем — ни на
+                      // экране, ни в книге.
+                      hideMoney: isHotelScoped(user),
                     });
                   }
                   catch (e) { notifyError("Ошибка экспорта"); console.error(e); }

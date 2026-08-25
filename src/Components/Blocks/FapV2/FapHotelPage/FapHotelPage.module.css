@@ -1120,6 +1120,10 @@
    на аватар в колонке ФИО. Меньше — и .roomGroup с overflow:hidden срежет денежную
    колонку, а скролл у обёртки не включится. Держать в согласии с .memberRow ниже. */
 .reportTableWrap .roomGroup { min-width: 990px; }
+/* Тот же расчёт для строки без денежных колонок: 402px треков + 48px гэпов +
+   28px паддинга + ~55px на аватар. Иначе гостиница получала бы горизонтальный
+   скролл под ширину, которой у её таблицы больше нет. */
+.reportTableWrap .roomGroupNoMoney { min-width: 540px; }
 
 /* Скролл для режима «Просмотр» отчёта (в edit скролл на .reportGroups) */
 .reportViewScroll {
@@ -1367,6 +1371,9 @@
 /* Маркер W3: в номере больше гостей, чем допускает требование (только редактирование) */
 .roomWarnBadge { font-size: 12px; font-weight: 700; color: #B45309; background: #FEF3C7; border: 1px solid #F59E0B; padding: 2px 8px; border-radius: 6px; cursor: help; outline: none; white-space: nowrap; }
 .memberColHead, .memberRow { display: grid; grid-template-columns: 1.4fr 90px 150px 56px 64px 64px 64px 64px 86px 70px 118px; gap: 8px; align-items: center; padding: 6px 14px; }
+/* Гостинице деньги отчёта не показываем: из строки уходят тариф, питание,
+   скидка и проживание — четыре трека, а не пустые ячейки. */
+.memberColHead.rowNoMoney, .memberRow.rowNoMoney { grid-template-columns: 1.4fr 90px 56px 64px 64px 64px 64px; }
 .numCenter { text-align: center; }
 .memberColHead { font-size: 10px; color: #94A3B8; text-transform: uppercase; letter-spacing: 0.3px; padding-bottom: 2px; }
 .memberRow { border-top: 1px solid #F1F4FB; }

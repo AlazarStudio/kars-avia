@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 import { PERSON_CATEGORY_LABEL, normalizeCategory, placementKindLabel } from "../fapConstants.js";
 import { driverFactCount } from "../fapTransferFact.js";
+import { lunchboxCountOf } from "../fapReportMoney.js";
 import { findRowIndexForPerson } from "./reportRowMatch.js";
 
 // ── helpers ──
@@ -72,33 +73,81 @@ export function pickHotelName(hotel) {
   return (hotel?.name && hotel.name.trim()) || hotel?.id || "Отель";
 }
 
+// Раскладка листа проживания — общая для листа гостиницы и «Сводки».
+// money — колонка про деньги проживания и питания: под hideMoney её в листе нет
+// вовсе (пустая колонка с заголовком «Цена за сутки» — тот же ответ на вопрос
+// «почём»), а значения в неё не пишутся (putMoney).
+// shared — колонка может пережить гейт, потому что в ней не только деньги
+// проживания: «Итого» несёт ещё и суммы трансфера. Оставлять её осмысленно
+// только когда эти суммы на листе действительно будут (гостиница-перевозчик,
+// которой трансфер не скрыт правилом видимости услуг), — иначе останется голый
+// заголовок с денежным форматом; решает вызывающая сторона вторым аргументом.
+// text — денежная по смыслу, но с текстом внутри: денежный формат ей не ставится.
+// left — выравнивание по левому краю.
+const HOTEL_COLUMNS = [
+  { key: "id", label: "ID", width: 6 },
+  { key: "fullName", label: "ФИО", width: 28, left: true },
+  { key: "personType", label: "Тип", width: 12 },
+  { key: "personCategory", label: "Возрастная категория", width: 15 },
+  { key: "inDate", label: "Дата заезда", width: 13 },
+  { key: "inTime", label: "Время заезда", width: 12 },
+  { key: "outDate", label: "Дата выезда", width: 13 },
+  { key: "outTime", label: "Время выезда", width: 12 },
+  { key: "roomNumber", label: "Номер", width: 12 },
+  // Вмещает «четырёхместное»
+  { key: "placementKind", label: "Вид размещения", width: 18 },
+  { key: "tariffName", label: "Тариф", width: 20 },
+  { key: "pricePerDay", label: "Цена за сутки", width: 14, money: true },
+  { key: "daysCount", label: "Количество суток", width: 15 },
+  { key: "breakfastCount", label: "Количество завтраков", width: 15 },
+  { key: "breakfast", label: "Завтрак", width: 12, money: true },
+  { key: "lunchCount", label: "Количество обедов", width: 15 },
+  { key: "lunch", label: "Обед", width: 12, money: true },
+  { key: "dinnerCount", label: "Количество ужинов", width: 15 },
+  { key: "dinner", label: "Ужин", width: 12, money: true },
+  { key: "lunchboxCount", label: "Количество ланчбоксов", width: 18 },
+  { key: "lunchboxPrice", label: "Ланчбокс", width: 12, money: true },
+  { key: "foodCost", label: "Стоимость питания", width: 15, money: true },
+  { key: "discount", label: "Скидка", width: 10, money: true, text: true },
+  { key: "accommodationCost", label: "Стоимость проживания", width: 15, money: true },
+  { key: "total", label: "Итого", width: 12, money: true, shared: true },
+];
+
+// Буква колонки для формул: раскладка не шире 25 колонок, двухбуквенных нет.
+const colLetter = (n) => String.fromCharCode(64 + n);
+
+// Раскладка под текущий режим: индексы колонок по ключу (`at`), запись значения
+// с пропуском отсутствующей колонки (`put`), запись денег проживания (`putMoney`)
+// и наборы для finishSheet.
+function hotelLayout(hideMoney, keepShared = true) {
+  const cols = HOTEL_COLUMNS.filter(
+    (c) => !(hideMoney && c.money && !(c.shared && keepShared))
+  );
+  const at = {};
+  cols.forEach((c, i) => { at[c.key] = i + 1; });
+  return {
+    cols,
+    at,
+    lastCol: cols.length,
+    // Буква скрытой колонки — пустая строка: формула с ней всё равно не пишется,
+    // её ячейку отсекает put.
+    letter: (key) => (at[key] ? colLetter(at[key]) : ""),
+    put: (row, key, value) => {
+      if (at[key]) row.getCell(at[key]).value = value;
+    },
+    // Деньги проживания и питания: под гейтом не пишутся и в уцелевшую колонку
+    // «Итого» — она остаётся только ради сумм трансфера.
+    putMoney: (row, key, value) => {
+      if (!hideMoney && at[key]) row.getCell(at[key]).value = value;
+    },
+    moneyCols: cols.map((c, i) => (c.money && !c.text ? i + 1 : 0)).filter(Boolean),
+    leftCols: cols.map((c, i) => (c.left ? i + 1 : 0)).filter(Boolean),
+  };
+}
+
 // Применить ширины колонок (для листа проживания).
-function applyHotelColumnWidths(ws) {
-  ws.getColumn(1).width = 6;      // A = ID
-  ws.getColumn(2).width = 28;     // B = ФИО
-  ws.getColumn(3).width = 12;     // C = Тип
-  ws.getColumn(4).width = 15;     // D = Возрастная категория
-  ws.getColumn(5).width = 13;     // E = Дата заезда
-  ws.getColumn(6).width = 12;     // F = Время заезда
-  ws.getColumn(7).width = 13;     // G = Дата выезда
-  ws.getColumn(8).width = 12;     // H = Время выезда
-  ws.getColumn(9).width = 12;     // I = Номер
-  ws.getColumn(10).width = 18;    // J = Вид размещения (вмещает «четырёхместное»)
-  ws.getColumn(11).width = 20;    // K = Тариф
-  ws.getColumn(12).width = 14;    // L = Цена за сутки
-  ws.getColumn(13).width = 15;    // M = Количество суток
-  ws.getColumn(14).width = 15;    // N = Количество завтраков
-  ws.getColumn(15).width = 12;    // O = Завтрак
-  ws.getColumn(16).width = 15;    // P = Количество обедов
-  ws.getColumn(17).width = 12;    // Q = Обед
-  ws.getColumn(18).width = 15;    // R = Количество ужинов
-  ws.getColumn(19).width = 12;    // S = Ужин
-  ws.getColumn(20).width = 18;    // T = Количество ланчбоксов
-  ws.getColumn(21).width = 12;    // U = Ланчбокс (цена за штуку)
-  ws.getColumn(22).width = 15;    // V = Стоимость питания
-  ws.getColumn(23).width = 10;    // W = Скидка
-  ws.getColumn(24).width = 15;    // X = Стоимость проживания
-  ws.getColumn(25).width = 12;    // Y = Итого
+function applyHotelColumnWidths(ws, cols) {
+  cols.forEach((c, i) => { ws.getColumn(i + 1).width = c.width; });
 }
 
 // Применить ширины колонок раскладки TRANSFER_HEADERS —
@@ -155,24 +204,18 @@ function finishSheet(ws, { lastCol, moneyCols, leftCols, headerRow = 4, skipRows
   ws.views = [{ state: "frozen", ySplit: headerRow }];
 }
 
-const HOTEL_HEADERS = [
-  "ID", "ФИО", "Тип", "Возрастная категория", "Дата заезда", "Время заезда",
-  "Дата выезда", "Время выезда", "Номер", "Вид размещения", "Тариф", "Цена за сутки",
-  "Количество суток", "Количество завтраков", "Завтрак",
-  "Количество обедов", "Обед", "Количество ужинов", "Ужин",
-  "Количество ланчбоксов", "Ланчбокс",
-  "Стоимость питания", "Скидка", "Стоимость проживания", "Итого",
-];
-
 // Количество порций приёма: легаси-строки без количеств — 1 при цене > 0.
 const mealCountOf = (r, priceField, countField) =>
   r?.[countField] != null ? toNum(r[countField]) : (toNum(r?.[priceField]) > 0 ? 1 : 0);
 
-// Число ланчбоксов гостя: новое поле lunchboxCount; иначе легаси — число тумблеров.
-const lunchboxCountOf = (r) =>
-  r?.lunchboxCount != null
-    ? toNum(r.lunchboxCount)
-    : (r?.breakfastLunchbox ? 1 : 0) + (r?.lunchLunchbox ? 1 : 0) + (r?.dinnerLunchbox ? 1 : 0);
+// Сумма направления трансфера: null, если reportCost не проставлен ни одному
+// водителю — пустая ячейка вместо нуля, так было всегда.
+const transferCost = (drivers) => {
+  const list = drivers ?? [];
+  return list.some((d) => d.reportCost != null)
+    ? list.reduce((s, d) => s + (d.reportCost ?? 0), 0)
+    : null;
+};
 
 // Процент возрастной скидки на проживание, выведенный из чисел строки:
 // 1 − факт/(цена за сутки × сутки). «—», если базы нет (ручной ввод / легаси).
@@ -223,33 +266,54 @@ function getCheckInOut(person, hotelIndex, plan) {
  *
  * opts.rows: готовый массив строк отчёта (формат reportRows из FapHotelPage).
  * Иначе — берёт сохранённые строки из request.hotelReports[hotelIndex].
+ * opts.hideMoney: лист без денежных колонок — гостинице, которая заполняет факт.
+ * opts.hiddenServiceKeys: скрытые правилом видимости услуг направления трансфера
+ * (те же ключи, что у книги) — в блок «Трансфер» листа они не печатаются.
  */
 export function addHotelSheet(wb, opts) {
-  const { request, hotelIndex, sheetNames, sheetPrefix = "" } = opts;
+  const {
+    request, hotelIndex, sheetNames, sheetPrefix = "",
+    hideMoney = false, hiddenServiceKeys = [],
+  } = opts;
   const hotel = request?.livingService?.hotels?.[hotelIndex];
   if (!hotel) return null;
 
+  // Гейт услуг доводится внутрь листа: гостиница, которая сама не возит, не
+  // должна видеть на своём листе чужие рейсы, типы ТС и суммы. Направления
+  // проверяются по отдельности — скрыть могут только прилёт или только вылет.
+  const hidden = new Set(hiddenServiceKeys);
+  const arrVisible = !hidden.has("transfer");
+  const depVisible = !hidden.has("transferDeparture");
+  const arrival = request?.transferService;
+  const departure = request?.departureTransferService;
+  const aCost = arrVisible ? transferCost(arrival?.drivers) : null;
+  const dCost = depVisible ? transferCost(departure?.drivers) : null;
+  // Под гейтом колонка «Итого» остаётся только ради денег трансфера: нет их —
+  // нет и колонки, иначе на листе без денег висел бы её пустой заголовок.
+  const { cols, at, put, putMoney, letter, lastCol, moneyCols, leftCols } =
+    hotelLayout(hideMoney, aCost != null || dCost != null);
   const hotelName = pickHotelName(hotel);
   const city = pickCity(request, hotel);
   const ws = wb.addWorksheet(chooseSheetName(prefixedSheetName(hotelName, sheetPrefix), sheetNames));
 
   // ── Шапка ──
   ws.getCell("A1").value = request?.airline?.nameFull || request?.airline?.name || "";
-  ws.getCell("Y1").value = "Договор № или \"по согласованию\"";
-  ws.getCell("Y1").alignment = { horizontal: "right" };
+  const contractCell = ws.getCell(1, lastCol);
+  contractCell.value = "Договор № или \"по согласованию\"";
+  contractCell.alignment = { horizontal: "right" };
   const flightPart = request?.flightDate
     ? ` от ${new Date(request.flightDate).toLocaleDateString("ru-RU")}`
     : "";
   ws.getCell("C3").value =
     `Детализация оказанных услуг пассажиров задержанного рейса № ${request?.flightNumber ?? ""}${flightPart} г. ${city} гостиница ${hotelName}`;
-  [ws.getCell("A1"), ws.getCell("Y1"), ws.getCell("C3")].forEach((c) => {
+  [ws.getCell("A1"), contractCell, ws.getCell("C3")].forEach((c) => {
     c.font = HEADER_FONT;
   });
 
   // ── Заголовки колонок (row 4) ──
-  HOTEL_HEADERS.forEach((label, i) => {
+  cols.forEach((c, i) => {
     const cell = ws.getCell(4, i + 1);
-    cell.value = label;
+    cell.value = c.label;
     cell.font = HEADER_FONT;
     cell.alignment = { wrapText: true, vertical: "middle", horizontal: "center" };
   });
@@ -309,100 +373,100 @@ export function addHotelSheet(wb, opts) {
     const { inAt, outAt } = getCheckInOut(p, hotelIndex, livingPlan);
     const row = ws.getRow(rowIdx);
 
-    row.getCell(1).value = i + 1; // A
-    row.getCell(2).value = p.fullName ?? ""; // B
-    row.getCell(3).value = p.personType === "CREW" ? "Экипаж" : "Пассажир"; // C
-    row.getCell(4).value = PERSON_CATEGORY_LABEL[normalizeCategory(p.personCategory)] ?? "Взрослый"; // D
+    put(row, "id", i + 1);
+    put(row, "fullName", p.fullName ?? "");
+    put(row, "personType", p.personType === "CREW" ? "Экипаж" : "Пассажир");
+    put(row, "personCategory", PERSON_CATEGORY_LABEL[normalizeCategory(p.personCategory)] ?? "Взрослый");
     if (inAt) {
       const inLocal = toExcelLocal(inAt);
-      row.getCell(5).value = inLocal;
-      row.getCell(5).numFmt = fmtDate;
-      row.getCell(6).value = inLocal;
-      row.getCell(6).numFmt = fmtTime;
+      row.getCell(at.inDate).value = inLocal;
+      row.getCell(at.inDate).numFmt = fmtDate;
+      row.getCell(at.inTime).value = inLocal;
+      row.getCell(at.inTime).numFmt = fmtTime;
     }
     if (outAt) {
       const outLocal = toExcelLocal(outAt);
-      row.getCell(7).value = outLocal;
-      row.getCell(7).numFmt = fmtDate;
-      row.getCell(8).value = outLocal;
-      row.getCell(8).numFmt = fmtTime;
+      row.getCell(at.outDate).value = outLocal;
+      row.getCell(at.outDate).numFmt = fmtDate;
+      row.getCell(at.outTime).value = outLocal;
+      row.getCell(at.outTime).numFmt = fmtTime;
     }
-    row.getCell(9).value = r.roomNumber;                        // I Номер
-    row.getCell(10).value = placementKindLabel(r.placementKind); // J Вид размещения ("" для legacy)
-    row.getCell(11).value = r.tariffName;                       // K Тариф
-    if (r.pricePerDay > 0) row.getCell(12).value = r.pricePerDay; // L Цена за сутки
-    row.getCell(13).value = r.daysCount;                        // M Суток
-    row.getCell(14).value = r.breakfastCount;                   // N Кол-во завтраков
-    row.getCell(15).value = r.breakfast;                        // O Цена завтрака (за порцию)
-    row.getCell(16).value = r.lunchCount;                       // P
-    row.getCell(17).value = r.lunch;                            // Q
-    row.getCell(18).value = r.dinnerCount;                      // R
-    row.getCell(19).value = r.dinner;                           // S
-    row.getCell(20).value = r.lunchboxCount;                    // T Количество ланчбоксов
-    row.getCell(21).value = r.lunchboxPrice;                    // U Ланчбокс (цена за штуку)
-    row.getCell(22).value = r.foodCost;                         // V Стоимость питания
-    row.getCell(23).value = accommodationDiscountLabel(r.pricePerDay, r.daysCount, r.accommodationCost); // W Скидка
-    row.getCell(24).value = r.accommodationCost;                // X Стоимость проживания
-    row.getCell(25).value = r.foodCost + r.accommodationCost;   // Y Итого
+    put(row, "roomNumber", r.roomNumber);
+    put(row, "placementKind", placementKindLabel(r.placementKind)); // "" для legacy
+    put(row, "tariffName", r.tariffName);
+    if (r.pricePerDay > 0) putMoney(row, "pricePerDay", r.pricePerDay);
+    put(row, "daysCount", r.daysCount);
+    put(row, "breakfastCount", r.breakfastCount);
+    putMoney(row, "breakfast", r.breakfast);                    // цена за порцию
+    put(row, "lunchCount", r.lunchCount);
+    putMoney(row, "lunch", r.lunch);
+    put(row, "dinnerCount", r.dinnerCount);
+    putMoney(row, "dinner", r.dinner);
+    put(row, "lunchboxCount", r.lunchboxCount);
+    putMoney(row, "lunchboxPrice", r.lunchboxPrice);            // цена за штуку
+    putMoney(row, "foodCost", r.foodCost);
+    putMoney(row, "discount", accommodationDiscountLabel(r.pricePerDay, r.daysCount, r.accommodationCost));
+    putMoney(row, "accommodationCost", r.accommodationCost);
+    putMoney(row, "total", r.foodCost + r.accommodationCost);
 
     rowIdx += 1;
   });
 
   const lastPersonRow = rowIdx - 1;
 
-  // ── Блок «Трансфер» (одна пустая строка + 3 строки) ──
-  const gapRow = rowIdx; // строка-разделитель: остаётся без сетки
-  rowIdx += 1;
-  const tHeaderRow = rowIdx;
-  ws.mergeCells(`B${tHeaderRow}:H${tHeaderRow}`);
-  const tHdr = ws.getCell(`B${tHeaderRow}`);
-  tHdr.value = "Трансфер";
-  tHdr.font = HEADER_FONT;
-  tHdr.alignment = { horizontal: "center" };
-  rowIdx += 1;
+  // ── Блок «Трансфер» (одна пустая строка + строки видимых направлений) ──
+  // Оба направления скрыты — блока нет вовсе: пустая шапка «Трансфер» говорила бы
+  // о рейсах, которых гостинице видеть не положено.
+  let gapRow = null; // строка-разделитель есть только вместе с блоком
+  let lastTransferRow = null;
+  if (arrVisible || depVisible) {
+    gapRow = rowIdx; // строка-разделитель: остаётся без сетки
+    rowIdx += 1;
+    const tHeaderRow = rowIdx;
+    ws.mergeCells(`${letter("fullName")}${tHeaderRow}:${letter("outTime")}${tHeaderRow}`);
+    const tHdr = ws.getCell(`${letter("fullName")}${tHeaderRow}`);
+    tHdr.value = "Трансфер";
+    tHdr.font = HEADER_FONT;
+    tHdr.alignment = { horizontal: "center" };
+    rowIdx += 1;
 
-  // ARRIVAL
-  const arrival = request?.transferService;
-  const aDrivers = arrival?.drivers ?? [];
-  const aFirstType = aDrivers.find((d) => d.vehicleType)?.vehicleType ?? "";
-  const aHasAnyCost = aDrivers.some((d) => d.reportCost != null);
-  const aCost = aHasAnyCost
-    ? aDrivers.reduce((s, d) => s + (d.reportCost ?? 0), 0)
-    : null;
-  const aRow = ws.getRow(rowIdx);
-  aRow.getCell(2).value = `аэропорт-гостиница ${hotelName}`;
-  aRow.getCell(3).value = aFirstType;
-  if (arrival?.plan?.plannedAt) {
-    const dt = toExcelLocal(new Date(arrival.plan.plannedAt));
-    aRow.getCell(5).value = dt;
-    aRow.getCell(5).numFmt = fmtDate;
-    aRow.getCell(6).value = dt;
-    aRow.getCell(6).numFmt = fmtTime;
-  }
-  if (aCost != null) aRow.getCell(25).value = aCost;
-  rowIdx += 1;
+    // ARRIVAL
+    if (arrVisible) {
+      const aFirstType = (arrival?.drivers ?? []).find((d) => d.vehicleType)?.vehicleType ?? "";
+      const aRow = ws.getRow(rowIdx);
+      put(aRow, "fullName", `аэропорт-гостиница ${hotelName}`);
+      put(aRow, "personType", aFirstType);
+      if (arrival?.plan?.plannedAt) {
+        const dt = toExcelLocal(new Date(arrival.plan.plannedAt));
+        aRow.getCell(at.inDate).value = dt;
+        aRow.getCell(at.inDate).numFmt = fmtDate;
+        aRow.getCell(at.inTime).value = dt;
+        aRow.getCell(at.inTime).numFmt = fmtTime;
+      }
+      if (aCost != null) put(aRow, "total", aCost);
+      lastTransferRow = rowIdx;
+      rowIdx += 1;
+    }
 
-  // DEPARTURE
-  const departure = request?.departureTransferService;
-  const dDrivers = departure?.drivers ?? [];
-  const dFirstType = dDrivers.find((d) => d.vehicleType)?.vehicleType ?? "";
-  const dHasAnyCost = dDrivers.some((d) => d.reportCost != null);
-  const dCost = dHasAnyCost
-    ? dDrivers.reduce((s, d) => s + (d.reportCost ?? 0), 0)
-    : null;
-  const dRow = ws.getRow(rowIdx);
-  dRow.getCell(2).value = `гостиница ${hotelName}-аэропорт`;
-  dRow.getCell(3).value = dFirstType;
-  if (departure?.plan?.plannedAt) {
-    const dt = toExcelLocal(new Date(departure.plan.plannedAt));
-    dRow.getCell(5).value = dt;
-    dRow.getCell(5).numFmt = fmtDate;
-    dRow.getCell(6).value = dt;
-    dRow.getCell(6).numFmt = fmtTime;
+    // DEPARTURE
+    if (depVisible) {
+      const dFirstType = (departure?.drivers ?? []).find((d) => d.vehicleType)?.vehicleType ?? "";
+      const dRow = ws.getRow(rowIdx);
+      put(dRow, "fullName", `гостиница ${hotelName}-аэропорт`);
+      put(dRow, "personType", dFirstType);
+      if (departure?.plan?.plannedAt) {
+        // Время подачи обоих направлений живёт в колонках заезда — так было и раньше.
+        const dt = toExcelLocal(new Date(departure.plan.plannedAt));
+        dRow.getCell(at.inDate).value = dt;
+        dRow.getCell(at.inDate).numFmt = fmtDate;
+        dRow.getCell(at.inTime).value = dt;
+        dRow.getCell(at.inTime).numFmt = fmtTime;
+      }
+      if (dCost != null) put(dRow, "total", dCost);
+      lastTransferRow = rowIdx;
+      rowIdx += 1;
+    }
   }
-  if (dCost != null) dRow.getCell(25).value = dCost;
-  const lastTransferRow = rowIdx;
-  rowIdx += 1;
 
   // ── Строка «Итого:» ──
   const totalRow = ws.getRow(rowIdx);
@@ -412,31 +476,41 @@ export function addHotelSheet(wb, opts) {
   // слово уезжает на две строки.
   totalRow.getCell(1).alignment = { vertical: "middle", horizontal: "left" };
   if (lastPersonRow >= 5) {
-    totalRow.getCell(13).value = { formula: `SUM(M5:M${lastPersonRow})` };
-    totalRow.getCell(14).value = { formula: `SUM(N5:N${lastPersonRow})` };
+    // Диапазон одной колонки и пара колонок для SUMPRODUCT — по ключам раскладки:
+    // под hideMoney буквы съезжают, а денежных слагаемых просто нет.
+    const range = (key) => `${letter(key)}5:${letter(key)}${lastPersonRow}`;
+    const sum = (key) => ({ formula: `SUM(${range(key)})` });
+    const product = (countKey, priceKey) => ({
+      formula: `SUMPRODUCT(${range(countKey)},${range(priceKey)})`,
+    });
+    put(totalRow, "daysCount", sum("daysCount"));
+    put(totalRow, "breakfastCount", sum("breakfastCount"));
     // Деньги приёма = Σ(кол-во × цена за порцию) — простой SUM цен потерял смысл.
-    totalRow.getCell(15).value = { formula: `SUMPRODUCT(N5:N${lastPersonRow},O5:O${lastPersonRow})` };
-    totalRow.getCell(16).value = { formula: `SUM(P5:P${lastPersonRow})` };
-    totalRow.getCell(17).value = { formula: `SUMPRODUCT(P5:P${lastPersonRow},Q5:Q${lastPersonRow})` };
-    totalRow.getCell(18).value = { formula: `SUM(R5:R${lastPersonRow})` };
-    totalRow.getCell(19).value = { formula: `SUMPRODUCT(R5:R${lastPersonRow},S5:S${lastPersonRow})` };
-    totalRow.getCell(20).value = { formula: `SUM(T5:T${lastPersonRow})` };
+    putMoney(totalRow, "breakfast", product("breakfastCount", "breakfast"));
+    put(totalRow, "lunchCount", sum("lunchCount"));
+    putMoney(totalRow, "lunch", product("lunchCount", "lunch"));
+    put(totalRow, "dinnerCount", sum("dinnerCount"));
+    putMoney(totalRow, "dinner", product("dinnerCount", "dinner"));
+    put(totalRow, "lunchboxCount", sum("lunchboxCount"));
     // Деньги ланчбоксов = Σ(кол-во × цена за штуку).
-    totalRow.getCell(21).value = { formula: `SUMPRODUCT(T5:T${lastPersonRow},U5:U${lastPersonRow})` };
-    totalRow.getCell(22).value = { formula: `SUM(V5:V${lastPersonRow})` };
-    // W (Скидка) — не суммируется.
-    totalRow.getCell(24).value = { formula: `SUM(X5:X${lastPersonRow})` };
+    putMoney(totalRow, "lunchboxPrice", product("lunchboxCount", "lunchboxPrice"));
+    putMoney(totalRow, "foodCost", sum("foodCost"));
+    // «Скидка» — не суммируется.
+    putMoney(totalRow, "accommodationCost", sum("accommodationCost"));
   }
-  totalRow.getCell(25).value = {
-    formula: `SUM(Y5:Y${lastTransferRow})`,
-  };
+  // Под гейтом в колонке «Итого» лежат только деньги трансфера: без них колонки
+  // уже нет (put промолчит), а с ними диапазон захватывает и пустые строки гостей.
+  const sumEnd = lastTransferRow ?? Math.max(lastPersonRow, 5);
+  put(totalRow, "total", {
+    formula: `SUM(${letter("total")}5:${letter("total")}${sumEnd})`,
+  });
 
-  applyHotelColumnWidths(ws);
+  applyHotelColumnWidths(ws, cols);
   finishSheet(ws, {
-    lastCol: 25,
-    moneyCols: [12, 15, 17, 19, 21, 22, 24, 25],
-    leftCols: [2],
-    skipRows: [gapRow],
+    lastCol,
+    moneyCols,
+    leftCols,
+    skipRows: gapRow == null ? [] : [gapRow],
   });
   return ws;
 }
@@ -644,32 +718,38 @@ export function addCombinedSheet(wb, opts) {
     sheetPrefix = "",
     hotelIndexes = null,
     hiddenServiceKeys = [],
+    hideMoney = false,
   } = opts;
   // includeTransfer отвечает за блок целиком, hiddenServiceKeys — за каждое
   // направление отдельно: скрыть могут только прилёт или только вылет, а блок
   // при этом остаётся. Поэтому видимость проверяется и здесь, а не только на
   // уровне листов: строки блока несут тот же тип ТС, время подачи и суммы.
   const hidden = new Set(hiddenServiceKeys);
+  // «Сводка» — та же раскладка, что у листа гостиницы: без денежных колонок она
+  // тоже обязана уметь, иначе гостиница читала бы в книге ровно те суммы,
+  // которые убраны с её листа.
+  const { cols, at, put, putMoney, letter, lastCol, moneyCols, leftCols } = hotelLayout(hideMoney);
   const ws = wb.addWorksheet(chooseSheetName(prefixedSheetName("Сводка", sheetPrefix), sheetNames));
   const city = pickCity(request, request?.livingService?.hotels?.[0]);
 
   // ── Шапка ──
   ws.getCell("A1").value = request?.airline?.nameFull || request?.airline?.name || "";
-  ws.getCell("Y1").value = "Договор № или \"по согласованию\"";
-  ws.getCell("Y1").alignment = { horizontal: "right" };
+  const contractCell = ws.getCell(1, lastCol);
+  contractCell.value = "Договор № или \"по согласованию\"";
+  contractCell.alignment = { horizontal: "right" };
   const flightPart = request?.flightDate
     ? ` от ${new Date(request.flightDate).toLocaleDateString("ru-RU")}`
     : "";
   ws.getCell("C3").value =
     `Детализация оказанных услуг пассажиров задержанного рейса № ${request?.flightNumber ?? ""}${flightPart} г. ${city}`;
-  [ws.getCell("A1"), ws.getCell("Y1"), ws.getCell("C3")].forEach((c) => {
+  [ws.getCell("A1"), contractCell, ws.getCell("C3")].forEach((c) => {
     c.font = HEADER_FONT;
   });
 
   // ── Заголовки колонок (row 4) ──
-  HOTEL_HEADERS.forEach((label, i) => {
+  cols.forEach((c, i) => {
     const cell = ws.getCell(4, i + 1);
-    cell.value = label;
+    cell.value = c.label;
     cell.font = HEADER_FONT;
     cell.alignment = { wrapText: true, vertical: "middle", horizontal: "center" };
   });
@@ -689,8 +769,8 @@ export function addCombinedSheet(wb, opts) {
     const people = hotel?.people ?? [];
     if (people.length === 0) return; // пустые гостиницы пропускаем в сводке
 
-    // Сабхедер гостиницы — merged A:X
-    ws.mergeCells(`A${rowIdx}:Y${rowIdx}`);
+    // Сабхедер гостиницы — merged на всю ширину раскладки
+    ws.mergeCells(`A${rowIdx}:${colLetter(lastCol)}${rowIdx}`);
     const hdr = ws.getCell(`A${rowIdx}`);
     hdr.value = `Гостиница: ${pickHotelName(hotel)}${hotel?.address ? ` · ${hotel.address}` : ""}`;
     hdr.font = HEADER_FONT;
@@ -721,38 +801,38 @@ export function addCombinedSheet(wb, opts) {
       const row = ws.getRow(rowIdx);
 
       runningId += 1;
-      row.getCell(1).value = runningId;
-      row.getCell(2).value = p.fullName ?? "";
-      row.getCell(3).value = p.personType === "CREW" ? "Экипаж" : "Пассажир";
-      row.getCell(4).value = PERSON_CATEGORY_LABEL[normalizeCategory(p.personCategory)] ?? "Взрослый";
+      put(row, "id", runningId);
+      put(row, "fullName", p.fullName ?? "");
+      put(row, "personType", p.personType === "CREW" ? "Экипаж" : "Пассажир");
+      put(row, "personCategory", PERSON_CATEGORY_LABEL[normalizeCategory(p.personCategory)] ?? "Взрослый");
       if (inAt) {
         const inLocal = toExcelLocal(inAt);
-        row.getCell(5).value = inLocal;  row.getCell(5).numFmt = fmtDate;
-        row.getCell(6).value = inLocal;  row.getCell(6).numFmt = fmtTime;
+        row.getCell(at.inDate).value = inLocal;  row.getCell(at.inDate).numFmt = fmtDate;
+        row.getCell(at.inTime).value = inLocal;  row.getCell(at.inTime).numFmt = fmtTime;
       }
       if (outAt) {
         const outLocal = toExcelLocal(outAt);
-        row.getCell(7).value = outLocal; row.getCell(7).numFmt = fmtDate;
-        row.getCell(8).value = outLocal; row.getCell(8).numFmt = fmtTime;
+        row.getCell(at.outDate).value = outLocal; row.getCell(at.outDate).numFmt = fmtDate;
+        row.getCell(at.outTime).value = outLocal; row.getCell(at.outTime).numFmt = fmtTime;
       }
       const pricePerDay = toNum(r.pricePerDay);
-      row.getCell(9).value = r.roomNumber ?? "";                                    // I Номер
-      row.getCell(10).value = placementKindLabel(Number(r.placementKind) || 0);     // J Вид размещения
-      row.getCell(11).value = (r.tariffName ?? "").trim() || (r.roomCategory ?? ""); // K Тариф
-      if (pricePerDay > 0) row.getCell(12).value = pricePerDay;                      // L Цена за сутки
-      row.getCell(13).value = toNum(r.daysCount);                                    // M Суток
-      row.getCell(14).value = mealCountOf(r, "breakfast", "breakfastCount");         // N Кол-во завтраков
-      row.getCell(15).value = toNum(r.breakfast);                                    // O Цена завтрака
-      row.getCell(16).value = mealCountOf(r, "lunch", "lunchCount");                 // P
-      row.getCell(17).value = toNum(r.lunch);                                        // Q
-      row.getCell(18).value = mealCountOf(r, "dinner", "dinnerCount");               // R
-      row.getCell(19).value = toNum(r.dinner);                                       // S
-      row.getCell(20).value = lunchboxCountOf(r);                                    // T Количество ланчбоксов
-      row.getCell(21).value = toNum(r.lunchboxPrice);                                // U Ланчбокс (цена за штуку)
-      row.getCell(22).value = foodCost;                                             // V Ст-ть питания
-      row.getCell(23).value = accommodationDiscountLabel(pricePerDay, r.daysCount, accommodationCost); // W Скидка
-      row.getCell(24).value = accommodationCost;                                     // X Ст-ть проживания
-      row.getCell(25).value = foodCost + accommodationCost;                          // Y Итого
+      put(row, "roomNumber", r.roomNumber ?? "");
+      put(row, "placementKind", placementKindLabel(Number(r.placementKind) || 0));
+      put(row, "tariffName", (r.tariffName ?? "").trim() || (r.roomCategory ?? ""));
+      if (pricePerDay > 0) putMoney(row, "pricePerDay", pricePerDay);
+      put(row, "daysCount", toNum(r.daysCount));
+      put(row, "breakfastCount", mealCountOf(r, "breakfast", "breakfastCount"));
+      putMoney(row, "breakfast", toNum(r.breakfast));            // цена за порцию
+      put(row, "lunchCount", mealCountOf(r, "lunch", "lunchCount"));
+      putMoney(row, "lunch", toNum(r.lunch));
+      put(row, "dinnerCount", mealCountOf(r, "dinner", "dinnerCount"));
+      putMoney(row, "dinner", toNum(r.dinner));
+      put(row, "lunchboxCount", lunchboxCountOf(r));
+      putMoney(row, "lunchboxPrice", toNum(r.lunchboxPrice));    // цена за штуку
+      putMoney(row, "foodCost", foodCost);
+      putMoney(row, "discount", accommodationDiscountLabel(pricePerDay, r.daysCount, accommodationCost));
+      putMoney(row, "accommodationCost", accommodationCost);
+      putMoney(row, "total", foodCost + accommodationCost);
 
       if (firstPersonRow == null) firstPersonRow = rowIdx;
       lastPersonRow = rowIdx;
@@ -762,13 +842,16 @@ export function addCombinedSheet(wb, opts) {
 
   // ── Блок «Трансфер» ──
   let lastTransferRow = null;
+  // Писали ли в колонку «Итого» деньги трансфера — под гейтом это единственное,
+  // что в ней вообще может оказаться.
+  let transferMoney = false;
   let gapRow = null; // строка-разделитель есть только вместе с блоком трансфера
   if (includeTransfer) {
     gapRow = rowIdx;
     rowIdx += 1;
     const tHeaderRow = rowIdx;
-    ws.mergeCells(`B${tHeaderRow}:H${tHeaderRow}`);
-    const tHdr = ws.getCell(`B${tHeaderRow}`);
+    ws.mergeCells(`${letter("fullName")}${tHeaderRow}:${letter("outTime")}${tHeaderRow}`);
+    const tHdr = ws.getCell(`${letter("fullName")}${tHeaderRow}`);
     tHdr.value = "Трансфер";
     tHdr.font = HEADER_FONT;
     tHdr.alignment = { horizontal: "center" };
@@ -776,40 +859,42 @@ export function addCombinedSheet(wb, opts) {
 
     // ARRIVAL
     const arrival = request?.transferService;
-    const aDrivers = arrival?.drivers ?? [];
-    const aFirstType = aDrivers.find((d) => d.vehicleType)?.vehicleType ?? "";
-    const aHasAnyCost = aDrivers.some((d) => d.reportCost != null);
-    const aCost = aHasAnyCost ? aDrivers.reduce((s, d) => s + (d.reportCost ?? 0), 0) : null;
+    const aFirstType = (arrival?.drivers ?? []).find((d) => d.vehicleType)?.vehicleType ?? "";
+    const aCost = transferCost(arrival?.drivers);
     if (arrival?.plan?.enabled && !hidden.has("transfer")) {
       const aRow = ws.getRow(rowIdx);
-      aRow.getCell(2).value = "аэропорт → гостиницы";
-      aRow.getCell(3).value = aFirstType;
+      put(aRow, "fullName", "аэропорт → гостиницы");
+      put(aRow, "personType", aFirstType);
       if (arrival?.plan?.plannedAt) {
         const dt = toExcelLocal(new Date(arrival.plan.plannedAt));
-        aRow.getCell(5).value = dt; aRow.getCell(5).numFmt = fmtDate;
-        aRow.getCell(6).value = dt; aRow.getCell(6).numFmt = fmtTime;
+        aRow.getCell(at.inDate).value = dt; aRow.getCell(at.inDate).numFmt = fmtDate;
+        aRow.getCell(at.inTime).value = dt; aRow.getCell(at.inTime).numFmt = fmtTime;
       }
-      if (aCost != null) aRow.getCell(25).value = aCost;
+      if (aCost != null) {
+        put(aRow, "total", aCost);
+        transferMoney = true;
+      }
       lastTransferRow = rowIdx;
       rowIdx += 1;
     }
 
     // DEPARTURE
     const departure = request?.departureTransferService;
-    const dDrivers = departure?.drivers ?? [];
-    const dFirstType = dDrivers.find((d) => d.vehicleType)?.vehicleType ?? "";
-    const dHasAnyCost = dDrivers.some((d) => d.reportCost != null);
-    const dCost = dHasAnyCost ? dDrivers.reduce((s, d) => s + (d.reportCost ?? 0), 0) : null;
+    const dFirstType = (departure?.drivers ?? []).find((d) => d.vehicleType)?.vehicleType ?? "";
+    const dCost = transferCost(departure?.drivers);
     if (departure?.plan?.enabled && !hidden.has("transferDeparture")) {
       const dRow = ws.getRow(rowIdx);
-      dRow.getCell(2).value = "гостиницы → аэропорт";
-      dRow.getCell(3).value = dFirstType;
+      put(dRow, "fullName", "гостиницы → аэропорт");
+      put(dRow, "personType", dFirstType);
       if (departure?.plan?.plannedAt) {
         const dt = toExcelLocal(new Date(departure.plan.plannedAt));
-        dRow.getCell(5).value = dt; dRow.getCell(5).numFmt = fmtDate;
-        dRow.getCell(6).value = dt; dRow.getCell(6).numFmt = fmtTime;
+        dRow.getCell(at.inDate).value = dt; dRow.getCell(at.inDate).numFmt = fmtDate;
+        dRow.getCell(at.inTime).value = dt; dRow.getCell(at.inTime).numFmt = fmtTime;
       }
-      if (dCost != null) dRow.getCell(25).value = dCost;
+      if (dCost != null) {
+        put(dRow, "total", dCost);
+        transferMoney = true;
+      }
       lastTransferRow = rowIdx;
       rowIdx += 1;
     }
@@ -822,43 +907,53 @@ export function addCombinedSheet(wb, opts) {
   // Явное выравнивание: иначе проход центрирует с переносом в узкой колонке A.
   totalRow.getCell(1).alignment = { vertical: "middle", horizontal: "left" };
   if (firstPersonRow != null && lastPersonRow != null) {
-    totalRow.getCell(13).value = { formula: `SUM(M${firstPersonRow}:M${lastPersonRow})` };
-    totalRow.getCell(14).value = { formula: `SUM(N${firstPersonRow}:N${lastPersonRow})` };
+    const range = (key) => `${letter(key)}${firstPersonRow}:${letter(key)}${lastPersonRow}`;
+    const sum = (key) => ({ formula: `SUM(${range(key)})` });
+    const product = (countKey, priceKey) => ({
+      formula: `SUMPRODUCT(${range(countKey)},${range(priceKey)})`,
+    });
+    put(totalRow, "daysCount", sum("daysCount"));
+    put(totalRow, "breakfastCount", sum("breakfastCount"));
     // Деньги приёма = Σ(кол-во × цена за порцию).
-    totalRow.getCell(15).value = { formula: `SUMPRODUCT(N${firstPersonRow}:N${lastPersonRow},O${firstPersonRow}:O${lastPersonRow})` };
-    totalRow.getCell(16).value = { formula: `SUM(P${firstPersonRow}:P${lastPersonRow})` };
-    totalRow.getCell(17).value = { formula: `SUMPRODUCT(P${firstPersonRow}:P${lastPersonRow},Q${firstPersonRow}:Q${lastPersonRow})` };
-    totalRow.getCell(18).value = { formula: `SUM(R${firstPersonRow}:R${lastPersonRow})` };
-    totalRow.getCell(19).value = { formula: `SUMPRODUCT(R${firstPersonRow}:R${lastPersonRow},S${firstPersonRow}:S${lastPersonRow})` };
-    totalRow.getCell(20).value = { formula: `SUM(T${firstPersonRow}:T${lastPersonRow})` };
+    putMoney(totalRow, "breakfast", product("breakfastCount", "breakfast"));
+    put(totalRow, "lunchCount", sum("lunchCount"));
+    putMoney(totalRow, "lunch", product("lunchCount", "lunch"));
+    put(totalRow, "dinnerCount", sum("dinnerCount"));
+    putMoney(totalRow, "dinner", product("dinnerCount", "dinner"));
+    put(totalRow, "lunchboxCount", sum("lunchboxCount"));
     // Деньги ланчбоксов = Σ(кол-во × цена за штуку).
-    totalRow.getCell(21).value = { formula: `SUMPRODUCT(T${firstPersonRow}:T${lastPersonRow},U${firstPersonRow}:U${lastPersonRow})` };
-    totalRow.getCell(22).value = { formula: `SUM(V${firstPersonRow}:V${lastPersonRow})` };
-    // W (Скидка) — не суммируется.
-    totalRow.getCell(24).value = { formula: `SUM(X${firstPersonRow}:X${lastPersonRow})` };
+    putMoney(totalRow, "lunchboxPrice", product("lunchboxCount", "lunchboxPrice"));
+    putMoney(totalRow, "foodCost", sum("foodCost"));
+    // «Скидка» — не суммируется.
+    putMoney(totalRow, "accommodationCost", sum("accommodationCost"));
   }
   const sumStart = firstPersonRow ?? 5;
   const sumEnd = lastTransferRow ?? lastPersonRow ?? sumStart;
-  totalRow.getCell(25).value = { formula: `SUM(Y${sumStart}:Y${sumEnd})` };
+  // Под гейтом суммировать нечего, пока в колонке нет денег трансфера.
+  if (!hideMoney || transferMoney) {
+    put(totalRow, "total", {
+      formula: `SUM(${letter("total")}${sumStart}:${letter("total")}${sumEnd})`,
+    });
+  }
 
-  applyHotelColumnWidths(ws);
+  applyHotelColumnWidths(ws, cols);
   finishSheet(ws, {
-    lastCol: 25,
-    moneyCols: [12, 15, 17, 19, 21, 22, 24, 25],
-    leftCols: [2],
+    lastCol,
+    moneyCols,
+    leftCols,
     skipRows: gapRow == null ? [] : [gapRow],
   });
   return ws;
 }
 
 export async function downloadLivingReport(request, opts = {}) {
-  const { hotelIndexes = null } = opts;
+  const { hotelIndexes = null, hideMoney = false, hiddenServiceKeys = [] } = opts;
   const wb = new ExcelJS.Workbook();
   const sheetNames = new Set();
-  addCombinedSheet(wb, { request, sheetNames, includeTransfer: false, hotelIndexes });
+  addCombinedSheet(wb, { request, sheetNames, includeTransfer: false, hotelIndexes, hideMoney });
   (request?.livingService?.hotels ?? []).forEach((_, hotelIndex) => {
     if (hotelIndexes && !hotelIndexes.includes(hotelIndex)) return;
-    addHotelSheet(wb, { request, hotelIndex, sheetNames });
+    addHotelSheet(wb, { request, hotelIndex, sheetNames, hideMoney, hiddenServiceKeys });
   });
   const filename = `${request?.airline?.name ?? ""} заявка ${request?.requestNumber ?? ""} проживание.xlsx`;
   await downloadWorkbook(wb, filename);
@@ -880,6 +975,7 @@ export function addRequestReportSheets(wb, request, opts = {}) {
     sheetPrefix = "",
     hotelIndexes = null,
     hiddenServiceKeys = [],
+    hideMoney = false,
   } = opts;
   const livingEnabled = request?.livingService?.plan?.enabled;
   const arrEnabled = request?.transferService?.plan?.enabled;
@@ -932,12 +1028,17 @@ export function addRequestReportSheets(wb, request, opts = {}) {
       // includeTransfer говорит только «есть ли блок»; какие из двух
       // направлений внутри него рисовать, решает тот же список ключей.
       hiddenServiceKeys,
+      hideMoney,
     });
   }
   if (livingVisible) {
     (request?.livingService?.hotels ?? []).forEach((_, hotelIndex) => {
       if (hotelIndexes && !hotelIndexes.includes(hotelIndex)) return;
-      addHotelSheet(wb, { request, hotelIndex, sheetNames, sheetPrefix });
+      // Гейт услуг доводится и до листа гостиницы: его блок «Трансфер» несёт те
+      // же направления, ТС и суммы, что убраны с отдельных листов.
+      addHotelSheet(wb, {
+        request, hotelIndex, sheetNames, sheetPrefix, hideMoney, hiddenServiceKeys,
+      });
     });
   }
   if (arrVisible) {

@@ -11,6 +11,19 @@
   gap: 14px;
 }
 
+/* Полоса без денег (гостиница): те же скругления и приглушённый текст, но
+   вместо карточек сумм — одна строка «сколько людей и суток». */
+.factStrip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border: 1px solid var(--border, #E4E4EF);
+  border-radius: 14px;
+  font-size: 13px;
+  color: var(--main-gray, #545873);
+}
+
 .totalCard {
   flex: 0 0 auto;
   min-width: 220px;

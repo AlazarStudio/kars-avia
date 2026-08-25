@@ -27,6 +27,8 @@ import { calculateCostDaysByDuration } from "../../../../utils/effectiveCostDays
 import { getPersonDays } from "../fapPersonDays.js";
 import { tariffNameKey, findTariffByName } from "../fapTariffNames.js";
 import { hotelReportSubmittedAt, isHotelReportSubmitted } from "../fapReportAccess";
+import { lunchboxCountOf, preserveMoneyFields } from "../fapReportMoney";
+import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
 import { hotelOverbookedBy, livingNameCollisions } from "../fapLivingMismatch";
 import HotelCapacityDialog from "../HotelCapacityDialog/HotelCapacityDialog";
 import { isAirlineRole, isHotelScoped } from "../../../../utils/access";
@@ -244,13 +246,9 @@ const hasHotelReport = (request, hotelIndex) =>
 const lunchboxPriceFor = (pd, tariff) =>
   toNum(tariff ? tariff.lunchboxPrice : pd?.lunchboxPrice);
 
-// Число ланчбоксов гостя: новое поле lunchboxCount; иначе легаси — число тумблеров.
-const lunchboxCountOf = (pd) =>
-  pd?.lunchboxCount != null
-    ? toNum(pd.lunchboxCount)
-    : (pd?.breakfastLunchbox ? 1 : 0) + (pd?.lunchLunchbox ? 1 : 0) + (pd?.dinnerLunchbox ? 1 : 0);
-
 // Питание гостя: Σ(цена × кол-во приёма) + кол-во ланчбоксов × цена ланчбокса.
+// Число ланчбоксов — общий lunchboxCountOf (fapReportMoney): та же семантика
+// легаси-тумблеров, что у выгрузки и у заморозки денег.
 const computePdFood = (pd, tariff) =>
   toNum(pd?.breakfast) * toNum(pd?.breakfastCount) +
   toNum(pd?.lunch) * toNum(pd?.lunchCount) +
@@ -455,6 +453,9 @@ export default function FapHotelPage({
   // Снапшот строк, из которых собрано текущее состояние (реконсиляция) либо
   // ответ нашего последнего сейва — для live-подхвата чужих изменений (подписка).
   const lastAppliedRowsRef = useRef(null);
+  // Сохранённые серверные строки — источник денег при заморозке под hideMoney.
+  // Тоже ref: buildReportRows читает состояние только через них.
+  const savedRowsRef = useRef([]);
   const [remoteVersion, setRemoteVersion] = useState(0);
   // persistReportRef нужен для cleanup'a на размонтирование — обычное замыкание
   // useEffect([], ...) видит persistReport времени монтирования, а мы хотим вызвать
@@ -462,6 +463,12 @@ export default function FapHotelPage({
   const persistReportRef = useRef(null);
   useEffect(() => { tariffsRef.current = tariffs; }, [tariffs]);
   useEffect(() => { personDataRef.current = personData; }, [personData]);
+  useEffect(() => {
+    savedRowsRef.current =
+      (request?.hotelReports ?? []).find(
+        (r) => Number(r?.hotelIndex) === Number(hotelIndex)
+      )?.reportRows ?? [];
+  }, [request?.hotelReports, hotelIndex]);
   useEffect(() => () => {
     // Флаш отложенного сейва при размонтировании — иначе изменения
     // в пределах debounce-окна теряются при навигации/обновлении.
@@ -514,6 +521,17 @@ export default function FapHotelPage({
   // Kars Avia, во вкладке «Тарифы» своей карточки гостиница их не видит и здесь
   // видеть не должна — ни договорным тарифом АК, ни собственными ценами.
   const hotelScoped = isHotelScoped(user);
+  // Интерим (см. fapReportMoney): гостинице деньги отчёта не показываем и не даём
+  // ей их переписать — цена в строке одна, для авиакомпании, а гостиница
+  // заполняет факт. Отдельное имя, а не hotelScoped по месту: гейтов много, и по
+  // ним должно быть видно, что скрывают именно деньги.
+  const hideMoney = hotelScoped;
+  // Вкладка «Тарифы» — это цены целиком, поэтому под гейтом её нет вовсе.
+  const showTariffsTab = showTariffs && !hideMoney;
+  // Тот же источник скрытых услуг, что у книги заявки: блок «Трансфер» на листе
+  // гостиницы обязан подчиняться правилу видимости так же, как отдельные листы.
+  // Диспетчеру и авиакомпании хук отдаёт пустой список — выгрузка прежняя.
+  const { hiddenServiceKeys } = useHotelServiceVisibility(user);
   const reportSubmittedAt = hotelReportSubmittedAt(request, hotelIndex);
   const reportSubmitted = isHotelReportSubmitted(request, hotelIndex);
   const reportHidden = isAirline && !reportSubmitted;
@@ -1571,8 +1589,12 @@ export default function FapHotelPage({
           pd.accommodationDiscount != null ? toNum(pd.accommodationDiscount) : null,
       };
     });
-    return [...personRows, ...ghostRows, ...airlineGhostRows, ...hotelGhostRows];
-  }, [hotelIndex, plan]);
+    const rows = [...personRows, ...ghostRows, ...airlineGhostRows, ...hotelGhostRows];
+    // Гостиница правит только факт: деньги остаются те, что посчитал диспетчер.
+    // Без этого её сейв молча переписал бы весь отчёт по её ценам — суммы выше
+    // собраны из eff, а он под hotelScoped резолвится из прайса гостиницы.
+    return hideMoney ? preserveMoneyFields(rows, savedRowsRef.current) : rows;
+  }, [hotelIndex, plan, hideMoney]);
 
   const persistReport = useCallback(async () => {
     if (!request?.id) return;
@@ -2587,7 +2609,11 @@ export default function FapHotelPage({
         saveTimerRef.current = null;
         await persistReport();
       }
-      await downloadHotelReport(request, hotelIndex, { rows: buildReportRows() });
+      await downloadHotelReport(request, hotelIndex, {
+        rows: buildReportRows(),
+        hideMoney,
+        hiddenServiceKeys,
+      });
     } catch (e) {
       notifyError("Ошибка экспорта");
       console.error(e);
@@ -2603,8 +2629,10 @@ export default function FapHotelPage({
   const handleSubmitReport = async () => {
     if (submitting) return;
     // Спрашиваем ДО автосейва: иначе отказ от отправки всё равно оставил бы
-    // сохранение, а вопрос выглядел бы запоздалым.
-    if (submitIssues.length > 0) {
+    // сохранение, а вопрос выглядел бы запоздалым. Сводка целиком про деньги
+    // (нулевые итоги, строки без цены) — гостинице её не показываем: этих чисел
+    // она не видит и исправить их не может.
+    if (!hideMoney && submitIssues.length > 0) {
       const go = await confirm({
         message: (
           <span>
@@ -3176,7 +3204,7 @@ export default function FapHotelPage({
           {request?.includesCrew ? "Пассажиры и экипаж" : "Пассажиры"}
           <span className={classes.tabBadge}>{placed}</span>
         </button>
-        {showTariffs && (
+        {showTariffsTab && (
           <button
             type="button"
             className={`${classes.tab} ${activeTab === "tariffs" ? classes.tabActive : ""}`}
@@ -3313,7 +3341,7 @@ export default function FapHotelPage({
           </div>
         )}
 
-        {showTariffs && activeTab === "tariffs" && (
+        {showTariffsTab && activeTab === "tariffs" && (
           <div className={classes.tariffsPane}>
             <div className={classes.tariffsHead}>
               <p className={classes.tariffsHint}>
@@ -3656,9 +3684,11 @@ export default function FapHotelPage({
                       onChange={(e) => setReportSearch(e.target.value)}
                     />
                   </div>
-                  <span className={classes.boundCount}>
-                    Тариф назначен: <strong>{boundCount}</strong> из {placed}
-                  </span>
+                  {!hideMoney && (
+                    <span className={classes.boundCount}>
+                      Тариф назначен: <strong>{boundCount}</strong> из {placed}
+                    </span>
+                  )}
                 </>
               )}
               <span className={classes.spacer} />
@@ -3748,7 +3778,11 @@ export default function FapHotelPage({
               <div className={classes.emptyRow}>Пассажиры ещё не добавлены</div>
             ) : effectiveReportMode === "view" ? (
               <div className={classes.reportViewScroll}>
-                <FapReportView summary={reportSummary} groups={reportViewGroups} />
+                <FapReportView
+                  summary={reportSummary}
+                  groups={reportViewGroups}
+                  hideMoney={hideMoney}
+                />
               </div>
             ) : (
               <div className={classes.reportTableWrap}>
@@ -3787,7 +3821,10 @@ export default function FapHotelPage({
                       else roomAccCost = ce.accommodationCost;
                     }
                     return (
-                      <div key={g.key} className={`${classes.roomGroup} ${g.noRoom ? classes.roomGroupNoRoom : ""}`}>
+                      <div
+                        key={g.key}
+                        className={`${classes.roomGroup} ${g.noRoom ? classes.roomGroupNoRoom : ""} ${hideMoney ? classes.roomGroupNoMoney : ""}`}
+                      >
                         <div className={classes.roomHead}>
                           <span className={classes.roomNo}>
                             {g.noRoom ? <span className={classes.noRoomBadge}>Без номера</span> : <>№ {g.roomNumber}</>}
@@ -3866,7 +3903,8 @@ export default function FapHotelPage({
                               </span>
                             </Tooltip>
                           )}
-                          {roomPerRoom &&
+                          {!hideMoney &&
+                            roomPerRoom &&
                             (roomAccWarn ? (
                               <Tooltip title={roomAccWarn} slotProps={hintTooltipSlotProps}>
                                 <span className={`${classes.roomAccPill} ${classes.roomAccPillWarn}`} tabIndex={0}>
@@ -3879,26 +3917,32 @@ export default function FapHotelPage({
                                 проживание {fmt(roomAccCost)}
                               </span>
                             ))}
-                          <span className={classes.roomTotalVal} style={{ marginLeft: "auto" }}>
-                            {gTotal > 0 ? fmt(gTotal) : "—"}
-                          </span>
+                          {!hideMoney && (
+                            <span className={classes.roomTotalVal} style={{ marginLeft: "auto" }}>
+                              {gTotal > 0 ? fmt(gTotal) : "—"}
+                            </span>
+                          )}
                         </div>
-                        <div className={classes.memberColHead}>
+                        <div className={`${classes.memberColHead} ${hideMoney ? classes.rowNoMoney : ""}`}>
                           {/* Тот же flex, что и в строке гостя: спейсер держит «ФИО» над колонкой точек */}
                           <span className={classes.reportCellName}>
                             {showReportGroupDots && <span className={classes.reportDotSpacer} />}
                             ФИО
                           </span>
                           <span>Номер</span>
-                          <span>Тариф</span>
+                          {!hideMoney && <span>Тариф</span>}
                           <span className={classes.numRight}>Сут.</span>
                           <span className={classes.numCenter}>Завтр.</span>
                           <span className={classes.numCenter}>Обед</span>
                           <span className={classes.numCenter}>Ужин</span>
                           <span className={classes.numCenter}>ЛБ</span>
-                          <span className={classes.numRight}>Питание</span>
-                          <span className={classes.numRight}>Скидка</span>
-                          <span className={classes.numRight}>Прожив.</span>
+                          {!hideMoney && (
+                            <>
+                              <span className={classes.numRight}>Питание</span>
+                              <span className={classes.numRight}>Скидка</span>
+                              <span className={classes.numRight}>Прожив.</span>
+                            </>
+                          )}
                         </div>
                         {g.members.map((m) => {
                           const { person, index: i, pd } = m;
@@ -3907,7 +3951,7 @@ export default function FapHotelPage({
                             ? groupIndex.get(person.personId)
                             : null;
                           return (
-                            <div key={i} className={classes.memberRow}>
+                            <div key={i} className={`${classes.memberRow} ${hideMoney ? classes.rowNoMoney : ""}`}>
                               <div className={classes.reportCellName}>
                                 {showReportGroupDots &&
                                   (memberGroup ? (
@@ -3940,23 +3984,29 @@ export default function FapHotelPage({
                                   onCommit={(v) => commitPersonRoom(i, v)}
                                 />
                               </div>
+                              {!hideMoney && (
+                                <div>
+                                  <FapSelect
+                                    size="compact"
+                                    accent="#8B5CF6"
+                                    className={`${classes.tariffPick} ${unbound ? classes.tariffPickUnbound : ""}`}
+                                    disabled={!canEdit}
+                                    value={pd.tariffId || ""}
+                                    onChange={(v) => canEdit && applyTariffToPerson(i, v)}
+                                    options={tariffOptions}
+                                    menuMinWidth={260}
+                                  />
+                                </div>
+                              )}
                               <div>
-                                <FapSelect
-                                  size="compact"
-                                  accent="#8B5CF6"
-                                  className={`${classes.tariffPick} ${unbound ? classes.tariffPickUnbound : ""}`}
-                                  disabled={!canEdit}
-                                  value={pd.tariffId || ""}
-                                  onChange={(v) => canEdit && applyTariffToPerson(i, v)}
-                                  options={tariffOptions}
-                                  menuMinWidth={260}
-                                />
-                              </div>
-                              <div>
+                                {/* Под гейтом сутки только для чтения: они множитель цены —
+                                    книга выводит из них скидку, и разъехавшись с замороженной
+                                    стоимостью печатали бы выдуманный процент. */}
                                 <input type="number" min={0} step={0.5} className={classes.cellInputNum}
                                   value={pd.daysCount ? pd.daysCount : ""}
-                                  onChange={(e) => canEdit && updatePersonReport(i, "daysCount", e.target.value)}
-                                  readOnly={!canEdit} />
+                                  onChange={(e) => canEdit && !hideMoney && updatePersonReport(i, "daysCount", e.target.value)}
+                                  readOnly={!canEdit || hideMoney}
+                                  title={hideMoney ? "Количество суток задаёт диспетчер" : undefined} />
                               </div>
                               {[
                                 ["breakfastCount", "завтрак", "цена за порцию из тарифа"],
@@ -3969,17 +4019,20 @@ export default function FapHotelPage({
                                     value={pd[countF] ? pd[countF] : ""}
                                     onChange={(e) => canEdit && updatePersonReport(i, countF, e.target.value)}
                                     readOnly={!canEdit}
-                                    title={`Количество (${mealLabel}) — ${priceHint}`} />
+                                    // Цены под гейтом не упоминаем — тарифа гостиница не видит.
+                                    title={hideMoney ? `Количество (${mealLabel})` : `Количество (${mealLabel}) — ${priceHint}`} />
                                 </div>
                               ))}
-                              <div className={`${classes.numRight} ${classes.memberFood}`}>
-                                {m.food > 0 ? fmt(m.food) : "—"}
-                                {(() => {
-                                  const fh = foodHintData(pd, findTariff(pd.tariffId));
-                                  return <CalcHint rows={fh.rows} totalLabel="Питание" total={fh.total} warn={fh.warn} />;
-                                })()}
-                              </div>
-                              {(() => {
+                              {!hideMoney && (
+                                <div className={`${classes.numRight} ${classes.memberFood}`}>
+                                  {m.food > 0 ? fmt(m.food) : "—"}
+                                  {(() => {
+                                    const fh = foodHintData(pd, findTariff(pd.tariffId));
+                                    return <CalcHint rows={fh.rows} totalLabel="Питание" total={fh.total} warn={fh.warn} />;
+                                  })()}
+                                </div>
+                              )}
+                              {!hideMoney && (() => {
                                 // Скидка применима только там, где проживание считается от цены
                                 // за сутки: при тарифе «Номер» оно принадлежит номеру, без тарифа
                                 // и у легаси-строк с плоской суммой процент считать не от чего.
@@ -4021,53 +4074,55 @@ export default function FapHotelPage({
                                   </div>
                                 );
                               })()}
-                              <div className={classes.numRight}>
-                                {(() => {
-                                  const eff = getEffectiveRow(i, pd);
-                                  const hasTariff = !!findTariff(pd.tariffId);
-                                  // Тариф «Номер»: стоимость на шапке, у гостя — нейтрально
-                                  // (без выделенного несущего). Сумма номера не меняется.
-                                  if (roomBillingByIndex[i]?.perRoom) {
-                                    return <span className={classes.accMuted}>в номере</span>;
-                                  }
-                                  if (!hasTariff) {
-                                    // Без тарифа — ручной ввод стоимости проживания.
+                              {!hideMoney && (
+                                <div className={classes.numRight}>
+                                  {(() => {
+                                    const eff = getEffectiveRow(i, pd);
+                                    const hasTariff = !!findTariff(pd.tariffId);
+                                    // Тариф «Номер»: стоимость на шапке, у гостя — нейтрально
+                                    // (без выделенного несущего). Сумма номера не меняется.
+                                    if (roomBillingByIndex[i]?.perRoom) {
+                                      return <span className={classes.accMuted}>в номере</span>;
+                                    }
+                                    if (!hasTariff) {
+                                      // Без тарифа — ручной ввод стоимости проживания.
+                                      return (
+                                        <input
+                                          type="number" min={0} className={classes.cellInputNum}
+                                          value={pd.accommodationCost ? pd.accommodationCost : ""}
+                                          onChange={(e) => canEdit && updatePersonReport(i, "accommodationCost", e.target.value)}
+                                          readOnly={!canEdit}
+                                        />
+                                      );
+                                    }
+                                    if (eff.warning) {
+                                      return <span className={classes.accWarning} title={eff.warning}>⚠ {eff.warning}</span>;
+                                    }
+                                    // Формулу в строке не показываем — только сумма + «?» с разбивкой.
+                                    const accRows = [
+                                      [
+                                        `Цена за сутки${eff.placementKind ? ` (${placementKindLabel(eff.placementKind)})` : ""}`,
+                                        "",
+                                        fmt(eff.pricePerDay),
+                                      ],
+                                      ["Количество суток", "", String(toNum(pd.daysCount))],
+                                    ];
+                                    if ((eff.chargeFactor ?? 1) < 1) {
+                                      accRows.push([
+                                        "Скидка",
+                                        "",
+                                        eff.chargeFactor === 0 ? "бесплатно" : `−${Math.round((1 - eff.chargeFactor) * 100)}%`,
+                                      ]);
+                                    }
                                     return (
-                                      <input
-                                        type="number" min={0} className={classes.cellInputNum}
-                                        value={pd.accommodationCost ? pd.accommodationCost : ""}
-                                        onChange={(e) => canEdit && updatePersonReport(i, "accommodationCost", e.target.value)}
-                                        readOnly={!canEdit}
-                                      />
+                                      <span className={classes.accValue}>
+                                        <strong>{fmt(eff.accommodationCost)}</strong>
+                                        <CalcHint rows={accRows} totalLabel="Проживание" total={fmt(eff.accommodationCost)} />
+                                      </span>
                                     );
-                                  }
-                                  if (eff.warning) {
-                                    return <span className={classes.accWarning} title={eff.warning}>⚠ {eff.warning}</span>;
-                                  }
-                                  // Формулу в строке не показываем — только сумма + «?» с разбивкой.
-                                  const accRows = [
-                                    [
-                                      `Цена за сутки${eff.placementKind ? ` (${placementKindLabel(eff.placementKind)})` : ""}`,
-                                      "",
-                                      fmt(eff.pricePerDay),
-                                    ],
-                                    ["Количество суток", "", String(toNum(pd.daysCount))],
-                                  ];
-                                  if ((eff.chargeFactor ?? 1) < 1) {
-                                    accRows.push([
-                                      "Скидка",
-                                      "",
-                                      eff.chargeFactor === 0 ? "бесплатно" : `−${Math.round((1 - eff.chargeFactor) * 100)}%`,
-                                    ]);
-                                  }
-                                  return (
-                                    <span className={classes.accValue}>
-                                      <strong>{fmt(eff.accommodationCost)}</strong>
-                                      <CalcHint rows={accRows} totalLabel="Проживание" total={fmt(eff.accommodationCost)} />
-                                    </span>
-                                  );
-                                })()}
-                              </div>
+                                  })()}
+                                </div>
+                              )}
                             </div>
                           );
                         })}
@@ -4080,8 +4135,12 @@ export default function FapHotelPage({
                     Человек: <strong>{placed}</strong>
                   </span>
                   <span className={classes.spacer} />
-                  <span className={classes.footerLabel}>Итого по отчёту</span>
-                  <span className={classes.grandTotal}>{fmt(grandTotal)} ₽</span>
+                  {!hideMoney && (
+                    <>
+                      <span className={classes.footerLabel}>Итого по отчёту</span>
+                      <span className={classes.grandTotal}>{fmt(grandTotal)} ₽</span>
+                    </>
+                  )}
                 </div>
               </div>
             )}

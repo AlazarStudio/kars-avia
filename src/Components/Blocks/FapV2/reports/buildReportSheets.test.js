@@ -7,6 +7,7 @@ import {
   addHotelSheet,
   addRequestReportSheets,
 } from "./buildReportSheets.js";
+import { preserveMoneyFields } from "../fapReportMoney.js";
 
 function makeRequest(airlineOverrides) {
   return {
@@ -459,4 +460,232 @@ test("книга заявки: всё скрыто и белый список г
   assert.equal(ok, false);
   assert.deepEqual(errors, ["Нет данных для отчёта"]);
   assert.equal(wb.worksheets.length, 0);
+});
+
+// ── Деньги скрыты от гостиницы (hideMoney) ──
+//
+// Гостиница заполняет факт, деньги проживания и питания считает диспетчер по
+// ценам для авиакомпании — в её выгрузке этих колонок нет вовсе. Колонка «Итого»
+// остаётся: в ней ещё и суммы трансфера, а они принадлежат гостинице-перевозчику.
+const MONEY_HEADERS = [
+  "Цена за сутки", "Завтрак", "Обед", "Ужин", "Ланчбокс",
+  "Стоимость питания", "Скидка", "Стоимость проживания", "Итого",
+];
+const HIDDEN_MONEY_HEADERS = MONEY_HEADERS.filter((h) => h !== "Итого");
+// Раскладка под гейтом: «Итого» появляется только когда на листе будут деньги
+// трансфера (гостиница-перевозчик), поэтому в базовый набор она не входит.
+const FACT_HEADERS = [
+  "ID", "ФИО", "Тип", "Возрастная категория", "Дата заезда", "Время заезда",
+  "Дата выезда", "Время выезда", "Номер", "Вид размещения", "Тариф",
+  "Количество суток", "Количество завтраков", "Количество обедов",
+  "Количество ужинов", "Количество ланчбоксов",
+];
+
+const headersOf = (ws) => ws.getRow(4).values.slice(1);
+
+// Заголовки колонок, ячейки которых получили денежный формат.
+const moneyFormatHeaders = (ws) => {
+  const headers = headersOf(ws);
+  const found = new Set();
+  ws.eachRow({ includeEmpty: false }, (row) => {
+    row.eachCell({ includeEmpty: true }, (cell, col) => {
+      if (cell.numFmt === "#,##0.00") found.add(headers[col - 1]);
+    });
+  });
+  return [...found];
+};
+
+test("лист гостиницы: без hideMoney раскладка прежняя — 25 колонок", () => {
+  const ws = guestSheet();
+  const headers = headersOf(ws);
+  assert.equal(headers.length, 25);
+  MONEY_HEADERS.forEach((h) => assert.ok(headers.includes(h), `нет колонки «${h}»`));
+  assert.equal(ws.getCell("M5").value, 2);      // Количество суток
+  assert.equal(ws.getCell("X5").value, 10000);  // Стоимость проживания
+});
+
+test("лист гостиницы: hideMoney убирает денежные колонки, факт остаётся", () => {
+  const ws = addHotelSheet(new ExcelJS.Workbook(), {
+    request: makeRequestWithGuest(),
+    hotelIndex: 0,
+    sheetNames: new Set(),
+    hideMoney: true,
+  });
+  const headers = headersOf(ws);
+  assert.deepEqual(headers, FACT_HEADERS);
+  HIDDEN_MONEY_HEADERS.forEach((h) =>
+    assert.ok(!headers.includes(h), `осталась колонка «${h}»`)
+  );
+  // Факт на месте, но уже в сдвинутых колонках.
+  assert.equal(ws.getCell("I5").value, "101"); // Номер
+  assert.equal(ws.getCell("L5").value, 2);     // Количество суток (было M)
+  assert.equal(ws.getCell("M5").value, 2);     // Количество завтраков (было N)
+  // Ни одной суммы отчёта в листе — ни ценой за сутки, ни стоимостью.
+  [5000, 10000, 1000, 500].forEach((v) =>
+    assert.equal(hasCellValue(ws, v), false, `в листе осталась сумма ${v}`)
+  );
+  // Трансфера в заявке нет — «Итого» не выводится, денежного формата в листе нет.
+  assert.deepEqual(moneyFormatHeaders(ws), []);
+});
+
+test("лист гостиницы: перевозчик под hideMoney сохраняет «Итого» с суммами трансфера", () => {
+  // hiddenServiceKeys пуст — гостиница возит сама, её трансфер ей и принадлежит.
+  const ws = addHotelSheet(new ExcelJS.Workbook(), {
+    request: makeFullServiceRequest(),
+    hotelIndex: 0,
+    sheetNames: new Set(),
+    hideMoney: true,
+  });
+  const headers = headersOf(ws);
+  assert.ok(headers.includes("Итого"));
+  HIDDEN_MONEY_HEADERS.forEach((h) => assert.ok(!headers.includes(h)));
+  assert.equal(hasCellValue(ws, "Трансфер"), true);
+  assert.equal(hasCellValue(ws, 3000), true);   // прилёт
+  assert.equal(hasCellValue(ws, 2500), true);   // вылет
+  assert.equal(hasCellValue(ws, 10000), false); // проживание скрыто
+  const totalCol = headers.indexOf("Итого") + 1;
+  assert.ok(
+    ws.getRow(ws.rowCount).getCell(totalCol).value.formula.startsWith("SUM(")
+  );
+});
+
+test("лист гостиницы: не-перевозчик под гейтом услуг — ни блока «Трансфер», ни «Итого»", () => {
+  const ws = addHotelSheet(new ExcelJS.Workbook(), {
+    request: makeFullServiceRequest(),
+    hotelIndex: 0,
+    sheetNames: new Set(),
+    hideMoney: true,
+    hiddenServiceKeys: ["transfer", "transferDeparture", "baggage"],
+  });
+  const headers = headersOf(ws);
+  assert.deepEqual(headers, FACT_HEADERS);
+  assert.equal(hasCellValue(ws, "Трансфер"), false);
+  assert.equal(hasCellValue(ws, 3000), false);
+  assert.equal(hasCellValue(ws, 2500), false);
+  assert.equal(hasCellValue(ws, "Автобус"), false);
+  assert.deepEqual(moneyFormatHeaders(ws), []);
+});
+
+test("лист гостиницы: направления гейтятся по отдельности", () => {
+  // Деньги не скрыты (диспетчерская выгрузка со скрытым прилётом): в блоке
+  // остаётся только вылет, колонки прежние.
+  const ws = addHotelSheet(new ExcelJS.Workbook(), {
+    request: makeFullServiceRequest(),
+    hotelIndex: 0,
+    sheetNames: new Set(),
+    hiddenServiceKeys: ["transfer"],
+  });
+  assert.equal(headersOf(ws).length, 25);
+  assert.equal(hasCellValue(ws, "Трансфер"), true);
+  assert.equal(hasCellValue(ws, "аэропорт-гостиница Гостиница Тест"), false);
+  assert.equal(hasCellValue(ws, "гостиница Гостиница Тест-аэропорт"), true);
+  assert.equal(hasCellValue(ws, 3000), false);
+  assert.equal(hasCellValue(ws, 2500), true);
+});
+
+test("лист гостиницы: hideMoney оставляет в «Итого:» только количества", () => {
+  const ws = addHotelSheet(new ExcelJS.Workbook(), {
+    request: makeRequestWithGuest(),
+    hotelIndex: 0,
+    sheetNames: new Set(),
+    hideMoney: true,
+  });
+  // 5 — гость, 6 — разделитель, 7 — «Трансфер», 8-9 — рейсы, 10 — «Итого:».
+  assert.equal(ws.getCell("A10").value, "Итого:");
+  assert.equal(ws.getCell("L10").value.formula, "SUM(L5:L5)"); // Суток
+  assert.equal(ws.getCell("M10").value.formula, "SUM(M5:M5)"); // Завтраки
+  assert.equal(ws.getCell("P10").value.formula, "SUM(P5:P5)"); // Ланчбоксы
+  // Трансфера в фикстуре нет — суммировать в «Итого» нечего, формулы нет.
+  assert.equal(ws.getCell("Q10").value, null);
+});
+
+test("книга заявки: hideMoney доезжает и до «Сводки», и до листа гостиницы", () => {
+  const { wb } = buildBook(makeFullServiceRequest(), {
+    hiddenServiceKeys: ["transfer", "transferDeparture", "baggage"],
+    hideMoney: true,
+  });
+  ["Сводка", "Гостиница Тест"].forEach((name) => {
+    const ws = wb.getWorksheet(name);
+    const headers = headersOf(ws);
+    HIDDEN_MONEY_HEADERS.forEach((h) =>
+      assert.ok(!headers.includes(h), `${name}: осталась колонка «${h}»`)
+    );
+    assert.equal(hasCellValue(ws, 10000), false, `${name}: осталась сумма проживания`);
+    assert.equal(hasCellValue(ws, 11000), false, `${name}: остался итог по гостю`);
+    // Гейт услуг доезжает вместе с hideMoney: чужих денег трансфера нет ни на
+    // одном листе книги — ни в «Сводке», ни на листе гостиницы.
+    assert.equal(hasCellValue(ws, 3000), false, `${name}: осталась сумма прилёта`);
+    assert.equal(hasCellValue(ws, 2500), false, `${name}: осталась сумма вылета`);
+    assert.equal(hasCellValue(ws, "Трансфер"), false, `${name}: остался блок трансфера`);
+  });
+  assert.deepEqual(headersOf(wb.getWorksheet("Гостиница Тест")), FACT_HEADERS);
+});
+
+test("сводка: под hideMoney «Итого» остаётся ради сумм трансфера перевозчика", () => {
+  // У гостиницы-перевозчика hiddenServiceKeys пуст: трансфер — её собственные
+  // деньги, и на её листе «Трансфер» они видны в любом случае.
+  const { wb } = buildBook(makeFullServiceRequest(), { hideMoney: true });
+  const ws = wb.getWorksheet("Сводка");
+  const headers = headersOf(ws);
+  assert.ok(headers.includes("Итого"));
+  HIDDEN_MONEY_HEADERS.forEach((h) => assert.ok(!headers.includes(h)));
+  assert.equal(hasCellValue(ws, 3000), true);   // прилёт
+  assert.equal(hasCellValue(ws, 2500), true);   // вылет
+  assert.equal(hasCellValue(ws, 10000), false); // проживание всё так же скрыто
+  // «Итого:» суммирует колонку, в которой лежат только деньги трансфера.
+  const totalCol = headers.indexOf("Итого") + 1;
+  const totalRow = ws.rowCount;
+  assert.ok(ws.getRow(totalRow).getCell(totalCol).value.formula.startsWith("SUM("));
+});
+
+test("книга заявки: без hideMoney деньги в книге на месте", () => {
+  const { wb } = buildBook(makeFullServiceRequest());
+  const combined = wb.getWorksheet("Сводка");
+  assert.ok(headersOf(combined).includes("Стоимость проживания"));
+  assert.equal(hasCellValue(combined, 10000), true);
+  assert.ok(
+    moneyFormatHeaders(wb.getWorksheet("Гостиница Тест")).includes("Стоимость проживания")
+  );
+});
+
+// ── Заморозка денег в связке с листом (регресс интеграционного ревью) ──
+//
+// Гостиница правит факт, buildReportRows прогоняет строки через
+// preserveMoneyFields — и книга, которую печатает уже диспетчер/авиакомпания,
+// не должна получить ни выдуманной скидки, ни спорящих между собой итогов.
+const preservedRows = (patch) => {
+  const request = makeRequestWithGuest();
+  const saved = request.hotelReports[0].reportRows;
+  return { request, rows: preserveMoneyFields([{ ...saved[0], ...patch }], saved) };
+};
+
+test("книга: правка суток гостиницей не фабрикует скидку", () => {
+  const { request, rows } = preservedRows({ daysCount: 5 });
+  const ws = addHotelSheet(new ExcelJS.Workbook(), {
+    request,
+    hotelIndex: 0,
+    sheetNames: new Set(),
+    rows,
+  });
+  assert.equal(ws.getCell("M5").value, 2);   // сутки остались диспетчерскими
+  assert.equal(ws.getCell("L5").value, 5000); // цена за сутки
+  assert.equal(ws.getCell("X5").value, 10000);
+  assert.equal(ws.getCell("W5").value, "—"); // 1 − 10000/(5000×2) = 0
+});
+
+test("книга: «Стоимость питания» согласована со счётчиками и ставками строки", () => {
+  const { request, rows } = preservedRows({ breakfastCount: 4 });
+  const ws = addHotelSheet(new ExcelJS.Workbook(), {
+    request,
+    hotelIndex: 0,
+    sheetNames: new Set(),
+    rows,
+  });
+  const cell = (a) => Number(ws.getCell(a).value);
+  // V = N×O + P×Q + R×S + T×U — ровно то, что суммирует строка «Итого:».
+  assert.equal(
+    cell("V5"),
+    cell("N5") * cell("O5") + cell("P5") * cell("Q5") + cell("R5") * cell("S5") + cell("T5") * cell("U5")
+  );
+  assert.equal(cell("V5"), 2000); // 500 × 4
 });

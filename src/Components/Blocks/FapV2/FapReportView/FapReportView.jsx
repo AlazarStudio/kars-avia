@@ -12,6 +12,8 @@ import HotelBedIcon from "../../../../shared/icons/HotelBedIcon";
 // }
 // category: 'ADULT' | 'CHILD' | 'INFANT'. room null/'' → нейтральная карточка «Номер не указан».
 // living === 0 → «бесплатно» (инфант); warning (string|null) выводится вместо цены. factor 0..1 — доля начисления.
+// hideMoney — вид для гостиницы: она заполняет факт, деньги отчёта считает диспетчер
+// по ценам для авиакомпании. Остаются состав номеров, счётчики приёмов и сутки.
 
 const rub = (n) => Number(n).toLocaleString("ru-RU") + " ₽";
 
@@ -57,43 +59,54 @@ function WarnTriangle() {
   );
 }
 
-export default function FapReportView({ summary = {}, groups = [] }) {
+export default function FapReportView({ summary = {}, groups = [], hideMoney = false }) {
   const s = summary || {};
 
   return (
     <div className={classes.root}>
       {/* 1. Итоговая полоса */}
-      <div className={classes.summaryStrip}>
-        <div className={classes.totalCard}>
-          <div className={classes.capLabel}>Итого по отчёту</div>
-          <div className={classes.grandValue}>{rub(s.grand)}</div>
-          <div className={classes.totalSub}>
+      {hideMoney ? (
+        // Гостинице деньги не показываем, а «сколько людей и суток» — факт, и он
+        // ей нужен: это сводка того самого, что она заполняет.
+        <div className={classes.factStrip}>
+          <span className={classes.capLabel}>Отчёт</span>
+          <span>
             {s.peopleCount} человек · {s.nights} суток
-          </div>
+          </span>
         </div>
+      ) : (
+        <div className={classes.summaryStrip}>
+          <div className={classes.totalCard}>
+            <div className={classes.capLabel}>Итого по отчёту</div>
+            <div className={classes.grandValue}>{rub(s.grand)}</div>
+            <div className={classes.totalSub}>
+              {s.peopleCount} человек · {s.nights} суток
+            </div>
+          </div>
 
-        <div className={classes.miniGrid}>
-          <div className={classes.miniCard}>
-            <div className={classes.capLabel}>Проживание</div>
-            <div className={classes.miniValue} style={{ color: "#0F172A" }}>
-              {rub(s.living)}
+          <div className={classes.miniGrid}>
+            <div className={classes.miniCard}>
+              <div className={classes.capLabel}>Проживание</div>
+              <div className={classes.miniValue} style={{ color: "#0F172A" }}>
+                {rub(s.living)}
+              </div>
             </div>
-          </div>
-          <div className={classes.miniCard}>
-            <div className={classes.capLabel}>Питание</div>
-            <div className={classes.miniValue} style={{ color: "#0F172A" }}>
-              {rub(s.meal)}
+            <div className={classes.miniCard}>
+              <div className={classes.capLabel}>Питание</div>
+              <div className={classes.miniValue} style={{ color: "#0F172A" }}>
+                {rub(s.meal)}
+              </div>
             </div>
-          </div>
-          <div className={classes.miniCard}>
-            {/* Скидка больше не только возрастная — её можно выставить вручную любому гостю */}
-            <div className={classes.capLabel}>Скидки</div>
-            <div className={classes.miniValue} style={{ color: "#B45309" }}>
-              −{rub(s.discounts)}
+            <div className={classes.miniCard}>
+              {/* Скидка больше не только возрастная — её можно выставить вручную любому гостю */}
+              <div className={classes.capLabel}>Скидки</div>
+              <div className={classes.miniValue} style={{ color: "#B45309" }}>
+                −{rub(s.discounts)}
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
       {/* 2. Карточки номеров */}
       {groups.map((g, gi) => {
@@ -113,7 +126,9 @@ export default function FapReportView({ summary = {}, groups = [] }) {
                 <span className={classes.roomTitle}>Номер {g.room}</span>
               )}
               {!noRoom && g.kind && <span className={classes.kindPill}>{g.kind}</span>}
-              {g.tariff && <span className={classes.tariffPill}>{g.tariff}</span>}
+              {/* Имя тарифа — вход в сущность, которой у гостиницы под гейтом нет
+                  ни во вкладке «Тарифы», ни в строке: показывать нечего. */}
+              {!hideMoney && g.tariff && <span className={classes.tariffPill}>{g.tariff}</span>}
               {(g.groups || []).map((gr) => (
                 <span key={gr.group.groupId} className={classes.groupWrap}>
                   {/* members включает карточку-поповер: состав и тип. Ворнинги
@@ -130,7 +145,8 @@ export default function FapReportView({ summary = {}, groups = [] }) {
                 <span className={classes.groupMeta}>+{g.ungrouped} без группы</span>
               )}
               {/* Тариф «Номер»: проживание принадлежит номеру, а не гостю */}
-              {g.perRoom &&
+              {!hideMoney &&
+                g.perRoom &&
                 (g.accommodationWarning ? (
                   <span className={classes.accRoomPillWarn} title={g.accommodationWarning}>
                     ⚠ проживание
@@ -142,7 +158,7 @@ export default function FapReportView({ summary = {}, groups = [] }) {
                   </span>
                 ))}
               <span className={classes.spacer} />
-              <span className={classes.roomTotal}>{rub(g.total)}</span>
+              {!hideMoney && <span className={classes.roomTotal}>{rub(g.total)}</span>}
             </div>
 
             {people.map((p, pi) => {
@@ -173,16 +189,20 @@ export default function FapReportView({ summary = {}, groups = [] }) {
                       </span>
                     </div>
                     <div className={classes.mealLine}>
-                      Питание {rub(p.meal)}
+                      {hideMoney ? "Питание: " : <>Питание {rub(p.meal)}</>}
                       <span className={classes.mealSuffix}>
-                        {" · "}
+                        {hideMoney ? null : " · "}
                         {p.mealSuffix || "завтрак · обед · ужин"}
                       </span>
                     </div>
                   </div>
 
                   <div className={classes.personRight}>
-                    {g.perRoom ? (
+                    {hideMoney ? (
+                      // Гостинице — только факт: сутки без ставки, без сумм и
+                      // без предупреждений о ценах, которые ставит не она.
+                      p.nights > 0 ? <div className={classes.rateLine}>{p.nights} сут</div> : null
+                    ) : g.perRoom ? (
                       // Тариф «Номер»: проживание — на шапке номера, у гостя нейтрально
                       <>
                         <div className={classes.includedText}>в номере</div>

@@ -7,7 +7,7 @@ import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
 import EditIcon from "../../../../shared/icons/EditIcon";
 import DownloadIcon from "../../../../shared/icons/DownloadIcon";
 import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
-import { isExternalUser } from "../../../../utils/access";
+import { isExternalUser, isHotelScoped } from "../../../../utils/access";
 import { downloadRequestReport } from "../reports/buildReportSheets";
 import { visibleHotelIndexes } from "../fapReportAccess";
 import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
@@ -56,6 +56,9 @@ export default function FapHeaderActions({
         await downloadRequestReport(request, notifyError, {
           hotelIndexes: visibleHotelIndexes(request, user),
           hiddenServiceKeys,
+          // Гостинице деньги отчёта проживания не показываем — ни на экране,
+          // ни в книге.
+          hideMoney: isHotelScoped(user),
         });
     } catch (e) {
       notifyError("Ошибка экспорта");
