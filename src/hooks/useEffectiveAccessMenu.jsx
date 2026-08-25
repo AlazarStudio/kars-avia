@@ -10,13 +10,15 @@ import {
 import {
   isAirlineRole as isAirlineRoleCheck,
   isDispatcherRole as isDispatcherRoleCheck,
-  safeAccessMenu,
+  resolveEffectiveAccessMenu,
 } from "../utils/access";
 
-// Единый источник резолюции доступа для диспетчера/авиакомпании.
-// Мёрж: { ...отдел, ...effective } — серверный effectiveAccessMenu (учитывает
-// приоритет должности над отделом; null у должности → наследование отдела)
-// спредится ПОСЛЕДНИМ и побеждает по каждому ключу; отдел — база/фолбэк.
+// Единый источник резолюции доступа для ЛЮБОЙ роли (диспетчер, авиакомпания,
+// гостиница и т.д.). Мёрж: { ...отдел, ...effective } — серверный
+// effectiveAccessMenu (учитывает приоритет должности над отделом; null у
+// должности → наследование отдела) спредится ПОСЛЕДНИМ и побеждает по
+// каждому ключу; отдел — база/фолбэк. У ролей без отдела (гостиница) базы нет,
+// но per-user слой (User.accessMenu) бэк резолвит и без него.
 export function useEffectiveAccessMenu(user) {
   const token = getCookie("token");
   const isDispatcherRole = isDispatcherRoleCheck(user);
@@ -55,24 +57,19 @@ export function useEffectiveAccessMenu(user) {
   });
 
   return useMemo(() => {
-    const effective = effectiveData?.user?.effectiveAccessMenu;
-    if (isDispatcherRole) {
-      const department =
-        dispatcherDepartmentsData?.dispatcherDepartments?.departments?.find(
-          (item) => item.id === dispatcherDepartmentId
-        );
-      return {
-        ...safeAccessMenu(department?.accessMenu),
-        ...safeAccessMenu(effective),
-      };
-    }
-    if (isAirlineRole) {
-      return {
-        ...safeAccessMenu(airlineDepartmentData?.airlineDepartment?.accessMenu),
-        ...safeAccessMenu(effective),
-      };
-    }
-    return {};
+    const department = dispatcherDepartmentsData?.dispatcherDepartments?.departments?.find(
+      (item) => item.id === dispatcherDepartmentId
+    );
+    const departmentAccessMenu = isDispatcherRole
+      ? department?.accessMenu
+      : airlineDepartmentData?.airlineDepartment?.accessMenu;
+
+    return resolveEffectiveAccessMenu({
+      isDispatcherRole,
+      isAirlineRole,
+      departmentAccessMenu,
+      effectiveAccessMenu: effectiveData?.user?.effectiveAccessMenu,
+    });
   }, [
     isDispatcherRole,
     isAirlineRole,

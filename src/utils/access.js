@@ -103,6 +103,31 @@ export const getDispatcherAccess = (accessMenu, key, user) => {
   return hasAccessMenu(accessMenu, key);
 };
 
+/**
+ * Единая формула эффективных прав пользователя: база отдела (для тех ролей, у
+ * кого он есть) + серверный `effectiveAccessMenu` поверх, побеждающий по
+ * каждому ключу (учитывает приоритет должности над отделом).
+ *
+ * Для ролей без отдела (в т.ч. гостиничных) раньше здесь стояла заглушка
+ * `{}` — per-user слой прав на бэке (`User.accessMenu`) резолвится и без
+ * отдела/должности, фронт его просто игнорировал. Порядок спреда не менять:
+ * `effectiveAccessMenu` обязан быть последним.
+ */
+export const resolveEffectiveAccessMenu = ({
+  isDispatcherRole,
+  isAirlineRole,
+  departmentAccessMenu,
+  effectiveAccessMenu,
+}) => {
+  if (isDispatcherRole || isAirlineRole) {
+    return {
+      ...safeAccessMenu(departmentAccessMenu),
+      ...safeAccessMenu(effectiveAccessMenu),
+    };
+  }
+  return safeAccessMenu(effectiveAccessMenu);
+};
+
 export const canCreateRequest = (user, accessMenu) => {
   if (isSuperAdmin(user)) return true;
   if (isDispatcherRole(user)) return hasAccessMenu(accessMenu, "requestCreate");
