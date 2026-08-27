@@ -15,7 +15,7 @@ import {
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import HotelAboutTariffs from "../HotelAboutTariffs/HotelAboutTariffs.jsx";
 import HotelAboutGallery from "./HotelAboutGallery.jsx";
-import HotelAboutDescription from "./HotelAboutDescription.jsx";
+import TextEditorOutput from "../TextEditorOutput/TextEditorOutput.jsx";
 import PinIcon from "../../../shared/icons/PinIcon.jsx";
 import ChevronIcon from "../../../shared/icons/ChevronIcon.jsx";
 import { hotelProvidesTransfer } from "../../../utils/hotelTransfer.js";
@@ -463,7 +463,7 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
                       descExpanded ? "" : classes.descClamp
                     }`}
                   >
-                    <HotelAboutDescription description={description} />
+                    <TextEditorOutput description={hotel.information?.description} />
                   </div>
                   {descOverflow && (
                     <button
