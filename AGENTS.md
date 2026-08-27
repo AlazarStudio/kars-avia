@@ -269,7 +269,7 @@ travellineMenu, accessManage
 - `fapConstants.js` — конфиги статусов (`REQUEST_STATUS_CONFIG`, `SERVICE_STATUS_CONFIG`), типов услуг (`SERVICE_CONFIG`), утилиты форматирования дат
 - `FapDetail` — детальная страница заявки, управляет переходами статусов (`CREATED → ACCEPTED → IN_PROGRESS → COMPLETED`)
 - Каждая услуга — отдельный компонент: `FapLivingPage` + `FapHotelPage` (проживание), `FapTransferPage` + `FapDriverPage` (трансфер), `FapWaterMealPage` (вода/питание), `FapBaggagePage` + `FapBaggageTripPage` (багаж). Маппинг `serviceKey` → компонент — в `src/Components/Pages/FapV2/FapServicePage.jsx`
-- `FapHotelPage` + `FapReportView` — отчёт по проживанию: группировка по `roomCategory + roomKind`, редактируемые цены и тарифы, экспорт в XLSX (`reports/buildReportSheets.js`)
+- `FapHotelPage` + `FapReportView` — отчёт по проживанию: строки группируются по номеру комнаты (`roomNumber`; гости без номера — отдельными строками), редактируемые цены и тарифы, экспорт в XLSX (`reports/buildReportSheets.js`)
 
 ## Раздел «Отчёты v2»
 
