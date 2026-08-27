@@ -11,6 +11,45 @@ export const DEFAULT_TRANSFER_PRICES = {
 };
 
 /**
+ * Все вместимости трансфера — порядок как в форме и в таблице.
+ */
+const TRANSFER_SEATER_KEYS = [
+  'threeSeater',
+  'fiveSeater',
+  'sevenSeater',
+  'twentySeater',
+  'fiftySeater',
+];
+
+/**
+ * Ищет подстроку query по договору: название, все цены (5 вместимостей ×
+ * межгород/город), названия аэропортов и городов.
+ * @param {object} item - запись цен трансфера (form/input shape)
+ * @param {string} query - строка поиска
+ * @param {{ airports?: Array<{id: string, name?: string}>, cities?: Array<{id: string, city?: string}> }} [refs]
+ * @returns {boolean}
+ */
+export function matchesTransferPriceSearch(item, query, { airports = [], cities = [] } = {}) {
+  if (!query || !query.trim()) return true;
+  const q = query.toLowerCase();
+  const prices = TRANSFER_SEATER_KEYS.flatMap((seatKey) => [
+    item?.prices?.[seatKey]?.intercity,
+    item?.prices?.[seatKey]?.city,
+  ])
+    .filter(Boolean)
+    .join(' ');
+  const airportLabels = (item?.airportIds || [])
+    .map((aid) => airports.find((a) => a.id === aid)?.name || aid)
+    .join(' ');
+  const cityLabels = (item?.cityIds || [])
+    .map((cid) => cities.find((c) => c.id === cid)?.city || cid)
+    .join(' ');
+  return [item?.name, prices, airportLabels, cityLabels].some(
+    (part) => String(part ?? '').toLowerCase().includes(q)
+  );
+}
+
+/**
  * Creates a new empty transfer price input record (for form state / API input).
  * @returns {{ prices: object, airportIds: string[], cityIds: string[] }}
  */

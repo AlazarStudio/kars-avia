@@ -1,4 +1,5 @@
 .root {
+  --registrySearchH: 36px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -95,9 +96,15 @@
 }
 
 /* Отдельная строка поиска над списком пассажиров. Правила ниже .searchWrap
-   намеренно: специфичность та же, побеждает порядок. */
+   намеренно: специфичность та же, побеждает порядок.
+   Липкая — остаётся видимой при скролле списка. */
 .searchBar {
   width: 100%;
+  position: sticky;
+  top: 0;
+  z-index: 6;
+  height: var(--registrySearchH);
+  box-sizing: border-box;
 }
 
 .searchBar input {
@@ -404,7 +411,7 @@
 
 .selectionBar {
   position: sticky;
-  top: 0;
+  top: var(--registrySearchH);
   z-index: 5;
   display: flex;
   align-items: center;

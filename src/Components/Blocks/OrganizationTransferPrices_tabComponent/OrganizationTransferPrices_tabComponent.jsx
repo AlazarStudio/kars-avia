@@ -21,6 +21,7 @@ import {
   transferPriceToInput,
   transferPriceInputsToPayload,
   createEmptyTransferPriceInput,
+  matchesTransferPriceSearch,
 } from "../../../utils/transferPrices.js";
 
 function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
@@ -177,36 +178,9 @@ function OrganizationTransferPrices_tabComponent({ id, user, accessMenu }) {
   const airports = airportsData?.airports ?? [];
   const cities = citiesData?.citys ?? [];
 
-  const filteredRequests = transferPricesInput.filter((item) => {
-    if (!searchQuery.trim()) return true;
-    const q = searchQuery.toLowerCase();
-    const intercity = [
-      item.prices?.threeSeater?.intercity,
-      item.prices?.fiveSeater?.intercity,
-      item.prices?.sevenSeater?.intercity,
-    ]
-      .filter(Boolean)
-      .join(" ");
-    const city = [
-      item.prices?.threeSeater?.city,
-      item.prices?.fiveSeater?.city,
-      item.prices?.sevenSeater?.city,
-    ]
-      .filter(Boolean)
-      .join(" ");
-    const airportLabels = (item.airportIds || [])
-      .map((aid) => airports.find((a) => a.id === aid)?.name || aid)
-      .join(" ");
-    const cityLabels = (item.cityIds || [])
-      .map((cid) => cities.find((c) => c.id === cid)?.city || cid)
-      .join(" ");
-    return (
-      intercity.toLowerCase().includes(q) ||
-      city.toLowerCase().includes(q) ||
-      airportLabels.toLowerCase().includes(q) ||
-      cityLabels.toLowerCase().includes(q)
-    );
-  });
+  const filteredRequests = transferPricesInput.filter((item) =>
+    matchesTransferPriceSearch(item, searchQuery, { airports, cities })
+  );
 
   if (loading) return <MUILoader fullHeight="70vh" />;
   if (error) return <p>Ошибка: {error.message}</p>;
