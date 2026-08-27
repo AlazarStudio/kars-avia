@@ -1,0 +1,58 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-width: 0;
+}
+
+/* ===== Пункты описания ===== */
+.items {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Значение уходит под лейбл, как только на строку остаётся меньше 320px —
+   без медиа-запросов, потому что блок живёт в шести разных обвязках. */
+.item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 20px;
+  min-width: 0;
+}
+
+.itemLabel {
+  flex: 0 0 auto;
+  font-size: 14px;
+  font-weight: 600;
+  color: #2d3147;
+}
+
+.itemValue {
+  flex: 1 1 320px;
+  min-width: 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #4a4f6a;
+  word-break: break-word;
+}
+
+.itemValue a {
+  color: #0057c3;
+}
+
+/* ===== Хвост, не подошедший под конвенцию ===== */
+.rest {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #4a4f6a;
+}
+
+/* Гасим инлайновый overflow-y: scroll обёртки TextEditorOutput — внутри
+   клампа он даёт постоянную нерабочую полосу прокрутки. Правило-близнец
+   в HotelAbout_tabComponent.module.css достаёт только прямых детей .descBody,
+   а здесь обёртка лежит на уровень глубже. */
+.rest > div {
+  overflow-y: visible !important;
+}

@@ -13,21 +13,54 @@ import {
   GET_HOTEL_TRANSFER_PRICE,
 } from "../../../../graphQL_requests.js";
 import MUILoader from "../MUILoader/MUILoader.jsx";
-import TextEditorOutput from "../TextEditorOutput/TextEditorOutput.jsx";
 import HotelAboutTariffs from "../HotelAboutTariffs/HotelAboutTariffs.jsx";
 import HotelAboutGallery from "./HotelAboutGallery.jsx";
+import HotelAboutDescription from "./HotelAboutDescription.jsx";
 import PinIcon from "../../../shared/icons/PinIcon.jsx";
 import ChevronIcon from "../../../shared/icons/ChevronIcon.jsx";
 import { hotelProvidesTransfer } from "../../../utils/hotelTransfer.js";
+import {
+  hasRichText,
+  parseHotelDescription,
+  extractAmenities,
+} from "../../../utils/hotelDescription.js";
+import WifiIcon from "../../../shared/icons/WifiIcon.jsx";
+import MealIcon from "../../../shared/icons/MealIcon.jsx";
+import BarIcon from "../../../shared/icons/BarIcon.jsx";
+import MiniBarIcon from "../../../shared/icons/MiniBarIcon.jsx";
+import SaunaIcon from "../../../shared/icons/SaunaIcon.jsx";
+import PoolIcon from "../../../shared/icons/PoolIcon.jsx";
+import GymIcon from "../../../shared/icons/GymIcon.jsx";
+import ParkingIcon from "../../../shared/icons/ParkingIcon.jsx";
+import AirConditionerIcon from "../../../shared/icons/AirConditionerIcon.jsx";
+import LaundryIcon from "../../../shared/icons/LaundryIcon.jsx";
+import BusIcon from "../../../shared/icons/BusIcon.jsx";
+import SafeIcon from "../../../shared/icons/SafeIcon.jsx";
+import ConferenceIcon from "../../../shared/icons/ConferenceIcon.jsx";
+import ElevatorIcon from "../../../shared/icons/ElevatorIcon.jsx";
 
 // Порог, ниже которого докручивать уже нечего — фейд у нижнего края гаснет.
 const SCROLL_EDGE = 8;
 
-function hasRichText(html) {
-  if (!html) return false;
-  if (/<img/i.test(html)) return true;
-  return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/gi, " ").trim() !== "";
-}
+const AMENITY_ICONS = {
+  wifi: WifiIcon,
+  restaurant: MealIcon,
+  bar: BarIcon,
+  minibar: MiniBarIcon,
+  sauna: SaunaIcon,
+  pool: PoolIcon,
+  gym: GymIcon,
+  parking: ParkingIcon,
+  airConditioning: AirConditionerIcon,
+  laundry: LaundryIcon,
+  transfer: BusIcon,
+  safe: SafeIcon,
+  conference: ConferenceIcon,
+  elevator: ElevatorIcon,
+};
+
+// Одиночный чип читается как случайность — ряд показываем от двух удобств.
+const MIN_AMENITIES = 2;
 
 const TABS = [
   { key: "about", label: "Общая информация", icon: DocIcon },
@@ -314,6 +347,14 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
     [hotel]
   );
 
+  const description = hotel?.information?.description;
+
+  // Чипы — сводка над структурным описанием: у свободного текста их нет.
+  const amenities = useMemo(() => {
+    if (!parseHotelDescription(description).parsed) return [];
+    return extractAmenities(description);
+  }, [description]);
+
   const isLoading = isPreview ? previewLoading : loading;
   const queryError = isPreview ? previewError : error;
 
@@ -341,7 +382,6 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
   // Высоту карточки диктует контейнер вкладки; визитка растёт по контенту.
   const cardStyle = isPreview ? { height: "auto" } : undefined;
   const contentStyle = isPreview ? { overflow: "visible" } : undefined;
-  const description = hotel.information?.description;
   const showDescription = hasRichText(description);
 
   return (
@@ -402,13 +442,28 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
               {showDescription && (
                 <div className={classes.aboutDesc}>
                   <div className={classes.sectionLabel}>О гостинице</div>
+                  {amenities.length >= MIN_AMENITIES && (
+                    <div className={classes.amenities}>
+                      {amenities.map(({ key, label }) => {
+                        const Icon = AMENITY_ICONS[key];
+                        return (
+                          <span key={key} className={classes.amenity}>
+                            {Icon && (
+                              <Icon size={15} className={classes.amenityIcon} />
+                            )}
+                            {label}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
                   <div
                     ref={descRef}
                     className={`${classes.descBody} ${
                       descExpanded ? "" : classes.descClamp
                     }`}
                   >
-                    <TextEditorOutput description={description} />
+                    <HotelAboutDescription description={description} />
                   </div>
                   {descOverflow && (
                     <button

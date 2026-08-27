@@ -213,6 +213,32 @@
   color: #9aa0b5;
 }
 
+/* Ряд удобств стоит НАД клампом: внутри .descBody он съедал первый экран
+   свёрнутого описания. */
+.amenities {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.amenity {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 10px;
+  border-radius: 8px;
+  background: #eef1f7;
+  color: #2d3147;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.amenityIcon {
+  color: #6b7090;
+  flex-shrink: 0;
+}
+
 .descBody {
   font-size: 15px;
   line-height: 1.6;
