@@ -10,6 +10,8 @@
   border-radius: 14px;
   overflow: hidden;
   background: #fff;
+  /* Четыре колонки не должны растягиваться на всю ширину широкого экрана. */
+  max-width: 980px;
 }
 
 .sectionHead {

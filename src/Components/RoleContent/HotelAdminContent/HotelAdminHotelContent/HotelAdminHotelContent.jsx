@@ -78,7 +78,7 @@ const HotelAdminHotelContent = ({ id, user }) => {
         </div>
       )}
       {params.id == "hotelAbout" && (
-        <div className={classes.tabPanel}>
+        <div className={`${classes.tabPanel} ${classes.aboutPanel}`}>
           <Suspense fallback={<MUILoader fullHeight={"100%"} />}>
             <HotelAboutTab id={id} />
           </Suspense>

@@ -1,5 +1,9 @@
+/* Единственная панель роли — карточка «О гостинице», поэтому высоту от
+   секции (100vh) пропускаем прямо здесь. */
 .tabPanel {
   display: flex;
   flex-direction: column;
   gap: 40px;
+  flex: 1;
+  min-height: 0;
 }

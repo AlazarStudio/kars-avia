@@ -5,17 +5,24 @@
   min-width: 0;
 }
 
+/* Герой всегда 16:9: высота считается от ширины, ступени по высоте экрана
+   задают только ширину — колонка уже героя не ломает кадрирование. */
 .hero {
   position: relative;
-  width: 100%;
-  height: 420px;
+  width: 604px;
+  aspect-ratio: 16 / 9;
+  height: auto;
+  max-width: 100%;
   border-radius: 14px;
   overflow: hidden;
   cursor: zoom-in;
   background: #eef0f6;
+  flex-shrink: 0;
 }
 
 .heroImg {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -24,10 +31,13 @@
 
 .heroEmpty {
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 10px;
+  background: #f6f7fb;
+  border: 1px dashed #d7dbe8;
   color: #8a8fa6;
-  font-family: Inter, sans-serif;
   font-size: 15px;
   cursor: default;
 }
@@ -36,8 +46,8 @@
   position: absolute;
   top: 50%;
   transform: translateY(-50%);
-  width: 42px;
-  height: 42px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -62,19 +72,21 @@
   right: 16px;
 }
 
-.zoomBadge {
+.countBadge {
   position: absolute;
-  right: 16px;
+  left: 16px;
   bottom: 16px;
-  width: 38px;
-  height: 38px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  border-radius: 10px;
-  background: rgba(255, 255, 255, 0.92);
-  color: #2d3147;
-  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  gap: 7px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: rgba(20, 24, 40, 0.62);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  pointer-events: none;
 }
 
 .thumbs {
@@ -84,6 +96,7 @@
 }
 
 .thumb {
+  position: relative;
   width: 92px;
   height: 68px;
   padding: 0;
@@ -92,6 +105,7 @@
   overflow: hidden;
   cursor: pointer;
   background: #eef0f6;
+  flex-shrink: 0;
   transition: border-color 0.2s ease;
 }
 
@@ -104,6 +118,18 @@
 
 .thumbActive {
   border-color: #0057C3;
+}
+
+.thumbMore {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(20, 24, 40, 0.55);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 /* ===== Lightbox ===== */
@@ -206,7 +232,6 @@
 
 .lightboxCounter {
   color: #fff;
-  font-family: Inter, sans-serif;
   font-size: 14px;
   letter-spacing: 0.04em;
 }
@@ -243,8 +268,60 @@
   border-color: #fff;
 }
 
-@media (min-width: 0px) and (max-width: 1499px) {
+/* ===== Ступени героя по высоте экрана: задают только ширину ===== */
+@media (min-height: 900px) {
   .hero {
-    height: 340px;
+    width: 747px;
+  }
+}
+
+/* Широкая зона: миниатюры лентой справа, чтобы не пустовало место у героя. */
+@container about (min-width: 1380px) {
+  .gallery {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  /* В строку сжимается герой (пропорцию держит aspect-ratio), а не лента. */
+  .hero {
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .thumbs {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    width: 92px;
+    flex-shrink: 0;
+  }
+
+  .thumb {
+    height: 66px;
+  }
+}
+
+/* Низкий экран: компактный герой и та же лента справа. */
+@media (min-height: 0px) and (max-height: 799px) {
+  /* В строку сжимается герой (пропорцию держит aspect-ratio), а не лента. */
+  .hero {
+    width: 462px;
+    flex-shrink: 1;
+    min-width: 0;
+  }
+
+  .gallery {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  .thumbs {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    width: 92px;
+    flex-shrink: 0;
+  }
+
+  .thumb {
+    height: 55px;
   }
 }

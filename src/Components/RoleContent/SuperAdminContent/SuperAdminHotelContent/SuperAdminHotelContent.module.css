@@ -1,3 +1,12 @@
+/* Корень вкладок пропускает высоту от секции (100vh) к панели «О гостинице».
+   Прочие панели остаются на flex-basis auto — их раскладка не меняется. */
+.tabs {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
 .tabList {
   position: relative;
   display: flex;
@@ -6,6 +15,7 @@
   margin-bottom: 40px;
   /* gap: 10px; */
   align-items: center;
+  flex-shrink: 0;
 }
 
 .tabList::after {
@@ -55,6 +65,13 @@
   display: flex;
   flex-direction: column;
   gap: 40px;
+}
+
+/* Только выбранная панель: react-tabs держит невыбранные пустыми div-ами,
+   и flex:1 на них съел бы остаток высоты у соседей. */
+.aboutPanel:global(.react-tabs__tab-panel--selected) {
+  flex: 1;
+  min-height: 0;
 }
 
 @media (min-width: 0px) and (max-width: 1399px) {

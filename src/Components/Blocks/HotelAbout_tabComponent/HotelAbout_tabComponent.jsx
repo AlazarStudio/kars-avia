@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import classes from "./HotelAbout_tabComponent.module.css";
 import { useQuery, useSubscription } from "@apollo/client";
 import HotelAboutRoomBlock from "../HotelAboutRoomBlock/HotelAboutRoomBlock.jsx";
@@ -17,7 +17,17 @@ import TextEditorOutput from "../TextEditorOutput/TextEditorOutput.jsx";
 import HotelAboutTariffs from "../HotelAboutTariffs/HotelAboutTariffs.jsx";
 import HotelAboutGallery from "./HotelAboutGallery.jsx";
 import PinIcon from "../../../shared/icons/PinIcon.jsx";
+import ChevronIcon from "../../../shared/icons/ChevronIcon.jsx";
 import { hotelProvidesTransfer } from "../../../utils/hotelTransfer.js";
+
+// Порог, ниже которого докручивать уже нечего — фейд у нижнего края гаснет.
+const SCROLL_EDGE = 8;
+
+function hasRichText(html) {
+  if (!html) return false;
+  if (/<img/i.test(html)) return true;
+  return html.replace(/<[^>]*>/g, "").replace(/&nbsp;/gi, " ").trim() !== "";
+}
 
 const TABS = [
   { key: "about", label: "Общая информация", icon: DocIcon },
@@ -190,6 +200,12 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
   const [transferPriceForAirReq, setTransferPriceForAirReq] = useState(false);
   const [transferPricesHotel, setTransferPricesHotel] = useState(null);
 
+  const contentRef = useRef(null);
+  const descRef = useRef(null);
+  const [descExpanded, setDescExpanded] = useState(false);
+  const [descOverflow, setDescOverflow] = useState(false);
+  const [showFade, setShowFade] = useState(false);
+
   useEffect(() => {
     if (data) {
       setHotel(data.hotel);
@@ -245,6 +261,54 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
     if (dataSubscriptionUpd) refetch();
   }, [dataSubscriptionUpd]);
 
+  // Смена вкладки возвращает описание в свёрнутый вид.
+  useEffect(() => {
+    setDescExpanded(false);
+  }, [tab]);
+
+  // Кнопка «Показать полностью» появляется, только когда кламп реально режет
+  // текст: на высоких экранах max-height не применяется и замер даёт ноль.
+  useEffect(() => {
+    const el = descRef.current;
+    if (!el || descExpanded) return;
+    const measure = () => setDescOverflow(el.scrollHeight - el.clientHeight > 1);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(el);
+    // Бокс самого .descBody запинен клампом: рост контента (догрузка картинок
+    // rich-text) виден только по внутренней обёртке.
+    if (el.firstElementChild) observer.observe(el.firstElementChild);
+    window.addEventListener("resize", measure);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("resize", measure);
+    };
+  }, [descExpanded, hotel, tab]);
+
+  // Фейд виден, пока скролл-зона переполнена и не докручена до низа.
+  useEffect(() => {
+    if (isPreview) return;
+    const el = contentRef.current;
+    if (!el) return;
+    const update = () => {
+      const hidden = el.scrollHeight - el.clientHeight;
+      setShowFade(hidden > SCROLL_EDGE && hidden - el.scrollTop > SCROLL_EDGE);
+    };
+    update();
+    el.addEventListener("scroll", update, { passive: true });
+    const observer = new ResizeObserver(update);
+    observer.observe(el);
+    // Высоту меняет само содержимое (догрузка картинок, раскрытие описания),
+    // а не бокс скролл-зоны — поэтому наблюдаем и за телом вкладки.
+    if (el.firstElementChild) observer.observe(el.firstElementChild);
+    window.addEventListener("resize", update);
+    return () => {
+      el.removeEventListener("scroll", update);
+      observer.disconnect();
+      window.removeEventListener("resize", update);
+    };
+  }, [isPreview, tab, hotel, descExpanded]);
+
   const rooms = useMemo(
     () => (hotel?.type !== "apartment" ? hotel?.roomKind : hotel?.rooms),
     [hotel]
@@ -274,74 +338,100 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
   const hotelNumber = hotel.information?.number;
   const hasHotelContacts = Boolean(hotelEmail || hotelNumber);
 
-  const cardStyle = isPreview
-    ? { height: "auto" }
-    : user?.hotelId || user?.airlineId
-    ? { height: "calc(100vh - 130px)" }
-    : undefined;
+  // Высоту карточки диктует контейнер вкладки; визитка растёт по контенту.
+  const cardStyle = isPreview ? { height: "auto" } : undefined;
   const contentStyle = isPreview ? { overflow: "visible" } : undefined;
+  const description = hotel.information?.description;
+  const showDescription = hasRichText(description);
 
   return (
     <div className={classes.card} style={cardStyle}>
-      <div className={classes.identity}>
-        <div className={classes.avatar}>
-          <img src={avatar} alt={hotel.name} />
+      <div className={classes.header}>
+        <div className={classes.identity}>
+          <div className={classes.avatar}>
+            <img src={avatar} alt={hotel.name} />
+          </div>
+          <div className={classes.identityText}>
+            <div className={classes.nameRow}>
+              <div className={classes.name}>{hotel.name}</div>
+              {!isHotel && hotel.discount > 0 && (
+                <span className={classes.discountBadge}>
+                  Выгода от {hotel.discount} %
+                </span>
+              )}
+            </div>
+            <div className={classes.identityMeta}>
+              {!isHotel && <StarRow value={hotel.stars} />}
+              {locationLine && (
+                <span className={classes.locationLine}>
+                  <PinIcon />
+                  {locationLine}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
-        <div className={classes.identityText}>
-          <div className={classes.nameRow}>
-            <div className={classes.name}>{hotel.name}</div>
-            {!isHotel && hotel.discount > 0 && (
-              <span className={classes.discountBadge}>
-                Выгода от {hotel.discount} %
-              </span>
-            )}
-          </div>
-          <div className={classes.identityMeta}>
-            {!isHotel && <StarRow value={hotel.stars} />}
-            {locationLine && (
-              <span className={classes.locationLine}>
-                <PinIcon />
-                {locationLine}
-              </span>
-            )}
-          </div>
+
+        <div className={classes.tabs}>
+          {TABS.map(({ key, label, icon: Icon }) => (
+            <button
+              key={key}
+              type="button"
+              className={`${classes.tab} ${tab === key ? classes.tabActive : ""}`}
+              onClick={() => setTab(key)}
+            >
+              <Icon />
+              {label}
+            </button>
+          ))}
         </div>
       </div>
 
-      <div className={classes.tabs}>
-        {TABS.map(({ key, label, icon: Icon }) => (
-          <button
-            key={key}
-            type="button"
-            className={`${classes.tab} ${tab === key ? classes.tabActive : ""}`}
-            onClick={() => setTab(key)}
-          >
-            <Icon />
-            {label}
-          </button>
-        ))}
-      </div>
+      <div className={classes.divider} />
 
-      <div className={classes.content} style={contentStyle}>
+      <div className={classes.content} style={contentStyle} ref={contentRef}>
         {tab === "about" && (
           <div className={classes.aboutGrid}>
             <div className={classes.aboutMain}>
-              <HotelAboutGallery
-                images={hotel.gallery || []}
-                mediaToken={mediaToken}
-              />
-              <div className={classes.aboutDesc}>
-                <div className={classes.sectionLabel}>О гостинице</div>
-                <div className={classes.descBody}>
-                  <TextEditorOutput description={hotel.information?.description} />
-                </div>
+              <div className={classes.galleryBlock}>
+                <HotelAboutGallery
+                  images={hotel.gallery || []}
+                  mediaToken={mediaToken}
+                />
               </div>
+              {showDescription && (
+                <div className={classes.aboutDesc}>
+                  <div className={classes.sectionLabel}>О гостинице</div>
+                  <div
+                    ref={descRef}
+                    className={`${classes.descBody} ${
+                      descExpanded ? "" : classes.descClamp
+                    }`}
+                  >
+                    <TextEditorOutput description={description} />
+                  </div>
+                  {descOverflow && (
+                    <button
+                      type="button"
+                      className={classes.descToggle}
+                      onClick={() => setDescExpanded((v) => !v)}
+                    >
+                      {descExpanded ? "Свернуть" : "Показать полностью"}
+                      <ChevronIcon
+                        className={`${classes.descToggleIcon} ${
+                          descExpanded ? classes.descToggleIconOpen : ""
+                        }`}
+                      />
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             <aside className={classes.rail}>
               <div className={classes.railCard}>
                 <div className={classes.railTitle}>Информация</div>
-                <div className={classes.railRows}>
+                <div className={`${classes.railRows} ${classes.railRowsWide}`}>
                   {hotel.usStars ? (
                     <RailRow label="Звёздность" value={<StarRow value={hotel.usStars} />} />
                   ) : null}
@@ -373,22 +463,26 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
                 <div className={classes.railCard}>
                   <div className={classes.railTitle}>Контакты</div>
                   {isStaff ? (
-                    <>
-                      <div className={classes.railSubLabel}>Гостиница</div>
-                      <div className={classes.railRows}>
-                        {hasHotelContacts ? (
-                          <HotelContactRows email={hotelEmail} number={hotelNumber} />
-                        ) : (
-                          <div className={classes.railRow}>
-                            <span className={classes.railRowLabel}>Не заполнены</span>
-                          </div>
-                        )}
+                    <div className={classes.railSplit}>
+                      <div className={classes.railGroup}>
+                        <div className={classes.railSubLabel}>Гостиница</div>
+                        <div className={classes.railRows}>
+                          {hasHotelContacts ? (
+                            <HotelContactRows email={hotelEmail} number={hotelNumber} />
+                          ) : (
+                            <div className={classes.railRow}>
+                              <span className={classes.railRowLabel}>Не заполнены</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className={classes.railSubLabel}>KARS AVIA</div>
-                      <div className={classes.railRows}>
-                        <KarsContactRows />
+                      <div className={classes.railGroup}>
+                        <div className={classes.railSubLabel}>KARS AVIA</div>
+                        <div className={classes.railRows}>
+                          <KarsContactRows />
+                        </div>
                       </div>
-                    </>
+                    </div>
                   ) : (
                     <div className={classes.railRows}>
                       <KarsContactRows />
@@ -409,7 +503,7 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
               {hotel.meal && (
                 <div className={classes.railCard}>
                   <div className={classes.railTitle}>Питание</div>
-                  <div className={classes.railRows}>
+                  <div className={`${classes.railRows} ${classes.railRowsWide}`}>
                     <RailRow label="Завтрак" value={fmtMeal(hotel.breakfast)} strong />
                     <RailRow label="Обед" value={fmtMeal(hotel.lunch)} strong />
                     <RailRow label="Ужин" value={fmtMeal(hotel.dinner)} strong />
@@ -464,6 +558,8 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
           />
         )}
       </div>
+
+      {showFade && <div className={classes.fade} />}
     </div>
   );
 }

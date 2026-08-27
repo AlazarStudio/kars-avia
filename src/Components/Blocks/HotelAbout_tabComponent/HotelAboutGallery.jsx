@@ -2,7 +2,12 @@ import { useEffect, useState } from "react";
 import Modal from "@mui/material/Modal";
 import Box from "@mui/material/Box";
 import { getMediaUrl } from "../../../../graphQL_requests.js";
+import ImageIcon from "../../../shared/icons/ImageIcon.jsx";
 import classes from "./HotelAboutGallery.module.css";
+
+// Больше четырёх плиток лента не показывает: если кадров больше, четвёртая
+// становится «+N» и ведёт в лайтбокс с первого скрытого кадра.
+const MAX_THUMBS = 4;
 
 function Chevron({ dir = "left" }) {
   return (
@@ -14,6 +19,15 @@ function Chevron({ dir = "left" }) {
         strokeLinecap="round"
         strokeLinejoin="round"
       />
+    </svg>
+  );
+}
+
+function ZoomGlyph() {
+  return (
+    <svg width="15" height="15" viewBox="0 0 24 24" fill="none">
+      <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
+      <path d="M21 21l-4.3-4.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
     </svg>
   );
 }
@@ -47,13 +61,19 @@ export default function HotelAboutGallery({ images = [], mediaToken }) {
     return (
       <div className={classes.gallery}>
         <div className={`${classes.hero} ${classes.heroEmpty}`}>
-          В галерее нет изображений
+          <ImageIcon width={28} height={28} color="#b3b8ca" />
+          <span>В галерее нет изображений</span>
         </div>
       </div>
     );
   }
 
   const heroUrl = getMediaUrl(images[safeIndex], mediaToken);
+  const hasMore = count > MAX_THUMBS;
+  // Плитка «+N» занимает последнее место в ленте, поэтому обычных на одну меньше.
+  const moreIndex = MAX_THUMBS - 1;
+  const visibleThumbs = images.slice(0, hasMore ? moreIndex : MAX_THUMBS);
+  const hiddenCount = count - visibleThumbs.length;
 
   return (
     <div className={classes.gallery}>
@@ -83,26 +103,39 @@ export default function HotelAboutGallery({ images = [], mediaToken }) {
             </button>
           </>
         )}
-        <span className={classes.zoomBadge}>
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="2" />
-            <path d="M21 21l-4.3-4.3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-          </svg>
+        <span className={classes.countBadge}>
+          <ZoomGlyph />
+          {safeIndex + 1} / {count}
         </span>
       </div>
 
       {count > 1 && (
         <div className={classes.thumbs}>
-          {images.map((img, i) => (
+          {visibleThumbs.map((img, i) => (
             <button
               type="button"
               key={i}
-              className={`${classes.thumb} ${i === safeIndex ? classes.thumbActive : ""}`}
+              className={`${classes.thumb} ${
+                i === safeIndex ? classes.thumbActive : ""
+              }`}
               onClick={() => setIndex(i)}
             >
               <img src={getMediaUrl(img, mediaToken)} alt="" />
             </button>
           ))}
+          {hasMore && (
+            <button
+              type="button"
+              className={classes.thumb}
+              onClick={() => {
+                setIndex(moreIndex);
+                setLightbox(true);
+              }}
+            >
+              <img src={getMediaUrl(images[moreIndex], mediaToken)} alt="" />
+              <span className={classes.thumbMore}>+{hiddenCount}</span>
+            </button>
+          )}
         </div>
       )}
 
