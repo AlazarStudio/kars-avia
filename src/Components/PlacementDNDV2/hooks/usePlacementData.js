@@ -6,14 +6,8 @@ import {
   GET_HOTEL_MIN,
   GET_HOTEL_ROOMS,
   GET_REQUESTS,
-  GET_RESERVE_REQUEST,
-  GET_RESERVE_REQUEST_HOTELS,
-  GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS_PLACEMENT,
-  GET_RESERVE_REQUESTS,
   REQUEST_CREATED_SUBSCRIPTION,
-  REQUEST_RESERVE_UPDATED_SUBSCRIPTION,
   REQUEST_UPDATED_SUBSCRIPTION,
-  generateTimestampId,
 } from "../../../../graphQL_requests";
 import {
   mapHotelChessToRequest,
@@ -24,23 +18,10 @@ import {
 
 const SIDEBAR_TAKE = 500;
 
-const sameId = (a, b) => String(a) === String(b);
-
-export const usePlacementData = ({
-  hotelId,
-  token,
-  currentMonth,
-  openReserveId,
-  showModalForAddHotelInReserve,
-}) => {
+export const usePlacementData = ({ hotelId, token, currentMonth }) => {
   const [hotelInfo, setHotelInfo] = useState(null);
   const [requests, setRequests] = useState([]);
   const [newRequests, setNewRequests] = useState([]);
-
-  const [requestsReserves, setRequestsReserves] = useState([]);
-  const [requestsReserveOne, setRequestsReserveOne] = useState([]);
-  const [requestsHotelReserveOne, setRequestsHotelReserveOne] = useState([]);
-  const [newReservePassangers, setNewReservePassangers] = useState([]);
 
   const authContext = useMemo(
     () => ({
@@ -197,226 +178,11 @@ export const usePlacementData = ({
     }
   }, [dataBrons]);
 
-  const { data: subscriptionDataPerson } = useSubscription(
-    GET_RESERVE_REQUEST_HOTELS_SUBSCRIPTION_PERSONS_PLACEMENT,
-    {
-      context: authContext,
-      onData: () => {
-        bronRefetch();
-      },
-    }
-  );
-
-  useSubscription(REQUEST_RESERVE_UPDATED_SUBSCRIPTION, {
-    context: authContext,
-    onData: () => {
-      bronRefetch();
-    },
-  });
-
-  const {
-    loading: loadingReserves,
-    data: dataReserves,
-    refetch: refetchReserves,
-  } = useQuery(GET_RESERVE_REQUESTS, {
-    context: authContext,
-    variables: {
-      pagination: { skip: 0, take: SIDEBAR_TAKE, airportId },
-    },
-    skip: !airportId,
-  });
-
-  const {
-    loading: loadingReserveOne,
-    data: dataReserveOne,
-    refetch: refetchReserveOne,
-  } = useQuery(GET_RESERVE_REQUEST, {
-    context: authContext,
-    variables: { reserveId: openReserveId },
-    skip: !openReserveId,
-  });
-
-  const {
-    loading: loadingHotelReserveOne,
-    data: dataHotelReserveOne,
-    refetch: refetchHotelReserveOne,
-  } = useQuery(GET_RESERVE_REQUEST_HOTELS, {
-    context: authContext,
-    variables: { reservationHotelsId: openReserveId },
-    skip: !openReserveId,
-  });
-
-  useEffect(() => {
-    if (dataReserves?.reserves?.reserves) {
-      setRequestsReserves(dataReserves.reserves.reserves);
-    }
-
-    if (openReserveId && dataReserveOne?.reserve) {
-      setRequestsReserveOne(dataReserveOne.reserve);
-    }
-
-    if (openReserveId && dataHotelReserveOne?.reservationHotels) {
-      setRequestsHotelReserveOne(dataHotelReserveOne.reservationHotels);
-    }
-  }, [
-    dataReserves,
-    dataReserveOne,
-    dataHotelReserveOne,
-    openReserveId,
-  ]);
-
-  useEffect(() => {
-    if (!showModalForAddHotelInReserve || !hotelInfo?.id) return;
-
-    const reservePassangers = requestsHotelReserveOne.filter(
-      (hotel) => hotel.hotel.id === hotelInfo.id
-    );
-
-    const bronedPersons = reservePassangers.flatMap(
-      (item) =>
-        item.reserve?.hotelChess
-          ?.map((chess) => chess.passenger?.id || chess.client?.id)
-          .filter(Boolean) || []
-    );
-
-    const transformedRequests = reservePassangers
-      .flatMap((reservePassanger) => {
-        const combinedPersons = [
-          ...(reservePassanger?.person || []),
-          ...(reservePassanger?.passengers || []),
-        ];
-
-        const filteredPersons = combinedPersons.filter(
-          (person) => !bronedPersons.includes(person.id)
-        );
-
-        return filteredPersons
-          .map((request) => {
-            const arrivalDate = reservePassanger?.reserve?.arrival;
-            const departureDate = reservePassanger?.reserve?.departure;
-
-            if (!arrivalDate || !departureDate) {
-              return null;
-            }
-
-            return {
-              id: generateTimestampId(),
-              checkInDate: new Date(arrivalDate).toISOString().split("T")[0],
-              checkInTime: new Date(arrivalDate)
-                .toISOString()
-                .split("T")[1]
-                .slice(0, 5),
-              checkOutDate: new Date(departureDate).toISOString().split("T")[0],
-              checkOutTime: new Date(departureDate)
-                .toISOString()
-                .split("T")[1]
-                .slice(0, 5),
-              status: "Ожидает",
-              guest: request.name ? request.name : "Неизвестный гость",
-              reserveId: reservePassanger?.reserve?.id,
-              isRequest: false,
-              airline: reservePassanger?.reserve?.airline,
-              personID: request.id,
-            };
-          })
-          .filter(Boolean);
-      })
-      .filter(Boolean);
-
-    setNewReservePassangers(transformedRequests);
-  }, [requestsHotelReserveOne, showModalForAddHotelInReserve, hotelInfo?.id]);
-
-  useEffect(() => {
-    if (!subscriptionDataPerson?.reservePersons || !hotelInfo?.id) return;
-
-    const reservePassangers = requestsHotelReserveOne.filter(
-      (hotel) => hotel.hotel.id === hotelInfo.id
-    );
-
-    const bronedPersons = reservePassangers.flatMap(
-      (item) =>
-        item.reserve?.hotelChess
-          ?.map((chess) => chess.passenger?.id || chess.client?.id)
-          .filter(Boolean) || []
-    );
-
-    const { reservePersons } = subscriptionDataPerson;
-
-    const isPerson = reservePassangers[0]?.person?.length > 0;
-    const isPassanger = reservePassangers[0]?.passengers?.length > 0;
-
-    const transformedRequests = reservePassangers
-      .flatMap((reservePassanger) => {
-        const combinedPersons =
-          isPerson && !isPassanger
-            ? [...(reservePersons?.reserveHotel.person || [])]
-            : !isPerson && isPassanger
-              ? [...(reservePersons?.reserveHotel.passengers || [])]
-              : [];
-
-        const filteredPersons = combinedPersons.filter(
-          (person) => !bronedPersons.includes(person.id)
-        );
-
-        return filteredPersons
-          .map((request) => {
-            const arrivalDate = reservePassanger?.reserve?.arrival;
-            const departureDate = reservePassanger?.reserve?.departure;
-
-            if (!arrivalDate || !departureDate) {
-              return null;
-            }
-
-            return {
-              id: generateTimestampId(),
-              checkInDate: new Date(arrivalDate).toISOString().split("T")[0],
-              checkInTime: new Date(arrivalDate)
-                .toISOString()
-                .split("T")[1]
-                .slice(0, 5),
-              checkOutDate: new Date(departureDate).toISOString().split("T")[0],
-              checkOutTime: new Date(departureDate)
-                .toISOString()
-                .split("T")[1]
-                .slice(0, 5),
-              status: "Ожидает",
-              guest: request.name ? request.name : "Неизвестный гость",
-              reserveId: reservePassanger?.reserve?.id,
-              isRequest: false,
-              airline: reservePassanger?.reserve?.airline,
-              personID: request.id,
-            };
-          })
-          .filter(Boolean);
-      })
-      .filter(Boolean);
-
-    setNewReservePassangers((prevReservePassangers) => {
-      const existingIds = new Set(
-        prevReservePassangers.map((item) => item.personID)
-      );
-      const newEntries = transformedRequests.filter(
-        (item) => !existingIds.has(item.personID)
-      );
-      return [...prevReservePassangers, ...newEntries];
-    });
-
-    refetchHotelReserveOne();
-  }, [
-    subscriptionDataPerson,
-    refetchHotelReserveOne,
-    requestsHotelReserveOne,
-    hotelInfo?.id,
-  ]);
-
   return {
     hotelInfo,
     loadingHotel,
     loadingRooms,
     loadingRequests,
-    loadingReserves,
-    loadingReserveOne,
-    loadingHotelReserveOne,
     rooms,
     roomsRefetch,
     requests,
@@ -426,12 +192,5 @@ export const usePlacementData = ({
     bronLoading,
     bronRefetch,
     refetchBrons,
-    refetchReserves,
-    refetchReserveOne,
-    refetchHotelReserveOne,
-    requestsReserves,
-    requestsReserveOne,
-    requestsHotelReserveOne,
-    newReservePassangers,
   };
 };

@@ -14,10 +14,7 @@ import RoomRowV2 from "./components/RoomRowV2";
 import DraggableRequestV2 from "./components/DraggableRequestV2";
 import ConfirmBookingModalV2 from "./components/ConfirmBookingModalV2";
 import EditRequestModalV2 from "./components/EditRequestModalV2";
-import AddPassengersModalV2 from "./components/AddPassengersModalV2";
 import Notification from "../Notification/Notification";
-import AddNewPassengerPlacement from "../Blocks/AddNewPassengerPlacement/AddNewPassengerPlacement";
-import ExistReserveMess from "../Blocks/ExistReserveMess/ExistReserveMess";
 import MUILoader from "../Blocks/MUILoader/MUILoader";
 import ExistRequest from "../Blocks/ExistRequest/ExistRequest";
 import EditRequestNomerFond from "../Blocks/EditRequestNomerFond/EditRequestNomerFond";
@@ -30,10 +27,8 @@ import {
   hasAccessMenu,
 } from "../../utils/access";
 import {
-  convertToDate,
   generateTimestampId,
   getCookie,
-  getMediaUrl,
   UPDATE_HOTEL_BRON,
   UPDATE_REQUEST_RELAY,
 } from "../../../graphQL_requests";
@@ -65,7 +60,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
   // Просмотр карточки заявки по requestMenu; суперадмин — полный доступ
   // const canViewRequest = canAccessMenu(accessMenu, "requestMenu", user);
 
-  const [checkRoomsType, setCheckRoomsType] = useState(false);
   const [hasInitialLoadCompleted, setHasInitialLoadCompleted] = useState(false);
 
   const [showEditNomer, setShowEditNomer] = useState(false);
@@ -74,8 +68,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
   const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isAddPassengersModalOpen, setIsAddPassengersModalOpen] =
-    useState(false);
   const [editableRequest, setEditableRequest] = useState(null);
   const [originalRequest, setOriginalRequest] = useState(null);
 
@@ -93,15 +85,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [selectedRequestID, setSelectedRequestID] = useState(null);
 
-  const [showReserveInfo, setShowReserveInfo] = useState(false);
-  const [openReserveId, setOpenReserveId] = useState("");
-  const [showModalForAddHotelInReserve, setshowModalForAddHotelInReserve] =
-    useState(false);
-  const [showCreateSidebarReserveOne, setShowCreateSidebarReserveOne] =
-    useState(false);
-  const [showChooseHotels, setShowChooseHotels] = useState(0);
-  const [showRequestSidebarMess, setShowChooseHotelMess] = useState(false);
-
   const {
     hotelInfo,
     loadingHotel,
@@ -115,19 +98,10 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
     bronLoading,
     bronRefetch,
     refetchBrons,
-    refetchReserves,
-    refetchReserveOne,
-    refetchHotelReserveOne,
-    requestsReserves,
-    requestsReserveOne,
-    requestsHotelReserveOne,
-    newReservePassangers,
   } = usePlacementData({
     hotelId,
     token,
     currentMonth,
-    openReserveId,
-    showModalForAddHotelInReserve,
   });
 
   const initialLoading =
@@ -167,10 +141,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
     },
   });
 
-  const handleCheckRoomsType = (info) => {
-    setCheckRoomsType(info);
-  };
-
   const handleUpdateRequest = (updatedRequest) => {
     setRequests((prevRequests) =>
       prevRequests.map((req) =>
@@ -200,9 +170,7 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
 
   const handleDragStart = (event) => {
     const { active } = event;
-    const draggedItem =
-      newRequests.find((req) => sameId(req.id, active.id)) ||
-      newReservePassangers.find((req) => sameId(req.id, active.id));
+    const draggedItem = newRequests.find((req) => sameId(req.id, active.id));
     const draggedItemOld = requests.find((req) => sameId(req.id, active.id));
     const activeItem = draggedItemOld || draggedItem;
     setActiveDragItem(activeItem);
@@ -230,9 +198,13 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
     }
 
     const draggedRequest =
-      newReservePassangers.find((req) => sameId(req.id, active.id)) ||
       newRequests.find((req) => sameId(req.id, active.id)) ||
       requests.find((req) => sameId(req.id, active.id));
+
+    // легаси-плашки резерва инертны: бэк игнорирует их запись (hotel.resolver: reserve disabled)
+    if (draggedRequest && !draggedRequest.isRequest) {
+      return;
+    }
 
     const [targetRoomId, targetPositionStr] = over.id.split("-");
     const targetPosition = parseInt(targetPositionStr, 10);
@@ -335,40 +307,20 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
         return;
       }
 
-      let bookingInput;
-
-      if (draggedRequest.isRequest && draggedRequest.status !== "Архив") {
-        bookingInput = {
-          hotelChesses: [
-            {
-              status: "done",
-              requestId: draggedRequest.requestID,
-              roomId: targetRoomId,
-              place: targetPosition + 1,
-              clientId: draggedRequest.personID,
-              id: draggedRequest.chessID,
-            },
-          ],
-        };
-      } else if (!draggedRequest.isRequest && draggedRequest.status !== "Архив") {
-        bookingInput = {
-          hotelChesses: [
-            {
-              status: "done",
-              reserveId: draggedRequest.requestID,
-              roomId: targetRoomId,
-              place: targetPosition + 1,
-              clientId: draggedRequest.personID,
-              id: draggedRequest.chessID,
-            },
-          ],
-        };
-      }
+      const bookingInput = {
+        hotelChesses: [
+          {
+            status: "done",
+            requestId: draggedRequest.requestID,
+            roomId: targetRoomId,
+            place: targetPosition + 1,
+            clientId: draggedRequest.personID,
+            id: draggedRequest.chessID,
+          },
+        ],
+      };
 
       try {
-        console.log(hotelId);
-        console.log(bookingInput);
-        
         await updateHotelBron({
           variables: {
             updateHotelId: hotelId,
@@ -393,44 +345,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
     const occupiedPositions = overlappingRequests.map((req) => req.position);
 
     if (newRequests.includes(draggedRequest)) {
-      if (targetRoom.active) {
-        const availablePosition = getAvailablePosition(
-          targetRoom.type,
-          occupiedPositions
-        );
-
-        if (availablePosition === undefined) {
-          addNotification("Все позиции заняты в этой комнате!", "error");
-          return;
-        }
-
-        const newRequest = {
-          ...draggedRequest,
-          room: targetRoomId,
-          roomId: targetRoom.roomId,
-          position: availablePosition,
-          status: "Ожидает",
-        };
-
-        setRequests((prevRequests) => {
-          const exists = prevRequests.some((req) => req.id === newRequest.id);
-          if (exists) {
-            addNotification(
-              `Заявка с id ${newRequest.id} уже существует!`,
-              "error"
-            );
-            return prevRequests;
-          }
-          return [...prevRequests, newRequest];
-        });
-
-        setSelectedRequest(newRequest);
-        setIsConfirmModalOpen(true);
-      } else {
-        addNotification("Комната не активна!", "error");
-        return;
-      }
-    } else if (newReservePassangers.includes(draggedRequest)) {
       if (targetRoom.active) {
         const availablePosition = getAvailablePosition(
           targetRoom.type,
@@ -498,37 +412,7 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
             return;
           }
 
-          let bookingInput;
-
-          if (draggedRequest.isRequest && draggedRequest.status !== "Архив") {
-            bookingInput = {
-              hotelChesses: [
-                {
-                  requestId: draggedRequest.requestID,
-                  roomId: targetRoom.roomId,
-                  place: Number(availablePosition) + 1,
-                  clientId: draggedRequest.personID,
-                  id: draggedRequest.chessID,
-                },
-              ],
-            };
-          } else if (
-            !draggedRequest.isRequest &&
-            draggedRequest.status !== "Архив"
-          ) {
-            bookingInput = {
-              hotelChesses: [
-                {
-                  clientId: draggedRequest.personID,
-                  hotelId: hotelId,
-                  reserveId: draggedRequest.requestID,
-                  roomId: targetRoom.roomId,
-                  place: Number(availablePosition) + 1,
-                  id: draggedRequest.chessID,
-                },
-              ],
-            };
-          } else {
+          if (draggedRequest.status === "Архив") {
             addNotification(
               "Эту заявку нельзя перемещать, так как она в архиве",
               "error"
@@ -536,10 +420,19 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
             return;
           }
 
+          const bookingInput = {
+            hotelChesses: [
+              {
+                requestId: draggedRequest.requestID,
+                roomId: targetRoom.roomId,
+                place: Number(availablePosition) + 1,
+                clientId: draggedRequest.personID,
+                id: draggedRequest.chessID,
+              },
+            ],
+          };
+
           try {
-            console.log(hotelId);            
-            console.log(bookingInput);
-            
             await updateHotelBron({
               variables: {
                 updateHotelId: hotelId,
@@ -679,40 +572,20 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
   };
 
   const confirmBooking = async (request) => {
-    let bookingInput;
-
-    if (request.reserveId) {
-      bookingInput = {
-        hotelChesses: [
-          {
-            clientId: request.personID,
-            start: `${request.checkInDate}T${request.checkInTime}:00.000Z`,
-            end: `${request.checkOutDate}T${request.checkOutTime}:00.000Z`,
-            hotelId: hotelId,
-            reserveId: request.reserveId ? request.reserveId : "",
-            roomId: `${request.roomId}`,
-            place: Number(request.position) + 1,
-            public: true,
-            status: "done",
-          },
-        ],
-      };
-    } else if (request.requestID) {
-      bookingInput = {
-        hotelChesses: [
-          {
-            clientId: request.personID,
-            start: `${request.checkInDate}T${request.checkInTime}:00.000Z`,
-            end: `${request.checkOutDate}T${request.checkOutTime}:00.000Z`,
-            hotelId: hotelId,
-            requestId: request.requestID ? request.requestID : "",
-            roomId: `${request.roomId}`,
-            place: Number(request.position) + 1,
-            public: true,
-          },
-        ],
-      };
-    }
+    const bookingInput = {
+      hotelChesses: [
+        {
+          clientId: request.personID,
+          start: `${request.checkInDate}T${request.checkInTime}:00.000Z`,
+          end: `${request.checkOutDate}T${request.checkOutTime}:00.000Z`,
+          hotelId: hotelId,
+          requestId: request.requestID ? request.requestID : "",
+          roomId: `${request.roomId}`,
+          place: Number(request.position) + 1,
+          public: true,
+        },
+      ],
+    };
 
     try {
       setSelectedRequest(null);
@@ -724,7 +597,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
         },
       });
       addNotification("Бронь успешно добавлена", "success");
-      refetchHotelReserveOne();
     } catch (err) {
       console.error("Произошла ошибка при подтверждении бронирования", err);
     }
@@ -807,76 +679,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
   const [hoveredDayInMonth, setHoveredDayInMonth] = useState(null);
   const [hoveredRoom, setHoveredRoom] = useState(null);
 
-  const handleOpenReserveInfo = async (reserveId) => {
-    setOpenReserveId(reserveId);
-    setShowReserveInfo(true);
-
-    try {
-      const { data } = await refetchHotelReserveOne({
-        reservationHotelsId: reserveId,
-      });
-
-      const hasHotelWithId = data.reservationHotels.some(
-        (hotel) => hotel.hotel.id === hotelInfo.id
-      );
-
-      if (hasHotelWithId) {
-        setshowModalForAddHotelInReserve(true);
-      } else {
-        setshowModalForAddHotelInReserve(false);
-        toggleCreateSidebarReserveOne();
-      }
-    } catch (error) {
-      console.error("Ошибка при загрузке данных резерва отелей:", error);
-    }
-  };
-
-  const handleCloseReserveInfo = () => {
-    setOpenReserveId("");
-    setShowReserveInfo(false);
-    setshowModalForAddHotelInReserve(false);
-  };
-
-  const toggleCreateSidebarReserveOne = () => {
-    setShowCreateSidebarReserveOne(!showCreateSidebarReserveOne);
-  };
-
-  useEffect(() => {
-    const totalPassengers = requestsHotelReserveOne.reduce(
-      (acc, item) => acc + Number(item.capacity),
-      0
-    );
-    setShowChooseHotels(totalPassengers);
-  }, [requestsHotelReserveOne]);
-
-  const handleOpenAddPassengersModal = () => {
-    setIsAddPassengersModalOpen(true);
-  };
-
-  const handleCloseAddPassengersModal = () => {
-    setIsAddPassengersModalOpen(false);
-  };
-
-  const targetReserveHotels = requestsHotelReserveOne.filter(
-    (item) => item.hotel?.id === hotelId
-  );
-  const targetReserveHotelCapacity = targetReserveHotels[0]?.capacity;
-  const targetReserveHotelCPassPersonCount =
-    targetReserveHotels[0]?.passengers?.length +
-    targetReserveHotels[0]?.person?.length;
-
-  const filteredRequestsReserves = requestsReserves.filter((request) => {
-    const infoHotel = request.hotel.find(
-      (hotel) => hotel.hotel?.id === hotelId
-    );
-    const totalCapacity = request.hotel.reduce(
-      (sum, hotel) => sum + hotel.capacity,
-      0
-    );
-
-    return request.passengerCount > totalCapacity || !!infoHotel;
-  });
-
   const listRef = useRef(null);
   const ListOuterElement = useMemo(() => {
     const Outer = React.forwardRef(({ style, onScroll, ...rest }, ref) => (
@@ -901,9 +703,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
       listRef.current.resetAfterIndex(0, true);
     }
   }, [filteredRooms]);
-
-  const toggleRequestSidebarMess = () =>
-    setShowChooseHotelMess(!showRequestSidebarMess);
 
   const getRoomHeight = (index) => {
     const room = filteredRooms[index];
@@ -1016,11 +815,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
                 weekendColor={WEEKEND_COLOR}
                 monthColor={MONTH_COLOR}
                 leftWidth={LEFT_WIDTH}
-                handleCheckRoomsType={handleCheckRoomsType}
-                setShowReserveInfo={setShowReserveInfo}
-                setshowModalForAddHotelInReserve={
-                  setshowModalForAddHotelInReserve
-                }
               />
               <VariableSizeList
                 ref={listRef}
@@ -1223,7 +1017,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
                             highlightedDatesOld={highlightedDatesOld}
                             isClick={isClick}
                             setIsClick={setIsClick}
-                            checkRoomsType={checkRoomsType}
                           />
                         </Box>
                       </Box>
@@ -1234,328 +1027,95 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
             </Box>
           </Box>
 
-          {!checkRoomsType && (
-            <Box
+          <Box
+            sx={{
+              minWidth: "330px",
+              maxWidth: "330px",
+              height: "fit-content",
+              backgroundColor: "#fff",
+              border: "1px solid #ddd",
+              borderRadius: "10px",
+            }}
+          >
+            <Typography
+              variant="h6"
               sx={{
-                minWidth: "330px",
-                maxWidth: "330px",
+                padding: "15px",
+                borderBottom: "1px solid #ddd",
+                textAlign: "center",
+                fontSize: "14px",
+                fontWeight: "700",
+                minHeight: "50px",
                 height: "fit-content",
-                backgroundColor: "#fff",
-                border: "1px solid #ddd",
-                borderRadius: "10px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
               }}
             >
-              <Typography
-                variant="h6"
-                sx={{
-                  padding: "15px",
-                  borderBottom: "1px solid #ddd",
-                  textAlign: "center",
-                  fontSize: "14px",
-                  fontWeight: "700",
-                  minHeight: "50px",
-                  height: "fit-content",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                Заявки по эскадрильи в городе {hotelInfo?.information?.city}
-              </Typography>
-              {newRequests?.length > 0 &&
-                ((user?.hotelId && hotelInfo?.access) || !user?.hotelId) ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    gap: "5px",
-                    flexDirection: "column",
-                    height: "fit-content",
-                    maxHeight: "485px",
-                    padding: "5px",
-                    overflow: "hidden",
-                    overflowY: "scroll",
-                    scrollbarWidth: "none"
-                  }}
-                >
-                  {newRequests
-                    .slice()
-                    .sort((a, b) => {
-                      if (a.requestID === requestId) return -1;
-                      if (b.requestID === requestId) return 1;
-                      return 0;
-                    })
-                    .filter((request) => {
-                      const shouldFilter =
-                        user?.hotelId && hotelInfo?.access;
-
-                      return shouldFilter ? request.hotelId === hotelId : true;
-                    })
-                    .map((request) => (
-                      <DraggableRequestV2
-                        hotelAccess={hotelInfo?.access || true}
-                        requestId={requestId}
-                        userRole={user?.role}
-                        key={request.id}
-                        request={request}
-                        dayWidth={DAY_WIDTH}
-                        currentMonth={currentMonth}
-                        onUpdateRequest={handleUpdateRequest}
-                        allRequests={requests}
-                        isDraggingGlobal={isDraggingGlobal}
-                        isClick={isClick}
-                        setIsClick={setIsClick}
-                        checkRoomsType={checkRoomsType}
-                      />
-                    ))}
-                </Box>
-              ) : (
-                <Typography
-                  variant="h6"
-                  sx={{
-                    padding: "10px ",
-                    textAlign: "center",
-                    fontSize: "14px",
-                    height: "calc(100% - 50px)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  Заявок не найдено
-                </Typography>
-              )}
-            </Box>
-          )}
-
-          {checkRoomsType && !showReserveInfo && !showModalForAddHotelInReserve && (
-            <Box
-              sx={{
-                minWidth: "330px",
-                maxWidth: "330px",
-                height: "fit-content",
-                backgroundColor: "#fff",
-                border: "1px solid #ddd",
-                borderRadius: "10px",
-              }}
-            >
-              <Typography
-                variant="h6"
-                sx={{
-                  padding: "10px",
-                  borderBottom: "1px solid #ddd",
-                  textAlign: "center",
-                  fontSize: "14px",
-                  fontWeight: "700",
-                  minHeight: "50px",
-                  height: "fit-content",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                Заявки по пассажирам в городе {hotelInfo?.information?.city}
-              </Typography>
-
-              {filteredRequestsReserves?.length > 0 &&
-                ((user?.hotelId && hotelInfo?.access) || !user?.hotelId) ? (
-                <Box
-                  sx={{
-                    display: "flex",
-                    gap: "5px",
-                    flexDirection: "column",
-                    height: "fit-content",
-                    maxHeight: "518px",
-                    padding: "5px",
-                    overflow: "hidden",
-                    overflowY: "scroll",
-                  }}
-                >
-                  {filteredRequestsReserves.map((request) => (
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "center",
-                        alignItems: "center",
-                        gap: "5px",
-                        width: "100%",
-                        padding: "5px",
-                        cursor: "pointer",
-                        textAlign: "center",
-                        fontSize: "12px",
-                        backgroundColor: "#adadad",
-                        border: "1px solid #757575",
-                        color: "#fff",
-                        borderRadius: "3px",
-                      }}
-                      onClick={() => handleOpenReserveInfo(request.id)}
-                    >
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "center",
-                          alignItems: "center",
-                        }}
-                      >
-                        <img
-                          src={getMediaUrl(request.airline.images[0])}
-                          alt=""
-                          style={{
-                            height: "25px",
-                            width: "25px",
-                            objectFit: "cover",
-                            borderRadius: "50%",
-                            marginRight: "5px",
-                          }}
-                        />
-                        {request.airline.name} -{" "}
-                        {request?.reserveForPerson ? "экипаж" : "пассажиры"}
-                      </Box>
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "center",
-                          alignItems: "center",
-                        }}
-                      >
-                        {convertToDate(request.arrival)} -{" "}
-                        {convertToDate(request.departure)}
-                      </Box>
-                    </Box>
-                  ))}
-                </Box>
-              ) : (
-                <Typography
-                  variant="h6"
-                  sx={{
-                    padding: "10px ",
-                    textAlign: "center",
-                    fontSize: "14px",
-                    height: "calc(100% - 50px)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  Заявок не найдено
-                </Typography>
-              )}
-            </Box>
-          )}
-
-          {checkRoomsType &&
-            showReserveInfo &&
-            showModalForAddHotelInReserve && (
+              Заявки по эскадрильи в городе {hotelInfo?.information?.city}
+            </Typography>
+            {newRequests?.length > 0 &&
+              ((user?.hotelId && hotelInfo?.access) || !user?.hotelId) ? (
               <Box
                 sx={{
-                  width: "300px",
+                  display: "flex",
+                  gap: "5px",
+                  flexDirection: "column",
                   height: "fit-content",
-                  backgroundColor: "#fff",
-                  border: "1px solid #ddd",
+                  maxHeight: "485px",
+                  padding: "5px",
+                  overflow: "hidden",
+                  overflowY: "scroll",
+                  scrollbarWidth: "none"
                 }}
               >
-                <Typography
-                  variant="h6"
-                  sx={{
-                    padding: "5px",
-                    display: "flex",
-                    alignItems: "center",
-                    borderBottom: "1px solid #ddd",
-                    textAlign: "center",
-                    fontSize: "14px",
-                    fontWeight: "700",
-                    minHeight: "50px",
-                    height: "fit-content",
-                    justifyContent: "center",
-                    lineHeight: "normal",
-                  }}
-                >
-                  <img
-                    src="/arrow-left-back.png"
-                    alt=""
-                    style={{
-                      height: "16px",
-                      cursor: "pointer",
-                      marginRight: "10px",
-                    }}
-                    onClick={handleCloseReserveInfo}
-                  />
-                  Заявка {requestsReserveOne?.reserveNumber?.split("-")[0]} -{" "}
-                  {requestsReserveOne?.reserveForPerson ? "экипаж" : "пассажиры"}
-                  {targetReserveHotelCPassPersonCount <
-                    targetReserveHotelCapacity && (
-                      <img
-                        src="/addReserve.png"
-                        alt=""
-                        style={{
-                          height: "16px",
-                          cursor: "pointer",
-                          marginLeft: "10px",
-                        }}
-                        onClick={handleOpenAddPassengersModal}
-                      />
-                    )}
-                  <img
-                    src="/chat.png"
-                    alt=""
-                    style={{
-                      height: "18px",
-                      cursor: "pointer",
-                      marginLeft: "10px",
-                    }}
-                    onClick={toggleRequestSidebarMess}
-                  />
-                </Typography>
+                {newRequests
+                  .slice()
+                  .sort((a, b) => {
+                    if (a.requestID === requestId) return -1;
+                    if (b.requestID === requestId) return 1;
+                    return 0;
+                  })
+                  .filter((request) => {
+                    const shouldFilter =
+                      user?.hotelId && hotelInfo?.access;
 
-                {newReservePassangers?.length > 0 ? (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      gap: "5px",
-                      flexDirection: "column",
-                      height: "fit-content",
-                      maxHeight: "485px",
-                      padding: "5px",
-                      overflow: "hidden",
-                      overflowY: "scroll",
-                    }}
-                  >
-                    {newReservePassangers.map((request) => (
-                      <DraggableRequestV2
-                        hotelAccess={hotelInfo?.access || false}
-                        requestId={requestId}
-                        userRole={user.role}
-                        key={request.id}
-                        request={request}
-                        dayWidth={DAY_WIDTH}
-                        currentMonth={currentMonth}
-                        onUpdateRequest={handleUpdateRequest}
-                        allRequests={requests}
-                        isDraggingGlobal={isDraggingGlobal}
-                        isClick={isClick}
-                        setIsClick={setIsClick}
-                        checkRoomsType={checkRoomsType}
-                      />
-                    ))}
-                  </Box>
-                ) : (
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      padding: "10px ",
-                      textAlign: "center",
-                      fontSize: "14px",
-                      height: "calc(100% - 50px)",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                    }}
-                  >
-                    Заявок не найдено
-                  </Typography>
-                )}
+                    return shouldFilter ? request.hotelId === hotelId : true;
+                  })
+                  .map((request) => (
+                    <DraggableRequestV2
+                      hotelAccess={hotelInfo?.access || true}
+                      requestId={requestId}
+                      userRole={user?.role}
+                      key={request.id}
+                      request={request}
+                      dayWidth={DAY_WIDTH}
+                      currentMonth={currentMonth}
+                      onUpdateRequest={handleUpdateRequest}
+                      allRequests={requests}
+                      isDraggingGlobal={isDraggingGlobal}
+                      isClick={isClick}
+                      setIsClick={setIsClick}
+                    />
+                  ))}
               </Box>
+            ) : (
+              <Typography
+                variant="h6"
+                sx={{
+                  padding: "10px ",
+                  textAlign: "center",
+                  fontSize: "14px",
+                  height: "calc(100% - 50px)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                Заявок не найдено
+              </Typography>
             )}
+          </Box>
         </Box>
 
         <DragOverlay
@@ -1575,7 +1135,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
               toggleRequestSidebar={toggleRequestSidebar}
               isClick={isClick}
               setIsClick={setIsClick}
-              checkRoomsType={checkRoomsType}
               isOverlay={true}
             />
           ) : null}
@@ -1587,17 +1146,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
         onClose={handleCloseModal}
         onSave={handleSaveChanges}
         request={editableRequest}
-      />
-
-      <AddPassengersModalV2
-        isOpen={isAddPassengersModalOpen}
-        onClose={handleCloseAddPassengersModal}
-        isPerson={requestsReserveOne?.reserveForPerson}
-        airlineId={requestsReserveOne?.airline?.id}
-        reserveId={requestsReserveOne?.id}
-        hotelId={hotelInfo?.id}
-        token={token}
-        openReserveId={openReserveId}
       />
 
       <ConfirmBookingModalV2
@@ -1644,27 +1192,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
           }}
         />
       ))}
-
-      <AddNewPassengerPlacement
-        show={showCreateSidebarReserveOne}
-        onClose={toggleCreateSidebarReserveOne}
-        request={requestsReserveOne}
-        placement={requestsHotelReserveOne ? requestsHotelReserveOne : []}
-        user={user}
-        hotelInfo={hotelInfo}
-        showChooseHotels={showChooseHotels}
-        setShowChooseHotels={setShowChooseHotels}
-        setshowModalForAddHotelInReserve={setshowModalForAddHotelInReserve}
-        setShowReserveInfo={setShowReserveInfo}
-      />
-
-      <ExistReserveMess
-        hotelId={hotelInfo?.id}
-        show={showRequestSidebarMess}
-        onClose={toggleRequestSidebarMess}
-        chooseRequestID={openReserveId}
-        user={user}
-      />
 
       {!hasInitialLoadCompleted && initialLoading && (
         <Box

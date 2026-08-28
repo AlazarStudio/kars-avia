@@ -12,7 +12,6 @@ function clamp(value, min, max) {
 
 const DraggableRequestV2 = ({
   requestId,
-  checkRoomsType,
   isClick,
   setIsClick,
   request,
@@ -35,7 +34,7 @@ const DraggableRequestV2 = ({
         position: request.position,
         roomId: request.room?.id,
       },
-      disabled: isOverlay,
+      disabled: isOverlay || !request.isRequest,
     });
 
   const startDate = startOfMonth(currentMonth);
@@ -71,19 +70,6 @@ const DraggableRequestV2 = ({
   };
 
   const { backgroundColor, borderColor } = getStatusColors(request.status);
-
-  let showBlockRequest = 0.3;
-  let showBlockReserve = 0.3;
-
-  if (!checkRoomsType) {
-    if (request.isRequest) {
-      showBlockRequest = 1;
-    }
-  } else {
-    if (!request.isRequest) {
-      showBlockReserve = 1;
-    }
-  }
 
   const [isBlinking, setIsBlinking] = useState(false);
   useEffect(() => {
@@ -238,12 +224,6 @@ const DraggableRequestV2 = ({
     }
   };
 
-  const handleMouseUp = () => {
-    if (isClick) {
-      toggleRequestSidebar && toggleRequestSidebar(request.requestID);
-    }
-  };
-
   const handleClick = () => {
     if (!isClick && !mouseIsMoving) {
       toggleRequestSidebar && toggleRequestSidebar(request.requestID);
@@ -276,7 +256,7 @@ const DraggableRequestV2 = ({
     height: baseHeight,
     backgroundColor: backgroundColor,
     animation: isBlinking ? "blinkBackground 1s infinite" : "none",
-    opacity: isDragging && !isOverlay ? 0 : request.isRequest ? showBlockRequest : showBlockReserve,
+    opacity: isDragging && !isOverlay ? 0 : 1,
     border: `1px solid ${borderColor}`,
     borderRadius: "3px",
     display: "flex",
@@ -288,7 +268,8 @@ const DraggableRequestV2 = ({
     zIndex: isDragging ? 10 : 2,
     userSelect: "none",
     overflow: "hidden",
-    cursor: isOverlay ? "grabbing" : isDragging ? "grabbing" : "grab",
+    cursor:
+      isOverlay || isDragging ? "grabbing" : request.isRequest ? "grab" : "default",
     transform: transform
       ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
       : undefined,
@@ -301,7 +282,6 @@ const DraggableRequestV2 = ({
         {request.status !== "Ожидает" &&
           request.status !== "Архив" &&
           request.isRequest &&
-          showBlockRequest === 1 &&
           (user?.hotelId && hotelAccess || !user?.hotelId) && (
             <Box
               onMouseDown={(e) => {
@@ -352,7 +332,7 @@ const DraggableRequestV2 = ({
             </Box>
           )}
 
-        {request.isRequest && showBlockRequest === 1 ? (
+        {request.isRequest ? (
           <Box
             ref={setNodeRef}
             {...(!isOverlay ? listeners : {})}
@@ -481,61 +461,6 @@ const DraggableRequestV2 = ({
               </div>
             </div>
           </Box>
-        ) : !request.isRequest && showBlockReserve === 1 ? (
-          <Box
-            ref={setNodeRef}
-            {...(!isOverlay ? listeners : {})}
-            {...(!isOverlay ? attributes : {})}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            sx={{
-              flex: 1,
-              width: "calc(100% - 20px)",
-              height: "35px",
-              display: "flex",
-              alignItems: "center",
-              textAlign: "left",
-              justifyContent: "left",
-              zIndex: 1,
-              overflow: "hidden",
-              padding: "0 5px",
-            }}
-          >
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "left",
-                gap: "5px",
-              }}
-            >
-              {request.airline && duration > 25 ? (
-                <img
-                  src={getMediaUrl(request.airline ? request.airline.images[0] : null)}
-                  alt=""
-                  style={{
-                    height: "25px",
-                    width: "25px",
-                    objectFit: "cover",
-                    borderRadius: "50%",
-                  }}
-                />
-              ) : null}
-              <div
-                style={{
-                  width: "100%",
-                  overflow: "hidden",
-                  whiteSpace: "nowrap",
-                  textOverflow: "ellipsis",
-                }}
-              >
-                {request.guest}
-              </div>
-            </div>
-          </Box>
         ) : (
           <Box
             sx={{
@@ -588,7 +513,6 @@ const DraggableRequestV2 = ({
         {request.status !== "Ожидает" &&
           request.status !== "Архив" &&
           request.isRequest &&
-          showBlockRequest === 1 &&
           (user?.hotelId && hotelAccess || !user?.hotelId) && (
             <Box
               onMouseDown={(e) => {

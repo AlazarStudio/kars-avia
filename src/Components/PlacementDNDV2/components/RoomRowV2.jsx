@@ -14,7 +14,6 @@ import DraggableRequestV2 from "./DraggableRequestV2";
 const RoomRowV2 = memo(
   ({
     requestId,
-    checkRoomsType,
     hotelAccess,
     isClick,
     setIsClick,
@@ -144,7 +143,6 @@ const RoomRowV2 = memo(
             <DraggableRequestV2
               hotelAccess={hotelAccess}
               requestId={requestId}
-              checkRoomsType={checkRoomsType}
               user={user}
               key={request.id}
               request={request}

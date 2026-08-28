@@ -1,8 +1,7 @@
-import React, { memo, useState } from "react";
+import React, { memo } from "react";
 import { Box, Typography, IconButton } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import classes from "./TimelineV2.module.css";
 import {
   format,
   eachDayOfInterval,
@@ -16,7 +15,6 @@ import { ru } from "date-fns/locale";
 const TimelineV2 = memo(
   ({
     user,
-    handleCheckRoomsType,
     hoveredDayInMonth,
     currentMonth,
     setCurrentMonth,
@@ -24,8 +22,6 @@ const TimelineV2 = memo(
     weekendColor,
     monthColor,
     leftWidth,
-    setShowReserveInfo,
-    setshowModalForAddHotelInReserve,
   }) => {
     const safeCurrentMonth =
       currentMonth instanceof Date ? currentMonth : new Date(currentMonth);
@@ -51,13 +47,6 @@ const TimelineV2 = memo(
 
     const capitalizeFirstLetter = (string) =>
       string.charAt(0).toUpperCase() + string.slice(1);
-
-    const [activeButton, setActiveButton] = useState(false);
-
-    const handleCheckRoomsTypeInfo = (info) => {
-      setActiveButton(info);
-      handleCheckRoomsType(info);
-    };
 
     return (
       <Box
@@ -85,32 +74,7 @@ const TimelineV2 = memo(
             gap: "10px",
             padding: "10px",
           }}
-        >
-          <button
-            className={`${classes.checkBTN} ${
-              !activeButton ? classes.activeButton : ""
-            }`}
-            onClick={() => {
-              handleCheckRoomsTypeInfo(false);
-              setShowReserveInfo(false);
-              setshowModalForAddHotelInReserve(false);
-            }}
-          >
-            Квота
-          </button>
-          <button
-            className={`${classes.checkBTN} ${
-              activeButton ? classes.activeButton : ""
-            }`}
-            onClick={() => {
-              handleCheckRoomsTypeInfo(true);
-              setShowReserveInfo(false);
-              setshowModalForAddHotelInReserve(false);
-            }}
-          >
-            Резерв
-          </button>
-        </Box>
+        />
 
         <Box
           sx={{
