@@ -1,6 +1,7 @@
 import ExcelJS from "exceljs";
 import { PERSON_CATEGORY_LABEL, normalizeCategory, placementKindLabel } from "../fapConstants.js";
 import { driverFactCount } from "../fapTransferFact.js";
+import { roomKey } from "../fapGroups.js";
 import { lunchboxCountOf } from "../fapReportMoney.js";
 import { findRowIndexForPerson } from "./reportRowMatch.js";
 
@@ -226,6 +227,72 @@ function accommodationDiscountLabel(pricePerDay, daysCount, accommodationCost) {
   return disc > 0.005 ? `${Math.round(disc * 100)}%` : "—";
 }
 
+// Карта «номер комнаты → вид размещения» для печати колонки «Вид размещения».
+//
+// При тарифе с режимом «Номер» (PER_ROOM) проживание начисляется один раз — на
+// «несущего» гостя номера, а у соседей по тому же номеру в сохранённых строках
+// остаётся placementKind: 0. Так сделано ради денег (обнулённые поля строки
+// пересчитывать нельзя), но в книге из-за этого колонка вида пустела у всех,
+// кроме одного жильца, хотя номер у них общий.
+//
+// Карта чинит только ПЕЧАТЬ: ни одна цифра строки (цена за сутки, скидка,
+// стоимость проживания, итоги) от неё не меняется. Пустая «Цена за сутки»
+// у соседей — правильное поведение и остаётся как есть.
+// Первое встреченное значение выигрывает; строки без номера или без вида в карту
+// не попадают.
+function roomKindByNumber(rows) {
+  const kinds = new Map();
+  (rows ?? []).forEach((r) => {
+    const room = String(r?.roomNumber ?? "").trim();
+    const kind = Number(r?.placementKind) || 0;
+    if (!room || kind <= 0 || kinds.has(room)) return;
+    kinds.set(room, kind);
+  });
+  return kinds;
+}
+
+// Вид размещения строки для печати: свой (режим «Койко-место») либо вид несущего
+// гостя того же номера. Гость без номера остаётся без вида — подставлять нечего.
+function printedKind(r, kinds) {
+  const own = Number(r?.placementKind) || 0;
+  if (own > 0) return own;
+  const room = String(r?.roomNumber ?? "").trim();
+  return (room && kinds.get(room)) || 0;
+}
+
+// Порядок ПЕЧАТИ строк гостей: зеркалим порядок групп экрана (мемо reportGroups
+// в FapHotelPage), чтобы бумага совпадала с экраном — живущие в одном номере
+// стоят подряд, а не разбросаны по ростеру.
+//
+// Правило то же, что на экране: идём по ростеру, первый гость номера «открывает»
+// группу на своей позиции, каждый следующий жилец того же номера доклеивается
+// к ней (то есть подтягивается вверх, к первому), гость без номера остаётся
+// одиночной группой на своём месте.
+//
+// rooms — номера комнат по индексам гостей (в порядке ростера); возвращает
+// перестановку индексов. На матчинг строк к гостям не влияет: тот идёт своим
+// проходом строго по ростеру.
+function groupedPrintOrder(rooms) {
+  const groups = [];
+  const byRoom = new Map();
+  (rooms ?? []).forEach((room, i) => {
+    const key = roomKey(room);
+    if (!key) {
+      groups.push([i]);
+      return;
+    }
+    const group = byRoom.get(key);
+    if (group) {
+      group.push(i);
+      return;
+    }
+    const created = [i];
+    byRoom.set(key, created);
+    groups.push(created);
+  });
+  return groups.flat();
+}
+
 // Извлечь даты заезда/выезда персоны (Date или null).
 // Приоритет: person.arrival/departure (явное переопределение per-person)
 //          → service.plan.plannedFromAt/plannedToAt (план услуги, дефолт)
@@ -367,13 +434,23 @@ export function addHotelSheet(wb, opts) {
     };
   });
 
+  // Вид размещения соседей по номеру берётся с несущего гостя (см. roomKindByNumber).
+  // Источник — уже сматченные строки реальных гостей: ghost-строки тарифов сюда
+  // не попадают.
+  const roomKinds = roomKindByNumber(rowsByPersonIdx);
+
+  // Печатаем не в порядке ростера, а группами по номеру комнаты — как на экране.
+  const printOrder = groupedPrintOrder(rowsByPersonIdx.map((r) => r.roomNumber));
+
   const livingPlan = request?.livingService?.plan;
-  people.forEach((p, i) => {
-    const r = rowsByPersonIdx[i];
+  printOrder.forEach((personIdx, seq) => {
+    const p = people[personIdx];
+    const r = rowsByPersonIdx[personIdx];
     const { inAt, outAt } = getCheckInOut(p, hotelIndex, livingPlan);
     const row = ws.getRow(rowIdx);
 
-    put(row, "id", i + 1);
+    // «ID» — порядковый номер строки в листе, а не индекс гостя в ростере.
+    put(row, "id", seq + 1);
     put(row, "fullName", p.fullName ?? "");
     put(row, "personType", p.personType === "CREW" ? "Экипаж" : "Пассажир");
     put(row, "personCategory", PERSON_CATEGORY_LABEL[normalizeCategory(p.personCategory)] ?? "Взрослый");
@@ -392,7 +469,7 @@ export function addHotelSheet(wb, opts) {
       row.getCell(at.outTime).numFmt = fmtTime;
     }
     put(row, "roomNumber", r.roomNumber);
-    put(row, "placementKind", placementKindLabel(r.placementKind)); // "" для legacy
+    put(row, "placementKind", placementKindLabel(printedKind(r, roomKinds))); // "" для legacy
     put(row, "tariffName", r.tariffName);
     if (r.pricePerDay > 0) putMoney(row, "pricePerDay", r.pricePerDay);
     put(row, "daysCount", r.daysCount);
@@ -788,13 +865,31 @@ export function addCombinedSheet(wb, opts) {
     );
     const savedRows = saved?.reportRows ?? [];
 
+    // Карта видов размещения строится по КАЖДОЙ гостинице отдельно (номера комнат
+    // разных гостиниц совпадают) и только по гостевым строкам: ghost-строки без
+    // ФИО несут таблицы цен тарифа, их placementKind — вид из ценовой пары, а не
+    // вид номера, соседям его подставлять нельзя.
+    const roomKinds = roomKindByNumber(
+      savedRows.filter((r) => (r?.fullName ?? "").trim())
+    );
+
     // Матч к гостям: personId — первично, ФИО — fallback для старых строк.
+    // Отдельным проходом и строго по ростеру: consumed-сет раздаёт строки
+    // дубликатам ФИО по порядку, поэтому порядок печати ниже его не касается.
     const consumed = new Set();
-    people.forEach((p) => {
+    const rowsByPersonIdx = people.map((p) => {
       const idx = findRowIndexForPerson(savedRows, p, consumed);
-      const matched = idx >= 0 ? savedRows[idx] : null;
-      if (idx >= 0) consumed.add(idx);
-      const r = matched ?? {};
+      if (idx < 0) return {};
+      consumed.add(idx);
+      return savedRows[idx];
+    });
+
+    // Печать — группами по номеру комнаты (как на экране), в пределах гостиницы.
+    const printOrder = groupedPrintOrder(rowsByPersonIdx.map((r) => r.roomNumber));
+
+    printOrder.forEach((personIdx) => {
+      const p = people[personIdx];
+      const r = rowsByPersonIdx[personIdx];
       const foodCost = toNum(r.foodCost);
       const accommodationCost = toNum(r.accommodationCost);
       const { inAt, outAt } = getCheckInOut(p, hotelIndex, request?.livingService?.plan);
@@ -817,7 +912,7 @@ export function addCombinedSheet(wb, opts) {
       }
       const pricePerDay = toNum(r.pricePerDay);
       put(row, "roomNumber", r.roomNumber ?? "");
-      put(row, "placementKind", placementKindLabel(Number(r.placementKind) || 0));
+      put(row, "placementKind", placementKindLabel(printedKind(r, roomKinds)));
       put(row, "tariffName", (r.tariffName ?? "").trim() || (r.roomCategory ?? ""));
       if (pricePerDay > 0) putMoney(row, "pricePerDay", pricePerDay);
       put(row, "daysCount", toNum(r.daysCount));

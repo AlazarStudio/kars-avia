@@ -689,3 +689,377 @@ test("книга: «Стоимость питания» согласована �
   );
   assert.equal(cell("V5"), 2000); // 500 × 4
 });
+
+// ── Вид размещения соседей по номеру ──
+//
+// Тариф с режимом «Номер» начисляет проживание один раз — на «несущего» гостя
+// номера, у соседей в сохранённых строках placementKind: 0 и нули по деньгам.
+// Книга подставляет соседу вид размещения несущего, но ни одной цифры строки
+// при этом не трогает (пустая «Цена за сутки» у соседа — так и задумано).
+function makeRoomMateRequest() {
+  const request = makeRequest();
+  request.livingService.hotels[0].people = [
+    { personId: "p1", fullName: "Иванов И.И.", personType: "PASSENGER", personCategory: "ADULT" },
+    { personId: "p2", fullName: "Петров П.П.", personType: "PASSENGER", personCategory: "ADULT" },
+  ];
+  request.hotelReports = [
+    {
+      hotelIndex: 0,
+      reportRows: [
+        {
+          personId: "p1", fullName: "Иванов И.И.", tariffName: "Стандарт",
+          pricePerDay: 2700, placementKind: 2, roomNumber: "12", daysCount: 2,
+          foodCost: 0, accommodationCost: 5400,
+        },
+        {
+          personId: "p2", fullName: "Петров П.П.", tariffName: "Стандарт",
+          pricePerDay: 0, placementKind: 0, roomNumber: "12", daysCount: 2,
+          foodCost: 0, accommodationCost: 0,
+        },
+      ],
+    },
+  ];
+  return request;
+}
+
+test("лист гостиницы: сосед по номеру получает вид размещения несущего гостя", () => {
+  const ws = addHotelSheet(new ExcelJS.Workbook(), {
+    request: makeRoomMateRequest(),
+    hotelIndex: 0,
+    sheetNames: new Set(),
+  });
+  assert.equal(ws.getCell("I5").value, "12");
+  assert.equal(ws.getCell("I6").value, "12");
+  assert.equal(ws.getCell("J5").value, "двухместное");
+  assert.equal(ws.getCell("J6").value, "двухместное");
+  // Деньги строк остались как в отчёте: у соседа цена за сутки пустая, суммы нулевые.
+  assert.equal(ws.getCell("L5").value, 2700);
+  assert.equal(ws.getCell("L6").value, null);
+  assert.equal(ws.getCell("X5").value, 5400);
+  assert.equal(ws.getCell("X6").value, 0);
+  assert.equal(ws.getCell("Y5").value, 5400);
+  assert.equal(ws.getCell("Y6").value, 0);
+  assert.equal(ws.getCell("W6").value, "—"); // базы для скидки нет
+});
+
+test("лист гостиницы: гость без номера остаётся без вида размещения", () => {
+  const request = makeRoomMateRequest();
+  request.hotelReports[0].reportRows[1].roomNumber = "";
+  const ws = addHotelSheet(new ExcelJS.Workbook(), {
+    request,
+    hotelIndex: 0,
+    sheetNames: new Set(),
+  });
+  assert.equal(ws.getCell("J5").value, "двухместное");
+  assert.equal(ws.getCell("J6").value, "");
+});
+
+// Сводка: у каждой гостиницы своя карта номеров — «1» в разных гостиницах
+// это разные номера.
+function makeTwoHotelsRequest() {
+  const request = makeRequest();
+  request.livingService.hotels = [
+    {
+      hotelId: "h1", name: "Гостиница А",
+      people: [
+        { personId: "a1", fullName: "Иванов И.И." },
+        { personId: "a2", fullName: "Петров П.П." },
+      ],
+    },
+    {
+      hotelId: "h2", name: "Гостиница Б",
+      people: [
+        { personId: "b1", fullName: "Сидоров С.С." },
+        { personId: "b2", fullName: "Кузнецов К.К." },
+      ],
+    },
+  ];
+  request.hotelReports = [
+    {
+      hotelIndex: 0,
+      reportRows: [
+        {
+          personId: "a1", fullName: "Иванов И.И.", placementKind: 2, roomNumber: "1",
+          pricePerDay: 2700, daysCount: 1, accommodationCost: 2700,
+        },
+        { personId: "a2", fullName: "Петров П.П.", placementKind: 0, roomNumber: "1" },
+      ],
+    },
+    {
+      hotelIndex: 1,
+      reportRows: [
+        {
+          personId: "b1", fullName: "Сидоров С.С.", placementKind: 3, roomNumber: "1",
+          pricePerDay: 3300, daysCount: 1, accommodationCost: 3300,
+        },
+        { personId: "b2", fullName: "Кузнецов К.К.", placementKind: 0, roomNumber: "1" },
+      ],
+    },
+  ];
+  return request;
+}
+
+test("сводка: сосед получает вид размещения из своей гостиницы", () => {
+  const ws = addCombinedSheet(new ExcelJS.Workbook(), {
+    request: makeTwoHotelsRequest(),
+    sheetNames: new Set(),
+    includeTransfer: false,
+  });
+  // 5 — сабхедер «Гостиница А», 6-7 — её гости, 8 — сабхедер «Гостиница Б», 9-10 — её.
+  assert.equal(ws.getCell("J6").value, "двухместное");
+  assert.equal(ws.getCell("J7").value, "двухместное");
+  assert.equal(ws.getCell("J9").value, "трёхместное");
+  assert.equal(ws.getCell("J10").value, "трёхместное");
+  // Деньги остались при несущих гостях.
+  assert.equal(ws.getCell("X6").value, 2700);
+  assert.equal(ws.getCell("X7").value, 0);
+  assert.equal(ws.getCell("X9").value, 3300);
+});
+
+// ── Порядок печати: соседи по номеру идут подряд ──
+//
+// Экран вкладки «Отчёт» группирует гостей по номеру комнаты (мемо reportGroups),
+// книга обязана печатать в том же порядке — иначе жильцы одного номера
+// разбросаны по листу чужими строками.
+
+// Ростер по алфавиту: A(208) · B(5) · C(208). Ожидаемый порядок печати — A, C, B.
+function makeRoomOrderRequest() {
+  const request = makeRequest();
+  request.livingService.hotels[0].people = [
+    { personId: "p1", fullName: "AMAF I.", personType: "PASSENGER", personCategory: "ADULT" },
+    { personId: "p2", fullName: "BORISOV B.", personType: "PASSENGER", personCategory: "ADULT" },
+    { personId: "p3", fullName: "CHIN C.", personType: "PASSENGER", personCategory: "ADULT" },
+  ];
+  request.hotelReports = [
+    {
+      hotelIndex: 0,
+      reportRows: [
+        {
+          personId: "p1", fullName: "AMAF I.", tariffName: "Стандарт",
+          pricePerDay: 1000, placementKind: 2, roomNumber: "208", daysCount: 1,
+          foodCost: 0, accommodationCost: 1000,
+        },
+        {
+          personId: "p2", fullName: "BORISOV B.", tariffName: "Стандарт",
+          pricePerDay: 2000, placementKind: 1, roomNumber: "5", daysCount: 1,
+          foodCost: 0, accommodationCost: 2000,
+        },
+        {
+          personId: "p3", fullName: "CHIN C.", tariffName: "Стандарт",
+          pricePerDay: 3000, placementKind: 2, roomNumber: "208", daysCount: 1,
+          foodCost: 0, accommodationCost: 3000,
+        },
+      ],
+    },
+  ];
+  return request;
+}
+
+const hotelSheetOf = (request) =>
+  addHotelSheet(new ExcelJS.Workbook(), { request, hotelIndex: 0, sheetNames: new Set() });
+
+test("лист гостиницы: жильцы одного номера печатаются подряд, ID — по новому порядку", () => {
+  const ws = hotelSheetOf(makeRoomOrderRequest());
+  // Ростер A(208) · B(5) · C(208) → лист A · C · B.
+  assert.deepEqual(
+    [ws.getCell("B5").value, ws.getCell("B6").value, ws.getCell("B7").value],
+    ["AMAF I.", "CHIN C.", "BORISOV B."]
+  );
+  // ID — порядковый номер строки листа, а не индекс в ростере.
+  assert.deepEqual(
+    [ws.getCell("A5").value, ws.getCell("A6").value, ws.getCell("A7").value],
+    [1, 2, 3]
+  );
+  // Значения строк уехали вместе с людьми: номер, цена, стоимость, итог.
+  assert.deepEqual(
+    [ws.getCell("I5").value, ws.getCell("I6").value, ws.getCell("I7").value],
+    ["208", "208", "5"]
+  );
+  assert.deepEqual(
+    [ws.getCell("L5").value, ws.getCell("L6").value, ws.getCell("L7").value],
+    [1000, 3000, 2000]
+  );
+  assert.deepEqual(
+    [ws.getCell("X5").value, ws.getCell("X6").value, ws.getCell("X7").value],
+    [1000, 3000, 2000]
+  );
+  assert.deepEqual(
+    [ws.getCell("Y5").value, ws.getCell("Y6").value, ws.getCell("Y7").value],
+    [1000, 3000, 2000]
+  );
+});
+
+test("лист гостиницы: гость без номера не разрывает пару соседей", () => {
+  const request = makeRoomOrderRequest();
+  // A(9) · B(без номера) · C(9) → лист A · C · B: безномерной остаётся
+  // одиночной группой на своей позиции, то есть после уже открытой группы «9».
+  request.hotelReports[0].reportRows[0].roomNumber = "9";
+  request.hotelReports[0].reportRows[1].roomNumber = "";
+  request.hotelReports[0].reportRows[2].roomNumber = "9";
+  const ws = hotelSheetOf(request);
+  assert.deepEqual(
+    [ws.getCell("B5").value, ws.getCell("B6").value, ws.getCell("B7").value],
+    ["AMAF I.", "CHIN C.", "BORISOV B."]
+  );
+  assert.deepEqual(
+    [ws.getCell("I5").value, ws.getCell("I6").value, ws.getCell("I7").value],
+    ["9", "9", ""]
+  );
+});
+
+// Значения строки листа как сравнимый массив: формулы — строкой «=…».
+const rowValues = (ws, r) =>
+  Array.from({ length: 25 }, (_, i) => {
+    const v = ws.getRow(r).getCell(i + 1).value;
+    return v && typeof v === "object" && "formula" in v ? `=${v.formula}` : v;
+  });
+
+test("лист гостиницы: «Итого» не зависит от порядка строк", () => {
+  const ws = hotelSheetOf(makeRoomOrderRequest());
+
+  // Тот же набор данных, но ростер УЖЕ сгруппирован (A · C · B) — печать
+  // обоих ростеров обязана дать одинаковую строку «Итого».
+  const pre = makeRoomOrderRequest();
+  const order = [0, 2, 1];
+  pre.livingService.hotels[0].people = order.map(
+    (i) => makeRoomOrderRequest().livingService.hotels[0].people[i]
+  );
+  pre.hotelReports[0].reportRows = order.map(
+    (i) => makeRoomOrderRequest().hotelReports[0].reportRows[i]
+  );
+  const wsPre = hotelSheetOf(pre);
+
+  // 5-7 — гости, 8 — разделитель, 9 — «Трансфер», 10-11 — рейсы, 12 — «Итого:».
+  assert.equal(ws.getCell("A12").value, "Итого:");
+  assert.deepEqual(rowValues(ws, 12), rowValues(wsPre, 12));
+  // Диапазон сплошной и тот же, что был до перестановки.
+  assert.equal(ws.getCell("M12").value.formula, "SUM(M5:M7)");
+  assert.equal(ws.getCell("X12").value.formula, "SUM(X5:X7)");
+  assert.equal(ws.getCell("V12").value.formula, "SUM(V5:V7)");
+});
+
+test("лист гостиницы: сосед по номеру печатается сразу под несущим и берёт его вид", () => {
+  const request = makeRequest();
+  request.livingService.hotels[0].people = [
+    { personId: "p1", fullName: "Несущий Н.Н." },
+    { personId: "p2", fullName: "Одиночка О.О." },
+    { personId: "p3", fullName: "Сосед С.С." },
+  ];
+  request.hotelReports = [
+    {
+      hotelIndex: 0,
+      reportRows: [
+        {
+          personId: "p1", fullName: "Несущий Н.Н.", placementKind: 2, roomNumber: "12",
+          pricePerDay: 2700, daysCount: 2, accommodationCost: 5400,
+        },
+        {
+          personId: "p2", fullName: "Одиночка О.О.", placementKind: 1, roomNumber: "3",
+          pricePerDay: 1800, daysCount: 2, accommodationCost: 3600,
+        },
+        // Тариф с режимом «Номер»: у соседа placementKind: 0 и нули по деньгам.
+        {
+          personId: "p3", fullName: "Сосед С.С.", placementKind: 0, roomNumber: "12",
+          pricePerDay: 0, daysCount: 2, accommodationCost: 0,
+        },
+      ],
+    },
+  ];
+  const ws = hotelSheetOf(request);
+  assert.deepEqual(
+    [ws.getCell("B5").value, ws.getCell("B6").value, ws.getCell("B7").value],
+    ["Несущий Н.Н.", "Сосед С.С.", "Одиночка О.О."]
+  );
+  // Фолбэк вида размещения работает поверх нового порядка.
+  assert.deepEqual(
+    [ws.getCell("J5").value, ws.getCell("J6").value, ws.getCell("J7").value],
+    ["двухместное", "двухместное", "одноместное"]
+  );
+  // Деньги остались при своих людях: у соседа пустая цена и нулевая стоимость.
+  assert.equal(ws.getCell("L6").value, null);
+  assert.equal(ws.getCell("X6").value, 0);
+  assert.equal(ws.getCell("X7").value, 3600);
+});
+
+test("сводка: группировка по номерам внутри каждой гостиницы, ID сквозной", () => {
+  const request = makeRequest();
+  request.livingService.hotels = [
+    {
+      hotelId: "h1", name: "Гостиница А",
+      people: [
+        { personId: "a1", fullName: "Первый П." },
+        { personId: "a2", fullName: "Второй В." },
+        { personId: "a3", fullName: "Третий Т." },
+      ],
+    },
+    {
+      hotelId: "h2", name: "Гостиница Б",
+      people: [
+        { personId: "b1", fullName: "Четвёртый Ч." },
+        { personId: "b2", fullName: "Пятый П." },
+      ],
+    },
+  ];
+  request.hotelReports = [
+    {
+      hotelIndex: 0,
+      reportRows: [
+        { personId: "a1", fullName: "Первый П.", roomNumber: "1", accommodationCost: 100 },
+        { personId: "a2", fullName: "Второй В.", roomNumber: "2", accommodationCost: 200 },
+        { personId: "a3", fullName: "Третий Т.", roomNumber: "1", accommodationCost: 300 },
+      ],
+    },
+    {
+      hotelIndex: 1,
+      reportRows: [
+        { personId: "b1", fullName: "Четвёртый Ч.", roomNumber: "7", accommodationCost: 400 },
+        { personId: "b2", fullName: "Пятый П.", roomNumber: "7", accommodationCost: 500 },
+      ],
+    },
+  ];
+  const ws = addCombinedSheet(new ExcelJS.Workbook(), {
+    request,
+    sheetNames: new Set(),
+    includeTransfer: false,
+  });
+  // 5 — сабхедер «Гостиница А», 6-8 — её гости, 9 — сабхедер «Гостиница Б», 10-11 — её.
+  assert.ok(String(ws.getCell("A5").value).startsWith("Гостиница: Гостиница А"));
+  assert.ok(String(ws.getCell("A9").value).startsWith("Гостиница: Гостиница Б"));
+  assert.deepEqual(
+    [6, 7, 8, 10, 11].map((r) => ws.getCell(`B${r}`).value),
+    ["Первый П.", "Третий Т.", "Второй В.", "Четвёртый Ч.", "Пятый П."]
+  );
+  assert.deepEqual(
+    [6, 7, 8, 10, 11].map((r) => ws.getCell(`I${r}`).value),
+    ["1", "1", "2", "7", "7"]
+  );
+  // Группировка не выходит за границы гостиницы, ID сквозной по книге.
+  assert.deepEqual([6, 7, 8, 10, 11].map((r) => ws.getCell(`A${r}`).value), [1, 2, 3, 4, 5]);
+  // Деньги уехали вместе с людьми.
+  assert.deepEqual(
+    [6, 7, 8, 10, 11].map((r) => ws.getCell(`X${r}`).value),
+    [100, 300, 200, 400, 500]
+  );
+});
+
+test("сводка: ghost-строка тарифа не подставляет вид размещения гостю", () => {
+  const request = makeRequest();
+  request.livingService.hotels[0].people = [{ personId: "p1", fullName: "Иванов И.И." }];
+  request.hotelReports = [
+    {
+      hotelIndex: 0,
+      reportRows: [
+        { personId: "p1", fullName: "Иванов И.И.", placementKind: 0, roomNumber: "1" },
+        // Ghost-строка таблицы цен тарифа: ФИО пустое, вид — из ценовой пары.
+        { fullName: "", tariffName: "Стандарт", placementKind: 4, roomNumber: "1", pricePerDay: 1800 },
+      ],
+    },
+  ];
+  const ws = addCombinedSheet(new ExcelJS.Workbook(), {
+    request,
+    sheetNames: new Set(),
+    includeTransfer: false,
+  });
+  assert.equal(ws.getCell("I6").value, "1");
+  assert.equal(ws.getCell("J6").value, "");
+});
