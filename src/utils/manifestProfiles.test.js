@@ -331,3 +331,96 @@ test("ICAO и ведомость не перехватывают файлы др
   assert.equal(detectProfile(ICAO_ROWS, PROFILES).profile.id, "ICAO");
   assert.equal(detectProfile(VED_ROWS, PROFILES).profile.id, "PM_TEXT");
 });
+
+// ── Выгрузка «Пассажиры» (Руслайн) ──
+// Шапка двухэтажная: строка групп («Пассажир», «Билет», «Документ») и под ней
+// сами колонки. Верхний этаж в фикстуре оставлен намеренно — «Пассажир» есть в
+// синонимах PNL и PM, и тест фиксирует, что файл они не перехватывают.
+const RUSLINE_GROUPS = [
+  "№", "Пассажир", null, null, null, "Билет", "Документ",
+  null, null, null, null, "Телефон агента", "Email",
+];
+
+const RUSLINE_HEADER = [
+  null, "Категория", "Фамилия", "Имя", "Дата рождения", null, "Гражданство",
+  "Тип", "Страна", "Номер", "Срок окончания", null, null,
+];
+
+// Дата рождения приходит из SheetJS уже строкой вида «11/26/01» (raw: false).
+const ruslineRow = (num, category, surname, firstname) => [
+  String(num), category, surname, firstname, "11/26/01",
+  "3626177871690 C2", "RU", "PS", "RU", "6722044535", "12/31/49",
+  "78095054669", "PAX@MAIL.RU",
+];
+
+const RUSLINE_ROWS = [
+  ["7R-398, 15.08.2026"],
+  [],
+  ["SUI-HMA"],
+  RUSLINE_GROUPS,
+  RUSLINE_HEADER,
+  ruslineRow(1, "Взрослый", "БАЛАШОВ", "АНДРЕЙ СЕРГЕЕВИЧ"),
+  ruslineRow(2, "Ребенок", "CHERDAKOVA", "AMALIIA"),
+  ruslineRow(3, "Ребёнок", "ШЕЛУДКОВ", "МАКАР"),
+  ruslineRow(4, "Младенец без места", "ХАПЦЕВА", "ЭММА АСКЕРБИЕВНА"),
+];
+
+test("RUSLINE: детекция на нижнем этаже двухэтажной шапки", () => {
+  const detected = detectProfile(RUSLINE_ROWS, PROFILES);
+  assert.ok(detected);
+  assert.equal(detected.profile.id, "RUSLINE");
+  assert.equal(detected.headerRow, 4);
+  assert.equal(detected.cols.category, 1);
+  assert.equal(detected.cols.surname, 2);
+  assert.equal(detected.cols.firstname, 3);
+});
+
+test("RUSLINE: ФИО из двух колонок, места нет, категории словами", () => {
+  const detected = detectProfile(RUSLINE_ROWS, PROFILES);
+  const people = extractPeople(RUSLINE_ROWS, detected.profile, detected.cols);
+  assert.deepEqual(people, [
+    { fullName: "БАЛАШОВ АНДРЕЙ СЕРГЕЕВИЧ", seat: null, personCategory: "ADULT" },
+    { fullName: "CHERDAKOVA AMALIIA", seat: null, personCategory: "CHILD" },
+    { fullName: "ШЕЛУДКОВ МАКАР", seat: null, personCategory: "CHILD" },
+    { fullName: "ХАПЦЕВА ЭММА АСКЕРБИЕВНА", seat: null, personCategory: "INFANT" },
+  ]);
+});
+
+test("RUSLINE: строки шапки не становятся пассажирами", () => {
+  const detected = detectProfile(RUSLINE_ROWS, PROFILES);
+  const people = extractPeople(RUSLINE_ROWS, detected.profile, detected.cols);
+  assert.equal(people.length, 4);
+  assert.ok(!people.some((p) => /Категория|Пассажир/.test(p.fullName)));
+});
+
+test("RUSLINE: № рейса берётся из титульной ячейки, а не из маршрута", () => {
+  const detected = detectProfile(RUSLINE_ROWS, PROFILES);
+  assert.equal(detected.profile.flight(RUSLINE_ROWS), "7R-398");
+});
+
+test("RUSLINE: инфанты идут своими строками, механизм lapInfants не подключается", () => {
+  const detected = detectProfile(RUSLINE_ROWS, PROFILES);
+  assert.equal(detected.profile.lapInfants, undefined);
+});
+
+test("RUSLINE и прочие форматы не перехватывают файлы друг друга", () => {
+  assert.equal(detectProfile(RUSLINE_ROWS, PROFILES).profile.id, "RUSLINE");
+  assert.equal(detectProfile(ICAO_ROWS, PROFILES).profile.id, "ICAO");
+  assert.equal(detectProfile(VED_ROWS, PROFILES).profile.id, "PM_TEXT");
+  assert.equal(
+    detectProfile([[TITLE], [], [], WIDE_HEADER], PROFILES).profile.id,
+    "PLI",
+  );
+  assert.equal(
+    detectProfile(
+      [["SEC", "Surname", "CHD", "INF"], ["1", "IVANOV IVAN", null, "X"]],
+      PROFILES,
+    ).profile.id,
+    "PM",
+  );
+  assert.equal(
+    detectProfile([["ФИО", "№ м", "Пас."], ["ИВАНОВ ИВАН", "12A", "ВЗ"]], PROFILES)
+      .profile.id,
+    "PNL",
+  );
+});
