@@ -74,6 +74,12 @@ export function pickHotelName(hotel) {
   return (hotel?.name && hotel.name.trim()) || hotel?.id || "Отель";
 }
 
+// Кусок «г. Город» для титулов и имени файла — вместе с ведущим пробелом.
+// Города может не быть вовсе (заявка без аэропорта и без гостиниц — типично для
+// багаж-only), и тогда шаблон должен схлопнуться целиком: «г.» без города и
+// двойные пробелы уезжали в титул и в имя файла.
+const cityPart = (city) => (city ? ` г. ${city}` : "");
+
 // Раскладка листа проживания — общая для листа гостиницы и «Сводки».
 // money — колонка про деньги проживания и питания: под hideMoney её в листе нет
 // вовсе (пустая колонка с заголовком «Цена за сутки» — тот же ответ на вопрос
@@ -353,8 +359,13 @@ export function addHotelSheet(wb, opts) {
   const depVisible = !hidden.has("transferDeparture");
   const arrival = request?.transferService;
   const departure = request?.departureTransferService;
-  const aCost = arrVisible ? transferCost(arrival?.drivers) : null;
-  const dCost = depVisible ? transferCost(departure?.drivers) : null;
+  // Направление печатается, только если оно И видимо, И включено в заявке —
+  // как в «Сводке». Без проверки enabled лист получал шапку «Трансфер» и две
+  // пустые строки рейсов у заявки, где трансфера нет вовсе.
+  const arrOn = arrVisible && Boolean(arrival?.plan?.enabled);
+  const depOn = depVisible && Boolean(departure?.plan?.enabled);
+  const aCost = arrOn ? transferCost(arrival?.drivers) : null;
+  const dCost = depOn ? transferCost(departure?.drivers) : null;
   // Под гейтом колонка «Итого» остаётся только ради денег трансфера: нет их —
   // нет и колонки, иначе на листе без денег висел бы её пустой заголовок.
   const { cols, at, put, putMoney, letter, lastCol, moneyCols, leftCols } =
@@ -372,7 +383,7 @@ export function addHotelSheet(wb, opts) {
     ? ` от ${new Date(request.flightDate).toLocaleDateString("ru-RU")}`
     : "";
   ws.getCell("C3").value =
-    `Детализация оказанных услуг пассажиров задержанного рейса № ${request?.flightNumber ?? ""}${flightPart} г. ${city} гостиница ${hotelName}`;
+    `Детализация оказанных услуг пассажиров задержанного рейса № ${request?.flightNumber ?? ""}${flightPart}${cityPart(city)} гостиница ${hotelName}`;
   [ws.getCell("A1"), contractCell, ws.getCell("C3")].forEach((c) => {
     c.font = HEADER_FONT;
   });
@@ -493,10 +504,11 @@ export function addHotelSheet(wb, opts) {
 
   // ── Блок «Трансфер» (одна пустая строка + строки видимых направлений) ──
   // Оба направления скрыты — блока нет вовсе: пустая шапка «Трансфер» говорила бы
-  // о рейсах, которых гостинице видеть не положено.
+  // о рейсах, которых гостинице видеть не положено. Блока нет и когда трансфера
+  // у заявки нет: пустая шапка выглядела бы как услуга, которой не было.
   let gapRow = null; // строка-разделитель есть только вместе с блоком
   let lastTransferRow = null;
-  if (arrVisible || depVisible) {
+  if (arrOn || depOn) {
     gapRow = rowIdx; // строка-разделитель: остаётся без сетки
     rowIdx += 1;
     const tHeaderRow = rowIdx;
@@ -508,7 +520,7 @@ export function addHotelSheet(wb, opts) {
     rowIdx += 1;
 
     // ARRIVAL
-    if (arrVisible) {
+    if (arrOn) {
       const aFirstType = (arrival?.drivers ?? []).find((d) => d.vehicleType)?.vehicleType ?? "";
       const aRow = ws.getRow(rowIdx);
       put(aRow, "fullName", `аэропорт-гостиница ${hotelName}`);
@@ -526,7 +538,7 @@ export function addHotelSheet(wb, opts) {
     }
 
     // DEPARTURE
-    if (depVisible) {
+    if (depOn) {
       const dFirstType = (departure?.drivers ?? []).find((d) => d.vehicleType)?.vehicleType ?? "";
       const dRow = ws.getRow(rowIdx);
       put(dRow, "fullName", `гостиница ${hotelName}-аэропорт`);
@@ -612,7 +624,7 @@ export function addTransferSheet(wb, opts) {
   ws.getCell("A1").value = request?.airline?.nameFull || request?.airline?.name || "";
   ws.getCell("A1").font = HEADER_FONT;
   ws.getCell("C3").value =
-    `${baseName} по рейсу № ${request?.flightNumber ?? ""} г. ${city}`;
+    `${baseName} по рейсу № ${request?.flightNumber ?? ""}${cityPart(city)}`;
   ws.getCell("C3").font = HEADER_FONT;
 
   TRANSFER_HEADERS.forEach((label, i) => {
@@ -679,7 +691,7 @@ export function addBaggageSheet(wb, opts) {
   ws.getCell("A1").value = request?.airline?.nameFull || request?.airline?.name || "";
   ws.getCell("A1").font = HEADER_FONT;
   ws.getCell("C3").value =
-    `Доставка багажа по рейсу № ${request?.flightNumber ?? ""} г. ${city}`;
+    `Доставка багажа по рейсу № ${request?.flightNumber ?? ""}${cityPart(city)}`;
   ws.getCell("C3").font = HEADER_FONT;
 
   TRANSFER_HEADERS.forEach((label, i) => {
@@ -781,7 +793,7 @@ export async function downloadHotelReport(request, hotelIndex, opts) {
   const sheetNames = new Set();
   addHotelSheet(wb, { request, hotelIndex, sheetNames, ...opts });
   const hotel = request?.livingService?.hotels?.[hotelIndex];
-  const filename = `${request?.airline?.name ?? ""} гостиница ${pickHotelName(hotel)} г. ${pickCity(request, hotel)}.xlsx`;
+  const filename = `${request?.airline?.name ?? ""} гостиница ${pickHotelName(hotel)}${cityPart(pickCity(request, hotel))}.xlsx`;
   await downloadWorkbook(wb, filename);
 }
 
@@ -818,7 +830,7 @@ export function addCombinedSheet(wb, opts) {
     ? ` от ${new Date(request.flightDate).toLocaleDateString("ru-RU")}`
     : "";
   ws.getCell("C3").value =
-    `Детализация оказанных услуг пассажиров задержанного рейса № ${request?.flightNumber ?? ""}${flightPart} г. ${city}`;
+    `Детализация оказанных услуг пассажиров задержанного рейса № ${request?.flightNumber ?? ""}${flightPart}${cityPart(city)}`;
   [ws.getCell("A1"), contractCell, ws.getCell("C3")].forEach((c) => {
     c.font = HEADER_FONT;
   });

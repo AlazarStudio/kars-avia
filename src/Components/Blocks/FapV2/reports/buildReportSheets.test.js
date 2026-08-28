@@ -583,6 +583,69 @@ test("лист гостиницы: направления гейтятся по 
   assert.equal(hasCellValue(ws, 2500), true);
 });
 
+// ── Блока «Трансфер» нет, когда трансфера нет ──
+//
+// Гейт видимости услуг блок не убирал — на проде в выгрузке гостиницы без
+// трансфера висели шапка «Трансфер» и две пустые строки направлений.
+// Лист гостиницы гейтит направления так же, как «Сводка»: видимо И включено.
+
+test("лист гостиницы: трансфера у заявки нет — блока «Трансфер» тоже нет", () => {
+  // Услуг трансфера в заявке нет вовсе.
+  const wsNoService = guestSheet();
+  // И тот же лист, где услуги есть, но выключены.
+  const disabled = makeRequestWithGuest();
+  disabled.transferService = { plan: { enabled: false }, drivers: [] };
+  disabled.departureTransferService = { plan: { enabled: false }, drivers: [] };
+  const wsDisabled = addHotelSheet(new ExcelJS.Workbook(), {
+    request: disabled,
+    hotelIndex: 0,
+    sheetNames: new Set(),
+  });
+
+  [wsNoService, wsDisabled].forEach((ws) => {
+    assert.equal(hasCellValue(ws, "Трансфер"), false);
+    assert.equal(hasCellValue(ws, "аэропорт-гостиница Гостиница Тест"), false);
+    assert.equal(hasCellValue(ws, "гостиница Гостиница Тест-аэропорт"), false);
+    // 5 — гость, 6 — «Итого:» сразу под ним, без разделителя и блока.
+    assert.equal(ws.getCell("A6").value, "Итого:");
+    // Диапазон «Итого» кончается на последней строке гостя.
+    assert.equal(ws.getCell("Y6").value.formula, "SUM(Y5:Y5)");
+  });
+});
+
+test("лист гостиницы: включён только прилёт — в блоке одна строка", () => {
+  const request = makeFullServiceRequest();
+  request.departureTransferService.plan.enabled = false;
+  const ws = addHotelSheet(new ExcelJS.Workbook(), {
+    request,
+    hotelIndex: 0,
+    sheetNames: new Set(),
+  });
+  assert.equal(hasCellValue(ws, "Трансфер"), true);
+  assert.equal(hasCellValue(ws, "аэропорт-гостиница Гостиница Тест"), true);
+  assert.equal(hasCellValue(ws, "гостиница Гостиница Тест-аэропорт"), false);
+  assert.equal(hasCellValue(ws, 3000), true);  // деньги прилёта
+  assert.equal(hasCellValue(ws, 2500), false); // выключенный вылет денег не даёт
+  // 5 — гость, 6 — разделитель, 7 — «Трансфер», 8 — прилёт, 9 — «Итого:».
+  assert.equal(ws.getCell("A9").value, "Итого:");
+  assert.equal(ws.getCell("Y9").value.formula, "SUM(Y5:Y8)");
+});
+
+test("лист гостиницы: выключенный трансфер не удерживает «Итого» под hideMoney", () => {
+  const request = makeRequestWithGuest();
+  request.transferService = { plan: { enabled: false }, drivers: [{ reportCost: 3000 }] };
+  const ws = addHotelSheet(new ExcelJS.Workbook(), {
+    request,
+    hotelIndex: 0,
+    sheetNames: new Set(),
+    hideMoney: true,
+  });
+  // Суммы выключенного направления в лист не попадают, значит и колонка «Итого»
+  // ради них не остаётся — иначе висел бы её пустой заголовок.
+  assert.deepEqual(headersOf(ws), FACT_HEADERS);
+  assert.equal(hasCellValue(ws, 3000), false);
+});
+
 test("лист гостиницы: hideMoney оставляет в «Итого:» только количества", () => {
   const ws = addHotelSheet(new ExcelJS.Workbook(), {
     request: makeRequestWithGuest(),
@@ -590,13 +653,13 @@ test("лист гостиницы: hideMoney оставляет в «Итого:
     sheetNames: new Set(),
     hideMoney: true,
   });
-  // 5 — гость, 6 — разделитель, 7 — «Трансфер», 8-9 — рейсы, 10 — «Итого:».
-  assert.equal(ws.getCell("A10").value, "Итого:");
-  assert.equal(ws.getCell("L10").value.formula, "SUM(L5:L5)"); // Суток
-  assert.equal(ws.getCell("M10").value.formula, "SUM(M5:M5)"); // Завтраки
-  assert.equal(ws.getCell("P10").value.formula, "SUM(P5:P5)"); // Ланчбоксы
+  // 5 — гость, 6 — «Итого:»: трансфера в фикстуре нет, блока «Трансфер» тоже.
+  assert.equal(ws.getCell("A6").value, "Итого:");
+  assert.equal(ws.getCell("L6").value.formula, "SUM(L5:L5)"); // Суток
+  assert.equal(ws.getCell("M6").value.formula, "SUM(M5:M5)"); // Завтраки
+  assert.equal(ws.getCell("P6").value.formula, "SUM(P5:P5)"); // Ланчбоксы
   // Трансфера в фикстуре нет — суммировать в «Итого» нечего, формулы нет.
-  assert.equal(ws.getCell("Q10").value, null);
+  assert.equal(ws.getCell("Q6").value, null);
 });
 
 test("книга заявки: hideMoney доезжает и до «Сводки», и до листа гостиницы", () => {
@@ -929,13 +992,13 @@ test("лист гостиницы: «Итого» не зависит от по�
   );
   const wsPre = hotelSheetOf(pre);
 
-  // 5-7 — гости, 8 — разделитель, 9 — «Трансфер», 10-11 — рейсы, 12 — «Итого:».
-  assert.equal(ws.getCell("A12").value, "Итого:");
-  assert.deepEqual(rowValues(ws, 12), rowValues(wsPre, 12));
+  // 5-7 — гости, 8 — «Итого:»: трансфера в фикстуре нет, блока «Трансфер» тоже.
+  assert.equal(ws.getCell("A8").value, "Итого:");
+  assert.deepEqual(rowValues(ws, 8), rowValues(wsPre, 8));
   // Диапазон сплошной и тот же, что был до перестановки.
-  assert.equal(ws.getCell("M12").value.formula, "SUM(M5:M7)");
-  assert.equal(ws.getCell("X12").value.formula, "SUM(X5:X7)");
-  assert.equal(ws.getCell("V12").value.formula, "SUM(V5:V7)");
+  assert.equal(ws.getCell("M8").value.formula, "SUM(M5:M7)");
+  assert.equal(ws.getCell("X8").value.formula, "SUM(X5:X7)");
+  assert.equal(ws.getCell("V8").value.formula, "SUM(V5:V7)");
 });
 
 test("лист гостиницы: сосед по номеру печатается сразу под несущим и берёт его вид", () => {
@@ -1062,4 +1125,51 @@ test("сводка: ghost-строка тарифа не подставляет 
   });
   assert.equal(ws.getCell("I6").value, "1");
   assert.equal(ws.getCell("J6").value, "");
+});
+
+// ── Титулы: город может отсутствовать ──
+//
+// Города нет, когда у заявки нет аэропорта с городом и нет адреса гостиницы
+// (типично для багаж-only заявки). «г. » клеилось в шаблон всё равно — титул
+// заканчивался висящим «г.» с двойным пробелом, имя файла — «… г. .xlsx».
+
+const TITLE_PREFIX = "Детализация оказанных услуг пассажиров задержанного рейса № A4-123";
+
+test("титулы: город есть — формат прежний", () => {
+  const request = makeRequestWithGuest(); // адрес «Город, ул. Тестовая 1» → «Город»
+  const hotel = addHotelSheet(new ExcelJS.Workbook(), {
+    request, hotelIndex: 0, sheetNames: new Set(),
+  });
+  assert.equal(
+    hotel.getCell("C3").value,
+    `${TITLE_PREFIX} г. Город гостиница Гостиница Тест`
+  );
+  const combined = addCombinedSheet(new ExcelJS.Workbook(), {
+    request, sheetNames: new Set(), includeTransfer: false,
+  });
+  assert.equal(combined.getCell("C3").value, `${TITLE_PREFIX} г. Город`);
+});
+
+test("титулы: города нет — «г.» не печатается и лишних пробелов не остаётся", () => {
+  const request = makeRequestWithGuest();
+  request.livingService.hotels[0].address = "";
+  const hotel = addHotelSheet(new ExcelJS.Workbook(), {
+    request, hotelIndex: 0, sheetNames: new Set(),
+  });
+  assert.equal(hotel.getCell("C3").value, `${TITLE_PREFIX} гостиница Гостиница Тест`);
+  const combined = addCombinedSheet(new ExcelJS.Workbook(), {
+    request, sheetNames: new Set(), includeTransfer: false,
+  });
+  assert.equal(combined.getCell("C3").value, TITLE_PREFIX);
+  [hotel, combined].forEach((ws) => {
+    const title = String(ws.getCell("C3").value);
+    assert.ok(!title.includes("г."), `в титуле осталось «г.»: ${title}`);
+    assert.ok(!title.includes("  "), `в титуле двойной пробел: ${title}`);
+  });
+});
+
+test("титул багажа: у багаж-only заявки города нет — «г.» не печатается", () => {
+  // Гостиниц у такой заявки нет вовсе, аэропорта тоже — реальный прод-случай.
+  const ws = baggageSheet();
+  assert.equal(ws.getCell("C3").value, "Доставка багажа по рейсу № A4-123");
 });
