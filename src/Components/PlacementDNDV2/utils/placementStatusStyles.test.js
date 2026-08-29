@@ -15,7 +15,7 @@ const RAW_STATUSES = [
   "archiving",
 ];
 
-const DEFAULT_STYLE = { edge: "#6b7090", tint: "#eef1f7" };
+const DEFAULT_STYLE = { edge: "#9e9e9e", tint: "#f5f5f5" };
 const LEGACY_STYLE = { edge: "#c3c8d9", tint: "#f6f7fa" };
 
 const HEX = /^#[0-9a-fA-F]{6}$/;
@@ -39,12 +39,12 @@ test("в STATUS_STYLES нет ключей сверх подписей translate
 
 test("getStatusStyle отдаёт стиль статуса для заявки", () => {
   assert.deepEqual(getStatusStyle("Забронирован"), {
-    edge: "#2e7d32",
+    edge: "#4caf50",
     tint: "#e8f5e9",
   });
   assert.deepEqual(getStatusStyle("Продлен", true), {
-    edge: "#0057C3",
-    tint: "#e7effa",
+    edge: "#2196f3",
+    tint: "#e3f2fd",
   });
 });
 

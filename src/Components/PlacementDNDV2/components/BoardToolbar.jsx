@@ -1,13 +1,13 @@
 import React, { useState } from "react";
 import { Popover } from "@mui/material";
 import ChevronIcon from "../../../shared/icons/ChevronIcon";
-import { STATUS_STYLES } from "../utils/placementStatusStyles";
+import { STATUS_STYLES, getStatusStyle } from "../utils/placementStatusStyles";
 import classes from "./BoardToolbar.module.css";
 
 // Порядок легенды — из макета: «Создан» описывает карточки лотка
 // (внутренний статус «Ожидает» не переименовываем).
 const LEGEND_ITEMS = [
-  { name: "Создан", style: { edge: "#6b7090", tint: "#eef1f7" } },
+  { name: "Создан", style: getStatusStyle("Ожидает") },
   { name: "Забронирован" },
   { name: "Продлен" },
   { name: "Ранний заезд" },
@@ -133,7 +133,7 @@ const BoardToolbar = ({
         slotProps={{
           paper: {
             style: {
-              width: 290,
+              width: 200,
               borderRadius: 12,
               border: "1px solid #e8eaf1",
               boxShadow: "0 4px 14px rgba(0,0,0,.15)",
