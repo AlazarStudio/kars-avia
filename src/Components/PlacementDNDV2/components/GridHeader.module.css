@@ -34,7 +34,7 @@
 .viewTab {
   border: none;
   border-radius: 7px;
-  padding: 4px 14px;
+  padding: 4px 11px;
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
@@ -47,20 +47,6 @@
   background: #fff;
   color: #2d3147;
   box-shadow: 0 1px 3px rgba(20, 30, 60, 0.15);
-}
-
-.todayButton {
-  border: none;
-  background: none;
-  color: #0057c3;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-family: inherit;
-  padding: 0;
 }
 
 .right {
@@ -122,10 +108,10 @@
   white-space: nowrap;
 }
 
+/* Сегодня выделяется жёлтой колонкой (DAY_BG.today) — число только жирнее. */
 .dayPillToday {
   font-weight: 700;
-  color: #fff;
-  background: #0057c3;
+  color: #2d3147;
 }
 
 .dayPillWeekend {

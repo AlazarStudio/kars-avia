@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { categoryLabel } from "../../../utils/roomCategories";
-import { DAY_BG, dayCellBg } from "../utils/placementPeriod";
+import { DRAG_HIGHLIGHT_BG, dayCellBg } from "../utils/placementPeriod";
 import PlacementBarV2 from "./PlacementBarV2";
 import classes from "./RoomRowV2.module.css";
 
@@ -110,7 +110,7 @@ const RoomRowV2 = memo(
               style={{
                 width: `${dayW}px`,
                 minWidth: `${dayW}px`,
-                background: highlighted(day) ? DAY_BG.today : dayCellBg(day),
+                background: highlighted(day) ? DRAG_HIGHLIGHT_BG : dayCellBg(day),
                 opacity: active ? 1 : 0.45,
               }}
             />

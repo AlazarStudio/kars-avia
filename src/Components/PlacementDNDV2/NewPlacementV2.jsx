@@ -826,7 +826,6 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
                   onShift={(dir) =>
                     setAnchor((prev) => shiftAnchor(view, prev, dir))
                   }
-                  onToday={() => setAnchor(new Date())}
                 />
 
                 {filteredRooms.map((room) => (

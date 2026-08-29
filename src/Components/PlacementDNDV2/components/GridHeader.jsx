@@ -4,11 +4,19 @@ import { ru } from "date-fns/locale";
 import { dayCellBg } from "../utils/placementPeriod";
 import classes from "./GridHeader.module.css";
 
-// view: "month" | "week"; period: результат buildPeriod; dayW: ширина дня в px
-const GridHeader = ({ view, period, dayW, onSetView, onShift, onToday }) => {
+const VIEW_TABS = [
+  { value: "week", label: "Неделя" },
+  { value: "decade", label: "Декада" },
+  { value: "month", label: "Месяц" },
+];
+
+// view: "month" | "decade" | "week"; period: buildPeriod; dayW: ширина дня в px
+const GridHeader = ({ view, period, dayW, onSetView, onShift }) => {
   const dayLabel = (day) => {
-    if (view !== "week") return format(day, "d");
-    // ru-локаль отдаёт «пн» — в макете день недели с заглавной: «Пн 24»
+    // В месяце колонок 28–31 — влезает только число. Неделя и декада широкие,
+    // там подписываем день недели: «Пн 24».
+    if (view === "month") return format(day, "d");
+    // ru-локаль отдаёт «пн» — в макете день недели с заглавной
     const weekday = format(day, "EEEEEE", { locale: ru });
     return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)} ${format(day, "d")}`;
   };
@@ -17,28 +25,17 @@ const GridHeader = ({ view, period, dayW, onSetView, onShift, onToday }) => {
     <div className={classes.header}>
       <div className={classes.corner}>
         <div className={classes.viewPill}>
-          <button
-            type="button"
-            className={`${classes.viewTab} ${view === "week" ? classes.viewTabActive : ""}`}
-            onClick={() => onSetView("week")}
-          >
-            Неделя
-          </button>
-          <button
-            type="button"
-            className={`${classes.viewTab} ${view === "month" ? classes.viewTabActive : ""}`}
-            onClick={() => onSetView("month")}
-          >
-            Месяц
-          </button>
+          {VIEW_TABS.map((tab) => (
+            <button
+              key={tab.value}
+              type="button"
+              className={`${classes.viewTab} ${view === tab.value ? classes.viewTabActive : ""}`}
+              onClick={() => onSetView(tab.value)}
+            >
+              {tab.label}
+            </button>
+          ))}
         </div>
-        <button type="button" className={classes.todayButton} onClick={onToday}>
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#0057C3" strokeWidth="2" strokeLinecap="round">
-            <circle cx="12" cy="12" r="9" />
-            <circle cx="12" cy="12" r="2.5" fill="#0057C3" />
-          </svg>
-          Сегодня
-        </button>
       </div>
 
       <div className={classes.right}>
