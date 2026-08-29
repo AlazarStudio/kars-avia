@@ -80,7 +80,7 @@ const UnplacedTray = ({
           ) : null}
         </div>
       ) : (
-        <div className={classes.list}>
+        <div className={classes.list} data-tray-scroll="">
           {items.map((request) => (
             <TrayCardV2
               key={request.id}

@@ -1,13 +1,21 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import ChatIcon from "../../../shared/icons/ChatIcon";
 import { convertToDate, getMediaUrl } from "../../../../graphQL_requests";
 import { categoryLabel } from "../../../utils/roomCategories";
 import { waitBadge } from "../utils/placementBadges";
+import { getStatusStyle } from "../utils/placementStatusStyles";
+import BarPopover from "./BarPopover";
 import classes from "./UnplacedTray.module.css";
 
 // Смещение курсора между нажатием и отпусканием, при котором это ещё клик.
 const CLICK_SLOP = 8;
+const HOVER_DELAY = 250;
+// Габариты поповера с запасом (см. BarPopover/PlacementBarV2.module.css .popover).
+const POPOVER_WIDTH = 300;
+const POPOVER_HEIGHT = 210;
+const POPOVER_GAP = 10;
+const VIEWPORT_PAD_LEFT = 8;
 
 // Карточка неразмещённой заявки: перетаскивается на койку в сетке.
 const TrayCardV2 = ({
@@ -31,6 +39,7 @@ const TrayCardV2 = ({
     checkOutDate,
     checkOutTime,
     unreadMessages,
+    status,
   } = request;
 
   const { attributes, listeners, setNodeRef, transform, isDragging } =
@@ -57,10 +66,81 @@ const TrayCardV2 = ({
 
   const pointerStartRef = useRef(null);
 
+  const [hovered, setHovered] = useState(false);
+  const [popPos, setPopPos] = useState(null);
+  const hoverTimerRef = useRef(null);
+  const cardRef = useRef(null);
+
+  // Один DOM-узел — один ref: складываем свой ref и ref dnd-kit в колбэк
+  // (как в PlacementBarV2), иначе позицию поповера будет негде взять.
+  const setRefs = useCallback(
+    (node) => {
+      cardRef.current = node;
+      if (!isOverlay) setNodeRef(node);
+    },
+    [isOverlay, setNodeRef]
+  );
+
+  const clearHoverTimer = () => {
+    if (hoverTimerRef.current) {
+      clearTimeout(hoverTimerRef.current);
+      hoverTimerRef.current = null;
+    }
+  };
+
+  useEffect(() => clearHoverTimer, []);
+
+  // Поповер раскрывается слева от карточки — лоток стоит у правого края
+  // экрана. По вертикали по умолчанию верх поповера совпадает с верхом
+  // карточки; если снизу не влезает, приподнимаем так, чтобы низ поповера
+  // совпал с низом карточки (above сдвигает его вверх на фактическую
+  // высоту через translateY(-100%) внутри BarPopover).
+  const resolvePopPos = () => {
+    const node = cardRef.current;
+    if (!node) return null;
+    const rect = node.getBoundingClientRect();
+    const left = Math.max(
+      VIEWPORT_PAD_LEFT,
+      rect.left - POPOVER_WIDTH - POPOVER_GAP
+    );
+    const above = rect.top + POPOVER_HEIGHT > window.innerHeight;
+    const top = above ? rect.bottom : rect.top;
+    return { top, left, above };
+  };
+
+  const handleMouseEnter = () => {
+    if (isOverlay) return;
+    clearHoverTimer();
+    hoverTimerRef.current = setTimeout(() => {
+      const pos = resolvePopPos();
+      if (!pos) return;
+      setPopPos(pos);
+      setHovered(true);
+    }, HOVER_DELAY);
+  };
+
+  const handleMouseLeave = () => {
+    clearHoverTimer();
+    setHovered(false);
+  };
+
+  // Поповер лежит в body с position:fixed, поэтому при прокрутке лотка он
+  // отвязался бы от карточки — закрываем его на первом же скролле.
+  useEffect(() => {
+    if (!hovered) return undefined;
+    const scroller = cardRef.current?.closest("[data-tray-scroll]");
+    if (!scroller) return undefined;
+    const handleScroll = () => setHovered(false);
+    scroller.addEventListener("scroll", handleScroll, { once: true });
+    return () => scroller.removeEventListener("scroll", handleScroll);
+  }, [hovered]);
+
   // Своё pointerdown поверх dnd-kit: запоминаем точку нажатия и передаём
   // событие сенсору дальше, иначе перетаскивание перестанет запускаться.
   const handlePointerDown = (event) => {
     pointerStartRef.current = { x: event.clientX, y: event.clientY };
+    clearHoverTimer();
+    setHovered(false);
     listeners?.onPointerDown?.(event);
   };
 
@@ -88,7 +168,7 @@ const TrayCardV2 = ({
 
   return (
     <div
-      ref={isOverlay ? undefined : setNodeRef}
+      ref={isOverlay ? undefined : setRefs}
       {...(!isOverlay ? listeners : {})}
       {...(!isOverlay ? attributes : {})}
       className={`${classes.card} ${isBlinking ? classes.cardBlink : ""}`}
@@ -102,6 +182,8 @@ const TrayCardV2 = ({
       }}
       onPointerDown={isOverlay ? undefined : handlePointerDown}
       onPointerUp={isOverlay ? undefined : handlePointerUp}
+      onMouseEnter={isOverlay ? undefined : handleMouseEnter}
+      onMouseLeave={isOverlay ? undefined : handleMouseLeave}
     >
       <span className={classes.cardHandle}>
         <svg width="8" height="26" viewBox="0 0 8 26" fill="currentColor">
@@ -161,6 +243,16 @@ const TrayCardV2 = ({
           ) : null}
         </div>
       </div>
+
+      {hovered && popPos && !isOverlay ? (
+        <BarPopover
+          request={request}
+          style={getStatusStyle(status)}
+          top={popPos.top}
+          left={popPos.left}
+          above={popPos.above}
+        />
+      ) : null}
     </div>
   );
 };
