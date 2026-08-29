@@ -45,12 +45,31 @@
   max-width: 150px;
 }
 
-.occChip {
-  font-size: 11px;
-  font-weight: 700;
-  border-radius: 8px;
-  padding: 3px 8px;
+.roomIcons {
+  min-width: 37px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 5px;
+}
+
+.roomIconRow {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 12px;
+  color: #9aa0b5;
   white-space: nowrap;
+}
+
+.roomIconPerson {
+  vertical-align: top;
+  width: 12px;
+}
+
+.roomIconBed {
+  vertical-align: top;
+  height: 12px;
 }
 
 .body {

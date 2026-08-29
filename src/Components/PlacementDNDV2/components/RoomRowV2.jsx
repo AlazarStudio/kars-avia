@@ -1,7 +1,6 @@
 import React, { memo } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { categoryLabel } from "../../../utils/roomCategories";
-import { bedsLabel, countOccupiedLanes } from "../utils/placementBadges";
 import { DAY_BG, dayCellBg } from "../utils/placementPeriod";
 import PlacementBarV2 from "./PlacementBarV2";
 import classes from "./RoomRowV2.module.css";
@@ -54,11 +53,7 @@ const RoomRowV2 = memo(
       requests,
     } = room;
 
-    const occupied = countOccupiedLanes(requests);
-    const isFull = occupied >= lanes;
-    const subtitle = [category ? categoryLabel(category) : "", bedsLabel(beds)]
-      .filter(Boolean)
-      .join(" · ");
+    const subtitle = category ? categoryLabel(category) : "";
     const isTargetRoom = dragTarget?.roomId === roomId;
 
     // Название в шапке строки обрезается многоточием — полный текст в тултипе.
@@ -85,18 +80,26 @@ const RoomRowV2 = memo(
             <span className={classes.roomName}>{displayName}</span>
             <span className={classes.roomSub}>{subtitle}</span>
           </div>
-          <span
-            className={classes.occChip}
-            style={
-              !active
-                ? { background: "#eef1f7", color: "#9aa0b5" }
-                : isFull
-                  ? { background: "#e8f5e9", color: "#2e7d32" }
-                  : { background: "#eef1f7", color: "#6b7090" }
-            }
-          >
-            {active ? `${occupied}/${lanes}` : "—"}
-          </span>
+          <div className={classes.roomIcons}>
+            <div className={classes.roomIconRow}>
+              <img
+                src="/roomPlacePersonWhite.png"
+                className={classes.roomIconPerson}
+                alt=""
+              />
+              {`x ${lanes}`}
+            </div>
+            {beds ? (
+              <div className={classes.roomIconRow}>
+                <img
+                  src="/roomsIcon.png"
+                  className={classes.roomIconBed}
+                  alt=""
+                />
+                {`x ${beds}`}
+              </div>
+            ) : null}
+          </div>
         </div>
 
         <div className={classes.body}>
