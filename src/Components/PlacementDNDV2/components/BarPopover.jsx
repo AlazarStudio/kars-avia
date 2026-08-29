@@ -64,6 +64,12 @@ const BarPopover = ({ request, style, top, left, above }) => {
         </span>
       </div>
 
+      <div className={classes.popoverRow}>
+        Заявка
+        <span className={classes.popoverValue}>
+          {request.reserveRequest ? "Резерв" : "Квота"}
+        </span>
+      </div>
       {roomName ? (
         <div className={classes.popoverRow}>
           Комната

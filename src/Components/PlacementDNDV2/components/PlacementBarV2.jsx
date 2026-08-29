@@ -14,7 +14,7 @@ const POPOVER_HEIGHT = 210;
 const POPOVER_WIDTH = 300;
 // Зазор между плашкой и поповером и минимальные отступы от краёв вьюпорта.
 const POPOVER_GAP = 4;
-const VIEWPORT_PAD_RIGHT = 10;
+const VIEWPORT_PAD_RIGHT = 24;
 const VIEWPORT_PAD_LEFT = 8;
 // Смещение курсора между нажатием и отпусканием, при котором это ещё клик.
 const CLICK_SLOP = 8;
@@ -217,9 +217,13 @@ const PlacementBarV2 = ({
     const below = rect.bottom + POPOVER_GAP;
     const above = below + POPOVER_HEIGHT > window.innerHeight;
     const top = above ? rect.top - POPOVER_GAP : below;
-    const left = Math.max(
+    let left = rect.left;
+    if (rect.left + POPOVER_WIDTH > window.innerWidth - VIEWPORT_PAD_RIGHT) {
+      left = rect.right - POPOVER_WIDTH;
+    }
+    left = Math.max(
       VIEWPORT_PAD_LEFT,
-      Math.min(rect.left, window.innerWidth - POPOVER_WIDTH - VIEWPORT_PAD_RIGHT)
+      Math.min(left, window.innerWidth - POPOVER_WIDTH - VIEWPORT_PAD_RIGHT)
     );
     return { top, left, above };
   };

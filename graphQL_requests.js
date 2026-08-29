@@ -2880,6 +2880,7 @@ export const GET_BRONS_HOTEL = gql`
           id
           status
           requestNumber
+          reserve
           mealPlan {
             included
             breakfast

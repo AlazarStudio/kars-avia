@@ -68,6 +68,7 @@ export const mapHotelChessToRequest = (chess) => ({
   requestNumber: chess.request
     ? chess.request?.requestNumber
     : chess.reserve?.reserveNumber,
+  reserveRequest: Boolean(chess.request?.reserve),
 });
 
 export const mapRequestToPlacement = (request) => ({
@@ -89,6 +90,7 @@ export const mapRequestToPlacement = (request) => ({
   createdAt: request.createdAt,
   roomCategory: request.roomCategory,
   unreadMessages: request.chat?.unreadMessagesCount || 0,
+  reserveRequest: Boolean(request.reserve),
 });
 
 export const mapUpdatedRequestFromSubscription = (updated) => ({

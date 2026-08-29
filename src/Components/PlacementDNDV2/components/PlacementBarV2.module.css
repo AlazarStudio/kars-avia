@@ -189,7 +189,7 @@
 .popoverRow {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   padding-top: 6px;
   font-size: 12px;
   color: #6b7090;
@@ -199,7 +199,9 @@
 .popoverValue {
   color: #2d3147;
   font-weight: 600;
-  white-space: nowrap;
+  max-width: 65%;
+  text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .mealChips {
