@@ -207,20 +207,21 @@ const PlacementBarV2 = ({
 
   // Координаты поповера считаем по факту, во вьюпорте: по умолчанию под
   // плашкой, вверх — только если снизу не влезает; по X прижимаем к экрану.
+  // Реальная высота поповера зависит от того, какие строки в нём условно
+  // отрендерились, поэтому вверх её не вычитаем — сдвиг на fact-height
+  // делает CSS (translateY(-100%) в BarPopover через проп above).
   const resolvePopPos = () => {
     const node = barRef.current;
     if (!node) return null;
     const rect = node.getBoundingClientRect();
     const below = rect.bottom + POPOVER_GAP;
-    const top =
-      below + POPOVER_HEIGHT > window.innerHeight
-        ? rect.top - POPOVER_GAP - POPOVER_HEIGHT
-        : below;
+    const above = below + POPOVER_HEIGHT > window.innerHeight;
+    const top = above ? rect.top - POPOVER_GAP : below;
     const left = Math.max(
       VIEWPORT_PAD_LEFT,
       Math.min(rect.left, window.innerWidth - POPOVER_WIDTH - VIEWPORT_PAD_RIGHT)
     );
-    return { top, left };
+    return { top, left, above };
   };
 
   const handleMouseEnter = () => {
@@ -421,6 +422,7 @@ const PlacementBarV2 = ({
           style={style}
           top={popPos.top}
           left={popPos.left}
+          above={popPos.above}
         />
       ) : null}
     </div>

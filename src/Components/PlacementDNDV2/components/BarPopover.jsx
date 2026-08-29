@@ -10,8 +10,10 @@ const MEAL_LABELS = [
 ];
 
 // Поповер деталей брони. Рендерится порталом в body — координаты (top/left)
-// считает PlacementBarV2 по позиции плашки во вьюпорте.
-const BarPopover = ({ request, style, top, left }) => {
+// считает PlacementBarV2 по позиции плашки во вьюпорте. При above=true top —
+// это низ поповера: translateY(-100%) сдвигает его вверх на фактическую
+// высоту, которая зависит от того, какие строки внутри отрендерились.
+const BarPopover = ({ request, style, top, left, above }) => {
   const { edge, tint } = style;
   const {
     guest,
@@ -33,7 +35,14 @@ const BarPopover = ({ request, style, top, left }) => {
   const avatar = airline?.images?.[0] ? getMediaUrl(airline.images[0]) : null;
 
   return ReactDOM.createPortal(
-    <div className={classes.popover} style={{ top: `${top}px`, left: `${left}px` }}>
+    <div
+      className={classes.popover}
+      style={{
+        top: `${top}px`,
+        left: `${left}px`,
+        transform: above ? "translateY(-100%)" : undefined,
+      }}
+    >
       <div className={classes.popoverHead}>
         <span className={classes.popoverAvatar}>
           {avatar ? <img src={avatar} alt="" /> : null}
