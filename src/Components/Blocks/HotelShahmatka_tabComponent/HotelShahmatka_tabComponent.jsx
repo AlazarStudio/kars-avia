@@ -1,24 +1,15 @@
-import React, { useEffect, useState } from "react";
-import classes from './HotelShahmatka_tabComponent.module.css';
+import React, { useState } from "react";
 // import HotelTablePageComponent from "../HotelTablePageComponent/HotelTablePageComponent";
 
-import { CANCEL_REQUEST, GET_BRONS_HOTEL, GET_HOTEL_ROOMS, getCookie } from '../../../../graphQL_requests.js';
-import { useMutation, useQuery } from "@apollo/client";
-import NewPlacement from "../../PlacementDND/NewPlacement/NewPlacement.jsx";
+import { CANCEL_REQUEST, getCookie } from '../../../../graphQL_requests.js';
+import { useMutation } from "@apollo/client";
 import NewPlacementV2 from "../../PlacementDNDV2/NewPlacementV2.jsx";
-import MUITextField from "../MUITextField/MUITextField.jsx";
-import { Menu, MenuItem } from "@mui/material";
-import Button from "../../Standart/Button/Button.jsx";
 import CreateRequest from "../CreateRequest/CreateRequest.jsx";
 import ExistRequest from "../ExistRequest/ExistRequest.jsx";
 import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
-import StatusLegend from "../StatusLegend/StatusLegend.jsx";
-import { roles } from "../../../roles.js";
 
 function HotelShahmatka_tabComponent({ id, user, accessMenu }) {
     const token = getCookie("token")
-    const isPlacementV2 =
-        new URLSearchParams(window.location.search).get("placementV2") === "1";
 
       const [showCreateRequest, setShowCreateRequest] = useState(false);
       const [showRequestSidebar, setShowRequestSidebar] = useState(false);
@@ -122,13 +113,7 @@ function HotelShahmatka_tabComponent({ id, user, accessMenu }) {
     //     }
     // }, [bronData]);
 
-    const [searchQuery, setSearchQuery] = useState('');
-    const [selectQuery, setSelectQuery] = useState('');
-    const [showAddBronForm, setShowAddBronForm] = useState(false);
-
-    const handleSearch = (e) => {
-        setSearchQuery(e.target.value);
-    }
+    // Поиск переехал в панель инструментов доски (BoardToolbar внутри NewPlacementV2)
 
     // const handleSelect = (e) => {
     //     setSelectQuery(e.target.value);
@@ -155,28 +140,9 @@ function HotelShahmatka_tabComponent({ id, user, accessMenu }) {
 
     // if (loading || bronLoading) return <MUILoader fullHeight={'70vh'}/>;
     // if (error || bronError) return <p>Error: {error ? error.message : bronError.message}</p>;
-    const handleItemClick = (e) => {
-        e.preventDefault(); // Блокирует действие по клику
-    };
     return (
         <>
-            <div className={classes.section_searchAndFilter}>
-                {/* <input
-                    type="text"
-                    className={classes.searchInput}
-                    placeholder="Поиск по номеру комнаты или ФИО клиента"
-                    // style={{ 'width': '500px' }}
-                    value={searchQuery}
-                    onChange={handleSearch}
-                /> */}
-                <MUITextField
-                    className={classes.searchInput}
-                    label={"Поиск по номеру комнаты или ФИО клиента"}
-                    value={searchQuery}
-                    onChange={handleSearch}
-                />
-
-                {/* <div className={classes.legend}>
+            {/* <div className={classes.legend}>
                     <div className={classes.legendLine}>
                         <div className={classes.legendInfo} style={{ border: '1px solid #fff', width: '130px' }}>
                             <div className={classes.legendInfoColor} style={{ backgroundColor: '#9e9e9e' }}></div>
@@ -223,25 +189,15 @@ function HotelShahmatka_tabComponent({ id, user, accessMenu }) {
                     </div>
                 </div> */}
 
-            <div className={classes.section_searchAndFilter_filter}>
-                <StatusLegend/>
-                {user?.role === roles.hotelAdmin ? null : (
-                  <Button onClick={toggleCreateRequest} minwidth={"160px"} maxWidth={"160px"} padding={"0 15px"}>
-                    Создать заявку
-                  </Button>
-                )}
-            </div>
-
-                {/* <div className={classes.section_searchAndFilter_filter}>
+            {/* <div className={classes.section_searchAndFilter_filter}>
                     <select onChange={handleSelect}>
                         <option value="">Показать все</option>
                         {uniquePlacesArray.map((item, index) => (
                             <option value={`${item}`} key={index}>{item} - МЕСТНЫЕ</option>
                         ))}
                     </select>
-                    <div onClick={toggleSidebar}>Добавить бронь</div> 
+                    <div onClick={toggleSidebar}>Добавить бронь</div>
                 </div>*/}
-            </div>
 
             {/* {isPlacementV2 ? (
               <NewPlacement idHotelInfo={id} searchQuery={searchQuery} user={user} />
@@ -249,7 +205,12 @@ function HotelShahmatka_tabComponent({ id, user, accessMenu }) {
               <NewPlacementV2 idHotelInfo={id} searchQuery={searchQuery} user={user} />
             )} */}
 
-            <NewPlacementV2 idHotelInfo={id} searchQuery={searchQuery} user={user} accessMenu={accessMenu} />
+            <NewPlacementV2
+              idHotelInfo={id}
+              user={user}
+              accessMenu={accessMenu}
+              onCreateRequest={toggleCreateRequest}
+            />
 
             {/* {(hotelBronsInfo.length === 0) &&
                 <HotelTablePageComponent maxHeight={"635px"} allRooms={filteredRequests} data={[]} idHotel={id} dataObject={dataObject} id={'hotels'} showAddBronForm={showAddBronForm} />

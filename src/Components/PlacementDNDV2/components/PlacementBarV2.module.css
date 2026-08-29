@@ -1,0 +1,226 @@
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 8px;
+  overflow: visible;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+@keyframes barBlink {
+  0% {
+    box-shadow: 0 0 0 0 rgba(245, 166, 35, 0);
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgba(245, 166, 35, 0.75);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 166, 35, 0);
+  }
+}
+
+.blink {
+  animation: barBlink 1s infinite;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.avatar {
+  height: 20px;
+  min-width: 20px;
+  width: 20px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #e8eaf1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.lock {
+  flex-shrink: 0;
+}
+
+.statusChip {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  background: #ffffffcc;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  padding: 1px 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.clipLeft {
+  position: absolute;
+  left: 2px;
+  top: -9px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #9aa0b5;
+  white-space: nowrap;
+}
+
+.clipRight {
+  position: absolute;
+  right: 2px;
+  top: -9px;
+  font-size: 9px;
+  font-weight: 700;
+  color: #9aa0b5;
+  white-space: nowrap;
+}
+
+.grip {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: #fff;
+  border: 2px solid #6b7090;
+  cursor: ew-resize;
+  z-index: 3;
+}
+
+.gripLeft {
+  left: -6px;
+}
+
+.gripRight {
+  right: -6px;
+}
+
+/* ===== поповер ===== */
+
+/* Рендерится порталом в body: fixed + координаты от плашки, чтобы поповер
+   не обрезался скролл-контейнером сетки у краёв. Информационный — клики
+   пропускает сквозь себя. */
+.popover {
+  position: fixed;
+  width: 300px;
+  background: #fff;
+  border: 1px solid #e8eaf1;
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.15);
+  padding: 12px 14px;
+  z-index: 1000;
+  cursor: default;
+  pointer-events: none;
+}
+
+.popoverHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e8eaf1;
+}
+
+.popoverAvatar {
+  height: 26px;
+  min-width: 26px;
+  width: 26px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #e8eaf1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.popoverAvatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.popoverTitles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.popoverName {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2d3147;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.popoverSub {
+  font-size: 11px;
+  color: #6b7090;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.popoverStatus {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 6px;
+  padding: 2px 7px;
+  white-space: nowrap;
+}
+
+.popoverRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 6px;
+  font-size: 12px;
+  color: #6b7090;
+  gap: 10px;
+}
+
+.popoverValue {
+  color: #2d3147;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.mealChips {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.mealChipOn {
+  font-size: 10px;
+  font-weight: 700;
+  color: #2e7d32;
+  background: #e8f5e9;
+  border-radius: 5px;
+  padding: 1px 6px;
+}
+
+.mealChipOff {
+  font-size: 10px;
+  font-weight: 700;
+  color: #6b7090;
+  background: #eef1f7;
+  border-radius: 5px;
+  padding: 1px 6px;
+}

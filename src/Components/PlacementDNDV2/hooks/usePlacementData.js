@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
 import { useQuery, useSubscription } from "@apollo/client";
-import { endOfMonth, startOfMonth } from "date-fns";
 import {
   GET_BRONS_HOTEL,
   GET_HOTEL_MIN,
@@ -18,7 +17,8 @@ import {
 
 const SIDEBAR_TAKE = 500;
 
-export const usePlacementData = ({ hotelId, token, currentMonth }) => {
+// periodStart/periodEnd — ISO-строки границ показываемого периода (месяц/неделя).
+export const usePlacementData = ({ hotelId, token, periodStart, periodEnd }) => {
   const [hotelInfo, setHotelInfo] = useState(null);
   const [requests, setRequests] = useState([]);
   const [newRequests, setNewRequests] = useState([]);
@@ -63,15 +63,6 @@ export const usePlacementData = ({ hotelId, token, currentMonth }) => {
     [dataRooms]
   );
 
-  const firstDay = useMemo(
-    () => startOfMonth(currentMonth).toISOString(),
-    [currentMonth]
-  );
-  const lastDay = useMemo(
-    () => endOfMonth(currentMonth).toISOString(),
-    [currentMonth]
-  );
-
   const {
     loading: bronLoading,
     data: bronData,
@@ -81,8 +72,8 @@ export const usePlacementData = ({ hotelId, token, currentMonth }) => {
     variables: {
       hotelId,
       hcPagination: {
-        start: firstDay,
-        end: lastDay,
+        start: periodStart,
+        end: periodEnd,
       },
     },
     fetchPolicy: "network-only",

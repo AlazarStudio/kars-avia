@@ -2880,6 +2880,12 @@ export const GET_BRONS_HOTEL = gql`
           id
           status
           requestNumber
+          mealPlan {
+            included
+            breakfast
+            lunch
+            dinner
+          }
           airline {
             name
             images

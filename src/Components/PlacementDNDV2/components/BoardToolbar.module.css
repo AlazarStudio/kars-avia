@@ -1,0 +1,168 @@
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 14px 16px;
+  border-bottom: 1px solid #e8eaf1;
+  position: relative;
+  z-index: 30;
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.search {
+  width: 380px;
+  min-width: 200px;
+  height: 40px;
+  border: 1px solid #e8eaf1;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  background: #fafbfd;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: 13px;
+  color: #2d3147;
+  font-family: inherit;
+}
+
+.searchInput::placeholder {
+  color: #9aa0b5;
+}
+
+.actions {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.button {
+  height: 40px;
+  padding: 0 14px;
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+  border: 1px solid #e8eaf1;
+  border-radius: 10px;
+  background: #fff;
+  color: #545873;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.legendDots {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.legendDots span {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.trayBadge {
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  background: #0057c3;
+  color: #fff;
+  border-radius: 10px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.createButton {
+  height: 40px;
+  padding: 0 18px;
+  background: #0057c3;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  white-space: nowrap;
+}
+
+.createButton:hover {
+  opacity: 0.92;
+}
+
+.legendTitle {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #9aa0b5;
+  padding-bottom: 10px;
+}
+
+.legendList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.legendRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.legendSwatch {
+  width: 26px;
+  min-width: 26px;
+  height: 16px;
+  border-radius: 4px;
+}
+
+.legendName {
+  font-size: 13px;
+  color: #2d3147;
+}
+
+.legendNote {
+  margin-left: auto;
+  font-size: 11px;
+  color: #9aa0b5;
+}
+
+.legendFooter {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e8eaf1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.legendSwatchDashed {
+  width: 26px;
+  min-width: 26px;
+  height: 16px;
+  border-radius: 4px;
+  background: #f6f7fa;
+  border: 1px dashed #c3c8d9;
+}
+
+.legendLegacyText {
+  font-size: 12px;
+  color: #6b7090;
+}

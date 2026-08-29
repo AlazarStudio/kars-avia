@@ -62,6 +62,7 @@ export const mapHotelChessToRequest = (chess) => ({
   requestID: chess.request ? chess.request?.id : chess.reserve?.id,
   isRequest: Boolean(chess.request),
   airline: chess.request ? chess.request?.airline : chess.reserve?.airline,
+  mealPlan: chess.request?.mealPlan || null,
   personID: chess.client ? chess.client?.id : chess.passenger?.id,
   chessID: chess.id,
   requestNumber: chess.request
@@ -84,6 +85,10 @@ export const mapRequestToPlacement = (request) => ({
   airline: request.airline,
   personID: request?.person?.id,
   hotelId: request?.hotelId,
+  // Карточка лотка: «ждёт N дн», чип категории, бейдж непрочитанных сообщений
+  createdAt: request.createdAt,
+  roomCategory: request.roomCategory,
+  unreadMessages: request.chat?.unreadMessagesCount || 0,
 });
 
 export const mapUpdatedRequestFromSubscription = (updated) => ({

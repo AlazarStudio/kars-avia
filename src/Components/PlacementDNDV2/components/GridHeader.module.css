@@ -1,0 +1,133 @@
+.header {
+  display: flex;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #fff;
+  box-shadow: 0 1px 0 #e8eaf1;
+}
+
+.corner {
+  width: 240px;
+  min-width: 240px;
+  position: sticky;
+  left: 0;
+  z-index: 11;
+  background: #fff;
+  border-right: 1px solid #e8eaf1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px;
+}
+
+.viewPill {
+  display: flex;
+  background: #eef1f7;
+  border-radius: 9px;
+  padding: 3px;
+  gap: 2px;
+}
+
+.viewTab {
+  border: none;
+  border-radius: 7px;
+  padding: 4px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  background: transparent;
+  color: #6b7090;
+  font-family: inherit;
+}
+
+.viewTabActive {
+  background: #fff;
+  color: #2d3147;
+  box-shadow: 0 1px 3px rgba(20, 30, 60, 0.15);
+}
+
+.todayButton {
+  border: none;
+  background: none;
+  color: #0057c3;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-family: inherit;
+  padding: 0;
+}
+
+.right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.periodRow {
+  height: 42px;
+  border-bottom: 1px solid #e8eaf1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Горизонтального скролла нет — строку периода можно просто отцентрировать
+   по области дней, sticky-трюк больше не нужен. */
+.periodInner {
+  display: inline-flex;
+  height: 100%;
+  align-items: center;
+  gap: 14px;
+  padding: 0 8px;
+}
+
+.arrow {
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.periodTitle {
+  font-weight: 700;
+  font-size: 14px;
+  color: #2d3147;
+  white-space: nowrap;
+}
+
+.daysRow {
+  display: flex;
+  height: 37px;
+}
+
+.dayCell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid #e8eaf1;
+}
+
+.dayPill {
+  font-size: 12px;
+  font-weight: 600;
+  color: #6b7090;
+  background: transparent;
+  border-radius: 6px;
+  padding: 2px 6px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.dayPillToday {
+  font-weight: 700;
+  color: #fff;
+  background: #0057c3;
+}
+
+.dayPillWeekend {
+  color: #9aa0b5;
+}

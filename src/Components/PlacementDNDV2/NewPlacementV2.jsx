@@ -1,33 +1,41 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useParams } from "react-router-dom";
-import { Box, Tooltip, Typography } from "@mui/material";
 import {
   AutoScrollActivator,
   DndContext,
   DragOverlay,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
 } from "@dnd-kit/core";
-import { VariableSizeList } from "react-window";
-import { eachDayOfInterval, endOfMonth, startOfDay, startOfMonth } from "date-fns";
+import { startOfDay } from "date-fns";
 import { useMutation } from "@apollo/client";
-import TimelineV2 from "./components/TimelineV2";
+import BoardToolbar from "./components/BoardToolbar";
+import GridHeader from "./components/GridHeader";
 import RoomRowV2 from "./components/RoomRowV2";
-import DraggableRequestV2 from "./components/DraggableRequestV2";
+import PlacementBarV2 from "./components/PlacementBarV2";
+import TrayCardV2 from "./components/TrayCardV2";
+import UnplacedTray from "./components/UnplacedTray";
 import ConfirmBookingModalV2 from "./components/ConfirmBookingModalV2";
 import EditRequestModalV2 from "./components/EditRequestModalV2";
 import Notification from "../Notification/Notification";
 import MUILoader from "../Blocks/MUILoader/MUILoader";
 import ExistRequest from "../Blocks/ExistRequest/ExistRequest";
 import EditRequestNomerFond from "../Blocks/EditRequestNomerFond/EditRequestNomerFond";
-import { useWindowSize } from "../../hooks/useWindowSize";
 import { roles } from "../../roles";
 import {
-  canCreateRequest as canCreateRequestAccess,
   canAccessMenu,
   getDispatcherAccess,
-  hasAccessMenu,
 } from "../../utils/access";
 import {
-  generateTimestampId,
   getCookie,
   UPDATE_HOTEL_BRON,
   UPDATE_REQUEST_RELAY,
@@ -36,15 +44,19 @@ import { usePlacementData } from "./hooks/usePlacementData";
 import { buildFilteredRooms, filterRequestsBySearch } from "./utils/placementFilters";
 import { hasOverlap, getOverlappingRequests } from "./utils/placementOverlap";
 import { getAvailablePosition } from "./utils/placementPositions";
+import { buildPeriod, shiftAnchor } from "./utils/placementPeriod";
+import classes from "./NewPlacementV2.module.css";
 
-const DAY_WIDTH = 40;
-const LEFT_WIDTH = 220;
-const WEEKEND_COLOR = "#efefef";
-const MONTH_COLOR = "#ddd";
+const LABEL_WIDTH = 240;
+// Нижний предел ширины дня — защита от нулевой/отрицательной ширины
+// контейнера, а не от «слишком узкого» месяца: период всегда виден целиком.
+const MIN_DAY_WIDTH = 8;
+// Клик по плашке не должен запускать drag — 5px порог незаметен рукой.
+const DRAG_ACTIVATION_DISTANCE = 5;
 
 const sameId = (a, b) => String(a) === String(b);
 
-const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
+const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
   const { idHotel, requestId } = useParams();
 
   const hotelId = idHotelInfo ? idHotelInfo : idHotel;
@@ -56,16 +68,20 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
     "requestUpdate",
     user
   );
-  const canCreateRequest = canCreateRequestAccess(user, accessMenu);
-  // Просмотр карточки заявки по requestMenu; суперадмин — полный доступ
-  // const canViewRequest = canAccessMenu(accessMenu, "requestMenu", user);
+  const canCreate = user?.role !== roles.hotelAdmin;
 
   const [hasInitialLoadCompleted, setHasInitialLoadCompleted] = useState(false);
 
   const [showEditNomer, setShowEditNomer] = useState(false);
   const [selectedNomer, setSelectedNomer] = useState(null);
 
-  const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
+  const [view, setView] = useState("month");
+  const [anchor, setAnchor] = useState(new Date());
+  const period = useMemo(() => buildPeriod(view, anchor), [view, anchor]);
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [trayOpen, setTrayOpen] = useState(null); // null = авто по данным
+  const [dragTarget, setDragTarget] = useState(null);
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editableRequest, setEditableRequest] = useState(null);
@@ -78,12 +94,42 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
   const [activeDragItemOld, setActiveDragItemOld] = useState(null);
   const [isDraggingGlobal, setIsDraggingGlobal] = useState(false);
 
-  const [highlightedDatesOld, setHighlightedDatesOld] = useState([]);
-  const [isClick, setIsClick] = useState(false);
+  const [highlightedDates, setHighlightedDates] = useState([]);
 
   const [, setShowChooseHotel] = useState(false);
   const [showRequestSidebar, setShowRequestSidebar] = useState(false);
   const [selectedRequestID, setSelectedRequestID] = useState(null);
+
+  const gridScrollRef = useRef(null);
+  const [containerWidth, setContainerWidth] = useState(0);
+
+  // Период всегда влезает в ширину доски: горизонтального скролла нет,
+  // ширина дня — производная от фактической ширины контейнера.
+  useLayoutEffect(() => {
+    const node = gridScrollRef.current;
+    if (!node) return undefined;
+    const measure = () => setContainerWidth(node.clientWidth);
+    measure();
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, []);
+
+  // Дробную ширину не округляем: округление копит рассинхрон ячеек и плашек.
+  const dayW = useMemo(() => {
+    const daysCount = period.days.length || 1;
+    return Math.max((containerWidth - LABEL_WIDTH) / daysCount, MIN_DAY_WIDTH);
+  }, [containerWidth, period]);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: { distance: DRAG_ACTIVATION_DISTANCE },
+    }),
+    useSensor(KeyboardSensor)
+  );
+
+  const periodStart = useMemo(() => period.start.toISOString(), [period]);
+  const periodEnd = useMemo(() => period.end.toISOString(), [period]);
 
   const {
     hotelInfo,
@@ -94,14 +140,14 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
     requests,
     setRequests,
     newRequests,
-    setNewRequests,
     bronLoading,
     bronRefetch,
     refetchBrons,
   } = usePlacementData({
     hotelId,
     token,
-    currentMonth,
+    periodStart,
+    periodEnd,
   });
 
   const initialLoading =
@@ -141,31 +187,29 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
     },
   });
 
-  const handleUpdateRequest = (updatedRequest) => {
-    setRequests((prevRequests) =>
-      prevRequests.map((req) =>
-        req.id === updatedRequest.id ? updatedRequest : req
-      )
-    );
-  };
-
-  const daysInMonthOld = eachDayOfInterval({
-    start: startOfMonth(currentMonth),
-    end: endOfMonth(currentMonth),
-  });
+  const handleUpdateRequest = useCallback(
+    (updatedRequest) => {
+      setRequests((prevRequests) =>
+        prevRequests.map((req) =>
+          req.id === updatedRequest.id ? updatedRequest : req
+        )
+      );
+    },
+    [setRequests]
+  );
 
   const handleDragStartForRequest = (request) => {
     if (!request) return;
     const dragStart = startOfDay(new Date(request.checkInDate));
     const dragEnd = startOfDay(new Date(request.checkOutDate));
 
-    const datesToHighlight = daysInMonthOld.filter(
+    const datesToHighlight = period.days.filter(
       (date) =>
         date.getTime() >= dragStart.getTime() &&
         date.getTime() <= dragEnd.getTime()
     );
 
-    setHighlightedDatesOld(datesToHighlight);
+    setHighlightedDates(datesToHighlight);
   };
 
   const handleDragStart = (event) => {
@@ -176,20 +220,47 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
     setActiveDragItem(activeItem);
     setActiveDragItemOld(draggedItemOld);
     setIsDraggingGlobal(true);
+    setDragTarget(null);
 
-    handleDragStartForRequest(draggedItemOld);
-    if (listRef.current) {
-      listRef.current.resetAfterIndex(0, true);
+    handleDragStartForRequest(activeItem);
+  };
+
+  // Подсказка-подсветка целевой койки. Валидацию дропа НЕ дублирует —
+  // фактические проверки остаются в handleDragEnd.
+  const handleDragOver = (event) => {
+    const { over } = event;
+    if (!over || !activeDragItem) {
+      setDragTarget(null);
+      return;
     }
+    const [roomId, positionStr] = String(over.id).split("-");
+    const position = parseInt(positionStr, 10);
+    const room = rooms.find((r) => r.roomId === roomId);
+    if (!room) {
+      setDragTarget(null);
+      return;
+    }
+    const occupied = requests.some((req) => {
+      if (req.room?.id !== roomId || req.position !== position) return false;
+      if (req.id === activeDragItem.id) return false;
+      const s = new Date(`${req.checkInDate}T${req.checkInTime}`);
+      const e = new Date(`${req.checkOutDate}T${req.checkOutTime}`);
+      const ds = new Date(
+        `${activeDragItem.checkInDate}T${activeDragItem.checkInTime}`
+      );
+      const de = new Date(
+        `${activeDragItem.checkOutDate}T${activeDragItem.checkOutTime}`
+      );
+      return !(e <= ds || s >= de);
+    });
+    setDragTarget({ roomId, position, valid: room.active && !occupied });
   };
 
   const handleDragEnd = async (event) => {
     setIsDraggingGlobal(false);
     setActiveDragItem(null);
-    setHighlightedDatesOld([]);
-    if (listRef.current) {
-      listRef.current.resetAfterIndex(0, true);
-    }
+    setHighlightedDates([]);
+    setDragTarget(null);
 
     const { active, over } = event;
 
@@ -455,11 +526,11 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
     }
   };
 
-  const handleOpenModal = (request, originalRequest) => {
+  const handleOpenModal = useCallback((request, originalRequest) => {
     setOriginalRequest(originalRequest);
     setEditableRequest(request);
     setIsModalOpen(true);
-  };
+  }, []);
 
   const handleSaveChanges = async (updatedRequest) => {
     const originalCheckIn = new Date(
@@ -602,57 +673,36 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
     }
   };
 
-  const handleCancelBooking = async () => {
+  const handleCancelBooking = () => {
     if (selectedRequest) {
-      const updatedRequest = {
-        ...selectedRequest,
-        id: generateTimestampId(),
-        room: null,
-        position: null,
-      };
-
-      setNewRequests((prevNewRequests) => [
-        ...prevNewRequests,
-        updatedRequest,
-      ]);
-
       setRequests((prevRequests) =>
         prevRequests.filter((req) => req.id !== selectedRequest.id)
       );
-
-      setNewRequests((prevRequests) =>
-        prevRequests.filter((req) => req.id !== selectedRequest.id)
-      );
-
-      try {
-        await bronRefetch?.();
-        await refetchBrons?.();
-      } catch (error) {
-        console.log("Ошибка при обновлении данных:", error);
-      }
     }
 
     setIsConfirmModalOpen(false);
     setSelectedRequest(null);
   };
 
-  const toggleRequestSidebar = (requestID) => {
+  const toggleRequestSidebar = useCallback((requestID) => {
     setSelectedRequestID(requestID);
     setShowRequestSidebar(true);
-  };
+  }, []);
 
-  const startOfCurrentMonth = startOfMonth(currentMonth);
-  const endOfCurrentMonth = endOfMonth(currentMonth);
+  const handleRoomClick = useCallback((item) => {
+    setSelectedNomer(item);
+    setShowEditNomer(true);
+  }, []);
 
   const filteredRequests = useMemo(
     () =>
       filterRequestsBySearch({
         requests,
         searchQuery,
-        startOfCurrentMonth,
-        endOfCurrentMonth,
+        startOfCurrentMonth: period.start,
+        endOfCurrentMonth: period.end,
       }),
-    [requests, searchQuery, startOfCurrentMonth, endOfCurrentMonth]
+    [requests, searchQuery, period]
   );
 
   const filteredRooms = useMemo(
@@ -665,6 +715,30 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
     [rooms, filteredRequests, searchQuery]
   );
 
+  const filteredNewRequests = useMemo(() => {
+    const canSeeUnplaced = (user?.hotelId && hotelInfo?.access) || !user?.hotelId;
+    if (!canSeeUnplaced) return [];
+
+    const shouldFilter = Boolean(user?.hotelId && hotelInfo?.access);
+
+    return newRequests
+      .slice()
+      .sort((a, b) => {
+        if (a.requestID === requestId) return -1;
+        if (b.requestID === requestId) return 1;
+        return 0;
+      })
+      .filter((request) => (shouldFilter ? request.hotelId === hotelId : true));
+  }, [newRequests, user, hotelInfo, hotelId, requestId]);
+
+  // Список скрыт гейтом доступа гостиницы — пустой лоток тогда не означает
+  // «всё размещено», поэтому лоток показывает нейтральный текст.
+  const unplacedHidden = Boolean(
+    user?.hotelId && hotelInfo && !hotelInfo.access
+  );
+
+  const trayOpenEffective = trayOpen ?? filteredNewRequests.length > 0;
+
   const [notifications, setNotifications] = useState([]);
 
   const addNotification = (text, status) => {
@@ -676,101 +750,40 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
     }, 5300);
   };
 
-  const [hoveredDayInMonth, setHoveredDayInMonth] = useState(null);
-  const [hoveredRoom, setHoveredRoom] = useState(null);
-
-  const listRef = useRef(null);
-  const ListOuterElement = useMemo(() => {
-    const Outer = React.forwardRef(({ style, onScroll, ...rest }, ref) => (
-      <div
-        ref={ref}
-        {...rest}
-        onScroll={(event) => {
-          if (event.currentTarget.scrollLeft !== 0) {
-            event.currentTarget.scrollLeft = 0;
-          }
-          if (onScroll) onScroll(event);
-        }}
-        style={{ ...style, overflowX: "hidden" }}
-      />
-    ));
-    Outer.displayName = "ListOuterElement";
-    return Outer;
-  }, []);
-
-  useEffect(() => {
-    if (listRef.current) {
-      listRef.current.resetAfterIndex(0, true);
-    }
-  }, [filteredRooms]);
-
-  const getRoomHeight = (index) => {
-    const room = filteredRooms[index];
-    return 50 * room.type;
-  };
-
-  const itemKey = (index) => {
-    const room = filteredRooms[index];
-    return room.roomId;
-  };
-
-  const containerRef = useRef(null);
-  const [dayWidthLength, setDayWidthLength] = useState(DAY_WIDTH);
-  const daysInMonth1 = eachDayOfInterval({
-    start: startOfMonth(currentMonth),
-    end: endOfMonth(currentMonth),
-  });
-
-  useEffect(() => {
-    if (listRef.current) {
-      listRef.current.resetAfterIndex(0, true);
-    }
-  }, [currentMonth]);
-
-  useEffect(() => {
-    const updateDayWidth = () => {
-      if (containerRef.current) {
-        const containerWidth = containerRef.current.offsetWidth;
-        const newDayWidth = containerWidth / daysInMonth1.length;
-        setDayWidthLength(newDayWidth);
-      }
-    };
-
-    updateDayWidth();
-
-    const observer = new ResizeObserver(updateDayWidth);
-    if (containerRef.current) observer.observe(containerRef.current);
-
-    return () => {
-      if (containerRef.current) observer.unobserve(containerRef.current);
-    };
-  }, [daysInMonth1]);
-
-  const { height } = useWindowSize();
-
+  // Скролл к строке заявки из URL (блинк плашки живёт в самой плашке)
   const hasScrolledRef = useRef(false);
-  const roomIndex = useMemo(() => {
-    if (!requestId) return -1;
-    return filteredRooms.findIndex((room) =>
-      room.requests?.some((req) => req.requestID === requestId)
-    );
-  }, [filteredRooms, requestId]);
-
   useEffect(() => {
-    if (roomIndex >= 0 && listRef.current) {
-      listRef.current.scrollToItem(roomIndex, "center");
-      hasScrolledRef.current = true;
-    }
-  }, [roomIndex, requestId]);
+    if (!requestId || hasScrolledRef.current || !gridScrollRef.current) return;
+    const room = filteredRooms.find((item) =>
+      item.requests?.some((req) => req.requestID === requestId)
+    );
+    if (!room) return;
+    const scroller = gridScrollRef.current;
+    const rowEl = scroller.querySelector(`[data-room-id="${room.roomId}"]`);
+    if (!rowEl) return;
+    // Ручной скролл только грид-контейнера: scrollIntoView дёргал всю страницу.
+    const rowRect = rowEl.getBoundingClientRect();
+    const scrollerRect = scroller.getBoundingClientRect();
+    const rowTop = rowRect.top - scrollerRect.top + scroller.scrollTop;
+    scroller.scrollTop = Math.max(
+      0,
+      rowTop - scroller.clientHeight / 2 + rowRect.height / 2
+    );
+    hasScrolledRef.current = true;
+  }, [filteredRooms, requestId]);
 
   return (
     <>
       <DndContext
+        sensors={sensors}
         onDragStart={(e) => handleDragStart(e)}
+        onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
         autoScroll={{
           enabled: true,
-          threshold: { x: 1, y: 0.08 },
+          // threshold.x: 0 — зона срабатывания горизонтального автоскролла
+          // нулевая, ось X не дёргается при перетаскивании вниз.
+          threshold: { x: 0, y: 0.08 },
           acceleration: 28,
           interval: 2,
           activator: AutoScrollActivator.Pointer,
@@ -781,342 +794,85 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
             const canScrollY =
               (overflowY === "auto" || overflowY === "scroll") &&
               element.scrollHeight > element.clientHeight;
-            const canScrollX = element.scrollWidth > element.clientWidth;
-            return canScrollY && !canScrollX;
+            // Горизонтальный автоскролл выключен через threshold.x, поэтому
+            // живой горизонтальный скролл сетки не должен глушить вертикальный.
+            return canScrollY;
           },
         }}
       >
-        <Box sx={{ display: "flex", justifyContent: "space-between", gap: "30px" }}>
-          <Box
-            sx={{
-              overflow: "hidden",
-              flex: 1,
-              minWidth: 0,
-              maxWidth: "100%",
-              overflowX: "hidden",
-            }}
-          >
-            <Box
-              sx={{
-                position: "relative",
-                height: user?.role == roles.hotelAdmin ? "76vh" : "67vh",
-                maxHeight: user?.role == roles.hotelAdmin ? "76vh" : "67vh",
-                overflow: "hidden",
-                overflowX: "hidden",
-                width: "100%",
-              }}
-            >
-              <TimelineV2
-                user={user}
-                hoveredDayInMonth={hoveredDayInMonth}
-                currentMonth={currentMonth}
-                setCurrentMonth={setCurrentMonth}
-                dayWidth={dayWidthLength}
-                weekendColor={WEEKEND_COLOR}
-                monthColor={MONTH_COLOR}
-                leftWidth={LEFT_WIDTH}
-              />
-              <VariableSizeList
-                ref={listRef}
-                outerElementType={ListOuterElement}
-                itemCount={filteredRooms.length}
-                itemSize={getRoomHeight}
-                itemKey={itemKey}
-                width="100%"
-                height={
-                  user?.role === roles.hotelAdmin && height > 880
-                    ? 610
-                    : user?.role === roles.hotelAdmin && height < 830
-                      ? 420
-                      : user?.role === roles.hotelAdmin && height < 880
-                        ? 530
-                        : user?.role !== roles.hotelAdmin && height < 830
-                          ? 390
-                          : user?.role !== roles.hotelAdmin && height < 900
-                            ? 460
-                            : 530
-                }
-                overscanCount={5}
-                style={{ overflowY: "scroll", overflowX: "hidden" }}
-              >
-                {({ index, style }) => {
-                  const room = filteredRooms[index];
-                  return (
-                    <div
-                      style={{
-                        ...style,
-                        pointerEvents: "auto",
-                        borderBottom: "1px solid #ddd",
-                      }}
-                      key={room.roomId}
-                    >
-                      <Box sx={{ display: "flex" }}>
-                        <Box
-                          sx={{
-                            minWidth: `${LEFT_WIDTH}px`,
-                            width: `${LEFT_WIDTH}px`,
-                            maxWidth: `${LEFT_WIDTH}px`,
-                            borderLeft: "1px solid #ddd",
-                            borderRight: "1px solid #ddd",
-                            borderBottom: "1px solid #ddd",
-                            display: "flex",
-                            alignItems: "center",
-                            overflow: "hidden",
-                            zIndex: 15,
-                            backgroundColor:
-                              hoveredRoom === room.roomId
-                                ? "#cce5ff"
-                                : !room.active
-                                  ? "#a9a9a9"
-                                  : "#fff",
-                          }}
-                        >
-                          <Tooltip
-                            title={`${room.roomType !== "apartment" ? "№" : ""} ${room.id} ${room.roomType !== "apartment"
-                                ? room?.roomKind?.name
-                                : ""
-                              } ${room.descriptionSecond ? room.descriptionSecond : ""
-                              } ${!room.active ? "(не работает)" : ""}`}
-                            arrow
-                            placement="top"
-                            enterDelay={1000}
-                          >
-                            <Typography
-                              variant="body1"
-                              sx={{
-                                width: "100%",
-                                textAlign: "left",
-                                fontSize: "14px",
-                                padding: "0 12px",
-                                overflow: "hidden",
-                                display: "flex",
-                                justifyContent: "space-between",
-                                alignItems: "center",
-                                color: "#545873",
-                                WebkitBoxOrient: "vertical",
-                                WebkitLineClamp: 2,
-                              }}
-                            >
-                              <div
-                                style={{
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  cursor: "pointer",
-                                }}
-                                onClick={() => {
-                                  setSelectedNomer(room);
-                                  setShowEditNomer(true);
-                                }}
-                              >
-                                <p
-                                  style={
-                                    room.type === 1
-                                      ? {
-                                        fontSize: "12px",
-                                        display: "-webkit-box",
-                                        WebkitLineClamp: 1,
-                                        WebkitBoxOrient: "vertical",
-                                        overflow: "hidden",
-                                      }
-                                      : { fontSize: "12px" }
-                                  }
-                                >
-                                  {room.roomType !== "apartment" ? "№" : ""}{" "}
-                                  {room.id}{" "}
-                                  {room.roomType !== "apartment"
-                                    ? room?.roomKind?.name
-                                    : ""}
-                                </p>
-                                <p
-                                  style={
-                                    room.type === 1
-                                      ? {
-                                        fontSize: "10px",
-                                        display: "-webkit-box",
-                                        WebkitLineClamp: 2,
-                                        WebkitBoxOrient: "vertical",
-                                        overflow: "hidden",
-                                      }
-                                      : { fontSize: "10px" }
-                                  }
-                                >
-                                  {room.descriptionSecond}
-                                </p>
-                              </div>
-                              {!room.active ? "(не работает)" : ""}
-                              <Box
-                                component="span"
-                                sx={{
-                                  minWidth: "37px",
-                                  display: "flex",
-                                  flexDirection: "column",
-                                  alignItems: "flex-end",
-                                  gap: "5px",
-                                }}
-                              >
-                                <div
-                                  style={{
-                                    display: "flex",
-                                    alignItems: "center",
-                                    gap: "2px",
-                                    fontSize: "12px",
-                                  }}
-                                >
-                                  <img
-                                    src="/roomPlacePersonWhite.png"
-                                    style={{ verticalAlign: "top", width: "12px" }}
-                                    alt=""
-                                  />
-                                  {`x ${room.type}`}
-                                </div>
-                                {room.beds ? (
-                                  <div
-                                    style={{
-                                      display: "flex",
-                                      alignItems: "center",
-                                      gap: "2px",
-                                      fontSize: "12px",
-                                    }}
-                                  >
-                                    <img
-                                      src="/roomsIcon.png"
-                                      style={{ verticalAlign: "top", height: "12px" }}
-                                      alt=""
-                                    />
-                                    {`x ${room.beds}`}
-                                  </div>
-                                ) : null}
-                              </Box>
-                            </Typography>
-                          </Tooltip>
-                        </Box>
-                        <Box sx={{ width: `calc(100% - ${LEFT_WIDTH}px)` }}>
-                          <RoomRowV2
-                            requestId={requestId}
-                            hotelAccess={hotelInfo?.access}
-                            setHoveredRoom={setHoveredRoom}
-                            setHoveredDayInMonth={setHoveredDayInMonth}
-                            borderBottomDraw={index + 1 === filteredRooms.length}
-                            user={user}
-                            key={room.roomId}
-                            containerRef={containerRef}
-                            dayWidth={dayWidthLength}
-                            weekendColor={WEEKEND_COLOR}
-                            monthColor={MONTH_COLOR}
-                            room={room}
-                            requests={filteredRequests.filter(
-                              (req) => req.room?.id === room.roomId
-                            )}
-                            allRequests={filteredRequests}
-                            currentMonth={currentMonth}
-                            onUpdateRequest={handleUpdateRequest}
-                            isDraggingGlobal={isDraggingGlobal}
-                            onOpenModal={handleOpenModal}
-                            toggleRequestSidebar={toggleRequestSidebar}
-                            activeDragItem={activeDragItem}
-                            highlightedDatesOld={highlightedDatesOld}
-                            isClick={isClick}
-                            setIsClick={setIsClick}
-                          />
-                        </Box>
-                      </Box>
-                    </div>
-                  );
-                }}
-              </VariableSizeList>
-            </Box>
-          </Box>
+        <div className={classes.card}>
+          <BoardToolbar
+            searchQuery={searchQuery}
+            onSearch={setSearchQuery}
+            trayOpen={trayOpenEffective}
+            onToggleTray={() => setTrayOpen(!trayOpenEffective)}
+            trayCount={filteredNewRequests.length}
+            onCreateRequest={onCreateRequest}
+            canCreate={canCreate}
+          />
 
-          <Box
-            sx={{
-              minWidth: "330px",
-              maxWidth: "330px",
-              height: "fit-content",
-              backgroundColor: "#fff",
-              border: "1px solid #ddd",
-              borderRadius: "10px",
-            }}
-          >
-            <Typography
-              variant="h6"
-              sx={{
-                padding: "15px",
-                borderBottom: "1px solid #ddd",
-                textAlign: "center",
-                fontSize: "14px",
-                fontWeight: "700",
-                minHeight: "50px",
-                height: "fit-content",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
+          <div className={classes.boardRow}>
+            <div
+              className={classes.gridScroll}
+              ref={gridScrollRef}
+              data-grid-scroll=""
             >
-              Заявки по эскадрильи в городе {hotelInfo?.information?.city}
-            </Typography>
-            {newRequests?.length > 0 &&
-              ((user?.hotelId && hotelInfo?.access) || !user?.hotelId) ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  gap: "5px",
-                  flexDirection: "column",
-                  height: "fit-content",
-                  maxHeight: "485px",
-                  padding: "5px",
-                  overflow: "hidden",
-                  overflowY: "scroll",
-                  scrollbarWidth: "none"
-                }}
-              >
-                {newRequests
-                  .slice()
-                  .sort((a, b) => {
-                    if (a.requestID === requestId) return -1;
-                    if (b.requestID === requestId) return 1;
-                    return 0;
-                  })
-                  .filter((request) => {
-                    const shouldFilter =
-                      user?.hotelId && hotelInfo?.access;
+              <div className={classes.gridInner}>
+                <GridHeader
+                  view={view}
+                  period={period}
+                  dayW={dayW}
+                  onSetView={setView}
+                  onShift={(dir) =>
+                    setAnchor((prev) => shiftAnchor(view, prev, dir))
+                  }
+                  onToday={() => setAnchor(new Date())}
+                />
 
-                    return shouldFilter ? request.hotelId === hotelId : true;
-                  })
-                  .map((request) => (
-                    <DraggableRequestV2
-                      hotelAccess={hotelInfo?.access || true}
-                      requestId={requestId}
-                      userRole={user?.role}
-                      key={request.id}
-                      request={request}
-                      dayWidth={DAY_WIDTH}
-                      currentMonth={currentMonth}
-                      onUpdateRequest={handleUpdateRequest}
-                      allRequests={requests}
-                      isDraggingGlobal={isDraggingGlobal}
-                      isClick={isClick}
-                      setIsClick={setIsClick}
-                    />
-                  ))}
-              </Box>
-            ) : (
-              <Typography
-                variant="h6"
-                sx={{
-                  padding: "10px ",
-                  textAlign: "center",
-                  fontSize: "14px",
-                  height: "calc(100% - 50px)",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                Заявок не найдено
-              </Typography>
-            )}
-          </Box>
-        </Box>
+                {filteredRooms.map((room) => (
+                  <RoomRowV2
+                    key={room.roomId}
+                    room={room}
+                    days={period.days}
+                    dayW={dayW}
+                    period={period}
+                    dragTarget={
+                      dragTarget?.roomId === room.roomId ? dragTarget : null
+                    }
+                    highlightedDates={highlightedDates}
+                    requestId={requestId}
+                    hotelAccess={hotelInfo?.access}
+                    user={user}
+                    allRequests={filteredRequests}
+                    onUpdateRequest={handleUpdateRequest}
+                    onOpenModal={handleOpenModal}
+                    isDraggingGlobal={isDraggingGlobal}
+                    toggleRequestSidebar={toggleRequestSidebar}
+                    onRoomClick={handleRoomClick}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <UnplacedTray
+              open={trayOpenEffective}
+              onClose={() => setTrayOpen(false)}
+              city={hotelInfo?.information?.city}
+              items={filteredNewRequests}
+              listHidden={unplacedHidden}
+              onCreateRequest={onCreateRequest}
+              canCreate={canCreate}
+              requestId={requestId}
+              toggleRequestSidebar={toggleRequestSidebar}
+            />
+          </div>
+
+          {!hasInitialLoadCompleted && initialLoading && (
+            <div className={classes.loader}>
+              <MUILoader fullHeight="100%" />
+            </div>
+          )}
+        </div>
 
         <DragOverlay
           adjustScale={false}
@@ -1124,19 +880,24 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
           style={{ pointerEvents: "none" }}
         >
           {activeDragItem ? (
-            <DraggableRequestV2
-              hotelAccess={hotelInfo?.access || false}
-              requestId={requestId}
-              userRole={user?.role}
-              request={activeDragItem}
-              dayWidth={dayWidthLength}
-              currentMonth={currentMonth}
-              isDraggingGlobal={true}
-              toggleRequestSidebar={toggleRequestSidebar}
-              isClick={isClick}
-              setIsClick={setIsClick}
-              isOverlay={true}
-            />
+            activeDragItemOld ? (
+              <PlacementBarV2
+                request={activeDragItem}
+                period={period}
+                dayW={dayW}
+                hotelAccess={hotelInfo?.access || false}
+                requestId={requestId}
+                user={user}
+                isDraggingGlobal={true}
+                isOverlay={true}
+              />
+            ) : (
+              <TrayCardV2
+                request={activeDragItem}
+                requestId={requestId}
+                isOverlay={true}
+              />
+            )
           ) : null}
         </DragOverlay>
       </DndContext>
@@ -1166,7 +927,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
           dispatcherCanUpdate={dispatcherCanUpdate}
           accessMenu={accessMenu}
         />
-
       )}
 
       {showEditNomer && (
@@ -1192,35 +952,6 @@ const NewPlacementV2 = ({ idHotelInfo, searchQuery, user, accessMenu }) => {
           }}
         />
       ))}
-
-      {!hasInitialLoadCompleted && initialLoading && (
-        <Box
-          sx={{
-            position: "absolute",
-            top: "auto",
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backgroundColor: "#F1F4FB",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            zIndex: 10,
-          }}
-        >
-          <MUILoader
-            fullHeight={
-              user?.role === roles.hotelAdmin && height > 800
-                ? "82vh"
-                : user?.role === roles.hotelAdmin && height < 800
-                  ? "75vh"
-                  : user?.role !== roles.hotelAdmin && height > 870
-                    ? "83vh"
-                    : "68vh"
-            }
-          />
-        </Box>
-      )}
     </>
   );
 };
