@@ -4,17 +4,17 @@ import ChevronIcon from "../../../shared/icons/ChevronIcon";
 import { STATUS_STYLES } from "../utils/placementStatusStyles";
 import classes from "./BoardToolbar.module.css";
 
-// Порядок и примечания легенды — из макета: «Создан» описывает карточки лотка
+// Порядок легенды — из макета: «Создан» описывает карточки лотка
 // (внутренний статус «Ожидает» не переименовываем).
 const LEGEND_ITEMS = [
-  { name: "Создан", note: "ждёт размещения", style: { edge: "#6b7090", tint: "#eef1f7" } },
-  { name: "Забронирован", note: "" },
-  { name: "Продлен", note: "" },
-  { name: "Ранний заезд", note: "" },
-  { name: "Перенесен", note: "" },
-  { name: "Сокращен", note: "" },
-  { name: "Готов к архиву", note: "" },
-  { name: "Архив", note: "только просмотр" },
+  { name: "Создан", style: { edge: "#6b7090", tint: "#eef1f7" } },
+  { name: "Забронирован" },
+  { name: "Продлен" },
+  { name: "Ранний заезд" },
+  { name: "Перенесен" },
+  { name: "Сокращен" },
+  { name: "Готов к архиву" },
+  { name: "Архив" },
 ].map((item) => ({ ...item, style: item.style || STATUS_STYLES[item.name] }));
 
 const BoardToolbar = ({
@@ -155,15 +155,8 @@ const BoardToolbar = ({
                 }}
               />
               <span className={classes.legendName}>{item.name}</span>
-              <span className={classes.legendNote}>{item.note}</span>
             </div>
           ))}
-        </div>
-        <div className={classes.legendFooter}>
-          <span className={classes.legendSwatchDashed} />
-          <span className={classes.legendLegacyText}>
-            Резерв без заявки — только просмотр
-          </span>
         </div>
       </Popover>
     </div>

@@ -138,31 +138,3 @@
   color: #2d3147;
 }
 
-.legendNote {
-  margin-left: auto;
-  font-size: 11px;
-  color: #9aa0b5;
-}
-
-.legendFooter {
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid #e8eaf1;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.legendSwatchDashed {
-  width: 26px;
-  min-width: 26px;
-  height: 16px;
-  border-radius: 4px;
-  background: #f6f7fa;
-  border: 1px dashed #c3c8d9;
-}
-
-.legendLegacyText {
-  font-size: 12px;
-  color: #6b7090;
-}
