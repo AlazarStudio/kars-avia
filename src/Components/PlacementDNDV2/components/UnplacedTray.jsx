@@ -23,9 +23,9 @@ const UnplacedTray = ({
   return (
     <div className={classes.tray}>
       <div className={classes.header}>
-        <span className={classes.title}>Неразмещённые заявки</span>
-        <span className={classes.counter}>{items.length}</span>
-        {city ? <span className={classes.city}>· {city}</span> : null}
+        <span className={classes.title}>
+          {city ? `Заявки по эскадрильи в городе ${city}` : "Заявки по эскадрильи"}
+        </span>
         <button type="button" className={classes.close} onClick={onClose}>
           <svg
             width="12"
