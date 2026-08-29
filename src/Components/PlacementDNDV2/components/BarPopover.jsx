@@ -23,7 +23,13 @@ const BarPopover = ({ request, style, top, left }) => {
     checkOutDate,
     checkOutTime,
     mealPlan,
+    room,
+    guestPosition,
   } = request;
+  const roomName = room?.name;
+  const position = guestPosition
+    ? String(guestPosition).split("(")[0].trim()
+    : "";
   const avatar = airline?.images?.[0] ? getMediaUrl(airline.images[0]) : null;
 
   return ReactDOM.createPortal(
@@ -49,6 +55,18 @@ const BarPopover = ({ request, style, top, left }) => {
         </span>
       </div>
 
+      {roomName ? (
+        <div className={classes.popoverRow}>
+          Комната
+          <span className={classes.popoverValue}>{roomName}</span>
+        </div>
+      ) : null}
+      {position ? (
+        <div className={classes.popoverRow}>
+          Должность
+          <span className={classes.popoverValue}>{position}</span>
+        </div>
+      ) : null}
       <div className={classes.popoverRow}>
         Заселение
         <span className={classes.popoverValue}>
