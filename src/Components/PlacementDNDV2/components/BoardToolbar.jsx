@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Popover } from "@mui/material";
 import ChevronIcon from "../../../shared/icons/ChevronIcon";
 import { STATUS_STYLES, getStatusStyle } from "../utils/placementStatusStyles";
+import Button from "../../Standart/Button/Button";
 import classes from "./BoardToolbar.module.css";
 
 // Порядок легенды — из макета: «Создан» описывает карточки лотка
@@ -114,13 +115,7 @@ const BoardToolbar = ({
         </button>
 
         {canCreate && onCreateRequest ? (
-          <button
-            type="button"
-            className={classes.createButton}
-            onClick={onCreateRequest}
-          >
-            Создать заявку
-          </button>
+          <Button onClick={onCreateRequest}>Создать заявку</Button>
         ) : null}
       </div>
 

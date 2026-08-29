@@ -87,24 +87,6 @@
   font-weight: 700;
 }
 
-.createButton {
-  height: 40px;
-  padding: 0 18px;
-  background: #0057c3;
-  color: #fff;
-  border: none;
-  border-radius: 10px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-  white-space: nowrap;
-}
-
-.createButton:hover {
-  opacity: 0.92;
-}
-
 .legendTitle {
   font-size: 11px;
   font-weight: 700;

@@ -75,20 +75,6 @@
   color: #6b7090;
 }
 
-.emptyButton {
-  margin-top: 6px;
-  height: 36px;
-  padding: 0 16px;
-  background: #fff;
-  color: #0057c3;
-  border: 1px solid #0057c3;
-  border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: inherit;
-}
-
 .list {
   flex: 1;
   min-height: 0;

@@ -1,5 +1,6 @@
 import React from "react";
 import TrayCardV2 from "./TrayCardV2";
+import Button from "../../Standart/Button/Button";
 import classes from "./UnplacedTray.module.css";
 
 // Лоток неразмещённых заявок — колонка в потоке справа от сетки.
@@ -66,13 +67,16 @@ const UnplacedTray = ({
             Новые заявки по эскадрилье появятся здесь автоматически
           </span>
           {canCreate && onCreateRequest ? (
-            <button
-              type="button"
-              className={classes.emptyButton}
+            <Button
               onClick={onCreateRequest}
+              backgroundcolor="#fff"
+              color="#0057C3"
+              border="1px solid #0057C3"
+              height="36px"
+              padding="0 16px"
             >
               Создать заявку
-            </button>
+            </Button>
           ) : null}
         </div>
       ) : (
