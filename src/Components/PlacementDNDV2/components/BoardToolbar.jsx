@@ -26,6 +26,7 @@ const BoardToolbar = ({
   trayCount,
   onCreateRequest,
   canCreate,
+  showTray,
 }) => {
   const [legendAnchorEl, setLegendAnchorEl] = useState(null);
   const legendOpen = Boolean(legendAnchorEl);
@@ -87,32 +88,34 @@ const BoardToolbar = ({
           />
         </button>
 
-        <button
-          type="button"
-          className={classes.button}
-          style={{
-            background: trayOpen ? "#e7effa" : "#fff",
-            borderColor: trayOpen ? "#0057C355" : "#e8eaf1",
-            color: "#2d3147",
-          }}
-          onClick={onToggleTray}
-        >
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#0057C3"
-            strokeWidth="1.8"
-            strokeLinecap="round"
-            strokeLinejoin="round"
+        {showTray ? (
+          <button
+            type="button"
+            className={classes.button}
+            style={{
+              background: trayOpen ? "#e7effa" : "#fff",
+              borderColor: trayOpen ? "#0057C355" : "#e8eaf1",
+              color: "#2d3147",
+            }}
+            onClick={onToggleTray}
           >
-            <rect x="3" y="5" width="18" height="14" rx="2" />
-            <path d="M3 10h18" />
-          </svg>
-          Неразмещённые
-          <span className={classes.trayBadge}>{trayCount}</span>
-        </button>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#0057C3"
+              strokeWidth="1.8"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <rect x="3" y="5" width="18" height="14" rx="2" />
+              <path d="M3 10h18" />
+            </svg>
+            Неразмещённые
+            <span className={classes.trayBadge}>{trayCount}</span>
+          </button>
+        ) : null}
 
         {canCreate && onCreateRequest ? (
           <Button onClick={onCreateRequest}>Создать заявку</Button>

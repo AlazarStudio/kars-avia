@@ -68,6 +68,7 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
     user
   );
   const canCreate = user?.role !== roles.hotelAdmin;
+  const showTray = !user?.hotelId;
 
   const [hasInitialLoadCompleted, setHasInitialLoadCompleted] = useState(false);
 
@@ -101,6 +102,8 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
 
   const gridScrollRef = useRef(null);
   const [containerWidth, setContainerWidth] = useState(0);
+  const cardRef = useRef(null);
+  const [cardTop, setCardTop] = useState(null);
 
   // Период всегда влезает в ширину доски: горизонтального скролла нет,
   // ширина дня — производная от фактической ширины контейнера.
@@ -112,6 +115,19 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
     const observer = new ResizeObserver(measure);
     observer.observe(node);
     return () => observer.disconnect();
+  }, []);
+
+  // Высота карточки — от её фактического top во вьюпорте: страницы разных
+  // ролей дают разный отступ сверху, константа в CSS оставлена фолбэком.
+  useLayoutEffect(() => {
+    const measure = () => {
+      const node = cardRef.current;
+      if (!node) return;
+      setCardTop(Math.round(node.getBoundingClientRect().top));
+    };
+    measure();
+    window.addEventListener("resize", measure);
+    return () => window.removeEventListener("resize", measure);
   }, []);
 
   // Дробную ширину не округляем: округление копит рассинхрон ячеек и плашек.
@@ -795,7 +811,15 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
           },
         }}
       >
-        <div className={classes.card}>
+        <div
+          className={classes.card}
+          ref={cardRef}
+          style={
+            cardTop != null
+              ? { height: `calc(100vh - ${cardTop + 24}px)` }
+              : undefined
+          }
+        >
           <BoardToolbar
             searchQuery={searchQuery}
             onSearch={setSearchQuery}
@@ -804,6 +828,7 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
             trayCount={filteredNewRequests.length}
             onCreateRequest={onCreateRequest}
             canCreate={canCreate}
+            showTray={showTray}
           />
 
           <div className={classes.boardRow}>
@@ -848,17 +873,19 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
               </div>
             </div>
 
-            <UnplacedTray
-              open={trayOpenEffective}
-              onClose={() => setTrayOpen(false)}
-              city={hotelInfo?.information?.city}
-              items={filteredNewRequests}
-              listHidden={unplacedHidden}
-              onCreateRequest={onCreateRequest}
-              canCreate={canCreate}
-              requestId={requestId}
-              toggleRequestSidebar={toggleRequestSidebar}
-            />
+            {showTray ? (
+              <UnplacedTray
+                open={trayOpenEffective}
+                onClose={() => setTrayOpen(false)}
+                city={hotelInfo?.information?.city}
+                items={filteredNewRequests}
+                listHidden={unplacedHidden}
+                onCreateRequest={onCreateRequest}
+                canCreate={canCreate}
+                requestId={requestId}
+                toggleRequestSidebar={toggleRequestSidebar}
+              />
+            ) : null}
           </div>
 
           {!hasInitialLoadCompleted && initialLoading && (
