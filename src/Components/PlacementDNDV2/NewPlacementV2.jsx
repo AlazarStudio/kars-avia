@@ -43,7 +43,6 @@ import {
 import { usePlacementData } from "./hooks/usePlacementData";
 import { buildFilteredRooms, filterRequestsBySearch } from "./utils/placementFilters";
 import { hasOverlap, getOverlappingRequests } from "./utils/placementOverlap";
-import { getAvailablePosition } from "./utils/placementPositions";
 import { buildPeriod, shiftAnchor } from "./utils/placementPeriod";
 import classes from "./NewPlacementV2.module.css";
 
@@ -256,11 +255,15 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
     setDragTarget({ roomId, position, valid: room.active && !occupied });
   };
 
-  const handleDragEnd = async (event) => {
+  const resetDragState = () => {
     setIsDraggingGlobal(false);
     setActiveDragItem(null);
     setHighlightedDates([]);
     setDragTarget(null);
+  };
+
+  const handleDragEnd = async (event) => {
+    resetDragState();
 
     const { active, over } = event;
 
@@ -296,6 +299,11 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
     }
 
     if (!currentRoom) {
+      if (!targetRoom.active) {
+        addNotification("Комната не активна!", "error");
+        return;
+      }
+
       const overlappingRequests = getOverlappingRequests({
         requests,
         targetRoomId,
@@ -303,13 +311,9 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
       });
 
       const occupiedPositions = overlappingRequests.map((req) => req.position);
-      const availablePosition = getAvailablePosition(
-        targetRoom.type,
-        occupiedPositions
-      );
 
-      if (availablePosition === undefined) {
-        addNotification("Все позиции заняты в этой комнате!", "error");
+      if (occupiedPositions.includes(targetPosition)) {
+        addNotification("Место занято в комнате!", "error");
         return;
       }
 
@@ -317,7 +321,7 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
         ...draggedRequest,
         room: targetRoomId,
         roomId: targetRoom.roomId,
-        position: availablePosition,
+        position: targetPosition,
         status: "Ожидает",
       };
 
@@ -417,13 +421,8 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
 
     if (newRequests.includes(draggedRequest)) {
       if (targetRoom.active) {
-        const availablePosition = getAvailablePosition(
-          targetRoom.type,
-          occupiedPositions
-        );
-
-        if (availablePosition === undefined) {
-          addNotification("Все позиции заняты в этой комнате!", "error");
+        if (occupiedPositions.includes(targetPosition)) {
+          addNotification("Место занято в комнате!", "error");
           return;
         }
 
@@ -431,7 +430,7 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
           ...draggedRequest,
           room: targetRoomId,
           roomId: targetRoom.roomId,
-          position: availablePosition,
+          position: targetPosition,
           status: "Ожидает",
         };
 
@@ -473,12 +472,7 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
             );
           }
         } else {
-          const availablePosition = getAvailablePosition(
-            targetRoom.type,
-            occupiedPositions
-          );
-
-          if (availablePosition === undefined) {
+          if (occupiedPositions.includes(targetPosition)) {
             addNotification("Место занято в комнате!", "error");
             return;
           }
@@ -496,7 +490,7 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
               {
                 requestId: draggedRequest.requestID,
                 roomId: targetRoom.roomId,
-                place: Number(availablePosition) + 1,
+                place: targetPosition + 1,
                 clientId: draggedRequest.personID,
                 id: draggedRequest.chessID,
               },
@@ -779,6 +773,7 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
         onDragStart={(e) => handleDragStart(e)}
         onDragOver={handleDragOver}
         onDragEnd={handleDragEnd}
+        onDragCancel={resetDragState}
         autoScroll={{
           enabled: true,
           // threshold.x: 0 — зона срабатывания горизонтального автоскролла

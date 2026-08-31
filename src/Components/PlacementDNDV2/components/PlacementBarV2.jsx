@@ -335,7 +335,7 @@ const PlacementBarV2 = ({
         borderRadius: `${clipL ? 0 : 10}px ${clipR ? 0 : 10}px ${clipR ? 0 : 10}px ${clipL ? 0 : 10}px`,
         opacity: isDragging ? 0 : 1,
         cursor: isLegacy ? "default" : isDragging ? "grabbing" : "grab",
-        zIndex: hovered ? 6 : 2,
+        zIndex: hovered ? 4 : 2,
         transform: transform
           ? `translate3d(${transform.x}px, ${transform.y}px, 0)`
           : undefined,
