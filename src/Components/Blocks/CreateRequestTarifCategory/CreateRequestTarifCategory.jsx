@@ -3,7 +3,11 @@ import classes from "./CreateRequestTarifCategory.module.css";
 import Button from "../../Standart/Button/Button";
 import Sidebar from "../Sidebar/Sidebar";
 
-import { getCookie, UPDATE_HOTEL_TARIF } from "../../../../graphQL_requests.js";
+import {
+  getCookie,
+  CREATE_ROOM_KIND_SEASON,
+  UPDATE_HOTEL_TARIF,
+} from "../../../../graphQL_requests.js";
 import { useMutation, useQuery } from "@apollo/client";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
@@ -15,6 +19,12 @@ import {
   APARTMENT_CATEGORIES,
   TARIF_ROOM_CATEGORIES,
 } from "../../../utils/roomCategories.js";
+import RoomKindSeasonsDraft from "../RoomKindSeasons/RoomKindSeasonsDraft.jsx";
+import { apolloErrorText } from "../../../utils/apolloErrorText.js";
+import {
+  prepareSeasonDrafts,
+  findNewRoomKindId,
+} from "../../../utils/roomKindSeasons.js";
 
 const REQUIRED_FIELDS_MESSAGE =
   "Пожалуйста, заполните все обязательные поля.";
@@ -26,6 +36,7 @@ function CreateRequestTarifCategory({
   refetch,
   user,
   type,
+  existingRoomKinds,
 }) {
   const token = getCookie("token");
   const { confirm, showAlert, isDialogOpen } = useDialog();
@@ -43,6 +54,9 @@ function CreateRequestTarifCategory({
   });
   const [coverImage, setCoverImage] = useState(null);
 
+  const [seasonDrafts, setSeasonDrafts] = useState([]);
+  const [seasonErrors, setSeasonErrors] = useState({});
+
   const [updateHotelTarif] = useMutation(UPDATE_HOTEL_TARIF, {
     context: {
       headers: {
@@ -50,6 +64,10 @@ function CreateRequestTarifCategory({
         "Apollo-Require-Preflight": "true",
       },
     },
+  });
+
+  const [createSeason] = useMutation(CREATE_ROOM_KIND_SEASON, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
   });
 
   // const [tarifNames, setTarifNames] = useState([]);
@@ -69,6 +87,8 @@ function CreateRequestTarifCategory({
     });
     setCoverImage(null);
     setIsEdited(false);
+    setSeasonDrafts([]);
+    setSeasonErrors({});
   }, []);
 
   const closeButton = useCallback(async () => {
@@ -99,6 +119,12 @@ function CreateRequestTarifCategory({
   const handleCoverImageChange = (image) => {
     setIsEdited(true);
     setCoverImage(image);
+  };
+
+  const handleSeasonDraftsChange = (next) => {
+    setIsEdited(true);
+    setSeasonErrors({});
+    setSeasonDrafts(next);
   };
 
   // const handleFileChange = (e) => {
@@ -180,6 +206,20 @@ function CreateRequestTarifCategory({
       return;
     }
 
+    const seasonsCheck = prepareSeasonDrafts(seasonDrafts);
+    if (!seasonsCheck.ok) {
+      const nextErrors = {};
+      seasonsCheck.rows.forEach((row) => {
+        if (!row.drop && Object.keys(row.errors).length) {
+          nextErrors[row.draft.key] = row.errors;
+        }
+      });
+      setSeasonErrors(nextErrors);
+      showAlert("Проверьте поля сезонных цен.");
+      return;
+    }
+    const seasonsToCreate = seasonsCheck.rows.filter((row) => !row.drop);
+
     const nameTrim = String(formData.name ?? "").trim();
     const priceNum = parseFloat(formData.price);
 
@@ -205,10 +245,58 @@ function CreateRequestTarifCategory({
           roomKindImages: imagesArray,
         },
       });
+
+      // Тариф создан. Дальше ошибки сезонов — частичный успех: сайдбар всё
+      // равно закрываем, врать «произошла ошибка при добавлении тарифа» нельзя.
+      let seasonsFailure = null;
+      if (seasonsToCreate.length) {
+        const beforeIds = (existingRoomKinds || []).map((rk) => rk.id);
+        const newId = findNewRoomKindId(
+          beforeIds,
+          response_update_tarif?.data?.updateHotel?.roomKind,
+          { name: nameTrim, category: formData.category }
+        );
+        if (!newId) {
+          seasonsFailure = "не удалось определить созданный тариф";
+        } else {
+          // Последовательно: бэковая проверка пересечений должна видеть уже
+          // созданные сезоны, параллель дала бы гонку.
+          for (const row of seasonsToCreate) {
+            const input = {
+              roomKindId: newId,
+              name: row.draft.name.trim() || null,
+              startDate: row.draft.startDate,
+              endDate: row.draft.endDate,
+              price: row.values.price,
+            };
+            // Гостинице ключ не кладём вовсе — инвариант из RoomKindSeasons.
+            if (!user?.hotelId) {
+              input.priceForAirline = row.values.priceForAirline;
+            }
+            try {
+              await createSeason({ variables: { input } });
+            } catch (err) {
+              if (!seasonsFailure) {
+                seasonsFailure = apolloErrorText(err, "ошибка сохранения");
+              }
+            }
+          }
+        }
+      }
+
       resetForm();
       onClose();
       setIsLoading(false);
-      success("Добавление тарифа прошло успешно.");
+      if (seasonsFailure) {
+        notifyError(
+          `Тариф создан, но сезоны не сохранились: ${seasonsFailure}. ` +
+            "Добавьте их в редактировании тарифа."
+        );
+      } else if (seasonsToCreate.length) {
+        success("Тариф и сезоны добавлены.");
+      } else {
+        success("Добавление тарифа прошло успешно.");
+      }
       refetch();
     } catch (error) {
       setIsLoading(false);
@@ -336,6 +424,13 @@ function CreateRequestTarifCategory({
                   </label>
                 </>
               )}
+
+              <RoomKindSeasonsDraft
+                value={seasonDrafts}
+                onChange={handleSeasonDraftsChange}
+                errors={seasonErrors}
+                showAirlinePrice={!user?.hotelId}
+              />
 
               <label>Квадратура</label>
               <input

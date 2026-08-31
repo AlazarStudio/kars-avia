@@ -178,3 +178,73 @@ export const validateSeasonForm = (values, seasons = [], excludeId = null) => {
     values: { price, priceForAirline },
   };
 };
+
+/** Черновик пуст целиком (все поля пустые/пробельные) — такой молча отбрасываем. */
+const isBlankDraft = (draft) =>
+  ["name", "startDate", "endDate", "price", "priceForAirline"].every(
+    (field) => String(draft?.[field] ?? "").trim() === ""
+  );
+
+/**
+ * Черновики сезонов из формы создания тарифа.
+ *
+ * Полностью пустая строка помечается drop и ошибок не даёт. Остальные гоняются
+ * через validateSeasonForm, причём пересечения проверяются между черновиками:
+ * каждая строка против уже принятых выше. values валидных строк — нормализованные
+ * числа, компонент не парсит форму второй раз (та же причина, что у
+ * validateSeasonForm).
+ *
+ * @param {Array<object>} drafts черновики {key?, name?, startDate?, endDate?, price?, priceForAirline?}
+ * @returns {{ ok: boolean, rows: Array<{draft: object, drop: boolean, errors: Record<string,string>, values: {price:number|null, priceForAirline:number|null}|null}> }}
+ */
+export const prepareSeasonDrafts = (drafts) => {
+  const accepted = [];
+  let ok = true;
+  const rows = (drafts || []).map((draft) => {
+    if (isBlankDraft(draft)) {
+      return { draft, drop: true, errors: {}, values: null };
+    }
+    const check = validateSeasonForm(draft, accepted, null);
+    if (!check.ok) {
+      ok = false;
+      return { draft, drop: false, errors: check.errors, values: null };
+    }
+    accepted.push({ startDate: draft.startDate, endDate: draft.endDate });
+    return { draft, drop: false, errors: {}, values: check.values };
+  });
+  return { ok, rows };
+};
+
+/**
+ * Id новой категории после updateHotel: дифф множеств id (ответ минус те, что
+ * были до сабмита); если новых несколько — среди них матч по name+category;
+ * если и после этого кандидат не ровно один — null (сезоны не отправляем,
+ * путь частичного успеха).
+ *
+ * @param {Array<string|number>} beforeIds
+ * @param {Array<{id: string|number, name?: string, category?: string}>} afterRoomKinds
+ * @param {{name?: string, category?: string}} created
+ * @returns {string|number|null}
+ */
+export const findNewRoomKindId = (beforeIds, afterRoomKinds, { name, category } = {}) => {
+  const before = new Set((beforeIds || []).map(String));
+  const fresh = (afterRoomKinds || []).filter(
+    (rk) => rk?.id != null && !before.has(String(rk.id))
+  );
+  if (fresh.length === 1) return fresh[0].id;
+  if (fresh.length > 1) {
+    const nameTrim = String(name ?? "").trim();
+    const matched = fresh.filter(
+      (rk) => String(rk.name ?? "").trim() === nameTrim && rk.category === category
+    );
+    if (matched.length === 1) return matched[0].id;
+  }
+  return null;
+};
+
+/** Цена для чипа сезона: разряды по ru-RU. Пусто/не число — пустая строка. */
+export const formatSeasonPrice = (value) => {
+  const num = Number(value);
+  if (value == null || value === "" || Number.isNaN(num)) return "";
+  return num.toLocaleString("ru-RU");
+};

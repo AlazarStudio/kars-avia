@@ -2,17 +2,21 @@
 
    Палитра и размеры не свои: разделитель #54587380 — из
    EditRequestTarifCategory.module.css (сайдбар, куда встраивается блок),
-   подписи #545873, границы #E4E4EF, ошибка #D2482C и приглушённый #6B7189 —
+   оттуда же подложка чипа #9CA4D91A с радиусом 10px и padding 15px по бокам
+   (.requestDataInfo_desc). Серый текст: #7f808a — это `--menu-gray` из
+   src/index.css, #9e9e9e — ходовой приглушённый серый Create*-сайдбаров.
+   Подписи #545873, границы #E4E4EF, ошибка #D2482C и приглушённый #6B7189 —
    из ReportCreateSidebar.module.css, янтарный #B45309 — из
    FapV2/GroupChip.module.css (.warn) и FapReportView.module.css (.warnText).
 
-   Шрифт — Inter, осознанно: у сайдбара-хозяина Inter только в заголовке
-   (.requestTitle_name), тело набрано Nunito Sans, а Inter — семейство новых
-   модулей (FapV2) и глобального `input, select`. Оговорка: сегодня
-   объявление не действует ни у нас, ни у хозяина — src/index.css:3-8 задаёт
-   `* { font-family: 'Open Sans', sans-serif !important }`, и всё, что не
-   !important, этой звёздочкой перебито. Строку держим, чтобы блок не
-   разошёлся с соседями, если глобальный !important однажды уберут.
+   Своего font-family нет намеренно: src/index.css:3-8 задаёт
+   `* { font-family: 'Open Sans', sans-serif !important }`, любое объявление
+   без !important этой звёздочкой перебито. Блок наследует шрифт хозяина, как
+   и его соседи по сайдбару.
+
+   Просмотр сезона — .chip (подложка, без рамки), правка — .editor (белая
+   карточка с рамкой). Отдельной серой формы создания нет: добавление
+   разворачивает такой же .editor в конце списка.
 
    Разметочные правила намеренно вложены в .block — оба раза из-за
    специфичности, а не для красоты:
@@ -31,17 +35,9 @@
 .block {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 10px;
     padding-top: 16px;
     border-top: 1px solid #54587380;
-    font-family: Inter, sans-serif;
-}
-
-.head {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
 }
 
 .title {
@@ -77,19 +73,18 @@
     cursor: pointer;
 }
 
-/* ── Строка сезона ── */
+/* ── Чип сезона (просмотр) — подложка как у .requestDataInfo_desc хозяина ── */
 
-.row {
+.chip {
     display: flex;
     align-items: center;
-    gap: 14px;
-    padding: 10px 14px;
-    border: 1px solid #E4E4EF;
+    gap: 12px;
+    padding: 9px 15px;
     border-radius: 10px;
-    background: #fff;
+    background: #9CA4D91A;
 }
 
-.rowMain {
+.chipMain {
     display: flex;
     flex-direction: column;
     gap: 2px;
@@ -97,22 +92,22 @@
     min-width: 0;
 }
 
-.range {
-    font-size: 14px;
+.chipRange {
+    font-size: 13px;
     font-weight: 600;
     color: var(--text);
     font-variant-numeric: tabular-nums;
 }
 
-.name {
+.chipName {
     font-size: 12px;
-    color: #6B7189;
+    color: #7f808a;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
 }
 
-.price {
+.chipPrices {
     display: flex;
     flex-direction: column;
     align-items: flex-end;
@@ -120,60 +115,63 @@
     flex-shrink: 0;
 }
 
-.priceLabel {
-    font-size: 11px;
-    color: #9AA0B4;
-}
-
-.priceValue {
-    font-size: 14px;
+.chipPrice {
+    font-size: 13px;
     font-weight: 700;
     color: var(--text);
     font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.chipPriceAir {
+    font-size: 11px;
+    color: #9e9e9e;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
 }
 
 /* Пустая цена для АК: отчёт возьмёт цену по договору, без наценки Kars Avia */
 .warn {
-    font-size: 12px;
+    font-size: 11px;
     color: #B45309;
     cursor: help;
 }
 
-.rowButtons {
+.chipButtons {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
     flex-shrink: 0;
 }
 
-/* ── Форма сезона ── */
+/* ── Инлайн-редактор строки ── */
 
-.form {
+.editor {
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    padding: 14px;
-    border: 1px solid #E4E4EF;
-    border-radius: 12px;
-    background: #F8FAFC;
+    gap: 10px;
+    padding: 12px;
+    border: 1px solid #d6d9e6;
+    border-radius: 10px;
+    background: #fff;
 }
 
 .fieldRow {
     display: flex;
-    gap: 12px;
+    gap: 10px;
 }
 
 .block .field {
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 6px;
+    gap: 4px;
     flex: 1;
     min-width: 0;
 }
 
 .fieldTitle {
-    font-size: 13px;
+    font-size: 12px;
     color: #545873;
 }
 
@@ -182,7 +180,7 @@
 .block .field input {
     width: 100%;
     box-sizing: border-box;
-    font-size: 14px;
+    font-size: 13px;
     background: #fff;
 }
 
@@ -191,10 +189,10 @@
     color: #D2482C;
 }
 
-.formButtons {
+.editorActions {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
 }
 
 .cancel {
@@ -219,4 +217,19 @@
 .cancel:disabled {
     opacity: 0.55;
     cursor: not-allowed;
+}
+
+.addLink {
+    align-self: flex-start;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: #0057C3;
+    font-family: inherit;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.addLink:hover {
+    text-decoration: underline;
 }

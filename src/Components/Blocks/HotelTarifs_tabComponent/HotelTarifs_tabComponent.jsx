@@ -569,6 +569,7 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
         show={showAddTarifCategory}
         refetch={refetch}
         onClose={toggleTarifsCategory}
+        existingRoomKinds={addTarif}
       />
       <CreateRequestAdditionalServices
         user={user}

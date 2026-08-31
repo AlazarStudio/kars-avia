@@ -6,6 +6,9 @@ import {
   seasonsOverlap,
   findOverlappingSeason,
   validateSeasonForm,
+  prepareSeasonDrafts,
+  findNewRoomKindId,
+  formatSeasonPrice,
 } from "./roomKindSeasons.js";
 
 test("toDateInputValue: ISO с временем → YYYY-MM-DD", () => {
@@ -267,4 +270,107 @@ test("validateSeasonForm: values присутствует и у забраков
   const res = validateSeasonForm({ startDate: "", endDate: "", price: "" }, []);
   assert.equal(res.ok, false);
   assert.ok(res.values, "values должен быть всегда, чтобы вызов не падал");
+});
+
+// --- prepareSeasonDrafts ---
+
+test("prepareSeasonDrafts: пустой список и полностью пустые строки — ok, всё drop", () => {
+  assert.deepEqual(prepareSeasonDrafts([]), { ok: true, rows: [] });
+  const blank = { key: "a", name: "", startDate: "", endDate: "", price: "", priceForAirline: "" };
+  const res = prepareSeasonDrafts([blank]);
+  assert.equal(res.ok, true);
+  assert.equal(res.rows[0].drop, true);
+  assert.deepEqual(res.rows[0].errors, {});
+});
+
+test("prepareSeasonDrafts: строка из одних пробелов тоже пустая", () => {
+  const res = prepareSeasonDrafts([
+    { key: "a", name: "  ", startDate: "", endDate: "", price: " ", priceForAirline: "" },
+  ]);
+  assert.equal(res.ok, true);
+  assert.equal(res.rows[0].drop, true);
+});
+
+test("prepareSeasonDrafts: полузаполненная строка — ошибки, ok=false", () => {
+  const res = prepareSeasonDrafts([
+    { key: "a", name: "Высокий", startDate: "2027-06-01", endDate: "", price: "", priceForAirline: "" },
+  ]);
+  assert.equal(res.ok, false);
+  assert.equal(res.rows[0].drop, false);
+  assert.ok(res.rows[0].errors.endDate);
+  assert.ok(res.rows[0].errors.price);
+});
+
+test("prepareSeasonDrafts: валидная строка — нормализованные числа в values", () => {
+  const res = prepareSeasonDrafts([
+    { key: "a", name: "", startDate: "2027-06-01", endDate: "2027-09-30", price: "5 200,50", priceForAirline: "" },
+  ]);
+  assert.equal(res.ok, true);
+  assert.equal(res.rows[0].drop, false);
+  assert.equal(res.rows[0].values.price, 5200.5);
+  assert.equal(res.rows[0].values.priceForAirline, null);
+});
+
+test("prepareSeasonDrafts: пересечение между черновиками ловится", () => {
+  const res = prepareSeasonDrafts([
+    { key: "a", startDate: "2027-06-01", endDate: "2027-09-30", price: "5200" },
+    { key: "b", startDate: "2027-09-30", endDate: "2027-10-10", price: "4800" },
+  ]);
+  assert.equal(res.ok, false);
+  assert.deepEqual(res.rows[0].errors, {});
+  assert.ok(res.rows[1].errors.startDate);
+});
+
+test("prepareSeasonDrafts: drop-строка не участвует в проверке пересечений", () => {
+  const res = prepareSeasonDrafts([
+    { key: "a", name: "", startDate: "", endDate: "", price: "", priceForAirline: "" },
+    { key: "b", startDate: "2027-06-01", endDate: "2027-09-30", price: "5200" },
+  ]);
+  assert.equal(res.ok, true);
+  assert.equal(res.rows[1].drop, false);
+  assert.deepEqual(res.rows[1].errors, {});
+});
+
+// --- findNewRoomKindId ---
+
+test("findNewRoomKindId: единственный новый id находится", () => {
+  const id = findNewRoomKindId(["1", "2"], [{ id: "1" }, { id: "2" }, { id: "3" }], {});
+  assert.equal(id, "3");
+});
+
+test("findNewRoomKindId: новых нет — null", () => {
+  assert.equal(findNewRoomKindId(["1"], [{ id: "1" }], {}), null);
+  assert.equal(findNewRoomKindId([], [], {}), null);
+});
+
+test("findNewRoomKindId: несколько новых — выбирает по name+category", () => {
+  const after = [
+    { id: "1", name: "Стандарт", category: "twoPlace" },
+    { id: "2", name: "Люкс", category: "luxe" },
+    { id: "3", name: "Стандарт ", category: "onePlace" },
+  ];
+  const id = findNewRoomKindId(["1"], after, { name: "Стандарт", category: "onePlace" });
+  assert.equal(id, "3");
+});
+
+test("findNewRoomKindId: несколько новых без однозначного матча — null", () => {
+  const after = [
+    { id: "2", name: "Стандарт", category: "onePlace" },
+    { id: "3", name: "Стандарт", category: "onePlace" },
+  ];
+  assert.equal(findNewRoomKindId([], after, { name: "Стандарт", category: "onePlace" }), null);
+});
+
+test("findNewRoomKindId: сравнение id нечувствительно к типу (число/строка)", () => {
+  assert.equal(findNewRoomKindId([1], [{ id: "1" }, { id: "2" }], {}), "2");
+});
+
+// --- formatSeasonPrice ---
+
+test("formatSeasonPrice: разряды через пробел, null/мусор — пусто", () => {
+  assert.equal(formatSeasonPrice(5200), "5 200");
+  assert.equal(formatSeasonPrice(980), "980");
+  assert.equal(formatSeasonPrice(null), "");
+  assert.equal(formatSeasonPrice(undefined), "");
+  assert.equal(formatSeasonPrice("abc"), "");
 });

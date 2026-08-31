@@ -8,10 +8,12 @@ import DeleteIcon from "../../../shared/icons/DeleteIcon";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
 import useRoomKindSeasons from "./useRoomKindSeasons.js";
+import SeasonRowEditor from "./SeasonRowEditor.jsx";
 import { apolloErrorText } from "../../../utils/apolloErrorText.js";
 import {
   toDateInputValue,
   formatSeasonRange,
+  formatSeasonPrice,
   validateSeasonForm,
 } from "../../../utils/roomKindSeasons.js";
 
@@ -86,17 +88,17 @@ function RoomKindSeasons({
     setErrors({});
   };
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prev) => {
-      const next = { ...prev, [name]: value };
-      // Как в ReportCreateSidebar: окончание не может быть раньше начала.
-      if (name === "startDate" && next.endDate && next.endDate < value) {
-        next.endDate = "";
+  // Сравнение с form из замыкания, а не через updater setForm: setState внутри
+  // чужого updater'а — side effect, под StrictMode он выполнился бы дважды.
+  const handleFormChange = (next) => {
+    setErrors((prevErr) => {
+      const cleared = { ...prevErr };
+      for (const k of Object.keys(next)) {
+        if (next[k] !== form[k]) cleared[k] = undefined;
       }
-      return next;
+      return cleared;
     });
-    setErrors((prev) => ({ ...prev, [name]: undefined }));
+    setForm(next);
   };
 
   const handleSubmit = async () => {
@@ -152,16 +154,7 @@ function RoomKindSeasons({
 
   return (
     <div className={classes.block}>
-      <div className={classes.head}>
-        <div className={classes.title}>Сезонные цены</div>
-        {/* type задаём явно: примитив Button своего type не ставит, а спредит
-            пропсы на <button> — без него эффективный type=submit. */}
-        {canEdit && !isFormOpen && (
-          <Button type="button" onClick={openAdd} minwidth={"180px"}>
-            Добавить сезон
-          </Button>
-        )}
-      </div>
+      <div className={classes.title}>Сезонные цены</div>
 
       <div className={classes.hint}>
         Сезонные цены применяются к отчётам эскадрильи. В отчёте ФАП пока
@@ -185,139 +178,26 @@ function RoomKindSeasons({
         </div>
       )}
 
-      {!loading && !error && !seasons.length && (
+      {!loading && !error && !seasons.length && !isAdding && (
         <div className={classes.empty}>Сезоны не заданы</div>
       )}
 
-      {seasons.map((season) => (
-        <div className={classes.row} key={season.id}>
-          <div className={classes.rowMain}>
-            <div className={classes.range}>
-              {formatSeasonRange(season.startDate, season.endDate)}
-            </div>
-            {season.name && <div className={classes.name}>{season.name}</div>}
-          </div>
-
-          <div className={classes.price}>
-            <span className={classes.priceLabel}>По договору</span>
-            <span className={classes.priceValue}>{season.price}</span>
-          </div>
-
-          {showAirlinePrice && (
-            <div className={classes.price}>
-              <span className={classes.priceLabel}>Для АК</span>
-              {season.priceForAirline == null ? (
-                <span
-                  className={classes.warn}
-                  title="Отчёт возьмёт цену по договору, без наценки"
-                >
-                  не задана
-                </span>
-              ) : (
-                <span className={classes.priceValue}>
-                  {season.priceForAirline}
-                </span>
-              )}
-            </div>
-          )}
-
-          {/* Во время сохранения иконки убираем: клик по карандашу открыл бы
-              форму правки, которую завершающийся handleSubmit тут же стёр бы
-              через closeForm(), а два параллельных run() дерутся за один
-              флаг saving. */}
-          {canEdit && !saving && (
-            <div className={classes.rowButtons}>
-              <EditPencilIcon cursor="pointer" onClick={() => openEdit(season)} />
-              <DeleteIcon cursor="pointer" onClick={() => handleDelete(season)} />
-            </div>
-          )}
-        </div>
-      ))}
-
-      {canEdit && isFormOpen && (
-        <div className={classes.form}>
-          <label className={classes.field}>
-            <span className={classes.fieldTitle}>Название</span>
-            <input
-              type="text"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              placeholder="Например: Высокий сезон"
-            />
-          </label>
-
-          <div className={classes.fieldRow}>
-            <label className={classes.field}>
-              <span className={classes.fieldTitle}>Начало</span>
-              <input
-                type="date"
-                name="startDate"
-                value={form.startDate}
-                onChange={handleChange}
-              />
-              {errors.startDate && (
-                <span className={classes.fieldError}>{errors.startDate}</span>
-              )}
-            </label>
-
-            <label className={classes.field}>
-              <span className={classes.fieldTitle}>Окончание</span>
-              <input
-                type="date"
-                name="endDate"
-                min={form.startDate}
-                value={form.endDate}
-                onChange={handleChange}
-              />
-              {errors.endDate && (
-                <span className={classes.fieldError}>{errors.endDate}</span>
-              )}
-            </label>
-          </div>
-
-          <div className={classes.fieldRow}>
-            <label className={classes.field}>
-              <span className={classes.fieldTitle}>Цена по договору</span>
-              <input
-                type="number"
-                name="price"
-                value={form.price}
-                onChange={handleChange}
-                placeholder="Введите стоимость"
-              />
-              {errors.price && (
-                <span className={classes.fieldError}>{errors.price}</span>
-              )}
-            </label>
-
-            {showAirlinePrice && (
-              <label className={classes.field}>
-                <span className={classes.fieldTitle}>Цена для авиакомпании</span>
-                <input
-                  type="number"
-                  name="priceForAirline"
-                  value={form.priceForAirline}
-                  onChange={handleChange}
-                  placeholder="Необязательно"
-                />
-                {errors.priceForAirline && (
-                  <span className={classes.fieldError}>
-                    {errors.priceForAirline}
-                  </span>
-                )}
-              </label>
-            )}
-          </div>
-
-          <div className={classes.formButtons}>
+      {seasons.map((season) =>
+        editingId === season.id ? (
+          <SeasonRowEditor
+            key={season.id}
+            form={form}
+            errors={errors}
+            onChange={handleFormChange}
+            showAirlinePrice={showAirlinePrice}
+          >
             <Button
               type="button"
               onClick={handleSubmit}
               disabled={saving}
               minwidth={"160px"}
             >
-              {editingId ? "Сохранить сезон" : "Добавить"}
+              Сохранить сезон
             </Button>
             <button
               type="button"
@@ -327,8 +207,89 @@ function RoomKindSeasons({
             >
               Отмена
             </button>
+          </SeasonRowEditor>
+        ) : (
+          <div className={classes.chip} key={season.id}>
+            <div className={classes.chipMain}>
+              <div className={classes.chipRange}>
+                {formatSeasonRange(season.startDate, season.endDate)}
+              </div>
+              {season.name && (
+                <div className={classes.chipName}>{season.name}</div>
+              )}
+            </div>
+
+            <div className={classes.chipPrices}>
+              <span className={classes.chipPrice}>
+                {formatSeasonPrice(season.price)} ₽
+              </span>
+              {showAirlinePrice &&
+                (season.priceForAirline == null ? (
+                  <span
+                    className={classes.warn}
+                    title="Отчёт возьмёт цену по договору, без наценки"
+                  >
+                    АК: не задана
+                  </span>
+                ) : (
+                  <span className={classes.chipPriceAir}>
+                    АК: {formatSeasonPrice(season.priceForAirline)} ₽
+                  </span>
+                ))}
+            </div>
+
+            {/* Во время сохранения иконки убираем: клик по карандашу открыл бы
+                форму правки, которую завершающийся handleSubmit тут же стёр бы
+                через closeForm(), а два параллельных run() дерутся за один
+                флаг saving. */}
+            {canEdit && !saving && !isFormOpen && (
+              <div className={classes.chipButtons}>
+                <EditPencilIcon
+                  cursor="pointer"
+                  onClick={() => openEdit(season)}
+                />
+                <DeleteIcon
+                  cursor="pointer"
+                  onClick={() => handleDelete(season)}
+                />
+              </div>
+            )}
           </div>
-        </div>
+        )
+      )}
+
+      {canEdit && isAdding && (
+        <SeasonRowEditor
+          form={form}
+          errors={errors}
+          onChange={handleFormChange}
+          showAirlinePrice={showAirlinePrice}
+        >
+          <Button
+            type="button"
+            onClick={handleSubmit}
+            disabled={saving}
+            minwidth={"160px"}
+          >
+            Добавить
+          </Button>
+          <button
+            type="button"
+            className={classes.cancel}
+            onClick={closeForm}
+            disabled={saving}
+          >
+            Отмена
+          </button>
+        </SeasonRowEditor>
+      )}
+
+      {/* type задаём явно: примитив Button своего type не ставит; здесь и в
+          «Отмена» это простые <button>, но правило то же. */}
+      {canEdit && !isFormOpen && (
+        <button type="button" className={classes.addLink} onClick={openAdd}>
+          + Добавить сезон
+        </button>
       )}
     </div>
   );
