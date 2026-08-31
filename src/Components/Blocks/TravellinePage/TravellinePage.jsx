@@ -10,11 +10,12 @@ import {
 import SyncProgressModal from "./modals/SyncProgressModal"
 import { useAuth } from "../../../AuthContext"
 import { useEffectiveAccessMenu } from "../../../hooks/useEffectiveAccessMenu"
-import { canAccessMenu, isSuperAdmin } from "../../../utils/access"
+import { canAccessMenu, isDispatcherAdmin, isSuperAdmin } from "../../../utils/access"
 import MenuDispetcher from "../MenuDispetcher/MenuDispetcher"
 import Header from "../Header/Header"
 import classes from "./TravellinePage.module.css"
 import { Badge } from "./shared/ui"
+import SyncIndicator from "./shared/SyncIndicator"
 import { cn } from "./shared/helpers"
 
 import SettingsTab from "./sections/SettingsTab"
@@ -43,13 +44,18 @@ export default function TravellinePage() {
   const [syncStatus, setSyncStatus] = useState(null)
   const [showSyncModal, setShowSyncModal] = useState(false)
   const pollRef = useRef(null)
+  // Модалку открывает только синхронизация, запущенная с этой страницы.
+  const manualSyncRef = useRef(false)
 
   const { data: syncStatusData, refetch: refetchSyncStatus } = useQuery(
     TL_SYNC_STATUS,
     {
       context: { headers: { Authorization: `Bearer ${token}` } },
       skip: !user || !isConfigured,
-      fetchPolicy: "network-only"
+      fetchPolicy: "network-only",
+      // Индикатор в шапке должен видеть и фоновую автосинхронизацию,
+      // а её никто не инициирует из браузера — поэтому опрашиваем сами.
+      pollInterval: 30000
     }
   )
   const [runSync] = useMutation(TL_SYNC_CATALOG, {
@@ -57,19 +63,26 @@ export default function TravellinePage() {
   })
 
   useEffect(() => {
-    if (!syncStatusData?.tlSyncStatus) return
-    setSyncStatus(syncStatusData.tlSyncStatus)
-    const st = syncStatusData.tlSyncStatus
+    const st = syncStatusData?.tlSyncStatus
+    if (!st) return
+    setSyncStatus(st)
+
     // Первый заход — каталог никогда не синкался
     if (!st.lastSyncAt && !st.running) {
+      manualSyncRef.current = true
       setShowSyncModal(true)
       runSync({ variables: { countryCode: "RUS" } }).then((res) =>
         setSyncStatus(res?.data?.tlSyncCatalog)
       )
+      return
     }
-    // Если уже идёт фоном — показать модалку и поллить
+
+    // Фоновая автосинхронизация не должна перебивать работу модалкой —
+    // её видно только по индикатору в шапке.
     if (st.running) {
-      setShowSyncModal(true)
+      if (manualSyncRef.current) setShowSyncModal(true)
+    } else {
+      manualSyncRef.current = false
     }
   }, [syncStatusData, runSync])
 
@@ -95,6 +108,7 @@ export default function TravellinePage() {
   }, [showSyncModal, refetchSyncStatus])
 
   const handleResync = async () => {
+    manualSyncRef.current = true
     setShowSyncModal(true)
     const r = await runSync({ variables: { countryCode: "RUS" } })
     setSyncStatus(r?.data?.tlSyncCatalog)
@@ -158,6 +172,12 @@ export default function TravellinePage() {
                   )}
                 </>
               )}
+              <SyncIndicator
+                status={syncStatus}
+                onResync={handleResync}
+                // ручной запуск разрешает adminMiddleware на бэкенде
+                canResync={isSuperAdmin(user) || isDispatcherAdmin(user)}
+              />
               {isSuperAdmin(user) && (<>
               <button
                 type="button"

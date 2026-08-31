@@ -1291,3 +1291,27 @@
 .resvCloseDarkBtn:hover {
   background: #334155;
 }
+
+/* Индикатор синхронизации каталога в шапке раздела */
+
+.syncIndicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.syncTime {
+  font-size: 12px;
+  color: var(--tl-text-2);
+  white-space: nowrap;
+}
+
+.iconBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.iconSpin {
+  animation: tl-spin 0.8s linear infinite;
+  transform-origin: 50% 50%;
+}
