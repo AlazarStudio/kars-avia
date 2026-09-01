@@ -18,7 +18,11 @@ import Analytics from "../../Pages/AnalyticsForAvia/Analytics/Analytics";
 import DisAdminTransferContent from "./DisAdminTransferContent/DisAdminTransferContent";
 import DisAdminAutoparkContent from "./DisAdminAutoparkContent/DisAdminAutoparkContent";
 import PositionAccessPage from "../../Blocks/PositionAccessPage/PositionAccessPage";
-import { canAccessMenu, safeAccessMenu as getSafeAccessMenu } from "../../../utils/access";
+import {
+  canAccessMenu,
+  canManageAirlineAccess,
+  safeAccessMenu as getSafeAccessMenu,
+} from "../../../utils/access";
 import RepresentativeRequests from "../../Blocks/RepresentativeRequests/RepresentativeRequests";
 import FapV2 from "../../Pages/FapV2/FapV2";
 import SupportPage from "../../Blocks/SupportPage/SupportPage";
@@ -103,10 +107,9 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
       },
       {
         ids: ["positions"],
-        // Редактор доступов должностей закрыт тем же правом, что и кнопка на
-        // него: без этого гейт кнопки был бы косметическим — страница
-        // открывалась по прямой ссылке.
-        guardKey: "accessManage",
+        // Редактор доступов должностей: диспетчер-админ проходит по роли (АК-
+        // контекст), страница внутри гейтит dispatcher-тип прежним ключом.
+        guard: canManageAirlineAccess,
         Comp: PositionAccessPage,
         props: () => ({ user, accessMenu: safeAccessMenu }),
       },
@@ -169,7 +172,9 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
     const rule = CONFIG.find((item) => item.ids.includes(id));
     if (!rule) return <NoAccess />;
 
-    const allowed = canAccessMenu(accessMenu, rule.guardKey, user);
+    const allowed = rule.guard
+      ? rule.guard(accessMenu, user)
+      : canAccessMenu(accessMenu, rule.guardKey, user);
     const Comp = allowed ? rule.Comp : NoAccess;
     return <Comp {...(rule.props ? rule.props() : { user })} />;
   }

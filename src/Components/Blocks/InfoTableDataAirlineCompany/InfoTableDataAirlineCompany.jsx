@@ -6,7 +6,7 @@ import SettingsIcon from "../../../shared/icons/SettingsIcon";
 import DeleteIcon from "../../../shared/icons/DeleteIcon";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import { menuAccess, roles } from "../../../roles";
-import { canAccessMenu } from "../../../utils/access";
+import { canManageAirlineAccess } from "../../../utils/access";
 import ReadinessIndicator from "../ReadinessIndicator/ReadinessIndicator";
 import { computeDepartmentReadiness } from "../../../utils/dispatcherDepartmentReadiness";
 
@@ -23,9 +23,9 @@ const collapseBtnStyle = {
 
 function InfoTableDataAirlineCompany({ children, user, representative, accessMenu, airlineId, toggleRequestSidebar, onViewOtdel, requests, openDeleteComponent, toggleRequestEditNumber, onViewEmployee, openDeleteNomerComponent, onOpenSettings, ...props }) {
     const canEditDepartment = !user?.airlineId || accessMenu.userUpdate;
-    // Выдача доступов отделена от обычного взаимодействия с разделом: право
-    // accessManage выдаёт суперадмин, canAccessMenu пропускает его по роли.
-    const canManageAccess = canAccessMenu(accessMenu, "accessManage", user);
+    // Доступы АК: супер и диспетчер-админ — по роли, остальные — по ключу
+    // accessManage (см. canManageAirlineAccess).
+    const canManageAccess = canManageAirlineAccess(accessMenu, user);
     const [collapsed, setCollapsed] = useState({});
     const toggleCollapse = (key) =>
         setCollapsed((c) => ({ ...c, [key]: !c[key] }));

@@ -98,6 +98,17 @@ export const hasAccessMenu = (accessMenu, key) => {
 export const canAccessMenu = (accessMenu, key, user) =>
   isSuperAdmin(user) || hasAccessMenu(accessMenu, key);
 
+// Доступы АВИАКОМПАНИЙ диспетчер-админ правит наравне с супером (решение
+// владельца 01.09.2026): роль пропускается без ключа accessManage — бэк и так
+// пускает DISPATCHERADMIN в updateAirline и должности АК
+// (airlineAdminMiddleware). Ключ остаётся тонкой настройкой для остальных
+// учёток (модераторы, АК). Собственные диспетчерские отделы этим хелпером НЕ
+// гейтятся — там по-прежнему canAccessMenu("accessManage").
+export const canManageAirlineAccess = (accessMenu, user) =>
+  isSuperAdmin(user) ||
+  isDispatcherAdmin(user) ||
+  hasAccessMenu(accessMenu, "accessManage");
+
 export const getDispatcherAccess = (accessMenu, key, user) => {
   if (!isDispatcherRole(user)) return undefined;
   return hasAccessMenu(accessMenu, key);

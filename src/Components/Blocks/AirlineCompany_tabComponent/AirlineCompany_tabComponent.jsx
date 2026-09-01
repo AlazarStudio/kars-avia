@@ -25,7 +25,7 @@ import MUILoader from "../MUILoader/MUILoader";
 import MUITextField from "../MUITextField/MUITextField";
 import SettingsSidebar from "../SettingsSidebar/SettingsSidebar";
 import { useToast } from "../../../contexts/ToastContext";
-import { canAccessMenu } from "../../../utils/access";
+import { canManageAirlineAccess } from "../../../utils/access";
 import { useNavigate } from "react-router-dom";
 import PositionsAccessButton from "../PositionsAccessButton/PositionsAccessButton";
 import AddMenuButton from "../AddMenuButton/AddMenuButton";
@@ -35,9 +35,9 @@ function AirlineCompany_tabComponent({ children, id, user, accessMenu, ...props 
   const { success, error: notifyError } = useToast();
   const navigate = useNavigate();
   const canCreate = !user?.airlineId || accessMenu.userCreate;
-  // Выдача доступов отделена от обычного взаимодействия с разделом: право
-  // accessManage выдаёт суперадмин, canAccessMenu пропускает его по роли.
-  const canManageAccess = canAccessMenu(accessMenu, "accessManage", user);
+  // Доступы АК: супер и диспетчер-админ — по роли, остальные — по ключу
+  // accessManage (см. canManageAirlineAccess).
+  const canManageAccess = canManageAirlineAccess(accessMenu, user);
 
   const { loading, error, data, refetch } = useQuery(GET_AIRLINE_COMPANY, {
     context: {

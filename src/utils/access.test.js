@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { resolveEffectiveAccessMenu } from "./access.js";
+import { resolveEffectiveAccessMenu, canManageAirlineAccess } from "./access.js";
+import { roles } from "../roles.js";
 
 test("гостиничная роль с непустым effectiveAccessMenu получает ровно эти флаги", () => {
   const result = resolveEffectiveAccessMenu({
@@ -56,4 +57,26 @@ test("меню отдела не протекает в результат для
     effectiveAccessMenu: { userMenu: true },
   });
   assert.deepEqual(result, { userMenu: true });
+});
+
+test("canManageAirlineAccess: супер без ключа accessManage — true", () => {
+  const user = { role: roles.superAdmin };
+  assert.equal(canManageAirlineAccess({}, user), true);
+});
+
+test("canManageAirlineAccess: DISPATCHERADMIN без ключа accessManage — true", () => {
+  const user = { role: roles.dispatcerAdmin };
+  assert.equal(canManageAirlineAccess({}, user), true);
+});
+
+test("canManageAirlineAccess: DISPATCHERMODERATOR без ключа — false, с ключом accessManage — true", () => {
+  const user = { role: roles.dispatcherModerator };
+  assert.equal(canManageAirlineAccess({}, user), false);
+  assert.equal(canManageAirlineAccess({ accessManage: true }, user), true);
+});
+
+test("canManageAirlineAccess: AIRLINEADMIN без ключа — false, с ключом accessManage — true", () => {
+  const user = { role: roles.airlineAdmin };
+  assert.equal(canManageAirlineAccess({}, user), false);
+  assert.equal(canManageAirlineAccess({ accessManage: true }, user), true);
 });

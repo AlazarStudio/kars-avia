@@ -21,7 +21,7 @@ import DeleteIcon from "../../../shared/icons/DeleteIcon";
 import { useToast } from "../../../contexts/ToastContext";
 import { useDialog } from "../../../contexts/DialogContext";
 import { buildAccessPayload, ALL_TRUE_ACCESS } from "../../../utils/accessPayload";
-import { canAccessMenu } from "../../../utils/access";
+import { canAccessMenu, canManageAirlineAccess } from "../../../utils/access";
 
 export default function PositionAccessPage({ user, accessMenu }) {
   const token = getCookie("token");
@@ -39,9 +39,10 @@ export default function PositionAccessPage({ user, accessMenu }) {
   const airlineId = location.state?.airlineId || user?.airlineId;
   const seedAccessMenu = location.state?.seedAccessMenu;
   const isAirline = type === "airline";
-  // Секцию «Управление доступами» видит тот, у кого само право есть: суперадмин
-  // проходит по роли внутри canAccessMenu, делегат — по флагу.
-  const canManageAccess = canAccessMenu(accessMenu, "accessManage", user);
+  // АК-контекст диспетчер-админ правит по роли; свой (dispatcher) — по ключу.
+  const canManageAccess = isAirline
+    ? canManageAirlineAccess(accessMenu, user)
+    : canAccessMenu(accessMenu, "accessManage", user);
 
   const { data, loading, refetch } = useQuery(
     isAirline ? GET_AIRLINE_USERS_POSITIONS : GET_DISPATCHER_POSITIONS,
