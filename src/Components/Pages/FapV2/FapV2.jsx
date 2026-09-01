@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useSubscription } from "@apollo/client";
 import classes from "./FapV2.module.css";
@@ -115,6 +115,7 @@ const STATUS_OPTIONS = [
 ];
 
 const LS_STATUS_KEY = "statusFilterFapV2";
+const LIST_STATE_KEY = "fapListScrollState";
 
 export default function FapV2({ user, accessMenu }) {
   const navigate = useNavigate();
@@ -155,6 +156,40 @@ export default function FapV2({ user, accessMenu }) {
     ? user?.airlineId
     : selectedAirline?.id;
 
+  const resetKeysValues = [
+    statusOption?.value,
+    debouncedSearch,
+    effectiveAirlineId,
+    selectedAirport?.id,
+    dateRange.startDate,
+    dateRange.endDate,
+  ];
+  const listSignature = JSON.stringify(resetKeysValues);
+
+  // Возврат из заявки: восстанавливаем окно подгрузки и позицию скролла,
+  // только если фильтры те же, что при уходе (иначе список другой).
+  const [savedListState] = useState(() => {
+    try {
+      const raw = sessionStorage.getItem(LIST_STATE_KEY);
+      return raw ? JSON.parse(raw) : null;
+    } catch {
+      return null;
+    }
+  });
+  const restoreState =
+    savedListState && savedListState.sig === listSignature ? savedListState : null;
+
+  useEffect(() => {
+    if (savedListState && !restoreState) {
+      try {
+        sessionStorage.removeItem(LIST_STATE_KEY);
+      } catch {
+        /* ignore */
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const {
     items: requests,
     loading,
@@ -165,6 +200,10 @@ export default function FapV2({ user, accessMenu }) {
     refreshWindow,
   } = useInfiniteScroll(GET_PASSENGER_REQUESTS, {
     take: PAGE_SIZE,
+    initialTake:
+      restoreState && restoreState.loaded > PAGE_SIZE
+        ? Math.min(Math.ceil(restoreState.loaded / PAGE_SIZE) * PAGE_SIZE, 300)
+        : undefined,
     context: { headers: { Authorization: `Bearer ${token}` } },
     buildVariables: (page, take) => ({
       skip: page * take,
@@ -183,15 +222,43 @@ export default function FapV2({ user, accessMenu }) {
       },
     }),
     getItems: (d) => d?.passengerRequests,
-    resetKeys: [
-      statusOption?.value,
-      debouncedSearch,
-      effectiveAirlineId,
-      selectedAirport?.id,
-      dateRange.startDate,
-      dateRange.endDate,
-    ],
+    resetKeys: resetKeysValues,
   });
+
+  const rememberListState = () => {
+    try {
+      sessionStorage.setItem(
+        LIST_STATE_KEY,
+        JSON.stringify({
+          scrollTop: wrapperRef.current?.scrollTop || 0,
+          loaded: requests.length,
+          sig: listSignature,
+        })
+      );
+    } catch {
+      /* приватный режим — просто без восстановления */
+    }
+  };
+
+  // ⚠️ scrollTo с behavior:"instant" обязателен: глобальный `* { scroll-behavior:
+  // smooth }` (src/index.css) превратил бы присвоение scrollTop в анимацию,
+  // под которой сентинел успевает пересечься и дёрнуть лишнюю догрузку.
+  const restoredRef = useRef(false);
+  useEffect(() => {
+    if (restoredRef.current) return;
+    if (!restoreState) return;
+    if (loading || requests.length === 0) return;
+    restoredRef.current = true;
+    try {
+      sessionStorage.removeItem(LIST_STATE_KEY);
+    } catch {
+      /* ignore */
+    }
+    wrapperRef.current?.scrollTo({
+      top: restoreState.scrollTop,
+      behavior: "instant",
+    });
+  }, [loading, requests.length, restoreState, wrapperRef]);
 
   useSubscription(PASSENGER_REQUEST_CREATED_SUBSCRIPTION, {
     onData: () => refreshWindow(),
@@ -345,7 +412,10 @@ export default function FapV2({ user, accessMenu }) {
               <div
                 key={req.id}
                 className={classes.card}
-                onClick={() => navigate(`/far/${req.id}`)}
+                onClick={() => {
+                  rememberListState();
+                  navigate(`/far/${req.id}`);
+                }}
               >
                 {/* Kicker: request number + status */}
                 <div className={classes.cardKicker}>

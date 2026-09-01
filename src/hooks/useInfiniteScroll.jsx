@@ -30,10 +30,12 @@ function computeHasMore({ pageInfo, loadedPages, loadedCount, lastChunkLen, take
 /**
  * Универсальный инфинит-скролл для Apollo-списков.
  * Контракт пагинации делегируется консьюмеру через buildVariables/getItems/getPageInfo.
+ * initialTake — разовое стартовое окно: первый базовый запрос берёт его вместо take.
  */
 export default function useInfiniteScroll(query, options) {
   const {
     take = 25,
+    initialTake,
     enabled = true,
     context,
     buildVariables,
@@ -56,7 +58,11 @@ export default function useInfiniteScroll(query, options) {
   const sentinelRef = useRef(null); // якорь внизу списка
   // Фактический take последнего базового запроса (page-0). Отличается от take
   // только после refreshWindow(), когда одним запросом перечитано несколько страниц.
-  const requestedTakeRef = useRef(take);
+  const requestedTakeRef = useRef(initialTake || take);
+  // Разовое стартовое окно (восстановление списка после возврата): первый
+  // базовый запрос берёт initialTake вместо take; после refresh() или смены
+  // фильтров действует обычный take.
+  const initialTakeRef = useRef(initialTake);
 
   // Свежие колбэки/опции без пере-подписки эффектов
   const cfgRef = useRef(null);
@@ -65,7 +71,9 @@ export default function useInfiniteScroll(query, options) {
   const { data, error, refetch, fetchMore, networkStatus } = useQuery(query, {
     skip: !enabled,
     context,
-    variables: enabled ? buildVariables(0, take) : undefined,
+    variables: enabled
+      ? buildVariables(0, initialTakeRef.current || take)
+      : undefined,
     notifyOnNetworkStatusChange: true,
   });
 
@@ -96,6 +104,7 @@ export default function useInfiniteScroll(query, options) {
   }, [data]);
 
   const refresh = useCallback(() => {
+    initialTakeRef.current = null;
     const { buildVariables, take } = cfgRef.current;
     currentPageRef.current = 0;
     requestedTakeRef.current = take;
@@ -115,15 +124,18 @@ export default function useInfiniteScroll(query, options) {
 
   // Сброс на стр.0 при смене фильтров. ВАЖНО: значения resetKeys должны также
   // участвовать в buildVariables, иначе базовый запрос не перезапросится и items останутся старыми.
+  // Сравниваем сигнатуры, а не «пропускаем первый вызов»: под StrictMode эффект
+  // на маунте выполняется дважды, и паттерн firstResetRef вторым прогоном
+  // выполнял сброс — обнулял initialTakeRef до того, как базовый запрос успел
+  // получить данные.
   const resetSignature = JSON.stringify(resetKeys);
-  const firstResetRef = useRef(true);
+  const prevResetSigRef = useRef(resetSignature);
   useEffect(() => {
-    if (firstResetRef.current) {
-      firstResetRef.current = false;
-      return;
-    }
+    if (prevResetSigRef.current === resetSignature) return;
+    prevResetSigRef.current = resetSignature;
     currentPageRef.current = 0;
     requestedTakeRef.current = cfgRef.current.take;
+    initialTakeRef.current = null;
     setHasMore(true);
   }, [resetSignature]);
 
