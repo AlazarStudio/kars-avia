@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import classes from "./ReportDraftsPanel.module.css";
-import { convertToDate } from "../../../../../graphQL_requests";
+import { convertToDate, convertToDateNew } from "../../../../../graphQL_requests";
 import { isDraftStale } from "../reportDraftAge";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 
@@ -56,8 +56,9 @@ export default function ReportDraftsPanel({ drafts, isAirline, onOpen, onDelete 
                     </span>
                   )}
                 </div>
+                {/* Границы периода — сентинелы T00:10/T23:50 в UTC; московский рендер сдвигал конец на +1 день */}
                 <div className={classes.period}>
-                  {convertToDate(draft.startDate)} – {convertToDate(draft.endDate)}
+                  {convertToDateNew(draft.startDate)} – {convertToDateNew(draft.endDate)}
                 </div>
               </div>
 

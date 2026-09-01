@@ -15,7 +15,7 @@ import ReportDraftPreview from "./ReportDraftPreview";
 import ReportDraftSummary from "./ReportDraftSummary";
 import { DRAFT_FILTERS, pluralizeDays, pluralizeRows, rowMatchesSearch } from "./reportDraftEditorUtils";
 import { useToast } from "../../../../contexts/ToastContext";
-import { convertToDate, GET_REPORT_PARTIAL_DAY_SETTINGS, getCookie } from "../../../../../graphQL_requests";
+import { convertToDateNew, GET_REPORT_PARTIAL_DAY_SETTINGS, getCookie } from "../../../../../graphQL_requests";
 import { measureSavePayload, rowHasWarning } from "../reportDraftRows";
 import { isDraftStale, getDraftAgeDays } from "../reportDraftAge";
 import { resolveDraftPartialDayRules } from "../reportRules";
@@ -335,7 +335,8 @@ export default function ReportDraftEditor({
     );
   }
 
-  const period = `${convertToDate(draft.startDate)} – ${convertToDate(draft.endDate)}`;
+  // Сентинелы периода в UTC — рендер по UTC, иначе конец периода +1 день
+  const period = `${convertToDateNew(draft.startDate)} – ${convertToDateNew(draft.endDate)}`;
   const companyName = draft.filterJson?.companyName || "—";
   // Экран один на две роли, поэтому и подпись разная: черновик правят, а
   // выпущенный отчёт только смотрят — называть его черновиком нельзя, он уже

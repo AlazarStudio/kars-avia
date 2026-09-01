@@ -1,6 +1,6 @@
 import PropTypes from "prop-types";
 import classes from "./ReportsV2List.module.css";
-import { convertToDate, getMediaUrl } from "../../../../../graphQL_requests";
+import { convertToDate, convertToDateNew, getMediaUrl } from "../../../../../graphQL_requests";
 import { DocIcon } from "../ReportsV2Icons";
 import Button from "../../../Standart/Button/Button";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
@@ -137,8 +137,9 @@ export default function ReportsV2List({
                   <div className={classes.colDate}>
                     {convertToDate(item?.createdAt)} {convertToDate(item?.createdAt, true)}
                   </div>
+                  {/* Границы периода — сентинелы T00:10/T23:50 в UTC; московский рендер сдвигал конец на +1 день */}
                   <div className={classes.colPeriod}>
-                    {convertToDate(item?.startDate)} - {convertToDate(item?.endDate)}
+                    {convertToDateNew(item?.startDate)} - {convertToDateNew(item?.endDate)}
                   </div>
                   <div className={classes.colActions}>
                     {draftByReport?.has(item.id) && (

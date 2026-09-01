@@ -16,6 +16,7 @@ import { roles } from "../../../roles";
 import { buildDraftByReport } from "./releasedReports";
 import {
   convertToDate,
+  convertToDateNew,
   decodeJWT,
   DELETE_REPORT,
   DELETE_REPORT_DRAFT,
@@ -149,8 +150,8 @@ export default function ReportsV2({ user, accessMenu }) {
   const filteredReports = reports.filter((report) => {
     const name = isAirline ? report?.airline?.name : report?.hotel?.name;
     const createTime = convertToDate(report?.createdAt);
-    const startTime = convertToDate(report?.startDate);
-    const endTime = convertToDate(report?.endDate);
+    const startTime = convertToDateNew(report?.startDate);
+    const endTime = convertToDateNew(report?.endDate);
     return (
       name?.toLowerCase().includes(q) ||
       createTime.toLowerCase().includes(q) ||
