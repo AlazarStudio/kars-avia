@@ -45,7 +45,6 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 | UI | Material UI 6 + Emotion |
 | Маршрутизация | React Router DOM 6 |
 | Drag-and-drop | @dnd-kit/core (шахматка) |
-| Виртуализация | react-window (шахматка) |
 | Даты | date-fns 4, dayjs |
 | Rich-text | Tiptap 3 |
 | Графики | Recharts |
@@ -123,7 +122,6 @@ src/
     ├── Standart/            # Примитивы (Button, H1, H2, Layout, RowBlock, ColumnBlock, WidthBlock, CenterBlock, Text, MUIAlert, MUIConfirm)
     ├── RoleContent/         # Контент по ролям (см. ниже)
     ├── HotelPMS/            # PMS-система для гостиниц (в разработке, mock-данные)
-    ├── PlacementDND/        # Шахматка v1 (устаревшая)
     └── PlacementDNDV2/      # Шахматка v2 (текущая)
         ├── components/      # UI-компоненты (TimelineV2, RoomRowV2, DraggableRequestV2, модалки)
         ├── hooks/           # usePlacementData.js
@@ -242,7 +240,6 @@ travellineMenu, accessManage
 
 Основной модуль — `src/Components/PlacementDNDV2/`. Это timeline-календарь для управления заселением:
 - Drag-and-drop заявок по номерам и датам (`@dnd-kit/core`)
-- Виртуализация строк номеров (`react-window`, `VariableSizeList`)
 - Real-time обновления через GraphQL subscriptions
 - Документация архитектуры: `SHAHMATKA_ARCHITECTURE.md` — описывает **v2** (актуален на 2026-08-17)
 - Разбор фронта с якорями `файл:строка`, известные дефекты, мёртвый код и инварианты, которые нельзя ломать: `docs/superpowers/2026-08-17-placement-v2-frontend-study.md`

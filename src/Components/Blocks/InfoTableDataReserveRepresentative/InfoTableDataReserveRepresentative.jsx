@@ -18,7 +18,7 @@ import Message from "../Message/Message";
 import { Link, useNavigate } from "react-router-dom";
 import { roles } from "../../../roles";
 import Logs from "../LogsHistory/Logs";
-import EditReserveDate from "../../PlacementDND/EditReserveDate/EditReserveDate";
+import EditReserveDate from "../EditReserveDate/EditReserveDate";
 import { InputMask } from "@react-input/mask";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import AddPassengerModal from "../AddPassengerModal/AddPassengerModal";

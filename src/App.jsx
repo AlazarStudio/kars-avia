@@ -20,7 +20,6 @@ import Non_Found_Page from "./Components/Pages/Non_Found_Page";
 import Layout from "./Components/Standart/Layout/Layout";
 import Placement from "./Components/Pages/Placement/Placement";
 import ReservePlacement from "./Components/Pages/ReservePlacement/ReservePlacement";
-import NewPlacement from "./Components/PlacementDND/NewPlacement/NewPlacement";
 import NewPlacementV2 from "./Components/PlacementDNDV2/NewPlacementV2";
 import createUploadLink from "apollo-upload-client/createUploadLink.mjs";
 
@@ -211,7 +210,6 @@ function App() {
               }
             /> */}
 
-            {/* <Route path="/newPlacement/:idHotel" element={<NewPlacement />} /> */}
             <Route path="/newPlacementV2/:idHotel" element={<NewPlacementV2 />} />
             <Route path="/hotel-pms" element={<HotelPMS />} />
             <Route

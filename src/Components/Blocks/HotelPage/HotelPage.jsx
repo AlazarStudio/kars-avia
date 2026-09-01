@@ -10,9 +10,7 @@ import {
   isSuperAdmin,
 } from "../../../utils/access";
 import HotelAdminHotelContent from "../../RoleContent/HotelAdminContent/HotelAdminHotelContent/HotelAdminHotelContent.jsx";
-import SDAdminHotelContent from "../../RoleContent/SuperAdminContent/SuperAdminHotelContent/SuperAdminHotelContent.jsx";
 import Header from "../Header/Header";
-import HotelAbout_tabComponent from "../HotelAbout_tabComponent/HotelAbout_tabComponent";
 
 import classes from "./HotelPage.module.css";
 import SuperAdminHotelContent from "../../RoleContent/SuperAdminContent/SuperAdminHotelContent/SuperAdminHotelContent.jsx";
