@@ -9,7 +9,7 @@ import { useQuery } from "@apollo/client";
 import SuperAdminAirlineContent from "../../RoleContent/SuperAdminContent/SuperAdminAirlineContent/SuperAdminAirlineContent";
 import DisAdminAirlineContent from "../../RoleContent/DispatcherAdminContent/DisAdminAirlineContent/DisAdminAirlineContent";
 import AirlineAdminAirlineContent from "../../RoleContent/AirlineAdminContent/AirlineAdminAirlineContent/AirlineAdminAirlineContent";
-import TransferAdminDriversContent from "../../RoleContent/TransferAdminContent/TransferAdminDriversContent/TransferAdminDriversContent";
+import TransferAdminDriversContent from "../TransferAdminDriversContent/TransferAdminDriversContent";
 
 function DriversCompanyPage({ children, id, user, accessMenu, ...props }) {
   let params = useParams();

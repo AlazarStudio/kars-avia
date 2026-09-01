@@ -11,7 +11,7 @@
   - `SuperAdminContent/SuperAdminMenu/SuperAdminMenu.jsx`,
   - `HotelAdminContent/HotelAdminMenu/HotelAdminMenu.jsx`,
   - `AirlineAdminContent/AirlineAdminMenu/AirlineAdminMenu.jsx`.
-- **Рендер контента:** при `id === 'documentation'` рендерится `DocumentationList` в `SuperAdminContent.jsx` и `AirlineAdminContent.jsx`. В `TransferAdminContent` блок закомментирован.
+- **Рендер контента:** при `id === 'documentation'` рендерится `DocumentationList` в `SuperAdminContent.jsx` и `AirlineAdminContent.jsx`.
 
 ---
 

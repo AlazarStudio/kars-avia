@@ -4,35 +4,35 @@ import { Tab, TabList, TabPanel, Tabs } from "react-tabs";
 // Lazy-loaded components for each tab
 const DriversCompanyTab = lazy(() =>
   import(
-    "../../../Blocks/DriversCompany_tabComponent/DriversCompany_tabComponent"
+    "../DriversCompany_tabComponent/DriversCompany_tabComponent"
   )
 );
 const AirlineTarifsTab = lazy(() =>
   import(
-    "../../../Blocks/AirlineTarifs_tabComponent/AirlineTarifs_tabComponent"
+    "../AirlineTarifs_tabComponent/AirlineTarifs_tabComponent"
   )
 );
 const AirlineRegisterOfContracts = lazy(() =>
   import(
-    "../../../Blocks/AirlineRegisterOfContracts/AirlineRegisterOfContracts"
+    "../AirlineRegisterOfContracts/AirlineRegisterOfContracts"
   )
 );
 const AirlineShahmatkaTabStaff = lazy(() =>
   import(
-    "../../../Blocks/AirlineShahmatka_tabComponent_Staff/AirlineShahmatka_tabComponent_Staff"
+    "../AirlineShahmatka_tabComponent_Staff/AirlineShahmatka_tabComponent_Staff"
   )
 );
 const OrganizationAboutTab = lazy(() =>
-  import("../../../Blocks/OrganizationAbout_tabComponent/OrganizationAbout_tabComponent")
+  import("../OrganizationAbout_tabComponent/OrganizationAbout_tabComponent")
 );
 const OrganizationRegisterOfContracts = lazy(() =>
-  import("../../../Blocks/OrganizationRegisterOfContracts/OrganizationRegisterOfContracts")
+  import("../OrganizationRegisterOfContracts/OrganizationRegisterOfContracts")
 );
 const OrganizationTransferPricesTab = lazy(() =>
-  import("../../../Blocks/OrganizationTransferPrices_tabComponent/OrganizationTransferPrices_tabComponent")
+  import("../OrganizationTransferPrices_tabComponent/OrganizationTransferPrices_tabComponent")
 );
 
-import MUILoader from "../../../Blocks/MUILoader/MUILoader";
+import MUILoader from "../MUILoader/MUILoader";
 import classes from "./TransferAdminDriversContent.module.css";
 
 const TransferAdminDriversContent = ({ id, user, accessMenu, selectedTab, handleTabSelect }) => (

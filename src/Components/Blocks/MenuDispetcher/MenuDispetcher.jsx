@@ -29,8 +29,6 @@ import DisAdminMenu from "../../RoleContent/DispatcherAdminContent/DisAdminMenu/
 import SuperAdminMenu from "../../RoleContent/SuperAdminContent/SuperAdminMenu/SuperAdminMenu";
 
 import classes from "./MenuDispetcher.module.css";
-import RepresentativeAdminMenu from "../../RoleContent/RepresentativeAdminContent/RepresentativeAdminMenu/RepresentativeAdminMenu";
-import TransferAdminMenu from "../../RoleContent/TransferAdminContent/TransferAdminMenu/TransferAdminMenu";
 
 function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
   const token = getCookie("token");
@@ -344,18 +342,6 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
               accessMenu={accessMenu}
               user={user}
             />
-            // <TransferAdminMenu
-            //   id={id}
-            //   allCreatedReserves={allCreatedReserves}
-            //   allCreatedRequests={allCreatedRequests}
-            //   menuOpen={menuOpen}
-            // />
-            // <RepresentativeAdminMenu
-            //   id={id}
-            //   allCreatedReserves={allCreatedReserves}
-            //   allCreatedRequests={allCreatedRequests}
-            //   menuOpen={menuOpen}
-            // />
           )}
         </div>
 

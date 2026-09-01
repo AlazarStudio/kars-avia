@@ -197,8 +197,6 @@ Main_Page (запрашивает GET_AUTH_USER_ACCESS / GET_DISPATCHER_DEPARTME
 | `DispatcherAdminContent` | `DISPATCHERADMIN` |
 | `AirlineAdminContent` | `AIRLINEADMIN` |
 | `HotelAdminContent` | `HOTELADMIN` |
-| `RepresentativeAdminContent` | Представительские услуги |
-| `TransferAdminContent` | Трансфер |
 
 Каждый контент-компонент сам управляет выбором вкладки/страницы на основе `id` из `useParams`.
 
