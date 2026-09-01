@@ -15,10 +15,11 @@ import ReportDraftPreview from "./ReportDraftPreview";
 import ReportDraftSummary from "./ReportDraftSummary";
 import { DRAFT_FILTERS, pluralizeDays, pluralizeRows, rowMatchesSearch } from "./reportDraftEditorUtils";
 import { useToast } from "../../../../contexts/ToastContext";
-import { convertToDateNew, GET_REPORT_PARTIAL_DAY_SETTINGS, getCookie } from "../../../../../graphQL_requests";
+import { convertToDateNew, decodeJWT, GET_REPORT_PARTIAL_DAY_SETTINGS, getCookie } from "../../../../../graphQL_requests";
 import { measureSavePayload, rowHasWarning } from "../reportDraftRows";
 import { isDraftStale, getDraftAgeDays } from "../reportDraftAge";
 import { resolveDraftPartialDayRules } from "../reportRules";
+import { roles } from "../../../../roles";
 
 // Редактор строк черновика отчёта: таблица правки перед подтверждением.
 // confirmReportDraft печатает строки ровно такими, как они лежат в базе —
@@ -73,6 +74,9 @@ export default function ReportDraftEditor({
   // cache-first редактор весь сеанс SPA рисовал бы по порогам, которые кто-то
   // уже поменял в другой вкладке, ни разу не сходив в сеть.
   const token = getCookie("token");
+  const me = decodeJWT(token);
+  // Заголовок как в самом разделе: «v2» видит только супер — у него два раздела «Отчётов»
+  const sectionTitle = me?.role === roles.superAdmin ? "Отчеты v2" : "Отчеты";
   const { data: rulesData, loading: rulesLoading } = useQuery(GET_REPORT_PARTIAL_DAY_SETTINGS, {
     fetchPolicy: "cache-and-network",
     context: { headers: { Authorization: `Bearer ${token}` } },
@@ -309,7 +313,7 @@ export default function ReportDraftEditor({
           <button type="button" className={classes.backButton} onClick={onBack} aria-label="Назад">
             <img src="/arrow.png" alt="" />
           </button>
-          Отчеты v2
+          {sectionTitle}
         </div>
       </Header>
 
@@ -358,7 +362,7 @@ export default function ReportDraftEditor({
         >
           <img src="/arrow.png" alt="" />
         </button>
-        Отчеты v2
+        {sectionTitle}
       </div>
     </Header>
 

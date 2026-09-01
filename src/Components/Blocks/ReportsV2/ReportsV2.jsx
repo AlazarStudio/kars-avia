@@ -61,11 +61,33 @@ export default function ReportsV2({ user, accessMenu }) {
   const canEditRules = canOpenRules;
   const canCreate = !me?.airlineId || accessMenu?.reportCreate;
   const showTypeToggle = me?.role === roles.superAdmin || me?.role === roles.dispatcerAdmin;
+  // Черновики — рабочий инструмент выпуска: АК и гостиница видят только
+  // выпущенные отчёты (решение владельца 01.09). «Экранный вид» выпущенного
+  // (CONFIRMED-черновик) остаётся всем.
+  const showDrafts = me?.role === roles.superAdmin || me?.role === roles.dispatcerAdmin;
+  // Текст пустого списка зависит от аккаунта: диспетчер собирает отчёты по
+  // любым АК/гостиницам, скоуп-роли видят только свои.
+  const emptyText = me?.hotelId
+    ? "Здесь появятся выпущенные отчёты по вашей гостинице. Соберите первый — выберите период."
+    : me?.airlineId
+      ? canCreate
+        ? "Здесь появятся выпущенные отчёты по вашей авиакомпании. Соберите первый — за нужный период."
+        : "Здесь появятся выпущенные отчёты по вашей авиакомпании."
+      : "Здесь появятся выпущенные отчёты. Соберите первый — по авиакомпании или по гостинице, за нужный период.";
 
   const [isAirline, setIsAirline] = useState(() => {
     const saved = localStorage.getItem(IS_AIRLINE_STORAGE_KEY);
     return saved ? JSON.parse(saved) : true;
   });
+
+  // Паритет со старым разделом (Reports.jsx:52-63): гостиничной учётке — отчёты
+  // гостиниц, авиакомпанейской — эскадрилья. Форс по привязке учётки, а не по
+  // имени роли — так покрываются и модераторы; сохранённый в localStorage
+  // переключатель супера не должен утаскивать скоуп-роль не в свой тип.
+  useEffect(() => {
+    if (me?.hotelId) setIsAirline(false);
+    else if (me?.airlineId) setIsAirline(true);
+  }, [me?.hotelId, me?.airlineId]);
 
   useEffect(() => {
     localStorage.setItem(IS_AIRLINE_STORAGE_KEY, JSON.stringify(isAirline));
@@ -103,6 +125,7 @@ export default function ReportsV2({ user, accessMenu }) {
   const { data: draftsData, refetch: refetchDrafts } = useQuery(GET_REPORT_DRAFTS, {
     context: { headers: { Authorization: `Bearer ${token}` } },
     variables: { filter: { type: isAirline ? "AIRLINE" : "HOTEL", status: "DRAFT" } },
+    skip: !showDrafts,
   });
 
   const { data: confirmedDraftsData } = useQuery(GET_REPORT_DRAFTS, {
@@ -242,7 +265,8 @@ export default function ReportsV2({ user, accessMenu }) {
         />
       ) : (
         <>
-        <Header>Отчеты v2</Header>
+        {/* У супера два раздела «Отчётов» — ему оставляем «v2», остальные видят просто «Отчеты» */}
+        <Header>{me?.role === roles.superAdmin ? "Отчеты v2" : "Отчеты"}</Header>
         <div className={classes.content}>
           {showTypeToggle && (
             <div className={classes.filter_wrapper}>
@@ -297,12 +321,14 @@ export default function ReportsV2({ user, accessMenu }) {
             )}
           </div>
 
-          <ReportDraftsPanel
-            drafts={drafts}
-            isAirline={isAirline}
-            onOpen={handleOpenDraft}
-            onDelete={handleDeleteDraft}
-          />
+          {showDrafts && (
+            <ReportDraftsPanel
+              drafts={drafts}
+              isAirline={isAirline}
+              onOpen={handleOpenDraft}
+              onDelete={handleDeleteDraft}
+            />
+          )}
 
           <ReportsV2List
             isAirline={isAirline}
@@ -315,6 +341,7 @@ export default function ReportsV2({ user, accessMenu }) {
             onDelete={handleDeleteReport}
             draftByReport={draftByReport}
             onOpenReleased={handleOpenReleased}
+            emptyText={emptyText}
           />
         </div>
         </>
@@ -327,6 +354,7 @@ export default function ReportsV2({ user, accessMenu }) {
         positions={positions}
         airports={airports}
         onDraftCreated={handleDraftCreated}
+        canDraft={showDrafts}
       />
 
       <ReportRulesSidebar

@@ -6,7 +6,6 @@ import AirlinesList from "../../Blocks/AirlinesList/AirlinesList";
 import Estafeta from "../../Blocks/Estafeta/Estafeta";
 import HotelPage from "../../Blocks/HotelPage/HotelPage";
 import HotelsList from "../../Blocks/HotelsList/HotelsList";
-import Reports from "../../Blocks/Reports/Reports";
 import ReportsV2 from "../../Blocks/ReportsV2/ReportsV2";
 import Reserve from "../../Blocks/Reserve/Reserve";
 import Company from "../../Blocks/Company/Company";
@@ -91,13 +90,7 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
         props: () => ({ user, accessMenu: safeAccessMenu }),
       },
       {
-        ids: ["reports"],
-        guardKey: "reportMenu",
-        Comp: Reports,
-        props: () => ({ user, accessMenu: safeAccessMenu }),
-      },
-      {
-        ids: ["reportsV2"],
+        ids: ["reports", "reportsV2"],
         guardKey: "reportMenu",
         Comp: ReportsV2,
         props: () => ({ user, accessMenu: safeAccessMenu }),

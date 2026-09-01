@@ -6,7 +6,7 @@ import Estafeta from "../../Blocks/Estafeta/Estafeta";
 import HotelPage from "../../Blocks/HotelPage/HotelPage";
 import HotelsList from "../../Blocks/HotelsList/HotelsList";
 import Reserve from "../../Blocks/Reserve/Reserve";
-import Reports from "../../Blocks/Reports/Reports";
+import ReportsV2 from "../../Blocks/ReportsV2/ReportsV2";
 import UpdatesList from "../../Blocks/UpdatesList/UpdatesList";
 import DocumentationList from "../../Blocks/DocumentationList/DocumentationList";
 import Analytics from "../../Pages/AnalyticsForAvia/Analytics/Analytics";
@@ -99,7 +99,7 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
       {
         ids: ["reports"],
         guardKey: "reportMenu",
-        Comp: Reports,
+        Comp: ReportsV2,
         props: () => ({ user, accessMenu: safeAccessMenu }),
       },
       {
@@ -208,7 +208,6 @@ export default AirlineAdminContent;
 // import HotelPage from "../../Blocks/HotelPage/HotelPage";
 // import HotelsList from "../../Blocks/HotelsList/HotelsList";
 // import Reserve from "../../Blocks/Reserve/Reserve";
-// import Reports from "../../Blocks/Reports/Reports";
 // import UpdatesList from "../../Blocks/UpdatesList/UpdatesList";
 // import DocumentationList from "../../Blocks/DocumentationList/DocumentationList";
 // import { menuAccess } from "../../../roles";
@@ -235,7 +234,6 @@ export default AirlineAdminContent;
 //       {id === "documentation" && <DocumentationList user={user} />}
 //       {!id && hotelID && <HotelPage id={hotelID} user={user} />}
 //       {!id && airlineID && <AirlinePage id={airlineID} user={user} />}
-//       {id === "reports" && <Reports user={user} />}
 //     </>
 //   );
 // };

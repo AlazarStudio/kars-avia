@@ -70,6 +70,7 @@ export default function ReportCreateSidebar({
   positions,
   airports,
   onDraftCreated,
+  canDraft = true,
 }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
@@ -174,12 +175,17 @@ export default function ReportCreateSidebar({
       ? positions.filter((p) => p.category === ENGINEER_POSITION_CATEGORY)
       : positions;
 
+  // Черновики доступны не всем ролям (canDraft) — скрытая галка «Проверить
+  // строки» с дефолтом true иначе молча создала бы черновик там, где раздел
+  // должен выпускать отчёт сразу.
+  const reviewEnabled = canDraft && withReview;
+
   const reportDocument =
     airOrHotel === "airline"
-      ? withReview
+      ? reviewEnabled
         ? CREATE_AIRLINE_REPORT_DRAFT
         : CREATE_REPORT
-      : withReview
+      : reviewEnabled
       ? CREATE_HOTEL_REPORT_DRAFT
       : CREATE_HOTEL_REPORT;
 
@@ -289,7 +295,7 @@ export default function ReportCreateSidebar({
     try {
       const res = await createReport({ variables: { input, createFilterInput } });
 
-      if (withReview) {
+      if (reviewEnabled) {
         const id =
           res?.data?.createAirlineReportDraft?.id || res?.data?.createHotelReportDraft?.id;
         if (!id) {
@@ -618,10 +624,15 @@ export default function ReportCreateSidebar({
                     </div>
                   )}
 
-                  <div className={classes.field}>
-                    <label className={classes.label}>Авиакомпания</label>
-                    <div className={classes.selectWrap}>{airlineAutocomplete}</div>
-                  </div>
+                  {/* Гостинице пикер АК не показываем (решение владельца 01.09):
+                      пустой airlineId бэк не фильтрует — отчёт соберётся по всем
+                      АК за период. Диспетчеру в HOTEL-режиме фильтр остаётся. */}
+                  {!user.hotelId && (
+                    <div className={classes.field}>
+                      <label className={classes.label}>Авиакомпания</label>
+                      <div className={classes.selectWrap}>{airlineAutocomplete}</div>
+                    </div>
+                  )}
                 </>
               )}
 
@@ -726,42 +737,44 @@ export default function ReportCreateSidebar({
                 </div>
               </div>
 
-              <div
-                className={`${classes.reviewBlock} ${withReview ? classes.reviewBlockActive : ""}`}
-                onClick={() => {
-                  setWithReview((prev) => !prev);
-                  setIsEdited(true);
-                }}
-              >
-                <span
-                  className={`${classes.flagCheckbox} ${
-                    withReview ? classes.flagCheckboxActive : ""
-                  }`}
+              {canDraft && (
+                <div
+                  className={`${classes.reviewBlock} ${withReview ? classes.reviewBlockActive : ""}`}
+                  onClick={() => {
+                    setWithReview((prev) => !prev);
+                    setIsEdited(true);
+                  }}
                 >
-                  {withReview && <CheckMark />}
-                </span>
-                <div className={classes.reviewContent}>
-                  <label className={classes.reviewTitle}>
-                    <input
-                      type="checkbox"
-                      checked={withReview}
-                      onChange={(e) => {
-                        e.stopPropagation();
-                        setWithReview(e.target.checked);
-                        setIsEdited(true);
-                      }}
-                      onClick={(e) => e.stopPropagation()}
-                      className={classes.srOnly}
-                    />
-                    Проверить строки перед выгрузкой
-                  </label>
-                  <div className={classes.reviewHint}>
-                    {withReview
-                      ? "Сначала откроется редактор строк — можно исправить сутки, цену и питание, и только потом выгрузить Excel."
-                      : "Excel сформируется сразу, без промежуточной проверки. Так выпускается большинство отчётов."}
+                  <span
+                    className={`${classes.flagCheckbox} ${
+                      withReview ? classes.flagCheckboxActive : ""
+                    }`}
+                  >
+                    {withReview && <CheckMark />}
+                  </span>
+                  <div className={classes.reviewContent}>
+                    <label className={classes.reviewTitle}>
+                      <input
+                        type="checkbox"
+                        checked={withReview}
+                        onChange={(e) => {
+                          e.stopPropagation();
+                          setWithReview(e.target.checked);
+                          setIsEdited(true);
+                        }}
+                        onClick={(e) => e.stopPropagation()}
+                        className={classes.srOnly}
+                      />
+                      Проверить строки перед выгрузкой
+                    </label>
+                    <div className={classes.reviewHint}>
+                      {withReview
+                        ? "Сначала откроется редактор строк — можно исправить сутки, цену и питание, и только потом выгрузить Excel."
+                        : "Excel сформируется сразу, без промежуточной проверки. Так выпускается большинство отчётов."}
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
             <div className={classes.footer}>
@@ -769,7 +782,7 @@ export default function ReportCreateSidebar({
                 Отмена
               </button>
               <button type="button" className={classes.mainBtn} onClick={handleSubmit}>
-                {withReview ? "К проверке" : "Добавить"}
+                {reviewEnabled ? "К проверке" : "Добавить"}
               </button>
             </div>
           </>
@@ -786,4 +799,5 @@ ReportCreateSidebar.propTypes = {
   positions: PropTypes.array.isRequired,
   airports: PropTypes.array.isRequired,
   onDraftCreated: PropTypes.func.isRequired,
+  canDraft: PropTypes.bool,
 };

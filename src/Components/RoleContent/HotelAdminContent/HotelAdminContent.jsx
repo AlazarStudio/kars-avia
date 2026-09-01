@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom";
 
 import HotelPage from "../../Blocks/HotelPage/HotelPage";
 import Reserve from "../../Blocks/Reserve/Reserve";
-import Reports from "../../Blocks/Reports/Reports";
+import ReportsV2 from "../../Blocks/ReportsV2/ReportsV2";
 import UpdatesList from "../../Blocks/UpdatesList/UpdatesList";
 import DocumentationList from "../../Blocks/DocumentationList/DocumentationList";
 import FapV2 from "../../Pages/FapV2/FapV2";
@@ -17,7 +17,7 @@ const HotelAdminContent = ({ user }) => {
   ) : id === "reserveRequests" ? (
     <Reserve user={user} idHotel={user.hotelId} />
   ) : id === "reports" ? (
-    <Reports user={user} />
+    <ReportsV2 user={user} />
   ) : // :
   // id === "hotelTarifs" ? (
   //   <HotelTarifs_tabComponent id={user.hotelId} user={user} />

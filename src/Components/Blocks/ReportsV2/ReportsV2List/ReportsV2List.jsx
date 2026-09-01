@@ -42,6 +42,7 @@ export default function ReportsV2List({
   onDelete,
   draftByReport,
   onOpenReleased,
+  emptyText = "Здесь появятся выпущенные отчёты. Соберите первый — по авиакомпании или по гостинице, за нужный период.",
 }) {
   const objectLabel = isAirline ? "Авиакомпания" : "Гостиница";
 
@@ -92,10 +93,7 @@ export default function ReportsV2List({
                 <DocIcon size={34} />
               </div>
               <div className={classes.emptyTitle}>Отчётов пока нет</div>
-              <div className={classes.emptyText}>
-                Здесь появятся выпущенные отчёты. Соберите первый — по авиакомпании или по
-                гостинице, за нужный период.
-              </div>
+              <div className={classes.emptyText}>{emptyText}</div>
               {canCreate && (
                 <Button type="button" onClick={onCreateClick} minwidth={"170px"}>
                   Создать отчёт
@@ -198,4 +196,5 @@ ReportsV2List.propTypes = {
   onDelete: PropTypes.func.isRequired,
   draftByReport: PropTypes.instanceOf(Map),
   onOpenReleased: PropTypes.func,
+  emptyText: PropTypes.string,
 };
