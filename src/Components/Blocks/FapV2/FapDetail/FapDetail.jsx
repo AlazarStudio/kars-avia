@@ -47,6 +47,7 @@ import BaggageIcon from "../../../../shared/icons/BaggageIcon";
 import FapActionButton from "../FapActionButton/FapActionButton";
 import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
 import FapRegistryButton from "../FapRegistryButton/FapRegistryButton";
+import FapManifestFiles from "../FapManifestFiles/FapManifestFiles";
 import EditIcon from "../../../../shared/icons/EditIcon";
 import FapChat from "../FapChat/FapChat";
 import {
@@ -715,6 +716,11 @@ export default function FapDetail({ user, canEdit = true, canEditCompleted = fal
           </div>
 
           <div className={classes.headerRight}>
+            {/* Манифест — весь список пассажиров с местами: гостинице и внешним
+                не показываем, они видят только своих. */}
+            {!isExternalUser(user) && !isHotelScoped(user) && (
+              <FapManifestFiles files={request.files} />
+            )}
             {!isExternalUser(user) && (
               <FapRegistryButton
                 count={request.savedPassengers?.length ?? 0}

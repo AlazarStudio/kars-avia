@@ -7,7 +7,7 @@ import FileDropzone from "../../FileDropzone/FileDropzone.jsx";
 import { plural } from "../../../../utils/plural.js";
 
 // Загрузка пассажирского манифеста (форма ПМ) с превью.
-// parsed = { people, flightNumber, lapInfants, fileName } | null — владеет родитель.
+// parsed = { people, flightNumber, lapInfants, fileName, file } | null — владеет родитель.
 // expectedFlightNumber — рейс заявки: при расхождении с рейсом файла показываем плашку.
 export default function ManifestUploadField({
   parsed,
@@ -47,6 +47,9 @@ export default function ManifestUploadField({
       flightNumber: result.flightNumber,
       lapInfants: result.lapInfants,
       fileName: file.name,
+      // Исходный File отдаём наверх: после импорта реестра он уходит во
+      // вложения заявки, чтобы манифест можно было скачать из детальной.
+      file,
     });
   };
 

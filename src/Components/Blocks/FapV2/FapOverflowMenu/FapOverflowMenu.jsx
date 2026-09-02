@@ -8,6 +8,8 @@ import classes from "./FapOverflowMenu.module.css";
 //   tone  — "danger" → красный пункт
 //   sep   — true → разделитель (без label)
 //   hidden— true → пункт пропускается
+// trigger — необязательная render-функция ({ open, toggle }) => node вместо «⋯»:
+//   позволяет повесить тот же выпадающий список на чужую кнопку (чип манифестов).
 // Схлопывает ведущие/соседние/хвостовые разделители. Если реальных пунктов нет — рендерит null.
 function normalizeItems(items) {
   const visible = (items || []).filter((it) => it && !it.hidden);
@@ -26,7 +28,7 @@ function normalizeItems(items) {
   return out;
 }
 
-export default function FapOverflowMenu({ items = [], className = "" }) {
+export default function FapOverflowMenu({ items = [], className = "", trigger }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef(null);
 
@@ -50,15 +52,19 @@ export default function FapOverflowMenu({ items = [], className = "" }) {
 
   return (
     <div ref={rootRef} className={[classes.root, className].filter(Boolean).join(" ")}>
-      <button
-        type="button"
-        className={[classes.trigger, open ? classes.triggerOpen : ""].filter(Boolean).join(" ")}
-        onClick={() => setOpen((v) => !v)}
-        aria-haspopup="menu"
-        aria-expanded={open}
-      >
-        <DotsIcon color={open ? "#0057C3" : "#545873"} />
-      </button>
+      {typeof trigger === "function" ? (
+        trigger({ open, toggle: () => setOpen((v) => !v) })
+      ) : (
+        <button
+          type="button"
+          className={[classes.trigger, open ? classes.triggerOpen : ""].filter(Boolean).join(" ")}
+          onClick={() => setOpen((v) => !v)}
+          aria-haspopup="menu"
+          aria-expanded={open}
+        >
+          <DotsIcon color={open ? "#0057C3" : "#545873"} />
+        </button>
+      )}
 
       {open && (
         <div className={classes.dropdown} role="menu">

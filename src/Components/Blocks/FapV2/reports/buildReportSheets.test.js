@@ -817,6 +817,62 @@ test("лист гостиницы: гость без номера остаётс
   assert.equal(ws.getCell("J6").value, "");
 });
 
+// ── Доли номера (тариф «Номер» делит цену между заселёнными) ──
+//
+// С 09.2026 сумма номера раскладывается по жильцам: у каждого своя цена за
+// сутки (база B) и своя доля. Книга не меняется — она печатает то, что лежит в
+// строках, — но колонки «Цена за сутки», «Вид размещения» и «Скидка» теперь
+// заполнены у всех, а не у одного «несущего».
+function makeRoomSplitRequest() {
+  const request = makeRequest();
+  request.livingService.hotels[0].people = [
+    { personId: "p1", fullName: "Иванов И.И.", personType: "PASSENGER", personCategory: "ADULT" },
+    { personId: "p2", fullName: "Петров П.П.", personType: "PASSENGER", personCategory: "ADULT" },
+    { personId: "p3", fullName: "Петров Ваня", personType: "PASSENGER", personCategory: "CHILD" },
+  ];
+  // Номер 4500 за сутки на троих: Σ(вес × сутки) = 1 + 1 + 0.5 = 2.5 → B = 1800.
+  const row = (personId, fullName, accommodationCost) => ({
+    personId, fullName, tariffName: "Стандарт",
+    pricePerDay: 1800, placementKind: 3, roomNumber: "12", daysCount: 1,
+    foodCost: 0, accommodationCost,
+  });
+  request.hotelReports = [
+    {
+      hotelIndex: 0,
+      reportRows: [
+        row("p1", "Иванов И.И.", 1800),
+        row("p2", "Петров П.П.", 1800),
+        row("p3", "Петров Ваня", 900),
+      ],
+    },
+  ];
+  return request;
+}
+
+test("лист гостиницы: доли номера печатают скидку ребёнка и сходятся в «Итого»", () => {
+  const ws = addHotelSheet(new ExcelJS.Workbook(), {
+    request: makeRoomSplitRequest(),
+    hotelIndex: 0,
+    sheetNames: new Set(),
+  });
+  // Цена за сутки и вид размещения заполнены у всех троих — подстановка
+  // printedKind для этого больше не нужна.
+  [5, 6, 7].forEach((r) => {
+    assert.equal(ws.getCell(`L${r}`).value, 1800);
+    assert.equal(ws.getCell(`J${r}`).value, "трёхместное");
+  });
+  // Скидка выводится из чисел строки: у взрослых базы нет, у ребёнка 1 − 900/1800.
+  assert.equal(ws.getCell("W5").value, "—");
+  assert.equal(ws.getCell("W6").value, "—");
+  assert.equal(ws.getCell("W7").value, "50%");
+  // Сумма долей = цена номера, и «Итого» суммирует ровно эти три строки.
+  const shares = [5, 6, 7].map((r) => Number(ws.getCell(`X${r}`).value));
+  assert.deepEqual(shares, [1800, 1800, 900]);
+  assert.equal(shares.reduce((s, v) => s + v, 0), 4500);
+  assert.equal(ws.getCell("A8").value, "Итого:");
+  assert.equal(ws.getCell("X8").value.formula, "SUM(X5:X7)");
+});
+
 // Сводка: у каждой гостиницы своя карта номеров — «1» в разных гостиницах
 // это разные номера.
 function makeTwoHotelsRequest() {

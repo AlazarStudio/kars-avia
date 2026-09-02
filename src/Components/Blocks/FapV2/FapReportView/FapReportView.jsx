@@ -202,24 +202,16 @@ export default function FapReportView({ summary = {}, groups = [], hideMoney = f
                       // Гостинице — только факт: сутки без ставки, без сумм и
                       // без предупреждений о ценах, которые ставит не она.
                       p.nights > 0 ? <div className={classes.rateLine}>{p.nights} сут</div> : null
-                    ) : g.perRoom ? (
-                      // Тариф «Номер»: проживание — на шапке номера, у гостя нейтрально
-                      <>
-                        <div className={classes.includedText}>в номере</div>
-                        {p.meal > 0 && (
-                          <div className={classes.livingLine} style={{ color: "#0F9D63" }}>
-                            питание {rub(p.meal)}
-                          </div>
-                        )}
-                      </>
                     ) : p.warning ? (
                       <div className={classes.warnText}>
                         <WarnTriangle />
                         <span>{p.warning}</span>
                       </div>
                     ) : p.included ? (
+                      // Тариф «Номер» без деления: своей доли у гостя нет — сумма
+                      // целиком на шапке номера (фолбэк и старые отправленные отчёты).
                       <>
-                        <div className={classes.includedText}>проживание в сумме номера</div>
+                        <div className={classes.includedText}>в номере</div>
                         {p.meal > 0 && (
                           <div className={classes.livingLine} style={{ color: "#0F9D63" }}>
                             питание {rub(p.meal)}

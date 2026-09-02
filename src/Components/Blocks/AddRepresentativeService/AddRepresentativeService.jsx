@@ -4,6 +4,7 @@ import classes from "./AddRepresentativeService.module.css";
 import Button from "../../Standart/Button/Button.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
 import {
+  ADD_PASSENGER_REQUEST_FILES,
   ADD_PASSENGER_REQUEST_SAVED_PEOPLE,
   CREATE_PASSENGER_REQUEST,
   GET_AIRLINE_POSITIONS,
@@ -18,6 +19,7 @@ import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutoc
 import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import ManifestUploadField from "../FapV2/ManifestUploadField/ManifestUploadField.jsx";
+import { buildManifestUpload } from "../FapV2/fapManifestFiles.js";
 import { manifestNameKey, isSameFlight } from "../../../utils/parseManifestXlsx.js";
 import { useDialog } from "../../../contexts/DialogContext";
 
@@ -254,6 +256,16 @@ function AddRepresentativeService({
     },
     refetchQueries: [{ query: GET_PASSENGER_REQUEST, variables: { passengerRequestId: request?.id } }],
     awaitRefetchQueries: true,
+  });
+
+  // Исходный файл манифеста во вложения заявки. Рефетч не нужен: ответ с
+  // `id files` сам обновляет кэш открытой детальной.
+  const [addFiles] = useMutation(ADD_PASSENGER_REQUEST_FILES, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
   });
 
   // Локальный подсчёт «добавлено/пропущено» — зеркалит жадный 1:1 матчинг бэка
@@ -554,13 +566,14 @@ function AddRepresentativeService({
       }
 
       if (hasManifest) {
+        const requestId = request?.id;
         const { added, skipped } = countManifestImport(
           manifest.people,
           request?.savedPassengers
         );
         await addSavedPeople({
           variables: {
-            requestId: request?.id,
+            requestId,
             people: manifest.people.map((p) => ({
               fullName: p.fullName,
               seat: p.seat,
@@ -576,6 +589,32 @@ function AddRepresentativeService({
               : `Реестр: добавлено ${added} пассажиров из манифеста.`,
             "success"
           );
+        }
+
+        // Реестр — главное, файл — приложение: своя обработка ошибки, чтобы
+        // неудачная загрузка не откатывала импорт людей.
+        if (manifest.file) {
+          try {
+            await addFiles({
+              variables: {
+                requestId,
+                files: [
+                  buildManifestUpload(
+                    manifest.file,
+                    manifest.flightNumber || nextFlightNumber
+                  ),
+                ],
+              },
+            });
+          } catch (fileError) {
+            console.error(fileError);
+            if (addNotification) {
+              addNotification(
+                "Реестр импортирован, но файл манифеста не сохранён — загрузите его снова через «Редактировать»",
+                "error"
+              );
+            }
+          }
         }
       }
 

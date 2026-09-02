@@ -4,6 +4,7 @@ import classes from "./CreateRepresentativeRequest.module.css";
 import Button from "../../Standart/Button/Button.jsx";
 import Sidebar from "../Sidebar/Sidebar.jsx";
 import {
+  ADD_PASSENGER_REQUEST_FILES,
   ADD_PASSENGER_REQUEST_SAVED_PEOPLE,
   CREATE_PASSENGER_REQUEST,
   CREATE_REQUEST_MUTATION,
@@ -22,6 +23,7 @@ import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutoc
 import CreateRequestAirlineStaff from "../CreateRequestAirlineStaff/CreateRequestAirlineStaff.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import ManifestUploadField from "../FapV2/ManifestUploadField/ManifestUploadField.jsx";
+import { buildManifestUpload } from "../FapV2/fapManifestFiles.js";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
 
@@ -248,6 +250,16 @@ function CreateRepresentativeRequest({
   });
 
   const [addSavedPeople] = useMutation(ADD_PASSENGER_REQUEST_SAVED_PEOPLE, {
+    context: {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    },
+  });
+
+  // Исходный файл манифеста во вложения заявки — чтобы диспетчер и АК могли
+  // его скачать из детальной.
+  const [addFiles] = useMutation(ADD_PASSENGER_REQUEST_FILES, {
     context: {
       headers: {
         Authorization: `Bearer ${token}`,
@@ -625,6 +637,29 @@ function CreateRepresentativeRequest({
             },
           });
           success(`Реестр: добавлено ${manifest.people.length} пассажиров из манифеста.`);
+
+          // Реестр — главное, файл — приложение: своя обработка ошибки, чтобы
+          // неудачная загрузка не выглядела провалом импорта людей.
+          if (manifest.file) {
+            try {
+              await addFiles({
+                variables: {
+                  requestId: newRequestId,
+                  files: [
+                    buildManifestUpload(
+                      manifest.file,
+                      manifest.flightNumber || formData.flightNumber
+                    ),
+                  ],
+                },
+              });
+            } catch (fileError) {
+              console.error(fileError);
+              toastError(
+                "Реестр импортирован, но файл манифеста не сохранён — загрузите его снова через «Редактировать»"
+              );
+            }
+          }
         } catch (importError) {
           console.error(importError);
           toastError(

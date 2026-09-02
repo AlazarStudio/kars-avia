@@ -2247,6 +2247,15 @@ export const ADD_PASSENGER_REQUEST_SAVED_PEOPLE = gql`
   }
 `;
 
+export const ADD_PASSENGER_REQUEST_FILES = gql`
+  mutation AddPassengerRequestFiles($requestId: ID!, $files: [Upload!]!) {
+    addPassengerRequestFiles(requestId: $requestId, files: $files) {
+      id
+      files
+    }
+  }
+`;
+
 export const ADD_PASSENGER_REQUEST_SAVED_PERSON = gql`
   mutation AddPassengerRequestSavedPerson($requestId: ID!, $person: PassengerRequestSavedPersonInput!) {
     addPassengerRequestSavedPerson(requestId: $requestId, person: $person) {
@@ -4095,6 +4104,7 @@ export const GET_PASSENGER_REQUEST = gql`
         }
       }
       plannedPassengersCount
+      files
       routeFrom
       routeTo
       status

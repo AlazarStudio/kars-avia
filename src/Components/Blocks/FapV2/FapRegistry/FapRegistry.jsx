@@ -8,6 +8,7 @@ import {
   UPDATE_PASSENGER_REQUEST_SAVED_PERSON,
   REMOVE_PASSENGER_REQUEST_SAVED_PERSON,
   ADD_PASSENGER_REQUEST_SAVED_PEOPLE,
+  ADD_PASSENGER_REQUEST_FILES,
   SET_PASSENGER_REQUEST_GROUP,
   REMOVE_PASSENGER_REQUEST_GROUP,
   getCookie,
@@ -40,6 +41,7 @@ import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import ManifestUploadField from "../ManifestUploadField/ManifestUploadField";
 import { manifestNameKey, isSameFlight } from "../../../../utils/parseManifestXlsx";
+import { buildManifestUpload } from "../fapManifestFiles";
 import { plural } from "../../../../utils/plural";
 import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
@@ -183,6 +185,8 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
   const [updatePerson] = useMutation(UPDATE_PASSENGER_REQUEST_SAVED_PERSON, ctx);
   const [removePerson] = useMutation(REMOVE_PASSENGER_REQUEST_SAVED_PERSON, ctx);
   const [addPeople] = useMutation(ADD_PASSENGER_REQUEST_SAVED_PEOPLE, ctx);
+  // Исходный файл манифеста во вложения заявки — скачивается из детальной.
+  const [addFiles] = useMutation(ADD_PASSENGER_REQUEST_FILES, ctx);
   const [saveGroup] = useMutation(SET_PASSENGER_REQUEST_GROUP, ctx);
   const [dropGroup] = useMutation(REMOVE_PASSENGER_REQUEST_GROUP, ctx);
 
@@ -415,9 +419,11 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
 
   const handleManifestImport = async () => {
     if (!manifest?.people?.length) return;
-    if (!isSameFlight(manifest.flightNumber, request?.flightNumber)) {
+    const requestId = request.id;
+    const requestFlight = request?.flightNumber;
+    if (!isSameFlight(manifest.flightNumber, requestFlight)) {
       const ok = await confirm({
-        message: `Рейс в манифесте (${manifest.flightNumber}) не совпадает с рейсом заявки (${request?.flightNumber}). Импортировать всё равно?`,
+        message: `Рейс в манифесте (${manifest.flightNumber}) не совпадает с рейсом заявки (${requestFlight}). Импортировать всё равно?`,
         confirmText: "Импортировать",
         cancelText: "Отмена",
       });
@@ -428,7 +434,7 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
       const { added, skipped } = countManifestImport(manifest.people, savedPassengers);
       await addPeople({
         variables: {
-          requestId: request.id,
+          requestId,
           people: manifest.people.map((p) => ({
             fullName: p.fullName,
             seat: p.seat,
@@ -442,6 +448,30 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
           ? `Добавлено ${added}, пропущено ${skipped} (дубликаты)`
           : `Добавлено ${added}`
       );
+
+      // Реестр — главное, файл — приложение: своя обработка ошибки, чтобы
+      // неудачная загрузка не выглядела провалом импорта.
+      if (manifest.file) {
+        try {
+          await addFiles({
+            variables: {
+              requestId,
+              files: [
+                buildManifestUpload(
+                  manifest.file,
+                  manifest.flightNumber || requestFlight
+                ),
+              ],
+            },
+          });
+        } catch (fileError) {
+          console.error(fileError);
+          notifyError(
+            "Реестр импортирован, но файл манифеста не сохранён — загрузите его снова через «Редактировать»"
+          );
+        }
+      }
+
       setManifest(null);
       onRefetch?.();
     } catch (err) {

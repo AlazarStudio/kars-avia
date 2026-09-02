@@ -28,6 +28,7 @@ import { getPersonDays } from "../fapPersonDays.js";
 import { tariffNameKey, findTariffByName } from "../fapTariffNames.js";
 import { hotelReportSubmittedAt, isHotelReportSubmitted } from "../fapReportAccess";
 import { lunchboxCountOf, preserveMoneyFields } from "../fapReportMoney";
+import { splitRoomAccommodation } from "../fapRoomSplit.js";
 import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
 import { hotelOverbookedBy, livingNameCollisions } from "../fapLivingMismatch";
 import HotelCapacityDialog from "../HotelCapacityDialog/HotelCapacityDialog";
@@ -752,6 +753,110 @@ export default function FapHotelPage({
     return map;
   }, [reportGroups, findTariff]);
 
+  // Раскладка суммы номера по жильцам при тарифе «Номер» (спека 2026-09-02 §3):
+  // сумма номера T = цена × сутки НЕСУЩЕГО — как и была, — но делится между всеми
+  // заселёнными по их скидкам (взрослый платит полную долю, ребёнок половину,
+  // инфант ничего). Считается на весь номер сразу: доля гостя зависит от состава
+  // соседей, поштучно в getEffectiveRow её не вывести.
+  //
+  // У ОТПРАВЛЕННОГО отчёта раскладки нет: там строки показываются как сохранены
+  // (§3.1), иначе живой пересчёт менял бы числа уже ушедшего документа.
+  const roomSplitByIndex = useMemo(() => {
+    const map = {};
+    if (reportSubmitted) return map;
+    reportGroups.forEach((g) => {
+      const carrier = g.members.find((m) => findTariff(m.pd.tariffId));
+      const carrierTariff = carrier ? findTariff(carrier.pd.tariffId) : null;
+      if (!carrierTariff || carrierTariff.billingMode !== "PER_ROOM") return;
+      const tariffName = carrierTariff.name ?? "";
+      // Сосед несёт СВОЁ название тарифа (как и раньше) — по нему бэк
+      // восстанавливает привязку строки к тарифу.
+      const neighbour = (m) => ({
+        tariffName: findTariff(m.pd.tariffId)?.name ?? "",
+        placementKind: 0,
+        pricePerDay: 0,
+        accommodationCost: 0,
+        warning: null,
+        perRoomIncluded: true,
+      });
+      const places = roomKindByIndex[carrier.index] ?? null;
+      const price = resolveTariffPricePerDay(
+        carrierTariff,
+        places,
+        roomCategoryByIndex[carrier.index] ?? null
+      );
+      // Ворнинги несущего гасят весь номер: пока нет номера или цены, делить нечего.
+      if (places == null || price == null) {
+        const warning =
+          places == null ? "укажите номер" : `нет цены (${placementKindLabel(places)})`;
+        g.members.forEach((m) => {
+          map[m.index] =
+            m.index === carrier.index
+              ? {
+                  tariffName,
+                  placementKind: places == null ? 0 : places,
+                  pricePerDay: 0,
+                  accommodationCost: 0,
+                  warning,
+                }
+              : neighbour(m);
+        });
+        return;
+      }
+      const total = price * toNum(carrier.pd.daysCount);
+      // Вес гостя: ручная скидка строки, иначе дефолт возрастной категории.
+      // Явный 0 — это «скидка 0%», а не «авто» (как и в режиме «Койко-место»).
+      const factors = {};
+      g.members.forEach((m) => {
+        const percent =
+          m.pd.accommodationDiscount != null
+            ? Math.min(100, Math.max(0, toNum(m.pd.accommodationDiscount)))
+            : accommodationDiscountPercent(m.person?.personCategory);
+        factors[m.index] = 1 - percent / 100;
+      });
+      const split = splitRoomAccommodation({
+        total,
+        carrierKey: carrier.index,
+        members: g.members.map((m) => ({
+          key: m.index,
+          factor: factors[m.index],
+          days: toNum(m.pd.daysCount),
+        })),
+      });
+      // Делить нечего (одни инфанты, нулевые сутки) — прежнее поведение:
+      // вся сумма на несущем, у соседей «в номере».
+      if (!split) {
+        g.members.forEach((m) => {
+          map[m.index] =
+            m.index === carrier.index
+              ? {
+                  tariffName,
+                  placementKind: places,
+                  pricePerDay: price,
+                  accommodationCost: total,
+                  chargeFactor: 1,
+                  warning: null,
+                  roomTotal: total,
+                }
+              : neighbour(m);
+        });
+        return;
+      }
+      g.members.forEach((m) => {
+        map[m.index] = {
+          tariffName: m.index === carrier.index ? tariffName : findTariff(m.pd.tariffId)?.name ?? "",
+          placementKind: places,
+          pricePerDay: split.base,
+          accommodationCost: split.shares[m.index] ?? 0,
+          chargeFactor: factors[m.index],
+          warning: null,
+          roomTotal: total,
+        };
+      });
+    });
+    return map;
+  }, [reportGroups, findTariff, roomKindByIndex, roomCategoryByIndex, reportSubmitted]);
+
   // Эффективные значения строки гостя. Для гостя с тарифом проживание —
   // ПРОИЗВОДНОЕ: цена за сутки (по виду размещения) × сутки. Без тарифа —
   // ручное значение pd.accommodationCost (как раньше).
@@ -770,38 +875,35 @@ export default function FapHotelPage({
       // номеру, и подпись в шапке обязана называть ту же величину, что оплачивается.
       const pinnedPrice = reportSubmitted ? pd.savedPricePerDay ?? null : null;
       const room = roomBillingByIndex[personIndex];
-      // Режим «Номер» задаётся тарифом несущего гостя и распространяется на ВЕСЬ номер:
-      // проживание начисляется один раз на несущего, остальные гости номера — 0,
+      // Режим «Номер» задаётся тарифом несущего гостя и распространяется на ВЕСЬ
+      // номер: сумма номера делится между жильцами по их скидкам (roomSplitByIndex),
       // независимо от их собственного тарифа (или его отсутствия).
       if (room?.perRoom) {
-        const tariff = findTariff(pd.tariffId);
-        const places = roomKindByIndex[personIndex] ?? null;
-        if (room.carrierIndex !== personIndex) {
+        // ОТПРАВЛЕННЫЙ отчёт — документ: строку показываем ровно как сохранена
+        // (спека §3.1). Так и старые отчёты («всё на несущем, у соседей нули»),
+        // и новые (доли) читаются теми числами, что ушли АК, а пересборка строк
+        // без правок даёт их байт-в-байт — отметка отправки не гаснет.
+        if (reportSubmitted) {
+          const price = toNum(pd.savedPricePerDay);
+          const cost = toNum(pd.accommodationCost);
+          const base = price * toNum(pd.daysCount);
           return {
-            tariffName: tariff?.name ?? "",
-            placementKind: 0,
-            pricePerDay: 0,
-            accommodationCost: 0,
+            tariffName: findTariff(pd.tariffId)?.name ?? "",
+            placementKind: Number(pd.savedPlacementKind) || 0,
+            pricePerDay: price,
+            accommodationCost: cost,
+            // Скидку для показа выводим из чисел строки — тем же способом, что и
+            // книга (buildReportSheets), иначе экран и Excel назовут разный процент.
+            chargeFactor: base > 0 ? cost / base : 1,
             warning: null,
-            perRoomIncluded: true,
+            perRoomIncluded: price === 0 && cost === 0 && room.carrierIndex !== personIndex,
           };
         }
-        // Несущий гость. Карта начислений — мемо предыдущего рендера, поэтому
-        // тариф может быть уже снят (removeTariff чистит pd и синхронно зовёт
-        // buildReportRows) — тогда падаем на ручное значение общей веткой ниже.
-        if (tariff) {
-          const price =
-            pinnedPrice ??
-            resolveTariffPricePerDay(tariff, places, roomCategoryByIndex[personIndex] ?? null);
-          if (places == null) {
-            return { tariffName: tariff.name ?? "", placementKind: 0, pricePerDay: 0, accommodationCost: 0, warning: "укажите номер" };
-          }
-          if (price == null) {
-            return { tariffName: tariff.name ?? "", placementKind: places, pricePerDay: 0, accommodationCost: 0, warning: `нет цены (${placementKindLabel(places)})` };
-          }
-          // Один раз на номер, без возрастного коэфа.
-          return { tariffName: tariff.name ?? "", placementKind: places, pricePerDay: price, accommodationCost: price * toNum(pd.daysCount), chargeFactor: 1, warning: null };
-        }
+        // Карта раскладки — мемо предыдущего рендера, поэтому тариф может быть уже
+        // снят (removeTariff чистит pd и синхронно зовёт buildReportRows) — тогда
+        // падаем на ручное значение общей веткой ниже.
+        const split = roomSplitByIndex[personIndex];
+        if (split) return split;
       }
 
       const tariff = findTariff(pd.tariffId);
@@ -851,7 +953,15 @@ export default function FapHotelPage({
         warning: null,
       };
     },
-    [findTariff, roomKindByIndex, roomCategoryByIndex, roomBillingByIndex, people, reportSubmitted]
+    [
+      findTariff,
+      roomKindByIndex,
+      roomCategoryByIndex,
+      roomBillingByIndex,
+      roomSplitByIndex,
+      people,
+      reportSubmitted,
+    ]
   );
 
   // Ref на getEffectiveRow: buildReportRows работает через refs (для флаш-сейва
@@ -2220,7 +2330,8 @@ export default function FapHotelPage({
         // Метки групп видны и в режиме «Просмотр» — в т.ч. авиакомпании (спека §5).
         // Ворнинги сюда НЕ передаём: read-only-роль их видеть не должна.
         const roomGroups = reportRoomGroups(g.members);
-        // Тариф «Номер»: проживание — на номере, не на госте (число с несущего).
+        // Тариф «Номер»: проживание — на номере, не на госте. Сумма номера — Σ
+        // долей жильцов (у несущего теперь тоже доля), ворнинг — по несущему.
         const carrier = g.members.find((m) => findTariff(m.pd.tariffId));
         const perRoom = !!(carrier && roomBillingByIndex[carrier.index]?.perRoom);
         let accommodation = null;
@@ -2228,7 +2339,11 @@ export default function FapHotelPage({
         if (perRoom) {
           const ce = getEffectiveRow(carrier.index, carrier.pd);
           if (ce.warning) accommodationWarning = ce.warning;
-          else accommodation = toNum(ce.accommodationCost);
+          else
+            accommodation = g.members.reduce(
+              (s, m) => s + toNum(getEffectiveRow(m.index, m.pd).accommodationCost),
+              0
+            );
         }
         return {
         key: g.key,
@@ -3807,8 +3922,10 @@ export default function FapHotelPage({
                         ].join("; ")
                       : "";
                     // Тариф «Номер»: проживание принадлежит номеру, а не гостю —
-                    // показываем на шапке. Число берём с несущего (у него оно
-                    // начислено для сумм), у гостей в колонке будет «в номере».
+                    // показываем на шапке. Сумма — Σ долей ВСЕХ жильцов (несущий
+                    // теперь тоже несёт только свою долю), поэтому считаем по
+                    // fullMembers: поиск по ФИО не должен уменьшать сумму номера.
+                    // Ворнинг остаётся по несущему — цена и вид его.
                     const perRoomCarrier = g.fullMembers.find((m) => findTariff(m.pd.tariffId));
                     const roomPerRoom = !!(
                       perRoomCarrier && roomBillingByIndex[perRoomCarrier.index]?.perRoom
@@ -3818,7 +3935,11 @@ export default function FapHotelPage({
                     if (roomPerRoom) {
                       const ce = getEffectiveRow(perRoomCarrier.index, perRoomCarrier.pd);
                       if (ce.warning) roomAccWarn = ce.warning;
-                      else roomAccCost = ce.accommodationCost;
+                      else
+                        roomAccCost = g.fullMembers.reduce(
+                          (s, m) => s + toNum(getEffectiveRow(m.index, m.pd).accommodationCost),
+                          0
+                        );
                     }
                     return (
                       <div
@@ -4033,15 +4154,14 @@ export default function FapHotelPage({
                                 </div>
                               )}
                               {!hideMoney && (() => {
-                                // Скидка применима только там, где проживание считается от цены
-                                // за сутки: при тарифе «Номер» оно принадлежит номеру, без тарифа
-                                // и у легаси-строк с плоской суммой процент считать не от чего.
+                                // Скидка применима там, где проживание считается от цены за
+                                // сутки: в режиме «Койко-место» — от своей, в режиме «Номер» —
+                                // это доля гостя в сумме номера (скидка задаёт его вес).
+                                // Без тарифа и у легаси-строк с плоской суммой процент считать
+                                // не от чего.
+                                const perRoom = !!roomBillingByIndex[i]?.perRoom;
                                 const hasTariff = !!findTariff(pd.tariffId);
-                                if (
-                                  roomBillingByIndex[i]?.perRoom ||
-                                  !hasTariff ||
-                                  getEffectiveRow(i, pd).isLegacyFlat
-                                ) {
+                                if (!perRoom && (!hasTariff || getEffectiveRow(i, pd).isLegacyFlat)) {
                                   return <div className={classes.discountMuted}>—</div>;
                                 }
                                 const auto = accommodationDiscountPercent(
@@ -4079,12 +4199,16 @@ export default function FapHotelPage({
                                   {(() => {
                                     const eff = getEffectiveRow(i, pd);
                                     const hasTariff = !!findTariff(pd.tariffId);
-                                    // Тариф «Номер»: стоимость на шапке, у гостя — нейтрально
-                                    // (без выделенного несущего). Сумма номера не меняется.
-                                    if (roomBillingByIndex[i]?.perRoom) {
+                                    const perRoom = !!roomBillingByIndex[i]?.perRoom;
+                                    // Тариф «Номер»: «в номере» осталось только там, где у гостя
+                                    // действительно нет своей доли (фолбэк деления, ворнинг
+                                    // несущего, старый отправленный отчёт с нулями у соседей).
+                                    if (eff.perRoomIncluded) {
                                       return <span className={classes.accMuted}>в номере</span>;
                                     }
-                                    if (!hasTariff) {
+                                    // Ручной ввод — только вне режима «Номер»: там сумма гостя
+                                    // производная (доля номера), даже если своего тарифа у него нет.
+                                    if (!hasTariff && !perRoom) {
                                       // Без тарифа — ручной ввод стоимости проживания.
                                       return (
                                         <input
