@@ -95,3 +95,56 @@
 
 /* Кнопки действий — общий `Standart/Button`, как в «Отчётах» v1
    (там он приходит из `Filter`). Своих классов у них нет. */
+
+/* Вкладка «Черновики»: панели занимают место списка, поэтому прокрутка
+   их собственная — иначе 7 черновиков утащили бы за экран весь раздел
+   (у `.section` overflow: hidden). */
+.drafts {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Пустое состояние вкладки черновиков. Повторяет пустое состояние
+   ReportsV2List (те же цвета, иконка и размеры текста), но карточка низкая:
+   черновиков нет — значит, это норма, а не потеря данных. */
+.emptyCard {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  padding: 40px 24px;
+  text-align: center;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 1px 3px rgba(25, 29, 48, 0.05);
+}
+
+.emptyIcon {
+  width: 76px;
+  height: 76px;
+  border-radius: 20px;
+  background: #F4F6FB;
+  color: #C3C9D8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.emptyTitle {
+  font-size: 17px;
+  font-weight: 600;
+  color: #191919;
+}
+
+.emptyText {
+  max-width: 460px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: #8B90A5;
+}

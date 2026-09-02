@@ -9,7 +9,9 @@ import ReportDraftEditor from "./ReportDraftEditor/ReportDraftEditor";
 import ReportCreateSidebar from "./ReportCreateSidebar/ReportCreateSidebar";
 import ReportRulesSidebar from "./ReportRulesSidebar/ReportRulesSidebar";
 import MUITextField from "../MUITextField/MUITextField";
+import SegmentedToggle from "../SegmentedToggle/SegmentedToggle";
 import Button from "../../Standart/Button/Button";
+import { DocIcon } from "./ReportsV2Icons";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
 import { roles } from "../../../roles";
@@ -110,10 +112,11 @@ export default function ReportsV2({ user, accessMenu }) {
     localStorage.setItem(IS_AIRLINE_STORAGE_KEY, JSON.stringify(isAirline));
   }, [isAirline]);
 
-  // Вкладка «Архив» намеренно НЕ ложится в localStorage: раздел всегда должен
-  // открываться на «Текущих», иначе учётка после одного захода в архив каждый
-  // раз видит его вместо рабочего списка.
-  const [showArchive, setShowArchive] = useState(false);
+  // Вкладка раздела: "current" | "drafts" | "archive". Намеренно НЕ ложится в
+  // localStorage: раздел всегда должен открываться на «Текущих», иначе учётка
+  // после одного захода в архив каждый раз видит его вместо рабочего списка.
+  const [view, setView] = useState("current");
+  const isArchive = view === "archive";
 
   const [searchQuery, setSearchQuery] = useState("");
   const [draftId, setDraftId] = useState(null);
@@ -136,7 +139,7 @@ export default function ReportsV2({ user, accessMenu }) {
     // Пустой фильтр — это «текущие»: бэк сам отсекает по началу предыдущей
     // декады. Архив — тот же запрос с archived: true; Apollo разводит два
     // набора по переменным, поэтому переключение вкладки не мешает списки.
-    variables: { filter: showArchive ? { archived: true } : {} },
+    variables: { filter: isArchive ? { archived: true } : {} },
   });
 
   const { data: positionsData } = useQuery(GET_AIRLINE_POSITIONS, {
@@ -205,6 +208,32 @@ export default function ReportsV2({ user, accessMenu }) {
   // Список отчётов сам не знает, у какой строки есть экранный вид: связь живёт
   // на стороне черновика (savedReportId). Карту строим здесь и отдаём в список.
   const draftByReport = useMemo(() => buildDraftByReport(draftsConfirmed), [draftsConfirmed]);
+
+  // Сегмент черновиков видят только те, у кого они бывают: у диспетчерских
+  // ролей это своя кухня выпуска (незавершённые + отправленные), у
+  // авиакомпании — только то, что ждёт её подтверждения. Гостинице сегмента
+  // нет вовсе. Раньше панели висели над списком и на 7 черновиках выдавливали
+  // его за экран — теперь это отдельная вкладка.
+  const showDraftsView = showDrafts || isAirlineUser;
+  // Счётчик равен числу строк, которые вкладка реально покажет: у гостиничного
+  // типа статуса SUBMITTED не бывает, второй панели нет — и в счёт они не идут.
+  const draftsCount = showDrafts
+    ? draftsOpen.length + (isAirline ? draftsSubmitted.length : 0)
+    : draftsSubmitted.length;
+
+  const viewOptions = [
+    { key: "current", label: "Текущие" },
+    ...(showDraftsView
+      ? [
+          {
+            key: "drafts",
+            label: showDrafts ? "Черновики" : "На подтверждении",
+            count: draftsCount,
+          },
+        ]
+      : []),
+    { key: "archive", label: "Архив" },
+  ];
 
   const q = searchQuery.trim().toLowerCase();
   const filteredReports = reports.filter((report) => {
@@ -303,6 +332,9 @@ export default function ReportsV2({ user, accessMenu }) {
 
   const handleDraftCreated = (id) => {
     setDraftId(id);
+    // Новый черновик живёт во вкладке «Черновики» — чтобы «назад» из редактора
+    // вернуло туда, где он лежит, а не в список выпущенных.
+    setView("drafts");
     refetchDrafts();
   };
 
@@ -325,6 +357,9 @@ export default function ReportsV2({ user, accessMenu }) {
     setDraftId(id);
   };
 
+  // Вкладку здесь не трогаем: черновик открывают из «Черновиков», а экранный
+  // вид выпущенного — из списка, и `view` за время редактора не менялся —
+  // закрытие само возвращает туда, откуда пришли.
   const handleDraftBack = () => {
     setDraftId(null);
     setDraftMode("edit");
@@ -339,6 +374,9 @@ export default function ReportsV2({ user, accessMenu }) {
   const handleDraftConfirmed = () => {
     setDraftId(null);
     setDraftMode("edit");
+    // Подтверждённый черновик выпущен: его строка теперь в «Текущих», во
+    // вкладке черновиков искать нечего.
+    setView("current");
     refetchDrafts();
     refetchReports();
   };
@@ -394,27 +432,18 @@ export default function ReportsV2({ user, accessMenu }) {
             </div>
           )}
 
-          {/* Отдельная полоса под типом объекта: тумблер типа видят только
-              супер и диспетчер-админ, а архив нужен всем ролям — иначе после
-              деплоя отчёты старше двух декад просто пропадут из раздела. */}
-          <div className={classes.filter_wrapper}>
-            <button
-              type="button"
-              onClick={() => setShowArchive(false)}
-              className={showArchive === false ? classes.activeButton : null}
-            >
-              Текущие
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowArchive(true)}
-              className={showArchive === true ? classes.activeButton : null}
-            >
-              Архив
-            </button>
-          </div>
-
           <div className={classes.toolbar}>
+            {/* Вкладки раздела — таблеткой слева в строке действий: вторая
+                полоса подчёркнутых вкладок под тумблером типа выглядела
+                лестницей. Архив нужен всем ролям — иначе отчёты старше двух
+                декад просто пропадут из раздела. */}
+            <SegmentedToggle
+              variant="toolbar"
+              options={viewOptions}
+              value={view}
+              onChange={setView}
+            />
+
             <MUITextField
               label={"Поиск по отчётам"}
               className={classes.mainSearch}
@@ -448,60 +477,83 @@ export default function ReportsV2({ user, accessMenu }) {
             )}
           </div>
 
-          {/* Черновики — про выпуск новых отчётов, в архиве им делать нечего */}
-          {showDrafts && !showArchive && (
-            <ReportDraftsPanel
-              drafts={draftsOpen}
+          {/* Черновики — про выпуск новых отчётов; вкладка отдаёт им всю
+              рабочую область вместо списка, а не отжимает его вниз. */}
+          {view === "drafts" ? (
+            <div className={classes.drafts}>
+              {showDrafts && (
+                <ReportDraftsPanel
+                  drafts={draftsOpen}
+                  isAirline={isAirline}
+                  onOpen={handleOpenDraft}
+                  onDelete={handleDeleteDraft}
+                />
+              )}
+
+              {/* Отправленные ждут авиакомпанию, но выпустить их диспетчер вправе и
+                  сам — поэтому открываются тем же редактором, только без правки.
+                  Гостиничных черновиков этот путь не касается: их подтверждают из
+                  DRAFT, статуса SUBMITTED у них не бывает. */}
+              {showDrafts && isAirline && (
+                <ReportDraftsPanel
+                  drafts={draftsSubmitted}
+                  isAirline={isAirline}
+                  title="У авиакомпании на подтверждении"
+                  variant="submitted"
+                  onOpen={handleOpenDraft}
+                  onUnsubmit={handleUnsubmitDraft}
+                />
+              )}
+
+              {/* Единственная панель черновиков у авиакомпании: то, что ждёт её
+                  подтверждения. Удаления и отзыва здесь нет — это сторона выпуска. */}
+              {isAirlineUser && (
+                <ReportDraftsPanel
+                  drafts={draftsSubmitted}
+                  isAirline
+                  title="На подтверждении"
+                  variant="submitted"
+                  onOpen={handleOpenSubmitted}
+                />
+              )}
+
+              {/* Панель на пустом списке возвращает null — без карточки вкладка
+                  была бы просто пустым местом под тулбаром. */}
+              {draftsCount === 0 && (
+                <div className={classes.emptyCard}>
+                  <div className={classes.emptyIcon}>
+                    <DocIcon size={34} />
+                  </div>
+                  <div className={classes.emptyTitle}>
+                    {showDrafts ? "Черновиков нет" : "Ничего не ждёт подтверждения"}
+                  </div>
+                  <div className={classes.emptyText}>
+                    {showDrafts
+                      ? "Черновик появляется здесь, если при создании отчёта отметить «Проверить строки перед выгрузкой»."
+                      : "Здесь появятся отчёты, отправленные вам на подтверждение."}
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <ReportsV2List
               isAirline={isAirline}
-              onOpen={handleOpenDraft}
-              onDelete={handleDeleteDraft}
+              items={filteredReports}
+              loading={reportsLoading}
+              hasAnyReports={reports.length > 0}
+              searchQuery={searchQuery}
+              canCreate={canCreate}
+              onCreateClick={() => setShowCreate(true)}
+              onDelete={handleDeleteReport}
+              archiveMode={isArchive}
+              onArchive={handleArchiveReport}
+              onRestore={handleRestoreReport}
+              canDelete={canDelete}
+              draftByReport={draftByReport}
+              onOpenReleased={handleOpenReleased}
+              emptyText={isArchive ? ARCHIVE_EMPTY_TEXT : emptyText}
             />
           )}
-
-          {/* Отправленные ждут авиакомпанию, но выпустить их диспетчер вправе и
-              сам — поэтому открываются тем же редактором, только без правки.
-              Гостиничных черновиков этот путь не касается: их подтверждают из
-              DRAFT, статуса SUBMITTED у них не бывает. */}
-          {showDrafts && isAirline && !showArchive && (
-            <ReportDraftsPanel
-              drafts={draftsSubmitted}
-              isAirline={isAirline}
-              title="У авиакомпании на подтверждении"
-              variant="submitted"
-              onOpen={handleOpenDraft}
-              onUnsubmit={handleUnsubmitDraft}
-            />
-          )}
-
-          {/* Единственная панель черновиков у авиакомпании: то, что ждёт её
-              подтверждения. Удаления и отзыва здесь нет — это сторона выпуска. */}
-          {isAirlineUser && !showArchive && (
-            <ReportDraftsPanel
-              drafts={draftsSubmitted}
-              isAirline
-              title="На подтверждении"
-              variant="submitted"
-              onOpen={handleOpenSubmitted}
-            />
-          )}
-
-          <ReportsV2List
-            isAirline={isAirline}
-            items={filteredReports}
-            loading={reportsLoading}
-            hasAnyReports={reports.length > 0}
-            searchQuery={searchQuery}
-            canCreate={canCreate}
-            onCreateClick={() => setShowCreate(true)}
-            onDelete={handleDeleteReport}
-            archiveMode={showArchive}
-            onArchive={handleArchiveReport}
-            onRestore={handleRestoreReport}
-            canDelete={canDelete}
-            draftByReport={draftByReport}
-            onOpenReleased={handleOpenReleased}
-            emptyText={showArchive ? ARCHIVE_EMPTY_TEXT : emptyText}
-          />
         </div>
         </>
       )}
