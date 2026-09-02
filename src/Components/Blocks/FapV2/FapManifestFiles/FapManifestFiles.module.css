@@ -30,20 +30,15 @@
   box-shadow: 0 0 0 3px rgba(0, 87, 195, 0.35);
 }
 
-/* Слот 14×14 под иконку: у стрелки скачивания портретные пропорции,
-   растягивать её до квадрата нельзя — задаём высоту, ширину считает браузер. */
+/* Иконка приглушённая, подпись — тёмно-синяя, как было раньше */
 .icon {
-  width: 14px;
-  height: 14px;
+  width: 16px;
+  height: 16px;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-}
-.icon svg {
-  display: block;
-  height: 14px;
-  width: auto;
+  color: #545873;
 }
 
 .label {

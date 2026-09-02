@@ -1,6 +1,6 @@
 import React from "react";
 import classes from "./FapManifestFiles.module.css";
-import DownloadIcon from "../../../../shared/icons/DownloadIcon";
+import FileDownIcon from "../../../../shared/icons/FileDownIcon";
 import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
 import { manifestFilesNewestFirst } from "../fapManifestFiles";
 import { formatDate, formatDateTime } from "../fapConstants";
@@ -35,7 +35,7 @@ export default function FapManifestFiles({ files }) {
       title={title}
     >
       <span className={classes.icon}>
-        <DownloadIcon />
+        <FileDownIcon size={16} strokeWidth={2} />
       </span>
       <span className={classes.label}>Манифест</span>
       {badge > 1 && <span className={classes.badge}>{badge}</span>}
@@ -54,7 +54,7 @@ export default function FapManifestFiles({ files }) {
     <FapOverflowMenu
       items={manifests.map((file) => ({
         label: fileLabel(file),
-        icon: DownloadIcon,
+        icon: FileDownIcon,
         onClick: () => openFile(file.path),
       }))}
       trigger={({ toggle }) =>

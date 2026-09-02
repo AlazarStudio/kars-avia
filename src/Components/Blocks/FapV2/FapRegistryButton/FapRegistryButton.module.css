@@ -29,9 +29,15 @@
   box-shadow: 0 0 0 3px rgba(0, 87, 195, 0.35);
 }
 
+/* Иконка приглушённая, подпись — тёмно-синяя, как было раньше */
 .icon {
+  width: 16px;
+  height: 16px;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
+  color: #545873;
 }
 
 .label {
