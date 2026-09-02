@@ -58,7 +58,7 @@ import {
 import { visibleServiceKeys } from "../fapServiceVisibility";
 import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
 import { downloadRequestReport } from "../reports/buildReportSheets";
-import { visibleHotelIndexes } from "../fapReportAccess";
+import { visibleHotelIndexes, airlineMoneyHidden } from "../fapReportAccess";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import { useRepresentativeLink } from "../hooks/useRepresentativeLink";
 
@@ -736,8 +736,8 @@ export default function FapDetail({ user, canEdit = true, canEditCompleted = fal
                       hotelIndexes: visibleHotelIndexes(request, user),
                       hiddenServiceKeys,
                       // Гостинице деньги отчёта проживания не показываем — ни на
-                      // экране, ни в книге.
-                      hideMoney: isHotelScoped(user),
+                      // экране, ни в книге. Авиакомпании — пока цены не согласованы.
+                      hideMoney: isHotelScoped(user) || airlineMoneyHidden(request, user),
                     });
                   }
                   catch (e) { notifyError("Ошибка экспорта"); console.error(e); }

@@ -10,7 +10,7 @@ import DownloadIcon from "../../../../shared/icons/DownloadIcon";
 import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
 import { isExternalUser, isHotelScoped } from "../../../../utils/access";
 import { downloadRequestReport } from "../reports/buildReportSheets";
-import { visibleHotelIndexes } from "../fapReportAccess";
+import { visibleHotelIndexes, airlineMoneyHidden } from "../fapReportAccess";
 import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
 import { useToast } from "../../../../contexts/ToastContext";
 
@@ -59,8 +59,8 @@ export default function FapHeaderActions({
           hotelIndexes: visibleHotelIndexes(request, user),
           hiddenServiceKeys,
           // Гостинице деньги отчёта проживания не показываем — ни на экране,
-          // ни в книге.
-          hideMoney: isHotelScoped(user),
+          // ни в книге. Авиакомпании — пока цены не согласованы.
+          hideMoney: isHotelScoped(user) || airlineMoneyHidden(request, user),
         });
     } catch (e) {
       notifyError("Ошибка экспорта");

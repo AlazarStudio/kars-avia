@@ -3,6 +3,8 @@ import classes from "./ReportsV2List.module.css";
 import { convertToDate, convertToDateNew, getMediaUrl } from "../../../../../graphQL_requests";
 import { DocIcon } from "../ReportsV2Icons";
 import Button from "../../../Standart/Button/Button";
+import ArchiveIcon from "../../../../shared/icons/ArchiveIcon";
+import RestoreIcon from "../../../../shared/icons/RestoreIcon";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 import DownloadReportIcon from "../../../../shared/icons/DownloadReportIcon";
 import ViewReportIcon from "../../../../shared/icons/ViewReportIcon";
@@ -40,6 +42,10 @@ export default function ReportsV2List({
   canCreate = false,
   onCreateClick = () => {},
   onDelete,
+  archiveMode = false,
+  onArchive,
+  onRestore,
+  canDelete = false,
   draftByReport,
   onOpenReleased,
   emptyText = "Здесь появятся выпущенные отчёты. Соберите первый — по авиакомпании или по гостинице, за нужный период.",
@@ -94,7 +100,9 @@ export default function ReportsV2List({
               </div>
               <div className={classes.emptyTitle}>Отчётов пока нет</div>
               <div className={classes.emptyText}>{emptyText}</div>
-              {canCreate && (
+              {/* В пустом архиве кнопка создания сбивает с толку: новый отчёт
+                  выйдет в «Текущие», а не сюда */}
+              {canCreate && !archiveMode && (
                 <Button type="button" onClick={onCreateClick} minwidth={"170px"}>
                   Создать отчёт
                 </Button>
@@ -159,14 +167,39 @@ export default function ReportsV2List({
                     >
                       <DownloadReportIcon />
                     </a>
-                    <button
-                      type="button"
-                      className={classes.deleteBtn}
-                      onClick={() => onDelete(item.id)}
-                      title="Удалить"
-                    >
-                      <DeleteIcon cursor="pointer" />
-                    </button>
+                    {/* Удаление доступно только внутри архива — контракт бэка:
+                        сначала отчёт убирают из работы, и лишь потом сносят. */}
+                    {archiveMode ? (
+                      <>
+                        <button
+                          type="button"
+                          className={classes.restoreBtn}
+                          onClick={() => onRestore(item.id)}
+                          title="Восстановить"
+                        >
+                          <RestoreIcon cursor="pointer" />
+                        </button>
+                        {canDelete && (
+                          <button
+                            type="button"
+                            className={classes.deleteBtn}
+                            onClick={() => onDelete(item.id)}
+                            title="Удалить"
+                          >
+                            <DeleteIcon cursor="pointer" />
+                          </button>
+                        )}
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        className={classes.archiveBtn}
+                        onClick={() => onArchive(item.id)}
+                        title="В архив"
+                      >
+                        <ArchiveIcon cursor="pointer" />
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -194,6 +227,10 @@ ReportsV2List.propTypes = {
   canCreate: PropTypes.bool,
   onCreateClick: PropTypes.func,
   onDelete: PropTypes.func.isRequired,
+  archiveMode: PropTypes.bool,
+  onArchive: PropTypes.func,
+  onRestore: PropTypes.func,
+  canDelete: PropTypes.bool,
   draftByReport: PropTypes.instanceOf(Map),
   onOpenReleased: PropTypes.func,
   emptyText: PropTypes.string,

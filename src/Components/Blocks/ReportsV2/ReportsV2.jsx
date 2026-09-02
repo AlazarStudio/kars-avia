@@ -13,8 +13,10 @@ import Button from "../../Standart/Button/Button";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
 import { roles } from "../../../roles";
-import { buildDraftByReport } from "./releasedReports";
+import { buildDraftByReport, splitDraftsByStatus } from "./releasedReports";
+import { canDeleteReport } from "./reportsV2Access.js";
 import {
+  ARCHIVE_REPORT,
   convertToDate,
   convertToDateNew,
   decodeJWT,
@@ -27,12 +29,20 @@ import {
   GET_REPORT_DRAFTS,
   GET_REPORTS_SUBSCRIPTION,
   getCookie,
+  RESTORE_REPORT,
+  UNSUBMIT_AIRLINE_REPORT_DRAFT,
 } from "../../../../graphQL_requests";
 
 // Ключ localStorage раздела — намеренно отличается от старого "isAirline"
 // (занят разделом «Отчёты» v1), иначе переключатели типа объекта двух
 // разделов будут сбивать друг друга.
 const IS_AIRLINE_STORAGE_KEY = "reportsV2IsAirline";
+
+// Архив наполняется двумя путями сразу: крон бэка уносит туда отчёты старше
+// двух декад, и то же делает кнопка «В архив». Пустой архив без этого текста
+// читался бы как потеря отчётов.
+const ARCHIVE_EMPTY_TEXT =
+  "В архиве пусто. Сюда попадают отчёты старше двух декад и убранные вручную.";
 
 // Сборка раздела «Отчёты v2» из готовых дочерних компонентов: шапка, плашка
 // черновиков, список готовых отчётов и редактор строк черновика — вместо
@@ -60,11 +70,18 @@ export default function ReportsV2({ user, accessMenu }) {
   const canOpenRules = me?.role === roles.superAdmin || me?.role === roles.dispatcerAdmin;
   const canEditRules = canOpenRules;
   const canCreate = !me?.airlineId || accessMenu?.reportCreate;
+  // Удаление живёт только в архиве и гейтится ключом reportDelete — зеркало
+  // бэкового assertCanDeleteSavedReport (супер и диспетчер-админ без ключа).
+  const canDelete = canDeleteReport(me, accessMenu);
   const showTypeToggle = me?.role === roles.superAdmin || me?.role === roles.dispatcerAdmin;
   // Черновики — рабочий инструмент выпуска: АК и гостиница видят только
   // выпущенные отчёты (решение владельца 01.09). «Экранный вид» выпущенного
   // (CONFIRMED-черновик) остаётся всем.
   const showDrafts = me?.role === roles.superAdmin || me?.role === roles.dispatcerAdmin;
+  // Единственное, что видит авиакомпания из кухни черновиков, — отправленный
+  // ей на подтверждение. Диспетчерским ролям эта панель не нужна: у них та же
+  // выборка лежит в «У авиакомпании на подтверждении».
+  const isAirlineUser = !!me?.airlineId && !showDrafts;
   // Текст пустого списка зависит от аккаунта: диспетчер собирает отчёты по
   // любым АК/гостиницам, скоуп-роли видят только свои.
   const emptyText = me?.hotelId
@@ -93,6 +110,11 @@ export default function ReportsV2({ user, accessMenu }) {
     localStorage.setItem(IS_AIRLINE_STORAGE_KEY, JSON.stringify(isAirline));
   }, [isAirline]);
 
+  // Вкладка «Архив» намеренно НЕ ложится в localStorage: раздел всегда должен
+  // открываться на «Текущих», иначе учётка после одного захода в архив каждый
+  // раз видит его вместо рабочего списка.
+  const [showArchive, setShowArchive] = useState(false);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [draftId, setDraftId] = useState(null);
   // Один и тот же экран открывается в двух ролях: черновик правят, выпущенный
@@ -111,7 +133,10 @@ export default function ReportsV2({ user, accessMenu }) {
     refetch: refetchReports,
   } = useQuery(isAirline ? GET_AIRLINE_REPORT : GET_HOTEL_REPORT, {
     context: { headers: { Authorization: `Bearer ${token}` } },
-    variables: { filter: {} },
+    // Пустой фильтр — это «текущие»: бэк сам отсекает по началу предыдущей
+    // декады. Архив — тот же запрос с archived: true; Apollo разводит два
+    // набора по переменным, поэтому переключение вкладки не мешает списки.
+    variables: { filter: showArchive ? { archived: true } : {} },
   });
 
   const { data: positionsData } = useQuery(GET_AIRLINE_POSITIONS, {
@@ -122,15 +147,14 @@ export default function ReportsV2({ user, accessMenu }) {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
 
+  // Один запрос на все три статуса: `status` в фильтре не задаём, выборку
+  // делим на клиенте (splitDraftsByStatus). Раздельные запросы держали бы три
+  // независимых кэша одного и того же списка и требовали трёх рефетчей после
+  // каждой отправки/отзыва. Скоуп режет бэк: авиакомпании он отдаёт только
+  // SUBMITTED и CONFIRMED её собственной АК.
   const { data: draftsData, refetch: refetchDrafts } = useQuery(GET_REPORT_DRAFTS, {
     context: { headers: { Authorization: `Bearer ${token}` } },
-    variables: { filter: { type: isAirline ? "AIRLINE" : "HOTEL", status: "DRAFT" } },
-    skip: !showDrafts,
-  });
-
-  const { data: confirmedDraftsData } = useQuery(GET_REPORT_DRAFTS, {
-    context: { headers: { Authorization: `Bearer ${token}` } },
-    variables: { filter: { type: isAirline ? "AIRLINE" : "HOTEL", status: "CONFIRMED" } },
+    variables: { filter: { type: isAirline ? "AIRLINE" : "HOTEL" } },
   });
 
   useSubscription(GET_REPORTS_SUBSCRIPTION, {
@@ -144,7 +168,19 @@ export default function ReportsV2({ user, accessMenu }) {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
 
+  const [archiveReport] = useMutation(ARCHIVE_REPORT, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const [restoreReport] = useMutation(RESTORE_REPORT, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
   const [deleteReportDraft] = useMutation(DELETE_REPORT_DRAFT, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const [unsubmitAirlineReportDraft] = useMutation(UNSUBMIT_AIRLINE_REPORT_DRAFT, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
 
@@ -160,14 +196,15 @@ export default function ReportsV2({ user, accessMenu }) {
     ? reportsData?.getAirlineReport?.[0]?.reports || []
     : reportsData?.getHotelReport?.[0]?.reports || [];
 
-  const drafts = draftsData?.reportDrafts || [];
+  const {
+    open: draftsOpen,
+    submitted: draftsSubmitted,
+    confirmed: draftsConfirmed,
+  } = useMemo(() => splitDraftsByStatus(draftsData?.reportDrafts), [draftsData]);
 
   // Список отчётов сам не знает, у какой строки есть экранный вид: связь живёт
   // на стороне черновика (savedReportId). Карту строим здесь и отдаём в список.
-  const draftByReport = useMemo(
-    () => buildDraftByReport(confirmedDraftsData?.reportDrafts),
-    [confirmedDraftsData]
-  );
+  const draftByReport = useMemo(() => buildDraftByReport(draftsConfirmed), [draftsConfirmed]);
 
   const q = searchQuery.trim().toLowerCase();
   const filteredReports = reports.filter((report) => {
@@ -193,8 +230,46 @@ export default function ReportsV2({ user, accessMenu }) {
     try {
       await deleteReport({ variables: { deleteReportId: id } });
       success("Отчёт удалён");
+      // Подписка GET_REPORTS_SUBSCRIPTION про удаление молчит — без рефетча
+      // удалённая строка остаётся в архиве до перезагрузки страницы.
+      refetchReports();
     } catch (e) {
       notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при удалении отчёта");
+    }
+  };
+
+  const handleArchiveReport = async (id) => {
+    const ok = await confirm({
+      message: "Убрать отчёт в архив?",
+      confirmText: "В архив",
+      cancelText: "Отмена",
+    });
+    if (!ok) return;
+    try {
+      await archiveReport({ variables: { id } });
+      success("Отчёт в архиве");
+      refetchReports();
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Не удалось убрать отчёт в архив");
+    }
+  };
+
+  const handleRestoreReport = async (id) => {
+    const ok = await confirm({
+      message: "Вернуть отчёт из архива?",
+      confirmText: "Восстановить",
+      cancelText: "Отмена",
+    });
+    if (!ok) return;
+    try {
+      await restoreReport({ variables: { id } });
+      success("Отчёт восстановлен");
+      refetchReports();
+    } catch (e) {
+      // Строка могла попасть в архив по порогу декады, без ручного флага —
+      // тогда бэк отвечает BAD_USER_INPUT «Report is not archived». Показываем
+      // его текст: только он объясняет, почему кнопка не сработала.
+      notifyError(e?.graphQLErrors?.[0]?.message || "Не удалось восстановить отчёт");
     }
   };
 
@@ -214,6 +289,18 @@ export default function ReportsV2({ user, accessMenu }) {
     }
   };
 
+  // Отзыв обратим и ничего не печатает — подтверждения не спрашиваем, в
+  // отличие от удаления черновика.
+  const handleUnsubmitDraft = async (id) => {
+    try {
+      await unsubmitAirlineReportDraft({ variables: { id } });
+      success("Отправка отозвана");
+      refetchDrafts();
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Не удалось отозвать отправку");
+    }
+  };
+
   const handleDraftCreated = (id) => {
     setDraftId(id);
     refetchDrafts();
@@ -221,6 +308,13 @@ export default function ReportsV2({ user, accessMenu }) {
 
   const handleOpenDraft = (id) => {
     setDraftMode("edit");
+    setDraftId(id);
+  };
+
+  // Авиакомпания открывает отправленный ей черновик на чтение и подтверждение:
+  // тот же экран, но без правки строк и без отзыва.
+  const handleOpenSubmitted = (id) => {
+    setDraftMode("review");
     setDraftId(id);
   };
 
@@ -249,6 +343,17 @@ export default function ReportsV2({ user, accessMenu }) {
     refetchReports();
   };
 
+  // Отправка и отзыв, в отличие от подтверждения, экран не закрывают: черновик
+  // никуда не делся, у него сменился статус — редактор перерисуется сам по
+  // нормализованному кэшу, а рефетч нужен только панелям под ним.
+  const handleDraftSubmitted = () => {
+    refetchDrafts();
+  };
+
+  const handleDraftUnsubmitted = () => {
+    refetchDrafts();
+  };
+
   return (
     <div className={classes.section}>
       {/* Header в режиме редактора рендерит сам редактор: заголовок тот же
@@ -262,6 +367,8 @@ export default function ReportsV2({ user, accessMenu }) {
           onBack={handleDraftBack}
           onDraftReplaced={handleDraftReplaced}
           onConfirmed={handleDraftConfirmed}
+          onSubmitted={handleDraftSubmitted}
+          onUnsubmitted={handleDraftUnsubmitted}
         />
       ) : (
         <>
@@ -286,6 +393,26 @@ export default function ReportsV2({ user, accessMenu }) {
               </button>
             </div>
           )}
+
+          {/* Отдельная полоса под типом объекта: тумблер типа видят только
+              супер и диспетчер-админ, а архив нужен всем ролям — иначе после
+              деплоя отчёты старше двух декад просто пропадут из раздела. */}
+          <div className={classes.filter_wrapper}>
+            <button
+              type="button"
+              onClick={() => setShowArchive(false)}
+              className={showArchive === false ? classes.activeButton : null}
+            >
+              Текущие
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowArchive(true)}
+              className={showArchive === true ? classes.activeButton : null}
+            >
+              Архив
+            </button>
+          </div>
 
           <div className={classes.toolbar}>
             <MUITextField
@@ -321,12 +448,40 @@ export default function ReportsV2({ user, accessMenu }) {
             )}
           </div>
 
-          {showDrafts && (
+          {/* Черновики — про выпуск новых отчётов, в архиве им делать нечего */}
+          {showDrafts && !showArchive && (
             <ReportDraftsPanel
-              drafts={drafts}
+              drafts={draftsOpen}
               isAirline={isAirline}
               onOpen={handleOpenDraft}
               onDelete={handleDeleteDraft}
+            />
+          )}
+
+          {/* Отправленные ждут авиакомпанию, но выпустить их диспетчер вправе и
+              сам — поэтому открываются тем же редактором, только без правки.
+              Гостиничных черновиков этот путь не касается: их подтверждают из
+              DRAFT, статуса SUBMITTED у них не бывает. */}
+          {showDrafts && isAirline && !showArchive && (
+            <ReportDraftsPanel
+              drafts={draftsSubmitted}
+              isAirline={isAirline}
+              title="У авиакомпании на подтверждении"
+              variant="submitted"
+              onOpen={handleOpenDraft}
+              onUnsubmit={handleUnsubmitDraft}
+            />
+          )}
+
+          {/* Единственная панель черновиков у авиакомпании: то, что ждёт её
+              подтверждения. Удаления и отзыва здесь нет — это сторона выпуска. */}
+          {isAirlineUser && !showArchive && (
+            <ReportDraftsPanel
+              drafts={draftsSubmitted}
+              isAirline
+              title="На подтверждении"
+              variant="submitted"
+              onOpen={handleOpenSubmitted}
             />
           )}
 
@@ -339,9 +494,13 @@ export default function ReportsV2({ user, accessMenu }) {
             canCreate={canCreate}
             onCreateClick={() => setShowCreate(true)}
             onDelete={handleDeleteReport}
+            archiveMode={showArchive}
+            onArchive={handleArchiveReport}
+            onRestore={handleRestoreReport}
+            canDelete={canDelete}
             draftByReport={draftByReport}
             onOpenReleased={handleOpenReleased}
-            emptyText={emptyText}
+            emptyText={showArchive ? ARCHIVE_EMPTY_TEXT : emptyText}
           />
         </div>
         </>

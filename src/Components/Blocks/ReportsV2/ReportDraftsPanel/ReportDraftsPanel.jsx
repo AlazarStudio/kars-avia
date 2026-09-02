@@ -4,40 +4,59 @@ import { convertToDate, convertToDateNew } from "../../../../../graphQL_requests
 import { isDraftStale } from "../reportDraftAge";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 
-// Плашка незавершённых черновиков раздела «Отчёты v2»: висит над таблицей
-// готовых отчётов и даёт вернуться к черновику или удалить его. Черновик —
-// мёртвый снимок строк на бэке (подтверждение печатает их как есть), поэтому
-// возраст с момента создания — значимая информация, а не украшение.
+// Плашка черновиков раздела «Отчёты v2»: висит над таблицей готовых отчётов
+// и даёт вернуться к черновику. Черновик — мёртвый снимок строк на бэке
+// (подтверждение печатает их как есть), поэтому возраст с момента создания —
+// значимая информация, а не украшение.
 // Дата+время черновика: convertToDate(x, true) возвращает ТОЛЬКО время
 // (проектный приём, см. InfoTableDataReports), поэтому дату и время нужно
-// склеивать вручную. На пустом/битом значении convertToDate отдаёт "" —
-// в этом случае возвращаем "", чтобы вызывающий код не оставил висящее
-// слово-подпись с пробелом там, где значения нет.
+// склеивать вручную. Пустое значение отсекаем сами, до convertToDate: на null
+// он отдаёт не "", а «01.01.1970» — new Date(null) это эпоха. Возвращённое ""
+// нужно, чтобы вызывающий код не оставил висящее слово-подпись с пробелом
+// там, где значения нет.
 const formatDateTime = (value) => {
+  if (!value) return "";
   const date = convertToDate(value);
   if (!date) return "";
   const time = convertToDate(value, true);
   return time ? `${date} ${time}` : date;
 };
 
-export default function ReportDraftsPanel({ drafts, isAirline, onOpen, onDelete }) {
+// Один и тот же список рисует две панели: незавершённые черновики диспетчера
+// и отправленные авиакомпании. Отличий ровно два — заголовок и подпись справа
+// («изменён» против «отправлено»), поэтому вариант, а не второй компонент.
+export default function ReportDraftsPanel({
+  drafts,
+  isAirline,
+  onOpen,
+  onDelete,
+  onUnsubmit,
+  title = "Незавершённые черновики",
+  variant = "open",
+}) {
   if (!Array.isArray(drafts) || drafts.length === 0) {
     return null;
   }
+
+  const submitted = variant === "submitted";
 
   return (
     <div className={classes.panel}>
       <div className={classes.header}>
         <span className={classes.headerDot} />
-        Незавершённые черновики · {drafts.length}
+        {title} · {drafts.length}
       </div>
 
       <div className={classes.list}>
         {drafts.map((draft) => {
           const name = isAirline ? draft?.airline?.name : draft?.hotel?.name;
           const rowsCount = draft.rows?.length ?? 0;
+          // Бейдж «устарел» в обоих вариантах считается от создания: отправка
+          // авиакомпании данные заявок не освежает, снимок остаётся тем же.
           const stale = isDraftStale(draft.createdAt);
-          const updatedLabel = formatDateTime(draft.updatedAt);
+          const timeLabel = submitted
+            ? formatDateTime(draft.submittedAt)
+            : formatDateTime(draft.updatedAt);
 
           return (
             <div className={classes.row} key={draft.id}>
@@ -64,7 +83,9 @@ export default function ReportDraftsPanel({ drafts, isAirline, onOpen, onDelete 
 
               <div className={classes.rowsCount}>строк: {rowsCount}</div>
 
-              <div className={classes.updated}>{updatedLabel ? `изменён ${updatedLabel}` : ""}</div>
+              <div className={classes.updated}>
+                {timeLabel ? `${submitted ? "отправлено" : "изменён"} ${timeLabel}` : ""}
+              </div>
 
               <div className={classes.actions}>
                 <button
@@ -74,14 +95,27 @@ export default function ReportDraftsPanel({ drafts, isAirline, onOpen, onDelete 
                 >
                   Открыть
                 </button>
-                <button
-                  type="button"
-                  className={classes.deleteBtn}
-                  onClick={() => onDelete(draft.id)}
-                  title="Удалить"
-                >
-                  <DeleteIcon cursor="pointer" />
-                </button>
+                {/* Отзыв — единственный способ снова начать править отправленный
+                    черновик, поэтому он в строке, а не только внутри редактора. */}
+                {onUnsubmit && (
+                  <button
+                    type="button"
+                    className={classes.unsubmitBtn}
+                    onClick={() => onUnsubmit(draft.id)}
+                  >
+                    Отозвать
+                  </button>
+                )}
+                {onDelete && (
+                  <button
+                    type="button"
+                    className={classes.deleteBtn}
+                    onClick={() => onDelete(draft.id)}
+                    title="Удалить"
+                  >
+                    <DeleteIcon cursor="pointer" />
+                  </button>
+                )}
               </div>
             </div>
           );
@@ -95,5 +129,10 @@ ReportDraftsPanel.propTypes = {
   drafts: PropTypes.arrayOf(PropTypes.object),
   isAirline: PropTypes.bool,
   onOpen: PropTypes.func.isRequired,
-  onDelete: PropTypes.func.isRequired,
+  // Удаление и отзыв — необязательные: отправленный черновик авиакомпания
+  // не удаляет, а отзывает его только диспетчер.
+  onDelete: PropTypes.func,
+  onUnsubmit: PropTypes.func,
+  title: PropTypes.string,
+  variant: PropTypes.oneOf(["open", "submitted"]),
 };

@@ -84,8 +84,12 @@
   color: #2A2E45;
 }
 
+/* Ширина рассчитана на самый длинный набор — архивную строку у того, кому
+   разрешено удаление: «Открыть на экране» + «Скачать» + «Восстановить» +
+   «Удалить» это 71px иконок и 45px зазоров. На «Текущих» иконок меньше, но
+   колонка не сужается — иначе имя объекта прыгало бы между вкладками. */
 .colActions {
-  flex: 0 0 96px;
+  flex: 0 0 124px;
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -123,6 +127,8 @@
    без фона и рамки: подложка спорила бы с их серым штрихом. */
 .viewBtn,
 .downloadBtn,
+.archiveBtn,
+.restoreBtn,
 .deleteBtn {
   display: flex;
   align-items: center;
@@ -137,6 +143,8 @@
 
 .viewBtn:hover,
 .downloadBtn:hover,
+.archiveBtn:hover,
+.restoreBtn:hover,
 .deleteBtn:hover {
   opacity: 0.6;
 }

@@ -1,6 +1,6 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { buildDraftByReport } from "./releasedReports.js";
+import { buildDraftByReport, splitDraftsByStatus } from "./releasedReports.js";
 
 test("buildDraftByReport maps a released report to its draft", () => {
   const map = buildDraftByReport([
@@ -37,4 +37,47 @@ test("buildDraftByReport on empty or broken input gives an empty map", () => {
   assert.equal(buildDraftByReport([]).size, 0);
   assert.equal(buildDraftByReport(null).size, 0);
   assert.equal(buildDraftByReport(undefined).size, 0);
+});
+
+test("splitDraftsByStatus spreads drafts over the three panels", () => {
+  const { open, submitted, confirmed } = splitDraftsByStatus([
+    { id: "a", status: "DRAFT" },
+    { id: "b", status: "SUBMITTED" },
+    { id: "c", status: "CONFIRMED" },
+    { id: "d", status: "DRAFT" },
+  ]);
+  assert.deepEqual(open.map((d) => d.id), ["a", "d"]);
+  assert.deepEqual(submitted.map((d) => d.id), ["b"]);
+  assert.deepEqual(confirmed.map((d) => d.id), ["c"]);
+});
+
+test("splitDraftsByStatus keeps the backend order inside each group", () => {
+  // Порядок задаёт бэк (свежие сверху) — деление на панели его не пересобирает.
+  const { open } = splitDraftsByStatus([
+    { id: "new", status: "DRAFT" },
+    { id: "mid", status: "SUBMITTED" },
+    { id: "old", status: "DRAFT" },
+  ]);
+  assert.deepEqual(open.map((d) => d.id), ["new", "old"]);
+});
+
+test("splitDraftsByStatus drops unknown and broken entries", () => {
+  // Незнакомый статус не должен попасть в «Незавершённые»: панель открывает
+  // строки на правку, а правится только DRAFT.
+  const { open, submitted, confirmed } = splitDraftsByStatus([
+    { id: "a", status: "ARCHIVED" },
+    { id: "b" },
+    null,
+    undefined,
+  ]);
+  assert.equal(open.length, 0);
+  assert.equal(submitted.length, 0);
+  assert.equal(confirmed.length, 0);
+});
+
+test("splitDraftsByStatus on empty or broken input gives three empty lists", () => {
+  for (const input of [[], null, undefined]) {
+    const groups = splitDraftsByStatus(input);
+    assert.deepEqual(groups, { open: [], submitted: [], confirmed: [] });
+  }
 });

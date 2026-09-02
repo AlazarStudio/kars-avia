@@ -136,6 +136,9 @@ export const menuAccess = {
 
   reportMenu: true,
   reportCreate: true,
+  // Удаление выпущенного отчёта необратимо, поэтому выдаётся осознанно:
+  // дефолт false, как и на бэке (AccessMenu.reportDelete).
+  reportDelete: false,
 
   travellineMenu: true,
   accessManage: false,

@@ -115,6 +115,15 @@ test("правка завершённой заявки — отдельный п
   );
 });
 
+test("удаление отчёта — отдельный переключатель секции «Отчёты»", () => {
+  // В rows его класть нельзя: «Взаимодействие с разделом» включает все строки
+  // разом, и необратимое удаление приезжало бы вместе с созданием.
+  const reports = ACCESS_SECTIONS.find((s) => s.key === "reports");
+  assert.deepEqual((reports.extras || []).map((e) => e.key), ["delete"]);
+  assert.equal(reports.extras[0].label, "Удаление");
+  assert.equal(reports.rows.some((r) => r.key === "delete"), false);
+});
+
 test("секция TravelLine описана одной строкой доступа", () => {
   const tl = ACCESS_SECTIONS.find((s) => s.key === "travelline");
   assert.equal(tl.title, "TravelLine");

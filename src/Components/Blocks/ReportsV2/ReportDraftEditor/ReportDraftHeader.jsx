@@ -14,19 +14,26 @@ export default function ReportDraftHeader({
   logo,
   loading = false,
   isStale,
+  submittedLabel,
   dirty,
   hasRows,
   recreating,
   deleting,
   saving,
   confirming,
+  submitting,
+  unsubmitting,
   canEdit = true,
+  canSubmit = false,
+  canConfirm = false,
   downloadUrl,
   onPreview,
   onRecreate,
   onDelete,
   onSave,
   onConfirm,
+  onSubmit,
+  onUnsubmit,
 }) {
   return (
     <div className={classes.bar}>
@@ -50,6 +57,10 @@ export default function ReportDraftHeader({
           устарел
         </span>
       )}
+
+      {/* Готовая строка приходит сверху: формулировка зависит от того, чей это
+          экран — диспетчера или самой авиакомпании, а роль сюда не доходит. */}
+      {submittedLabel && <span className={classes.submittedBadge}>{submittedLabel}</span>}
 
       {/* Пока черновик грузится, показывать нечего, кроме «назад»: действия
           без данных ни на что не подействуют. */}
@@ -108,16 +119,44 @@ export default function ReportDraftHeader({
               {dirty && <span className={classes.saveDot} />}
               {saving ? "Сохранение…" : "Сохранить"}
             </button>
-
-            <button
-              type="button"
-              className={classes.primaryBtn}
-              disabled={!hasRows || confirming}
-              onClick={onConfirm}
-            >
-              {confirming ? "Выгрузка…" : "Подтвердить и выгрузить"}
-            </button>
           </>
+        )}
+
+        {/* Отзыв возвращает черновик в правку — рядом с подтверждением, но
+            вторичной кнопкой: основное действие на этом экране всё-таки выпуск. */}
+        {onUnsubmit && (
+          <button
+            type="button"
+            className={classes.secondaryBtn}
+            disabled={unsubmitting}
+            onClick={onUnsubmit}
+          >
+            {unsubmitting ? "Отзыв…" : "Отозвать"}
+          </button>
+        )}
+
+        {/* У черновика авиакомпании отправка заменяет подтверждение: бэк не
+            даёт подтвердить AIRLINE-черновик, минуя SUBMITTED. */}
+        {canSubmit && (
+          <button
+            type="button"
+            className={classes.primaryBtn}
+            disabled={!hasRows || submitting}
+            onClick={onSubmit}
+          >
+            {submitting ? "Отправка…" : "Отправить авиакомпании"}
+          </button>
+        )}
+
+        {canConfirm && (
+          <button
+            type="button"
+            className={classes.primaryBtn}
+            disabled={!hasRows || confirming}
+            onClick={onConfirm}
+          >
+            {confirming ? "Выгрузка…" : "Подтвердить и выгрузить"}
+          </button>
         )}
       </div>
       )}
@@ -130,17 +169,26 @@ ReportDraftHeader.propTypes = {
   logo: PropTypes.string,
   loading: PropTypes.bool,
   isStale: PropTypes.bool,
+  submittedLabel: PropTypes.string,
   dirty: PropTypes.bool,
   hasRows: PropTypes.bool,
   recreating: PropTypes.bool,
   deleting: PropTypes.bool,
   saving: PropTypes.bool,
   confirming: PropTypes.bool,
+  submitting: PropTypes.bool,
+  unsubmitting: PropTypes.bool,
   canEdit: PropTypes.bool,
+  canSubmit: PropTypes.bool,
+  canConfirm: PropTypes.bool,
   downloadUrl: PropTypes.string,
   onPreview: PropTypes.func,
   onRecreate: PropTypes.func,
   onDelete: PropTypes.func,
   onSave: PropTypes.func,
   onConfirm: PropTypes.func,
+  onSubmit: PropTypes.func,
+  // Отзыв показывается по наличию обработчика — как удаление в плашке
+  // черновиков: отдельный флаг дублировал бы то же условие.
+  onUnsubmit: PropTypes.func,
 };

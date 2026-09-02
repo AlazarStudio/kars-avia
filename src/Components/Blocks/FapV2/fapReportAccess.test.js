@@ -3,6 +3,9 @@ import assert from "node:assert/strict";
 import {
   hotelReportSubmittedAt,
   isHotelReportSubmitted,
+  hotelReportPricingApprovedAt,
+  isHotelReportPricingApproved,
+  airlineMoneyHidden,
   visibleHotelIndexes,
 } from "./fapReportAccess.js";
 
@@ -94,4 +97,77 @@ test("гостиничный аккаунт без привязки не вид�
 test("диспетчера и авиакомпанию новое правило не задело", () => {
   assert.deepEqual(visibleHotelIndexes(requestWithIds, dispatcher), [0, 1, 2]);
   assert.deepEqual(visibleHotelIndexes(requestWithIds, airline), []);
+});
+
+// ── Согласование ценообразования ──
+// Обе гостиницы отправлены — то есть авиакомпании видны обе; различие только
+// в согласовании цен.
+const SENT = "2026-08-30T10:00:00.000Z";
+const pricedRequest = {
+  livingService: { hotels: [{ hotelId: "h-1" }, { hotelId: "h-2" }] },
+  hotelReports: [
+    { hotelIndex: 0, submittedAt: SENT, pricingApprovedAt: "2026-09-01T09:00:00.000Z" },
+    { hotelIndex: 1, submittedAt: SENT, pricingApprovedAt: null },
+  ],
+};
+
+test("отдаёт дату согласования цен по индексу гостиницы", () => {
+  assert.equal(hotelReportPricingApprovedAt(pricedRequest, 0), "2026-09-01T09:00:00.000Z");
+  assert.equal(hotelReportPricingApprovedAt(pricedRequest, 1), null);
+  // Гостиницы без записи отчёта нет и в согласованных.
+  assert.equal(hotelReportPricingApprovedAt(pricedRequest, 5), null);
+  assert.equal(hotelReportPricingApprovedAt(undefined, 0), null);
+});
+
+test("строковый индекс согласования работает так же", () => {
+  assert.equal(isHotelReportPricingApproved(pricedRequest, "0"), true);
+  assert.equal(isHotelReportPricingApproved(pricedRequest, "1"), false);
+  assert.equal(isHotelReportPricingApproved(pricedRequest, 5), false);
+});
+
+test("деньги скрыты, пока хоть один видимый отчёт не согласован", () => {
+  assert.equal(airlineMoneyHidden(pricedRequest, airline), true);
+  assert.equal(airlineMoneyHidden(pricedRequest, airlineModerator), true);
+});
+
+test("все видимые отчёты согласованы — деньги показываем", () => {
+  const allApproved = {
+    ...pricedRequest,
+    hotelReports: pricedRequest.hotelReports.map((r) => ({
+      ...r,
+      pricingApprovedAt: "2026-09-01T09:00:00.000Z",
+    })),
+  };
+  assert.equal(airlineMoneyHidden(allApproved, airline), false);
+});
+
+test("несогласованный, но невидимый авиакомпании отчёт денег не прячет", () => {
+  // Вторая гостиница не отправлена — авиакомпании её нет вовсе, а первая
+  // согласована. Гейт должен смотреть только на видимые отчёты.
+  const onlyFirstSent = {
+    ...pricedRequest,
+    hotelReports: [
+      { hotelIndex: 0, submittedAt: SENT, pricingApprovedAt: "2026-09-01T09:00:00.000Z" },
+      { hotelIndex: 1, submittedAt: null, pricingApprovedAt: null },
+    ],
+  };
+  assert.equal(airlineMoneyHidden(onlyFirstSent, airline), false);
+});
+
+test("авиакомпании нечего показывать — прятать тоже нечего", () => {
+  assert.equal(airlineMoneyHidden({}, airline), false);
+  assert.equal(
+    airlineMoneyHidden(
+      { ...pricedRequest, hotelReports: [{ hotelIndex: 0, submittedAt: null }] },
+      airline
+    ),
+    false
+  );
+});
+
+test("правило про деньги — только про авиакомпанию", () => {
+  // У диспетчера и гостиницы свои гейты (hideMoney), согласование их не трогает.
+  assert.equal(airlineMoneyHidden(pricedRequest, dispatcher), false);
+  assert.equal(airlineMoneyHidden(pricedRequest, { role: "HOTELADMIN", hotelId: "h-2" }), false);
+  assert.equal(airlineMoneyHidden(pricedRequest, extHotel), false);
 });

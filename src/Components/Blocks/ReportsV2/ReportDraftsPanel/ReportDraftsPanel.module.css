@@ -146,3 +146,21 @@
 .deleteBtn:hover {
   opacity: 0.6;
 }
+
+/* «Отозвать» стоит рядом с «Открыть», но основное действие в строке — не оно:
+   те же габариты, нейтральный текст вместо синего. */
+.unsubmitBtn {
+  height: 36px;
+  padding: 0 18px;
+  border-radius: 9px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  color: #545873;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.unsubmitBtn:hover {
+  border-color: #545873;
+}

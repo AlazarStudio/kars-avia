@@ -173,6 +173,13 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
                       notify.passengerRequestId != null;
                     const isReserve =
                       notify.reserveId != null && !isPassengerRequest;
+                    // Отчёт отправлен авиакомпании на подтверждение. Тип
+                    // определяем по action: в списке (QUERY_NOTIFICATIONS) тип
+                    // плоский, без фрагментов, и draftId в него не приходит —
+                    // ведём в раздел отчётов, где черновик ждёт в панели
+                    // «На подтверждении».
+                    const isReportSubmitted =
+                      notify?.description?.action === "submit_airline_report_draft";
                     const passengerRequestLink = `/far/${notify.passengerRequestId}`;
                     const reserveLink = `/reserve/reservePlacement/${notify.reserveId}`;
                     return (
@@ -202,7 +209,14 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
                               />
                             )}
                           </div>
-                          {isHotelAdmin && isPassengerRequest ? (
+                          {isReportSubmitted ? (
+                            <p
+                              className={classes.toRequest}
+                              onClick={() => navigate("/reports")}
+                            >
+                              <ExportIcon />
+                            </p>
+                          ) : isHotelAdmin && isPassengerRequest ? (
                             <p
                               className={classes.toRequest}
                               onClick={() => navigate(passengerRequestLink)}

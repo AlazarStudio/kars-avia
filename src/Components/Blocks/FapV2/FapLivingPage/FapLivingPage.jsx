@@ -18,7 +18,12 @@ import {
   scopedHotelId,
 } from "../../../../utils/access";
 import { downloadLivingReport } from "../reports/buildReportSheets";
-import { visibleHotelIndexes, hotelReportSubmittedAt } from "../fapReportAccess";
+import {
+  visibleHotelIndexes,
+  hotelReportSubmittedAt,
+  hotelReportPricingApprovedAt,
+  airlineMoneyHidden,
+} from "../fapReportAccess";
 import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
 import { useToast } from "../../../../contexts/ToastContext";
 import FapActionButton from "../FapActionButton/FapActionButton";
@@ -79,6 +84,9 @@ export default function FapLivingPage({
   // они про магик-линк, а внутренней роли правку и так закрывает пустой accessMenu.
   const hotelScoped = isHotelScoped(user);
   const ownHotelId = scopedHotelId(user);
+  // Деньги в книге: гостинице их не показываем никогда, авиакомпании — пока
+  // диспетчер не согласовал цены (до согласования стоимости приходят ей пустыми).
+  const moneyHidden = hotelScoped || airlineMoneyHidden(request, user);
   // Скрытые правилом видимости услуги: их блок «Трансфер» не должен уезжать в
   // листы гостиницы. Диспетчеру и авиакомпании хук отдаёт пустой список.
   const { hiddenServiceKeys } = useHotelServiceVisibility(user);
@@ -278,7 +286,7 @@ export default function FapLivingPage({
                   try {
                     await downloadLivingReport(request, {
                       hotelIndexes: exportHotelIndexes,
-                      hideMoney: hotelScoped,
+                      hideMoney: moneyHidden,
                       hiddenServiceKeys,
                     });
                   }
@@ -297,7 +305,7 @@ export default function FapLivingPage({
             onDownloadReport={() =>
               downloadLivingReport(request, {
                 hotelIndexes: exportHotelIndexes,
-                hideMoney: hotelScoped,
+                hideMoney: moneyHidden,
                 hiddenServiceKeys,
               })
             }
@@ -470,6 +478,7 @@ export default function FapLivingPage({
               isExtHotel={isExtHotel}
               isCompleted={isCompleted}
               reportSubmittedAt={hotelReportSubmittedAt(request, origIdx)}
+              reportPricingApprovedAt={hotelReportPricingApprovedAt(request, origIdx)}
               showReportState={!isAirlineRole(user)}
               onOpen={() => navigate(`/far/${requestId}/service/living/hotel/${origIdx}`)}
               onCopyLink={copyLink}
@@ -549,7 +558,7 @@ export default function FapLivingPage({
 // ──────────────────────────────────────────────────────────────────
 function HotelCard({
   hotel, showLinks, canEdit, isExtHotel, isCompleted,
-  reportSubmittedAt, showReportState,
+  reportSubmittedAt, reportPricingApprovedAt, showReportState,
   onOpen, onCopyLink, onEdit, onRemove,
 }) {
   const cap = hotel.peopleCount || 0;
@@ -591,6 +600,15 @@ function HotelCard({
                 <span className={classes.reportBadgeSent}>Отчёт отправлен</span>
               ) : (
                 <span className={classes.reportBadgePending}>Отчёт формируется</span>
+              )
+            )}
+            {/* Согласование цен имеет смысл только у отправленного отчёта: до
+                отправки авиакомпания не видит и состава. */}
+            {showReportState && placed > 0 && reportSubmittedAt && (
+              reportPricingApprovedAt ? (
+                <span className={classes.reportBadgeSent}>цены согласованы</span>
+              ) : (
+                <span className={classes.reportBadgeMuted}>ждёт согласования</span>
               )
             )}
           </div>

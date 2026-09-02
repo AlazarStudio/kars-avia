@@ -4,6 +4,8 @@ import {
   GET_REPORT_DRAFT,
   UPDATE_REPORT_DRAFT,
   CONFIRM_REPORT_DRAFT,
+  SUBMIT_AIRLINE_REPORT_DRAFT,
+  UNSUBMIT_AIRLINE_REPORT_DRAFT,
   DELETE_REPORT_DRAFT,
   CREATE_AIRLINE_REPORT_DRAFT,
   CREATE_HOTEL_REPORT_DRAFT,
@@ -36,6 +38,8 @@ export default function useReportDraft(draftId) {
   const [editedUids, setEditedUids] = useState(() => new Set());
   const [saving, setSaving] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [unsubmitting, setUnsubmitting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [recreating, setRecreating] = useState(false);
 
@@ -158,6 +162,12 @@ export default function useReportDraft(draftId) {
 
   const [updateReportDraft] = useMutation(UPDATE_REPORT_DRAFT, { context: authContext });
   const [confirmReportDraft] = useMutation(CONFIRM_REPORT_DRAFT, { context: authContext });
+  const [submitAirlineReportDraft] = useMutation(SUBMIT_AIRLINE_REPORT_DRAFT, {
+    context: authContext,
+  });
+  const [unsubmitAirlineReportDraft] = useMutation(UNSUBMIT_AIRLINE_REPORT_DRAFT, {
+    context: authContext,
+  });
   const [createAirlineReportDraft] = useMutation(CREATE_AIRLINE_REPORT_DRAFT, {
     context: authContext,
   });
@@ -204,6 +214,38 @@ export default function useReportDraft(draftId) {
     },
     [rows, snapshot, save, draftId, confirmReportDraft]
   );
+
+  // Отправка авиакомпании: тот же порядок, что и у подтверждения — сначала
+  // сохранить. Бэк показывает АК строки из базы, а не то, что осталось в
+  // редакторе, поэтому несохранённая правка уехала бы мимо адресата.
+  //
+  // Мутация возвращает id/status/submittedAt того же ReportDraft — Apollo
+  // кладёт их в нормализованный кэш, и открытый редактор сам переезжает в
+  // read-only состояние SUBMITTED, без отдельного рефетча.
+  const submit = useCallback(async () => {
+    setSubmitting(true);
+    try {
+      if (!rowsEqual(rows, snapshot)) {
+        await save();
+      }
+      const { data: result } = await submitAirlineReportDraft({ variables: { id: draftId } });
+      return result?.submitAirlineReportDraft;
+    } finally {
+      setSubmitting(false);
+    }
+  }, [rows, snapshot, save, draftId, submitAirlineReportDraft]);
+
+  // Отзыв возвращает черновик в DRAFT — единственный способ снова его править
+  // после отправки. Сохранять нечего: в SUBMITTED редактор read-only.
+  const unsubmit = useCallback(async () => {
+    setUnsubmitting(true);
+    try {
+      const { data: result } = await unsubmitAirlineReportDraft({ variables: { id: draftId } });
+      return result?.unsubmitAirlineReportDraft;
+    } finally {
+      setUnsubmitting(false);
+    }
+  }, [draftId, unsubmitAirlineReportDraft]);
 
   // Пересоздание: сначала создаём новый черновик из исходного снимка
   // фильтра, и только при успехе удаляем старый. Обратный порядок оставил бы
@@ -259,6 +301,8 @@ export default function useReportDraft(draftId) {
     loading,
     saving,
     confirming,
+    submitting,
+    unsubmitting,
     deleting,
     recreating,
     dirty,
@@ -273,6 +317,8 @@ export default function useReportDraft(draftId) {
     fieldEdited,
     save,
     confirmAndExport,
+    submit,
+    unsubmit,
     recreate,
     removeDraft,
   };

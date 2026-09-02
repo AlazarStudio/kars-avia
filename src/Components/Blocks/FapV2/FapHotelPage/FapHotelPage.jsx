@@ -18,6 +18,7 @@ import {
   SAVE_PASSENGER_REQUEST_HOTEL_REPORT,
   SUBMIT_PASSENGER_REQUEST_HOTEL_REPORT,
   HIDE_PASSENGER_REQUEST_HOTEL_REPORT,
+  SET_PASSENGER_REQUEST_HOTEL_REPORT_PRICING_APPROVED,
   UPDATE_PASSENGER_REQUEST_HOTEL,
   GET_FAP_HOTEL_TARIFFS,
   GET_AIRLINE_TARIFS,
@@ -26,7 +27,12 @@ import {
 import { calculateCostDaysByDuration } from "../../../../utils/effectiveCostDays";
 import { getPersonDays } from "../fapPersonDays.js";
 import { tariffNameKey, findTariffByName } from "../fapTariffNames.js";
-import { hotelReportSubmittedAt, isHotelReportSubmitted } from "../fapReportAccess";
+import {
+  hotelReportSubmittedAt,
+  isHotelReportSubmitted,
+  hotelReportPricingApprovedAt,
+  isHotelReportPricingApproved,
+} from "../fapReportAccess";
 import { lunchboxCountOf, preserveMoneyFields } from "../fapReportMoney";
 import { splitRoomAccommodation } from "../fapRoomSplit.js";
 import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
@@ -422,6 +428,7 @@ export default function FapHotelPage({
 
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [approvingPrices, setApprovingPrices] = useState(false);
   const [capacityOpen, setCapacityOpen] = useState(false);
 
   // Refs хранят актуальное состояние для отложенного автосохранения —
@@ -508,6 +515,10 @@ export default function FapHotelPage({
   const [hideReportMutation] = useMutation(HIDE_PASSENGER_REQUEST_HOTEL_REPORT, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
+  const [setPricingApproved] = useMutation(
+    SET_PASSENGER_REQUEST_HOTEL_REPORT_PRICING_APPROVED,
+    { context: { headers: { Authorization: `Bearer ${token}` } } }
+  );
   const [updateHotel] = useMutation(UPDATE_PASSENGER_REQUEST_HOTEL, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
@@ -535,7 +546,13 @@ export default function FapHotelPage({
   const { hiddenServiceKeys } = useHotelServiceVisibility(user);
   const reportSubmittedAt = hotelReportSubmittedAt(request, hotelIndex);
   const reportSubmitted = isHotelReportSubmitted(request, hotelIndex);
+  const reportPricingApprovedAt = hotelReportPricingApprovedAt(request, hotelIndex);
+  const reportPricingApproved = isHotelReportPricingApproved(request, hotelIndex);
   const reportHidden = isAirline && !reportSubmitted;
+  // Промежуток между отправкой и согласованием цен: состав и сутки авиакомпания
+  // уже видит, а стоимости бэк отдаёт ей как null. Считать их на клиенте нельзя —
+  // прячем деньги тем же флагом, что и у гостиницы.
+  const airlinePricesPending = isAirline && reportSubmitted && !reportPricingApproved;
   const hasSavedReport = hasHotelReport(request, hotelIndex);
 
   const { data: hotelTariffData, loading: hotelTariffLoading } = useQuery(
@@ -2726,7 +2743,9 @@ export default function FapHotelPage({
       }
       await downloadHotelReport(request, hotelIndex, {
         rows: buildReportRows(),
-        hideMoney,
+        // До согласования цен строки авиакомпании приходят без стоимостей —
+        // книга с ними напечатала бы нули вместо сумм.
+        hideMoney: hideMoney || airlinePricesPending,
         hiddenServiceKeys,
       });
     } catch (e) {
@@ -2812,6 +2831,36 @@ export default function FapHotelPage({
       console.error(e);
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // Согласование ценообразования — отдельный от отправки шаг: до него
+  // авиакомпания видит состав без сумм. Спрашиваем только на включении:
+  // оно открывает деньги и шлёт письмо, снятие же ничего не разглашает.
+  const handlePricingApproved = async (next) => {
+    if (approvingPrices || next === reportPricingApproved) return;
+    if (next) {
+      const go = await confirm({
+        message: "Согласовать ценообразование? Авиакомпания увидит суммы и получит письмо",
+        confirmText: "Согласовать",
+        cancelText: "Отмена",
+      });
+      if (!go) return;
+    }
+    try {
+      setApprovingPrices(true);
+      await setPricingApproved({
+        variables: { ...reportMutationVars(), approved: next },
+      });
+      success(next ? "Цены согласованы" : "Согласование снято");
+      onRefetch?.();
+    } catch (e) {
+      // Текст бэка объясняет отказ по делу («Сначала отправьте отчёт на
+      // проверку») — своей формулировкой его не подменяем.
+      notifyError(e?.message || "Не удалось изменить согласование цен");
+      console.error(e);
+    } finally {
+      setApprovingPrices(false);
     }
   };
 
@@ -3182,6 +3231,16 @@ export default function FapHotelPage({
                   title="Авиакомпания видит этот отчёт. Любая правка снова его скроет"
                 >
                   Отчёт отправлен · {formatDateTime(reportSubmittedAt)}
+                </span>
+              )}
+              {/* Второе состояние отчёта — рядом с первым и по тем же правилам,
+                  что бейдж на карточке гостиницы в «Проживании». */}
+              {canEdit && reportPricingApproved && (
+                <span
+                  className={classes.headReportBadge}
+                  title="Авиакомпания видит суммы отчёта"
+                >
+                  Цены согласованы · {formatDateTime(reportPricingApprovedAt)}
                 </span>
               )}
             </div>
@@ -3857,7 +3916,7 @@ export default function FapHotelPage({
                     className={classes.ghostBtn}
                     onClick={handleHideReport}
                     disabled={submitting}
-                    title="Скрыть отчёт от авиакомпании"
+                    title="Скрыть отчёт от авиакомпании и снять согласование цен"
                   >
                     {submitting ? "Скрываем…" : "Скрыть отчёт"}
                   </button>
@@ -3878,6 +3937,36 @@ export default function FapHotelPage({
                     {submitting ? "Отправка…" : "Отправить на проверку"}
                   </button>
                 ))}
+              {/* Согласование цен: сегмент, а не кнопка, — это состояние с двумя
+                  положениями, и переключают его в обе стороны. Гостинице тумблера
+                  нет: деньги отчёта ей скрыты (hideMoney), согласовывать невидимое
+                  нечего. До отправки бэк отвечает отказом — там его тоже нет. */}
+              {canEdit && reportSubmitted && !hideMoney && (
+                <div
+                  className={`${classes.billingSeg} ${classes.approveSeg}`}
+                  role="group"
+                  aria-label="Согласование цен"
+                >
+                  <button
+                    type="button"
+                    className={`${classes.billingSegBtn} ${!reportPricingApproved ? classes.billingSegActive : ""}`}
+                    onClick={() => handlePricingApproved(false)}
+                    disabled={approvingPrices || !reportPricingApproved}
+                    title="Авиакомпания видит состав отчёта без сумм"
+                  >
+                    Цены не согласованы
+                  </button>
+                  <button
+                    type="button"
+                    className={`${classes.billingSegBtn} ${reportPricingApproved ? classes.billingSegActive : ""}`}
+                    onClick={() => handlePricingApproved(true)}
+                    disabled={approvingPrices || reportPricingApproved}
+                    title="Авиакомпания увидит суммы и получит письмо"
+                  >
+                    Цены согласованы
+                  </button>
+                </div>
+              )}
             </div>
 
             {reportHidden ? (
@@ -3892,13 +3981,31 @@ export default function FapHotelPage({
             ) : placed === 0 ? (
               <div className={classes.emptyRow}>Пассажиры ещё не добавлены</div>
             ) : effectiveReportMode === "view" ? (
-              <div className={classes.reportViewScroll}>
-                <FapReportView
-                  summary={reportSummary}
-                  groups={reportViewGroups}
-                  hideMoney={hideMoney}
-                />
-              </div>
+              <>
+                {/* Баннер над отчётом, а не вместо него: состав и сутки
+                    авиакомпания уже видит, ждут только суммы. */}
+                {airlinePricesPending && (
+                  <div className={classes.pricesPendingBanner}>
+                    <ScheduleIcon />
+                    <div>
+                      <div className={classes.reportPendingTitle}>
+                        Ценообразование согласовывается
+                      </div>
+                      <div className={classes.reportPendingText}>
+                        Состав и сутки уже здесь, суммы появятся после
+                        согласования диспетчером.
+                      </div>
+                    </div>
+                  </div>
+                )}
+                <div className={classes.reportViewScroll}>
+                  <FapReportView
+                    summary={reportSummary}
+                    groups={reportViewGroups}
+                    hideMoney={hideMoney || airlinePricesPending}
+                  />
+                </div>
+              </>
             ) : (
               <div className={classes.reportTableWrap}>
                 <div className={classes.reportGroups}>

@@ -15,7 +15,7 @@ import ReportDraftPreview from "./ReportDraftPreview";
 import ReportDraftSummary from "./ReportDraftSummary";
 import { DRAFT_FILTERS, pluralizeDays, pluralizeRows, rowMatchesSearch } from "./reportDraftEditorUtils";
 import { useToast } from "../../../../contexts/ToastContext";
-import { convertToDateNew, decodeJWT, GET_REPORT_PARTIAL_DAY_SETTINGS, getCookie } from "../../../../../graphQL_requests";
+import { convertToDate, convertToDateNew, decodeJWT, GET_REPORT_PARTIAL_DAY_SETTINGS, getCookie } from "../../../../../graphQL_requests";
 import { measureSavePayload, rowHasWarning } from "../reportDraftRows";
 import { isDraftStale, getDraftAgeDays } from "../reportDraftAge";
 import { resolveDraftPartialDayRules } from "../reportRules";
@@ -31,19 +31,19 @@ export default function ReportDraftEditor({
   onBack,
   onDraftReplaced,
   onConfirmed,
+  onSubmitted,
+  onUnsubmitted,
   airports,
   mode = "edit",
 }) {
-  // Выпущенный отчёт открывается тем же экраном, но править его нельзя —
-  // на бэке подтверждение необратимо (Only DRAFT reports can be confirmed).
-  const canEdit = mode === "edit";
-
   const {
     draft,
     rows,
     loading,
     saving,
     confirming,
+    submitting,
+    unsubmitting,
     deleting,
     recreating,
     dirty,
@@ -58,9 +58,28 @@ export default function ReportDraftEditor({
     fieldEdited,
     save,
     confirmAndExport,
+    submit,
+    unsubmit,
     recreate,
     removeDraft,
   } = useReportDraft(draftId);
+
+  // Экран один на четыре состояния, и правка — только у DRAFT. Выпущенный
+  // отчёт править нельзя (подтверждение на бэке необратимо), отправленный —
+  // тоже: бэк печатает АК строки из базы, и правка «под ней» разошлась бы с
+  // тем, что она уже видит. Вернуть правку можно только отзывом.
+  const canEdit = mode === "edit" && draft?.status === "DRAFT";
+  const isAirlineDraft = draft?.type === "AIRLINE";
+  const isSubmitted = draft?.status === "SUBMITTED";
+  // Отправка заменяет подтверждение у черновика авиакомпании: бэк принимает
+  // confirmReportDraft для AIRLINE только из SUBMITTED.
+  const canSubmit = mode === "edit" && isAirlineDraft && draft?.status === "DRAFT";
+  // Отзыв — только диспетчеру: у АК свой экран (mode="review") без правки.
+  const canUnsubmit = mode === "edit" && isAirlineDraft && isSubmitted;
+  // Выпуск: гостиничный черновик — сразу из DRAFT, черновик АК — только после
+  // отправки, и жмут его обе стороны (assertDraftAccess пускает и диспетчера).
+  const canConfirm =
+    mode !== "view" && (isSubmitted || (!isAirlineDraft && draft?.status === "DRAFT"));
 
   const { success, error: notifyError } = useToast();
 
@@ -101,7 +120,8 @@ export default function ReportDraftEditor({
   // Замер строк на момент неудачного сохранения: {bytes, limit} — если строки
   // не влезли в лимит тела запроса, и null во всех остальных случаях.
   const [oversize, setOversize] = useState(null);
-  // dialog: null | { type: "leave" | "delete" | "recreate" | "stale" } | { type: "deleteRow", row }
+  // dialog: null | { type: "leave" | "delete" | "recreate" } | { type: "deleteRow", row }
+  //       | { type: "stale", action: "confirm" | "submit" } — что продолжить, если всё равно
   const [dialog, setDialog] = useState(null);
   const closeDialog = () => setDialog(null);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -204,7 +224,8 @@ export default function ReportDraftEditor({
   };
 
   const handleBackClick = () => {
-    // В режиме просмотра правок не бывает — выходим сразу, без диалога.
+    // Там, где правка закрыта (просмотр, подтверждение у АК, отправленный
+    // черновик), несохранённым правкам взяться неоткуда — выходим без диалога.
     if (!canEdit) {
       onBack();
       return;
@@ -264,13 +285,43 @@ export default function ReportDraftEditor({
     }
   };
 
-  const handleConfirmClick = () => {
+  const runSubmit = async () => {
+    closeDialog();
+    try {
+      await submit();
+      success("Отчёт отправлен авиакомпании");
+      onSubmitted();
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Не удалось отправить черновик");
+    }
+  };
+
+  // Отзыв обратим и ничего не печатает — предупреждать не о чем, диалога нет.
+  const runUnsubmit = async () => {
+    try {
+      await unsubmit();
+      success("Отправка отозвана");
+      onUnsubmitted();
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Не удалось отозвать отправку");
+    }
+  };
+
+  // Предупреждение об устаревшем черновике одно на оба необратимых действия —
+  // и на выпуск, и на отправку: цифры расходятся с заявками одинаково, разной
+  // остаётся только развязка. В стейт кладём её имя, а не саму функцию:
+  // функции пересоздаются каждый рендер, и сохранённая ссылка устарела бы.
+  const handleStaleGuarded = (action) => {
     if (isDraftStale(draft?.createdAt)) {
-      setDialog({ type: "stale" });
+      setDialog({ type: "stale", action });
       return;
     }
-    runConfirmExport();
+    if (action === "submit") runSubmit();
+    else runConfirmExport();
   };
+
+  const handleConfirmClick = () => handleStaleGuarded("confirm");
+  const handleSubmitClick = () => handleStaleGuarded("submit");
 
   const handleRequestDeleteRow = (row) => setDialog({ type: "deleteRow", row });
   const handleConfirmDeleteRow = () => {
@@ -342,10 +393,26 @@ export default function ReportDraftEditor({
   // Сентинелы периода в UTC — рендер по UTC, иначе конец периода +1 день
   const period = `${convertToDateNew(draft.startDate)} – ${convertToDateNew(draft.endDate)}`;
   const companyName = draft.filterJson?.companyName || "—";
-  // Экран один на две роли, поэтому и подпись разная: черновик правят, а
-  // выпущенный отчёт только смотрят — называть его черновиком нельзя, он уже
-  // напечатан и в базе лежит со статусом CONFIRMED.
-  const title = `${canEdit ? "Черновик" : "Отчёт"} · ${companyName} · ${period}`;
+  // Подпись — по статусу, а не по режиму: отправленный черновик ещё черновик,
+  // но уже не правится, а выпущенный называть черновиком нельзя вовсе — он
+  // напечатан и лежит в базе как CONFIRMED.
+  const statusTitle =
+    draft.status === "CONFIRMED"
+      ? "Отчёт"
+      : draft.status === "SUBMITTED"
+        ? "На подтверждении"
+        : "Черновик";
+  const title = `${statusTitle} · ${companyName} · ${period}`;
+  // Бейдж — только диспетчеру: авиакомпании «у авиакомпании» читалось бы про
+  // кого-то другого, ей статус и так стоит в заголовке.
+  // Пустое значение отсеиваем до вызова: convertToDate(null) даёт не "", а
+  // «01.01.1970» — new Date(null) это эпоха, а не невалидная дата.
+  const submittedDate = draft.submittedAt ? convertToDate(draft.submittedAt) : "";
+  const submittedLabel =
+    isSubmitted && mode === "edit"
+      ? `У авиакомпании на подтверждении${submittedDate ? ` · ${submittedDate}` : ""}`
+      : null;
+  const staleSubmit = dialog?.type === "stale" && dialog.action === "submit";
   const stale = isDraftStale(draft.createdAt);
   const staleDays = Math.floor(getDraftAgeDays(draft.createdAt) ?? 0);
   const unsavedRowsCount = editedUids.size + deletedCount;
@@ -374,19 +441,26 @@ export default function ReportDraftEditor({
         title={title}
         logo={draft.airline ? draft.airline.images?.[0] ?? null : undefined}
         isStale={stale}
+        submittedLabel={submittedLabel}
         dirty={dirty}
         hasRows={rows.length > 0}
         recreating={recreating}
         deleting={deleting}
         saving={saving}
         confirming={confirming}
+        submitting={submitting}
+        unsubmitting={unsubmitting}
         canEdit={canEdit}
+        canSubmit={canSubmit}
+        canConfirm={canConfirm}
         downloadUrl={draft.savedReport?.url}
         onPreview={() => setPreviewOpen(true)}
         onRecreate={handleRecreateClick}
         onDelete={handleDeleteDraftClick}
         onSave={runSave}
         onConfirm={handleConfirmClick}
+        onSubmit={handleSubmitClick}
+        onUnsubmit={canUnsubmit ? runUnsubmit : undefined}
       />
 
       {saveFailed && (
@@ -512,13 +586,17 @@ export default function ReportDraftEditor({
         symbolBg="#FFF6E8"
         symbolColor="#D9891F"
         title={`Черновику ${staleDays} ${pluralizeDays(staleDays)}`}
-        message="Данные заявок за это время могли измениться, а черновик их не увидит. Выгруженный файл может разойтись с фактическим размещением."
+        message={`Данные заявок за это время могли измениться, а черновик их не увидит. ${
+          staleSubmit
+            ? "Авиакомпания увидит цифры, которые могут разойтись с фактическим размещением."
+            : "Выгруженный файл может разойтись с фактическим размещением."
+        }`}
         note="Надёжнее сначала нажать «Пересоздать» — правки при этом потеряются, зато цифры будут актуальными."
         cancelLabel="Отмена"
         onCancel={closeDialog}
-        primaryLabel="Всё равно выгрузить"
+        primaryLabel={staleSubmit ? "Всё равно отправить" : "Всё равно выгрузить"}
         primaryColor="#D97A22"
-        onPrimary={runConfirmExport}
+        onPrimary={staleSubmit ? runSubmit : runConfirmExport}
         tertiaryLabel="Пересоздать черновик"
         onTertiary={runRecreate}
       />
@@ -555,6 +633,10 @@ ReportDraftEditor.propTypes = {
   onBack: PropTypes.func.isRequired,
   onDraftReplaced: PropTypes.func.isRequired,
   onConfirmed: PropTypes.func.isRequired,
+  onSubmitted: PropTypes.func.isRequired,
+  onUnsubmitted: PropTypes.func.isRequired,
   airports: PropTypes.array,
-  mode: PropTypes.oneOf(["edit", "view"]),
+  // review — экран авиакомпании: читает отправленный ей черновик и
+  // подтверждает его, но ничего не правит.
+  mode: PropTypes.oneOf(["edit", "view", "review"]),
 };

@@ -1245,6 +1245,7 @@ export const GET_AIRLINE_USERS_POSITIONS = gql`
         analyticsUpload
         reportMenu
         reportCreate
+        reportDelete
         userMenu
         userCreate
         userUpdate
@@ -1313,6 +1314,7 @@ export const GET_DISPATCHER_POSITIONS = gql`
         analyticsUpload
         reportMenu
         reportCreate
+        reportDelete
         userMenu
         userCreate
         userUpdate
@@ -1390,6 +1392,7 @@ export const GET_USER_EFFECTIVE_ACCESS_MENU = gql`
         analyticsUpload
         reportMenu
         reportCreate
+        reportDelete
         userMenu
         userCreate
         userUpdate
@@ -1834,6 +1837,14 @@ export const NOTIFICATIONS_SUBSCRIPTION = gql`
           id
         }
         text
+      }
+      ... on ReportSubmittedNotification {
+        draftId
+        airlineId
+        airline {
+          id
+          name
+        }
       }
     }
   }
@@ -4141,6 +4152,8 @@ export const GET_PASSENGER_REQUEST = gql`
         id
         hotelIndex
         submittedAt
+        pricingApprovedAt
+        pricingApproved
         reportRows {
           fullName
           personId
@@ -4256,6 +4269,8 @@ export const GET_PASSENGER_REQUEST_REPORT = gql`
       hotelReports {
         hotelIndex
         submittedAt
+        pricingApprovedAt
+        pricingApproved
         reportRows {
           fullName
           personId
@@ -4329,6 +4344,8 @@ export const SAVE_PASSENGER_REQUEST_HOTEL_REPORT = gql`
       id
       hotelIndex
       submittedAt
+      pricingApprovedAt
+      pricingApproved
       reportRows {
         fullName
         personId
@@ -4368,6 +4385,8 @@ export const SUBMIT_PASSENGER_REQUEST_HOTEL_REPORT = gql`
       id
       hotelIndex
       submittedAt
+      pricingApprovedAt
+      pricingApproved
     }
   }
 `;
@@ -4381,6 +4400,28 @@ export const HIDE_PASSENGER_REQUEST_HOTEL_REPORT = gql`
       id
       hotelIndex
       submittedAt
+      pricingApprovedAt
+      pricingApproved
+    }
+  }
+`;
+
+export const SET_PASSENGER_REQUEST_HOTEL_REPORT_PRICING_APPROVED = gql`
+  mutation SetPassengerRequestHotelReportPricingApproved(
+    $requestId: ID!
+    $hotelIndex: Int!
+    $approved: Boolean!
+  ) {
+    setPassengerRequestHotelReportPricingApproved(
+      requestId: $requestId
+      hotelIndex: $hotelIndex
+      approved: $approved
+    ) {
+      id
+      hotelIndex
+      submittedAt
+      pricingApprovedAt
+      pricingApproved
     }
   }
 `;
@@ -5512,6 +5553,7 @@ export const GET_AIRLINES = gql`
             analyticsUpload
             reportMenu
             reportCreate
+            reportDelete
             userMenu
             userCreate
             userUpdate
@@ -5705,6 +5747,7 @@ export const GET_AIRLINE = gql`
           analyticsUpload
           reportMenu
           reportCreate
+          reportDelete
           userMenu
           userCreate
           userUpdate
@@ -6040,6 +6083,7 @@ export const GET_AIRLINE_COMPANY = gql`
           analyticsUpload
           reportMenu
           reportCreate
+          reportDelete
           userMenu
           userCreate
           userUpdate
@@ -6171,6 +6215,7 @@ export const CREATE_AIRLINE_DEPARTMERT = gql`
           analyticsUpload
           reportMenu
           reportCreate
+          reportDelete
           userMenu
           userCreate
           userUpdate
@@ -6331,6 +6376,7 @@ export const GET_AIRLINE_DEPARTMENT = gql`
         analyticsUpload
         reportMenu
         reportCreate
+        reportDelete
         userMenu
         userCreate
         userUpdate
@@ -6479,6 +6525,7 @@ export const GET_DISPATCHER_DEPARTMENTS = gql`
           analyticsUpload
           reportMenu
           reportCreate
+          reportDelete
           userMenu
           userCreate
           userUpdate
@@ -6718,6 +6765,7 @@ export const GET_AIRLINE_REPORT = gql`
         }
         startDate
         endDate
+        archived
       }
     }
   }
@@ -6749,6 +6797,7 @@ export const GET_HOTEL_REPORT = gql`
         }
         startDate
         endDate
+        archived
       }
     }
   }
@@ -6759,6 +6808,24 @@ export const DELETE_REPORT = gql`
   mutation DeleteReport($deleteReportId: ID!) {
     deleteReport(id: $deleteReportId) {
       id
+    }
+  }
+`;
+
+export const ARCHIVE_REPORT = gql`
+  mutation ArchiveReport($id: ID!) {
+    archiveReport(id: $id) {
+      id
+      archived
+    }
+  }
+`;
+
+export const RESTORE_REPORT = gql`
+  mutation RestoreReport($id: ID!) {
+    restoreReport(id: $id) {
+      id
+      archived
     }
   }
 `;
@@ -6827,6 +6894,7 @@ export const GET_REPORT_DRAFTS = gql`
       startDate
       endDate
       createdAt
+      submittedAt
       updatedAt
       airline {
         id
@@ -6859,6 +6927,7 @@ export const GET_REPORT_DRAFT = gql`
       startDate
       endDate
       createdAt
+      submittedAt
       updatedAt
       savedReport {
         id
@@ -7016,6 +7085,26 @@ export const CONFIRM_REPORT_DRAFT = gql`
       startDate
       endDate
       createdAt
+    }
+  }
+`;
+
+export const SUBMIT_AIRLINE_REPORT_DRAFT = gql`
+  mutation SubmitAirlineReportDraft($id: ID!) {
+    submitAirlineReportDraft(id: $id) {
+      id
+      status
+      submittedAt
+    }
+  }
+`;
+
+export const UNSUBMIT_AIRLINE_REPORT_DRAFT = gql`
+  mutation UnsubmitAirlineReportDraft($id: ID!) {
+    unsubmitAirlineReportDraft(id: $id) {
+      id
+      status
+      submittedAt
     }
   }
 `;

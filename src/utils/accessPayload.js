@@ -1,5 +1,5 @@
 // Конвертер внутреннего секционного состояния AccessPermissionsPanel
-// в плоский accessMenu (все 34 ключа) для бэка.
+// в плоский accessMenu (все 35 ключей) для бэка.
 export const buildAccessPayload = (s) => ({
   requestMenu: !!s?.squadron?.access,
   requestCreate: !!s?.squadron?.create,
@@ -36,6 +36,7 @@ export const buildAccessPayload = (s) => ({
 
   reportMenu: !!s?.reports?.access,
   reportCreate: !!s?.reports?.create,
+  reportDelete: !!s?.reports?.delete,
 
   organizationMenu: !!s?.organization?.access,
   organizationCreate: !!s?.organization?.create,
@@ -61,7 +62,9 @@ export const ALL_TRUE_ACCESS = {
   // Право выдавать доступы — осознанно выдаваемое, как и правка завершённой заявки.
   accessManage: false,
   analyticsMenu: true, analyticsUpload: true,
-  reportMenu: true, reportCreate: true,
+  // Удаление выпущенного отчёта необратимо — как reserveUpdateCompleted и
+  // accessManage выше, посевом новой должности не включается.
+  reportMenu: true, reportCreate: true, reportDelete: false,
   userMenu: true, userCreate: true, userUpdate: true,
   airlineMenu: true, airlineUpdate: true,
   contracts: true, contractCreate: true, contractUpdate: true,
