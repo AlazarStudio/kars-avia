@@ -132,12 +132,17 @@ function MenuDispetcher({ children, id, hotelID, accessMenu, ...props }) {
     skip: isExternalPassengerRequestUser || !!user?.hotelId,
   });
 
+  // ФАП: авиакомпании считаем только свои заявки — как фильтрует список FapV2.
   const {
     data: fapData,
     refetch: refetchFap,
   } = useQuery(GET_PASSENGER_REQUESTS_COUNT, {
     context: { headers: { Authorization: `Bearer ${token}` } },
-    variables: { take: 999999999, skip: 0, filter: { status: "CREATED" } },
+    variables: {
+      take: 999999999,
+      skip: 0,
+      filter: { status: "CREATED", airlineId: user?.airlineId || undefined },
+    },
     skip: isExternalPassengerRequestUser,
   });
 
