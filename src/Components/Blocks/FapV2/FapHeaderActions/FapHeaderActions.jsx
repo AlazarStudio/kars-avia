@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
 import FapRegistryButton from "../FapRegistryButton/FapRegistryButton";
+import FapManifestFiles from "../FapManifestFiles/FapManifestFiles";
 import AddRepresentativeService from "../../AddRepresentativeService/AddRepresentativeService";
 import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
 import EditIcon from "../../../../shared/icons/EditIcon";
@@ -13,9 +14,10 @@ import { visibleHotelIndexes } from "../fapReportAccess";
 import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
 import { useToast } from "../../../../contexts/ToastContext";
 
-// Единый набор действий шапки услуги / внутренней страницы ФАП: чип «Реестр»
-// рядом с меню «⋯», в меню — общие пункты (Редактировать, Скачать отчёт,
-// История) и, после разделителя, свои пункты конкретного места.
+// Единый набор действий шапки услуги / внутренней страницы ФАП: чипы
+// «Манифест» и «Реестр» рядом с меню «⋯», в меню — общие пункты
+// (Редактировать, Скачать отчёт, История) и, после разделителя, свои пункты
+// конкретного места.
 // Порядок общих пунктов одинаков везде — как в шапке заявки (FapDetail).
 //
 // Пропсы:
@@ -68,6 +70,12 @@ export default function FapHeaderActions({
 
   return (
     <>
+      {/* Манифест — весь список пассажиров с местами: гостинице и внешним
+          не показываем, они видят только своих. */}
+      {!external && !isHotelScoped(user) && request?.id && (
+        <FapManifestFiles files={request.files} />
+      )}
+
       {!external && request?.id && (
         <FapRegistryButton
           count={request.savedPassengers?.length ?? 0}
