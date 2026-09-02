@@ -15,6 +15,12 @@ import {
   useMaintenanceCountdown,
 } from "./useMaintenanceCountdown";
 
+// Готовые тексты плашки — клик по чипу подставляет текст в редактор
+const MESSAGE_PRESETS = [
+  "Скоро будут проведены технические работы.",
+  "Проводятся технические работы.",
+];
+
 // ISO (UTC) -> значение для <input type="datetime-local"> в локальном времени
 function isoToLocalInput(iso) {
   if (!iso) return "";
@@ -120,10 +126,25 @@ function MaintenanceBannerSettings() {
 
           <div className={classes.divider} />
 
-          <label className={classes.field}>
-            <span className={classes.label}>Текст плашки</span>
+          <div className={classes.field}>
+            <label htmlFor="maintenance-banner-message" className={classes.label}>
+              Текст плашки
+            </label>
+            <div className={classes.audPills} role="group" aria-label="Готовые тексты">
+              {MESSAGE_PRESETS.map((preset) => (
+                <button
+                  key={preset}
+                  type="button"
+                  className={`${classes.audPill} ${message.trim() === preset ? classes.audPillOn : ""}`}
+                  onClick={() => setMessage(preset)}
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
             <div className={classes.textareaShell}>
               <textarea
+                id="maintenance-banner-message"
                 className={classes.textareaField}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
@@ -137,7 +158,7 @@ function MaintenanceBannerSettings() {
                 <span className={classes.textareaCount}>{message.length} симв.</span>
               </div>
             </div>
-          </label>
+          </div>
 
           <label className={classes.field}>
             <span className={classes.label}>Окончание работ (необязательно)</span>
