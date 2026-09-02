@@ -33,7 +33,7 @@ import {
   hotelReportPricingApprovedAt,
   isHotelReportPricingApproved,
 } from "../fapReportAccess";
-import { lunchboxCountOf, preserveMoneyFields } from "../fapReportMoney";
+import { lunchboxCountOf, preserveMoneyFields, reportMoneyDiffers } from "../fapReportMoney";
 import { splitRoomAccommodation } from "../fapRoomSplit.js";
 import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
 import { hotelOverbookedBy, livingNameCollisions } from "../fapLivingMismatch";
@@ -464,6 +464,9 @@ export default function FapHotelPage({
   // Сохранённые серверные строки — источник денег при заморозке под hideMoney.
   // Тоже ref: buildReportRows читает состояние только через них.
   const savedRowsRef = useRef([]);
+  // Реконсиляция, для которой уже сверены деньги сохранённых строк с экраном
+  // (см. эффект догона ниже) — по одной сверке на загруженный снимок.
+  const moneySyncKeyRef = useRef(null);
   const [remoteVersion, setRemoteVersion] = useState(0);
   // persistReportRef нужен для cleanup'a на размонтирование — обычное замыкание
   // useEffect([], ...) видит persistReport времени монтирования, а мы хотим вызвать
@@ -1771,6 +1774,42 @@ export default function FapHotelPage({
 
   // Синк-ref для cleanup на unmount.
   useEffect(() => { persistReportRef.current = persistReport; }, [persistReport]);
+
+  // Догон сохранённых строк под живой расчёт. Экран считает строки на лету
+  // (buildReportRows), а в базу они попадают только при сохранении — простое
+  // открытие страницы отчёт не переписывает. Поэтому после смены правил расчёта
+  // (деление цены номера между жильцами) экран показывает новую раскладку, а
+  // выгрузка по заявке печатает СТАРУЮ: она берёт строки из базы. Сверяем деньги
+  // и, если разошлись, сохраняем — один раз на загруженный снимок.
+  //
+  // Условия те же и по тем же причинам, что у синхронизации номера комнаты ниже:
+  // canEdit — чтобы сохранение не ушло из вкладки авиакомпании; hasSavedReport —
+  // чтобы открытие страницы не создавало отчёт, которого ещё нет; !reportSubmitted —
+  // чтобы простое открытие не снимало отметку отправки (бэк гасит её при
+  // изменении строк). Плюс !hideMoney: у гостиницы деньги заморожены
+  // preserveMoneyFields, её buildReportRows отдаёт ровно сохранённое — сверять
+  // нечего, а сейв только погасил бы отметку.
+  useEffect(() => {
+    // Одна сверка на реконсиляцию: ключ собран из её собственного (заявка +
+    // гостиница) и remoteVersion, то есть меняется при смене заявки/гостиницы и
+    // при live-подхвате чужого сейва, но НЕ от нашего собственного сохранения.
+    // Иначе сейв → рефетч → сверка → сейв по кругу на любом устойчивом
+    // расхождении (например, у строки, которой нечем посчитать цену).
+    //
+    // Пустой ключ — реконсиляции ещё не было (тарифы не готовы); пустые people
+    // или personData — её результат ещё не доехал до refs, из которых читает
+    // buildReportRows. Ключ в этих случаях не расходуем: эффект вернётся сюда
+    // следующим рендером — personData реконсиляция всегда пересоздаёт, а refs
+    // синхронизируются эффектами, объявленными выше по файлу.
+    const syncKey =
+      reconciledKeyRef.current && `${reconciledKeyRef.current}:${remoteVersion}`;
+    if (!syncKey || moneySyncKeyRef.current === syncKey) return;
+    if (people.length === 0 || Object.keys(personDataRef.current).length === 0) return;
+    moneySyncKeyRef.current = syncKey;
+    if (!canEdit || !hasSavedReport || reportSubmitted || hideMoney) return;
+    if (reportMoneyDiffers(buildReportRows(), savedRowsRef.current)) scheduleSave();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [personData, tariffs]);
 
   // Запись отчёта для гостя, которого в personData ещё нет. Договорный тариф
   // назначается автоматически, поэтому его цены питания надо и перенести — иначе

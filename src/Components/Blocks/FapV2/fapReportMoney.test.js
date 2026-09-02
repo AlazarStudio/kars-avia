@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { preserveMoneyFields } from "./fapReportMoney.js";
+import { preserveMoneyFields, reportMoneyDiffers } from "./fapReportMoney.js";
 
 // Строка гостя из билдера: факт свежий, деньги посчитаны по ценам смотрящего
 // (у гостиницы — по её прайсу, поэтому в базу они уходить не должны).
@@ -210,4 +210,64 @@ test("однофамильцы без personId разбираются по по�
   assert.equal(rows[1].accommodationCost, 7000);
   assert.equal(rows[0].roomNumber, "201");
   assert.equal(rows[1].roomNumber, "202");
+});
+
+// ── reportMoneyDiffers: сохранённое устарело относительно экрана ──
+
+test("деньги совпадают — синхронизация не нужна", () => {
+  const rows = [savedPerson(), shadowRow()];
+  assert.equal(reportMoneyDiffers(rows, rows), false);
+});
+
+test("старая раскладка (вся цена на одном) против деления по жильцам", () => {
+  // В базе: носитель тарифа несёт всю цену номера, сосед — пустую строку.
+  const saved = [
+    savedPerson({ personId: "p1", pricePerDay: 5000, accommodationCost: 10000 }),
+    savedPerson({
+      personId: "p2",
+      fullName: "Петров П.П.",
+      pricePerDay: null,
+      accommodationCost: 0,
+    }),
+  ];
+  // На экране: цена номера поделена между жильцами.
+  const built = [
+    builtPerson({ personId: "p1", pricePerDay: 2500, accommodationCost: 5000 }),
+    builtPerson({
+      personId: "p2",
+      fullName: "Петров П.П.",
+      pricePerDay: 2500,
+      accommodationCost: 5000,
+    }),
+  ];
+  assert.equal(reportMoneyDiffers(built, saved), true);
+});
+
+test("вид размещения разошёлся — тоже расхождение", () => {
+  const saved = [savedPerson({ placementKind: 1 })];
+  const built = [savedPerson({ placementKind: 2 })];
+  assert.equal(reportMoneyDiffers(built, saved), true);
+});
+
+test("изменилось только количество приёмов — деньги проживания те же", () => {
+  const saved = [savedPerson({ breakfastCount: 1, foodCost: 500 })];
+  const built = [savedPerson({ breakfastCount: 3, foodCost: 1500, roomNumber: "777" })];
+  assert.equal(reportMoneyDiffers(built, saved), false);
+});
+
+test("новый гость на экране — в базе строки под него нет", () => {
+  const saved = [savedPerson()];
+  const built = [savedPerson(), savedPerson({ personId: "p2", fullName: "Петров П.П." })];
+  assert.equal(reportMoneyDiffers(built, saved), true);
+});
+
+test("сохранённого отчёта нет — синхронизировать нечего", () => {
+  assert.equal(reportMoneyDiffers([builtPerson()], []), false);
+  assert.equal(reportMoneyDiffers([builtPerson()], null), false);
+});
+
+test("теневые тарифные строки в сравнение не входят", () => {
+  const saved = [savedPerson(), shadowRow({ pricePerDay: 2500 })];
+  const built = [savedPerson(), shadowRow({ pricePerDay: 9999 })];
+  assert.equal(reportMoneyDiffers(built, saved), false);
 });

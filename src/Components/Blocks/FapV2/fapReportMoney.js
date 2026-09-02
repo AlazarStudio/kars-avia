@@ -104,3 +104,46 @@ export function preserveMoneyFields(builtRows, savedRows) {
   // питания, цена ланчбокса) — не пересобираем, отдаём как лежат.
   return [...personRows, ...saved.filter((r) => !isPersonRow(r)).map(withoutTypename)];
 }
+
+// Разошлись ли деньги сохранённого отчёта с тем, что показывает экран.
+//
+// Экран считает строки живьём (buildReportRows), а в базу они попадают только
+// при сохранении — простое открытие страницы отчёт не переписывает. Поэтому
+// после смены правил расчёта (например, деления цены номера между жильцами)
+// экран показывает новую раскладку, а заявочная выгрузка печатает СТАРУЮ: она
+// берёт строки из базы. Этот предикат — сигнал «сохранённое устарело».
+//
+// Сравниваем ровно три величины, из которых печатается проживание: цену за
+// сутки, стоимость и вид размещения. Питание, номер и счётчики сюда не входят —
+// их синхронизируют собственные пути (правка гостя, присвоение номера), и
+// лишний сейв на каждое их расхождение только гасил бы отметку отправки.
+//
+// Матчинг тот же, что в preserveMoneyFields: personId → ФИО, с consumed-сетом,
+// иначе однофамильцы сравнивались бы с одной и той же строкой.
+export function reportMoneyDiffers(builtRows, savedRows) {
+  const built = Array.isArray(builtRows) ? builtRows : [];
+  const saved = Array.isArray(savedRows) ? savedRows : [];
+  // Отчёта в базе нет — расходиться не с чем. Создание отчёта остаётся за
+  // штатными путями: синхронизация не должна заводить его сама.
+  if (saved.length === 0) return false;
+
+  const builtPeople = built.filter(isPersonRow);
+  const savedPeople = saved.filter(isPersonRow);
+  // Состав строк разъехался (гость добавлен или выселен) — деньги в базе точно
+  // не те, что на экране.
+  if (builtPeople.length !== savedPeople.length) return true;
+
+  const consumed = new Set();
+  return builtPeople.some((row) => {
+    const idx = findRowIndexForPerson(savedPeople, row, consumed);
+    // Гость есть на экране, а строки под него в базе нет.
+    if (idx < 0) return true;
+    consumed.add(idx);
+    const was = savedPeople[idx];
+    return (
+      toNum(row?.pricePerDay) !== toNum(was?.pricePerDay) ||
+      toNum(row?.accommodationCost) !== toNum(was?.accommodationCost) ||
+      (Number(row?.placementKind) || 0) !== (Number(was?.placementKind) || 0)
+    );
+  });
+}
