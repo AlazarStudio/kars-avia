@@ -8,6 +8,7 @@ import ReportDraftsPanel from "./ReportDraftsPanel/ReportDraftsPanel";
 import ReportDraftEditor from "./ReportDraftEditor/ReportDraftEditor";
 import ReportCreateSidebar from "./ReportCreateSidebar/ReportCreateSidebar";
 import ReportRulesSidebar from "./ReportRulesSidebar/ReportRulesSidebar";
+import ArchiveContractModal from "../ArchiveContractModal/ArchiveContractModal.jsx";
 import MUITextField from "../MUITextField/MUITextField";
 import SegmentedToggle from "../SegmentedToggle/SegmentedToggle";
 import Button from "../../Standart/Button/Button";
@@ -126,6 +127,7 @@ export default function ReportsV2({ user, accessMenu }) {
   const [draftMode, setDraftMode] = useState("edit");
   const [showCreate, setShowCreate] = useState(false);
   const [showRules, setShowRules] = useState(false);
+  const [archiveTarget, setArchiveTarget] = useState(null);
 
   const [airports, setAirports] = useState([]);
   const [positions, setPositions] = useState([]);
@@ -267,13 +269,15 @@ export default function ReportsV2({ user, accessMenu }) {
     }
   };
 
-  const handleArchiveReport = async (id) => {
-    const ok = await confirm({
-      message: "Убрать отчёт в архив?",
-      confirmText: "В архив",
-      cancelText: "Отмена",
-    });
-    if (!ok) return;
+  const handleArchiveReport = (id) => {
+    const report = reports.find((item) => item.id === id);
+    if (!report) return;
+    setArchiveTarget(report);
+  };
+
+  const confirmArchiveReport = async () => {
+    const id = archiveTarget.id;
+    setArchiveTarget(null);
     try {
       await archiveReport({ variables: { id } });
       success("Отчёт в архиве");
@@ -391,6 +395,10 @@ export default function ReportsV2({ user, accessMenu }) {
   const handleDraftUnsubmitted = () => {
     refetchDrafts();
   };
+
+  const archiveEntityLabel = archiveTarget
+    ? `Отчёт «${(isAirline ? archiveTarget?.airline?.name : archiveTarget?.hotel?.name) || "—"}» за ${convertToDateNew(archiveTarget.startDate)} – ${convertToDateNew(archiveTarget.endDate)}`
+    : "";
 
   return (
     <div className={classes.section}>
@@ -577,6 +585,16 @@ export default function ReportsV2({ user, accessMenu }) {
         onClose={() => setShowRules(false)}
         canEdit={canEditRules}
       />
+
+      {/* Тот же модал реестра договоров — чтобы оба архива выглядели одинаково */}
+      {archiveTarget && (
+        <ArchiveContractModal
+          title="Перенести отчёт в архив?"
+          entityLabel={archiveEntityLabel}
+          onCancel={() => setArchiveTarget(null)}
+          onConfirm={confirmArchiveReport}
+        />
+      )}
     </div>
   );
 }
