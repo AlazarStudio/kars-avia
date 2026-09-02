@@ -9,6 +9,7 @@ import ReportDraftEditor from "./ReportDraftEditor/ReportDraftEditor";
 import ReportCreateSidebar from "./ReportCreateSidebar/ReportCreateSidebar";
 import ReportRulesSidebar from "./ReportRulesSidebar/ReportRulesSidebar";
 import ArchiveContractModal from "../ArchiveContractModal/ArchiveContractModal.jsx";
+import DeleteComponent from "../DeleteComponent/DeleteComponent.jsx";
 import MUITextField from "../MUITextField/MUITextField";
 import SegmentedToggle from "../SegmentedToggle/SegmentedToggle";
 import Button from "../../Standart/Button/Button";
@@ -128,6 +129,7 @@ export default function ReportsV2({ user, accessMenu }) {
   const [showCreate, setShowCreate] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
 
   const [airports, setAirports] = useState([]);
   const [positions, setPositions] = useState([]);
@@ -251,22 +253,8 @@ export default function ReportsV2({ user, accessMenu }) {
     );
   });
 
-  const handleDeleteReport = async (id) => {
-    const ok = await confirm({
-      message: "Вы действительно хотите удалить отчёт?",
-      confirmText: "Удалить",
-      cancelText: "Отмена",
-    });
-    if (!ok) return;
-    try {
-      await deleteReport({ variables: { deleteReportId: id } });
-      success("Отчёт удалён");
-      // Подписка GET_REPORTS_SUBSCRIPTION про удаление молчит — без рефетча
-      // удалённая строка остаётся в архиве до перезагрузки страницы.
-      refetchReports();
-    } catch (e) {
-      notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при удалении отчёта");
-    }
+  const handleDeleteReport = (id) => {
+    setDeleteTarget({ type: "report", id });
   };
 
   const handleArchiveReport = (id) => {
@@ -306,19 +294,32 @@ export default function ReportsV2({ user, accessMenu }) {
     }
   };
 
-  const handleDeleteDraft = async (id) => {
-    const ok = await confirm({
-      message: "Удалить черновик? Это действие необратимо.",
-      confirmText: "Удалить",
-      cancelText: "Отмена",
-    });
-    if (!ok) return;
+  const handleDeleteDraft = (id) => {
+    setDeleteTarget({ type: "draft", id });
+  };
+
+  const confirmDelete = async () => {
+    const target = deleteTarget;
+    setDeleteTarget(null);
+    if (!target) return;
+    if (target.type === "draft") {
+      try {
+        await deleteReportDraft({ variables: { id: target.id } });
+        success("Черновик удалён");
+        refetchDrafts();
+      } catch (e) {
+        notifyError(e?.graphQLErrors?.[0]?.message || "Не удалось удалить черновик");
+      }
+      return;
+    }
     try {
-      await deleteReportDraft({ variables: { id } });
-      success("Черновик удалён");
-      refetchDrafts();
+      await deleteReport({ variables: { deleteReportId: target.id } });
+      success("Отчёт удалён");
+      // Подписка GET_REPORTS_SUBSCRIPTION про удаление молчит — без рефетча
+      // удалённая строка остаётся в архиве до перезагрузки страницы.
+      refetchReports();
     } catch (e) {
-      notifyError(e?.graphQLErrors?.[0]?.message || "Не удалось удалить черновик");
+      notifyError(e?.graphQLErrors?.[0]?.message || "Ошибка при удалении отчёта");
     }
   };
 
@@ -593,6 +594,19 @@ export default function ReportsV2({ user, accessMenu }) {
           entityLabel={archiveEntityLabel}
           onCancel={() => setArchiveTarget(null)}
           onConfirm={confirmArchiveReport}
+        />
+      )}
+
+      {/* Подтверждение удаления — общий по проекту DeleteComponent, как везде */}
+      {deleteTarget && (
+        <DeleteComponent
+          title={
+            deleteTarget.type === "draft"
+              ? "Вы действительно хотите удалить черновик?"
+              : "Вы действительно хотите удалить отчёт?"
+          }
+          remove={confirmDelete}
+          close={() => setDeleteTarget(null)}
         />
       )}
     </div>
