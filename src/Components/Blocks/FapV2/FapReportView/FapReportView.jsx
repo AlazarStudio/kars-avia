@@ -97,13 +97,16 @@ export default function FapReportView({ summary = {}, groups = [], hideMoney = f
                 {rub(s.meal)}
               </div>
             </div>
+            {/* Временно скрыто (02.09.2026): раскомментировать, чтобы вернуть карточку */}
+            {/*
             <div className={classes.miniCard}>
-              {/* Скидка больше не только возрастная — её можно выставить вручную любому гостю */}
+              Скидка больше не только возрастная — её можно выставить вручную любому гостю
               <div className={classes.capLabel}>Скидки</div>
               <div className={classes.miniValue} style={{ color: "#B45309" }}>
                 −{rub(s.discounts)}
               </div>
             </div>
+            */}
           </div>
         </div>
       )}
