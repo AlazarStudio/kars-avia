@@ -444,12 +444,16 @@ export default function ReportsV2({ user, accessMenu }) {
               onChange={setView}
             />
 
-            <MUITextField
-              label={"Поиск по отчётам"}
-              className={classes.mainSearch}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
+            {/* поиск фильтрует только список отчётов, черновики он не трогает —
+                на их вкладке поле только сбивает с толку */}
+            {view !== "drafts" && (
+              <MUITextField
+                label={"Поиск по отчётам"}
+                className={classes.mainSearch}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+              />
+            )}
 
             <div className={classes.spacer} />
 
