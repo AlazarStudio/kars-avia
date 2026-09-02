@@ -88,7 +88,7 @@ function clampPos(p, size) {
   };
 }
 
-export default function FapChat({ passengerRequestId, token, user, flightNumber, requestNumber }) {
+export default function FapChat({ passengerRequestId, token, user, flightNumber, requestNumber, openOnMount = false }) {
   const titleLabel = requestNumber || flightNumber || "";
   const subtitleLabel = flightNumber || "";
   const [mode, setMode] = useState(readMode);
@@ -207,6 +207,13 @@ export default function FapChat({ passengerRequestId, token, user, flightNumber,
     setMode(next);
     writeMode(next);
   };
+
+  // Deep-link из письма (?chatId=): свёрнутый чат раскрываем один раз при маунте.
+  // mode намеренно не в зависимостях — иначе чат нельзя было бы свернуть обратно.
+  useEffect(() => {
+    if (openOnMount && mode === "tab") setAndSave("mini");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [openOnMount]);
 
   const posStyle = { right: `${pos.right}px`, bottom: `${pos.bottom}px` };
 

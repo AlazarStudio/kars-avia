@@ -40,6 +40,8 @@ function Message({
     chatPadding,
     chatHeight,
     height,
+    preferredChatId = null,
+    onResolveSeparator,
     ...props
 }) {
     const messagesEndRef = useRef(null);
@@ -148,6 +150,11 @@ function Message({
     });
 
 
+    const resolvedPreferredRef = useRef(false);
+    useEffect(() => {
+        resolvedPreferredRef.current = false;
+    }, [preferredChatId]);
+
     useEffect(() => {
         if (!data?.chats) return;
 
@@ -162,6 +169,19 @@ function Message({
         }
 
         if ((data && data.chats) || (filteredPlacement && filteredPlacement.length !== 0)) {
+            // Deep-link из письма (?chatId=): если нужный чат живёт под другим separator,
+            // просим родителя переключить его — эффект перезапустится и выберет чат штатно.
+            if (preferredChatId && !resolvedPreferredRef.current) {
+                const hit = data.chats.find((chat) => chat.id === preferredChatId);
+                if (hit) {
+                    resolvedPreferredRef.current = true;
+                    if (hit.separator && hit.separator !== separator && onResolveSeparator) {
+                        onResolveSeparator(hit.separator);
+                        return;
+                    }
+                }
+            }
+
             let selectedChats = [];
             if (user?.airlineId) {
                 selectedChats = data?.chats.filter(chat => chat.separator === 'airline');
@@ -206,6 +226,8 @@ function Message({
         setHotelChats,
         setTitle,
         isFapMode,
+        preferredChatId,
+        onResolveSeparator,
     ]);
 
 // console.log(messages);

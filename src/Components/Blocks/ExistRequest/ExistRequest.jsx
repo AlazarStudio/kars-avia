@@ -66,6 +66,7 @@ function ExistRequest({
   openInEditMode,
   // openDeleteComponent,
   setRequestId,
+  openChatId = null,
 }) {
   const token = getCookie("token");
   const { showAlert, isDialogOpen } = useDialog();
@@ -190,6 +191,11 @@ function ExistRequest({
   const canUpdateActions =
     dispatcherCanUpdate ??
     (!user?.airlineId || hasAccessMenu(accessMenu, "requestUpdate"));
+
+  // Deep-link из письма открывает вкладку «Чат»; без права на чат карточка открывается как обычно.
+  useEffect(() => {
+    if (show && openChatId && canChatTab) setActiveTab("Чат");
+  }, [show, openChatId, canChatTab]);
 
   const [showDelete, setShowDelete] = useState(false);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -2230,6 +2236,8 @@ function ExistRequest({
                       token={token}
                       user={user}
                       separator={separator}
+                      preferredChatId={openChatId}
+                      onResolveSeparator={setSeparator}
                       chatHeight={
                         user?.airlineId || user?.hotelId
                           ? "calc(100vh - 202px)"

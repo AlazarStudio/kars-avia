@@ -56,6 +56,14 @@ function Estafeta({ user, accessMenu }) {
 
   const requestIdFromState = state?.requestId || null;
 
+  // Ссылки из писем бэка: /relay?id=<requestId>&chatId=<chatId> — открываем карточку и её чат
+  const deepLink = useMemo(() => {
+    const p = new URLSearchParams(search);
+    return { id: p.get("id"), chatId: p.get("chatId") };
+  }, [search]);
+
+  const requestIdToOpen = requestIdFromState || deepLink.id;
+
   const [searchQuery, setSearchQuery] = useState("");
   const debouncedSearch = useDebounce(searchQuery, 500);
   const [selectedAirline, setSelectedAirline] = useState(null);
@@ -67,11 +75,11 @@ function Estafeta({ user, accessMenu }) {
   });
 
   useEffect(() => {
-    if (requestIdFromState) {
-      setChooseRequestID(requestIdFromState);
+    if (requestIdToOpen) {
+      setChooseRequestID(requestIdToOpen);
       setShowRequestSidebar(true);
     }
-  }, [requestIdFromState]);
+  }, [requestIdToOpen]);
 
   // Инициализация текущей страницы на основе параметров URL или по умолчанию
   const pageNumberRelay = new URLSearchParams(location.search).get("page");
@@ -564,9 +572,11 @@ function Estafeta({ user, accessMenu }) {
 
   // Если открыли /relay без ?page — проставим ?page=1
   useEffect(() => {
-    if (pathname === "/relay" && !new URLSearchParams(search).has("page")) {
-      navigate("?page=1", { replace: true });
-    }
+    if (pathname !== "/relay") return;
+    const params = new URLSearchParams(search);
+    if (params.has("page")) return;
+    params.set("page", "1");
+    navigate(`?${params.toString()}`, { replace: true });
   }, [pathname, search, navigate]);
 
   // Обработчик для изменения текущей страницы при клике на элементы пагинации
@@ -680,7 +690,7 @@ function Estafeta({ user, accessMenu }) {
               setChooseObject={setChooseObject}
               setChooseRequestID={setChooseRequestID}
               pageInfo={pageInfo.skip}
-              scrollToId={requestIdFromState}
+              scrollToId={requestIdToOpen}
             />
           )}
 
@@ -737,10 +747,17 @@ function Estafeta({ user, accessMenu }) {
         onClose={() => {
           setOpenExistRequestInEditMode(false);
           toggleRequestSidebar();
+          if (deepLink.id || deepLink.chatId) {
+            const params = new URLSearchParams(search);
+            params.delete("id");
+            params.delete("chatId");
+            navigate(`?${params.toString()}`, { replace: true });
+          }
         }}
         setChooseRequestID={setChooseRequestID}
         setShowChooseHotel={setShowChooseHotel}
         chooseRequestID={chooseRequestID ? chooseRequestID : existRequestData}
+        openChatId={deepLink.chatId}
         // handleCancelRequest={handleCancelRequest}
         user={user}
         accessMenu={accessMenu}

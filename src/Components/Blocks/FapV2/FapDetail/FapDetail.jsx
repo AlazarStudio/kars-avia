@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
@@ -163,6 +163,9 @@ function getTileMetrics(serviceKey, request) {
 
 export default function FapDetail({ user, canEdit = true, canEditCompleted = false }) {
   const { requestId } = useParams();
+  // Письмо о новом сообщении ведёт на /far/:id?chatId=… — раскрываем плавающий чат.
+  const [searchParams] = useSearchParams();
+  const openChatFromUrl = Boolean(searchParams.get("chatId"));
   const navigate = useNavigate();
   const token = getCookie("token");
   const { success, error: notifyError } = useToast();
@@ -778,6 +781,7 @@ export default function FapDetail({ user, canEdit = true, canEditCompleted = fal
         user={user}
         flightNumber={request.flightNumber}
         requestNumber={request.requestNumber}
+        openOnMount={openChatFromUrl}
       />
 
       {canEdit && !editLocked && showAddService && (
