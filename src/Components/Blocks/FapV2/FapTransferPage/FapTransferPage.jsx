@@ -502,6 +502,9 @@ function DriverCard({
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
   const [vehicleTypeDraft, setVehicleTypeDraft] = useState(driver.vehicleType ?? "");
+  const [vehicleNumberDraft, setVehicleNumberDraft] = useState(
+    driver.vehicleNumber ?? ""
+  );
   const [reportCostDraft, setReportCostDraft] = useState(
     driver.reportCost != null ? String(driver.reportCost) : ""
   );
@@ -512,12 +515,16 @@ function DriverCard({
   // Пока инпут в фокусе — не перезатираем draft значением из кэша:
   // иначе refetch после автосейва может «откатить» только что напечатанное.
   const vtFocused = useRef(false);
+  const vnFocused = useRef(false);
   const rcFocused = useRef(false);
   const tcFocused = useRef(false);
 
   useEffect(() => {
     if (!vtFocused.current) setVehicleTypeDraft(driver.vehicleType ?? "");
   }, [driver.vehicleType]);
+  useEffect(() => {
+    if (!vnFocused.current) setVehicleNumberDraft(driver.vehicleNumber ?? "");
+  }, [driver.vehicleNumber]);
   useEffect(() => {
     if (!rcFocused.current) {
       setReportCostDraft(driver.reportCost != null ? String(driver.reportCost) : "");
@@ -537,11 +544,14 @@ function DriverCard({
   // ── Сохранение только по кнопке (оба поля одним запросом, с тостом) ──
   const vtNext = vehicleTypeDraft.trim();
   const vtPrev = (driver.vehicleType ?? "").trim();
+  const vnNext = vehicleNumberDraft.trim();
+  const vnPrev = (driver.vehicleNumber ?? "").trim();
   const rcNext = reportCostDraft === "" ? null : Number(reportCostDraft);
   const rcPrev = driver.reportCost ?? null;
   const tcNext = transportedDraft === "" ? null : Number(transportedDraft);
   const tcPrev = driver.transportedCount ?? null;
-  const isDirty = vtNext !== vtPrev || rcNext !== rcPrev || tcNext !== tcPrev;
+  const isDirty =
+    vtNext !== vtPrev || vnNext !== vnPrev || rcNext !== rcPrev || tcNext !== tcPrev;
 
   // Превышение вместимости не блокируем (легально — несколько ходок одной машиной),
   // но подсвечиваем как необычное значение.
@@ -551,6 +561,7 @@ function DriverCard({
   const handleSave = async () => {
     const patch = {};
     if (vtNext !== vtPrev) patch.vehicleType = vtNext === "" ? null : vtNext;
+    if (vnNext !== vnPrev) patch.vehicleNumber = vnNext === "" ? null : vnNext;
     if (rcNext !== rcPrev) {
       if (rcNext != null && !Number.isFinite(rcNext)) {
         notifyError("Некорректная сумма");
@@ -597,6 +608,12 @@ function DriverCard({
             {driver.phone && <span>{driver.phone}</span>}
             {driver.phone && driver.pickupAt && <span className={classes.metaDot} />}
             {driver.pickupAt && <span>подача {formatDateTime(driver.pickupAt)}</span>}
+            {driver.vehicleNumber && (
+              <>
+                <span className={classes.metaDot} />
+                <span>{driver.vehicleNumber}</span>
+              </>
+            )}
             <span className={classes.metaDot} />
             <span
               className={cap > 0 && fact > cap ? classes.metaOver : undefined}
@@ -711,6 +728,30 @@ function DriverCard({
                 : []),
               ...VEHICLE_TYPES.map((t) => ({ value: t, label: t })),
             ]}
+          />
+        </label>
+        <label className={classes.reportField}>
+          <span className={classes.reportFieldLabel}>Гос. номер</span>
+          <input
+            type="text"
+            maxLength={16}
+            value={vehicleNumberDraft}
+            onChange={(e) => setVehicleNumberDraft(e.target.value)}
+            onFocus={() => {
+              vnFocused.current = true;
+            }}
+            onBlur={() => {
+              vnFocused.current = false;
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                handleSave();
+              }
+            }}
+            placeholder="А123БВ 05"
+            disabled={!canEdit || isCancelled}
+            className={`${classes.reportInputNumber} ${classes.reportInputNarrow}`}
           />
         </label>
         <label className={classes.reportField}>

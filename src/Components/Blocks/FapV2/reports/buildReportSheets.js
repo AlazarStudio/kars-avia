@@ -157,9 +157,10 @@ function applyHotelColumnWidths(ws, cols) {
   cols.forEach((c, i) => { ws.getColumn(i + 1).width = c.width; });
 }
 
-// Применить ширины колонок раскладки TRANSFER_HEADERS —
-// общей для листов трансфера и доставки багажа.
-function applyTransferColumnWidths(ws) {
+// Применить ширины колонок раскладки водительских листов: базовая часть A–H
+// общая для трансфера и доставки багажа, дальше раскладки расходятся —
+// у трансфера есть колонка I «Гос. номер», у багажа её нет.
+function applyTransferColumnWidths(ws, { vehicleNumber = false } = {}) {
   ws.getColumn(1).width = 6;      // №
   ws.getColumn(2).width = 26;     // ФИО водителя
   ws.getColumn(3).width = 16;     // Телефон
@@ -168,8 +169,14 @@ function applyTransferColumnWidths(ws) {
   ws.getColumn(6).width = 13;     // Дата подачи
   ws.getColumn(7).width = 11;     // Время подачи
   ws.getColumn(8).width = 22;     // Тип ТС
-  ws.getColumn(9).width = 12;     // Перевезено
-  ws.getColumn(10).width = 12;    // Сумма
+  if (vehicleNumber) {
+    ws.getColumn(9).width = 14;   // Гос. номер
+    ws.getColumn(10).width = 12;  // Перевезено
+    ws.getColumn(11).width = 12;  // Сумма
+  } else {
+    ws.getColumn(9).width = 12;   // Перевезено
+    ws.getColumn(10).width = 12;  // Сумма
+  }
 }
 
 // Финальный проход по телу листа: шрифт, выравнивание, сетка, формат денег.
@@ -606,6 +613,13 @@ export function addHotelSheet(wb, opts) {
 
 const TRANSFER_HEADERS = [
   "№", "ФИО водителя", "Телефон", "Адрес отправления", "Адрес прибытия",
+  "Дата подачи", "Время подачи", "Тип ТС", "Гос. номер", "Перевезено", "Сумма",
+];
+
+// Багаж живёт на прежней раскладке из 10 колонок: его мини-таблица пассажиров
+// завязана на жёсткие индексы B/E/H/J, сдвиг колонок её ломает.
+const BAGGAGE_HEADERS = [
+  "№", "ФИО водителя", "Телефон", "Адрес отправления", "Адрес прибытия",
   "Дата подачи", "Время подачи", "Тип ТС", "Перевезено", "Сумма",
 ];
 
@@ -634,7 +648,7 @@ export function addTransferSheet(wb, opts) {
     cell.alignment = { wrapText: true, vertical: "middle", horizontal: "center" };
   });
   ws.getRow(4).height = 51;
-  applyTransferColumnWidths(ws);
+  applyTransferColumnWidths(ws, { vehicleNumber: true });
 
   const drivers = service?.drivers ?? [];
   drivers.forEach((d, i) => {
@@ -652,10 +666,11 @@ export function addTransferSheet(wb, opts) {
       row.getCell(7).numFmt = fmtTime;
     }
     row.getCell(8).value = d.vehicleType ?? "";
+    row.getCell(9).value = d.vehicleNumber ?? "";
     // Факт поездки: поимённый список ИЛИ «перевезено N» — что больше.
     const fact = driverFactCount(d);
-    if (fact > 0) row.getCell(9).value = fact;
-    if (d.reportCost != null) row.getCell(10).value = d.reportCost;
+    if (fact > 0) row.getCell(10).value = fact;
+    if (d.reportCost != null) row.getCell(11).value = d.reportCost;
   });
 
   const last = drivers.length > 0 ? 4 + drivers.length : 4;
@@ -665,17 +680,17 @@ export function addTransferSheet(wb, opts) {
   // Явное выравнивание: иначе проход центрирует с переносом в узкой колонке A.
   totalRow.getCell(1).alignment = { vertical: "middle", horizontal: "left" };
   if (drivers.length > 0) {
-    totalRow.getCell(9).value = { formula: `SUM(I5:I${last})` };
     totalRow.getCell(10).value = { formula: `SUM(J5:J${last})` };
+    totalRow.getCell(11).value = { formula: `SUM(K5:K${last})` };
   }
-  finishSheet(ws, { lastCol: 10, moneyCols: [10], leftCols: [2, 4, 5] });
+  finishSheet(ws, { lastCol: 11, moneyCols: [11], leftCols: [2, 4, 5] });
   return ws;
 }
 
 /**
  * Лист «Доставка багажа» — раскладка «водитель + его пассажиры».
  *
- * Колонки те же, что у трансфера (TRANSFER_HEADERS): поездка багажа — это тот же
+ * Колонки — BAGGAGE_HEADERS (прежняя раскладка трансфера): поездка багажа — это тот же
  * рейс водителя. Под строкой водителя идёт мини-таблица его пассажиров, которая
  * зеркалит экран поездки (ФИО / адрес доставки / номера бирок / сумма), поэтому у
  * пассажирских строк заполнены только B, E, H, J — остальные колонки водительские.
@@ -694,7 +709,7 @@ export function addBaggageSheet(wb, opts) {
     `Доставка багажа по рейсу № ${request?.flightNumber ?? ""}${cityPart(city)}`;
   ws.getCell("C3").font = HEADER_FONT;
 
-  TRANSFER_HEADERS.forEach((label, i) => {
+  BAGGAGE_HEADERS.forEach((label, i) => {
     const cell = ws.getCell(4, i + 1);
     cell.value = label;
     cell.font = HEADER_FONT;
