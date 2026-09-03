@@ -11,8 +11,9 @@ import FingerprintJS from "@fingerprintjs/fingerprintjs";
 
 import { SINGIN, SINGUP, TRANSFER_SING_IN } from "../../../../graphQL_requests.js";
 import { useMutation } from "@apollo/client";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { authService } from "../../../services/authService.js";
+import { resolveLoginTarget } from "../../../utils/loginRedirect.js";
 
 function Login() {
   const [signIn] = useMutation(SINGIN);
@@ -23,6 +24,7 @@ function Login() {
   const [fpHash, setFpHash] = useState("");
   const [error, setError] = useState(null);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const setFp = async () => {
@@ -85,8 +87,7 @@ function Login() {
       authService.setTokens({ token, refreshToken });
       authService.setFingerprint(fpHash || "");
 
-      navigate("/");
-      window.location.reload();
+      window.location.replace(resolveLoginTarget(location.search));
     } catch (err) {
       const msg = err?.graphQLErrors?.[0]?.message || "";
       if (msg.toLowerCase().includes("подтвердите email") || msg.toLowerCase().includes("email")) {

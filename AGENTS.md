@@ -149,6 +149,7 @@ src/
 - Токены (JWT) хранятся в **cookie**: `token` (24ч), `refreshToken` (30 дней), `auth_fingerprint`
 - Весь доступ к токенам — через `src/services/authService.js`
 - Apollo link для 401 — `src/services/authErrorLink.js` (редирект на `/login`)
+- Неавторизованный на «настоящем» адресе уходит на `/login?next=<путь>`, после входа `Login` ведёт на `next` (только относительный путь, не служебные/публичные страницы) — `src/utils/loginRedirect.js`, `LoginRedirect.jsx`
 - Декодирование JWT — `decodeJWT()` в `graphQL_requests.js`
 - Внешние пользователи (external login) имеют `subjectType: "EXTERNAL_USER"` и дополнительный контекст в cookie `externalUserContext`
 

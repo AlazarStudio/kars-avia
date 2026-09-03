@@ -27,7 +27,9 @@ import { server, path } from "../graphQL_requests";
 import { useAuth } from "./AuthContext";
 import { authService } from "./services/authService";
 import { createAuthErrorLink } from "./services/authErrorLink";
+import { buildLoginPath } from "./utils/loginRedirect";
 import Login from "./Components/Pages/Login/Login";
+import LoginRedirect from "./Components/Pages/Login/LoginRedirect";
 import Email from "./Components/Pages/Email/Email";
 import ResetPassword from "./Components/Pages/ResetPassword/ResetPassword";
 import VerifyEmail from "./Components/Pages/VerifyEmail/VerifyEmail";
@@ -88,7 +90,7 @@ function App() {
   });
 
   const errorLink = createAuthErrorLink({
-    onLogout: () => window.location.replace("/login"),
+    onLogout: () => window.location.replace(buildLoginPath(window.location)),
   });
 
   const uploadLink = createUploadLink({
@@ -229,7 +231,7 @@ function App() {
             <Route path="/reset-to-email" element={<Email />} />
             <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/verify-email" element={<VerifyEmail />} />
-            <Route path="*" element={<Login />} />
+            <Route path="*" element={<LoginRedirect />} />
           </>
         )}
       </Routes>
