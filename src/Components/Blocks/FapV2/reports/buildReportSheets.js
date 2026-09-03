@@ -12,7 +12,7 @@ const toNum = (v) => {
   return Number.isFinite(n) ? n : 0;
 };
 
-const safeFilename = (s) =>
+export const safeFilename = (s) =>
   String(s ?? "").replace(/[/\\?*[\]:]/g, "_").slice(0, 100);
 
 const prefixedSheetName = (name, prefix) =>

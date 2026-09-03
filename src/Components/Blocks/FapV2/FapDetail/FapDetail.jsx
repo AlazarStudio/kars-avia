@@ -722,7 +722,7 @@ export default function FapDetail({ user, canEdit = true, canEditCompleted = fal
             {/* Манифест — весь список пассажиров с местами: гостинице и внешним
                 не показываем, они видят только своих. */}
             {!isExternalUser(user) && !isHotelScoped(user) && (
-              <FapManifestFiles files={request.files} />
+              <FapManifestFiles request={request} />
             )}
             {!isExternalUser(user) && (
               <FapRegistryButton

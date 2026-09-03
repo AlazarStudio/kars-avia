@@ -39,7 +39,7 @@ import GroupCreateModal from "../GroupModal/GroupCreateModal";
 import PlacementBadge from "../PlacementBadge/PlacementBadge";
 import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
-import ManifestUploadField from "../ManifestUploadField/ManifestUploadField";
+import ManifestImportModal from "../ManifestImportModal/ManifestImportModal";
 import { manifestNameKey, isSameFlight } from "../../../../utils/parseManifestXlsx";
 import { buildManifestUpload } from "../fapManifestFiles";
 import { plural } from "../../../../utils/plural";
@@ -175,10 +175,10 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
   const [editForm, setEditForm] = useState(emptyForm);
   const [saving, setSaving] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState(null);
-  const [manifest, setManifest] = useState(null);
+  const [manifestOpen, setManifestOpen] = useState(false);
   const [selected, setSelected] = useState(() => new Set());
   const [groupModal, setGroupModal] = useState(null);
-  const [groupsOpen, setGroupsOpen] = useState(true);
+  const [tab, setTab] = useState("passengers");
   const [dismissedSuggestions, setDismissedSuggestions] = useState(() => new Set());
 
   const [addPerson] = useMutation(ADD_PASSENGER_REQUEST_SAVED_PERSON, ctx);
@@ -417,13 +417,13 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
     return { added, skipped: people.length - added };
   };
 
-  const handleManifestImport = async () => {
-    if (!manifest?.people?.length) return;
+  const handleManifestImport = async (parsed) => {
+    if (!parsed?.people?.length) return;
     const requestId = request.id;
     const requestFlight = request?.flightNumber;
-    if (!isSameFlight(manifest.flightNumber, requestFlight)) {
+    if (!isSameFlight(parsed.flightNumber, requestFlight)) {
       const ok = await confirm({
-        message: `Рейс в манифесте (${manifest.flightNumber}) не совпадает с рейсом заявки (${requestFlight}). Импортировать всё равно?`,
+        message: `Рейс в манифесте (${parsed.flightNumber}) не совпадает с рейсом заявки (${requestFlight}). Импортировать всё равно?`,
         confirmText: "Импортировать",
         cancelText: "Отмена",
       });
@@ -431,11 +431,11 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
     }
     try {
       setSaving(true);
-      const { added, skipped } = countManifestImport(manifest.people, savedPassengers);
+      const { added, skipped } = countManifestImport(parsed.people, savedPassengers);
       await addPeople({
         variables: {
           requestId,
-          people: manifest.people.map((p) => ({
+          people: parsed.people.map((p) => ({
             fullName: p.fullName,
             seat: p.seat,
             personCategory: p.personCategory,
@@ -451,15 +451,15 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
 
       // Реестр — главное, файл — приложение: своя обработка ошибки, чтобы
       // неудачная загрузка не выглядела провалом импорта.
-      if (manifest.file) {
+      if (parsed.file) {
         try {
           await addFiles({
             variables: {
               requestId,
               files: [
                 buildManifestUpload(
-                  manifest.file,
-                  manifest.flightNumber || requestFlight
+                  parsed.file,
+                  parsed.flightNumber || requestFlight
                 ),
               ],
             },
@@ -472,7 +472,7 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
         }
       }
 
-      setManifest(null);
+      setManifestOpen(false);
       onRefetch?.();
     } catch (err) {
       notifyError(err?.graphQLErrors?.[0]?.message || "Ошибка при импорте");
@@ -670,6 +670,10 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
         .map((k) => SERVICE_CONFIG[k]?.label)
         .filter(Boolean)
     : [];
+  // Экипаж может исчезнуть с заявки после refetch — на его табе тогда остаётся
+  // пустая страница без единой кнопки возврата, поэтому падаем на пассажиров.
+  const activeTab = tab === "crew" && !includesCrew ? "passengers" : tab;
+
   const deleteDescription = targetLabels.length
     ? `Размещён в: ${targetLabels.join(", ")}. Удалить из реестра? Из услуг человек не удаляется.`
     : "Удалить пассажира из реестра?";
@@ -711,47 +715,73 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
             </span>
           </div>
         </div>
+        {canEdit && includesPassengers && (
+          <button
+            type="button"
+            className={classes.headBtn}
+            onClick={() => setManifestOpen(true)}
+          >
+            Импорт манифеста
+          </button>
+        )}
       </div>
 
-      {/* Manifest import */}
-      {canEdit && includesPassengers && (
-        <div className={classes.manifestCard}>
-          <div className={classes.manifestHead}>Импорт манифеста</div>
-          <ManifestUploadField
-            parsed={manifest}
-            onParsed={setManifest}
-            onClear={() => setManifest(null)}
-            expectedFlightNumber={request?.flightNumber}
-          />
-          {manifest?.people?.length > 0 && (
-            <div className={classes.manifestConfirm}>
-              <button
-                type="button"
-                className={classes.quickAddBtn}
-                onClick={handleManifestImport}
-                disabled={saving}
-              >
-                Добавить {manifest.people.length} в реестр
-              </button>
-            </div>
+      {/* Tabs */}
+      <div className={classes.tabs}>
+        <button
+          type="button"
+          className={`${classes.tab} ${activeTab === "passengers" ? classes.tabActive : ""}`}
+          onClick={() => setTab("passengers")}
+        >
+          Пассажиры
+          <span className={classes.tabBadge}>{savedPassengers.length}</span>
+        </button>
+        <button
+          type="button"
+          className={`${classes.tab} ${activeTab === "groups" ? classes.tabActive : ""}`}
+          onClick={() => setTab("groups")}
+        >
+          Группы
+          <span className={classes.tabBadge}>{groups.length}</span>
+          {/* Подсказки «Похоже на группы» приходят после импорта манифеста —
+              янтарный бейдж не даёт им потеряться за неактивным табом. */}
+          {visibleSuggestions.length > 0 && (
+            <span className={`${classes.tabBadge} ${classes.tabBadgeWarn}`}>
+              {visibleSuggestions.length}{" "}
+              {plural(visibleSuggestions.length, [
+                "подсказка",
+                "подсказки",
+                "подсказок",
+              ])}
+            </span>
           )}
-        </div>
-      )}
+        </button>
+        {includesCrew && (
+          <button
+            type="button"
+            className={`${classes.tab} ${activeTab === "crew" ? classes.tabActive : ""}`}
+            onClick={() => setTab("crew")}
+          >
+            Экипаж
+            <span className={classes.tabBadge}>{crewMembers.length}</span>
+          </button>
+        )}
+      </div>
 
       {/* Groups */}
-      {(groups.length > 0 || visibleSuggestions.length > 0) && (
+      {activeTab === "groups" && (
         <div className={classes.listCard}>
-          <div
-            className={`${classes.listHead} ${classes.groupsHead}`}
-            onClick={() => setGroupsOpen((v) => !v)}
-          >
+          <div className={classes.listHead}>
             <span className={classes.listTitle}>Группы</span>
             <span className={classes.listCount}>{groups.length}</span>
-            <span className={classes.groupsToggle}>
-              {groupsOpen ? "Свернуть" : "Развернуть"}
-            </span>
           </div>
-          {groupsOpen && (
+          {groups.length === 0 && visibleSuggestions.length === 0 ? (
+            <div className={classes.listEmpty}>
+              {canEdit
+                ? "Групп пока нет — отметьте пассажиров в списке и нажмите «Связать в группу»"
+                : "Групп нет"}
+            </div>
+          ) : (
             <div className={classes.listBody}>
               {groups.map((g) => {
                 const members = membersByGroupId.get(g.groupId) || [];
@@ -888,183 +918,186 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
         </div>
       )}
 
-      {/* Поиск стоит вплотную над списком, а не в шапке: между шапкой и списком
-          лежат импорт манифеста и группы, и результаты поиска приходилось искать
-          прокруткой. */}
-      <div className={`${classes.searchWrap} ${classes.searchBar}`}>
-        <input
-          placeholder="Поиск по ФИО, телефону, месту"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
+      {/* Поиск стоит вплотную над списком, а не в шапке: липкая строка остаётся
+          видимой при скролле. На табе «Группы» искать нечего — там его нет. */}
+      {activeTab !== "groups" && (
+        <div className={`${classes.searchWrap} ${classes.searchBar}`}>
+          <input
+            placeholder="Поиск по ФИО, телефону, месту"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+      )}
 
       {/* Passengers */}
-      <div className={classes.listCard}>
-        <div className={classes.listHead}>
-          <span className={classes.listTitle}>Пассажиры</span>
-          <span className={classes.listCount}>{savedPassengers.length}</span>
-          {canEdit && !adding && (
-            <button type="button" className={classes.addBtn} onClick={startAdd}>
-              <PlusSvg /> Добавить пассажира
-            </button>
-          )}
-        </div>
-
-        {canEdit && selectedPersons.length >= 2 && (
-          <div className={classes.selectionBar}>
-            <span className={classes.selectionCount}>
-              Выбрано: {selectedPersons.length}
-            </span>
-            <button
-              type="button"
-              className={classes.bulkBtn}
-              onClick={openGroupCreate}
-              disabled={saving}
-            >
-              Связать в группу
-            </button>
-            <span className={classes.spacer} />
-            <button
-              type="button"
-              className={classes.clearSelBtn}
-              onClick={clearSelection}
-            >
-              Снять выбор
-            </button>
+      {activeTab === "passengers" && (
+        <div className={classes.listCard}>
+          <div className={classes.listHead}>
+            <span className={classes.listTitle}>Пассажиры</span>
+            <span className={classes.listCount}>{savedPassengers.length}</span>
+            {canEdit && !adding && (
+              <button type="button" className={classes.addBtn} onClick={startAdd}>
+                <PlusSvg /> Добавить пассажира
+              </button>
+            )}
           </div>
-        )}
 
-        {canEdit && adding && (
-          <PersonForm
-            values={form}
-            onChange={setForm}
-            onSubmit={handleAdd}
-            onCancel={() => {
-              setAdding(false);
-              setForm(emptyForm);
-            }}
-            saving={saving}
-            submitLabel="Добавить"
-          />
-        )}
-
-        <div className={classes.listBody}>
-          {filteredPassengers.length === 0 ? (
-            <div className={classes.listEmpty}>
-              {q
-                ? "Ничего не найдено"
-                : "Реестр пуст — добавьте пассажиров или импортируйте манифест"}
+          {canEdit && selectedPersons.length >= 2 && (
+            <div className={classes.selectionBar}>
+              <span className={classes.selectionCount}>
+                Выбрано: {selectedPersons.length}
+              </span>
+              <button
+                type="button"
+                className={classes.bulkBtn}
+                onClick={openGroupCreate}
+                disabled={saving}
+              >
+                Связать в группу
+              </button>
+              <span className={classes.spacer} />
+              <button
+                type="button"
+                className={classes.clearSelBtn}
+                onClick={clearSelection}
+              >
+                Снять выбор
+              </button>
             </div>
-          ) : (
-            filteredPassengers.map((p) => {
-              if (canEdit && editingId === p.personId) {
-                return (
-                  <PersonForm
-                    key={p.personId}
-                    values={editForm}
-                    onChange={setEditForm}
-                    onSubmit={(e) => {
-                      e.preventDefault();
-                      handleSaveEdit();
-                    }}
-                    onCancel={cancelEdit}
-                    saving={saving}
-                    submitLabel="Сохранить"
-                  />
+          )}
+
+          {canEdit && adding && (
+            <PersonForm
+              values={form}
+              onChange={setForm}
+              onSubmit={handleAdd}
+              onCancel={() => {
+                setAdding(false);
+                setForm(emptyForm);
+              }}
+              saving={saving}
+              submitLabel="Добавить"
+            />
+          )}
+
+          <div className={classes.listBody}>
+            {filteredPassengers.length === 0 ? (
+              <div className={classes.listEmpty}>
+                {q
+                  ? "Ничего не найдено"
+                  : "Реестр пуст — добавьте пассажиров или импортируйте манифест"}
+              </div>
+            ) : (
+              filteredPassengers.map((p) => {
+                if (canEdit && editingId === p.personId) {
+                  return (
+                    <PersonForm
+                      key={p.personId}
+                      values={editForm}
+                      onChange={setEditForm}
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleSaveEdit();
+                      }}
+                      onCancel={cancelEdit}
+                      saving={saving}
+                      submitLabel="Сохранить"
+                    />
+                  );
+                }
+                const keys = SERVICE_PRESENCE.filter((s) =>
+                  presence[p.personId]?.has(s.key)
                 );
-              }
-              const keys = SERVICE_PRESENCE.filter((s) =>
-                presence[p.personId]?.has(s.key)
-              );
-              const group = groupIndex.get(p.personId);
-              const groupWarn = group ? warnings.byGroupId.get(group.groupId) : null;
-              return (
-                <div key={p.personId} className={classes.row}>
-                  {canEdit && (
-                    <div className={classes.rowCheck}>
-                      <input
-                        type="checkbox"
-                        checked={selected.has(p.personId)}
-                        onChange={() => toggleSelected(p.personId)}
-                      />
+                const group = groupIndex.get(p.personId);
+                const groupWarn = group ? warnings.byGroupId.get(group.groupId) : null;
+                return (
+                  <div key={p.personId} className={classes.row}>
+                    {canEdit && (
+                      <div className={classes.rowCheck}>
+                        <input
+                          type="checkbox"
+                          checked={selected.has(p.personId)}
+                          onChange={() => toggleSelected(p.personId)}
+                        />
+                      </div>
+                    )}
+                    <span
+                      className={classes.avatar}
+                      style={{ background: PERSON_TYPE_CONFIG.PASSENGER.color }}
+                    >
+                      {initials(p.fullName)}
+                    </span>
+                    <div className={classes.rowMain}>
+                      <div className={classes.rowName}>
+                        <span className={classes.rowNameText}>{p.fullName || "—"}</span>
+                        <CategoryBadge category={normalizeCategory(p.personCategory)} />
+                        <PlacementBadge value={p.placementRequirement} />
+                        <GroupChip
+                          group={group}
+                          index={group ? groupOrdinals.get(group.groupId) ?? 0 : 0}
+                          members={group ? membersByGroupId.get(group.groupId) || [] : null}
+                          warn={!!groupWarn}
+                          warnText={groupWarningText(groupWarn)}
+                          onEdit={canEdit ? openGroupEdit : null}
+                        />
+                      </div>
+                      <div className={classes.rowMeta}>
+                        {[p.seat && `место ${p.seat}`, p.phone]
+                          .filter(Boolean)
+                          .join(" · ") || "—"}
+                      </div>
                     </div>
-                  )}
-                  <span
-                    className={classes.avatar}
-                    style={{ background: PERSON_TYPE_CONFIG.PASSENGER.color }}
-                  >
-                    {initials(p.fullName)}
-                  </span>
-                  <div className={classes.rowMain}>
-                    <div className={classes.rowName}>
-                      <span className={classes.rowNameText}>{p.fullName || "—"}</span>
-                      <CategoryBadge category={normalizeCategory(p.personCategory)} />
-                      <PlacementBadge value={p.placementRequirement} />
-                      <GroupChip
-                        group={group}
-                        index={group ? groupOrdinals.get(group.groupId) ?? 0 : 0}
-                        members={group ? membersByGroupId.get(group.groupId) || [] : null}
-                        warn={!!groupWarn}
-                        warnText={groupWarningText(groupWarn)}
-                        onEdit={canEdit ? openGroupEdit : null}
-                      />
+                    <div className={classes.services}>
+                      {keys.length === 0 ? (
+                        <span className={classes.servicesEmpty}>—</span>
+                      ) : (
+                        keys.map(({ key, Icon }) => {
+                          const cfg = SERVICE_CONFIG[key];
+                          return (
+                            <span
+                              key={key}
+                              className={classes.serviceChip}
+                              style={{ background: cfg.bg, color: cfg.color }}
+                              title={cfg.label}
+                            >
+                              <Icon size={15} strokeWidth={2} />
+                            </span>
+                          );
+                        })
+                      )}
                     </div>
-                    <div className={classes.rowMeta}>
-                      {[p.seat && `место ${p.seat}`, p.phone]
-                        .filter(Boolean)
-                        .join(" · ") || "—"}
-                    </div>
-                  </div>
-                  <div className={classes.services}>
-                    {keys.length === 0 ? (
-                      <span className={classes.servicesEmpty}>—</span>
-                    ) : (
-                      keys.map(({ key, Icon }) => {
-                        const cfg = SERVICE_CONFIG[key];
-                        return (
-                          <span
-                            key={key}
-                            className={classes.serviceChip}
-                            style={{ background: cfg.bg, color: cfg.color }}
-                            title={cfg.label}
-                          >
-                            <Icon size={15} strokeWidth={2} />
-                          </span>
-                        );
-                      })
+                    {canEdit && (
+                      <div className={classes.rowActions}>
+                        <button
+                          type="button"
+                          className={classes.iconBtn}
+                          onClick={() => openEdit(p)}
+                          title="Редактировать"
+                        >
+                          <EditPencilIcon color="#545873" cursor="pointer" />
+                        </button>
+                        <button
+                          type="button"
+                          className={`${classes.iconBtn} ${classes.iconBtnDanger}`}
+                          onClick={() => setDeleteTarget(p)}
+                          title="Удалить"
+                          disabled={saving}
+                        >
+                          <DeleteIcon cursor="pointer" />
+                        </button>
+                      </div>
                     )}
                   </div>
-                  {canEdit && (
-                    <div className={classes.rowActions}>
-                      <button
-                        type="button"
-                        className={classes.iconBtn}
-                        onClick={() => openEdit(p)}
-                        title="Редактировать"
-                      >
-                        <EditPencilIcon color="#545873" cursor="pointer" />
-                      </button>
-                      <button
-                        type="button"
-                        className={`${classes.iconBtn} ${classes.iconBtnDanger}`}
-                        onClick={() => setDeleteTarget(p)}
-                        title="Удалить"
-                        disabled={saving}
-                      >
-                        <DeleteIcon cursor="pointer" />
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })
-          )}
+                );
+              })
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Crew */}
-      {includesCrew && (
+      {activeTab === "crew" && (
         <div className={classes.listCard}>
           <div className={classes.listHead}>
             <span className={classes.listTitle}>Экипаж</span>
@@ -1129,6 +1162,14 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
         ordinal={modalOrdinal}
         saving={saving}
         onConfirm={handleGroupConfirm}
+      />
+
+      <ManifestImportModal
+        open={manifestOpen}
+        onClose={() => setManifestOpen(false)}
+        expectedFlightNumber={request?.flightNumber}
+        saving={saving}
+        onImport={handleManifestImport}
       />
     </div>
   );

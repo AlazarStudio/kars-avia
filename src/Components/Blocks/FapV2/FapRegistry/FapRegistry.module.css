@@ -113,27 +113,60 @@
   width: auto;
 }
 
-/* ── Manifest card ── */
-.manifestCard {
-  background: #fff;
-  border: 1px solid #E4E4EF;
-  border-radius: 12px;
-  padding: 14px 16px;
+/* ── Tabs ── */
+.tabs {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: 6px;
+  border-bottom: 1px solid #E4E4EF;
   flex-shrink: 0;
 }
 
-.manifestHead {
-  font-size: 13px;
+.tab {
+  padding: 10px 16px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 14px;
   font-weight: 700;
+  color: #545873;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.tab:hover {
   color: var(--text);
 }
 
-.manifestConfirm {
-  display: flex;
-  justify-content: flex-end;
+.tabActive {
+  color: var(--dark-blue);
+  border-bottom-color: var(--dark-blue);
+}
+
+.tabBadge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #F1F4FB;
+  color: #545873;
+}
+
+.tabActive .tabBadge {
+  background: #EAF1FB;
+  color: var(--dark-blue);
+}
+
+/* Бейдж подсказок остаётся янтарным и на активном табе. */
+.tabBadgeWarn,
+.tabActive .tabBadgeWarn {
+  background: #FEF3C7;
+  color: #B45309;
 }
 
 /* ── List card ── */
@@ -194,6 +227,30 @@
 }
 
 .addBtn:hover {
+  filter: brightness(0.92);
+}
+
+/* Кнопка в шапке реестра: .headText забирает свободное место, поэтому
+   margin-left: auto (как у .addBtn) не нужен. */
+.headBtn {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: 8px;
+  border: none;
+  background: var(--dark-blue);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  transition: filter 0.15s;
+}
+
+.headBtn:hover {
   filter: brightness(0.92);
 }
 
@@ -475,18 +532,6 @@
 }
 
 /* ── Groups card ── */
-.groupsHead {
-  cursor: pointer;
-  user-select: none;
-}
-
-.groupsToggle {
-  margin-left: auto;
-  font-size: 12px;
-  font-weight: 600;
-  color: #545873;
-}
-
 .groupRow {
   padding: 10px 16px;
   display: flex;

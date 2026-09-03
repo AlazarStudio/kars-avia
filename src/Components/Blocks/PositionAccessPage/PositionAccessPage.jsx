@@ -56,7 +56,9 @@ export default function PositionAccessPage({ user, accessMenu }) {
 
   const positions = useMemo(() => {
     const list = isAirline ? data?.getAirlineUserPositions : data?.getDispatcherPositions;
-    return list || [];
+    return (list || [])
+      .slice()
+      .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? "", "ru", { sensitivity: "base" }));
   }, [data, isAirline]);
 
   const [createPosition] = useMutation(CREATE_POSITION, { context: ctx });

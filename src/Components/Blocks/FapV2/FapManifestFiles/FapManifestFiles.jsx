@@ -3,6 +3,7 @@ import classes from "./FapManifestFiles.module.css";
 import FileDownIcon from "../../../../shared/icons/FileDownIcon";
 import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
 import { manifestFilesNewestFirst } from "../fapManifestFiles";
+import { downloadManifestXlsx, hasManifestRoster } from "../fapManifestBuild";
 import { formatDate, formatDateTime } from "../fapConstants";
 import { getMediaUrl } from "../../../../../graphQL_requests";
 
@@ -22,10 +23,11 @@ const openFile = (path) =>
   window.open(getMediaUrl(path), "_blank", "noopener");
 
 // Чип «Манифест» в шапке заявки: скачивание исходного файла манифеста.
-// files — `PassengerRequest.files` как есть; чужие вложения отсеиваются.
-export default function FapManifestFiles({ files }) {
-  const manifests = manifestFilesNewestFirst(files);
-  if (manifests.length === 0) return null;
+// Файл берётся из `request.files` как есть; чужие вложения отсеиваются. У старых
+// заявок файла нет вовсе (сохранять его начали 02.09) — тогда собираем ведомость
+// из реестра заявки.
+export default function FapManifestFiles({ request }) {
+  const manifests = manifestFilesNewestFirst(request?.files);
 
   const chip = ({ onClick, title, badge }) => (
     <button
@@ -41,6 +43,14 @@ export default function FapManifestFiles({ files }) {
       {badge > 1 && <span className={classes.badge}>{badge}</span>}
     </button>
   );
+
+  if (manifests.length === 0) {
+    if (!hasManifestRoster(request)) return null;
+    return chip({
+      onClick: () => downloadManifestXlsx(request),
+      title: "Собрать манифест из реестра — файл этой заявки не сохранялся",
+    });
+  }
 
   if (manifests.length === 1) {
     return chip({

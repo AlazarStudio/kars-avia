@@ -73,7 +73,7 @@ export default function FapHeaderActions({
       {/* Манифест — весь список пассажиров с местами: гостинице и внешним
           не показываем, они видят только своих. */}
       {!external && !isHotelScoped(user) && request?.id && (
-        <FapManifestFiles files={request.files} />
+        <FapManifestFiles request={request} />
       )}
 
       {!external && request?.id && (
