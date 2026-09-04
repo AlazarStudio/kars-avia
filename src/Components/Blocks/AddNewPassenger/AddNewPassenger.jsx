@@ -224,6 +224,7 @@ function AddNewPassenger({
 
       <div className={classes.requestMiddle}>
         <div className={classes.requestData}>
+          <span className={classes.hint}>* — обязательные поля</span>
           {error && (
             <>
               <div className={classes.warningMessage}>
@@ -231,7 +232,9 @@ function AddNewPassenger({
               </div>
             </>
           )}
-          {user.role != "HOTELADMIN" && <label>Город</label>}
+          {user.role != "HOTELADMIN" && (
+            <label className={classes.required}>Город</label>
+          )}
           {/* <select
             hidden={user.role == "HOTELADMIN" && true}
             name="city"
@@ -262,7 +265,9 @@ function AddNewPassenger({
           )}
           {formData.city && (
             <>
-              {user.role != "HOTELADMIN" && <label>Гостиница</label>}
+              {user.role != "HOTELADMIN" && (
+                <label className={classes.required}>Гостиница</label>
+              )}
               {/* <select
                 hidden={user.role == "HOTELADMIN" && true}
                 name="hotel"
@@ -331,7 +336,7 @@ function AddNewPassenger({
             </>
           )}
 
-          <label>Количество пассажиров</label>
+          <label className={classes.required}>Количество пассажиров</label>
           <input
             type="number"
             name="passengers"

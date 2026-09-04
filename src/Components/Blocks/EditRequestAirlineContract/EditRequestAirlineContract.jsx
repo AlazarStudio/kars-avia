@@ -685,6 +685,9 @@ function EditRequestAirlineContract({
                 }
               >
                 <div className={classes.requestData}>
+                  {isEditing && (
+                    <div className={classes.hint}>* — обязательные поля</div>
+                  )}
                   {/* Договор: основные поля */}
                   <div
                     className={
@@ -695,7 +698,7 @@ function EditRequestAirlineContract({
                   >
                     {isEditing ? (
                       <>
-                        <label>№ Договора</label>
+                        <label className={classes.required}>№ Договора</label>
                         <input
                           type="text"
                           name="contractNumber"
@@ -725,7 +728,7 @@ function EditRequestAirlineContract({
                   >
                     {isEditing ? (
                       <>
-                        <label>Дата заключения</label>
+                        <label className={classes.required}>Дата заключения</label>
                         <input
                           type="date"
                           name="date"
@@ -856,7 +859,7 @@ function EditRequestAirlineContract({
                   >
                     {isEditing ? (
                       <>
-                        <label>ГК КАРС</label>
+                        <label className={classes.required}>ГК КАРС</label>
                         <MUIAutocomplete
                           dropdownWidth={"59%"}
                           label={"Введите компанию"}
@@ -901,7 +904,7 @@ function EditRequestAirlineContract({
                   >
                     {isEditing ? (
                       <>
-                        <label>Авиакомпания</label>
+                        <label className={classes.required}>Авиакомпания</label>
                         <MUIAutocomplete
                           dropdownWidth={"59%"}
                           label={"Выберите авиакомпанию"}
@@ -977,7 +980,7 @@ function EditRequestAirlineContract({
                   >
                     {isEditing ? (
                       <>
-                        <label>Предмет договора</label>
+                        <label className={classes.required}>Предмет договора</label>
                         <MUIAutocomplete
                           dropdownWidth={"59%"}
                           label={"Выберите предмет договора"}

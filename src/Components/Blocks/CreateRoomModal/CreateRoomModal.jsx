@@ -8,6 +8,7 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { getCookie, UPDATE_HOTEL } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import { ROOM_FUND_CATEGORIES as categories } from "../../../utils/roomCategories";
+import classes from "./CreateRoomModal.module.css";
 
 const bedsCategories = [
   { value: 1.0, label: "Одна кровать" },
@@ -128,7 +129,7 @@ const CreateRoomModal = ({ open, onClose, hotelId, setNewRoom }) => {
             }}
           />
 
-          <label>Название номера</label>
+          <label className={classes.required}>Название номера</label>
           <input
             type="text"
             name="nomerName"
@@ -137,7 +138,7 @@ const CreateRoomModal = ({ open, onClose, hotelId, setNewRoom }) => {
             placeholder="Введите название номера"
           />
 
-          <label>Категория</label>
+          <label className={classes.required}>Категория</label>
           <MUIAutocomplete
             listboxHeight={"120px"}
             dropdownWidth="100%"

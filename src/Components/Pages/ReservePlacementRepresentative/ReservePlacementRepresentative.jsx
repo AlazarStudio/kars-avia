@@ -808,6 +808,7 @@ function ReservePlacementRepresentative({ children, user, ...props }) {
                 multiline
                 minRows={3}
                 label="Причина"
+                required
                 value={earlyCompleteReason}
                 onChange={(e) => setEarlyCompleteReason(e.target.value)}
                 fullWidth

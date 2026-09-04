@@ -28,6 +28,9 @@ function ExistRequestEditForm({
 
   return (
     <>
+      {isEditing && (
+        <div className={classes.hint}>* — обязательные поля</div>
+      )}
       <div className={classes.requestDataTitle}>Информация о заявке</div>
       <div className={classes.requestDataInfo}>
         <div className={classes.requestDataInfo_title}>Номер заявки</div>
@@ -201,7 +204,7 @@ function ExistRequestEditForm({
         </>
       )}
       <div className={classes.requestDataInfo}>
-        <div className={classes.requestDataInfo_title}>Заезд</div>
+        <div className={`${classes.requestDataInfo_title} ${isEditing && formDataExtend && onExtendChange ? classes.required : ""}`}>Заезд</div>
         {isEditing && formDataExtend && onExtendChange ? (
           <div className={classes.reis_info} style={{ width: "60%" }}>
             <input
@@ -305,7 +308,7 @@ function ExistRequestEditForm({
         )}
       </div>
       <div className={classes.requestDataInfo}>
-        <div className={classes.requestDataInfo_title}>Выезд</div>
+        <div className={`${classes.requestDataInfo_title} ${isEditing && formDataExtend && onExtendChange ? classes.required : ""}`}>Выезд</div>
         {isEditing && formDataExtend && onExtendChange ? (
           <div className={classes.reis_info} style={{ width: "60%" }}>
             <input

@@ -363,6 +363,9 @@ function ExistRequestDispatcherCompany({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
+              {isEditing && (
+                <span className={classes.hint}>* — обязательные поля</span>
+              )}
               <div className={classes.requestDataInfo_img}>
                 <div className={classes.requestDataInfo_img_imgBlock}>
                   <img
@@ -376,7 +379,7 @@ function ExistRequestDispatcherCompany({
                   />
                 </div>
               </div>
-              <label>ФИО</label>
+              <label className={isEditing ? classes.required : undefined}>ФИО</label>
               <input
                 type="text"
                 name="name"
@@ -387,7 +390,7 @@ function ExistRequestDispatcherCompany({
                 disabled={!isEditing}
               />
 
-              <label>Почта</label>
+              <label className={isEditing ? classes.required : undefined}>Почта</label>
               <input
                 type="email"
                 name="email"
@@ -411,7 +414,7 @@ function ExistRequestDispatcherCompany({
                 disabled={!isEditing}
               />
 
-              <label>Роль</label>
+              <label className={isEditing ? classes.required : undefined}>Роль</label>
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите роль"}
@@ -452,7 +455,7 @@ function ExistRequestDispatcherCompany({
               />
 
               <div className={classes.fieldHeader}>
-                <label>Должность</label>
+                <label className={isEditing ? classes.required : undefined}>Должность</label>
                 {isEditing && (
                   <div
                     className={classes.addPosition}
@@ -497,7 +500,7 @@ function ExistRequestDispatcherCompany({
                 </div>
               )}
 
-              <label>Логин</label>
+              <label className={isEditing ? classes.required : undefined}>Логин</label>
               <input
                 type="text"
                 name="login"

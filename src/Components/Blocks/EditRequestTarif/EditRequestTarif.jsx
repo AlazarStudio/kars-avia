@@ -370,6 +370,7 @@ function EditRequestTarif({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
+              <span className={classes.hint}>* — обязательные поля</span>
               <label>Название категории</label>
               <input
                 type="text"
@@ -378,7 +379,7 @@ function EditRequestTarif({
                 onChange={handleChange}
                 disabled
               />
-              <label>Цена категории</label>
+              <label className={classes.required}>Цена категории</label>
               <input
                 type="text"
                 name="price"

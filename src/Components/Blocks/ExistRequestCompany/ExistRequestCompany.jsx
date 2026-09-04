@@ -401,6 +401,9 @@ function ExistRequestCompany({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
+              {isEditing && (
+                <div className={classes.hint}>* — обязательные поля</div>
+              )}
               <div className={classes.requestDataInfo_img}>
                 <div className={classes.requestDataInfo_img_imgBlock}>
                   <img
@@ -416,7 +419,7 @@ function ExistRequestCompany({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>ФИО</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>ФИО</div>
                 {isEditing ? (
                   <input
                     type="text"
@@ -433,7 +436,7 @@ function ExistRequestCompany({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>Почта</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Почта</div>
                 {isEditing ? (
                   <input
                     type="email"
@@ -500,7 +503,7 @@ function ExistRequestCompany({
               {isDispatcherModerator(user) ? null : (
                 <>
                   <div className={classes.requestDataInfo}>
-                    <div className={classes.requestDataInfo_title}>Роль</div>
+                    <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Роль</div>
                     {isEditing ? (
                       <div className={classes.dropdown}>
                         <MUIAutocomplete
@@ -589,7 +592,7 @@ function ExistRequestCompany({
                 </div>
               )}
               <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>Логин</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Логин</div>
                 {isEditing ? (
                   <input
                     type="text"

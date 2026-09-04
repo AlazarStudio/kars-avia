@@ -140,6 +140,11 @@
     font-weight: 600;
 }
 
+.label.required::after {
+    content: " *";
+    color: #e53935;
+}
+
 .input {
     width: 100%;
     height: 42px;

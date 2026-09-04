@@ -176,7 +176,7 @@ function AmendModal({ r, onClose, onSuccess }) {
           {/* Dates */}
           <div className={classes.gridForm2} style={{ marginBottom: 16 }}>
             <div className={classes.fieldGroup}>
-              <label className={classes.fieldLabel}>Заезд</label>
+              <label className={classes.fieldLabel}>Заезд<span className={classes.required}>*</span></label>
               <input
                 type="date"
                 value={form.arrival}
@@ -185,7 +185,7 @@ function AmendModal({ r, onClose, onSuccess }) {
               />
             </div>
             <div className={classes.fieldGroup}>
-              <label className={classes.fieldLabel}>Выезд</label>
+              <label className={classes.fieldLabel}>Выезд<span className={classes.required}>*</span></label>
               <input
                 type="date"
                 value={form.departure}

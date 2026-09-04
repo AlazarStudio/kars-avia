@@ -259,7 +259,8 @@ function CreateRequestTransferCompany({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>ФИО</label>
+              <span className={classes.hint}>* — обязательные поля</span>
+              <label className={classes.required}>ФИО</label>
               <input
                 type="text"
                 name="name"
@@ -269,7 +270,7 @@ function CreateRequestTransferCompany({
                 autoComplete="new-password"
               />
 
-              <label>Почта</label>
+              <label className={classes.required}>Почта</label>
               <input
                 type="email"
                 name="email"
@@ -279,7 +280,7 @@ function CreateRequestTransferCompany({
                 autoComplete="new-password"
               />
 
-              <label>Роль</label>
+              <label className={classes.required}>Роль</label>
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите роль"}
@@ -299,7 +300,7 @@ function CreateRequestTransferCompany({
                 }}
               />
 
-              <label>Должность</label>
+              <label className={classes.required}>Должность</label>
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите должность"}
@@ -314,7 +315,7 @@ function CreateRequestTransferCompany({
                 }}
               />
 
-              <label>Логин</label>
+              <label className={classes.required}>Логин</label>
               <input
                 type="text"
                 name="login"
@@ -324,7 +325,7 @@ function CreateRequestTransferCompany({
                 autoComplete="new-password"
               />
 
-              <label>Пароль</label>
+              <label className={classes.required}>Пароль</label>
               <input
                 type="password"
                 name="password"

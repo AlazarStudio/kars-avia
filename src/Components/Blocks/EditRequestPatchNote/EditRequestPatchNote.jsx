@@ -162,6 +162,9 @@ function EditRequestPatchNote({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
+              {isEditing && (
+                <span className={classes.hint}>* — обязательные поля</span>
+              )}
               {canEdit && isEditing && (
                 <div className={classes.formHint}>
                   После сохранения изменения сразу появятся в ленте Patch Notes.
@@ -171,7 +174,7 @@ function EditRequestPatchNote({
               {isEditing ? (
                 <>
                   <div className={classes.fieldGroup}>
-                    <label>Название</label>
+                    <label className={classes.required}>Название</label>
                     <input
                       type="text"
                       name="name"
@@ -183,7 +186,7 @@ function EditRequestPatchNote({
                   </div>
 
                   <div className={classes.fieldGroup}>
-                    <label>Дата</label>
+                    <label className={classes.required}>Дата</label>
                     <input
                       type="date"
                       name="date"
@@ -195,7 +198,7 @@ function EditRequestPatchNote({
                   </div>
 
                   <div className={classes.fieldGroup}>
-                    <label>Описание</label>
+                    <label className={classes.required}>Описание</label>
                     <TextEditor
                       anotherDescription={formData?.description || ""}
                       isEditing={isEditing}

@@ -185,7 +185,7 @@ export default function CorporatesTab() {
         </p>
 
         <div className={classes.fieldGroup} style={{ marginBottom: 12 }}>
-          <label className={classes.fieldLabel}>Юрлицо *</label>
+          <label className={classes.fieldLabel}>Юрлицо<span className={classes.required}>*</span></label>
           <select
             value={form.companyId}
             onChange={(e) => handlePickCompany(e.target.value)}
@@ -202,7 +202,7 @@ export default function CorporatesTab() {
 
         <div className={classes.gridForm2} style={{ marginBottom: 12 }}>
           <div className={classes.fieldGroup}>
-            <label className={classes.fieldLabel}>ИНН *</label>
+            <label className={classes.fieldLabel}>ИНН<span className={classes.required}>*</span></label>
             <input
               type="text"
               value={form.inn}
@@ -212,7 +212,7 @@ export default function CorporatesTab() {
             />
           </div>
           <div className={classes.fieldGroup}>
-            <label className={classes.fieldLabel}>КПП * (9 цифр)</label>
+            <label className={classes.fieldLabel}>КПП<span className={classes.required}>*</span> (9 цифр)</label>
             <input
               type="text"
               value={form.kpp}

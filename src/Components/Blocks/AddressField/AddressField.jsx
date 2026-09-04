@@ -30,6 +30,7 @@ export const AddressField = ({
   onChange,
   placeholder,
   compact = false,
+  required = false,
 }) => {
   const [query, setQuery] = useState(value || "");
   const [anchor, setAnchor] = useState(null); // координаты ПОДТВЕРЖДЁННОГО адреса
@@ -194,7 +195,12 @@ export const AddressField = ({
       className={`${classes.addressField} ${compact ? classes.compact : ""}`}
       ref={containerRef}
     >
-      {label && <span className={classes.addressLabel}>{label}</span>}
+      {label && (
+        <span className={classes.addressLabel}>
+          {label}
+          {required && <span className={classes.req}>{" *"}</span>}
+        </span>
+      )}
 
       <div className={classes.inputRow} ref={inputRowRef}>
         <input

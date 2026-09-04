@@ -461,6 +461,7 @@ export default function RepresentativeHotelDetail({
             <p style={{ marginBottom: 8 }}>Выберите отель и укажите причину:</p>
             <MUIAutocompleteColor
               label="Отель"
+              required
               options={hotelAutocompleteOptions}
               value={
                 hotelAutocompleteOptions.find(

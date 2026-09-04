@@ -850,10 +850,12 @@ function BookView({
           <p className={classes.label}>Данные гостя</p>
           <div className={classes.gridForm2} style={{ marginTop: 8, marginBottom: 12 }}>
             {["firstName", "lastName", "email", "phone"].map((k) => {
-              const labels = { firstName: "Имя *", lastName: "Фамилия *", email: "Email *", phone: "Телефон *" }
+              const labels = { firstName: "Имя", lastName: "Фамилия", email: "Email", phone: "Телефон" }
               return (
                 <div key={k} className={classes.fieldGroup}>
-                  <label style={{ fontSize: 11, color: "#94a3b8" }}>{labels[k]}</label>
+                  <label style={{ fontSize: 11, color: "#94a3b8" }}>
+                    {labels[k]}<span style={{ color: "#ef4444", marginLeft: 2 }}>*</span>
+                  </label>
                   <input
                     type="text"
                     value={bookForm[k]}
@@ -879,10 +881,12 @@ function BookView({
               <p className={classes.label}>Данные заказчика</p>
               <div className={classes.gridForm2} style={{ marginTop: 8, marginBottom: 12 }}>
                 {["firstName", "lastName", "email", "phone"].map((k) => {
-                  const labels = { firstName: "Имя *", lastName: "Фамилия *", email: "Email *", phone: "Телефон *" }
+                  const labels = { firstName: "Имя", lastName: "Фамилия", email: "Email", phone: "Телефон" }
                   return (
                     <div key={k} className={classes.fieldGroup}>
-                      <label style={{ fontSize: 11, color: "#94a3b8" }}>{labels[k]}</label>
+                      <label style={{ fontSize: 11, color: "#94a3b8" }}>
+                        {labels[k]}<span style={{ color: "#ef4444", marginLeft: 2 }}>*</span>
+                      </label>
                       <input
                         type="text"
                         value={bookerForm[k]}

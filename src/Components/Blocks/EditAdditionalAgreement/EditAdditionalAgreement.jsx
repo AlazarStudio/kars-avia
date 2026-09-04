@@ -285,6 +285,9 @@ function EditAdditionalAgreement({
             style={!canEdit ? { height: "calc(100% - 148px)" } : isEditing ? {height: "calc(100vh - 161px)"} : {height: "calc(100vh - 80px)"}}
           >
             <div className={classes.requestData}>
+              {isEditing && (
+                <span className={classes.hint}>* — обязательные поля</span>
+              )}
               <div className={agreement?.id && !isEditing ? classes.requestDataInfo : classes.requestDataItem}>
                 {agreement?.id && !isEditing ? (
                   <>
@@ -293,7 +296,7 @@ function EditAdditionalAgreement({
                   </>
                 ) : (
                   <>
-                    <label>№ ДС</label>
+                    <label className={classes.required}>№ ДС</label>
                     <input
                       type="text"
                       name="contractNumber"
@@ -314,7 +317,7 @@ function EditAdditionalAgreement({
                   </>
                 ) : (
                   <>
-                    <label>Дата заключения</label>
+                    <label className={classes.required}>Дата заключения</label>
                     <input
                       type="date"
                       name="date"

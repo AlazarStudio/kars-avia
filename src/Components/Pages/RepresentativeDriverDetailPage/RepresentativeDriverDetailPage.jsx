@@ -437,7 +437,11 @@ function RepresentativeDriverDetailPage({ user }) {
           {editingPersonIndex !== null ? "Редактировать пассажира" : "Добавить пассажира"}
         </DialogTitle>
         <DialogContent className={dialogFormClasses.content}>
-          <label className={dialogFormClasses.label}>ФИО *</label>
+          <label
+            className={`${dialogFormClasses.label} ${dialogFormClasses.required}`}
+          >
+            ФИО
+          </label>
           <input
             type="text"
             name="fullName"

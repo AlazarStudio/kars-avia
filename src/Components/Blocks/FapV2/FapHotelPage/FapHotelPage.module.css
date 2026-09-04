@@ -1281,6 +1281,10 @@
   color: #545873;
 }
 
+.dialogLabel .req {
+  color: #EF4444;
+}
+
 .dialogInput {
   height: 40px;
   padding: 0 12px;

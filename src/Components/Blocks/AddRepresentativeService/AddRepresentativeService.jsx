@@ -664,7 +664,8 @@ function AddRepresentativeService({
           <>
             <div className={classes.requestMiddle}>
               <div className={classes.requestData}>
-                <label>Номер рейса</label>
+                <span className={classes.hint}>* — обязательные поля</span>
+                <label className={classes.required}>Номер рейса</label>
                 <input
                   type="text"
                   value={flightNumber}
@@ -675,7 +676,7 @@ function AddRepresentativeService({
                   }}
                 />
 
-                <label>Дата рейса</label>
+                <label className={classes.required}>Дата рейса</label>
                 <input
                   type="date"
                   value={flightDate}
@@ -687,7 +688,7 @@ function AddRepresentativeService({
 
                 <div className={classes.typeServices}>Экипаж</div>
                 <div className={classes.staffWrapper}>
-                  <label>Сотрудники экипажа</label>
+                  <label className={classes.required}>Сотрудники экипажа</label>
                   {airlineId && (
                     <div className={classes.addStaff} onClick={toggleAddStaff}>
                       <img src="/plus.png" alt="" />
@@ -740,14 +741,14 @@ function AddRepresentativeService({
                 </label>
                 {formData.waterSupply && (
                   <>
-                    <label>Введите количество человек</label>
+                    <label className={classes.required}>Введите количество человек</label>
                     <input
                       type="number"
                       name="waterPeopleCount"
                       value={formData.waterPeopleCount}
                       onChange={handleChange}
                     />
-                    <label>Дата и время подачи в аэропорт</label>
+                    <label className={classes.required}>Дата и время подачи в аэропорт</label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
@@ -781,14 +782,14 @@ function AddRepresentativeService({
                 </label>
                 {formData.foodSupply && (
                   <>
-                    <label>Введите количество человек</label>
+                    <label className={classes.required}>Введите количество человек</label>
                     <input
                       type="number"
                       name="foodPeopleCount"
                       value={formData.foodPeopleCount}
                       onChange={handleChange}
                     />
-                    <label>Дата и время подачи в аэропорт</label>
+                    <label className={classes.required}>Дата и время подачи в аэропорт</label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
@@ -822,14 +823,14 @@ function AddRepresentativeService({
                 </label>
                 {formData.habitation && (
                   <>
-                    <label>Введите количество человек</label>
+                    <label className={classes.required}>Введите количество человек</label>
                     <input
                       type="number"
                       name="habitationPeopleCount"
                       value={formData.habitationPeopleCount}
                       onChange={handleChange}
                     />
-                    <label>Дата и время заезда</label>
+                    <label className={classes.required}>Дата и время заезда</label>
                     <input
                       type="date"
                       name="habitationPlannedFromDate"
@@ -842,7 +843,7 @@ function AddRepresentativeService({
                       value={formData.habitationPlannedFromTime}
                       onChange={handleChange}
                     />
-                    <label>Дата и время выезда</label>
+                    <label className={classes.required}>Дата и время выезда</label>
                     <input
                       type="date"
                       name="habitationPlannedToDate"
@@ -873,14 +874,14 @@ function AddRepresentativeService({
                 </label>
                 {formData.transferArrival && (
                   <>
-                    <label>Введите количество человек</label>
+                    <label className={classes.required}>Введите количество человек</label>
                     <input
                       type="number"
                       name="transferArrivalPeopleCount"
                       value={formData.transferArrivalPeopleCount}
                       onChange={handleChange}
                     />
-                    <label>Дата и время подачи в аэропорт</label>
+                    <label className={classes.required}>Дата и время подачи в аэропорт</label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
@@ -914,14 +915,14 @@ function AddRepresentativeService({
                 </label>
                 {formData.transferDeparture && (
                   <>
-                    <label>Введите количество человек</label>
+                    <label className={classes.required}>Введите количество человек</label>
                     <input
                       type="number"
                       name="transferDeparturePeopleCount"
                       value={formData.transferDeparturePeopleCount}
                       onChange={handleChange}
                     />
-                    <label>Дата и время прибытия пассажиров в аэропорт</label>
+                    <label className={classes.required}>Дата и время прибытия пассажиров в аэропорт</label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
@@ -955,7 +956,7 @@ function AddRepresentativeService({
                 </label>
                 {formData.baggageDelivery && (
                   <>
-                    <label>Дата и время</label>
+                    <label className={classes.required}>Дата и время</label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"

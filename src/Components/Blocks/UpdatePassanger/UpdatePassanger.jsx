@@ -100,17 +100,18 @@ function UpdatePassanger({ show, onClose, onAddPassenger, placement, idPassanger
 
             <div className={classes.requestMiddle}>
                 <div className={classes.requestData}>
-                    <label>ФИО</label>
+                    <span className={classes.hint}>* — обязательные поля</span>
+                    <label className={classes.required}>ФИО</label>
                     <input type="text" name="client" placeholder="Иванов Иван Иванович" value={formData.client} onChange={handleChange} />
 
-                    <label>Пол</label>
+                    <label className={classes.required}>Пол</label>
                     <select name="sex" value={formData.sex} onChange={handleChange}>
                         <option value="" disabled>Выберите пол</option>
                         <option value="Мужской">Мужской</option>
                         <option value="Женский">Женский</option>
                     </select>
 
-                    <label>Телефон</label>
+                    <label className={classes.required}>Телефон</label>
                     <input type="text" name="phone" placeholder="89094567899" value={formData.phone} onChange={handleChange} />
 
                     <label>Прибытие</label>

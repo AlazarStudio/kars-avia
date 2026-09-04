@@ -281,6 +281,11 @@
   color: var(--main-gray);
 }
 
+.fieldLabel .required {
+  color: #ef4444;
+  margin-left: 2px;
+}
+
 .fieldInput {
   height: 36px;
   padding: 0 10px;

@@ -175,6 +175,11 @@
     color: #545873;
 }
 
+.fieldTitle.required::after {
+    content: " *";
+    color: #e53935;
+}
+
 /* Ширина и шрифт полей — свои; высота, рамка и радиус приходят из
    глобального `input, select` в src/index.css, как во всём сайдбаре. */
 .block .field input {

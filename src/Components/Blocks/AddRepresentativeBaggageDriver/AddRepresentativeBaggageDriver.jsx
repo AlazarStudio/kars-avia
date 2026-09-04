@@ -249,7 +249,8 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>Количество пассажиров *</label>
+              <span className={classes.hint}>* — обязательные поля</span>
+              <label className={classes.required}>Количество пассажиров</label>
               <input
                 type="number"
                 name="peopleCount"
@@ -260,7 +261,7 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
                 placeholder="Сколько пассажиров ожидается"
               />
 
-              <label>Водитель *</label>
+              <label className={classes.required}>Водитель</label>
               <MUIAutocompleteColor
                 dropdownWidth="100%"
                 label="Выберите водителя"

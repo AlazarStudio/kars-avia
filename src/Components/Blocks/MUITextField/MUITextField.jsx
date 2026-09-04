@@ -8,6 +8,7 @@ function MUITextField({
   onChange,
   className,
   label,
+  required = false,
   ...props
 }) {
   return (
@@ -18,6 +19,7 @@ function MUITextField({
         className={className}
         value={value}
         onChange={onChange}
+        slotProps={{ inputLabel: { required } }}
         sx={{
           bgcolor: "transparent",
           height: "40px",

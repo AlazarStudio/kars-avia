@@ -212,7 +212,7 @@ function SystemUpdateSettings() {
           </label>
 
           <label className={classes.field}>
-            <span className={classes.label}>Заголовок</span>
+            <span className={`${classes.label} ${enabled ? classes.required : ""}`}>Заголовок</span>
             <input
               type="text"
               className={classes.input}

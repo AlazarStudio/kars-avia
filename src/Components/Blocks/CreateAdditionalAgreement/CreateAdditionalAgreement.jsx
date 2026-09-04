@@ -182,7 +182,8 @@ function CreateAdditionalAgreement({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>№ ДС</label>
+              <span className={classes.hint}>* — обязательные поля</span>
+              <label className={classes.required}>№ ДС</label>
               <input
                 type="text"
                 name="contractNumber"
@@ -191,7 +192,7 @@ function CreateAdditionalAgreement({
                 placeholder="Например: ДС №1"
               />
 
-              <label>Дата заключения</label>
+              <label className={classes.required}>Дата заключения</label>
               <input
                 type="date"
                 name="date"

@@ -195,8 +195,9 @@ function EditRequestTarifAdditionalServices({
             }
           >
             <div className={classes.requestData}>
+              <div className={classes.hint}>* — обязательные поля</div>
               <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>
+                <div className={`${classes.requestDataInfo_title} ${classes.required}`}>
                   Название доп услуги
                 </div>
                 {isEditing ? (
@@ -215,7 +216,7 @@ function EditRequestTarifAdditionalServices({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>Стоимость</div>
+                <div className={`${classes.requestDataInfo_title} ${classes.required}`}>Стоимость</div>
                 {isEditing ? (
                   <input
                     type="number"
@@ -236,7 +237,7 @@ function EditRequestTarifAdditionalServices({
               {!user?.hotelId && (
                 <>
                   <div className={classes.requestDataInfo}>
-                    <div className={classes.requestDataInfo_title}>
+                    <div className={`${classes.requestDataInfo_title} ${!formData.priceForAirReq ? classes.required : ""}`}>
                       Стоимость для авиакомпании
                     </div>
                     {isEditing ? (

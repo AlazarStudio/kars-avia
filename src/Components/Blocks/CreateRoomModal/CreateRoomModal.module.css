@@ -63,6 +63,11 @@
     gap: 15px;
 }
 
+.required::after {
+    content: " *";
+    color: #e53935;
+}
+
 .requestData input,
 select {
     height: 40px;

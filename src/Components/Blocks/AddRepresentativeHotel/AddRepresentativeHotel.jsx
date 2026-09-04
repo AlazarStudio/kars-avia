@@ -297,7 +297,8 @@ function AddRepresentativeHotel({ show, onClose, request }) {
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>Гостиница</label>
+              <span className={classes.hint}>* — обязательные поля</span>
+              <label className={classes.required}>Гостиница</label>
               <MUIAutocompleteColor
                 dropdownWidth="100%"
                 label="Выберите гостиницу"
@@ -413,7 +414,7 @@ function AddRepresentativeHotel({ show, onClose, request }) {
                 )}
               </div>
 
-              <label>Количество мест</label>
+              <label className={classes.required}>Количество мест</label>
               <input
                 type="number"
                 name="peopleCount"

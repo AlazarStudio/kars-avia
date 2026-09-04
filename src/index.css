@@ -381,3 +381,7 @@ textarea {
     color: var(--text);
     /* padding-right: 8px; */
 }
+
+.MuiFormLabel-asterisk {
+    color: #e53935;
+}

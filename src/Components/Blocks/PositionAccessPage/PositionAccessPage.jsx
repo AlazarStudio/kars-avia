@@ -393,6 +393,7 @@ export default function PositionAccessPage({ user, accessMenu }) {
             </div>
             <MUITextField
               label="Название должности"
+              required
               value={formName}
               onChange={(e) => setFormName(e.target.value)}
             />

@@ -780,11 +780,14 @@ function EditRequestHotelContract({
                 style={!canEdit ? { height: "calc(100% - 148px)" } : isEditing ? {height: "calc(100vh - 198px)"} : {height: "calc(100vh - 117px)"}}
               >
                 <div className={classes.requestData}>
+                  {isEditing && (
+                    <div className={classes.hint}>* — обязательные поля</div>
+                  )}
                   {/* Договор: основные поля */}
                   <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
                     {isEditing ? (
                       <>
-                        <label>№ Договора</label>
+                        <label className={classes.required}>№ Договора</label>
                         <input
                           type="text"
                           name="contractNumber"
@@ -804,7 +807,7 @@ function EditRequestHotelContract({
                   <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
                     {isEditing ? (
                       <>
-                        <label>Дата заключения</label>
+                        <label className={classes.required}>Дата заключения</label>
                         <input
                           type="date"
                           name="date"
@@ -910,7 +913,7 @@ function EditRequestHotelContract({
                   <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
                     {isEditing ? (
                       <>
-                        <label>ГК КАРС</label>
+                        <label className={classes.required}>ГК КАРС</label>
                         <MUIAutocomplete
                           dropdownWidth={"59%"}
                           label={"Введите компанию"}
@@ -944,7 +947,7 @@ function EditRequestHotelContract({
                   <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
                     {isEditing ? (
                       <>
-                        <label>
+                        <label className={classes.required}>
                           {activeFilterTab === "hotels"
                             ? "Гостиница"
                             : "Организация"}
@@ -1033,7 +1036,7 @@ function EditRequestHotelContract({
                   <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
                     {isEditing ? (
                       <>
-                        <label>Город</label>
+                        <label className={classes.required}>Город</label>
                         <MUIAutocompleteColor
                           dropdownWidth="59%"
                           label={"Выберите город"}
@@ -1186,7 +1189,7 @@ function EditRequestHotelContract({
                   <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
                     {isEditing ? (
                       <>
-                        <label>Вид услуги</label>
+                        <label className={classes.required}>Вид услуги</label>
                         <input
                           type="text"
                           name="applicationType"

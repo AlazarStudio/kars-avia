@@ -589,24 +589,28 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
                     )}
                     <div className={classes.formRow}>
                       <FormField
-                        label="Имя *"
+                        label="Имя"
+                        required
                         value={guest.firstName}
                         onChange={(v) => setGuest({ ...guest, firstName: v })}
                       />
                       <FormField
-                        label="Фамилия *"
+                        label="Фамилия"
+                        required
                         value={guest.lastName}
                         onChange={(v) => setGuest({ ...guest, lastName: v })}
                       />
                     </div>
                     <div className={classes.formRow}>
                       <FormField
-                        label="Email *"
+                        label="Email"
+                        required
                         value={guest.email}
                         onChange={(v) => setGuest({ ...guest, email: v })}
                       />
                       <FormField
-                        label="Телефон *"
+                        label="Телефон"
+                        required
                         value={guest.phone}
                         onChange={(v) => setGuest({ ...guest, phone: v })}
                       />
@@ -631,24 +635,28 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
                         </div>
                         <div className={classes.formRow}>
                           <FormField
-                            label="Имя *"
+                            label="Имя"
+                            required
                             value={booker.firstName}
                             onChange={(v) => setBooker({ ...booker, firstName: v })}
                           />
                           <FormField
-                            label="Фамилия *"
+                            label="Фамилия"
+                            required
                             value={booker.lastName}
                             onChange={(v) => setBooker({ ...booker, lastName: v })}
                           />
                         </div>
                         <div className={classes.formRow}>
                           <FormField
-                            label="Email *"
+                            label="Email"
+                            required
                             value={booker.email}
                             onChange={(v) => setBooker({ ...booker, email: v })}
                           />
                           <FormField
-                            label="Телефон *"
+                            label="Телефон"
+                            required
                             value={booker.phone}
                             onChange={(v) => setBooker({ ...booker, phone: v })}
                           />
@@ -755,10 +763,13 @@ function TravellineRoomsSidebar({ show, property, request, onClose, onBooked }) 
   );
 }
 
-function FormField({ label, value, onChange, placeholder }) {
+function FormField({ label, value, onChange, placeholder, required }) {
   return (
     <label className={classes.field}>
-      <span className={classes.fieldLabel}>{label}</span>
+      <span className={classes.fieldLabel}>
+        {label}
+        {required && <span className={classes.required}>*</span>}
+      </span>
       <input
         type="text"
         value={value || ""}

@@ -127,7 +127,7 @@ function MaintenanceBannerSettings() {
           <div className={classes.divider} />
 
           <div className={classes.field}>
-            <label htmlFor="maintenance-banner-message" className={classes.label}>
+            <label htmlFor="maintenance-banner-message" className={`${classes.label} ${enabled ? classes.required : ""}`}>
               Текст плашки
             </label>
             <div className={classes.audPills} role="group" aria-label="Готовые тексты">

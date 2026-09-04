@@ -169,7 +169,8 @@ function CreateRequestHotelReserve({ show, onClose }) {
 
       <div className={classes.requestMiddle}>
         <div className={classes.requestData}>
-          <label>Название</label>
+          <span className={classes.hint}>* — обязательные поля</span>
+          <label className={classes.required}>Название</label>
           <input
             type="text"
             name="name"
@@ -177,7 +178,7 @@ function CreateRequestHotelReserve({ show, onClose }) {
             onChange={handleChange}
           />
 
-          <label>Город</label>
+          <label className={classes.required}>Город</label>
           <MUIAutocomplete
             dropdownWidth={"100%"}
             label={"Выберите город"}

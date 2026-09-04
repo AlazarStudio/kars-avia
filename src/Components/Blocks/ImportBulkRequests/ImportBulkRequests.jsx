@@ -178,8 +178,9 @@ function ImportBulkRequests({ show, onClose, user, onImported, embedded = false,
       ) : (
         <>
           <div className={classes.requestMiddle}>
+            <span className={classes.hint}>* — обязательные поля</span>
             <div className={classes.field}>
-              <label>Файл XLSX</label>
+              <label className={classes.required}>Файл XLSX</label>
               <FileDropzone
                 accept=".xlsx"
                 hint="Таблица заявок в формате XLSX"
@@ -208,7 +209,7 @@ function ImportBulkRequests({ show, onClose, user, onImported, embedded = false,
 
             {user?.airlineId ? null : (
               <div className={classes.field}>
-                <label>Авиакомпания</label>
+                <label className={classes.required}>Авиакомпания</label>
                 <MUIAutocomplete
                   dropdownWidth={"100%"}
                   label={"Введите авиакомпанию"}
@@ -223,7 +224,7 @@ function ImportBulkRequests({ show, onClose, user, onImported, embedded = false,
             )}
 
             <div className={classes.field}>
-              <label>Аэропорт</label>
+              <label className={classes.required}>Аэропорт</label>
               <MUIAutocompleteColor
                 dropdownWidth="100%"
                 label={"Введите аэропорт"}

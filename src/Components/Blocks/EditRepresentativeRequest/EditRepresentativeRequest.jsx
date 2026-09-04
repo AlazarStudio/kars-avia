@@ -233,6 +233,7 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
+              <span className={classes.hint}>* — обязательные поля</span>
               {/* <div className={classes.typeServices}>Вид услуг</div> */}
 
               <label className={classes.checkBoxWrapper}>
@@ -246,7 +247,7 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
               </label>
               {formData.waterEnabled && (
                 <>
-                  <label>Введите количество человек</label>
+                  <label className={classes.required}>Введите количество человек</label>
                   <input
                     type="number"
                     name="waterPeopleCount"
@@ -254,7 +255,7 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
                     onChange={handleChange}
                     min={0}
                   />
-                  <label>Дата и время</label>
+                  <label className={classes.required}>Дата и время</label>
                   <div className={classes.reis_info}>
                     <input
                       type="date"
@@ -284,7 +285,7 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
               </label>
               {formData.mealEnabled && (
                 <>
-                  <label>Введите количество человек</label>
+                  <label className={classes.required}>Введите количество человек</label>
                   <input
                     type="number"
                     name="mealPeopleCount"
@@ -292,7 +293,7 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
                     onChange={handleChange}
                     min={0}
                   />
-                  <label>Дата и время</label>
+                  <label className={classes.required}>Дата и время</label>
                   <div className={classes.reis_info}>
                     <input
                       type="date"
@@ -322,7 +323,7 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
               </label>
               {formData.livingEnabled && (
                 <>
-                  <label>Введите количество человек</label>
+                  <label className={classes.required}>Введите количество человек</label>
                   <input
                     type="number"
                     name="livingPeopleCount"
@@ -330,7 +331,7 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
                     onChange={handleChange}
                     min={0}
                   />
-                  <label>Дата и время заезда</label>
+                  <label className={classes.required}>Дата и время заезда</label>
                   <input
                     type="date"
                     name="livingPlannedFromDate"
@@ -343,7 +344,7 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
                     value={formData.livingPlannedFromTime}
                     onChange={handleChange}
                   />
-                  <label>Дата и время выезда</label>
+                  <label className={classes.required}>Дата и время выезда</label>
                   <input
                     type="date"
                     name="livingPlannedToDate"
@@ -370,7 +371,7 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
               </label>
               {formData.transferEnabled && (
                 <>
-                  <label>Введите количество человек</label>
+                  <label className={classes.required}>Введите количество человек</label>
                   <input
                     type="number"
                     name="transferPeopleCount"
@@ -378,7 +379,7 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
                     onChange={handleChange}
                     min={0}
                   />
-                  <label>Дата и время</label>
+                  <label className={classes.required}>Дата и время</label>
                   <div className={classes.reis_info}>
                     <input
                       type="date"
@@ -408,7 +409,7 @@ function EditRepresentativeRequest({ show, onClose, request, onOpenCancelConfirm
               </label>
               {formData.baggageEnabled && (
                 <>
-                  <label>Дата и время</label>
+                  <label className={classes.required}>Дата и время</label>
                   <div className={classes.reis_info}>
                     <input
                       type="date"

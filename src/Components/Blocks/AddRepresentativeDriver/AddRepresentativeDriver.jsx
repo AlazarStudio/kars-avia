@@ -339,7 +339,8 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>Водитель</label>
+              <span className={classes.hint}>* — обязательные поля</span>
+              <label className={classes.required}>Водитель</label>
               <MUIAutocompleteColor
                 dropdownWidth="100%"
                 label="Выберите водителя"
@@ -455,6 +456,7 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
 
               <AddressField
                 label="Адрес отправления"
+                required
                 placeholder="г. Черкесск, Ленина, 57Б"
                 value={formData.addressFrom}
                 onChange={(addr) => {
@@ -466,6 +468,7 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
 
               <AddressField
                 label="Адрес прибытия"
+                required
                 placeholder="г. Минеральные Воды, Ленина, 10К1"
                 value={formData.addressTo}
                 onChange={(addr) => {
@@ -475,7 +478,7 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
               />
               {airportField === "addressTo" && airportHint}
 
-              <label>Количество людей</label>
+              <label className={classes.required}>Количество людей</label>
               <input
                 type="number"
                 name="peopleCount"

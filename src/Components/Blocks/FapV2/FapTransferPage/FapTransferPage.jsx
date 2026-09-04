@@ -427,7 +427,7 @@ export default function FapTransferPage({
         onConfirm={reopen.confirm}
         title="Вернуть услугу в работу"
         description="Услуга вернётся в работу: дата завершения и причина досрочного закрытия будут сняты."
-        reasonLabel="Причина *"
+        reasonLabel="Причина"
         placeholder="Укажите причину..."
         confirmText="Вернуть"
         cancelText="Отмена"
@@ -440,7 +440,7 @@ export default function FapTransferPage({
         onConfirm={handleCompleteEarly}
         title="Досрочное завершение"
         description="Услуга будет завершена досрочно. Это действие необратимо."
-        reasonLabel="Причина *"
+        reasonLabel="Причина"
         placeholder="Укажите причину..."
         confirmText="Завершить"
         cancelText="Отмена"

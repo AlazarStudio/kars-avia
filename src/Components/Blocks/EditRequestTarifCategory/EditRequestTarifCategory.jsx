@@ -413,8 +413,9 @@ function EditRequestTarifCategory({
             }
           >
             <div className={classes.requestData}>
+              <div className={classes.hint}>* — обязательные поля</div>
               <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>Категория</div>
+                <div className={`${classes.requestDataInfo_title} ${classes.required}`}>Категория</div>
                 {isEditing ? (
                   <div className={classes.dropdown}>
                     <MUIAutocomplete
@@ -450,7 +451,7 @@ function EditRequestTarifCategory({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>
+                <div className={`${classes.requestDataInfo_title} ${classes.required}`}>
                   Название тарифа
                 </div>
                 {isEditing ? (
@@ -469,7 +470,7 @@ function EditRequestTarifCategory({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>Стоимость</div>
+                <div className={`${classes.requestDataInfo_title} ${classes.required}`}>Стоимость</div>
                 {isEditing ? (
                   <input
                     type="number"
@@ -490,7 +491,7 @@ function EditRequestTarifCategory({
               {!user?.hotelId && (
                 <>
                   <div className={classes.requestDataInfo}>
-                    <div className={classes.requestDataInfo_title}>
+                    <div className={`${classes.requestDataInfo_title} ${!formData.priceForAirReq ? classes.required : ""}`}>
                       Стоимость для авиакомпании
                     </div>
                     {isEditing ? (

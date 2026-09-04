@@ -72,6 +72,7 @@ export default function FapDestructiveModal({
                 }}
               >
                 {reasonLabel}
+                {reasonRequired && <span style={{ color: "#EF4444" }}> *</span>}
               </label>
             )}
             <textarea

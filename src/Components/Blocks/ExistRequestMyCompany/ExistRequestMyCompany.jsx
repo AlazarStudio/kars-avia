@@ -305,9 +305,12 @@ function ExistRequestMyCompany({
         <>
           <div className={classes.requestMiddle} style={isEditing ? { height: "calc(100vh - 161px)" } : { height: "calc(100vh - 80px)" }}>
             <div className={classes.requestData}>
+              {isEditing && (
+                <span className={classes.hint}>* — обязательные поля</span>
+              )}
               {isEditing ? (
                 <>
-                  <label>Название</label>
+                  <label className={classes.required}>Название</label>
                   <input
                     type="text"
                     name="name"

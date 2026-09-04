@@ -169,7 +169,8 @@ function AddDriverToOrganization({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>Водители</label>
+              <span className={classes.hint}>* — обязательные поля</span>
+              <label className={classes.required}>Водители</label>
               <MultiSelectAutocomplete
                 isMultiple={true}
                 dropdownWidth={"100%"}

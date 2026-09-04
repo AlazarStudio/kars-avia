@@ -149,7 +149,9 @@ function AddRepresentativeBooking({
         {isEditMode ? "Редактировать бронь" : "Добавить бронь"}
       </DialogTitle>
       <DialogContent className={classes.content}>
-        <label className={classes.label}>ФИО пассажира</label>
+        <label className={`${classes.label} ${classes.required}`}>
+          ФИО пассажира
+        </label>
         <input
           type="text"
           name="fullName"

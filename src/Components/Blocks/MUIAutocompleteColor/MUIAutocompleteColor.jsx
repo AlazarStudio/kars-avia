@@ -19,6 +19,7 @@ function MUIAutocompleteColor({
   // Новый пропс: если true, то разделяем строку и меняем цвета
   isColor,
   scriptRunnerId,
+  required = false,
   children,
   ...props
 }) {
@@ -162,6 +163,9 @@ function MUIAutocompleteColor({
           inputProps={{
             ...params.inputProps,
             [SCRIPT_RUNNER_ID_ATTR]: runnerIds.inputId,
+          }}
+          slotProps={{
+            inputLabel: { ...(params.InputLabelProps || {}), required },
           }}
           label={
             hideLabelOnFocus && (focused || value)

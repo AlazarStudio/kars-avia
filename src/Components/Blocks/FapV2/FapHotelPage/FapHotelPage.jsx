@@ -4443,7 +4443,7 @@ export default function FapHotelPage({
             )}
           </>
         }
-        reasonLabel="Причина *"
+        reasonLabel="Причина"
         placeholder="Укажите причину выселения..."
         confirmText={
           evictState && evictState.indices.length > 1 ? "Выселить всех" : "Выселить"
@@ -4497,7 +4497,9 @@ export default function FapHotelPage({
             <p className={classes.groupSplitWarn}>{relocateSplitText}</p>
           )}
           <div className={classes.dialogField}>
-            <label className={classes.dialogLabel}>Гостиница *</label>
+            <label className={classes.dialogLabel}>
+              Гостиница <span className={classes.req}>*</span>
+            </label>
             <FapSelect
               accent={LIV}
               value={relocateTarget}
@@ -4522,7 +4524,9 @@ export default function FapHotelPage({
             />
           </div>
           <div className={classes.dialogField}>
-            <label className={classes.dialogLabel}>Причина *</label>
+            <label className={classes.dialogLabel}>
+              Причина <span className={classes.req}>*</span>
+            </label>
             <textarea
               className={classes.dialogTextarea}
               rows={4}
@@ -4638,7 +4642,9 @@ export default function FapHotelPage({
             Номер будет проставлен всем выбранным гостям.
           </p>
           <div className={classes.dialogField}>
-            <label className={classes.dialogLabel}>Номер *</label>
+            <label className={classes.dialogLabel}>
+              Номер <span className={classes.req}>*</span>
+            </label>
             <RoomNumberField
               live
               className={classes.dialogInput}

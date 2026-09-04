@@ -69,7 +69,9 @@ export default function HotelCapacityDialog({
           Гостиница: <strong>{hotelName || "—"}</strong>
         </div>
         <div className={classes.editHotelField}>
-          <label className={classes.editHotelLabel}>Количество мест *</label>
+          <label className={classes.editHotelLabel}>
+            Количество мест <span className={classes.req}>*</span>
+          </label>
           <input
             type="number"
             min={1}

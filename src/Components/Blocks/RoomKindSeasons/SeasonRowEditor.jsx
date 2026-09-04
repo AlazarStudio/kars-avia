@@ -30,7 +30,7 @@ function SeasonRowEditor({
     <div className={classes.editor}>
       <div className={classes.fieldRow}>
         <label className={classes.field}>
-          <span className={classes.fieldTitle}>Начало</span>
+          <span className={`${classes.fieldTitle} ${classes.required}`}>Начало</span>
           <input
             type="date"
             name="startDate"
@@ -42,7 +42,7 @@ function SeasonRowEditor({
           )}
         </label>
         <label className={classes.field}>
-          <span className={classes.fieldTitle}>Окончание</span>
+          <span className={`${classes.fieldTitle} ${classes.required}`}>Окончание</span>
           <input
             type="date"
             name="endDate"
@@ -58,7 +58,7 @@ function SeasonRowEditor({
 
       <div className={classes.fieldRow}>
         <label className={classes.field}>
-          <span className={classes.fieldTitle}>Цена по договору</span>
+          <span className={`${classes.fieldTitle} ${classes.required}`}>Цена по договору</span>
           <input
             type="number"
             name="price"

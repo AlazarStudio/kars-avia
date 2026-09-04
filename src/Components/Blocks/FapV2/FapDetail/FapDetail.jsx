@@ -853,7 +853,7 @@ export default function FapDetail({ user, canEdit = true, canEditCompleted = fal
           title="Отмена заявки"
           description="После отмены заявка перейдёт в статус «Отменена». Это действие необратимо."
           showReason
-          reasonLabel="Причина *"
+          reasonLabel="Причина"
           placeholder="Укажите причину отмены..."
           confirmText="Отменить заявку"
           cancelText="Назад"

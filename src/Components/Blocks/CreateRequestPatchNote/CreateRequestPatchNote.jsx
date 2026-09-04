@@ -191,12 +191,13 @@ function CreateRequestPatchNote({ show, onClose, refetchPatchNotes }) {
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
+              <span className={classes.hint}>* — обязательные поля</span>
               <div className={classes.formHint}>
                 Запись появится в общем списке патчей сразу после сохранения.
               </div>
 
               <div className={classes.fieldGroup}>
-                <label>Название</label>
+                <label className={classes.required}>Название</label>
                 <input
                   type="text"
                   name="name"
@@ -207,7 +208,7 @@ function CreateRequestPatchNote({ show, onClose, refetchPatchNotes }) {
               </div>
 
               <div className={classes.fieldGroup}>
-                <label>Дата</label>
+                <label className={classes.required}>Дата</label>
                 <input
                   type="date"
                   name="date"
@@ -218,7 +219,7 @@ function CreateRequestPatchNote({ show, onClose, refetchPatchNotes }) {
               </div>
 
               <div className={classes.fieldGroup}>
-                <label>Описание</label>
+                <label className={classes.required}>Описание</label>
                 <TextEditor
                   anotherDescription={formData.description}
                   isEditing={true}

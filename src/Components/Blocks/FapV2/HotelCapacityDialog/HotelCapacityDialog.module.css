@@ -10,6 +10,10 @@
   color: #545873;
 }
 
+.editHotelLabel .req {
+  color: #EF4444;
+}
+
 .editHotelInput {
   height: 40px;
   padding: 0 12px;

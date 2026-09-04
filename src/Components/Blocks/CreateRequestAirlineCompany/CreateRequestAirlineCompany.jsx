@@ -366,7 +366,8 @@ function CreateRequestAirlineCompany({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <label>ФИО</label>
+              <span className={classes.hint}>* — обязательные поля</span>
+              <label className={classes.required}>ФИО</label>
               <input
                 type="text"
                 name="name"
@@ -390,7 +391,7 @@ function CreateRequestAirlineCompany({
 
               {!representative && (
                 <>
-                  <label>Почта</label>
+                  <label className={classes.required}>Почта</label>
                   <input
                     type="email"
                     name="email"
@@ -422,7 +423,7 @@ function CreateRequestAirlineCompany({
               )}
 
               <div className={classes.fieldHeader}>
-                <label>Должность</label>
+                <label className={classes.required}>Должность</label>
                 <div
                   className={classes.addPosition}
                   onClick={() => setIsCreatingPosition((prev) => !prev)}
@@ -462,7 +463,7 @@ function CreateRequestAirlineCompany({
                 </div>
               )}
 
-              <label>Логин</label>
+              <label className={classes.required}>Логин</label>
               <input
                 type="text"
                 name="login"
@@ -472,7 +473,7 @@ function CreateRequestAirlineCompany({
                 autoComplete="new-password"
               />
 
-              <label>Пароль</label>
+              <label className={classes.required}>Пароль</label>
               <input
                 type="password"
                 name="password"

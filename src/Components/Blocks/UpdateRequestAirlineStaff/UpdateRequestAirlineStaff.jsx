@@ -252,8 +252,11 @@ function UpdateRequestAirlineStaff({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
+              {isEditing && (
+                <div className={classes.hint}>* — обязательные поля</div>
+              )}
               <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>ФИО</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>ФИО</div>
                 {isEditing ? (
                   <input
                     type="text"
@@ -270,7 +273,7 @@ function UpdateRequestAirlineStaff({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>Номер телефона</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Номер телефона</div>
                 {isEditing ? (
                   <InputMask
                     type="text"
@@ -315,7 +318,7 @@ function UpdateRequestAirlineStaff({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>Пол</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Пол</div>
                 {isEditing ? (
                   <div className={classes.dropdown}>
                     <MUIAutocomplete

@@ -609,6 +609,7 @@ function EditRequestNomerFond({
             }
           >
             <div className={classes.requestData}>
+              <div className={classes.hint}>* — обязательные поля</div>
               {type !== "apartment" && (
                 <>
                   <div className={classes.requestDataInfo}>
@@ -639,7 +640,7 @@ function EditRequestNomerFond({
                     )}
                   </div>
                   <div className={classes.requestDataInfo}>
-                    <div className={classes.requestDataInfo_title}>Тариф</div>
+                    <div className={`${classes.requestDataInfo_title} ${classes.required}`}>Тариф</div>
                     {isEditing ? (
                       <div className={classes.dropdown}>
                         <MUIAutocomplete
@@ -673,7 +674,7 @@ function EditRequestNomerFond({
               )}
 
               <div className={classes.requestDataInfo}>
-                <div className={classes.requestDataInfo_title}>
+                <div className={`${classes.requestDataInfo_title} ${classes.required}`}>
                   Название номера
                 </div>
                 {isEditing ? (

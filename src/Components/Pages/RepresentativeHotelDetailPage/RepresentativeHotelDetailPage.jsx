@@ -372,7 +372,8 @@ function RepresentativeHotelDetailPage({ user }) {
                   </div>
                 </div>
                 <MUITextField
-                  label="Email *"
+                  label="Email"
+                  required
                   value={issueLinkEmail}
                   onChange={(e) => setIssueLinkEmail(e.target.value)}
                   placeholder="email@example.com"
