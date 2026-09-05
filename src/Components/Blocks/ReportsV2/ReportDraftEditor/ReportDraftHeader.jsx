@@ -79,7 +79,10 @@ export default function ReportDraftHeader({
             aria-label="Настройка редактируемых полей"
             onClick={onFieldSettings}
           >
-            <SettingsIcon width={16} height={16} cursor="pointer" />
+            {/* 18px и явная обводка 1.5: шестерёнка нарисована во viewBox 22,
+                и на 16px с глобальными 1.7 зубцы сливались (то же лечение,
+                что у кнопки отката поля). */}
+            <SettingsIcon width={18} height={18} strokeWidth={1.5} cursor="pointer" />
           </button>
         )}
 
