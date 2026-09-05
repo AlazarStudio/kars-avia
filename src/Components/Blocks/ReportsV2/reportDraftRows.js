@@ -20,10 +20,29 @@ export const DRAFT_ROW_FIELDS = [
   "pricePerDay",
   "totalDebt",
   "hotelName",
+  "frozen",
 ];
 
-/** Поля строки, которые пользователь правит руками; остальные — только производные/справочные. */
-export const EDITABLE_FIELDS = ["totalDays", "pricePerDay", "totalMealCost"];
+/**
+ * Поля строки, которые пользователь правит руками. Не правятся только
+ * производная «Стоимость проживания», итог и гостиница (требование заказчика:
+ * весь черновик гибко настраивается в контексте отчёта, данных системы правки
+ * не меняют) — плюс структурный «вид проживания» (shareSegments считает бэк).
+ */
+export const EDITABLE_FIELDS = [
+  "personName",
+  "arrival",
+  "departure",
+  "totalDays",
+  "category",
+  "roomName",
+  "personPosition",
+  "breakfastCount",
+  "lunchCount",
+  "dinnerCount",
+  "totalMealCost",
+  "pricePerDay",
+];
 
 /**
  * Добавляет каждой строке черновика стабильный клиентский ключ `_uid` (индекс в массиве).

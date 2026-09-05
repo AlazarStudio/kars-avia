@@ -6998,6 +6998,7 @@ export const GET_REPORT_DRAFT = gql`
         pricePerDay
         totalDebt
         hotelName
+        frozen
         changedKeys
       }
     }
@@ -7087,6 +7088,7 @@ export const UPDATE_REPORT_DRAFT = gql`
         pricePerDay
         totalDebt
         hotelName
+        frozen
         changedKeys
       }
     }
@@ -7133,6 +7135,7 @@ export const RECREATE_REPORT_DRAFT = gql`
         pricePerDay
         totalDebt
         hotelName
+        frozen
         changedKeys
       }
     }

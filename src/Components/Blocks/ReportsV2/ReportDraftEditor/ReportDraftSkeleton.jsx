@@ -16,6 +16,10 @@ export default function ReportDraftSkeleton() {
     <div aria-hidden="true">
       {NAME_WIDTHS.map((nameWidth, i) => (
         <div className={table.row} key={i}>
+          <div className={`${table.colFreeze} ${table.stickyFreeze}`}>
+            <div className={skeleton.barSmall} style={{ width: 16 }} />
+          </div>
+
           <div className={`${table.colIndex} ${table.stickyIndex}`}>
             <div className={skeleton.barSmall} style={{ width: 16 }} />
           </div>
@@ -72,16 +76,16 @@ export default function ReportDraftSkeleton() {
             <div className={skeleton.barInput} style={{ width: 88 }} />
           </div>
 
+          <div className={table.colHotel}>
+            <div className={skeleton.bar} style={{ width: HOTEL_WIDTHS[i] }} />
+          </div>
+
           <div className={table.colLiving}>
             <div className={skeleton.bar} style={{ width: 76 }} />
           </div>
 
           <div className={table.colTotal}>
             <div className={skeleton.bar} style={{ width: 68 }} />
-          </div>
-
-          <div className={table.colHotel}>
-            <div className={skeleton.bar} style={{ width: HOTEL_WIDTHS[i] }} />
           </div>
 
           <div className={table.colActions} />

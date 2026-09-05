@@ -10,27 +10,30 @@ import {
   getDepartureHighlight,
   livingCostTooltip,
   splitDateTime,
+  trimSeconds,
   describeShareSegments,
   listCohabitants,
   editableValue,
-  breakfastCellText,
 } from "./reportDraftEditorUtils";
 
 // Одна строка таблицы черновика. Чисто UI: получает уже готовую строку и
 // колбэки, всю логику (что такое "правлено", что сохранять) решает вызывающий
 // код (ReportDraftEditor/useReportDraft).
 //
-// Набор и порядок колонок повторяют печатную форму реестра (см. `presentation`
-// с бэка): заезд, выезд, сутки, категория, комната, вид проживания, должность,
-// завтрак/обед/ужин по отдельности, стоимости, гостиница. Свёрнутых пар вроде
-// «ФИО + должность в одной ячейке» больше нет — заказчик сверяет экран с Excel
-// построчно, и склейка ему мешала.
+// Набор колонок повторяет печатную форму реестра, но с 05.09.2026 почти все
+// поля правятся прямо в контексте отчёта (требование заказчика: черновик
+// настраивается гибко, данных системы правки не меняют). Не правятся только
+// «Стоимость проживания» (производная), «Итоговая стоимость» (производная),
+// «Гостиница» и структурный «Вид проживания» (его считает бэк из подселений).
 //
-// Два отступления от формы, оба намеренные:
-//  - ФИО стоит вторым и закреплено по горизонтали: таблица шире экрана, и без
-//    закреплённого имени при прокрутке вправо непонятно, чья это строка;
-//  - «Цена/сут.» в форме нет вовсе — это поле редактора, из которого считается
-//    стоимость проживания. Стоит рядом с ней.
+// Отступления от печатной формы, все намеренные:
+//  - первой стоит колонка «заморозки»: галочка фиксирует строку целиком —
+//    пересоздание черновика её не тронет (требование заказчика);
+//  - ФИО закреплено по горизонтали: таблица шире экрана, и без закреплённого
+//    имени при прокрутке вправо непонятно, чья это строка;
+//  - «Цена/сут.» в форме нет вовсе — это поле редактора;
+//  - «Гостиница» стоит ПЕРЕД «Стоимостью проживания» (просьба заказчика),
+//    в файле выгрузки она остаётся последней.
 export default function ReportDraftRow({
   row,
   number,
@@ -72,17 +75,21 @@ export default function ReportDraftRow({
     ? getDepartureHighlight(row.departure, rules)
     : { highlighted: false };
 
-  // Ячейка изменилась при пересоздании (серверный changedKeys) — жёлтая
-  // подсветка, та же, что в выгружаемом Excel. Отдельно от editedDot:
-  // точка — «правил я сейчас», фон — «изменилось при пересборке».
+  // Ячейка изменилась при пересоздании (серверный changedKeys). Подсветка
+  // живёт на самом ПОЛЕ (рамка и заливка инпута / плашка у значения), а не
+  // фоном под ячейкой: закрашенный угол ячейки читался как артефакт вёрстки.
+  // Отдельно от editedDot: точка — «правил я сейчас», янтарное поле —
+  // «изменилось при пересборке».
   const chg = (key) =>
-    Array.isArray(row.changedKeys) && row.changedKeys.includes(key)
-      ? ` ${classes.cellChanged}`
-      : "";
+    Array.isArray(row.changedKeys) && row.changedKeys.includes(key);
 
-  const daysEdited = fieldEdited(row, "totalDays");
-  const priceEdited = fieldEdited(row, "pricePerDay");
-  const mealEdited = fieldEdited(row, "totalMealCost");
+  // Классы инпута: базовый + янтарный «изменилось при пересборке» + доп.
+  const inputCls = (base, key, extra = "") =>
+    [base, chg(key) ? classes.inputChanged : "", extra]
+      .filter(Boolean)
+      .join(" ");
+  // Обёртка значения без инпута: янтарная плашка вместо фона ячейки.
+  const valCls = (key) => (chg(key) ? classes.valueChanged : undefined);
 
   const livingCost = Number(row.totalLivingCost) || 0;
 
@@ -97,46 +104,146 @@ export default function ReportDraftRow({
           .join("\n")
       : row.shareNote || undefined;
 
+  const frozen = Boolean(row.frozen);
+
   const rowClassName = [
     classes.row,
-    hasWarning ? classes.rowWarning : isEdited ? classes.rowEdited : "",
+    // Предупреждение важнее заморозки (нет цены — нет суммы), заморозка
+    // важнее пометки правки: правка у замороженной и так видна по точкам.
+    hasWarning
+      ? classes.rowWarning
+      : frozen
+        ? classes.rowFrozen
+        : isEdited
+          ? classes.rowEdited
+          : "",
     // Подсветка всей группы соседей — включается наведением на любую её строку.
     clusterHighlighted ? classes.rowClusterMatch : "",
   ]
     .filter(Boolean)
     .join(" ");
 
+  // Текстовое поле в одну строку: ФИО, даты, категория, комната, должность.
+  const textInput = (field, value, { label, extra, title } = {}) => (
+    <input
+      type="text"
+      name={field}
+      className={inputCls(classes.inputText, field, extra)}
+      value={value ?? ""}
+      title={title}
+      aria-label={`${label} — ${personLabel}`}
+      onChange={(e) => onCellChange(row._uid, field, e.target.value)}
+      {...cellFocusProps}
+    />
+  );
+
+  // Целочисленное поле счётчика питания.
+  const countInput = (field, label) => (
+    <input
+      type="number"
+      name={field}
+      inputMode="numeric"
+      step={1}
+      min={0}
+      className={inputCls(classes.inputCount, field)}
+      value={editableValue(row[field])}
+      placeholder="0"
+      aria-label={`${label} — ${personLabel}`}
+      onChange={(e) => onCellChange(row._uid, field, e.target.value)}
+      {...cellFocusProps}
+    />
+  );
+
+  // Точка «правил я сейчас» рядом с полем.
+  const dot = (field) =>
+    fieldEdited(row, field) ? <span className={classes.editedDot} /> : null;
+
   return (
     <div className={rowClassName}>
+      {/* Заморозка: строка целиком не меняется при пересоздании черновика.
+          Галочка видна и в read-only — как состояние, без возможности снять. */}
+      <div className={`${classes.colFreeze} ${classes.stickyFreeze}`}>
+        <input
+          type="checkbox"
+          className={classes.freezeCheck}
+          checked={frozen}
+          disabled={!canEdit}
+          title={
+            frozen
+              ? "Строка заморожена — пересоздание черновика её не изменит"
+              : "Заморозить строку — пересоздание черновика её не изменит"
+          }
+          aria-label={`Заморозить строку — ${personLabel}`}
+          onChange={(e) => onCellChange(row._uid, "frozen", e.target.checked)}
+        />
+      </div>
+
       <div className={`${classes.colIndex} ${classes.stickyIndex}`}>{number}</div>
 
       <div className={`${classes.colPassenger} ${classes.stickyPassenger}`}>
-        <div className={classes.personName} title={row.personName || undefined}>
-          {row.personName || "—"}
-        </div>
+        {canEdit ? (
+          <div className={classes.fieldWrapWide}>
+            {textInput("personName", row.personName, {
+              label: "ФИО",
+              extra: classes.inputName,
+              title: row.personName || undefined,
+            })}
+            {dot("personName")}
+          </div>
+        ) : (
+          <div className={classes.personName} title={row.personName || undefined}>
+            <span className={valCls("personName")}>{row.personName || "—"}</span>
+          </div>
+        )}
       </div>
 
-      <div className={`${classes.colArrival}${chg("arrival")}`}>
-        {arrival.date}{" "}
-        <span
-          className={arrivalHighlight.highlighted ? classes.stayTimeWarn : undefined}
-          title={arrivalHighlight.title}
-        >
-          {arrival.time}
-        </span>
+      <div className={classes.colArrival}>
+        {canEdit ? (
+          <div className={classes.fieldWrapWide}>
+            {textInput("arrival", trimSeconds(row.arrival), {
+              label: "Дата/время заезда",
+              extra: arrivalHighlight.highlighted ? classes.inputStayWarn : "",
+              title: arrivalHighlight.title,
+            })}
+            {dot("arrival")}
+          </div>
+        ) : (
+          <span className={valCls("arrival")}>
+            {arrival.date}{" "}
+            <span
+              className={arrivalHighlight.highlighted ? classes.stayTimeWarn : undefined}
+              title={arrivalHighlight.title}
+            >
+              {arrival.time}
+            </span>
+          </span>
+        )}
       </div>
 
-      <div className={`${classes.colDeparture}${chg("departure")}`}>
-        {departure.date}{" "}
-        <span
-          className={departureHighlight.highlighted ? classes.stayTimeWarn : undefined}
-          title={departureHighlight.title}
-        >
-          {departure.time}
-        </span>
+      <div className={classes.colDeparture}>
+        {canEdit ? (
+          <div className={classes.fieldWrapWide}>
+            {textInput("departure", trimSeconds(row.departure), {
+              label: "Дата/время выезда",
+              extra: departureHighlight.highlighted ? classes.inputStayWarn : "",
+              title: departureHighlight.title,
+            })}
+            {dot("departure")}
+          </div>
+        ) : (
+          <span className={valCls("departure")}>
+            {departure.date}{" "}
+            <span
+              className={departureHighlight.highlighted ? classes.stayTimeWarn : undefined}
+              title={departureHighlight.title}
+            >
+              {departure.time}
+            </span>
+          </span>
+        )}
       </div>
 
-      <div className={`${classes.colDays}${chg("totalDays")}`}>
+      <div className={classes.colDays}>
         <div className={classes.cellField}>
           {canEdit ? (
             <div className={classes.fieldWrap}>
@@ -146,35 +253,50 @@ export default function ReportDraftRow({
                 inputMode="decimal"
                 step={0.5}
                 min={0}
-                className={
-                  needsDays ? `${classes.inputDays} ${classes.inputNeedsValue}` : classes.inputDays
-                }
+                className={inputCls(
+                  classes.inputDays,
+                  "totalDays",
+                  needsDays ? classes.inputNeedsValue : ""
+                )}
                 value={editableValue(row.totalDays)}
                 placeholder="0"
                 aria-label={`Сутки проживания — ${personLabel}`}
                 onChange={(e) => onCellChange(row._uid, "totalDays", e.target.value)}
                 {...cellFocusProps}
               />
-              {daysEdited && <span className={classes.editedDot} />}
+              {dot("totalDays")}
             </div>
           ) : (
-            <span>{formatDays(row.totalDays)}</span>
+            <span className={valCls("totalDays")}>{formatDays(row.totalDays)}</span>
           )}
           {needsDays && <span className={classes.needCaption}>нет суток</span>}
         </div>
       </div>
 
-      <div className={`${classes.colCategory}${chg("category")}`} title={row.category || undefined}>
-        {row.category || "—"}
+      <div className={classes.colCategory} title={row.category || undefined}>
+        {canEdit ? (
+          <div className={classes.fieldWrapWide}>
+            {textInput("category", row.category, { label: "Категория номера" })}
+            {dot("category")}
+          </div>
+        ) : (
+          <span className={valCls("category")}>{row.category || "—"}</span>
+        )}
       </div>
 
-      <div className={`${classes.colRoom}${chg("roomName")}`} title={row.roomName || undefined}>
-        {row.roomName || "—"}
+      <div className={classes.colRoom} title={row.roomName || undefined}>
+        {canEdit ? (
+          <div className={classes.fieldWrapWide}>
+            {textInput("roomName", row.roomName, { label: "Комната" })}
+            {dot("roomName")}
+          </div>
+        ) : (
+          <span className={valCls("roomName")}>{row.roomName || "—"}</span>
+        )}
       </div>
 
-      {/* «Вид проживания» — с кем именно делили номер. Именно из-за подселения
-          стоимость номера делится между жильцами, поэтому это не украшение,
-          а объяснение суммы в строке. */}
+      {/* «Вид проживания» — с кем именно делили номер. Не правится: соседей и
+          отрезки считает бэк из подселений, текст здесь лишь их отражение. */}
       <div
         className={cohabitants.length > 0 ? classes.colShareWith : classes.colShare}
         title={shareTitle}
@@ -193,14 +315,52 @@ export default function ReportDraftRow({
       </div>
 
       <div className={classes.colPosition} title={row.personPosition || undefined}>
-        {row.personPosition || "—"}
+        {canEdit ? (
+          <div className={classes.fieldWrapWide}>
+            {textInput("personPosition", row.personPosition, { label: "Должность" })}
+            {dot("personPosition")}
+          </div>
+        ) : (
+          <span className={valCls("personPosition")}>{row.personPosition || "—"}</span>
+        )}
       </div>
 
-      <div className={`${classes.colBreakfast}${chg("breakfastCount")}`}>{breakfastCellText(row)}</div>
-      <div className={`${classes.colLunch}${chg("lunchCount")}`}>{row.lunchCount ?? 0}</div>
-      <div className={`${classes.colDinner}${chg("dinnerCount")}`}>{row.dinnerCount ?? 0}</div>
+      {/* Завтрак: «вкл» значит «входит в цену номера» — счётчик в этом случае
+          не участвует в деньгах, и поле остаётся подписью, а не инпутом. */}
+      <div className={classes.colBreakfast}>
+        {row.breakfastIncludedInPrice ? (
+          <span className={valCls("breakfastCount")}>вкл</span>
+        ) : canEdit ? (
+          <div className={classes.fieldWrap}>
+            {countInput("breakfastCount", "Завтраки")}
+            {dot("breakfastCount")}
+          </div>
+        ) : (
+          <span className={valCls("breakfastCount")}>{row.breakfastCount ?? 0}</span>
+        )}
+      </div>
+      <div className={classes.colLunch}>
+        {canEdit ? (
+          <div className={classes.fieldWrap}>
+            {countInput("lunchCount", "Обеды")}
+            {dot("lunchCount")}
+          </div>
+        ) : (
+          <span className={valCls("lunchCount")}>{row.lunchCount ?? 0}</span>
+        )}
+      </div>
+      <div className={classes.colDinner}>
+        {canEdit ? (
+          <div className={classes.fieldWrap}>
+            {countInput("dinnerCount", "Ужины")}
+            {dot("dinnerCount")}
+          </div>
+        ) : (
+          <span className={valCls("dinnerCount")}>{row.dinnerCount ?? 0}</span>
+        )}
+      </div>
 
-      <div className={`${classes.colMeal}${chg("totalMealCost")}`}>
+      <div className={classes.colMeal}>
         <div className={classes.cellField}>
           {canEdit ? (
             <div className={classes.fieldWrap}>
@@ -210,24 +370,22 @@ export default function ReportDraftRow({
                 inputMode="decimal"
                 step={1}
                 min={0}
-                className={
-                  mealEdited ? `${classes.inputMeal} ${classes.inputMealEdited}` : classes.inputMeal
-                }
+                className={inputCls(classes.inputMeal, "totalMealCost")}
                 value={editableValue(row.totalMealCost)}
                 placeholder="0"
                 aria-label={`Стоимость питания — ${personLabel}`}
                 onChange={(e) => onCellChange(row._uid, "totalMealCost", e.target.value)}
                 {...cellFocusProps}
               />
-              {mealEdited && <span className={classes.editedDot} />}
+              {dot("totalMealCost")}
             </div>
           ) : (
-            <span>{formatMoney(row.totalMealCost)}</span>
+            <span className={valCls("totalMealCost")}>{formatMoney(row.totalMealCost)}</span>
           )}
         </div>
       </div>
 
-      <div className={`${classes.colPrice}${chg("pricePerDay")}`}>
+      <div className={classes.colPrice}>
         <div className={classes.cellField}>
           {canEdit ? (
             <div className={classes.fieldWrap}>
@@ -237,42 +395,57 @@ export default function ReportDraftRow({
                 inputMode="decimal"
                 step={1}
                 min={0}
-                className={
-                  needsPrice
-                    ? `${classes.inputPrice} ${classes.inputNeedsValue}`
-                    : classes.inputPrice
-                }
+                className={inputCls(
+                  classes.inputPrice,
+                  "pricePerDay",
+                  needsPrice ? classes.inputNeedsValue : ""
+                )}
                 value={editableValue(row.pricePerDay)}
                 placeholder="0"
                 aria-label={`Цена за сутки — ${personLabel}`}
                 onChange={(e) => onCellChange(row._uid, "pricePerDay", e.target.value)}
                 {...cellFocusProps}
               />
-              {priceEdited && <span className={classes.editedDot} />}
+              {dot("pricePerDay")}
             </div>
           ) : (
-            <span>{formatMoney(row.pricePerDay)}</span>
+            <span className={valCls("pricePerDay")}>{formatMoney(row.pricePerDay)}</span>
           )}
           {needsPrice && <span className={classes.needCaption}>нет цены</span>}
         </div>
       </div>
 
-      <div className={`${classes.colLiving}${chg("totalLivingCost")}`} title={livingCostTooltip(row, isEdited)}>
+      {/* «Гостиница» стоит перед стоимостью проживания (просьба заказчика).
+          Не правится: имя гостиницы связывает строку с закупкой и группировкой,
+          свободный текст тут разъехался бы с реестром. */}
+      <div className={classes.colHotel} title={row.hotelName || undefined}>
+        <span className={valCls("hotelName")}>{row.hotelName || "—"}</span>
+      </div>
+
+      <div className={classes.colLiving} title={livingCostTooltip(row, isEdited)}>
         <span
-          className={
-            livingCost === 0 ? `${classes.livingValue} ${classes.livingZero}` : classes.livingValue
-          }
+          className={[
+            classes.livingValue,
+            livingCost === 0 ? classes.livingZero : "",
+            chg("totalLivingCost") ? classes.valueChanged : "",
+          ]
+            .filter(Boolean)
+            .join(" ")}
         >
           {formatMoney(row.totalLivingCost)}
         </span>
       </div>
 
-      <div className={`${classes.colTotal}${chg("totalDebt")}`}>
-        <span className={classes.totalValue}>{formatMoney(row.totalDebt)}</span>
-      </div>
-
-      <div className={`${classes.colHotel}${chg("hotelName")}`} title={row.hotelName || undefined}>
-        {row.hotelName || "—"}
+      <div className={classes.colTotal}>
+        <span
+          className={
+            chg("totalDebt")
+              ? `${classes.totalValue} ${classes.valueChanged}`
+              : classes.totalValue
+          }
+        >
+          {formatMoney(row.totalDebt)}
+        </span>
       </div>
 
       <div className={classes.colActions}>

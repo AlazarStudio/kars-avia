@@ -269,7 +269,20 @@ test("sumTotalDebt adds up and survives junk", () => {
 });
 
 test("editable fields are exactly the three agreed ones", () => {
-  assert.deepEqual(EDITABLE_FIELDS, ["totalDays", "pricePerDay", "totalMealCost"]);
+  assert.deepEqual(EDITABLE_FIELDS, [
+    "personName",
+    "arrival",
+    "departure",
+    "totalDays",
+    "category",
+    "roomName",
+    "personPosition",
+    "breakfastCount",
+    "lunchCount",
+    "dinnerCount",
+    "totalMealCost",
+    "pricePerDay",
+  ]);
 });
 
 test("save payload limit mirrors JSON_BODY_LIMIT=2mb on the backend", () => {

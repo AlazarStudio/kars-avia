@@ -97,6 +97,15 @@ export default function ReportDraftTable({
           с Excel без перевода. Порядок тоже её, кроме «Сотрудника» (закреплён
           вторым ради прокрутки) и «Цены/сут.» (поля редактора в форме нет). */}
       <div className={classes.headRow}>
+        {/* Колонка заморозки: галочка фиксирует строку, пересоздание её не
+            меняет. Заголовок — иконка-замок смыслом не легла бы (закреплена
+            не запись, а расчёт), поэтому короткая подпись. */}
+        <div
+          className={`${classes.colFreeze} ${classes.stickyFreeze}`}
+          title="Заморозить строку — пересоздание черновика её не изменит"
+        >
+          Фикс.
+        </div>
         <div className={`${classes.colIndex} ${classes.stickyIndex}`}>№</div>
         <div className={`${classes.colPassenger} ${classes.stickyPassenger}`}>Сотрудник</div>
         <div className={classes.colArrival}>Дата/время заезда</div>
@@ -111,9 +120,11 @@ export default function ReportDraftTable({
         <div className={classes.colDinner}>Ужин</div>
         <div className={classes.colMeal}>Стоимость питания</div>
         <div className={classes.colPrice}>Цена/сут.</div>
+        {/* «Гостиница» перед стоимостью проживания — просьба заказчика;
+            в файле выгрузки порядок печатной формы не меняется. */}
+        <div className={classes.colHotel}>Гостиница</div>
         <div className={classes.colLiving}>Стоимость проживания</div>
         <div className={classes.colTotal}>Итоговая стоимость</div>
-        <div className={classes.colHotel}>Гостиница</div>
         <div className={classes.colActions} />
       </div>
 
