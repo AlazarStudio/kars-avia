@@ -7,6 +7,7 @@ import {
   ADD_PASSENGER_REQUEST_SAVED_PERSON,
   UPDATE_PASSENGER_REQUEST_SAVED_PERSON,
   REMOVE_PASSENGER_REQUEST_SAVED_PERSON,
+  MERGE_PASSENGER_REQUEST_SAVED_PEOPLE,
   ADD_PASSENGER_REQUEST_SAVED_PEOPLE,
   ADD_PASSENGER_REQUEST_FILES,
   SET_PASSENGER_REQUEST_GROUP,
@@ -41,6 +42,7 @@ import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import ManifestImportModal from "../ManifestImportModal/ManifestImportModal";
 import { manifestNameKey, isSameFlight } from "../../../../utils/parseManifestXlsx";
+import { cleanFullName } from "../../../../utils/manifestCore";
 import { buildManifestUpload } from "../fapManifestFiles";
 import { plural } from "../../../../utils/plural";
 import { useToast } from "../../../../contexts/ToastContext";
@@ -180,6 +182,8 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
   const [groupModal, setGroupModal] = useState(null);
   const [tab, setTab] = useState("passengers");
   const [dismissedSuggestions, setDismissedSuggestions] = useState(() => new Set());
+  // Скрытые группы дублей: полные тёзки бывают и легитимно — «Скрыть» на сессию.
+  const [dismissedDupes, setDismissedDupes] = useState(() => new Set());
 
   const [addPerson] = useMutation(ADD_PASSENGER_REQUEST_SAVED_PERSON, ctx);
   const [updatePerson] = useMutation(UPDATE_PASSENGER_REQUEST_SAVED_PERSON, ctx);
@@ -189,6 +193,7 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
   const [addFiles] = useMutation(ADD_PASSENGER_REQUEST_FILES, ctx);
   const [saveGroup] = useMutation(SET_PASSENGER_REQUEST_GROUP, ctx);
   const [dropGroup] = useMutation(REMOVE_PASSENGER_REQUEST_GROUP, ctx);
+  const [mergePeople] = useMutation(MERGE_PASSENGER_REQUEST_SAVED_PEOPLE, ctx);
 
   const savedPassengers = request?.savedPassengers || [];
   const crewMembers = request?.crewMembers || [];
@@ -265,6 +270,70 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
   const visibleSuggestions = canEdit
     ? suggestions.filter((s) => !dismissedSuggestions.has(s.key))
     : [];
+
+  // Дубли скан + манифест: один человек заведён дважды (рукой со скана и
+  // импортом манифеста). Ключ — тот же normalizeFullNameKey, что дедупит импорт,
+  // плюс срез хвостовых MR/MRS: «GORBACHEVA ANNA MRS» ≡ «Gorbacheva Anna».
+  const duplicateGroups = useMemo(() => {
+    const byKey = new Map();
+    savedPassengers.forEach((p) => {
+      if (!p?.personId) return;
+      const key = manifestNameKey(cleanFullName(p.fullName));
+      if (!key) return;
+      if (!byKey.has(key)) byKey.set(key, []);
+      byKey.get(key).push(p);
+    });
+    return [...byKey.entries()]
+      .filter(([, members]) => members.length > 1)
+      .map(([key, members]) => {
+        // Оставляем самую заполненную запись (телефон, место, требование к
+        // размещению); при равенстве — первую по порядку реестра.
+        const filled = (p) =>
+          (p.phone ? 1 : 0) + (p.seat ? 1 : 0) + (p.placementRequirement ? 1 : 0);
+        const keep = members.reduce((best, p) => (filled(p) > filled(best) ? p : best));
+        return { key, members, keep };
+      });
+  }, [savedPassengers]);
+
+  const visibleDuplicates = canEdit
+    ? duplicateGroups.filter((g) => !dismissedDupes.has(g.key))
+    : [];
+
+  const dismissDuplicate = (key) =>
+    setDismissedDupes((prev) => new Set(prev).add(key));
+
+  const handleMergeDuplicates = async (group) => {
+    const mergeIds = group.members
+      .filter((p) => p.personId !== group.keep.personId)
+      .map((p) => p.personId);
+    if (!mergeIds.length) return;
+    const ok = await confirm({
+      message:
+        `Объединить ${group.members.length} ${plural(group.members.length, ["запись", "записи", "записей"])} ` +
+        `«${group.keep.fullName}» в одну? Услуги и группы перейдут на оставшуюся ` +
+        `запись, лишние удалятся. Затронутые отчёты гостиниц будут распроведены — ` +
+        `их придётся провести заново. Действие необратимо.`,
+      confirmText: "Объединить",
+      cancelText: "Отмена",
+    });
+    if (!ok) return;
+    try {
+      setSaving(true);
+      await mergePeople({
+        variables: {
+          requestId: request.id,
+          keepPersonId: group.keep.personId,
+          mergePersonIds: mergeIds,
+        },
+      });
+      success("Записи объединены");
+      onRefetch?.();
+    } catch (err) {
+      notifyError(err?.graphQLErrors?.[0]?.message || "Ошибка при объединении");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   // Дети и инфанты считаются раздельно: у них разные правила начисления
   // проживания (ребёнок — 50%, инфант — бесплатно), поэтому общее число
@@ -942,6 +1011,45 @@ export default function FapRegistry({ request, canEdit = false, onRefetch }) {
               </button>
             )}
           </div>
+
+          {visibleDuplicates.length > 0 && (
+            <div className={classes.suggestBlock}>
+              <div className={classes.suggestHead}>
+                <span className={classes.suggestTitle}>
+                  Похоже на дубли: {visibleDuplicates.length}
+                </span>
+              </div>
+              {visibleDuplicates.map((g) => (
+                <div key={g.key} className={classes.suggestCard}>
+                  <div className={classes.rowMain}>
+                    <div className={classes.rowName}>
+                      <span className={classes.rowNameText}>{g.keep.fullName}</span>
+                    </div>
+                    <div className={classes.rowMeta}>
+                      {g.members.length}{" "}
+                      {plural(g.members.length, ["запись", "записи", "записей"])} с
+                      одинаковым ФИО — обычно скан + манифест
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    className={classes.bulkBtn}
+                    onClick={() => handleMergeDuplicates(g)}
+                    disabled={saving}
+                  >
+                    Объединить
+                  </button>
+                  <button
+                    type="button"
+                    className={classes.clearSelBtn}
+                    onClick={() => dismissDuplicate(g.key)}
+                  >
+                    Скрыть
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
 
           {canEdit && selectedPersons.length >= 2 && (
             <div className={classes.selectionBar}>

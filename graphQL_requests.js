@@ -2291,6 +2291,16 @@ export const REMOVE_PASSENGER_REQUEST_SAVED_PERSON = gql`
   }
 `;
 
+// Слияние дублей реестра (скан + манифест): keep остаётся, merge переносятся в
+// него по всем услугам и группам, затронутые отчёты гостиниц распроводятся.
+export const MERGE_PASSENGER_REQUEST_SAVED_PEOPLE = gql`
+  mutation MergePassengerRequestSavedPeople($requestId: ID!, $keepPersonId: ID!, $mergePersonIds: [ID!]!) {
+    mergePassengerRequestSavedPeople(requestId: $requestId, keepPersonId: $keepPersonId, mergePersonIds: $mergePersonIds) {
+      id
+    }
+  }
+`;
+
 export const SET_PASSENGER_REQUEST_GROUP = gql`
   mutation SetPassengerRequestGroup($requestId: ID!, $group: PassengerRequestGroupInput!) {
     setPassengerRequestGroup(requestId: $requestId, group: $group) {
