@@ -119,8 +119,14 @@ test("удаление отчёта — отдельный переключат�
   // В rows его класть нельзя: «Взаимодействие с разделом» включает все строки
   // разом, и необратимое удаление приезжало бы вместе с созданием.
   const reports = ACCESS_SECTIONS.find((s) => s.key === "reports");
-  assert.deepEqual((reports.extras || []).map((e) => e.key), ["delete"]);
+  // Настройка редактируемых полей черновика — тоже extras: выдаётся осознанно,
+  // по умолчанию выключена, «Взаимодействием с разделом» не включается.
+  assert.deepEqual(
+    (reports.extras || []).map((e) => e.key),
+    ["delete", "fieldSettings"]
+  );
   assert.equal(reports.extras[0].label, "Удаление");
+  assert.equal(reports.extras[1].label, "Настройка редактируемых полей");
   assert.equal(reports.rows.some((r) => r.key === "delete"), false);
 });
 

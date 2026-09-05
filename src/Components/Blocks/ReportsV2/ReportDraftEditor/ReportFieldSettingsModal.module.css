@@ -1,0 +1,115 @@
+/* Шестерёнка редактора черновика. Оверлей и карточка — как у
+   ReportDraftDialog, строки-переключатели — как в панели доступов. */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(25, 29, 48, 0.34);
+  padding: 20px;
+}
+
+.card {
+  width: 100%;
+  max-width: 440px;
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 20px 60px rgba(25, 29, 48, 0.28);
+  padding: 24px 26px 20px;
+  box-sizing: border-box;
+  max-height: calc(100vh - 60px);
+  display: flex;
+  flex-direction: column;
+}
+
+.title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #191919;
+}
+
+.subtitle {
+  margin-top: 6px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #8B90A5;
+}
+
+.list {
+  margin-top: 14px;
+  overflow-y: auto;
+  border: 1px solid #EEF1F8;
+  border-radius: 12px;
+  padding: 4px 14px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 42px;
+  border-bottom: 1px solid #F5F7FC;
+}
+.row:last-child {
+  border-bottom: none;
+}
+
+.rowLabel {
+  font-size: 14px;
+  color: #2A2E45;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.spacer {
+  flex: 1;
+}
+
+.linkBtn {
+  border: none;
+  background: none;
+  padding: 0;
+  font-size: 13.5px;
+  color: #0057C3;
+  cursor: pointer;
+}
+.linkBtn:disabled {
+  color: #C3C7D6;
+  cursor: default;
+}
+
+.cancelBtn,
+.primaryBtn {
+  height: 38px;
+  padding: 0 18px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.cancelBtn:disabled,
+.primaryBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.cancelBtn {
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  color: #2A2E45;
+}
+
+.primaryBtn {
+  border: none;
+  background: #0057C3;
+  color: #fff;
+}

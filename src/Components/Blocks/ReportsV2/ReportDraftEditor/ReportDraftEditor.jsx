@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import PropTypes from "prop-types";
-import { useQuery } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import classes from "./ReportDraftEditor.module.css";
 import useReportDraft from "./useReportDraft";
 import useEditingPins from "./useEditingPins";
@@ -13,10 +13,20 @@ import ReportDraftFooter from "./ReportDraftFooter";
 import ReportDraftDialog from "./ReportDraftDialog";
 import ReportDraftPreview from "./ReportDraftPreview";
 import ReportDraftSummary from "./ReportDraftSummary";
+import ReportFieldSettingsModal from "./ReportFieldSettingsModal";
 import { DRAFT_FILTERS, pluralizeDays, pluralizeRows, rowMatchesSearch } from "./reportDraftEditorUtils";
 import { useToast } from "../../../../contexts/ToastContext";
-import { convertToDate, convertToDateNew, decodeJWT, GET_REPORT_PARTIAL_DAY_SETTINGS, getCookie } from "../../../../../graphQL_requests";
-import { measureSavePayload, rowHasWarning } from "../reportDraftRows";
+import {
+  convertToDate,
+  convertToDateNew,
+  decodeJWT,
+  GET_AIRLINE_POSITIONS,
+  GET_REPORT_PARTIAL_DAY_SETTINGS,
+  MY_REPORT_EDITABLE_FIELDS,
+  SET_MY_REPORT_EDITABLE_FIELDS,
+  getCookie,
+} from "../../../../../graphQL_requests";
+import { EDITABLE_FIELDS, measureSavePayload, rowHasWarning } from "../reportDraftRows";
 import { isDraftStale, getDraftAgeDays } from "../reportDraftAge";
 import { resolveDraftPartialDayRules } from "../reportRules";
 import { roles } from "../../../../roles";
@@ -34,6 +44,7 @@ export default function ReportDraftEditor({
   onSubmitted,
   onUnsubmitted,
   airports,
+  accessMenu,
   mode = "edit",
 }) {
   const {
@@ -56,6 +67,7 @@ export default function ReportDraftEditor({
     resetRow,
     resetAll,
     fieldEdited,
+    snapshotValue,
     save,
     confirmAndExport,
     submit,
@@ -113,6 +125,59 @@ export default function ReportDraftEditor({
   // каждом обновлении. Ошибка запроса тоже считается ответом: правил нет,
   // работаем по дефолтам.
   const rulesKnown = Boolean(rulesData) || !rulesLoading;
+
+  // Личная настройка редактируемых полей. Хранится у пользователя на сервере
+  // и потому одинакова на всех его устройствах; null — дефолт (все поля).
+  const { data: fieldsData, refetch: refetchMyFields } = useQuery(MY_REPORT_EDITABLE_FIELDS, {
+    fetchPolicy: "cache-and-network",
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const myEditableFields = fieldsData?.myReportEditableFields ?? null;
+  const editableFields = useMemo(
+    () => new Set(myEditableFields ?? EDITABLE_FIELDS),
+    [myEditableFields]
+  );
+
+  // Шестерёнка настройки — только тем, кому должность выдала право
+  // reportFieldSettings (супер — всегда, как везде в системе).
+  const canFieldSettings =
+    mode === "edit" &&
+    (me?.role === roles.superAdmin || Boolean(accessMenu?.reportFieldSettings));
+  const [fieldSettingsOpen, setFieldSettingsOpen] = useState(false);
+  const [savingFieldSettings, setSavingFieldSettings] = useState(false);
+  const [setMyReportEditableFields] = useMutation(SET_MY_REPORT_EDITABLE_FIELDS, {
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+
+  const handleSaveFieldSettings = async (fields) => {
+    setSavingFieldSettings(true);
+    try {
+      await setMyReportEditableFields({ variables: { fields } });
+      await refetchMyFields();
+      success("Настройка полей сохранена");
+      setFieldSettingsOpen(false);
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Не удалось сохранить настройку");
+    } finally {
+      setSavingFieldSettings(false);
+    }
+  };
+
+  // Справочник должностей — для выпадающего списка в колонке «Должность».
+  // Только в режиме правки: читателю список не нужен, а у стороны АК может
+  // не быть права на этот запрос.
+  const { data: positionsData } = useQuery(GET_AIRLINE_POSITIONS, {
+    fetchPolicy: "cache-first",
+    skip: mode !== "edit",
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const positionNames = useMemo(
+    () =>
+      (positionsData?.getAirlinePositions || [])
+        .map((p) => p?.name)
+        .filter(Boolean),
+    [positionsData]
+  );
 
   const [filter, setFilter] = useState(DRAFT_FILTERS.ALL);
   const [search, setSearch] = useState("");
@@ -463,6 +528,7 @@ export default function ReportDraftEditor({
         canConfirm={canConfirm}
         downloadUrl={draft.savedReport?.url}
         onPreview={() => setPreviewOpen(true)}
+        onFieldSettings={canFieldSettings ? () => setFieldSettingsOpen(true) : undefined}
         onRecreate={handleRecreateClick}
         onDelete={handleDeleteDraftClick}
         onSave={runSave}
@@ -507,6 +573,9 @@ export default function ReportDraftEditor({
             displayedRows={displayedRows}
             editedUids={editedUids}
             fieldEdited={fieldEdited}
+            snapshotValue={snapshotValue}
+            editableFields={editableFields}
+            positions={positionNames}
             onCellChange={handleCellChange}
             onCellFocus={hold}
             onCellBlur={release}
@@ -629,6 +698,14 @@ export default function ReportDraftEditor({
         localTotal={total}
         unsavedCount={unsavedRowsCount}
       />
+
+      <ReportFieldSettingsModal
+        open={fieldSettingsOpen}
+        fields={myEditableFields}
+        saving={savingFieldSettings}
+        onSave={handleSaveFieldSettings}
+        onClose={() => setFieldSettingsOpen(false)}
+      />
     </div>
     </>
   );
@@ -642,6 +719,9 @@ ReportDraftEditor.propTypes = {
   onSubmitted: PropTypes.func.isRequired,
   onUnsubmitted: PropTypes.func.isRequired,
   airports: PropTypes.array,
+  // Эффективное accessMenu текущего пользователя — для права на шестерёнку
+  // настройки редактируемых полей (reportFieldSettings).
+  accessMenu: PropTypes.object,
   // review — экран авиакомпании: читает отправленный ей черновик и
   // подтверждает его, но ничего не правит.
   mode: PropTypes.oneOf(["edit", "view", "review"]),

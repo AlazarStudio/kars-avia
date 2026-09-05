@@ -67,6 +67,7 @@ export default function AccessPermissionsPanel({
         access: b(accessMenu?.reportMenu),
         create: b(accessMenu?.reportCreate),
         delete: b(accessMenu?.reportDelete),
+        fieldSettings: b(accessMenu?.reportFieldSettings),
       },
       organization: {
         access: b(accessMenu?.organizationMenu),

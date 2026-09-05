@@ -43,6 +43,25 @@ export function trimSeconds(value) {
 }
 
 /**
+ * Строка дат черновика "DD.MM.YYYY HH:MM[:SS]" → значение для
+ * `input[type=datetime-local]` ("YYYY-MM-DDTHH:mm"). Пустое/неразобранное — "".
+ */
+export function reportDateToInputValue(value) {
+  const m = /^(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2})/.exec(value || "");
+  return m ? `${m[3]}-${m[2]}-${m[1]}T${m[4]}:${m[5]}` : "";
+}
+
+/**
+ * Обратно: значение datetime-local → строка контракта черновика.
+ * Секунды дописываются нулями — бэк отдаёт даты с ":SS", и без них строка,
+ * совпадающая по сути, считалась бы правкой. Пустой ввод — "".
+ */
+export function inputValueToReportDate(value) {
+  const m = /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/.exec(value || "");
+  return m ? `${m[3]}.${m[2]}.${m[1]} ${m[4]}:${m[5]}:00` : "";
+}
+
+/**
  * Разбивает отформатированную строку "DD.MM.YYYY HH:MM[:SS]" на дату и время.
  * Строка приходит с бэка уже в этом виде (не ISO) — см. trimSeconds.
  *

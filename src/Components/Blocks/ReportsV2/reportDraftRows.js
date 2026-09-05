@@ -29,6 +29,22 @@ export const DRAFT_ROW_FIELDS = [
  * весь черновик гибко настраивается в контексте отчёта, данных системы правки
  * не меняют) — плюс структурный «вид проживания» (shareSegments считает бэк).
  */
+/** Подписи редактируемых полей — для шестерёнки настроек редактора. */
+export const REPORT_FIELD_LABELS = {
+  personName: "Сотрудник (ФИО)",
+  arrival: "Дата/время заезда",
+  departure: "Дата/время выезда",
+  totalDays: "Кол-во суток",
+  category: "Категория номера",
+  roomName: "Комната",
+  personPosition: "Должность",
+  breakfastCount: "Завтрак",
+  lunchCount: "Обед",
+  dinnerCount: "Ужин",
+  totalMealCost: "Стоимость питания",
+  pricePerDay: "Цена/сут.",
+};
+
 export const EDITABLE_FIELDS = [
   "personName",
   "arrival",

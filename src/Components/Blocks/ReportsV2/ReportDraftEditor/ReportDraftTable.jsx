@@ -17,6 +17,9 @@ export default function ReportDraftTable({
   displayedRows,
   editedUids,
   fieldEdited,
+  snapshotValue,
+  editableFields,
+  positions,
   onCellChange,
   onCellFocus,
   onCellBlur,
@@ -46,6 +49,9 @@ export default function ReportDraftTable({
       number={rowNumbers.get(row._uid)}
       isEdited={editedUids.has(row._uid)}
       fieldEdited={fieldEdited}
+      snapshotValue={snapshotValue}
+      editableFields={editableFields}
+      positions={positions}
       onCellChange={onCellChange}
       onCellFocus={onCellFocus}
       onCellBlur={onCellBlur}
@@ -139,6 +145,9 @@ ReportDraftTable.propTypes = {
   displayedRows: PropTypes.array.isRequired,
   editedUids: PropTypes.instanceOf(Set).isRequired,
   fieldEdited: PropTypes.func.isRequired,
+  snapshotValue: PropTypes.func,
+  editableFields: PropTypes.instanceOf(Set),
+  positions: PropTypes.arrayOf(PropTypes.string),
   onCellChange: PropTypes.func.isRequired,
   onCellFocus: PropTypes.func,
   onCellBlur: PropTypes.func,

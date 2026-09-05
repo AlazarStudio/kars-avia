@@ -1246,6 +1246,7 @@ export const GET_AIRLINE_USERS_POSITIONS = gql`
         reportMenu
         reportCreate
         reportDelete
+        reportFieldSettings
         userMenu
         userCreate
         userUpdate
@@ -1315,6 +1316,7 @@ export const GET_DISPATCHER_POSITIONS = gql`
         reportMenu
         reportCreate
         reportDelete
+        reportFieldSettings
         userMenu
         userCreate
         userUpdate
@@ -1393,6 +1395,7 @@ export const GET_USER_EFFECTIVE_ACCESS_MENU = gql`
         reportMenu
         reportCreate
         reportDelete
+        reportFieldSettings
         userMenu
         userCreate
         userUpdate
@@ -5568,6 +5571,7 @@ export const GET_AIRLINES = gql`
             reportMenu
             reportCreate
             reportDelete
+            reportFieldSettings
             userMenu
             userCreate
             userUpdate
@@ -5762,6 +5766,7 @@ export const GET_AIRLINE = gql`
           reportMenu
           reportCreate
           reportDelete
+          reportFieldSettings
           userMenu
           userCreate
           userUpdate
@@ -6098,6 +6103,7 @@ export const GET_AIRLINE_COMPANY = gql`
           reportMenu
           reportCreate
           reportDelete
+          reportFieldSettings
           userMenu
           userCreate
           userUpdate
@@ -6230,6 +6236,7 @@ export const CREATE_AIRLINE_DEPARTMERT = gql`
           reportMenu
           reportCreate
           reportDelete
+          reportFieldSettings
           userMenu
           userCreate
           userUpdate
@@ -6391,6 +6398,7 @@ export const GET_AIRLINE_DEPARTMENT = gql`
         reportMenu
         reportCreate
         reportDelete
+        reportFieldSettings
         userMenu
         userCreate
         userUpdate
@@ -6540,6 +6548,7 @@ export const GET_DISPATCHER_DEPARTMENTS = gql`
           reportMenu
           reportCreate
           reportDelete
+          reportFieldSettings
           userMenu
           userCreate
           userUpdate
@@ -7000,6 +7009,10 @@ export const GET_REPORT_DRAFT = gql`
         hotelName
         frozen
         changedKeys
+        changedFrom {
+          key
+          value
+        }
       }
     }
   }
@@ -7090,6 +7103,10 @@ export const UPDATE_REPORT_DRAFT = gql`
         hotelName
         frozen
         changedKeys
+        changedFrom {
+          key
+          value
+        }
       }
     }
   }
@@ -7137,8 +7154,27 @@ export const RECREATE_REPORT_DRAFT = gql`
         hotelName
         frozen
         changedKeys
+        changedFrom {
+          key
+          value
+        }
       }
     }
+  }
+`;
+
+// Личная настройка редактора черновика: какие поля строк правятся. Хранится
+// у пользователя на сервере (не в localStorage) — едет за ним на любое
+// устройство. null — дефолт (все редактируемые поля), [] — всё только чтение.
+export const MY_REPORT_EDITABLE_FIELDS = gql`
+  query MyReportEditableFields {
+    myReportEditableFields
+  }
+`;
+
+export const SET_MY_REPORT_EDITABLE_FIELDS = gql`
+  mutation SetMyReportEditableFields($fields: [String!]) {
+    setMyReportEditableFields(fields: $fields)
   }
 `;
 

@@ -411,6 +411,7 @@ export default function ReportsV2({ user, accessMenu }) {
           draftId={draftId}
           mode={draftMode}
           airports={airports}
+          accessMenu={accessMenu}
           onBack={handleDraftBack}
           onDraftReplaced={handleDraftReplaced}
           onConfirmed={handleDraftConfirmed}

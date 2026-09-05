@@ -12,10 +12,10 @@
    min-width строки — сумма фиксированных колонок + минимума резиновой
    "Пассажир" + горизонтальные паддинги строки:
      фиксированные
-       40+44+164+148+106+152+240+200+120+84+78+78+140+124+160+140+176+66 = 2260
+       40+44+196+184+122+152+240+200+120+84+78+78+140+124+160+140+176+66 = 2344
      Сотрудник (min)                                                  =  210
      паддинги строки  24 + 24                                         =   48
-     итого                                                            = 2518
+     итого                                                            = 2602
 
    Ширины пересчитаны 12.08.2026 по замеру реальных значений на черновике
    в 126 строк: у каждой колонки места под текст с запасом, зазор между
@@ -39,7 +39,7 @@
   display: flex;
   align-items: center;
   padding: 0 24px;
-  min-width: 2518px;
+  min-width: 2602px;
 }
 
 /* Заголовки взяты из печатной формы и длинные («Стоимость проживания»),
@@ -61,7 +61,7 @@
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
-  min-width: 2518px;
+  min-width: 2602px;
 }
 
 /* z-index: 0 обязателен, а не украшение. Без него `position: relative` не
@@ -89,6 +89,14 @@
   --row-stripe: transparent;
 }
 
+/* Строка в группе совместного проживания — подсвечена ВСЕГДА, слабым тоном.
+   Определена ПЕРВОЙ среди состояний: предупреждение/заморозка/правка ниже
+   перебивают её (равная специфичность, побеждает порядок в файле), а
+   наведение на группу (.rowClusterMatch, стоит последней) — усиливает. */
+.rowInCluster {
+  --row-bg: #F5F8FE;
+}
+
 .rowWarning {
   --row-bg: #FFFCF6;
   --row-stripe: #E09A3A;
@@ -111,7 +119,7 @@
    перебивать фон предупреждения и правки: пока курсор в группе, важнее
    видеть её целиком. */
 .rowClusterMatch {
-  --row-bg: #EFF4FE;
+  --row-bg: #E7EFFC;
 }
 
 /* Колонки — общие для шапки и строк, задают порядок и ширину (flex-basis).
@@ -197,20 +205,21 @@
 }
 
 /* Первая колонка за закреплённой зоной: padding-left отодвигает дату от
-   границы, ширина при этом оставляет тексту те же 128px. */
+   границы. Ширины дат расширены под input[type=datetime-local] — ему нужно
+   ~170px на значение с иконкой календаря. */
 .colArrival {
-  flex-basis: 164px;
+  flex-basis: 196px;
   padding-left: 16px;
 }
 
 .colDeparture {
-  flex-basis: 148px;
+  flex-basis: 184px;
 }
 
 /* padding-left отделяет поле ввода от блока дат — так же, как дата отделена
    от закреплённой зоны. */
 .colDays {
-  flex-basis: 106px;
+  flex-basis: 122px;
   padding-left: 12px;
   display: flex;
   justify-content: center;
@@ -378,7 +387,7 @@
    начало зоны 147).
 
    Псевдоэлемент привязан к самой закреплённой ячейке, поэтому едет вместе
-   с ней и закрывает полосу тем же фоном. Ширины колонок и сумма 2518px
+   с ней и закрывает полосу тем же фоном. Ширины колонок и сумма 2602px
    не затрагиваются: элемент выведен из потока. */
 .stickyFreeze::before {
   content: "";
@@ -409,7 +418,7 @@
    PMS (src/Components/HotelPMS/components/Timeline/Timeline.module.css:227).
    Ширину строки линия не меняет: у колонок
    box-sizing: border-box (:134), поэтому 1px съедается изнутри
-   flex-basis, а не добавляется к нему, и min-width: 2518px остаётся верен. */
+   flex-basis, а не добавляется к нему, и min-width: 2602px остаётся верен. */
 .stickyPassenger {
   left: 108px;
   border-right: 1px solid #E8EDF3;
@@ -514,8 +523,9 @@
   min-width: 0;
 }
 
+/* 78, а не 62: «22,5» с нецелой половиной суток в 62 не влезало. */
 .inputDays {
-  width: 62px;
+  width: 78px;
 }
 
 .inputPrice {
@@ -545,6 +555,39 @@
   border-radius: 50%;
   background: #0057C3;
   border: 2px solid #fff;
+}
+
+/* Откат ОДНОГО поля: появляется при наведении на поле, живёт в том же углу,
+   что и точка правки (точка на время наведения прячется — они бы наложились).
+   Подсказка кнопки называет прежнее значение («Было: 3 — вернуть»). */
+.fieldResetBtn {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 1px solid #C9D4E8;
+  background: #fff;
+  color: #0057C3;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 0;
+  box-shadow: 0 1px 3px rgba(25, 29, 48, 0.12);
+  z-index: 1;
+}
+.fieldResetBtn:hover {
+  background: #EFF4FE;
+}
+.fieldWrap:hover .fieldResetBtn,
+.fieldWrapWide:hover .fieldResetBtn {
+  display: inline-flex;
+}
+.fieldWrap:hover .editedDot,
+.fieldWrapWide:hover .editedDot {
+  display: none;
 }
 
 .needCaption {
@@ -627,4 +670,12 @@
   box-shadow: inset 0 0 0 1px #EEDA9C;
   border-radius: 6px;
   padding: 2px 8px;
+}
+
+/* .selectChanged — то же янтарное состояние для выпадающего списка
+   (должность): красится обёртка FapSelect, у которой нет своего инпута. */
+.selectChanged {
+  border-radius: 10px;
+  background: #FFFBEB;
+  box-shadow: inset 0 0 0 1px #E0B54A;
 }

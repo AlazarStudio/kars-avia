@@ -208,6 +208,15 @@ export default function useReportDraft(draftId) {
     [snapshot]
   );
 
+  // Значение поля в snapshot — для подсказки «Было: X» и отката одного поля.
+  const snapshotValue = useCallback(
+    (uid, field) => {
+      const snapRow = snapshot.find((r) => r._uid === uid);
+      return snapRow ? snapRow[field] : undefined;
+    },
+    [snapshot]
+  );
+
   const [updateReportDraft] = useMutation(UPDATE_REPORT_DRAFT, { context: authContext });
   const [confirmReportDraft] = useMutation(CONFIRM_REPORT_DRAFT, { context: authContext });
   const [submitAirlineReportDraft] = useMutation(SUBMIT_AIRLINE_REPORT_DRAFT, {
@@ -349,6 +358,7 @@ export default function useReportDraft(draftId) {
     resetRow,
     resetAll,
     fieldEdited,
+    snapshotValue,
     save,
     confirmAndExport,
     submit,

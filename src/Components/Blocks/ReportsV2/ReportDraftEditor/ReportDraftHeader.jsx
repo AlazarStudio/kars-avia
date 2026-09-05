@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import classes from "./ReportDraftHeader.module.css";
 import RestoreIcon from "../../../../shared/icons/RestoreIcon";
 import DownloadReportIcon from "../../../../shared/icons/DownloadReportIcon";
+import SettingsIcon from "../../../../shared/icons/SettingsIcon";
 import { getMediaUrl } from "../../../../../graphQL_requests";
 
 const NO_AVATAR = "/no-avatar.png";
@@ -28,6 +29,7 @@ export default function ReportDraftHeader({
   canConfirm = false,
   downloadUrl,
   onPreview,
+  onFieldSettings,
   onRecreate,
   onDelete,
   onSave,
@@ -66,6 +68,21 @@ export default function ReportDraftHeader({
           без данных ни на что не подействуют. */}
       {loading ? null : (
       <div className={classes.actions}>
+        {/* Шестерёнка настройки редактируемых полей: показывается по наличию
+            обработчика, как «Отозвать» — право (reportFieldSettings) решает
+            вызывающий код. */}
+        {onFieldSettings && (
+          <button
+            type="button"
+            className={classes.secondaryBtn}
+            title="Настройка редактируемых полей"
+            aria-label="Настройка редактируемых полей"
+            onClick={onFieldSettings}
+          >
+            <SettingsIcon width={16} height={16} cursor="pointer" />
+          </button>
+        )}
+
         <button
           type="button"
           className={classes.secondaryBtn}
@@ -183,6 +200,8 @@ ReportDraftHeader.propTypes = {
   canConfirm: PropTypes.bool,
   downloadUrl: PropTypes.string,
   onPreview: PropTypes.func,
+  // Шестерёнка показывается по наличию обработчика (право решает родитель).
+  onFieldSettings: PropTypes.func,
   onRecreate: PropTypes.func,
   onDelete: PropTypes.func,
   onSave: PropTypes.func,

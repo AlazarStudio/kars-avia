@@ -15,6 +15,8 @@ import {
   describeShareSegments,
   listCohabitants,
   breakfastCellText,
+  reportDateToInputValue,
+  inputValueToReportDate,
 } from "./reportDraftEditorUtils.js";
 
 // Формат границ — как на стенде: "DD.MM.YYYY HH:MM:SS", уже отформатирован бэком.
@@ -242,4 +244,19 @@ test("breakfastCellText prints 'вкл' when breakfast is included in the room p
   assert.equal(breakfastCellText({ breakfastIncludedInPrice: false, breakfastCount: 2 }), "2");
   assert.equal(breakfastCellText({ breakfastIncludedInPrice: false }), "0");
   assert.equal(breakfastCellText({}), "0");
+});
+
+test("reportDateToInputValue: формат контракта → datetime-local и обратно без потерь", () => {
+  assert.equal(reportDateToInputValue("03.08.2026 19:00:00"), "2026-08-03T19:00");
+  assert.equal(reportDateToInputValue("03.08.2026 19:00"), "2026-08-03T19:00");
+  assert.equal(reportDateToInputValue(""), "");
+  assert.equal(reportDateToInputValue(null), "");
+  assert.equal(reportDateToInputValue("мусор"), "");
+
+  assert.equal(inputValueToReportDate("2026-08-03T19:00"), "03.08.2026 19:00:00");
+  assert.equal(inputValueToReportDate(""), "");
+  // Круговая поездка стабильна: строка с секундами возвращается той же —
+  // без этого нетронутая дата считалась бы правкой.
+  const original = "01.08.2026 00:10:00";
+  assert.equal(inputValueToReportDate(reportDateToInputValue(original)), original);
 });

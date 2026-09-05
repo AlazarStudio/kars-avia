@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import classes from "./ReportDraftTable.module.css";
 import RestoreIcon from "../../../../shared/icons/RestoreIcon";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
+import FapSelect from "../../FapV2/FapSelect/FapSelect";
 import { rowHasWarning, rowNeedsDays, rowNeedsPrice } from "../reportDraftRows";
 import {
   formatDays,
@@ -10,7 +11,8 @@ import {
   getDepartureHighlight,
   livingCostTooltip,
   splitDateTime,
-  trimSeconds,
+  reportDateToInputValue,
+  inputValueToReportDate,
   describeShareSegments,
   listCohabitants,
   editableValue,
@@ -39,6 +41,9 @@ export default function ReportDraftRow({
   number,
   isEdited,
   fieldEdited,
+  snapshotValue,
+  editableFields,
+  positions,
   onCellChange,
   onCellFocus,
   onCellBlur,
@@ -91,6 +96,30 @@ export default function ReportDraftRow({
   // Обёртка значения без инпута: янтарная плашка вместо фона ячейки.
   const valCls = (key) => (chg(key) ? classes.valueChanged : undefined);
 
+  // «Что было» у поля и куда его откатывать: несохранённая правка — к
+  // последнему сохранённому значению («Было»), сохранённая правка/пересборка
+  // (янтарное поле) — к расчёту сервера («Расчёт», серверный changedFrom).
+  const changedFromMap = new Map(
+    (Array.isArray(row.changedFrom) ? row.changedFrom : []).map((e) => [e.key, e.value])
+  );
+  const prevInfo = (key) => {
+    if (fieldEdited(row, key)) {
+      return { value: snapshotValue?.(row._uid, key), label: "Было" };
+    }
+    if (chg(key) && changedFromMap.has(key)) {
+      return { value: changedFromMap.get(key), label: "Расчёт" };
+    }
+    return null;
+  };
+  const fmtPrev = (v) =>
+    v === null || v === undefined || v === "" ? "пусто" : String(v);
+
+  // Подсказка на самом поле: наведи — увидишь прежнее значение.
+  const wrapTitle = (key) => {
+    const prev = canEdit ? prevInfo(key) : null;
+    return prev ? { title: `${prev.label}: ${fmtPrev(prev.value)}` } : {};
+  };
+
   const livingCost = Number(row.totalLivingCost) || 0;
 
   // Структурные данные о подселении (shareSegments) вместо разбора текстового
@@ -106,6 +135,10 @@ export default function ReportDraftRow({
 
   const frozen = Boolean(row.frozen);
 
+  // Поле правится, если правится черновик И поле включено личной настройкой
+  // (шестерёнка). Без настройки (null/undefined) редактируется всё.
+  const may = (field) => canEdit && (!editableFields || editableFields.has(field));
+
   const rowClassName = [
     classes.row,
     // Предупреждение важнее заморозки (нет цены — нет суммы), заморозка
@@ -117,7 +150,10 @@ export default function ReportDraftRow({
         : isEdited
           ? classes.rowEdited
           : "",
-    // Подсветка всей группы соседей — включается наведением на любую её строку.
+    // Строки в группе совместного проживания подсвечены ВСЕГДА (слабый тон,
+    // не перебивает предупреждение/заморозку/правку — см. порядок в CSS)…
+    cluster ? classes.rowInCluster : "",
+    // …а наведение на «вид проживания» усиливает свою группу.
     clusterHighlighted ? classes.rowClusterMatch : "",
   ]
     .filter(Boolean)
@@ -154,9 +190,31 @@ export default function ReportDraftRow({
     />
   );
 
-  // Точка «правил я сейчас» рядом с полем.
-  const dot = (field) =>
-    fieldEdited(row, field) ? <span className={classes.editedDot} /> : null;
+  // Хвост поля: точка «правил я сейчас» + кнопка отката ИМЕННО этого поля
+  // (появляется при наведении на поле, если есть куда откатывать).
+  // onMouseDown с preventDefault — чтобы клик не blur-ил инпут и строка не
+  // выпадала из закрепления useEditingPins до самого отката.
+  const fieldTail = (field) => {
+    const prev = canEdit ? prevInfo(field) : null;
+    return (
+      <>
+        {fieldEdited(row, field) && <span className={classes.editedDot} />}
+        {prev && (
+          <button
+            type="button"
+            className={classes.fieldResetBtn}
+            title={`${prev.label}: ${fmtPrev(prev.value)} — вернуть`}
+            aria-label={`Вернуть «${fmtPrev(prev.value)}» — ${personLabel}`}
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => onCellChange(row._uid, field, prev.value)}
+          >
+            <RestoreIcon width={11} height={11} color="currentColor" />
+          </button>
+        )}
+      </>
+    );
+  };
+  const dot = fieldTail;
 
   return (
     <div className={rowClassName}>
@@ -181,8 +239,8 @@ export default function ReportDraftRow({
       <div className={`${classes.colIndex} ${classes.stickyIndex}`}>{number}</div>
 
       <div className={`${classes.colPassenger} ${classes.stickyPassenger}`}>
-        {canEdit ? (
-          <div className={classes.fieldWrapWide}>
+        {may("personName") ? (
+          <div className={classes.fieldWrapWide} {...wrapTitle("personName")}>
             {textInput("personName", row.personName, {
               label: "ФИО",
               extra: classes.inputName,
@@ -198,13 +256,27 @@ export default function ReportDraftRow({
       </div>
 
       <div className={classes.colArrival}>
-        {canEdit ? (
-          <div className={classes.fieldWrapWide}>
-            {textInput("arrival", trimSeconds(row.arrival), {
-              label: "Дата/время заезда",
-              extra: arrivalHighlight.highlighted ? classes.inputStayWarn : "",
-              title: arrivalHighlight.title,
-            })}
+        {may("arrival") ? (
+          <div className={classes.fieldWrapWide} {...wrapTitle("arrival")}>
+            {/* datetime-local: календарь и время в одном поле — руками строку
+                дат не набрать. Конвертация формата контракта туда-обратно —
+                reportDateToInputValue / inputValueToReportDate. */}
+            <input
+              type="datetime-local"
+              name="arrival"
+              className={inputCls(
+                classes.inputText,
+                "arrival",
+                arrivalHighlight.highlighted ? classes.inputStayWarn : ""
+              )}
+              value={reportDateToInputValue(row.arrival)}
+              title={arrivalHighlight.title}
+              aria-label={`Дата/время заезда — ${personLabel}`}
+              onChange={(e) =>
+                onCellChange(row._uid, "arrival", inputValueToReportDate(e.target.value))
+              }
+              {...cellFocusProps}
+            />
             {dot("arrival")}
           </div>
         ) : (
@@ -221,13 +293,24 @@ export default function ReportDraftRow({
       </div>
 
       <div className={classes.colDeparture}>
-        {canEdit ? (
-          <div className={classes.fieldWrapWide}>
-            {textInput("departure", trimSeconds(row.departure), {
-              label: "Дата/время выезда",
-              extra: departureHighlight.highlighted ? classes.inputStayWarn : "",
-              title: departureHighlight.title,
-            })}
+        {may("departure") ? (
+          <div className={classes.fieldWrapWide} {...wrapTitle("departure")}>
+            <input
+              type="datetime-local"
+              name="departure"
+              className={inputCls(
+                classes.inputText,
+                "departure",
+                departureHighlight.highlighted ? classes.inputStayWarn : ""
+              )}
+              value={reportDateToInputValue(row.departure)}
+              title={departureHighlight.title}
+              aria-label={`Дата/время выезда — ${personLabel}`}
+              onChange={(e) =>
+                onCellChange(row._uid, "departure", inputValueToReportDate(e.target.value))
+              }
+              {...cellFocusProps}
+            />
             {dot("departure")}
           </div>
         ) : (
@@ -245,8 +328,8 @@ export default function ReportDraftRow({
 
       <div className={classes.colDays}>
         <div className={classes.cellField}>
-          {canEdit ? (
-            <div className={classes.fieldWrap}>
+          {may("totalDays") ? (
+            <div className={classes.fieldWrap} {...wrapTitle("totalDays")}>
               <input
                 type="number"
                 name="days"
@@ -274,8 +357,8 @@ export default function ReportDraftRow({
       </div>
 
       <div className={classes.colCategory} title={row.category || undefined}>
-        {canEdit ? (
-          <div className={classes.fieldWrapWide}>
+        {may("category") ? (
+          <div className={classes.fieldWrapWide} {...wrapTitle("category")}>
             {textInput("category", row.category, { label: "Категория номера" })}
             {dot("category")}
           </div>
@@ -285,8 +368,8 @@ export default function ReportDraftRow({
       </div>
 
       <div className={classes.colRoom} title={row.roomName || undefined}>
-        {canEdit ? (
-          <div className={classes.fieldWrapWide}>
+        {may("roomName") ? (
+          <div className={classes.fieldWrapWide} {...wrapTitle("roomName")}>
             {textInput("roomName", row.roomName, { label: "Комната" })}
             {dot("roomName")}
           </div>
@@ -315,9 +398,31 @@ export default function ReportDraftRow({
       </div>
 
       <div className={classes.colPosition} title={row.personPosition || undefined}>
-        {canEdit ? (
-          <div className={classes.fieldWrapWide}>
-            {textInput("personPosition", row.personPosition, { label: "Должность" })}
+        {may("personPosition") ? (
+          <div className={classes.fieldWrapWide} {...wrapTitle("personPosition")}>
+            {/* Должности есть в системе (справочник лётного состава) — свой
+                выпадающий список вместо свободного текста. Текущее значение,
+                которого нет в справочнике, добавляется в опции: иначе его
+                нельзя было бы даже увидеть в списке. Фолбэк на текст — когда
+                справочник не приехал. */}
+            {positions && positions.length > 0 ? (
+              <FapSelect
+                value={row.personPosition || ""}
+                onChange={(v) => onCellChange(row._uid, "personPosition", v)}
+                options={
+                  row.personPosition && !positions.includes(row.personPosition)
+                    ? [row.personPosition, ...positions]
+                    : positions
+                }
+                placeholder="—"
+                accent="#0057C3"
+                size="compact"
+                className={chg("personPosition") ? classes.selectChanged : undefined}
+                title={`Должность — ${personLabel}`}
+              />
+            ) : (
+              textInput("personPosition", row.personPosition, { label: "Должность" })
+            )}
             {dot("personPosition")}
           </div>
         ) : (
@@ -330,8 +435,8 @@ export default function ReportDraftRow({
       <div className={classes.colBreakfast}>
         {row.breakfastIncludedInPrice ? (
           <span className={valCls("breakfastCount")}>вкл</span>
-        ) : canEdit ? (
-          <div className={classes.fieldWrap}>
+        ) : may("breakfastCount") ? (
+          <div className={classes.fieldWrap} {...wrapTitle("breakfastCount")}>
             {countInput("breakfastCount", "Завтраки")}
             {dot("breakfastCount")}
           </div>
@@ -340,8 +445,8 @@ export default function ReportDraftRow({
         )}
       </div>
       <div className={classes.colLunch}>
-        {canEdit ? (
-          <div className={classes.fieldWrap}>
+        {may("lunchCount") ? (
+          <div className={classes.fieldWrap} {...wrapTitle("lunchCount")}>
             {countInput("lunchCount", "Обеды")}
             {dot("lunchCount")}
           </div>
@@ -350,8 +455,8 @@ export default function ReportDraftRow({
         )}
       </div>
       <div className={classes.colDinner}>
-        {canEdit ? (
-          <div className={classes.fieldWrap}>
+        {may("dinnerCount") ? (
+          <div className={classes.fieldWrap} {...wrapTitle("dinnerCount")}>
             {countInput("dinnerCount", "Ужины")}
             {dot("dinnerCount")}
           </div>
@@ -362,8 +467,8 @@ export default function ReportDraftRow({
 
       <div className={classes.colMeal}>
         <div className={classes.cellField}>
-          {canEdit ? (
-            <div className={classes.fieldWrap}>
+          {may("totalMealCost") ? (
+            <div className={classes.fieldWrap} {...wrapTitle("totalMealCost")}>
               <input
                 type="number"
                 name="mealCost"
@@ -387,8 +492,8 @@ export default function ReportDraftRow({
 
       <div className={classes.colPrice}>
         <div className={classes.cellField}>
-          {canEdit ? (
-            <div className={classes.fieldWrap}>
+          {may("pricePerDay") ? (
+            <div className={classes.fieldWrap} {...wrapTitle("pricePerDay")}>
               <input
                 type="number"
                 name="pricePerDay"
@@ -487,6 +592,9 @@ ReportDraftRow.propTypes = {
   number: PropTypes.number.isRequired,
   isEdited: PropTypes.bool,
   fieldEdited: PropTypes.func.isRequired,
+  snapshotValue: PropTypes.func,
+  editableFields: PropTypes.instanceOf(Set),
+  positions: PropTypes.arrayOf(PropTypes.string),
   onCellChange: PropTypes.func.isRequired,
   onCellFocus: PropTypes.func,
   onCellBlur: PropTypes.func,

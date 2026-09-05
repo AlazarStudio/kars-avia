@@ -37,6 +37,7 @@ export const buildAccessPayload = (s) => ({
   reportMenu: !!s?.reports?.access,
   reportCreate: !!s?.reports?.create,
   reportDelete: !!s?.reports?.delete,
+  reportFieldSettings: !!s?.reports?.fieldSettings,
 
   organizationMenu: !!s?.organization?.access,
   organizationCreate: !!s?.organization?.create,
@@ -63,8 +64,10 @@ export const ALL_TRUE_ACCESS = {
   accessManage: false,
   analyticsMenu: true, analyticsUpload: true,
   // Удаление выпущенного отчёта необратимо — как reserveUpdateCompleted и
-  // accessManage выше, посевом новой должности не включается.
+  // accessManage выше, посевом новой должности не включается. Настройка
+  // редактируемых полей черновика — тоже осознанно выдаваемое право.
   reportMenu: true, reportCreate: true, reportDelete: false,
+  reportFieldSettings: false,
   userMenu: true, userCreate: true, userUpdate: true,
   airlineMenu: true, airlineUpdate: true,
   contracts: true, contractCreate: true, contractUpdate: true,
