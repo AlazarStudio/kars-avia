@@ -562,10 +562,10 @@
    Подсказка кнопки называет прежнее значение («Было: 3 — вернуть»). */
 .fieldResetBtn {
   position: absolute;
-  top: -9px;
-  right: -9px;
-  width: 20px;
-  height: 20px;
+  top: -10px;
+  right: -10px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   border: 1px solid #C9D4E8;
   background: #fff;
@@ -577,6 +577,10 @@
   padding: 0;
   box-shadow: 0 1px 3px rgba(25, 29, 48, 0.12);
   z-index: 1;
+}
+/* Иконка внутри — строго по центру кнопки, без наследного line-height. */
+.fieldResetBtn svg {
+  display: block;
 }
 .fieldResetBtn:hover {
   background: #EFF4FE;

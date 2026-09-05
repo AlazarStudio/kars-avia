@@ -208,7 +208,10 @@ export default function ReportDraftRow({
             onMouseDown={(e) => e.preventDefault()}
             onClick={() => onCellChange(row._uid, field, prev.value)}
           >
-            <RestoreIcon width={11} height={11} color="currentColor" />
+            {/* Та же RestoreIcon, что у «Вернуть расчёт сервера», только
+                мельче; strokeWidth задан явно — глобальные 1.7 на 13px
+                слипаются в пятно. */}
+            <RestoreIcon width={13} height={13} color="currentColor" strokeWidth={1.4} />
           </button>
         )}
       </>
