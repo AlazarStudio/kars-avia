@@ -156,3 +156,10 @@
   color: #C03B28;
   font-weight: 600;
 }
+
+/* №64 · ячейка изменилась при пересоздании черновика (серверный changedKeys).
+   Тот же жёлтый, что заливка FFE599 в выгружаемом Excel (exporter.js). */
+.cellChanged {
+  background: #fff3c4;
+  border-radius: 4px;
+}

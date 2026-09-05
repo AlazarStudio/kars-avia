@@ -266,9 +266,11 @@ export default function ReportDraftEditor({
   const runRecreate = async () => {
     closeDialog();
     try {
-      const newId = await recreate();
-      success("Черновик пересоздан");
-      onDraftReplaced(newId);
+      const sameId = await recreate();
+      success("Черновик пересобран — правки сохранены, изменённое подсвечено");
+      // id не меняется; родителю сообщаем тем же колбэком, чтобы список
+      // черновиков перечитал updatedAt.
+      onDraftReplaced(sameId);
     } catch (e) {
       notifyError(e?.graphQLErrors?.[0]?.message || "Не удалось пересоздать черновик");
     }
@@ -334,7 +336,13 @@ export default function ReportDraftEditor({
   // других вкладках не двигает (см. ReportDraftFilters).
   const searchedRows = rows.filter((row) => rowMatchesSearch(row, search));
   const warningRows = searchedRows.filter((row) => rowHasWarning(row));
-  const editedRows = searchedRows.filter((row) => editedUids.has(row._uid));
+  // «Изменено» — и локальные правки, и ячейки, изменившиеся при пересоздании
+  // (серверный changedKeys): после пересборки человек ищет именно их.
+  const rowServerChanged = (row) =>
+    Array.isArray(row.changedKeys) && row.changedKeys.length > 0;
+  const editedRows = searchedRows.filter(
+    (row) => editedUids.has(row._uid) || rowServerChanged(row)
+  );
 
   // Счётчики чипов считаются по warningRows/editedRows — то есть честно, без
   // закреплений. А вот показываем строку, если она либо подходит под фильтр,
@@ -344,7 +352,7 @@ export default function ReportDraftEditor({
     filter === DRAFT_FILTERS.WARNINGS
       ? rowHasWarning(row)
       : filter === DRAFT_FILTERS.EDITED
-      ? editedUids.has(row._uid)
+      ? editedUids.has(row._uid) || rowServerChanged(row)
       : true;
 
   const displayedRows = searchedRows.filter(
@@ -569,9 +577,7 @@ export default function ReportDraftEditor({
         symbolBg="#EFF4FE"
         symbolColor="#0057C3"
         title="Пересоздать черновик?"
-        message={`Черновик соберётся заново из свежих данных заявок. Все ручные правки — ${unsavedRowsCount} ${pluralizeRows(
-          unsavedRowsCount
-        )} — будут потеряны.`}
+        message="Черновик соберётся заново из свежих данных заявок. Ручные правки сохранятся, а изменившиеся ячейки будут подсвечены."
         cancelLabel="Отмена"
         onCancel={closeDialog}
         primaryLabel="Пересоздать"
@@ -591,7 +597,7 @@ export default function ReportDraftEditor({
             ? "Авиакомпания увидит цифры, которые могут разойтись с фактическим размещением."
             : "Выгруженный файл может разойтись с фактическим размещением."
         }`}
-        note="Надёжнее сначала нажать «Пересоздать» — правки при этом потеряются, зато цифры будут актуальными."
+        note="Надёжнее сначала нажать «Пересоздать» — правки сохранятся, а изменившиеся ячейки будут подсвечены."
         cancelLabel="Отмена"
         onCancel={closeDialog}
         primaryLabel={staleSubmit ? "Всё равно отправить" : "Всё равно выгрузить"}

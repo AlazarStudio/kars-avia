@@ -56,7 +56,7 @@ export default function ReportDraftPreview({ open, draftId, onClose, localTotal,
   const totals = printed ? compareWithPrintedTotal(localTotal, printed.debt) : null;
   const cellByKey = (row) => {
     const map = new Map();
-    for (const cell of row?.cells || []) map.set(cell.key, cell.value);
+    for (const cell of row?.cells || []) map.set(cell.key, cell);
     return map;
   };
   const totalsCells = buildTotalsCells(presentation?.totalsRow, columns);
@@ -123,7 +123,14 @@ export default function ReportDraftPreview({ open, draftId, onClose, localTotal,
                     return (
                       <tr key={index}>
                         {columns.map((column) => (
-                          <td key={column.key}>{cells.get(column.key) ?? ""}</td>
+                          <td
+                          key={column.key}
+                          className={
+                            cells.get(column.key)?.highlighted ? classes.cellChanged : undefined
+                          }
+                        >
+                          {cells.get(column.key)?.value ?? ""}
+                        </td>
                         ))}
                       </tr>
                     );

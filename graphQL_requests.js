@@ -6988,6 +6988,7 @@ export const GET_REPORT_DRAFT = gql`
         pricePerDay
         totalDebt
         hotelName
+        changedKeys
       }
     }
   }
@@ -7019,6 +7020,7 @@ export const GET_REPORT_DRAFT_PRESENTATION = gql`
           cells {
             key
             value
+            highlighted
           }
         }
         totalsRow {
@@ -7075,6 +7077,53 @@ export const UPDATE_REPORT_DRAFT = gql`
         pricePerDay
         totalDebt
         hotelName
+        changedKeys
+      }
+    }
+  }
+`;
+
+// Пересоздание НА МЕСТЕ: бэк собирает строки заново из свежих заявок и
+// СЛИВАЕТ ручные правки по «липким» полям (mergeReportDraftRows), помечая
+// изменившиеся ячейки changedKeys. id черновика не меняется.
+export const RECREATE_REPORT_DRAFT = gql`
+  mutation RecreateReportDraft($id: ID!) {
+    recreateReportDraft(id: $id) {
+      id
+      updatedAt
+      rows {
+        index
+        requestId
+        arrival
+        departure
+        totalDays
+        category
+        personName
+        personPosition
+        roomName
+        roomId
+        shareNote
+        roomGroupId
+        shareClusterId
+        shareSegments {
+          start
+          end
+          alone
+          cohabitants {
+            requestId
+            personName
+          }
+        }
+        breakfastCount
+        lunchCount
+        dinnerCount
+        breakfastIncludedInPrice
+        totalMealCost
+        totalLivingCost
+        pricePerDay
+        totalDebt
+        hotelName
+        changedKeys
       }
     }
   }

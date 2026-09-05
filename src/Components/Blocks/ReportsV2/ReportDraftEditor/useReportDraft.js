@@ -7,8 +7,7 @@ import {
   SUBMIT_AIRLINE_REPORT_DRAFT,
   UNSUBMIT_AIRLINE_REPORT_DRAFT,
   DELETE_REPORT_DRAFT,
-  CREATE_AIRLINE_REPORT_DRAFT,
-  CREATE_HOTEL_REPORT_DRAFT,
+  RECREATE_REPORT_DRAFT,
   getCookie,
 } from "../../../../../graphQL_requests";
 import {
@@ -168,10 +167,7 @@ export default function useReportDraft(draftId) {
   const [unsubmitAirlineReportDraft] = useMutation(UNSUBMIT_AIRLINE_REPORT_DRAFT, {
     context: authContext,
   });
-  const [createAirlineReportDraft] = useMutation(CREATE_AIRLINE_REPORT_DRAFT, {
-    context: authContext,
-  });
-  const [createHotelReportDraft] = useMutation(CREATE_HOTEL_REPORT_DRAFT, {
+  const [recreateReportDraftMutation] = useMutation(RECREATE_REPORT_DRAFT, {
     context: authContext,
   });
   const [deleteReportDraft] = useMutation(DELETE_REPORT_DRAFT, { context: authContext });
@@ -247,44 +243,31 @@ export default function useReportDraft(draftId) {
     }
   }, [draftId, unsubmitAirlineReportDraft]);
 
-  // Пересоздание: сначала создаём новый черновик из исходного снимка
-  // фильтра, и только при успехе удаляем старый. Обратный порядок оставил бы
-  // пользователя без обоих черновиков при сбое создания.
+  // Пересоздание НА МЕСТЕ (recreateReportDraft): бэк собирает строки заново
+  // из свежих заявок и СЛИВАЕТ ручные правки по «липким» полям, помечая
+  // изменившиеся ячейки changedKeys. Прежняя пара «создать новый + удалить
+  // старый» теряла правки и меняла id черновика (ломая ссылку на него) —
+  // ровно то, о чём была задача №64. id не меняется, поэтому вызывающему
+  // возвращается тот же draftId.
   const recreate = useCallback(async () => {
     setRecreating(true);
     try {
-      const snap = draft?.filterJson || {};
-      const input = {
-        filter: {
-          startDate: snap.startDate,
-          endDate: snap.endDate,
-          airlineId: snap.airlineId,
-          hotelId: snap.hotelId,
-          airportId: snap.airportId,
-          personId: snap.personId,
-          positionId: snap.positionId,
-          position: snap.position,
-          region: snap.region,
-        },
-        format: snap.format || "xlsx",
-      };
-      const createFilterInput = {
-        meal: snap.meal !== false,
-        living: snap.living !== false,
-      };
-
-      const createMutation =
-        draft?.type === "AIRLINE" ? createAirlineReportDraft : createHotelReportDraft;
-      const { data: created } = await createMutation({ variables: { input, createFilterInput } });
-      const newId =
-        created?.createAirlineReportDraft?.id || created?.createHotelReportDraft?.id;
-
-      await deleteReportDraft({ variables: { id: draftId } });
-      return newId;
+      const { data: result } = await recreateReportDraftMutation({
+        variables: { id: draftId },
+      });
+      const nextRows = result?.recreateReportDraft?.rows;
+      if (nextRows) {
+        const next = attachRowKeys(nextRows);
+        setState({ rows: next, snapshot: next });
+      }
+      // Локальные пометки правок снимаются: слитые правки теперь часть
+      // серверных строк, а изменившееся подсвечено серверным changedKeys.
+      setEditedUids(new Set());
+      return draftId;
     } finally {
       setRecreating(false);
     }
-  }, [draft, draftId, createAirlineReportDraft, createHotelReportDraft, deleteReportDraft]);
+  }, [draftId, recreateReportDraftMutation]);
 
   const removeDraft = useCallback(async () => {
     setDeleting(true);

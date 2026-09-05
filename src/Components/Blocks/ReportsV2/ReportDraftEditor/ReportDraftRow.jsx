@@ -72,6 +72,14 @@ export default function ReportDraftRow({
     ? getDepartureHighlight(row.departure, rules)
     : { highlighted: false };
 
+  // Ячейка изменилась при пересоздании (серверный changedKeys) — жёлтая
+  // подсветка, та же, что в выгружаемом Excel. Отдельно от editedDot:
+  // точка — «правил я сейчас», фон — «изменилось при пересборке».
+  const chg = (key) =>
+    Array.isArray(row.changedKeys) && row.changedKeys.includes(key)
+      ? ` ${classes.cellChanged}`
+      : "";
+
   const daysEdited = fieldEdited(row, "totalDays");
   const priceEdited = fieldEdited(row, "pricePerDay");
   const mealEdited = fieldEdited(row, "totalMealCost");
@@ -108,7 +116,7 @@ export default function ReportDraftRow({
         </div>
       </div>
 
-      <div className={classes.colArrival}>
+      <div className={`${classes.colArrival}${chg("arrival")}`}>
         {arrival.date}{" "}
         <span
           className={arrivalHighlight.highlighted ? classes.stayTimeWarn : undefined}
@@ -118,7 +126,7 @@ export default function ReportDraftRow({
         </span>
       </div>
 
-      <div className={classes.colDeparture}>
+      <div className={`${classes.colDeparture}${chg("departure")}`}>
         {departure.date}{" "}
         <span
           className={departureHighlight.highlighted ? classes.stayTimeWarn : undefined}
@@ -128,7 +136,7 @@ export default function ReportDraftRow({
         </span>
       </div>
 
-      <div className={classes.colDays}>
+      <div className={`${classes.colDays}${chg("totalDays")}`}>
         <div className={classes.cellField}>
           {canEdit ? (
             <div className={classes.fieldWrap}>
@@ -156,11 +164,11 @@ export default function ReportDraftRow({
         </div>
       </div>
 
-      <div className={classes.colCategory} title={row.category || undefined}>
+      <div className={`${classes.colCategory}${chg("category")}`} title={row.category || undefined}>
         {row.category || "—"}
       </div>
 
-      <div className={classes.colRoom} title={row.roomName || undefined}>
+      <div className={`${classes.colRoom}${chg("roomName")}`} title={row.roomName || undefined}>
         {row.roomName || "—"}
       </div>
 
@@ -188,11 +196,11 @@ export default function ReportDraftRow({
         {row.personPosition || "—"}
       </div>
 
-      <div className={classes.colBreakfast}>{breakfastCellText(row)}</div>
-      <div className={classes.colLunch}>{row.lunchCount ?? 0}</div>
-      <div className={classes.colDinner}>{row.dinnerCount ?? 0}</div>
+      <div className={`${classes.colBreakfast}${chg("breakfastCount")}`}>{breakfastCellText(row)}</div>
+      <div className={`${classes.colLunch}${chg("lunchCount")}`}>{row.lunchCount ?? 0}</div>
+      <div className={`${classes.colDinner}${chg("dinnerCount")}`}>{row.dinnerCount ?? 0}</div>
 
-      <div className={classes.colMeal}>
+      <div className={`${classes.colMeal}${chg("totalMealCost")}`}>
         <div className={classes.cellField}>
           {canEdit ? (
             <div className={classes.fieldWrap}>
@@ -219,7 +227,7 @@ export default function ReportDraftRow({
         </div>
       </div>
 
-      <div className={classes.colPrice}>
+      <div className={`${classes.colPrice}${chg("pricePerDay")}`}>
         <div className={classes.cellField}>
           {canEdit ? (
             <div className={classes.fieldWrap}>
@@ -249,7 +257,7 @@ export default function ReportDraftRow({
         </div>
       </div>
 
-      <div className={classes.colLiving} title={livingCostTooltip(row, isEdited)}>
+      <div className={`${classes.colLiving}${chg("totalLivingCost")}`} title={livingCostTooltip(row, isEdited)}>
         <span
           className={
             livingCost === 0 ? `${classes.livingValue} ${classes.livingZero}` : classes.livingValue
@@ -259,11 +267,11 @@ export default function ReportDraftRow({
         </span>
       </div>
 
-      <div className={classes.colTotal}>
+      <div className={`${classes.colTotal}${chg("totalDebt")}`}>
         <span className={classes.totalValue}>{formatMoney(row.totalDebt)}</span>
       </div>
 
-      <div className={classes.colHotel} title={row.hotelName || undefined}>
+      <div className={`${classes.colHotel}${chg("hotelName")}`} title={row.hotelName || undefined}>
         {row.hotelName || "—"}
       </div>
 
