@@ -10,7 +10,7 @@ const INFANT = 0;
 const sumOf = (shares) =>
   Math.round(Object.values(shares).reduce((s, v) => s + v, 0) * 100) / 100;
 
-test("пример спеки: 4500 × 2 суток на взрослого, взрослого и ребёнка", () => {
+test("пример спеки: 4500 × 2 суток, скидка ребёнка режет итог номера", () => {
   const res = splitRoomAccommodation({
     total: 9000,
     carrierKey: 0,
@@ -20,23 +20,22 @@ test("пример спеки: 4500 × 2 суток на взрослого, в�
       { key: 2, factor: CHILD, days: 2 },
     ],
   });
-  assert.equal(res.base, 1800);
-  assert.deepEqual(res.shares, { 0: 3600, 1: 3600, 2: 1800 });
-  assert.equal(sumOf(res.shares), 9000);
+  assert.equal(res.base, 1500);
+  assert.deepEqual(res.shares, { 0: 3000, 1: 3000, 2: 1500 });
+  assert.equal(sumOf(res.shares), 7500);
 });
 
-test("один гость платит всю сумму номера при любой скидке", () => {
+test("один гость платит свою долю со скидкой", () => {
   const res = splitRoomAccommodation({
     total: 9000,
     carrierKey: 0,
     members: [{ key: 0, factor: CHILD, days: 2 }],
   });
-  // База вдвое выше цены номера — но платит он ровно T, как и должен.
-  assert.equal(res.base, 9000);
-  assert.equal(res.shares[0], 9000);
+  assert.equal(res.base, 4500);
+  assert.equal(res.shares[0], 4500);
 });
 
-test("одни инфанты — делить нечего, фолбэк", () => {
+test("одни инфанты — делится, все платят 0", () => {
   const res = splitRoomAccommodation({
     total: 9000,
     carrierKey: 0,
@@ -45,10 +44,12 @@ test("одни инфанты — делить нечего, фолбэк", () =
       { key: 1, factor: INFANT, days: 2 },
     ],
   });
-  assert.equal(res, null);
+  assert.notEqual(res, null);
+  assert.equal(res.base, 2250);
+  assert.deepEqual(res.shares, { 0: 0, 1: 0 });
 });
 
-test("нулевые сутки у всех — делить нечего, фолбэк", () => {
+test("нулевые сутки у всех — фолбэк", () => {
   const res = splitRoomAccommodation({
     total: 9000,
     carrierKey: 0,
@@ -57,7 +58,7 @@ test("нулевые сутки у всех — делить нечего, фо�
   assert.equal(res, null);
 });
 
-test("разные сутки у соседей — Σ долей равна сумме номера", () => {
+test("разные сутки у соседей — Σ долей без скидки равна сумме номера", () => {
   const res = splitRoomAccommodation({
     total: 9000,
     carrierKey: 0,
@@ -67,14 +68,12 @@ test("разные сутки у соседей — Σ долей равна с�
       { key: 2, factor: CHILD, days: 1 },
     ],
   });
-  // Σ(f × D) = 2 + 3 + 0.5 = 5.5 → B = 1636.36
-  assert.equal(res.base, 1636.36);
-  assert.equal(res.shares[1], 4909.08); // 1636.36 × 1 × 3
-  assert.equal(res.shares[2], 818.18);  // 1636.36 × 0.5 × 1
-  assert.equal(sumOf(res.shares), 9000);
+  assert.equal(res.base, 1500);
+  assert.deepEqual(res.shares, { 0: 3000, 1: 4500, 2: 750 });
+  assert.equal(sumOf(res.shares), 8250);
 });
 
-test("копейки: остаток ложится на несущего, Σ сходится точно", () => {
+test("копейки: остаток без скидки ложится на несущего", () => {
   const res = splitRoomAccommodation({
     total: 5000,
     carrierKey: 0,
@@ -84,10 +83,12 @@ test("копейки: остаток ложится на несущего, Σ с
       { key: 2, factor: CHILD, days: 1 },
     ],
   });
-  assert.equal(res.base, 2000);
-  assert.equal(sumOf(res.shares), 5000);
+  assert.equal(res.base, 1666.67);
+  assert.equal(res.shares[1], 1666.67);
+  assert.equal(res.shares[0], 1666.66);
+  assert.ok(Math.abs(res.shares[2] - 833.335) <= 0.005);
 
-  // База не делится нацело: 5000 / 3 = 1666.666… → у несущего 1666.66.
+  // Без скидок доли без скидки и итоговые совпадают, Σ сходится точно.
   const odd = splitRoomAccommodation({
     total: 5000,
     carrierKey: 0,
@@ -98,13 +99,11 @@ test("копейки: остаток ложится на несущего, Σ с
     ],
   });
   assert.equal(odd.base, 1666.67);
-  assert.equal(odd.shares[1], 1666.67);
-  assert.equal(odd.shares[2], 1666.67);
-  assert.equal(odd.shares[0], 1666.66);
+  assert.deepEqual(odd.shares, { 1: 1666.67, 2: 1666.67, 0: 1666.66 });
   assert.equal(sumOf(odd.shares), 5000);
 });
 
-test("гость с нулевыми сутками не платит — остальные делят всё", () => {
+test("гость с нулевыми сутками не платит", () => {
   const res = splitRoomAccommodation({
     total: 9000,
     carrierKey: 0,
@@ -115,14 +114,12 @@ test("гость с нулевыми сутками не платит — ост
     ],
   });
   assert.equal(res.base, 2250);
-  assert.equal(res.shares[2], 0);
-  assert.equal(res.shares[0], 4500);
-  assert.equal(res.shares[1], 4500);
+  assert.deepEqual(res.shares, { 0: 4500, 1: 4500, 2: 0 });
   assert.equal(sumOf(res.shares), 9000);
 });
 
 test("произвольный процент скидки работает так же, как 50%", () => {
-  // Ручные 30% у соседа: вес 0.7.
+  // Ручные 30% у соседа: множитель 0.7.
   const res = splitRoomAccommodation({
     total: 8500,
     carrierKey: 0,
@@ -131,13 +128,12 @@ test("произвольный процент скидки работает та
       { key: 1, factor: 0.7, days: 1 },
     ],
   });
-  assert.equal(res.base, 5000); // 8500 / 1.7
-  assert.equal(res.shares[1], 3500);
-  assert.equal(res.shares[0], 5000);
-  assert.equal(sumOf(res.shares), 8500);
+  assert.equal(res.base, 4250);
+  assert.deepEqual(res.shares, { 0: 4250, 1: 2975 });
+  assert.equal(sumOf(res.shares), 7225);
 });
 
-test("инфант рядом со взрослым: платит взрослый, сумма прежняя", () => {
+test("инфант рядом со взрослым: взрослый платит свою половину", () => {
   const res = splitRoomAccommodation({
     total: 9000,
     carrierKey: 0,
@@ -146,7 +142,34 @@ test("инфант рядом со взрослым: платит взрослы
       { key: 1, factor: INFANT, days: 2 },
     ],
   });
-  assert.equal(res.base, 4500);
-  assert.equal(res.shares[0], 9000);
-  assert.equal(res.shares[1], 0);
+  assert.equal(res.base, 2250);
+  assert.deepEqual(res.shares, { 0: 4500, 1: 0 });
+  assert.equal(sumOf(res.shares), 4500);
+});
+
+test("несущий со скидкой режет свою долю", () => {
+  const res = splitRoomAccommodation({
+    total: 9000,
+    carrierKey: 0,
+    members: [
+      { key: 0, factor: CHILD, days: 2 },
+      { key: 1, factor: ADULT, days: 2 },
+    ],
+  });
+  assert.equal(res.base, 2250);
+  assert.deepEqual(res.shares, { 0: 2250, 1: 4500 });
+  assert.equal(sumOf(res.shares), 6750);
+});
+
+test("Σ долей без скидки равна T при кривом делении на троих", () => {
+  const res = splitRoomAccommodation({
+    total: 1000,
+    carrierKey: 0,
+    members: [
+      { key: 0, factor: ADULT, days: 1 },
+      { key: 1, factor: ADULT, days: 1 },
+      { key: 2, factor: ADULT, days: 1 },
+    ],
+  });
+  assert.equal(sumOf(res.shares), 1000);
 });
