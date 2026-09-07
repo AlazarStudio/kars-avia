@@ -2392,15 +2392,18 @@ export default function FapHotelPage({
         const carrier = g.members.find((m) => findTariff(m.pd.tariffId));
         const perRoom = !!(carrier && roomBillingByIndex[carrier.index]?.perRoom);
         let accommodation = null;
+        let accommodationNominal = null;
         let accommodationWarning = null;
         if (perRoom) {
           const ce = getEffectiveRow(carrier.index, carrier.pd);
           if (ce.warning) accommodationWarning = ce.warning;
-          else
+          else {
             accommodation = g.members.reduce(
               (s, m) => s + toNum(getEffectiveRow(m.index, m.pd).accommodationCost),
               0
             );
+            accommodationNominal = toNum(ce.roomTotal) > 0 ? toNum(ce.roomTotal) : null;
+          }
         }
         return {
         key: g.key,
@@ -2412,6 +2415,7 @@ export default function FapHotelPage({
         total: groupTotals[g.key]?.total ?? 0,
         perRoom,
         accommodation,
+        accommodationNominal,
         accommodationWarning,
         showDots: showReportGroupDots,
         groups: roomGroups.list.map(({ group, inRoom, total }) => ({
@@ -4078,15 +4082,20 @@ export default function FapHotelPage({
                       perRoomCarrier && roomBillingByIndex[perRoomCarrier.index]?.perRoom
                     );
                     let roomAccCost = null;
+                    // Номинал номера T = цена вида × сутки несущего (roomTotal из раскладки). Показываем
+                    // рядом с суммой строк только когда скидки её уменьшили — иначе чип дезориентирует.
+                    let roomAccNominal = null;
                     let roomAccWarn = "";
                     if (roomPerRoom) {
                       const ce = getEffectiveRow(perRoomCarrier.index, perRoomCarrier.pd);
                       if (ce.warning) roomAccWarn = ce.warning;
-                      else
+                      else {
                         roomAccCost = g.fullMembers.reduce(
                           (s, m) => s + toNum(getEffectiveRow(m.index, m.pd).accommodationCost),
                           0
                         );
+                        roomAccNominal = toNum(ce.roomTotal) > 0 ? toNum(ce.roomTotal) : null;
+                      }
                     }
                     return (
                       <div
@@ -4183,6 +4192,9 @@ export default function FapHotelPage({
                               <span className={classes.roomAccPill}>
                                 <HotelBedIcon size={13} strokeWidth={2} />
                                 проживание {fmt(roomAccCost)}
+                                {roomAccNominal != null &&
+                                  Math.abs(roomAccNominal - roomAccCost) >= 0.005 &&
+                                  ` из ${fmt(roomAccNominal)}`}
                               </span>
                             ))}
                           {!hideMoney && (

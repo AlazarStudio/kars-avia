@@ -154,7 +154,11 @@ export default function FapReportView({ summary = {}, groups = [], hideMoney = f
                 ) : (
                   <span className={classes.accRoomPill}>
                     <HotelBedIcon size={13} strokeWidth={2} />
-                    проживание {rub(g.accommodation)}
+                    проживание{" "}
+                    {g.accommodationNominal != null &&
+                    Math.abs(g.accommodationNominal - g.accommodation) >= 0.005
+                      ? `${Number(g.accommodation).toLocaleString("ru-RU")} из ${rub(g.accommodationNominal)}`
+                      : rub(g.accommodation)}
                   </span>
                 ))}
               <span className={classes.spacer} />
