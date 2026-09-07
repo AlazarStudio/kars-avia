@@ -215,9 +215,11 @@ function EditRequestDispatcherDepartment({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <div className={classes.hint}>* — обязательные поля</div>
+              {isEditing && (
+                <div className={classes.hint}>* — обязательные поля</div>
+              )}
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${classes.required}`}>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>
                   Название отдела
                 </div>
                 {isEditing ? (

@@ -413,7 +413,9 @@ function EditRequestAirlineCompany({
         <>
           <div className={classes.requestMiddle}>
             <div className={classes.requestData}>
-              <div className={classes.hint}>* — обязательные поля</div>
+              {isEditing && (
+                <div className={classes.hint}>* — обязательные поля</div>
+              )}
               <div className={classes.requestDataInfo_img}>
                 <div className={classes.requestDataInfo_img_imgBlock}>
                   <img
@@ -427,7 +429,7 @@ function EditRequestAirlineCompany({
                 </div>
               </div>
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${classes.required}`}>ФИО</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>ФИО</div>
                 {isEditing ? (
                   <input
                     type="text"
@@ -446,7 +448,7 @@ function EditRequestAirlineCompany({
               {!representative && (
                 <>
                   <div className={classes.requestDataInfo}>
-                    <div className={`${classes.requestDataInfo_title} ${classes.required}`}>Почта</div>
+                    <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Почта</div>
                     {isEditing ? (
                       <input
                         type="email"
@@ -464,7 +466,7 @@ function EditRequestAirlineCompany({
 
                   {user?.role === roles.airlineModerator ? null : (
                     <div className={classes.requestDataInfo}>
-                      <div className={`${classes.requestDataInfo_title} ${classes.required}`}>Роль</div>
+                      <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Роль</div>
                       {isEditing ? (
                         <div className={classes.dropdown}>
                           <MUIAutocomplete
@@ -568,7 +570,7 @@ function EditRequestAirlineCompany({
                   </>
                 ) : (
                   <>
-                    <div className={`${classes.requestDataInfo_title} ${classes.required}`}>Должность</div>
+                    <div className={classes.requestDataInfo_title}>Должность</div>
                     <div className={classes.requestDataInfo_desc}>
                       {formData.position || "—"}
                     </div>
@@ -577,7 +579,7 @@ function EditRequestAirlineCompany({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${classes.required}`}>Отдел</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Отдел</div>
                 {isEditing ? (
                   <div className={classes.dropdown}>
                     <MUIAutocomplete
@@ -603,7 +605,7 @@ function EditRequestAirlineCompany({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${classes.required}`}>Логин</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Логин</div>
                 {isEditing ? (
                   <input
                     type="text"

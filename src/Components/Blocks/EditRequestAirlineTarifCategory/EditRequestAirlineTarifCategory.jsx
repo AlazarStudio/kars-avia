@@ -326,9 +326,11 @@ function EditRequestAirlineTarifCategory({
             }
           >
             <div className={classes.requestData}>
-              <div className={classes.hint}>* — обязательные поля</div>
+              {isEditing && (
+                <div className={classes.hint}>* — обязательные поля</div>
+              )}
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${classes.required}`}>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>
                   Название договора
                 </div>
                 {isEditing ? (
@@ -409,7 +411,7 @@ function EditRequestAirlineTarifCategory({
 
               {contractType === "individual" && (
               <div className={classes.requestDataInfo_block}>
-                <div className={`${classes.requestDataInfo_title} ${classes.required}`}>Аэропорты</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Аэропорты</div>
                 {isEditing ? (
                   <div className={classes.dropdown}>
                     {allAirportsUsed && (

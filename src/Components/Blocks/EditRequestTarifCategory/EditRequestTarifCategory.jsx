@@ -413,9 +413,11 @@ function EditRequestTarifCategory({
             }
           >
             <div className={classes.requestData}>
-              <div className={classes.hint}>* — обязательные поля</div>
+              {isEditing && (
+                <div className={classes.hint}>* — обязательные поля</div>
+              )}
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${classes.required}`}>Категория</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Категория</div>
                 {isEditing ? (
                   <div className={classes.dropdown}>
                     <MUIAutocomplete
@@ -451,7 +453,7 @@ function EditRequestTarifCategory({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${classes.required}`}>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>
                   Название тарифа
                 </div>
                 {isEditing ? (
@@ -470,7 +472,7 @@ function EditRequestTarifCategory({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${classes.required}`}>Стоимость</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Стоимость</div>
                 {isEditing ? (
                   <input
                     type="number"
@@ -491,7 +493,7 @@ function EditRequestTarifCategory({
               {!user?.hotelId && (
                 <>
                   <div className={classes.requestDataInfo}>
-                    <div className={`${classes.requestDataInfo_title} ${!formData.priceForAirReq ? classes.required : ""}`}>
+                    <div className={`${classes.requestDataInfo_title} ${isEditing && !formData.priceForAirReq ? classes.required : ""}`}>
                       Стоимость для авиакомпании
                     </div>
                     {isEditing ? (
