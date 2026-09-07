@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useMutation, useQuery } from "@apollo/client";
 import classes from "./ReportDraftEditor.module.css";
@@ -14,7 +14,13 @@ import ReportDraftDialog from "./ReportDraftDialog";
 import ReportDraftPreview from "./ReportDraftPreview";
 import ReportDraftSummary from "./ReportDraftSummary";
 import ReportFieldSettingsModal from "./ReportFieldSettingsModal";
-import { DRAFT_FILTERS, pluralizeDays, pluralizeRows, rowMatchesSearch } from "./reportDraftEditorUtils";
+import {
+  DRAFT_FILTERS,
+  pluralizeDays,
+  pluralizeRows,
+  rowMatchesSearch,
+  sortDraftRows,
+} from "./reportDraftEditorUtils";
 import { useToast } from "../../../../contexts/ToastContext";
 import {
   convertToDate,
@@ -420,9 +426,64 @@ export default function ReportDraftEditor({
       ? editedUids.has(row._uid) || rowServerChanged(row)
       : true;
 
-  const displayedRows = searchedRows.filter(
+  const filteredRows = searchedRows.filter(
     (row) => matchesFilter(row) || pinned.has(row._uid)
   );
+
+  // №58 · ВИЗУАЛЬНАЯ сортировка кликом по заголовку. Порядок rows/index не
+  // трогается (контрактный, по нему печатается файл) — сортируется только
+  // показ; колонка «№» продолжает показывать номер файла, по нему и сверяют
+  // с бумагой. Третий клик по колонке возвращает порядок файла (sort=null).
+  const [sort, setSort] = useState(null); // null | {key, dir: "asc"|"desc"}
+  const handleSort = (key) => {
+    clearPins();
+    setSort((prev) =>
+      prev?.key === key
+        ? prev.dir === "asc"
+          ? { key, dir: "desc" }
+          : null
+        : { key, dir: "asc" }
+    );
+  };
+
+  // Пока курсор в каком-то поле (pinned не пуст), порядок ЗАМОРОЖЕН последним
+  // рассчитанным: иначе правка сортируемого поля (сутки, цена) уводила бы
+  // строку из-под курсора на первой же цифре — та же болезнь, что лечит
+  // useEditingPins для фильтра. Новые строки (появились в выборке во время
+  // заморозки) прицепляются в хвост.
+  const sortOrderRef = useRef(null);
+  const displayedRows = useMemo(() => {
+    if (!sort) {
+      sortOrderRef.current = null;
+      return filteredRows;
+    }
+    if (pinned.size > 0 && sortOrderRef.current) {
+      const pos = new Map(sortOrderRef.current.map((uid, i) => [uid, i]));
+      return [...filteredRows].sort(
+        (a, b) => (pos.get(a._uid) ?? Infinity) - (pos.get(b._uid) ?? Infinity)
+      );
+    }
+    let sorted;
+    if (groupBy === "hotel") {
+      // В режиме «Гостиницы» порядок САМИХ групп не трогаем (первое появление
+      // в порядке файла — на нём держится сводка), сортируем строки ВНУТРИ
+      // групп: первичный ключ — номер группы по несортированному списку.
+      const hotelOrder = new Map();
+      filteredRows.forEach((row) => {
+        const name = (row?.hotelName || "").trim() || "Без гостиницы";
+        if (!hotelOrder.has(name)) hotelOrder.set(name, hotelOrder.size);
+      });
+      const groupOf = (row) =>
+        hotelOrder.get((row?.hotelName || "").trim() || "Без гостиницы") ?? Infinity;
+      sorted = sortDraftRows(filteredRows, sort.key, sort.dir).sort(
+        (a, b) => groupOf(a) - groupOf(b)
+      );
+    } else {
+      sorted = sortDraftRows(filteredRows, sort.key, sort.dir);
+    }
+    sortOrderRef.current = sorted.map((row) => row._uid);
+    return sorted;
+  }, [filteredRows, sort, groupBy, pinned]);
 
   // Подвал, в отличие от чипов, — сводка по ВСЕМУ черновику, а не по
   // текущему поиску: иначе "показано 3 из 12 · изменено 5" читалось бы как
@@ -590,6 +651,9 @@ export default function ReportDraftEditor({
             onToggleHotel={toggleHotel}
             narrowed={filter !== DRAFT_FILTERS.ALL || search.trim() !== ""}
             canEdit={canEdit}
+            sortKey={sort?.key}
+            sortDir={sort?.dir}
+            onSort={handleSort}
           />
         </div>
 

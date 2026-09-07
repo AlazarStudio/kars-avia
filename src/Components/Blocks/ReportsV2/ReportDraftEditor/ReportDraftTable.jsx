@@ -34,8 +34,37 @@ export default function ReportDraftTable({
   onToggleHotel,
   narrowed,
   canEdit = true,
+  sortKey,
+  sortDir,
+  onSort,
 }) {
   const rowNumbers = new Map(rows.map((row, i) => [row._uid, i + 1]));
+
+  // №58 · Кликабельный заголовок сортируемой колонки. Сортировка визуальная
+  // (порядок файла не трогается), поэтому доступна и в режиме чтения.
+  const Th = ({ cls, k, children }) =>
+    k && onSort ? (
+      <div
+        className={`${cls} ${classes.sortableHead}`}
+        role="button"
+        tabIndex={0}
+        title="Клик — по возрастанию, ещё раз — по убыванию, третий — как в файле"
+        onClick={() => onSort(k)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onSort(k);
+          }
+        }}
+      >
+        {children}
+        {sortKey === k && (
+          <span className={classes.sortArrow}>{sortDir === "asc" ? "▲" : "▼"}</span>
+        )}
+      </div>
+    ) : (
+      <div className={cls}>{children}</div>
+    );
   // Группы считаем по ПОЛНОМУ списку строк, а не по отфильтрованному: номер
   // группы не должен меняться от того, что часть соседей отсеял фильтр.
   const clusters = buildShareClusters(rows);
@@ -113,24 +142,24 @@ export default function ReportDraftTable({
           Фикс.
         </div>
         <div className={`${classes.colIndex} ${classes.stickyIndex}`}>№</div>
-        <div className={`${classes.colPassenger} ${classes.stickyPassenger}`}>Сотрудник</div>
-        <div className={classes.colArrival}>Дата/время заезда</div>
-        <div className={classes.colDeparture}>Дата/время выезда</div>
-        <div className={classes.colDays}>Кол-во суток</div>
-        <div className={classes.colCategory}>Категория номера</div>
-        <div className={classes.colRoom}>Комната</div>
+        <Th cls={`${classes.colPassenger} ${classes.stickyPassenger}`} k="personName">Сотрудник</Th>
+        <Th cls={classes.colArrival} k="arrival">Дата/время заезда</Th>
+        <Th cls={classes.colDeparture} k="departure">Дата/время выезда</Th>
+        <Th cls={classes.colDays} k="totalDays">Кол-во суток</Th>
+        <Th cls={classes.colCategory} k="category">Категория номера</Th>
+        <Th cls={classes.colRoom} k="roomName">Комната</Th>
         <div className={classes.colShare}>Вид проживания</div>
-        <div className={classes.colPosition}>Должность</div>
-        <div className={classes.colBreakfast}>Завтрак</div>
-        <div className={classes.colLunch}>Обед</div>
-        <div className={classes.colDinner}>Ужин</div>
-        <div className={classes.colMeal}>Стоимость питания</div>
-        <div className={classes.colPrice}>Цена/сут.</div>
+        <Th cls={classes.colPosition} k="personPosition">Должность</Th>
+        <Th cls={classes.colBreakfast} k="breakfastCount">Завтрак</Th>
+        <Th cls={classes.colLunch} k="lunchCount">Обед</Th>
+        <Th cls={classes.colDinner} k="dinnerCount">Ужин</Th>
+        <Th cls={classes.colMeal} k="totalMealCost">Стоимость питания</Th>
+        <Th cls={classes.colPrice} k="pricePerDay">Цена/сут.</Th>
         {/* «Гостиница» перед стоимостью проживания — просьба заказчика;
             в файле выгрузки порядок печатной формы не меняется. */}
-        <div className={classes.colHotel}>Гостиница</div>
-        <div className={classes.colLiving}>Стоимость проживания</div>
-        <div className={classes.colTotal}>Итоговая стоимость</div>
+        <Th cls={classes.colHotel} k="hotelName">Гостиница</Th>
+        <Th cls={classes.colLiving} k="totalLivingCost">Стоимость проживания</Th>
+        <Th cls={classes.colTotal} k="totalDebt">Итоговая стоимость</Th>
         <div className={classes.colActions} />
       </div>
 
@@ -162,4 +191,7 @@ ReportDraftTable.propTypes = {
   onToggleHotel: PropTypes.func,
   narrowed: PropTypes.bool,
   canEdit: PropTypes.bool,
+  sortKey: PropTypes.string,
+  sortDir: PropTypes.oneOf(["asc", "desc"]),
+  onSort: PropTypes.func,
 };

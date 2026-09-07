@@ -64,6 +64,21 @@
   min-width: 2642px;
 }
 
+/* №58 · сортируемый заголовок: курсор и потемнение при наведении говорят
+   «по мне можно кликнуть», стрелка — активная колонка и направление. */
+.sortableHead {
+  cursor: pointer;
+  user-select: none;
+}
+.sortableHead:hover {
+  color: #545873;
+}
+.sortArrow {
+  margin-left: 4px;
+  font-size: 9px;
+  color: #0057C3;
+}
+
 /* z-index: 0 обязателен, а не украшение. Без него `position: relative` не
    создаёт stacking context, и `z-index: 4` липких ячеек строки (.stickyIndex /
    .stickyPassenger) соперничает напрямую с `z-index: 3` шапки в общем контексте

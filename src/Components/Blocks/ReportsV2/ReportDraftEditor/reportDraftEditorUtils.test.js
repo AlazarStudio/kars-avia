@@ -17,6 +17,7 @@ import {
   breakfastCellText,
   reportDateToInputValue,
   inputValueToReportDate,
+  sortDraftRows,
 } from "./reportDraftEditorUtils.js";
 
 // Формат границ — как на стенде: "DD.MM.YYYY HH:MM:SS", уже отформатирован бэком.
@@ -259,4 +260,32 @@ test("reportDateToInputValue: формат контракта → datetime-local
   // без этого нетронутая дата считалась бы правкой.
   const original = "01.08.2026 00:10:00";
   assert.equal(inputValueToReportDate(reportDateToInputValue(original)), original);
+});
+
+test("sortDraftRows №58: числа, даты, русские строки, направление, стабильность", () => {
+  const rows = [
+    { _uid: 0, personName: "Яшин", arrival: "05.08.2026 10:00:00", totalDays: 2, totalDebt: 300 },
+    { _uid: 1, personName: "Абрамов", arrival: "01.08.2026 22:00:00", totalDays: 10, totalDebt: 100 },
+    { _uid: 2, personName: "Иванов", arrival: "01.08.2026 08:00:00", totalDays: 2, totalDebt: 200 },
+  ];
+  // Числа — числом (10 после 2, а не лексикографически)
+  assert.deepEqual(sortDraftRows(rows, "totalDays", "asc").map((r) => r._uid), [0, 2, 1]);
+  // Стабильность: равные totalDays (uid 0 и 2) остаются в порядке файла
+  // Даты — по значению, включая время внутри одного дня
+  assert.deepEqual(sortDraftRows(rows, "arrival", "asc").map((r) => r._uid), [2, 1, 0]);
+  // Русские строки по алфавиту, направление desc переворачивает
+  assert.deepEqual(sortDraftRows(rows, "personName", "desc").map((r) => r._uid), [0, 2, 1]);
+  // Неизвестный ключ — порядок не меняется (и это тот же массив по данным)
+  assert.deepEqual(sortDraftRows(rows, "shareNote", "asc").map((r) => r._uid), [0, 1, 2]);
+  // Исходный массив не мутируется
+  assert.equal(rows[0]._uid, 0);
+});
+
+test("sortDraftRows: пустые значения не роняют сортировку", () => {
+  const rows = [
+    { _uid: 0, pricePerDay: null, hotelName: "" },
+    { _uid: 1, pricePerDay: 500, hotelName: "Азимут" },
+  ];
+  assert.deepEqual(sortDraftRows(rows, "pricePerDay", "asc").map((r) => r._uid), [0, 1]);
+  assert.deepEqual(sortDraftRows(rows, "hotelName", "desc").map((r) => r._uid), [1, 0]);
 });

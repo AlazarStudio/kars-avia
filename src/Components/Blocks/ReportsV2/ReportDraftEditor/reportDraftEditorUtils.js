@@ -62,6 +62,63 @@ export function inputValueToReportDate(value) {
 }
 
 /**
+ * Типы сортируемых колонок таблицы черновика (№58). Ключи — поля строки;
+ * «Фикс.», «№», «Вид проживания» и корзина не сортируются намеренно:
+ * № — это порядок файла (к нему возвращает третий клик), вид проживания —
+ * структурный текст без полезного порядка.
+ */
+export const DRAFT_SORT_TYPES = {
+  personName: "string",
+  arrival: "date",
+  departure: "date",
+  totalDays: "number",
+  category: "string",
+  roomName: "string",
+  personPosition: "string",
+  breakfastCount: "number",
+  lunchCount: "number",
+  dinnerCount: "number",
+  totalMealCost: "number",
+  pricePerDay: "number",
+  totalLivingCost: "number",
+  totalDebt: "number",
+  hotelName: "string",
+};
+
+/**
+ * ВИЗУАЛЬНАЯ сортировка строк черновика по колонке. Порядок в массиве rows
+ * и `index` не трогаются — они контрактные, по ним печатается файл;
+ * сортируется только представление на экране.
+ *
+ * Даты сравниваются через reportDateToInputValue: "YYYY-MM-DDTHH:mm"
+ * сортируется обычным сравнением строк, парсер не нужен. Строки — по-русски
+ * (localeCompare ru), числа — числом (пустое считается нулём). Сравнение
+ * стабильное: равные значения остаются в порядке файла.
+ *
+ * @param {Array<object>} rows - строки к показу
+ * @param {string} key - поле из DRAFT_SORT_TYPES
+ * @param {"asc"|"desc"} dir - направление
+ * @returns {Array<object>} новый отсортированный массив
+ */
+export function sortDraftRows(rows, key, dir) {
+  const type = DRAFT_SORT_TYPES[key];
+  if (!Array.isArray(rows) || !type) return Array.isArray(rows) ? rows : [];
+  const sign = dir === "desc" ? -1 : 1;
+  const value = (row) => {
+    const raw = row?.[key];
+    if (type === "number") return Number(raw) || 0;
+    if (type === "date") return reportDateToInputValue(raw);
+    return String(raw ?? "");
+  };
+  return [...rows].sort((a, b) => {
+    const va = value(a);
+    const vb = value(b);
+    if (type === "number") return sign * (va - vb);
+    return sign * String(va).localeCompare(String(vb), "ru");
+  });
+}
+
+/**
  * Разбивает отформатированную строку "DD.MM.YYYY HH:MM[:SS]" на дату и время.
  * Строка приходит с бэка уже в этом виде (не ISO) — см. trimSeconds.
  *
