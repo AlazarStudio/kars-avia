@@ -29,6 +29,7 @@ import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.j
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 // Компонент для создания новой заявки
 function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, registerClose }) {
@@ -41,6 +42,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, re
   const [selectedAirline, setSelectedAirline] = useState(null); // Выбранная авиакомпания
   const [newStaffId, setNewStaffId] = useState(null);
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
   const [disableAutocomplete, setDisableAutocomplete] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -88,6 +90,19 @@ function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, re
     reserve: false,
     note: "",
   });
+
+  const showAirlineField = !user?.airlineId;
+  const requiredKeys = [
+    ...(showAirlineField ? ["airlineId"] : []),
+    "airportId",
+    "arrivalDate",
+    "departureDate",
+  ];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
 
   const { data: dataSubscription } = useSubscription(
     GET_AIRLINES_SUBSCRIPTION,
@@ -244,6 +259,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, re
 
   // Сброс формы к начальному состоянию
   const resetForm = useCallback(() => {
+    resetRequired();
     setActiveTab("Общая");
     setSelectedAirline(user?.airlineId ? airlineForAirlineAdmin : null);
     setFormData({
@@ -447,28 +463,13 @@ function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, re
   // Обработчик переключения вкладок
   const handleTabChange = useCallback((tab) => setActiveTab(tab), []);
 
-  const isFormValid = () => {
-    return (
-      // formData.personId &&
-      formData.airportId &&
-      formData.airlineId &&
-      // formData.arrivalRoute &&
-      formData.arrivalDate &&
-      // formData.arrivalTime &&
-      // formData.departureRoute &&
-      formData.departureDate
-      // formData.departureTime
-    );
-  };
-
   // console.log(formData);
 
   // Отправка формы на сервер
   const handleSubmit = async () => {
     setIsLoading(true);
 
-    if (!isFormValid()) {
-      showAlert("Пожалуйста, заполните все обязательные поля.");
+    if (!validate()) {
       setIsLoading(false);
       return;
     }
@@ -721,7 +722,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, re
           <MUILoader loadSize={"50px"} fullHeight={"75vh"} />
         ) : (
           <>
-            <div className={classes.requestMiddle}>
+            <div className={classes.requestMiddle} ref={formBodyRef}>
               {/* Вкладка "Общая" */}
               {activeTab === "Общая" && (
                 <div className={classes.requestData}>
@@ -761,12 +762,18 @@ function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, re
                     }}
                   />
 
-                  {user?.airlineId ? null : (
+                  {showAirlineField ? (
                     <>
-                      <label className={classes.required}>Авиакомпания</label>
+                      <label
+                        className={`${classes.required} ${invalid("airlineId") ? "fieldInvalid" : ""
+                          }`}
+                      >
+                        Авиакомпания
+                      </label>
                       <MUIAutocomplete
                         dropdownWidth={"100%"}
                         label={"Введите авиакомпанию"}
+                        error={invalid("airlineId")}
                         options={airlines?.map((airline) => airline.name)}
                         value={selectedAirline ? selectedAirline?.name : ""}
                         onChange={(event, newValue) => {
@@ -796,7 +803,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, re
                                     }}
                                 /> */}
                     </>
-                  )}
+                  ) : null}
 
                   {selectedAirline && (
                     <>
@@ -905,10 +912,16 @@ function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, re
                   }}
                 /> */}
 
-                  <label className={classes.required}>Аэропорт</label>
+                  <label
+                    className={`${classes.required} ${invalid("airportId") ? "fieldInvalid" : ""
+                      }`}
+                  >
+                    Аэропорт
+                  </label>
                   <MUIAutocompleteColor
                     dropdownWidth="100%"
                     label={"Введите аэропорт"}
+                    error={invalid("airportId")}
                     options={airports}
                     getOptionLabel={(option) => {
                       if (!option) return "";
@@ -959,13 +972,21 @@ function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, re
                   {/* </>
                 )} */}
 
-                  <label className={classes.required}>Прибытие</label>
+                  <label
+                    className={`${classes.required} ${invalid("arrivalDate") ? "fieldInvalid" : ""
+                      }`}
+                  >
+                    Прибытие
+                  </label>
                   {/* <input type="text" name="arrivalRoute" placeholder="Рейс" value={formData.arrivalRoute} onChange={handleChange} /> */}
                   <div className={classes.reis_info}>
                     {/* <input type="date" name="arrivalDate" value={formData.arrivalDate} min={today} onChange={handleChange} placeholder="Дата" /> */}
                     <input
                       type="date"
                       name="arrivalDate"
+                      className={
+                        invalid("arrivalDate") ? "inputInvalid" : undefined
+                      }
                       value={formData.arrivalDate}
                       min={minArrivalDate}
                       onChange={handleChange}
@@ -980,12 +1001,20 @@ function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, re
                     />
                   </div>
 
-                  <label className={classes.required}>Отъезд</label>
+                  <label
+                    className={`${classes.required} ${invalid("departureDate") ? "fieldInvalid" : ""
+                      }`}
+                  >
+                    Отъезд
+                  </label>
                   {/* <input type="text" name="departureRoute" placeholder="Рейс" value={formData.departureRoute} onChange={handleChange} /> */}
                   <div className={classes.reis_info}>
                     <input
                       type="date"
                       name="departureDate"
+                      className={
+                        invalid("departureDate") ? "inputInvalid" : undefined
+                      }
                       value={formData.departureDate}
                       min={formData.arrivalDate}
                       onChange={handleChange}

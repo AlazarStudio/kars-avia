@@ -20,6 +20,7 @@ function MUIAutocompleteColor({
   isColor,
   scriptRunnerId,
   required = false,
+  error = false,
   children,
   ...props
 }) {
@@ -160,6 +161,7 @@ function MUIAutocompleteColor({
       renderInput={(params) => (
         <TextField
           {...params}
+          error={error}
           inputProps={{
             ...params.inputProps,
             [SCRIPT_RUNNER_ID_ATTR]: runnerIds.inputId,
@@ -188,6 +190,9 @@ function MUIAutocompleteColor({
               transform: "translateY(-50%)",
               transition: "all 0.1s ease-out",
               fontSize: "14px",
+            },
+            "& label.Mui-error": {
+              color: "#e53935",
             },
             "& .MuiInputBase-root": {
               maxHeight: "40px",
@@ -234,6 +239,9 @@ function MUIAutocompleteColor({
           },
           "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
             borderColor: "primary.main",
+          },
+          "&.Mui-error .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#e53935",
           },
         },
         "& .MuiSvgIcon-root": {

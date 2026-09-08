@@ -385,3 +385,14 @@ textarea {
 .MuiFormLabel-asterisk {
     color: #e53935;
 }
+
+/* Подсветка незаполненных обязательных полей после попытки отправки (useRequiredFields) */
+.fieldInvalid {
+    color: #e53935;
+}
+
+input.inputInvalid,
+select.inputInvalid,
+textarea.inputInvalid {
+    border-color: #e53935;
+}

@@ -9,6 +9,7 @@ function MUITextField({
   className,
   label,
   required = false,
+  error = false,
   ...props
 }) {
   return (
@@ -16,6 +17,7 @@ function MUITextField({
       <TextField
         type="search"
         label={label}
+        error={error}
         className={className}
         value={value}
         onChange={onChange}
@@ -48,6 +50,9 @@ function MUITextField({
             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
               borderColor: "primary.main",
             },
+            "&.Mui-error .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#e53935",
+            },
           },
 
           "& label": {
@@ -56,6 +61,9 @@ function MUITextField({
             transform: "translateY(-50%)",
             transition: "all 0.1s ease-out", // Плавная анимация при фокусе
             fontSize: "14px",
+          },
+          "& label.Mui-error": {
+            color: "#e53935",
           },
           "& .MuiInputBase-root": {
             minHeight: "40px",

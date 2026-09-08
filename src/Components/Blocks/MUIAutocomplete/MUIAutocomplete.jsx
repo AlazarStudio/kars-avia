@@ -18,6 +18,7 @@ function MUIAutocomplete({
   isMultiple,
   listboxHeight,
   scriptRunnerId,
+  error = false,
   children,
   ...props
 }) {
@@ -130,6 +131,7 @@ function MUIAutocomplete({
         renderInput={(params) => (
           <TextField
             {...params}
+            error={error}
             inputProps={{
               ...params.inputProps,
               [SCRIPT_RUNNER_ID_ATTR]: runnerIds.inputId,
@@ -160,6 +162,9 @@ function MUIAutocomplete({
                 transform: "translateY(-50%)",
                 transition: "all 0.1s ease-out", // Плавная анимация при фокусе
                 fontSize: "14px",
+              },
+              "& label.Mui-error": {
+                color: "#e53935",
               },
               "& .MuiInputBase-root": {
                 height: "40px",
@@ -208,6 +213,9 @@ function MUIAutocomplete({
             },
             "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
               borderColor: "primary.main",
+            },
+            "&.Mui-error .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#e53935",
             },
           },
           // уменьшаем иконку (стрелку)
