@@ -368,23 +368,49 @@ test("applyMealCountChange: стоимость питания по средне�
   assert.equal("totalMealCost" in empty, false);
 });
 
-test("groupRowsByRoom: жильцы одной комнаты подтягиваются к первому вхождению", () => {
+test("groupRowsByRoom: рядом ставятся только комната + пересечение дат", () => {
   const rows = [
-    { _uid: 0, hotelName: "А", roomName: "1", personName: "Иванов" },
-    { _uid: 1, hotelName: "А", roomName: "2", personName: "Петров" },
-    { _uid: 2, hotelName: "А", roomName: "1", personName: "Сидоров" },
-    { _uid: 3, hotelName: "Б", roomName: "1", personName: "Козлов" }, // другая гостиница
-    { _uid: 4, hotelName: "А", roomName: "", personName: "Безкомнатный" }, // не группируется
+    { _uid: 0, hotelName: "А", roomName: "1", personName: "Иванов",
+      arrival: "01.08.2026 14:00:00", departure: "05.08.2026 12:00:00" },
+    { _uid: 1, hotelName: "А", roomName: "2", personName: "Петров",
+      arrival: "01.08.2026 14:00:00", departure: "05.08.2026 12:00:00" },
+    { _uid: 2, hotelName: "А", roomName: "1", personName: "Сидоров",
+      arrival: "03.08.2026 14:00:00", departure: "07.08.2026 12:00:00" }, // пересёкся с Ивановым
+    { _uid: 3, hotelName: "А", roomName: "1", personName: "Козлов",
+      arrival: "10.08.2026 14:00:00", departure: "12.08.2026 12:00:00" }, // та же комната, ПОЗЖЕ — не вместе
+    { _uid: 4, hotelName: "Б", roomName: "1", personName: "Чужой",
+      arrival: "01.08.2026 14:00:00", departure: "05.08.2026 12:00:00" }, // другая гостиница
   ];
   assert.deepEqual(groupRowsByRoom(rows).map((r) => r._uid), [0, 2, 1, 3, 4]);
 });
 
-test("buildRoomMates: соседи без себя, одиночки и пустые комнаты не считаются", () => {
+test("groupRowsByRoom: транзитивное пересечение собирает цепочку (зеркало findOverlapClusters)", () => {
+  // А и В не пересекаются напрямую, но оба пересекаются с Б — один кластер.
   const rows = [
-    { _uid: 0, hotelName: "А", roomName: "1", personName: "Иванов" },
-    { _uid: 1, hotelName: "А", roomName: "1", personName: "Петров" },
-    { _uid: 2, hotelName: "А", roomName: "2", personName: "Сидоров" },
-    { _uid: 3, hotelName: "А", roomName: "", personName: "Пустой" },
+    { _uid: 0, hotelName: "А", roomName: "1", personName: "А",
+      arrival: "01.08.2026 14:00:00", departure: "03.08.2026 12:00:00" },
+    { _uid: 1, hotelName: "А", roomName: "2", personName: "Прокладка",
+      arrival: "01.08.2026 14:00:00", departure: "10.08.2026 12:00:00" },
+    { _uid: 2, hotelName: "А", roomName: "1", personName: "Б",
+      arrival: "02.08.2026 14:00:00", departure: "06.08.2026 12:00:00" },
+    { _uid: 3, hotelName: "А", roomName: "1", personName: "В",
+      arrival: "05.08.2026 14:00:00", departure: "08.08.2026 12:00:00" },
+  ];
+  assert.deepEqual(groupRowsByRoom(rows).map((r) => r._uid), [0, 2, 3, 1]);
+});
+
+test("buildRoomMates: сосед = комната + пересечение дат; стык впритык — не сосед", () => {
+  const rows = [
+    { _uid: 0, hotelName: "А", roomName: "1", personName: "Иванов",
+      arrival: "01.08.2026 14:00:00", departure: "05.08.2026 12:00:00" },
+    { _uid: 1, hotelName: "А", roomName: "1", personName: "Петров",
+      arrival: "03.08.2026 14:00:00", departure: "07.08.2026 12:00:00" },
+    // заехал ровно в момент выезда Петрова — интервалы НЕ пересекаются
+    { _uid: 2, hotelName: "А", roomName: "1", personName: "Козлов",
+      arrival: "07.08.2026 12:00:00", departure: "09.08.2026 12:00:00" },
+    // дата не разобрана — ни с кем не кластеризуется
+    { _uid: 3, hotelName: "А", roomName: "1", personName: "Безданных",
+      arrival: "", departure: "" },
   ];
   const mates = buildRoomMates(rows);
   assert.deepEqual(mates.get(0), ["Петров"]);

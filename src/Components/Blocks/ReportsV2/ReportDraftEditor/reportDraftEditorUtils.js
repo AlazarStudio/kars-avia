@@ -265,40 +265,105 @@ export function applyMealCountChange(row, field, rawValue) {
   return patch;
 }
 
-// Ключ «одна комната одной гостиницы» — для группировки и пометки «живут
-// вместе». Пустая комната ключа не даёт: безымянные не группируются.
+// Ключ «одна комната одной гостиницы» — первый признак соседства. Пустая
+// комната ключа не даёт: безымянные не группируются.
 export function roomKeyOf(row) {
   const room = String(row?.roomName ?? "").trim();
   if (!room) return null;
   return `${String(row?.hotelName ?? "").trim()}|${room}`;
 }
 
+// Интервал проживания строки в миллисекундах; null — даты не разобрать
+// (такая строка ни с кем не кластеризуется).
+function stayIntervalOf(row) {
+  const a = parseReportDateParts(row?.arrival);
+  const b = parseReportDateParts(row?.departure);
+  if (!a || !b) return null;
+  return {
+    start: Date.UTC(a.y, a.mo - 1, a.d, a.hh, a.mm),
+    end: Date.UTC(b.y, b.mo - 1, b.d, b.hh, b.mm),
+  };
+}
+
 /**
- * Порядок показа «одинаковые комнаты друг под другом»: строки идут в порядке
- * файла, но все жильцы одной комнаты подтягиваются к её первому вхождению.
- * Одиночные строки не двигаются. Порядок в массиве rows и index не трогаются
+ * Кластеры «живут вместе» по ТЕКУЩЕМУ состоянию строк: одна комната одной
+ * гостиницы И пересечение периодов проживания — транзитивно, как в бэковом
+ * findOverlapClusters (reportUtils.js: заезд < чужой_выезд && выезд >
+ * чужой_заезд). Одно лишь совпадение номера соседством НЕ считается:
+ * в одну комнату могли заехать в разные даты.
+ *
+ * @param {Array<object>} rows - строки (с _uid)
+ * @returns {Array<Array<object>>} кластеры из 2+ строк, члены — в порядке rows
+ */
+export function buildRoomClusters(rows) {
+  const byKey = new Map();
+  (Array.isArray(rows) ? rows : []).forEach((row, i) => {
+    const key = roomKeyOf(row);
+    if (!key) return;
+    if (!byKey.has(key)) byKey.set(key, []);
+    byKey.get(key).push({ row, i, interval: stayIntervalOf(row) });
+  });
+
+  const clusters = [];
+  for (const guests of byKey.values()) {
+    const assigned = new Set();
+    for (let i = 0; i < guests.length; i++) {
+      if (assigned.has(i) || !guests[i].interval) continue;
+      const cluster = [i];
+      assigned.add(i);
+      let changed = true;
+      while (changed) {
+        changed = false;
+        for (let j = 0; j < guests.length; j++) {
+          if (assigned.has(j) || !guests[j].interval) continue;
+          const cand = guests[j].interval;
+          const overlaps = cluster.some((idx) => {
+            const g = guests[idx].interval;
+            return g.start < cand.end && g.end > cand.start;
+          });
+          if (overlaps) {
+            cluster.push(j);
+            assigned.add(j);
+            changed = true;
+          }
+        }
+      }
+      if (cluster.length > 1) {
+        clusters.push(
+          cluster
+            .map((idx) => guests[idx])
+            .sort((a, b) => a.i - b.i)
+            .map((g) => g.row)
+        );
+      }
+    }
+  }
+  return clusters;
+}
+
+/**
+ * Порядок показа «живущие вместе — друг под другом»: строки идут в порядке
+ * файла, но члены одного кластера (комната + пересечение дат) подтягиваются
+ * к его первому вхождению. Одиночные строки и совпадения номера без
+ * пересечения дат не двигаются. Порядок в массиве rows и index не трогаются
  * (контрактны) — это только представление.
  *
  * @param {Array<object>} rows - строки к показу
- * @returns {Array<object>} новый массив в комнатном порядке
+ * @returns {Array<object>} новый массив в кластерном порядке
  */
 export function groupRowsByRoom(rows) {
   if (!Array.isArray(rows)) return [];
-  const byKey = new Map();
-  for (const row of rows) {
-    const key = roomKeyOf(row);
-    if (!key) continue;
-    if (!byKey.has(key)) byKey.set(key, []);
-    byKey.get(key).push(row);
+  const clusterByUid = new Map();
+  for (const cluster of buildRoomClusters(rows)) {
+    for (const row of cluster) clusterByUid.set(row._uid, cluster);
   }
   const emitted = new Set();
   const out = [];
   for (const row of rows) {
     if (emitted.has(row._uid)) continue;
-    const key = roomKeyOf(row);
-    const group = key ? byKey.get(key) : null;
-    if (group && group.length > 1) {
-      for (const mate of group) {
+    const cluster = clusterByUid.get(row._uid);
+    if (cluster) {
+      for (const mate of cluster) {
         if (!emitted.has(mate._uid)) {
           emitted.add(mate._uid);
           out.push(mate);
@@ -313,28 +378,21 @@ export function groupRowsByRoom(rows) {
 }
 
 /**
- * Фамилии соседей по комнате для каждой строки — по ТЕКУЩЕМУ состоянию
- * строк (а не по серверным shareSegments): после ручной смены комнаты
- * сервер о новом соседстве ещё не знает.
+ * Фамилии соседей для каждой строки — по ТЕКУЩЕМУ состоянию строк (а не по
+ * серверным shareSegments): после ручной смены комнаты или дат сервер о
+ * новом соседстве ещё не знает. Сосед = тот же кластер (комната +
+ * пересечение периодов).
  *
  * @param {Array<object>} rows - ВСЕ строки черновика (не отфильтрованные)
  * @returns {Map<number, string[]>} _uid → фамилии соседей (без себя)
  */
 export function buildRoomMates(rows) {
-  const byKey = new Map();
-  for (const row of rows || []) {
-    const key = roomKeyOf(row);
-    if (!key) continue;
-    if (!byKey.has(key)) byKey.set(key, []);
-    byKey.get(key).push(row);
-  }
   const out = new Map();
-  for (const group of byKey.values()) {
-    if (group.length < 2) continue;
-    for (const row of group) {
+  for (const cluster of buildRoomClusters(rows)) {
+    for (const row of cluster) {
       out.set(
         row._uid,
-        group.filter((r) => r._uid !== row._uid).map((r) => r.personName || "без имени")
+        cluster.filter((r) => r._uid !== row._uid).map((r) => r.personName || "без имени")
       );
     }
   }
