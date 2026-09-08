@@ -37,6 +37,20 @@
   border: 1px solid var(--border, #E4E4EF);
   border-radius: 10px;
   box-shadow: 0 10px 30px rgba(20, 30, 60, 0.14);
+  /* Плавное появление из-под кнопки — как у меню FapSelect, чуть мягче. */
+  transform-origin: top right;
+  animation: overflowMenuIn 0.18s ease-out;
+}
+
+@keyframes overflowMenuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .item {
