@@ -168,6 +168,17 @@ export default function useReportDraft(draftId) {
     }));
   }, []);
 
+  // Применяет к строке ГОТОВЫЙ патч из нескольких полей разом (пересчёты
+  // дат/питания собирает вызывающий код в чистых хелперах — см.
+  // applyDateChange/applyMealCountChange в reportDraftEditorUtils). Значения
+  // приходят уже нормализованными, коэрция setCell здесь не выполняется.
+  const setRowPatch = useCallback((uid, patch) => {
+    setState((prev) => ({
+      ...prev,
+      rows: prev.rows.map((row) => (row._uid === uid ? { ...row, ...patch } : row)),
+    }));
+  }, []);
+
   const removeRow = useCallback((uid) => {
     setState((prev) => ({
       ...prev,
@@ -354,6 +365,7 @@ export default function useReportDraft(draftId) {
     serverTotal,
     deletedCount,
     setCell,
+    setRowPatch,
     removeRow,
     resetRow,
     resetAll,

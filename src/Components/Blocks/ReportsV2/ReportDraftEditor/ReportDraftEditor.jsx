@@ -16,6 +16,10 @@ import ReportDraftSummary from "./ReportDraftSummary";
 import ReportFieldSettingsModal from "./ReportFieldSettingsModal";
 import {
   DRAFT_FILTERS,
+  applyDateChange,
+  applyMealCountChange,
+  buildRoomMates,
+  groupRowsByRoom,
   pluralizeDays,
   pluralizeRows,
   rowMatchesSearch,
@@ -69,6 +73,7 @@ export default function ReportDraftEditor({
     serverTotal,
     deletedCount,
     setCell,
+    setRowPatch,
     removeRow,
     resetRow,
     resetAll,
@@ -219,8 +224,25 @@ export default function ReportDraftEditor({
   // первой же введённой цифре (см. useEditingPins).
   const { pinned, pin, hold, release, clear: clearPins } = useEditingPins();
 
+  // Правки дат и счётчиков питания идут через ПАТЧИ с пересчётом производных
+  // (требование заказчика 07.09): смена даты пересчитывает сутки по правилам
+  // частичных суток, питание пропорцией «на сутки», деньги следом; правка
+  // счётчика — стоимость питания по средней цене приёма. Остальные поля —
+  // прежним setCell.
   const handleCellChange = (uid, field, value) => {
     pin(uid);
+    const row = rows.find((r) => r._uid === uid);
+    if (row && (field === "arrival" || field === "departure")) {
+      setRowPatch(uid, applyDateChange(row, field, value, rulesKnown ? rules : null));
+      return;
+    }
+    if (
+      row &&
+      (field === "breakfastCount" || field === "lunchCount" || field === "dinnerCount")
+    ) {
+      setRowPatch(uid, applyMealCountChange(row, field, value));
+      return;
+    }
     setCell(uid, field, value);
   };
 
@@ -453,15 +475,21 @@ export default function ReportDraftEditor({
   // заморозки) прицепляются в хвост.
   const sortOrderRef = useRef(null);
   const displayedRows = useMemo(() => {
-    if (!sort) {
-      sortOrderRef.current = null;
-      return filteredRows;
-    }
+    // Заморозка действует и на дефолтную комнатную группировку: правка
+    // «Комнаты» иначе уводила бы строку к новой группе прямо из-под курсора.
     if (pinned.size > 0 && sortOrderRef.current) {
       const pos = new Map(sortOrderRef.current.map((uid, i) => [uid, i]));
       return [...filteredRows].sort(
         (a, b) => (pos.get(a._uid) ?? Infinity) - (pos.get(b._uid) ?? Infinity)
       );
+    }
+    if (!sort) {
+      // Дефолт показа (требование 07.09): одинаковые комнаты друг под другом —
+      // жильцы одной комнаты подтягиваются к её первому вхождению. Третий клик
+      // сортировки возвращает к этому же порядку.
+      const grouped = groupRowsByRoom(filteredRows);
+      sortOrderRef.current = grouped.map((row) => row._uid);
+      return grouped;
     }
     let sorted;
     if (groupBy === "hotel") {
@@ -484,6 +512,12 @@ export default function ReportDraftEditor({
     sortOrderRef.current = sorted.map((row) => row._uid);
     return sorted;
   }, [filteredRows, sort, groupBy, pinned]);
+
+  // Соседи по комнате — по ТЕКУЩЕМУ состоянию строк (не по серверным
+  // shareSegments): после ручной смены комнаты сервер о новом соседстве ещё
+  // не знает, а пометка «живут вместе» должна появиться сразу. По ВСЕМ
+  // строкам, не по отфильтрованным: сосед может быть скрыт фильтром.
+  const roomMates = useMemo(() => buildRoomMates(rows), [rows]);
 
   // Подвал, в отличие от чипов, — сводка по ВСЕМУ черновику, а не по
   // текущему поиску: иначе "показано 3 из 12 · изменено 5" читалось бы как
@@ -637,6 +671,7 @@ export default function ReportDraftEditor({
             snapshotValue={snapshotValue}
             editableFields={editableFields}
             positions={positionNames}
+            roomMates={roomMates}
             onCellChange={handleCellChange}
             onCellFocus={hold}
             onCellBlur={release}

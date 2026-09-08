@@ -44,6 +44,7 @@ export default function ReportDraftRow({
   snapshotValue,
   editableFields,
   positions,
+  roomMates,
   onCellChange,
   onCellFocus,
   onCellBlur,
@@ -381,24 +382,46 @@ export default function ReportDraftRow({
         )}
       </div>
 
-      {/* «Вид проживания» — с кем именно делили номер. Не правится: соседей и
-          отрезки считает бэк из подселений, текст здесь лишь их отражение. */}
-      <div
-        className={cohabitants.length > 0 ? classes.colShareWith : classes.colShare}
-        title={shareTitle}
-        onMouseEnter={cluster ? () => onHoverCluster?.(row.shareClusterId) : undefined}
-        onMouseLeave={cluster ? () => onHoverCluster?.(null) : undefined}
-      >
-        {/* Номер группы совместного проживания: одинаковый у всех жильцов
-            номера. Строки в таблице стоят в порядке реестра и вперемешку,
-            поэтому без метки соседей глазами не сопоставить. */}
-        {cluster && (
-          <span className={classes.clusterBadge} title="Группа совместного проживания">
-            {cluster.number}
-          </span>
-        )}
-        {cohabitants.length > 0 ? `с ${cohabitants.join(", ")}` : "жил один"}
-      </div>
+      {/* «Вид проживания» — с кем именно делили номер. Не правится напрямую.
+          Два источника: серверные shareSegments (с периодами) и ТЕКУЩЕЕ
+          совпадение комнат (roomMates) — после ручной смены «Комнаты» сервер
+          о новом соседстве ещё не знает, поэтому при расхождении показывается
+          свежее room-based «вместе с …» (требование заказчика 07.09); когда
+          составы совпадают, остаётся серверный текст с периодами в подсказке. */}
+      {(() => {
+        const mates = Array.isArray(roomMates) ? roomMates : [];
+        const sameAsServer =
+          mates.length === cohabitants.length &&
+          mates.every((name) => cohabitants.includes(name));
+        const roomBased = mates.length > 0 && !sameAsServer;
+        const shared = roomBased || cohabitants.length > 0;
+        return (
+          <div
+            className={shared ? classes.colShareWith : classes.colShare}
+            title={
+              roomBased
+                ? `Живут вместе — одна комната: ${mates.join(", ")}`
+                : shareTitle
+            }
+            onMouseEnter={cluster ? () => onHoverCluster?.(row.shareClusterId) : undefined}
+            onMouseLeave={cluster ? () => onHoverCluster?.(null) : undefined}
+          >
+            {/* Номер группы совместного проживания: одинаковый у всех жильцов
+                номера. Строки в таблице стоят в порядке реестра и вперемешку,
+                поэтому без метки соседей глазами не сопоставить. */}
+            {cluster && (
+              <span className={classes.clusterBadge} title="Группа совместного проживания">
+                {cluster.number}
+              </span>
+            )}
+            {roomBased
+              ? `вместе с ${mates.join(", ")}`
+              : cohabitants.length > 0
+                ? `с ${cohabitants.join(", ")}`
+                : "жил один"}
+          </div>
+        );
+      })()}
 
       <div className={classes.colPosition} title={row.personPosition || undefined}>
         {may("personPosition") ? (
@@ -598,6 +621,7 @@ ReportDraftRow.propTypes = {
   snapshotValue: PropTypes.func,
   editableFields: PropTypes.instanceOf(Set),
   positions: PropTypes.arrayOf(PropTypes.string),
+  roomMates: PropTypes.arrayOf(PropTypes.string),
   onCellChange: PropTypes.func.isRequired,
   onCellFocus: PropTypes.func,
   onCellBlur: PropTypes.func,

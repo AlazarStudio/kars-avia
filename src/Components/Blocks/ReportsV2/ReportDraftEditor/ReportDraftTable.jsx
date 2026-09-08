@@ -20,6 +20,7 @@ export default function ReportDraftTable({
   snapshotValue,
   editableFields,
   positions,
+  roomMates,
   onCellChange,
   onCellFocus,
   onCellBlur,
@@ -81,6 +82,7 @@ export default function ReportDraftTable({
       snapshotValue={snapshotValue}
       editableFields={editableFields}
       positions={positions}
+      roomMates={roomMates?.get(row._uid)}
       onCellChange={onCellChange}
       onCellFocus={onCellFocus}
       onCellBlur={onCellBlur}
@@ -177,6 +179,7 @@ ReportDraftTable.propTypes = {
   snapshotValue: PropTypes.func,
   editableFields: PropTypes.instanceOf(Set),
   positions: PropTypes.arrayOf(PropTypes.string),
+  roomMates: PropTypes.instanceOf(Map),
   onCellChange: PropTypes.func.isRequired,
   onCellFocus: PropTypes.func,
   onCellBlur: PropTypes.func,

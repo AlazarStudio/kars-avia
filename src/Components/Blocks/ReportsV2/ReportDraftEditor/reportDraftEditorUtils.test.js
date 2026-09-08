@@ -18,6 +18,11 @@ import {
   reportDateToInputValue,
   inputValueToReportDate,
   sortDraftRows,
+  computeStayDays,
+  applyDateChange,
+  applyMealCountChange,
+  groupRowsByRoom,
+  buildRoomMates,
 } from "./reportDraftEditorUtils.js";
 
 // Формат границ — как на стенде: "DD.MM.YYYY HH:MM:SS", уже отформатирован бэком.
@@ -288,4 +293,102 @@ test("sortDraftRows: пустые значения не роняют сорти�
   ];
   assert.deepEqual(sortDraftRows(rows, "pricePerDay", "asc").map((r) => r._uid), [0, 1]);
   assert.deepEqual(sortDraftRows(rows, "hotelName", "desc").map((r) => r._uid), [1, 0]);
+});
+
+test("computeStayDays зеркалит бэковую calcTotalDays (дефолтные правила)", () => {
+  // 3 календарных дня, заезд 19:00 (без надбавки), выезд 12:00 (не > 12:00)
+  assert.equal(computeStayDays("03.08.2026 19:00:00", "06.08.2026 12:00:00", null), 3);
+  // ранний заезд до 06:00 → +1
+  assert.equal(computeStayDays("03.08.2026 05:30:00", "06.08.2026 12:00:00", null), 4);
+  // заезд 06:00–14:00 → +0.5; выезд после 18:00 → +1
+  assert.equal(computeStayDays("03.08.2026 10:00:00", "06.08.2026 19:00:00", null), 4.5);
+  // выезд 12:01–18:00 → +0.5
+  assert.equal(computeStayDays("03.08.2026 19:00:00", "06.08.2026 12:30:00", null), 3.5);
+  // сентинели бэка: заезд 00:10 — ноль надбавки, выезд 23:50 — полный день
+  assert.equal(computeStayDays("03.08.2026 00:10:00", "06.08.2026 12:00:00", null), 3);
+  assert.equal(computeStayDays("03.08.2026 19:00:00", "06.08.2026 23:50:00", null), 4);
+  // нераспарсиваемое — null
+  assert.equal(computeStayDays("мусор", "06.08.2026 12:00:00", null), null);
+});
+
+test("applyDateChange: сутки, питание пропорцией, деньги следом", () => {
+  const row = {
+    arrival: "03.08.2026 19:00:00", departure: "06.08.2026 12:00:00",
+    totalDays: 3, breakfastCount: 3, lunchCount: 3, dinnerCount: 0,
+    breakfastIncludedInPrice: false, totalMealCost: 3000, pricePerDay: 4500,
+    totalLivingCost: 13500, totalDebt: 16500,
+  };
+  // выезд сдвинулся на сутки позже: 3 → 4 суток
+  const patch = applyDateChange(row, "departure", "07.08.2026 12:00:00", null);
+  assert.equal(patch.totalDays, 4);
+  assert.equal(patch.breakfastCount, 4); // 1/сутки × 4
+  assert.equal(patch.lunchCount, 4);
+  assert.equal(patch.dinnerCount, 0);
+  // средняя цена приёма 3000/6 = 500 → 8 приёмов × 500
+  assert.equal(patch.totalMealCost, 4000);
+  assert.equal(patch.totalLivingCost, 18000); // 4 × 4500
+  assert.equal(patch.totalDebt, 22000);
+});
+
+test("applyDateChange: завтрак «вкл» не участвует в средней цене приёма", () => {
+  const row = {
+    arrival: "03.08.2026 19:00:00", departure: "05.08.2026 12:00:00",
+    totalDays: 2, breakfastCount: 2, lunchCount: 2, dinnerCount: 0,
+    breakfastIncludedInPrice: true, totalMealCost: 1000, pricePerDay: 1000,
+    totalLivingCost: 2000, totalDebt: 3000,
+  };
+  const patch = applyDateChange(row, "departure", "07.08.2026 12:00:00", null);
+  // платных приёмов было 2 (обеды), цена приёма 500; стало 4 обеда → 2000
+  assert.equal(patch.totalMealCost, 2000);
+  assert.equal(patch.totalDebt, 4000 + 2000);
+});
+
+test("applyDateChange: нераспарсиваемая дата меняет только само поле", () => {
+  const row = { arrival: "03.08.2026 19:00:00", departure: "06.08.2026 12:00:00", totalDays: 3 };
+  const patch = applyDateChange(row, "departure", "", null);
+  assert.deepEqual(Object.keys(patch), ["departure"]);
+});
+
+test("applyMealCountChange: стоимость питания по средней цене приёма", () => {
+  const row = {
+    breakfastCount: 2, lunchCount: 2, dinnerCount: 0,
+    breakfastIncludedInPrice: false, totalMealCost: 2000,
+    totalLivingCost: 9000,
+  };
+  // цена приёма 2000/4 = 500; ужинов стало 2 → 6 приёмов × 500
+  const patch = applyMealCountChange(row, "dinnerCount", "2");
+  assert.equal(patch.dinnerCount, 2);
+  assert.equal(patch.totalMealCost, 3000);
+  assert.equal(patch.totalDebt, 12000);
+  // приёмов не было — стоимость не трогаем (калибровать нечем)
+  const empty = applyMealCountChange(
+    { breakfastCount: 0, lunchCount: 0, dinnerCount: 0, totalMealCost: 0 },
+    "lunchCount", "3");
+  assert.equal(empty.lunchCount, 3);
+  assert.equal("totalMealCost" in empty, false);
+});
+
+test("groupRowsByRoom: жильцы одной комнаты подтягиваются к первому вхождению", () => {
+  const rows = [
+    { _uid: 0, hotelName: "А", roomName: "1", personName: "Иванов" },
+    { _uid: 1, hotelName: "А", roomName: "2", personName: "Петров" },
+    { _uid: 2, hotelName: "А", roomName: "1", personName: "Сидоров" },
+    { _uid: 3, hotelName: "Б", roomName: "1", personName: "Козлов" }, // другая гостиница
+    { _uid: 4, hotelName: "А", roomName: "", personName: "Безкомнатный" }, // не группируется
+  ];
+  assert.deepEqual(groupRowsByRoom(rows).map((r) => r._uid), [0, 2, 1, 3, 4]);
+});
+
+test("buildRoomMates: соседи без себя, одиночки и пустые комнаты не считаются", () => {
+  const rows = [
+    { _uid: 0, hotelName: "А", roomName: "1", personName: "Иванов" },
+    { _uid: 1, hotelName: "А", roomName: "1", personName: "Петров" },
+    { _uid: 2, hotelName: "А", roomName: "2", personName: "Сидоров" },
+    { _uid: 3, hotelName: "А", roomName: "", personName: "Пустой" },
+  ];
+  const mates = buildRoomMates(rows);
+  assert.deepEqual(mates.get(0), ["Петров"]);
+  assert.deepEqual(mates.get(1), ["Иванов"]);
+  assert.equal(mates.has(2), false);
+  assert.equal(mates.has(3), false);
 });

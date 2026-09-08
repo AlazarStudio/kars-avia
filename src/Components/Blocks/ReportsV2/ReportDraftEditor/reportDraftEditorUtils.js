@@ -118,6 +118,229 @@ export function sortDraftRows(rows, key, dir) {
   });
 }
 
+// Разбор строки контракта "DD.MM.YYYY HH:MM[:SS]" в компоненты — для расчёта
+// суток. Не через new Date(строка): формат не ISO, а руками — надёжнее.
+function parseReportDateParts(value) {
+  const m = /^(\d{2})\.(\d{2})\.(\d{4}) (\d{2}):(\d{2})/.exec(value || "");
+  if (!m) return null;
+  return { d: +m[1], mo: +m[2], y: +m[3], hh: +m[4], mm: +m[5] };
+}
+
+/**
+ * Сутки проживания по правилам частичных суток — ЗЕРКАЛО бэковой
+ * calcTotalDays (services/report/reportUtils.js): базовые календарные дни
+ * между датами + надбавка за ранний заезд (до arrivalFullBefore — полные,
+ * до arrivalHalfBefore — половина) + за поздний выезд (после
+ * departureFullAfter — полные, после departureHalfAfter — половина).
+ * Сентинели бэка сохранены: заезд ровно в 00:10 — без надбавки, выезд
+ * ровно в 23:50 — полный день. Менять только парой с бэком.
+ *
+ * @param {string} arrivalStr - "DD.MM.YYYY HH:MM[:SS]"
+ * @param {string} departureStr - то же
+ * @param {object|null} rules - правила (PARTIAL_DAY_DEFAULTS-совместимые)
+ * @returns {number|null} сутки (кратно 0.5) или null, если даты не разобрать
+ */
+export function computeStayDays(arrivalStr, departureStr, rules) {
+  const a = parseReportDateParts(arrivalStr);
+  const b = parseReportDateParts(departureStr);
+  if (!a || !b) return null;
+
+  const MS_PER_DAY = 86400000;
+  const baseDays = Math.max(
+    0,
+    Math.floor((Date.UTC(b.y, b.mo - 1, b.d) - Date.UTC(a.y, a.mo - 1, a.d)) / MS_PER_DAY)
+  );
+
+  const r = { ...PARTIAL_DAY_DEFAULTS, ...(rules || {}) };
+  const cfg = {
+    arrivalFullBeforeMin: parseHhMm(r.arrivalFullBefore) ?? 6 * 60,
+    arrivalHalfBeforeMin: parseHhMm(r.arrivalHalfBefore) ?? 14 * 60,
+    departureHalfAfterMin: parseHhMm(r.departureHalfAfter) ?? 12 * 60,
+    departureFullAfterMin: parseHhMm(r.departureFullAfter) ?? 18 * 60,
+    arrivalFullDays: Number(r.arrivalFullDays) || 0,
+    arrivalHalfDays: Number(r.arrivalHalfDays) || 0,
+    departureHalfDays: Number(r.departureHalfDays) || 0,
+    departureFullDays: Number(r.departureFullDays) || 0,
+  };
+
+  let arrivalAdjust = 0;
+  const am = a.hh * 60 + a.mm;
+  if (a.hh === 0 && a.mm === 10) arrivalAdjust = 0;
+  else if (am < cfg.arrivalFullBeforeMin) arrivalAdjust = cfg.arrivalFullDays;
+  else if (am < cfg.arrivalHalfBeforeMin) arrivalAdjust = cfg.arrivalHalfDays;
+
+  let departureAdjust = 0;
+  const dm = b.hh * 60 + b.mm;
+  if (b.hh === 23 && b.mm === 50) departureAdjust = cfg.departureFullDays;
+  else if (dm >= cfg.departureFullAfterMin) departureAdjust = cfg.departureFullDays;
+  else if (dm > cfg.departureHalfAfterMin) departureAdjust = cfg.departureHalfDays;
+
+  const total = baseDays + arrivalAdjust + departureAdjust;
+  return total < 0 ? 0 : total;
+}
+
+// Платные приёмы пищи строки: завтрак «вкл» входит в цену номера и в деньгах
+// питания не участвует.
+function paidMealsCount(row, counts) {
+  const c = counts || row;
+  const breakfast = row?.breakfastIncludedInPrice ? 0 : Number(c.breakfastCount) || 0;
+  return breakfast + (Number(c.lunchCount) || 0) + (Number(c.dinnerCount) || 0);
+}
+
+/**
+ * Патч строки при смене даты заезда/выезда: пересчитываются сутки (по
+ * правилам частичных суток), счётчики питания (пропорция «приёмов на сутки»
+ * из текущей строки), стоимость питания (по средней цене платного приёма),
+ * стоимость проживания (сутки × цена) и итог.
+ *
+ * Средняя цена приёма — осознанное приближение: в строке черновика нет цен
+ * завтрака/обеда/ужина по отдельности, есть только их сумма. Если платных
+ * приёмов не было, стоимость питания не трогается (калибровать нечем).
+ *
+ * @param {object} row - текущая строка
+ * @param {"arrival"|"departure"} field - какое поле меняется
+ * @param {string} value - новое значение "DD.MM.YYYY HH:MM:SS"
+ * @param {object|null} rules - правила частичных суток
+ * @returns {object} патч полей строки
+ */
+export function applyDateChange(row, field, value, rules) {
+  const patch = { [field]: value ?? "" };
+  const arrival = field === "arrival" ? value : row?.arrival;
+  const departure = field === "departure" ? value : row?.departure;
+  const newDays = computeStayDays(arrival, departure, rules);
+  if (newDays == null) return patch; // дата не разобрана — только само поле
+
+  patch.totalDays = newDays;
+
+  const oldDays = Number(row?.totalDays) || 0;
+  if (oldDays > 0) {
+    // Приёмы пищи привязаны к суткам: масштабируем по норме «на сутки».
+    const scale = (n) => Math.round(((Number(n) || 0) / oldDays) * newDays);
+    const nextCounts = {
+      breakfastCount: scale(row?.breakfastCount),
+      lunchCount: scale(row?.lunchCount),
+      dinnerCount: scale(row?.dinnerCount),
+    };
+    const paidOld = paidMealsCount(row);
+    if (paidOld > 0) {
+      const meanPrice = (Number(row?.totalMealCost) || 0) / paidOld;
+      patch.totalMealCost = Math.round(meanPrice * paidMealsCount(row, nextCounts));
+    }
+    Object.assign(patch, nextCounts);
+  }
+
+  const price = Number(row?.pricePerDay) || 0;
+  patch.totalLivingCost = Math.round(newDays * price);
+  patch.totalDebt =
+    patch.totalLivingCost +
+    (patch.totalMealCost != null ? patch.totalMealCost : Number(row?.totalMealCost) || 0);
+  return patch;
+}
+
+/**
+ * Патч строки при ручной правке счётчика питания (завтрак/обед/ужин):
+ * стоимость питания пересчитывается по средней цене платного приёма из
+ * текущей строки, итог — следом. Если платных приёмов не было, стоимость
+ * не трогается: среднюю цену взять неоткуда.
+ *
+ * @param {object} row - текущая строка
+ * @param {"breakfastCount"|"lunchCount"|"dinnerCount"} field
+ * @param {string|number|null} rawValue - значение из инпута
+ * @returns {object} патч полей строки
+ */
+export function applyMealCountChange(row, field, rawValue) {
+  const value =
+    rawValue === "" || rawValue === null || rawValue === undefined
+      ? null
+      : Math.round(Number(rawValue));
+  const patch = { [field]: value };
+
+  const paidOld = paidMealsCount(row);
+  if (paidOld > 0) {
+    const meanPrice = (Number(row?.totalMealCost) || 0) / paidOld;
+    const paidNew = paidMealsCount(row, { ...row, [field]: value });
+    patch.totalMealCost = Math.round(meanPrice * paidNew);
+    patch.totalDebt = (Number(row?.totalLivingCost) || 0) + patch.totalMealCost;
+  }
+  return patch;
+}
+
+// Ключ «одна комната одной гостиницы» — для группировки и пометки «живут
+// вместе». Пустая комната ключа не даёт: безымянные не группируются.
+export function roomKeyOf(row) {
+  const room = String(row?.roomName ?? "").trim();
+  if (!room) return null;
+  return `${String(row?.hotelName ?? "").trim()}|${room}`;
+}
+
+/**
+ * Порядок показа «одинаковые комнаты друг под другом»: строки идут в порядке
+ * файла, но все жильцы одной комнаты подтягиваются к её первому вхождению.
+ * Одиночные строки не двигаются. Порядок в массиве rows и index не трогаются
+ * (контрактны) — это только представление.
+ *
+ * @param {Array<object>} rows - строки к показу
+ * @returns {Array<object>} новый массив в комнатном порядке
+ */
+export function groupRowsByRoom(rows) {
+  if (!Array.isArray(rows)) return [];
+  const byKey = new Map();
+  for (const row of rows) {
+    const key = roomKeyOf(row);
+    if (!key) continue;
+    if (!byKey.has(key)) byKey.set(key, []);
+    byKey.get(key).push(row);
+  }
+  const emitted = new Set();
+  const out = [];
+  for (const row of rows) {
+    if (emitted.has(row._uid)) continue;
+    const key = roomKeyOf(row);
+    const group = key ? byKey.get(key) : null;
+    if (group && group.length > 1) {
+      for (const mate of group) {
+        if (!emitted.has(mate._uid)) {
+          emitted.add(mate._uid);
+          out.push(mate);
+        }
+      }
+    } else {
+      emitted.add(row._uid);
+      out.push(row);
+    }
+  }
+  return out;
+}
+
+/**
+ * Фамилии соседей по комнате для каждой строки — по ТЕКУЩЕМУ состоянию
+ * строк (а не по серверным shareSegments): после ручной смены комнаты
+ * сервер о новом соседстве ещё не знает.
+ *
+ * @param {Array<object>} rows - ВСЕ строки черновика (не отфильтрованные)
+ * @returns {Map<number, string[]>} _uid → фамилии соседей (без себя)
+ */
+export function buildRoomMates(rows) {
+  const byKey = new Map();
+  for (const row of rows || []) {
+    const key = roomKeyOf(row);
+    if (!key) continue;
+    if (!byKey.has(key)) byKey.set(key, []);
+    byKey.get(key).push(row);
+  }
+  const out = new Map();
+  for (const group of byKey.values()) {
+    if (group.length < 2) continue;
+    for (const row of group) {
+      out.set(
+        row._uid,
+        group.filter((r) => r._uid !== row._uid).map((r) => r.personName || "без имени")
+      );
+    }
+  }
+  return out;
+}
+
 /**
  * Разбивает отформатированную строку "DD.MM.YYYY HH:MM[:SS]" на дату и время.
  * Строка приходит с бэка уже в этом виде (не ISO) — см. trimSeconds.
