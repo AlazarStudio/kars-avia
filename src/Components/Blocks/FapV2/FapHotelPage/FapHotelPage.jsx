@@ -38,6 +38,7 @@ import { splitRoomAccommodation } from "../fapRoomSplit.js";
 import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
 import { hotelOverbookedBy, livingNameCollisions } from "../fapLivingMismatch";
 import HotelCapacityDialog from "../HotelCapacityDialog/HotelCapacityDialog";
+import FapDiscountDialog from "../FapDiscountDialog/FapDiscountDialog";
 import { isAirlineRole, isHotelScoped } from "../../../../utils/access";
 import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
 import { formatDateTime, normalizeCategory, PERSON_CATEGORY_OPTIONS, accommodationDiscountPercent, placementKindLabel } from "../fapConstants";
@@ -990,6 +991,36 @@ export default function FapHotelPage({
   const getEffectiveRowRef = useRef(getEffectiveRow);
   useEffect(() => { getEffectiveRowRef.current = getEffectiveRow; }, [getEffectiveRow]);
   useEffect(() => { placementOverridesRef.current = placementOverrides; }, [placementOverrides]);
+
+  // Скидка применима там же, где её показывает ячейка колонки «Скидка»: в режиме
+  // «Номер» — всегда (скидка задаёт вес доли), иначе нужен тариф с ценой за сутки.
+  // Один предикат на ячейку и на массовую простановку — иначе в базу ушёл бы
+  // процент, которого на экране нет.
+  const discountApplicable = useCallback(
+    (personIndex, pd) => {
+      const perRoom = !!roomBillingByIndex[personIndex]?.perRoom;
+      const hasTariff = !!findTariff(pd.tariffId);
+      return perRoom || (hasTariff && !getEffectiveRow(personIndex, pd).isLegacyFlat);
+    },
+    [roomBillingByIndex, findTariff, getEffectiveRow]
+  );
+
+  // Гости отчёта в терминах зон скидки. Строится от reportGroups (полный состав,
+  // до поиска в тулбаре) — поиск на зоны не влияет.
+  const discountTargets = useMemo(
+    () =>
+      reportGroups.flatMap((g) =>
+        g.members.map((m) => ({
+          index: m.index,
+          fullName: m.person?.fullName ?? "",
+          category: normalizeCategory(m.person?.personCategory),
+          roomNumber: g.noRoom ? "" : g.roomNumber,
+          placementKind: g.noRoom ? null : placementKindByRoom[g.roomNumber]?.kind ?? null,
+          applicable: discountApplicable(m.index, m.pd),
+        }))
+      ),
+    [reportGroups, placementKindByRoom, discountApplicable]
+  );
 
   // Денежные итоги по группам — отдельно от состава (иначе циклическая зависимость).
   const groupTotals = useMemo(() => {
@@ -2177,6 +2208,26 @@ export default function FapHotelPage({
     setPersonData(next);
     scheduleSave();
   }, [bulkCounts, people, hotelIndex, plan, scheduleSave, findTariff]);
+
+  // Массовая простановка скидок на проживание («Скидки» в тулбаре отчёта).
+  // Патч приходит готовым из FapDiscountDialog: { [index]: number|null }.
+  const [discountsOpen, setDiscountsOpen] = useState(false);
+  const applyDiscountPatch = useCallback(
+    (patch) => {
+      if (!patch || !Object.keys(patch).length) return;
+      const next = { ...personDataRef.current };
+      Object.entries(patch).forEach(([i, value]) => {
+        const base = next[i] ?? emptyPD(peopleRef.current[i], hotelIndex, plan);
+        next[i] = { ...base, accommodationDiscount: value };
+      });
+      // Ref — синхронно до setPersonData: отложенный автосейв читает только refs.
+      personDataRef.current = next;
+      setPersonData(next);
+      // foodCost не пересчитываем — питание скидкой на проживание не затрагивается.
+      scheduleSave();
+    },
+    [hotelIndex, plan, scheduleSave]
+  );
 
   // Жёсткая привязка номера комнаты: person.roomNumber — единственный источник.
   // Правка во вкладке «Гости» (мутация → refetch → people) сразу отражается в
@@ -3943,6 +3994,16 @@ export default function FapHotelPage({
                   <EditPencilIcon color="#545873" /> Кол-во всем
                 </button>
               )}
+              {effectiveReportMode === "edit" && canEdit && placed > 0 && !hideMoney && (
+                <button
+                  type="button"
+                  className={classes.secondaryBtn}
+                  onClick={() => setDiscountsOpen(true)}
+                  title="Применить скидки гостям отчёта"
+                >
+                  Скидки
+                </button>
+              )}
               {effectiveReportMode === "edit" && canEdit && (
                 <button
                   type="button"
@@ -4313,14 +4374,8 @@ export default function FapHotelPage({
                                 </div>
                               )}
                               {!hideMoney && (() => {
-                                // Скидка применима там, где проживание считается от цены за
-                                // сутки: в режиме «Койко-место» — от своей, в режиме «Номер» —
-                                // это доля гостя в сумме номера (скидка задаёт его вес).
-                                // Без тарифа и у легаси-строк с плоской суммой процент считать
-                                // не от чего.
-                                const perRoom = !!roomBillingByIndex[i]?.perRoom;
-                                const hasTariff = !!findTariff(pd.tariffId);
-                                if (!perRoom && (!hasTariff || getEffectiveRow(i, pd).isLegacyFlat)) {
+                                // Тот же предикат, что у массовой простановки «Скидки».
+                                if (!discountApplicable(i, pd)) {
                                   return <div className={classes.discountMuted}>—</div>;
                                 }
                                 const auto = accommodationDiscountPercent(
@@ -4628,6 +4683,16 @@ export default function FapHotelPage({
           </Button>
         </DialogActions>
       </Dialog>
+
+      <FapDiscountDialog
+        open={discountsOpen}
+        targets={discountTargets}
+        onClose={() => setDiscountsOpen(false)}
+        onApply={(patch) => {
+          applyDiscountPatch(patch);
+          setDiscountsOpen(false);
+        }}
+      />
 
       <Dialog
         open={assignRoomOpen}
