@@ -59,6 +59,13 @@
 .item:hover {
   background: var(--gray, #F1F4FB);
 }
+.itemDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.itemDisabled:hover {
+  background: transparent;
+}
 /* Единый 16×16 слот под иконку: все пункты меню одного размера,
    пропорции сохраняются (портретная иконка скачивания не растягивается). */
 .itemIcon {

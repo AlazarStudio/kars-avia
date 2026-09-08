@@ -417,6 +417,17 @@
   cursor: not-allowed;
 }
 
+.secondaryBtnOpen {
+  border-color: var(--dark-blue, #0057C3);
+  background: #EAF1FB;
+  color: var(--dark-blue, #0057C3);
+}
+
+.actionsChevron {
+  width: 14px;
+  height: 14px;
+}
+
 /* Статус отчёта в шапке гостиницы — рядом с бейджем «заполнен», в его габаритах. */
 .headReportBadge {
   font-size: 11px;
@@ -427,30 +438,6 @@
   border-radius: 999px;
   white-space: nowrap;
   flex-shrink: 0;
-}
-
-.ghostBtn {
-  height: 36px;
-  padding: 0 12px;
-  border-radius: 10px;
-  border: none;
-  background: transparent;
-  color: #545873;
-  font-size: 12.5px;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.ghostBtn:hover:not(:disabled) {
-  background: #F1F4FB;
-  color: #0F172A;
-}
-
-.ghostBtn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
 }
 
 .reportPending {

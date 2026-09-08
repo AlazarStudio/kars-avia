@@ -3,11 +3,13 @@ import DotsIcon from "../../../../shared/icons/DotsIcon.jsx";
 import classes from "./FapOverflowMenu.module.css";
 
 // Оверфлоу-меню «⋯».
-// items: Array<{ label, icon?, onClick?, tone?, sep?, hidden? }>
-//   icon  — компонент иконки (необязательно)
-//   tone  — "danger" → красный пункт
-//   sep   — true → разделитель (без label)
-//   hidden— true → пункт пропускается
+// items: Array<{ label, icon?, onClick?, tone?, sep?, hidden?, disabled?, title? }>
+//   icon    — компонент иконки (необязательно)
+//   tone    — "danger" → красный пункт
+//   sep     — true → разделитель (без label)
+//   hidden  — true → пункт пропускается
+//   disabled— true → пункт приглушён и не кликается
+//   title   — подсказка на пункте
 // trigger — необязательная render-функция ({ open, toggle }) => node вместо «⋯»:
 //   позволяет повесить тот же выпадающий список на чужую кнопку (чип манифестов).
 // Схлопывает ведущие/соседние/хвостовые разделители. Если реальных пунктов нет — рендерит null.
@@ -77,8 +79,10 @@ export default function FapOverflowMenu({ items = [], className = "", trigger })
                 key={`item-${i}`}
                 type="button"
                 role="menuitem"
-                className={[classes.item, danger ? classes.danger : ""].filter(Boolean).join(" ")}
+                className={[classes.item, danger ? classes.danger : "", item.disabled ? classes.itemDisabled : ""].filter(Boolean).join(" ")}
                 onClick={() => handleItemClick(item)}
+                disabled={!!item.disabled}
+                title={item.title}
               >
                 {Icon && (
                   <span className={classes.itemIcon}>

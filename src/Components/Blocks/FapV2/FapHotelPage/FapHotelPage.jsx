@@ -90,6 +90,9 @@ import { downloadHotelReport } from "../reports/buildReportSheets";
 import FapReportView from "../FapReportView/FapReportView";
 import FapModeToggle from "../FapModeToggle/FapModeToggle";
 import FapHeaderActions from "../FapHeaderActions/FapHeaderActions";
+import FapOverflowMenu from "../FapOverflowMenu/FapOverflowMenu";
+import ChevronIcon from "../../../../shared/icons/ChevronIcon";
+import PercentIcon from "../../../../shared/icons/PercentIcon";
 
 const LIV = "#10B981";
 
@@ -3984,64 +3987,6 @@ export default function FapHotelPage({
               //   </span>
               // )
               }
-              {effectiveReportMode === "edit" && canEdit && placed > 0 && (
-                <button
-                  type="button"
-                  className={classes.secondaryBtn}
-                  onClick={() => setBulkCountsOpen(true)}
-                  title="Задать количество приёмов всем гостям отчёта"
-                >
-                  <EditPencilIcon color="#545873" /> Кол-во всем
-                </button>
-              )}
-              {effectiveReportMode === "edit" && canEdit && placed > 0 && !hideMoney && (
-                <button
-                  type="button"
-                  className={classes.secondaryBtn}
-                  onClick={() => setDiscountsOpen(true)}
-                  title="Применить скидки гостям отчёта"
-                >
-                  Скидки
-                </button>
-              )}
-              {effectiveReportMode === "edit" && canEdit && (
-                <button
-                  type="button"
-                  className={classes.primaryBtn}
-                  onClick={handleSaveReport}
-                  disabled={saving}
-                >
-                  <CheckSvg /> {saving ? "Сохранение…" : "Сохранить отчёт"}
-                </button>
-              )}
-              {effectiveReportMode === "edit" && canEdit &&
-                (reportSubmitted ? (
-                  <button
-                    type="button"
-                    className={classes.ghostBtn}
-                    onClick={handleHideReport}
-                    disabled={submitting}
-                    title="Скрыть отчёт от авиакомпании и снять согласование цен"
-                  >
-                    {submitting ? "Скрываем…" : "Скрыть отчёт"}
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className={classes.secondaryBtn}
-                    onClick={handleSubmitReport}
-                    disabled={submitting || saving || placed === 0 || !hasSavedReport}
-                    title={
-                      placed === 0
-                        ? "Нет размещённых гостей"
-                        : !hasSavedReport
-                        ? "Сначала сохраните отчёт"
-                        : "Открыть отчёт авиакомпании"
-                    }
-                  >
-                    {submitting ? "Отправка…" : "Отправить на проверку"}
-                  </button>
-                ))}
               {/* Согласование цен: сегмент, а не кнопка, — это состояние с двумя
                   положениями, и переключают его в обе стороны. Гостинице тумблера
                   нет: деньги отчёта ей скрыты (hideMoney), согласовывать невидимое
@@ -4071,6 +4016,49 @@ export default function FapHotelPage({
                     Цены согласованы
                   </button>
                 </div>
+              )}
+              {effectiveReportMode === "edit" && canEdit && (
+                <FapOverflowMenu
+                  trigger={({ open, toggle }) => (
+                    <button
+                      type="button"
+                      className={`${classes.secondaryBtn} ${open ? classes.secondaryBtnOpen : ""}`}
+                      onClick={toggle}
+                      aria-haspopup="menu"
+                      aria-expanded={open}
+                    >
+                      Действия <ChevronIcon className={classes.actionsChevron} />
+                    </button>
+                  )}
+                  items={[
+                    { label: "Количество приёмов…", icon: EditPencilIcon, onClick: () => setBulkCountsOpen(true), hidden: placed === 0 },
+                    { label: "Скидки…", icon: PercentIcon, onClick: () => setDiscountsOpen(true), hidden: placed === 0 || hideMoney },
+                    { sep: true },
+                    reportSubmitted
+                      ? { label: "Скрыть отчёт", tone: "danger", onClick: handleHideReport, disabled: submitting, title: "Скрыть отчёт от авиакомпании и снять согласование цен" }
+                      : {
+                          label: "Отправить на проверку",
+                          onClick: handleSubmitReport,
+                          disabled: submitting || saving || placed === 0 || !hasSavedReport,
+                          title:
+                            placed === 0
+                              ? "Нет размещённых гостей"
+                              : !hasSavedReport
+                              ? "Сначала сохраните отчёт"
+                              : "Открыть отчёт авиакомпании",
+                        },
+                  ]}
+                />
+              )}
+              {effectiveReportMode === "edit" && canEdit && (
+                <button
+                  type="button"
+                  className={classes.primaryBtn}
+                  onClick={handleSaveReport}
+                  disabled={saving}
+                >
+                  <CheckSvg /> {saving ? "Сохранение…" : "Сохранить отчёт"}
+                </button>
               )}
             </div>
 
