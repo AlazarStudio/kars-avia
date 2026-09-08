@@ -1555,9 +1555,10 @@
   flex-shrink: 0;
 }
 
+/* 28 + паддинг 3×2 + рамка 1×2 = 36px — высота кнопок тулбара. */
 .approveSeg .billingSegBtn {
   flex: none;
-  height: 30px;
+  height: 28px;
   font-size: 12.5px;
   font-weight: 700;
 }

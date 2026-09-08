@@ -6,8 +6,9 @@
   border: 1px solid var(--border, #E4E4EF);
 }
 
+/* 28 + паддинг 3×2 + рамка 1×2 = 36px — в ряд с кнопками и поиском тулбара отчёта. */
 .segment {
-  height: 32px;
+  height: 28px;
   padding: 0 14px;
   display: inline-flex;
   align-items: center;

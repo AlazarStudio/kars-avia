@@ -6,8 +6,11 @@
 }
 
 /* ── 1. Итоговая полоса ── */
+/* Четыре карточки одной ширины: сетка на полосе, .miniGrid отдаёт свои
+   карточки в неё через display: contents. */
 .summaryStrip {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 14px;
 }
 
@@ -25,8 +28,7 @@
 }
 
 .totalCard {
-  flex: 0 0 auto;
-  min-width: 220px;
+  min-width: 0;
   padding: 14px 18px;
   border: 1px solid #10B98133;
   border-radius: 14px;
@@ -57,10 +59,7 @@
 }
 
 .miniGrid {
-  flex: 1;
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 14px;
+  display: contents;
 }
 
 .miniCard {
