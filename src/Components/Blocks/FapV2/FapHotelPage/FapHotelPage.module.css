@@ -432,17 +432,51 @@
   height: 14px;
 }
 
-/* Статус отчёта в шапке гостиницы — рядом с бейджем «заполнен», в его габаритах. */
-.headReportBadge {
-  font-size: 11px;
+/* Стадии отчёта в полосе метрик: пройденный шаг — зелёный кружок с галкой,
+   непройденный — пунктирный; цепочка не переносится внутри себя, на узком окне
+   уходит на вторую строку полосы целиком. */
+.reportSteps {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+}
+.reportStep {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
   font-weight: 700;
-  color: #15803D;
-  background: #F0FDF4;
-  padding: 1px 8px;
-  border-radius: 999px;
   white-space: nowrap;
   flex-shrink: 0;
 }
+.reportStepDone { color: #15803D; }
+.reportStepWait { color: #8A8FA8; }
+.reportStepDate { font-weight: 600; color: #545873; }
+.reportStepDot {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: #10B981;
+  color: #fff;
+  font-size: 10px;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.reportStepWait .reportStepDot {
+  background: #fff;
+  border: 1.5px dashed #B8BDD0;
+}
+.reportStepConn {
+  width: 22px;
+  height: 1.5px;
+  background: #E4E4EF;
+  margin: 0 6px;
+  flex-shrink: 0;
+}
+.reportStepConnDone { background: #C9E9D8; }
 
 .reportPending {
   padding: 48px 16px;

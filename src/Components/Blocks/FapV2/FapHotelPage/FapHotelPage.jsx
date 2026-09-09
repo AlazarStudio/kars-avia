@@ -3364,38 +3364,6 @@ export default function FapHotelPage({
                   <span className={classes.fullDot} />заполнен
                 </span>
               )}
-              {/* Статус отчёта живёт в шапке рядом с «заполнен», а не среди кнопок
-                  тулбара: это состояние, а не действие. Тот же бейдж — на карточке
-                  гостиницы в «Проживании». */}
-              {canEdit && reportSubmitted && (
-                <span
-                  className={classes.headReportBadge}
-                  title="Авиакомпания видит этот отчёт. Любая правка снова его скроет"
-                >
-                  Отчёт отправлен · {formatDateTime(reportSubmittedAt)}
-                </span>
-              )}
-              {/* Второе состояние отчёта — рядом с первым и по тем же правилам,
-                  что бейдж на карточке гостиницы в «Проживании». */}
-              {canEdit && reportPricingApproved && (
-                <span
-                  className={classes.headReportBadge}
-                  title="Авиакомпания видит суммы отчёта"
-                >
-                  Цены согласованы · {formatDateTime(reportPricingApprovedAt)}
-                </span>
-              )}
-              {/* Третье состояние отчёта — ответ авиакомпании. Показываем его
-                  диспетчеру и гостинице: сама авиакомпания видит своё
-                  утверждение тумблером в тулбаре отчёта. */}
-              {canEdit && reportAirlineApproved && (
-                <span
-                  className={classes.headReportBadge}
-                  title="Авиакомпания утвердила отчёт"
-                >
-                  Утверждён АК · {formatDateTime(reportAirlineApprovedAt)}
-                </span>
-              )}
             </div>
             {hotel.address && (
               <div className={classes.headSub}>
@@ -3518,6 +3486,49 @@ export default function FapHotelPage({
               )}
             </div>
           </div>
+          {/* Стадии отчёта — метрика, а не плашки в названии: строка названия
+              не переносится, полоса метрик умеет. */}
+          {canEdit && reportSubmitted && (
+            <>
+              <div className={classes.metricDivider} />
+              <div className={classes.metric}>
+                <span className={classes.metricLabel}>Отчёт</span>
+                <div className={classes.reportSteps} aria-label="Стадии отчёта">
+                  <span
+                    className={`${classes.reportStep} ${classes.reportStepDone}`}
+                    title="Авиакомпания видит этот отчёт. Любая правка снова его скроет"
+                  >
+                    <span className={classes.reportStepDot}>✓</span>
+                    Отправлен <span className={classes.reportStepDate}>{formatDateTime(reportSubmittedAt)}</span>
+                  </span>
+                  <span className={`${classes.reportStepConn} ${reportPricingApproved ? classes.reportStepConnDone : ""}`} />
+                  {reportPricingApproved ? (
+                    <span className={`${classes.reportStep} ${classes.reportStepDone}`} title="Авиакомпания видит суммы отчёта">
+                      <span className={classes.reportStepDot}>✓</span>
+                      Цены согласованы <span className={classes.reportStepDate}>{formatDateTime(reportPricingApprovedAt)}</span>
+                    </span>
+                  ) : (
+                    <span className={`${classes.reportStep} ${classes.reportStepWait}`} title="Авиакомпания видит состав отчёта без сумм">
+                      <span className={classes.reportStepDot} />
+                      Цены не согласованы
+                    </span>
+                  )}
+                  <span className={`${classes.reportStepConn} ${reportAirlineApproved ? classes.reportStepConnDone : ""}`} />
+                  {reportAirlineApproved ? (
+                    <span className={`${classes.reportStep} ${classes.reportStepDone}`} title="Авиакомпания утвердила отчёт">
+                      <span className={classes.reportStepDot}>✓</span>
+                      Утверждён АК <span className={classes.reportStepDate}>{formatDateTime(reportAirlineApprovedAt)}</span>
+                    </span>
+                  ) : (
+                    <span className={`${classes.reportStep} ${classes.reportStepWait}`} title="Ждём утверждения отчёта авиакомпанией">
+                      <span className={classes.reportStepDot} />
+                      Ждёт утверждения АК
+                    </span>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
 
