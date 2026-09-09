@@ -1,0 +1,86 @@
+{
+  "runs": [
+    {
+      "date": "2026-07-30T07:49:27.170369+00:00",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "files": 14,
+      "mode": "update-code-only"
+    },
+    {
+      "date": "2026-07-30T08:15:39.302969+00:00",
+      "input_tokens": 734400,
+      "output_tokens": 0,
+      "files": 10,
+      "mode": "update-docs-semantic"
+    },
+    {
+      "date": "2026-07-31T07:51:12.200115+00:00",
+      "input_tokens": 140644,
+      "output_tokens": 0,
+      "files": 43
+    },
+    {
+      "date": "2026-07-31T15:39:13.208236+00:00",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "files": 21
+    },
+    {
+      "date": "2026-07-31T16:24:34.539089+00:00",
+      "input_tokens": 1984604,
+      "output_tokens": 0,
+      "files": 99
+    },
+    {
+      "date": "2026-08-17T04:17:14.223190+00:00",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "files": 128
+    },
+    {
+      "date": "2026-08-17T07:54:21.863973+00:00",
+      "input_tokens": 187039,
+      "output_tokens": 14000,
+      "files": 4
+    },
+    {
+      "date": "2026-08-17T08:11:41.115939+00:00",
+      "input_tokens": 109069,
+      "output_tokens": 12000,
+      "files": 1
+    },
+    {
+      "date": "2026-08-24T18:56:19.973395+00:00",
+      "input_tokens": 145487,
+      "output_tokens": 0,
+      "files": 39
+    },
+    {
+      "date": "2026-08-28T17:26:59.167152+00:00",
+      "input_tokens": 110000,
+      "output_tokens": 6000,
+      "files": 687
+    },
+    {
+      "date": "2026-09-02T17:21:35.076653+00:00",
+      "input_tokens": 234812,
+      "output_tokens": 0,
+      "files": 199
+    },
+    {
+      "date": "2026-09-07T12:19:31.813807+00:00",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "files": 200
+    },
+    {
+      "date": "2026-09-07T12:32:31.949881+00:00",
+      "input_tokens": 0,
+      "output_tokens": 0,
+      "files": 200
+    }
+  ],
+  "total_input_tokens": 3646055,
+  "total_output_tokens": 32000
+}

@@ -1,0 +1,9 @@
+{
+  "notificationMenuCheck.js": "Email Notifications: templates, rate guard, menu check",
+  "publicAuthService.js": "Auth: user.resolver, sign-in, refresh tokens",
+  "transferPushService.js": "Transfer Push (Firebase) & transfer.resolver",
+  "logaction.js": "Bulk Request Import & logaction",
+  "fapEditGuard.js": "FAP Edit Guard & Request Envelope",
+  "mergeReportDraftRows.js": "Report Drafts: merge, frozen rows, changedFrom",
+  "accessMenuKeys.js": "Access Menu Keys & Effective Access"
+}

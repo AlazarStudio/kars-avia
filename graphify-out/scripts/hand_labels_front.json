@@ -1,0 +1,17 @@
+{
+  "Message.jsx": "Чаты и поддержка: Message, SupportPage, getMediaUrl",
+  "Estafeta.jsx": "Эскадрилья: Estafeta, ExistRequest, статусы и roles",
+  "AllRoles.jsx": "RoleContent: точки входа ролей и роуты FapV2",
+  "HotelAbout_tabComponent.jsx": "«О гостинице»: HotelAbout и иконки удобств",
+  "reportDraftRows.js": "Отчёты v2: черновик — reportDraftRows, useReportDraft",
+  "InfoTableDataTarifs.jsx": "Таблицы InfoTableData* и готовность отделов (readiness)",
+  "Svg.jsx": "Svg-обёртка, иконки действий и меню «⋮»",
+  "PassengerAnalytics.jsx": "ФАП-аналитика: PassengerAnalytics и мапперы",
+  "NewPlacementV2.jsx": "Шахматка v2: NewPlacementV2, utils и история версий",
+  "MUIConfirm.jsx": "CLAUDE.md / AGENTS.md: руководство и MUI-примитивы",
+  "roomKindSeasons.js": "Сезонные цены категорий номеров (RoomKindSeasons)",
+  "FapTransferPage.jsx": "ФАП: трансфер — FapTransferPage и факт поездки",
+  "ReportDraftEditor.jsx": "Отчёты v2: редактор черновика (ReportDraftEditor, поля, сортировка)",
+  "loginRedirect.js": "Вход и возврат по /login?next= (loginRedirect, LoginRedirect)",
+  "fapManifestBuild.js": "ФАП: манифест из реестра и импорт (fapManifestBuild, ManifestImportModal)"
+}
