@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import classes from "./Analytics.module.css";
 
 import AirlineAnalytics from "../tabs/AirlineAnalytics/AirlineAnalytics";
@@ -7,20 +7,25 @@ import DispatcherAnalytics from "../tabs/DispatcherAnalytics/DispatcherAnalytics
 import HotelAnalytics from "../tabs/HotelAnalytics/HotelAnalytics";
 import SupportAnalytics from "../tabs/SupportAnalytics/SupportAnalytics";
 import Header from "../../../Blocks/Header/Header";
+import { visibleAnalyticsTabs } from "./analyticsTabs";
 
-const tabs = [
-  { key: "airlines", label: "Авиакомпании" },
-  { key: "passengers", label: "Пассажиры" },
-  // { key: "hotels", label: "Гостиницы" },
-  // { key: "dispatchers", label: "Диспетчеры" },
-  // { key: "support", label: "Техподдержка" }
-];
-
-function Analytics({user}) {
-  const [activeTab, setActiveTab] = useState("airlines");
+function Analytics({ user, accessMenu }) {
+  const tabs = useMemo(
+    () => visibleAnalyticsTabs(accessMenu, user),
+    [accessMenu, user],
+  );
+  const [activeTab, setActiveTab] = useState(() => tabs[0]?.key ?? null);
   const [filterOpen, setFilterOpen] = useState(false);
   const [appliedPeriods, setAppliedPeriods] = useState({});
   const appliedPeriod = appliedPeriods[activeTab] || null;
+
+  // accessMenu приезжает асинхронно (Main_Page кладёт его в state), поэтому на
+  // первом рендере вкладок может не быть — активную выбираем, когда список
+  // приехал, и когда права её отобрали.
+  useEffect(() => {
+    if (!tabs.length) return;
+    if (!tabs.some((tab) => tab.key === activeTab)) setActiveTab(tabs[0].key);
+  }, [tabs, activeTab]);
 
   const openFilter = useCallback(() => setFilterOpen(true), []);
   const closeFilter = useCallback(() => setFilterOpen(false), []);
@@ -29,6 +34,9 @@ function Analytics({user}) {
     setActiveTab(key);
     setFilterOpen(false);
   };
+
+  const showSquadron = tabs.some((tab) => tab.key === "squadron");
+  const showPassengers = tabs.some((tab) => tab.key === "passengers");
 
   return (
     <div className={classes.analyticsContainer}>
@@ -80,23 +88,29 @@ function Analytics({user}) {
       </div>
 
       <div className={classes.tabContent}>
-        <div style={{ display: activeTab === "airlines" ? "contents" : "none" }}>
-          <AirlineAnalytics
-            user={user}
-            height={user.airlineId ? "calc(100vh - 125px)" : null}
-            filterOpen={filterOpen && activeTab === "airlines"}
-            onFilterClose={closeFilter}
-            onPeriodChange={(p) => setAppliedPeriods((prev) => ({ ...prev, airlines: p }))}
-          />
-        </div>
-        <div style={{ display: activeTab === "passengers" ? "contents" : "none" }}>
-          <PassengerAnalytics
-            user={user}
-            filterOpen={filterOpen && activeTab === "passengers"}
-            onFilterClose={closeFilter}
-            onPeriodChange={(p) => setAppliedPeriods((prev) => ({ ...prev, passengers: p }))}
-          />
-        </div>
+        {/* Недоступную вкладку не прячем, а не монтируем: каждая шлёт свой
+            запрос, и display:none всё равно вытянул бы данные. */}
+        {showSquadron && (
+          <div style={{ display: activeTab === "squadron" ? "contents" : "none" }}>
+            <AirlineAnalytics
+              user={user}
+              height={user.airlineId ? "calc(100vh - 125px)" : null}
+              filterOpen={filterOpen && activeTab === "squadron"}
+              onFilterClose={closeFilter}
+              onPeriodChange={(p) => setAppliedPeriods((prev) => ({ ...prev, squadron: p }))}
+            />
+          </div>
+        )}
+        {showPassengers && (
+          <div style={{ display: activeTab === "passengers" ? "contents" : "none" }}>
+            <PassengerAnalytics
+              user={user}
+              filterOpen={filterOpen && activeTab === "passengers"}
+              onFilterClose={closeFilter}
+              onPeriodChange={(p) => setAppliedPeriods((prev) => ({ ...prev, passengers: p }))}
+            />
+          </div>
+        )}
       </div>
     </div>
   );

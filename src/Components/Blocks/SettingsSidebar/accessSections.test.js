@@ -17,6 +17,7 @@ test("порядок секций диспетчера совпадает с т�
     "employees",
     "contracts",
     "analytics",
+    "analyticsPassengers",
     "aboutAirlines",
     "reports",
     "travelline",
@@ -31,6 +32,7 @@ test("у авиакомпании скрыты автопарк и реестр 
     "users",
     "employees",
     "analytics",
+    "analyticsPassengers",
     "aboutAirlines",
     "reports",
     "travelline",
@@ -44,7 +46,7 @@ test("defaultSectionKeys выбирает набор по типу", () => {
 });
 
 test("каждая секция описана полностью и ключи строк уникальны", () => {
-  assert.equal(ACCESS_SECTIONS.length, 11);
+  assert.equal(ACCESS_SECTIONS.length, 12);
   for (const section of ACCESS_SECTIONS) {
     assert.equal(typeof section.key, "string");
     assert.equal(typeof section.title, "string");
@@ -81,9 +83,16 @@ test("наборы ключей и ACCESS_SECTIONS описывают один �
   }
 });
 
-test("у аналитики нет строк действий — выгрузка закомментирована в обеих панелях", () => {
-  const analytics = ACCESS_SECTIONS.find((s) => s.key === "analytics");
-  assert.deepEqual(analytics.rows, []);
+test("аналитика разведена на две карточки, у обеих нет строк действий", () => {
+  // Строка выгрузки закомментирована в обеих панелях, а вкладки гейтятся
+  // равными ключами — значит у каждой карточки только «Доступ к разделу».
+  const squadron = ACCESS_SECTIONS.find((s) => s.key === "analytics");
+  const passengers = ACCESS_SECTIONS.find((s) => s.key === "analyticsPassengers");
+  assert.equal(squadron.title, "Аналитика: эскадрилья");
+  assert.deepEqual(squadron.rows, []);
+  assert.equal(passengers.title, "Аналитика: пассажиры");
+  assert.deepEqual(passengers.rows, []);
+  assert.deepEqual(passengers.extras || [], []);
 });
 
 test("секция пассажиров называется «ФАП»", () => {

@@ -80,9 +80,18 @@ export const ACCESS_SECTIONS = [
   },
   {
     key: "analytics",
-    title: "Аналитика",
+    title: "Аналитика: эскадрилья",
     // Строка «Выгрузка аналитики» закомментирована в обеих панелях;
     // значение analytics.export живёт в состоянии и уходит в payload.
+    rows: [],
+  },
+  {
+    // Вкладка «Пассажиры» той же страницы. Отдельная карточка, а не строка
+    // внутри соседней: ключи равные, и «только пассажиры» должно выдаваться
+    // без аналитики по эскадрилье — extras так не умеют, они гаснут вместе
+    // с «Доступом к разделу» своей карточки.
+    key: "analyticsPassengers",
+    title: "Аналитика: пассажиры",
     rows: [],
   },
   {
@@ -121,6 +130,7 @@ export const DISPATCHER_SECTION_KEYS = [
   "employees",
   "contracts",
   "analytics",
+  "analyticsPassengers",
   "aboutAirlines",
   "reports",
   "travelline",

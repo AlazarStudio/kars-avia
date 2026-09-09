@@ -128,7 +128,10 @@ export const menuAccess = {
   personalCreate: true,
   personalUpdate: true,
 
+  // Раздел «Аналитика» гейтят два равных ключа: вкладка «Эскадрилья» и
+  // вкладка «Пассажиры». Раздел открыт, если включено любое из двух.
   analyticsMenu: true,
+  analyticsPassengerMenu: true,
 
   airlineMenu: true,
   airlineUpdate: true,

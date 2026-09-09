@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import classes from "./AirlineAdminMenu.module.css";
 import DelayedText from "../../../Blocks/DelayedText/DelayedText";
 import {
+  canSeeAnalytics,
   hasAccessMenu,
   safeAccessMenu as getSafeAccessMenu,
 } from "../../../../utils/access";
@@ -68,7 +69,7 @@ const AirlineAdminMenu = ({
         hasAccessMenu(accessMenu, "reportMenu") && {
           label: "Отчеты", to: "/reports", icon: MenuNavIcons.reports, active: id == "reports",
         },
-        hasAccessMenu(accessMenu, "analyticsMenu") && {
+        canSeeAnalytics(accessMenu) && {
           label: "Аналитика", to: "/analytics", icon: MenuNavIcons.analytics, fill: true, active: id == "analytics",
         },
       ],

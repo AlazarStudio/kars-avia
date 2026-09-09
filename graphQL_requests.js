@@ -1243,6 +1243,7 @@ export const GET_AIRLINE_USERS_POSITIONS = gql`
         travellineMenu
         analyticsMenu
         analyticsUpload
+        analyticsPassengerMenu
         reportMenu
         reportCreate
         reportDelete
@@ -1313,6 +1314,7 @@ export const GET_DISPATCHER_POSITIONS = gql`
         travellineMenu
         analyticsMenu
         analyticsUpload
+        analyticsPassengerMenu
         reportMenu
         reportCreate
         reportDelete
@@ -1392,6 +1394,7 @@ export const GET_USER_EFFECTIVE_ACCESS_MENU = gql`
         travellineMenu
         analyticsMenu
         analyticsUpload
+        analyticsPassengerMenu
         reportMenu
         reportCreate
         reportDelete
@@ -5607,6 +5610,7 @@ export const GET_AIRLINES = gql`
             travellineMenu
             analyticsMenu
             analyticsUpload
+            analyticsPassengerMenu
             reportMenu
             reportCreate
             reportDelete
@@ -5802,6 +5806,7 @@ export const GET_AIRLINE = gql`
           travellineMenu
           analyticsMenu
           analyticsUpload
+          analyticsPassengerMenu
           reportMenu
           reportCreate
           reportDelete
@@ -6139,6 +6144,7 @@ export const GET_AIRLINE_COMPANY = gql`
           travellineMenu
           analyticsMenu
           analyticsUpload
+          analyticsPassengerMenu
           reportMenu
           reportCreate
           reportDelete
@@ -6272,6 +6278,7 @@ export const CREATE_AIRLINE_DEPARTMERT = gql`
           travellineMenu
           analyticsMenu
           analyticsUpload
+          analyticsPassengerMenu
           reportMenu
           reportCreate
           reportDelete
@@ -6434,6 +6441,7 @@ export const GET_AIRLINE_DEPARTMENT = gql`
         travellineMenu
         analyticsMenu
         analyticsUpload
+        analyticsPassengerMenu
         reportMenu
         reportCreate
         reportDelete
@@ -6584,6 +6592,7 @@ export const GET_DISPATCHER_DEPARTMENTS = gql`
           travellineMenu
           analyticsMenu
           analyticsUpload
+          analyticsPassengerMenu
           reportMenu
           reportCreate
           reportDelete

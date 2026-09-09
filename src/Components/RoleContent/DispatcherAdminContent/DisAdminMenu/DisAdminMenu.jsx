@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 import classes from "./DisAdminMenu.module.css";
 import DelayedText from "../../../Blocks/DelayedText/DelayedText";
-import { canAccessMenu } from "../../../../utils/access";
+import { canAccessMenu, canSeeAnalytics } from "../../../../utils/access";
 import MenuNavIcons from "../../../../shared/icons/menuNavIcons";
 
 const DisAdminMenu = ({
@@ -75,7 +75,7 @@ const DisAdminMenu = ({
           label: "Отчеты", to: "/reports", icon: MenuNavIcons.reports,
           active: id == "reports" || id == "reportsV2",
         },
-        canAccessMenu(accessMenu, "analyticsMenu", user) && {
+        canSeeAnalytics(accessMenu, user) && {
           label: "Аналитика", to: "/analytics", icon: MenuNavIcons.analytics, fill: true, active: id == "analytics",
         },
       ],

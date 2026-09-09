@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { resolveEffectiveAccessMenu, canManageAirlineAccess } from "./access.js";
+import {
+  resolveEffectiveAccessMenu,
+  canManageAirlineAccess,
+  canSeeAnalytics,
+} from "./access.js";
 import { roles } from "../roles.js";
 
 test("гостиничная роль с непустым effectiveAccessMenu получает ровно эти флаги", () => {
@@ -79,4 +83,31 @@ test("canManageAirlineAccess: AIRLINEADMIN без ключа — false, с кл�
   const user = { role: roles.airlineAdmin };
   assert.equal(canManageAirlineAccess({}, user), false);
   assert.equal(canManageAirlineAccess({ accessManage: true }, user), true);
+});
+
+test("раздел «Аналитика» открыт, если доступна хотя бы одна вкладка", () => {
+  assert.equal(canSeeAnalytics({ analyticsMenu: true }), true);
+  assert.equal(canSeeAnalytics({ analyticsPassengerMenu: true }), true);
+  assert.equal(
+    canSeeAnalytics({ analyticsMenu: true, analyticsPassengerMenu: true }),
+    true,
+  );
+  assert.equal(
+    canSeeAnalytics({ analyticsMenu: false, analyticsPassengerMenu: false }),
+    false,
+  );
+  assert.equal(canSeeAnalytics({}), false);
+  assert.equal(canSeeAnalytics(null), false);
+});
+
+test("суперадмин видит раздел «Аналитика» без accessMenu", () => {
+  // SuperAdminContent рендерит страницу без accessMenu — гейт по роли обязателен.
+  assert.equal(canSeeAnalytics(null, { role: roles.superAdmin }), true);
+  assert.equal(
+    canSeeAnalytics(
+      { analyticsMenu: false, analyticsPassengerMenu: false },
+      { role: roles.superAdmin },
+    ),
+    true,
+  );
 });

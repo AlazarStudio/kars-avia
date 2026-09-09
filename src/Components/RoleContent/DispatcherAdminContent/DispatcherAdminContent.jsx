@@ -21,6 +21,7 @@ import PositionAccessPage from "../../Blocks/PositionAccessPage/PositionAccessPa
 import {
   canAccessMenu,
   canManageAirlineAccess,
+  canSeeAnalytics,
   safeAccessMenu as getSafeAccessMenu,
 } from "../../../utils/access";
 import RepresentativeRequests from "../../Blocks/RepresentativeRequests/RepresentativeRequests";
@@ -101,7 +102,8 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
       },
       {
         ids: ["analytics"],
-        guardKey: "analyticsMenu",
+        // Два равных ключа — гейт функцией, а не guardKey.
+        guard: canSeeAnalytics,
         Comp: Analytics,
         props: () => ({ user, accessMenu: safeAccessMenu }),
       },

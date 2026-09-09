@@ -98,6 +98,16 @@ export const hasAccessMenu = (accessMenu, key) => {
 export const canAccessMenu = (accessMenu, key, user) =>
   isSuperAdmin(user) || hasAccessMenu(accessMenu, key);
 
+// Раздел «Аналитика» гейтят два РАВНЫХ ключа: analyticsMenu — вкладка
+// «Эскадрилья», analyticsPassengerMenu — вкладка «Пассажиры». Пункт меню и
+// роут открыты, если доступна хотя бы одна вкладка, иначе «только пассажиры»
+// выдать было бы нельзя.
+export const ANALYTICS_MENU_KEYS = ["analyticsMenu", "analyticsPassengerMenu"];
+
+export const canSeeAnalytics = (accessMenu, user) =>
+  isSuperAdmin(user) ||
+  ANALYTICS_MENU_KEYS.some((key) => hasAccessMenu(accessMenu, key));
+
 // Доступы АВИАКОМПАНИЙ диспетчер-админ правит наравне с супером (решение
 // владельца 01.09.2026): роль пропускается без ключа accessManage — бэк и так
 // пускает DISPATCHERADMIN в updateAirline и должности АК

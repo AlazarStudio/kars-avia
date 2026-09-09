@@ -19,7 +19,7 @@ const ALL_ACCESS_ENABLED = {
   transferMenu: true, transferCreate: true, transferUpdate: true, transferChat: true,
   personalMenu: true, personalCreate: true, personalUpdate: true,
   reserveMenu: true, reserveCreate: true, reserveUpdate: true, reserveUpdateCompleted: false,
-  analyticsMenu: true, analyticsUpload: true,
+  analyticsMenu: true, analyticsUpload: true, analyticsPassengerMenu: true,
   reportMenu: true, reportCreate: true,
   userMenu: true, userCreate: true, userUpdate: true,
   airlineMenu: true, airlineUpdate: true,

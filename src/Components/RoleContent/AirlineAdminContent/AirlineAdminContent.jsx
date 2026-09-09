@@ -20,6 +20,7 @@ const TransferOrder = lazy(() =>
 );
 
 import {
+  canSeeAnalytics,
   hasAccessMenu,
   safeAccessMenu as getSafeAccessMenu,
 } from "../../../utils/access";
@@ -91,7 +92,8 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
 
       {
         ids: ["analytics"],
-        guardKey: "analyticsMenu",
+        // Два равных ключа — гейт функцией, а не guardKey.
+        guard: canSeeAnalytics,
         Comp: Analytics,
         props: () => ({ user, accessMenu: safeAccessMenu }),
       },
@@ -185,7 +187,9 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
     const rule = CONFIG?.find((r) => r.ids.includes(id));
     if (!rule) return <NoAccess />;
 
-    const allowed = hasAccessMenu(accessMenu, rule?.guardKey);
+    const allowed = rule.guard
+      ? rule.guard(accessMenu, user)
+      : hasAccessMenu(accessMenu, rule?.guardKey);
     const Comp = allowed ? rule.Comp : NoAccess;
     return (
       <Suspense fallback={<MUILoader fullHeight="100%" />}>

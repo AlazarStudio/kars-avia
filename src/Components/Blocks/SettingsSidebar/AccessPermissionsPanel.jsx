@@ -59,6 +59,9 @@ export default function AccessPermissionsPanel({
         access: b(accessMenu?.analyticsMenu),
         export: b(accessMenu?.analyticsUpload),
       },
+      analyticsPassengers: {
+        access: b(accessMenu?.analyticsPassengerMenu),
+      },
       aboutAirlines: {
         access: b(accessMenu?.airlineMenu),
         edit: b(accessMenu?.airlineUpdate),
