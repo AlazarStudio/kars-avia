@@ -28,9 +28,9 @@ export const buildAccessPayload = (s) => ({
   contractCreate: !!s?.contracts?.create,
   contractUpdate: !!s?.contracts?.edit,
 
-  analyticsMenu: !!s?.analytics?.access,
+  analyticsMenu: !!s?.analytics?.squadron,
   analyticsUpload: !!s?.analytics?.export,
-  analyticsPassengerMenu: !!s?.analyticsPassengers?.access,
+  analyticsPassengerMenu: !!s?.analytics?.passengers,
 
   airlineMenu: !!s?.aboutAirlines?.access,
   airlineUpdate: !!s?.aboutAirlines?.edit,

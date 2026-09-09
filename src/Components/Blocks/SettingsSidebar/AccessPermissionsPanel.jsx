@@ -56,11 +56,11 @@ export default function AccessPermissionsPanel({
         edit: b(accessMenu?.contractUpdate),
       },
       analytics: {
-        access: b(accessMenu?.analyticsMenu),
+        squadron: b(accessMenu?.analyticsMenu),
+        passengers: b(accessMenu?.analyticsPassengerMenu),
+        // Строка «Выгрузка аналитики» закомментирована в обеих панелях, но
+        // значение живёт в состоянии и уходит в payload.
         export: b(accessMenu?.analyticsUpload),
-      },
-      analyticsPassengers: {
-        access: b(accessMenu?.analyticsPassengerMenu),
       },
       aboutAirlines: {
         access: b(accessMenu?.airlineMenu),
@@ -163,6 +163,11 @@ export default function AccessPermissionsPanel({
       },
     }));
 
+  // Переключение одной строки без каскадов — и для extras, и для строк секции
+  // с independentRows.
+  const setRow = (section, rowKey, value) =>
+    setState((s) => ({ ...s, [section]: { ...s[section], [rowKey]: value } }));
+
   const interactChecked = (section) =>
     Object.entries(state[section])
       .filter(([k]) => k !== "access" && !isExtra(section, k))
@@ -211,39 +216,51 @@ export default function AccessPermissionsPanel({
 
           return (
             <SectionCard key={key} title={config.title} classes={classes}>
-              <RowSwitch
-                classes={classes}
-                label="Доступ к разделу"
-                checked={state[key].access}
-                onChange={(v) => setAccess(key, v)}
-                disabled={!isEditing}
-              />
+              {config.independentRows ? (
+                // Секция равных прав: общего тумблера нет, каждая строка сама
+                // по себе — иначе одну без другой выдать было бы нельзя.
+                config.rows.map((row) => (
+                  <RowSwitch
+                    key={row.key}
+                    classes={classes}
+                    label={row.label}
+                    checked={state[key][row.key]}
+                    onChange={(v) => setRow(key, row.key, v)}
+                    disabled={!isEditing}
+                  />
+                ))
+              ) : (
+                <>
+                  <RowSwitch
+                    classes={classes}
+                    label="Доступ к разделу"
+                    checked={state[key].access}
+                    onChange={(v) => setAccess(key, v)}
+                    disabled={!isEditing}
+                  />
 
-              {config.rows.length > 0 && (
-                <RowSwitch
-                  classes={classes}
-                  label="Взаимодействие с разделом"
-                  checked={interactChecked(key)}
-                  onChange={(v) => setInteraction(key, v)}
-                  disabled={!isEditing || !state[key].access}
-                />
+                  {config.rows.length > 0 && (
+                    <RowSwitch
+                      classes={classes}
+                      label="Взаимодействие с разделом"
+                      checked={interactChecked(key)}
+                      onChange={(v) => setInteraction(key, v)}
+                      disabled={!isEditing || !state[key].access}
+                    />
+                  )}
+
+                  {visibleExtras(config).map((extra) => (
+                    <RowSwitch
+                      key={extra.key}
+                      classes={classes}
+                      label={extra.label}
+                      checked={state[key][extra.key]}
+                      onChange={(v) => setRow(key, extra.key, v)}
+                      disabled={!isEditing || !state[key].access}
+                    />
+                  ))}
+                </>
               )}
-
-              {visibleExtras(config).map((extra) => (
-                <RowSwitch
-                  key={extra.key}
-                  classes={classes}
-                  label={extra.label}
-                  checked={state[key][extra.key]}
-                  onChange={(v) =>
-                    setState((s) => ({
-                      ...s,
-                      [key]: { ...s[key], [extra.key]: v },
-                    }))
-                  }
-                  disabled={!isEditing || !state[key].access}
-                />
-              ))}
             </SectionCard>
           );
         })}
