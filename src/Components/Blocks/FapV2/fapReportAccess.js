@@ -39,6 +39,18 @@ export function isHotelReportPricingApproved(request, hotelIndex) {
   return hotelReportPricingApprovedAt(request, hotelIndex) != null;
 }
 
+// Дата утверждения отчёта авиакомпанией или null. Третья и последняя отметка
+// отчёта: гостиница заполнила → диспетчер отправил и согласовал цены →
+// авиакомпания утвердила. Ставит и снимает её только авиакомпания, а любой
+// сброс двух предыдущих отметок гасит и эту (бэк, report.resolver.js).
+export function hotelReportAirlineApprovedAt(request, hotelIndex) {
+  return findHotelReport(request, hotelIndex)?.airlineApprovedAt ?? null;
+}
+
+export function isHotelReportAirlineApproved(request, hotelIndex) {
+  return hotelReportAirlineApprovedAt(request, hotelIndex) != null;
+}
+
 // Индексы гостиниц, отчёты которых этот пользователь имеет право видеть.
 // Диспетчер — все; авиакомпания — только отправленные; гостиница — только свою.
 //

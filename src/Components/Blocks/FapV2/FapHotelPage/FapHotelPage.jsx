@@ -19,6 +19,7 @@ import {
   SUBMIT_PASSENGER_REQUEST_HOTEL_REPORT,
   HIDE_PASSENGER_REQUEST_HOTEL_REPORT,
   SET_PASSENGER_REQUEST_HOTEL_REPORT_PRICING_APPROVED,
+  SET_PASSENGER_REQUEST_HOTEL_REPORT_AIRLINE_APPROVED,
   UPDATE_PASSENGER_REQUEST_HOTEL,
   GET_FAP_HOTEL_TARIFFS,
   GET_AIRLINE_TARIFS,
@@ -32,6 +33,8 @@ import {
   isHotelReportSubmitted,
   hotelReportPricingApprovedAt,
   isHotelReportPricingApproved,
+  hotelReportAirlineApprovedAt,
+  isHotelReportAirlineApproved,
 } from "../fapReportAccess";
 import { lunchboxCountOf, preserveMoneyFields, reportMoneyDiffers } from "../fapReportMoney";
 import { splitRoomAccommodation } from "../fapRoomSplit.js";
@@ -433,6 +436,7 @@ export default function FapHotelPage({
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [approvingPrices, setApprovingPrices] = useState(false);
+  const [approvingAirline, setApprovingAirline] = useState(false);
   const [capacityOpen, setCapacityOpen] = useState(false);
 
   // Refs хранят актуальное состояние для отложенного автосохранения —
@@ -526,6 +530,10 @@ export default function FapHotelPage({
     SET_PASSENGER_REQUEST_HOTEL_REPORT_PRICING_APPROVED,
     { context: { headers: { Authorization: `Bearer ${token}` } } }
   );
+  const [setAirlineApproved] = useMutation(
+    SET_PASSENGER_REQUEST_HOTEL_REPORT_AIRLINE_APPROVED,
+    { context: { headers: { Authorization: `Bearer ${token}` } } }
+  );
   const [updateHotel] = useMutation(UPDATE_PASSENGER_REQUEST_HOTEL, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
@@ -560,6 +568,12 @@ export default function FapHotelPage({
   // уже видит, а стоимости бэк отдаёт ей как null. Считать их на клиенте нельзя —
   // прячем деньги тем же флагом, что и у гостиницы.
   const airlinePricesPending = isAirline && reportSubmitted && !reportPricingApproved;
+  const reportAirlineApprovedAt = hotelReportAirlineApprovedAt(request, hotelIndex);
+  const reportAirlineApproved = isHotelReportAirlineApproved(request, hotelIndex);
+  // Утверждает отчёт только авиакомпания и только когда видит его целиком —
+  // с суммами. До согласования цен бэк отвечает отказом, поэтому тумблера там
+  // нет вовсе, как и у диспетчера с гостиницей.
+  const canApproveAsAirline = isAirline && reportSubmitted && reportPricingApproved;
   const hasSavedReport = hasHotelReport(request, hotelIndex);
 
   const { data: hotelTariffData, loading: hotelTariffLoading } = useQuery(
@@ -2962,6 +2976,36 @@ export default function FapHotelPage({
     }
   };
 
+  // Утверждение отчёта авиакомпанией — её подпись под составом и суммами.
+  // Спрашиваем в обе стороны, в отличие от согласования цен: там снятие ничего
+  // не разглашает, а здесь и утверждение, и отзыв — заявление второй стороне.
+  const handleAirlineApproved = async (next) => {
+    if (approvingAirline || next === reportAirlineApproved) return;
+    const go = await confirm({
+      message: next
+        ? "Утвердить отчёт? Диспетчер получит уведомление"
+        : "Отозвать утверждение отчёта?",
+      confirmText: next ? "Утвердить" : "Отозвать",
+      cancelText: "Отмена",
+    });
+    if (!go) return;
+    try {
+      setApprovingAirline(true);
+      await setAirlineApproved({
+        variables: { ...reportMutationVars(), approved: next },
+      });
+      success(next ? "Отчёт утверждён" : "Утверждение отозвано");
+      onRefetch?.();
+    } catch (e) {
+      // Текст бэка объясняет отказ по делу («только после согласования цен»,
+      // «только авиакомпания») — своей формулировкой его не подменяем.
+      notifyError(e?.message || "Не удалось изменить утверждение отчёта");
+      console.error(e);
+    } finally {
+      setApprovingAirline(false);
+    }
+  };
+
   // ── Guard ──
   if (!hotel) {
     return (
@@ -3339,6 +3383,17 @@ export default function FapHotelPage({
                   title="Авиакомпания видит суммы отчёта"
                 >
                   Цены согласованы · {formatDateTime(reportPricingApprovedAt)}
+                </span>
+              )}
+              {/* Третье состояние отчёта — ответ авиакомпании. Показываем его
+                  диспетчеру и гостинице: сама авиакомпания видит своё
+                  утверждение тумблером в тулбаре отчёта. */}
+              {canEdit && reportAirlineApproved && (
+                <span
+                  className={classes.headReportBadge}
+                  title="Авиакомпания утвердила отчёт"
+                >
+                  Утверждён АК · {formatDateTime(reportAirlineApprovedAt)}
                 </span>
               )}
             </div>
@@ -4014,6 +4069,37 @@ export default function FapHotelPage({
                     title="Авиакомпания увидит суммы и получит письмо"
                   >
                     Цены согласованы
+                  </button>
+                </div>
+              )}
+              {/* Утверждение отчёта авиакомпанией — такой же сегмент из двух
+                  положений и на том же месте тулбара, что согласование цен у
+                  диспетчера: обе стороны переключают своё состояние там, где
+                  привыкли видеть чужое. До согласования цен сегмента нет —
+                  утверждать отчёт без сумм не под чем, и бэк это отбивает. */}
+              {canApproveAsAirline && (
+                <div
+                  className={`${classes.billingSeg} ${classes.approveSeg}`}
+                  role="group"
+                  aria-label="Утверждение отчёта"
+                >
+                  <button
+                    type="button"
+                    className={`${classes.billingSegBtn} ${!reportAirlineApproved ? classes.billingSegActive : ""}`}
+                    onClick={() => handleAirlineApproved(false)}
+                    disabled={approvingAirline || !reportAirlineApproved}
+                    title="Отчёт не утверждён авиакомпанией"
+                  >
+                    Не утверждён
+                  </button>
+                  <button
+                    type="button"
+                    className={`${classes.billingSegBtn} ${reportAirlineApproved ? classes.billingSegActive : ""}`}
+                    onClick={() => handleAirlineApproved(true)}
+                    disabled={approvingAirline || reportAirlineApproved}
+                    title="Утвердить отчёт: диспетчер получит уведомление"
+                  >
+                    Утверждён
                   </button>
                 </div>
               )}

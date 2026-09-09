@@ -4169,6 +4169,8 @@ export const GET_PASSENGER_REQUEST = gql`
         submittedAt
         pricingApprovedAt
         pricingApproved
+        airlineApprovedAt
+        airlineApproved
         reportRows {
           fullName
           personId
@@ -4288,6 +4290,8 @@ export const GET_PASSENGER_REQUEST_REPORT = gql`
         submittedAt
         pricingApprovedAt
         pricingApproved
+        airlineApprovedAt
+        airlineApproved
         reportRows {
           fullName
           personId
@@ -4363,6 +4367,8 @@ export const SAVE_PASSENGER_REQUEST_HOTEL_REPORT = gql`
       submittedAt
       pricingApprovedAt
       pricingApproved
+      airlineApprovedAt
+      airlineApproved
       reportRows {
         fullName
         personId
@@ -4404,6 +4410,8 @@ export const SUBMIT_PASSENGER_REQUEST_HOTEL_REPORT = gql`
       submittedAt
       pricingApprovedAt
       pricingApproved
+      airlineApprovedAt
+      airlineApproved
     }
   }
 `;
@@ -4419,6 +4427,8 @@ export const HIDE_PASSENGER_REQUEST_HOTEL_REPORT = gql`
       submittedAt
       pricingApprovedAt
       pricingApproved
+      airlineApprovedAt
+      airlineApproved
     }
   }
 `;
@@ -4439,6 +4449,30 @@ export const SET_PASSENGER_REQUEST_HOTEL_REPORT_PRICING_APPROVED = gql`
       submittedAt
       pricingApprovedAt
       pricingApproved
+      airlineApprovedAt
+      airlineApproved
+    }
+  }
+`;
+
+export const SET_PASSENGER_REQUEST_HOTEL_REPORT_AIRLINE_APPROVED = gql`
+  mutation SetPassengerRequestHotelReportAirlineApproved(
+    $requestId: ID!
+    $hotelIndex: Int!
+    $approved: Boolean!
+  ) {
+    setPassengerRequestHotelReportAirlineApproved(
+      requestId: $requestId
+      hotelIndex: $hotelIndex
+      approved: $approved
+    ) {
+      id
+      hotelIndex
+      submittedAt
+      pricingApprovedAt
+      pricingApproved
+      airlineApprovedAt
+      airlineApproved
     }
   }
 `;

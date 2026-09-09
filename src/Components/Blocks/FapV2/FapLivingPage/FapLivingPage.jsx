@@ -22,6 +22,7 @@ import {
   visibleHotelIndexes,
   hotelReportSubmittedAt,
   hotelReportPricingApprovedAt,
+  hotelReportAirlineApprovedAt,
   airlineMoneyHidden,
 } from "../fapReportAccess";
 import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
@@ -479,6 +480,7 @@ export default function FapLivingPage({
               isCompleted={isCompleted}
               reportSubmittedAt={hotelReportSubmittedAt(request, origIdx)}
               reportPricingApprovedAt={hotelReportPricingApprovedAt(request, origIdx)}
+              reportAirlineApprovedAt={hotelReportAirlineApprovedAt(request, origIdx)}
               showReportState={!isAirlineRole(user)}
               onOpen={() => navigate(`/far/${requestId}/service/living/hotel/${origIdx}`)}
               onCopyLink={copyLink}
@@ -558,7 +560,7 @@ export default function FapLivingPage({
 // ──────────────────────────────────────────────────────────────────
 function HotelCard({
   hotel, showLinks, canEdit, isExtHotel, isCompleted,
-  reportSubmittedAt, reportPricingApprovedAt, showReportState,
+  reportSubmittedAt, reportPricingApprovedAt, reportAirlineApprovedAt, showReportState,
   onOpen, onCopyLink, onEdit, onRemove,
 }) {
   const cap = hotel.peopleCount || 0;
@@ -609,6 +611,15 @@ function HotelCard({
                 <span className={classes.reportBadgeSent}>цены согласованы</span>
               ) : (
                 <span className={classes.reportBadgeMuted}>ждёт согласования</span>
+              )
+            )}
+            {/* Ответ авиакомпании ждём только с согласованными ценами: раньше
+                ей нечего утверждать, и бэк такое утверждение отбивает. */}
+            {showReportState && placed > 0 && reportPricingApprovedAt && (
+              reportAirlineApprovedAt ? (
+                <span className={classes.reportBadgeSent}>утверждён АК</span>
+              ) : (
+                <span className={classes.reportBadgeMuted}>ждёт утверждения АК</span>
               )
             )}
           </div>
