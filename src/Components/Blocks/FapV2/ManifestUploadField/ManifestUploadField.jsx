@@ -92,8 +92,8 @@ export default function ManifestUploadField({
   return (
     <div className={classes.wrapper}>
       <FileDropzone
-        accept=".xlsb,.xlsx,.xls"
-        hint="Формат файла XLSB, XLSX, XLS"
+        accept=".xlsb,.xlsx,.xls,.csv"
+        hint="Формат файла XLSB, XLSX, XLS, CSV"
         fileName={parsed?.fileName}
         meta={meta}
         parsing={parsing}

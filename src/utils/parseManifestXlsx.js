@@ -7,10 +7,31 @@ export { manifestNameKey, isSameFlight } from "./manifestCore.js";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 МБ
 
+// CSV узнаём по расширению: на Windows у .csv MIME часто application/vnd.ms-excel.
+export function isCsvFile(file) {
+  const name = String(file?.name ?? "").toLowerCase();
+  return name.endsWith(".csv") || file?.type === "text/csv";
+}
+
+// Текст из байтов: UTF-8 (с BOM или без), иначе windows-1251 — так выгружают
+// «Руслайн» и большинство российских DCS.
+export function decodeTextBuffer(buffer) {
+  const bytes = new Uint8Array(buffer);
+  const hasBom = bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf;
+  const body = hasBom ? bytes.subarray(3) : bytes;
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(body);
+  } catch {
+    return new TextDecoder("windows-1251").decode(body);
+  }
+}
+
 // Возвращает { people: [{ fullName, seat, personCategory }], flightNumber, lapInfants, error }.
-// Формат (PM / PNL / PLI) определяется автоматически по заголовкам (см. manifestProfiles.js).
-// lapInfants = { count, carriers: [{ name, count }] } | null — инфанты на руках, если
-// формат их вообще выделяет. Они попадают и в people (см. expandLapInfants).
+// Формат файла — XLSB/XLSX/XLS/CSV; CSV декодируем сами (UTF-8 → windows-1251), разделитель
+// SheetJS угадывает. Формат ведомости (PM / PNL / PLI) определяется автоматически по
+// заголовкам (см. manifestProfiles.js). lapInfants = { count, carriers: [{ name, count }] } |
+// null — инфанты на руках, если формат их вообще выделяет. Они попадают и в people (см.
+// expandLapInfants).
 export async function parseManifestXlsx(file) {
   if (file.size > MAX_FILE_SIZE) {
     return { people: [], flightNumber: "", error: "Файл больше 10 МБ" };
@@ -19,7 +40,9 @@ export async function parseManifestXlsx(file) {
   let wb;
   try {
     const buf = await file.arrayBuffer();
-    wb = XLSX.read(buf, { type: "array" });
+    wb = isCsvFile(file)
+      ? XLSX.read(decodeTextBuffer(buf), { type: "string", raw: true })
+      : XLSX.read(buf, { type: "array" });
   } catch {
     return { people: [], flightNumber: "", error: "Не удалось прочитать файл" };
   }
