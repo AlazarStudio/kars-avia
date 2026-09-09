@@ -1227,6 +1227,7 @@ export const GET_AIRLINE_USERS_POSITIONS = gql`
         requestMenu
         requestCreate
         requestUpdate
+        requestUpdateCompleted
         requestChat
         transferMenu
         transferCreate
@@ -1298,6 +1299,7 @@ export const GET_DISPATCHER_POSITIONS = gql`
         requestMenu
         requestCreate
         requestUpdate
+        requestUpdateCompleted
         requestChat
         transferMenu
         transferCreate
@@ -1378,6 +1380,7 @@ export const GET_USER_EFFECTIVE_ACCESS_MENU = gql`
         requestMenu
         requestCreate
         requestUpdate
+        requestUpdateCompleted
         requestChat
         transferMenu
         transferCreate
@@ -5594,6 +5597,7 @@ export const GET_AIRLINES = gql`
             requestMenu
             requestCreate
             requestUpdate
+            requestUpdateCompleted
             requestChat
             transferMenu
             transferCreate
@@ -5790,6 +5794,7 @@ export const GET_AIRLINE = gql`
           requestMenu
           requestCreate
           requestUpdate
+          requestUpdateCompleted
           requestChat
           transferMenu
           transferCreate
@@ -6128,6 +6133,7 @@ export const GET_AIRLINE_COMPANY = gql`
           requestMenu
           requestCreate
           requestUpdate
+          requestUpdateCompleted
           requestChat
           transferMenu
           transferCreate
@@ -6262,6 +6268,7 @@ export const CREATE_AIRLINE_DEPARTMERT = gql`
           requestMenu
           requestCreate
           requestUpdate
+          requestUpdateCompleted
           requestChat
           transferMenu
           transferCreate
@@ -6425,6 +6432,7 @@ export const GET_AIRLINE_DEPARTMENT = gql`
         requestMenu
         requestCreate
         requestUpdate
+        requestUpdateCompleted
         requestChat
         transferMenu
         transferCreate
@@ -6576,6 +6584,7 @@ export const GET_DISPATCHER_DEPARTMENTS = gql`
           requestMenu
           requestCreate
           requestUpdate
+          requestUpdateCompleted
           requestChat
           transferMenu
           transferCreate

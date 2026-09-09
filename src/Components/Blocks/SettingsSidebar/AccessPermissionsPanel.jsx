@@ -24,6 +24,7 @@ export default function AccessPermissionsPanel({
         create: b(accessMenu?.requestCreate),
         chat: b(accessMenu?.requestChat),
         edit: b(accessMenu?.requestUpdate),
+        editCompleted: b(accessMenu?.requestUpdateCompleted),
       },
       transfer: {
         access: b(accessMenu?.transferMenu),

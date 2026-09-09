@@ -125,6 +125,16 @@ test("extras описаны отдельно от rows и не пересека�
   }
 });
 
+test("правка заявки в архиве — отдельный переключатель секции «Эскадрилья»", () => {
+  // В rows класть нельзя: «Взаимодействие с разделом» включает строки разом,
+  // и право на архив приезжало бы вместе с обычным редактированием.
+  const squadron = ACCESS_SECTIONS.find((s) => s.key === "squadron");
+  assert.deepEqual(
+    (squadron.extras || []).map((e) => e.key),
+    ["editCompleted"],
+  );
+});
+
 test("правка завершённой заявки — отдельный переключатель секции ФАП", () => {
   const passengers = ACCESS_SECTIONS.find((s) => s.key === "passengers");
   assert.deepEqual(

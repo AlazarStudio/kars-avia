@@ -114,6 +114,9 @@ export const menuAccess = {
   requestCreate: true,
   requestUpdate: true,
   requestChat: true,
+  // Правка заявки в АРХИВЕ. Дефолт false, как на бэке
+  // (AccessMenu.requestUpdateCompleted, services/request/requestArchiveGuard.js).
+  requestUpdateCompleted: false,
 
   reserveMenu: true,
   reserveCreate: true,

@@ -1,10 +1,11 @@
 // Конвертер внутреннего секционного состояния AccessPermissionsPanel
-// в плоский accessMenu (все 37 ключей) для бэка.
+// в плоский accessMenu (все 38 ключей) для бэка.
 export const buildAccessPayload = (s) => ({
   requestMenu: !!s?.squadron?.access,
   requestCreate: !!s?.squadron?.create,
   requestChat: !!s?.squadron?.chat,
   requestUpdate: !!s?.squadron?.edit,
+  requestUpdateCompleted: !!s?.squadron?.editCompleted,
 
   transferMenu: !!s?.transfer?.access,
   transferCreate: !!s?.transfer?.create,
@@ -54,6 +55,9 @@ export const buildAccessPayload = (s) => ({
 // которые выдаются осознанно. ⚠️ Имя историческое — набор уже не сплошные true.
 export const ALL_TRUE_ACCESS = {
   requestMenu: true, requestCreate: true, requestUpdate: true, requestChat: true,
+  // Правка заявки в архиве — осознанно выдаваемое право, как и правка
+  // завершённой заявки ФАП ниже: посев новой должности его не включает.
+  requestUpdateCompleted: false,
   transferMenu: true, transferCreate: true, transferUpdate: true, transferChat: true,
   personalMenu: true, personalCreate: true, personalUpdate: true,
   reserveMenu: true, reserveCreate: true, reserveUpdate: true,
