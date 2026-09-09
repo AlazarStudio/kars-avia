@@ -25,9 +25,7 @@ import {
   prepareSeasonDrafts,
   findNewRoomKindId,
 } from "../../../utils/roomKindSeasons.js";
-
-const REQUIRED_FIELDS_MESSAGE =
-  "Пожалуйста, заполните все обязательные поля.";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function CreateRequestTarifCategory({
   show,
@@ -72,9 +70,24 @@ function CreateRequestTarifCategory({
 
   // const [tarifNames, setTarifNames] = useState([]);
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
   const [isEdited, setIsEdited] = useState(false);
 
+  const needsAirlinePrice = !user?.hotelId && !formData.priceForAirReq;
+  const requiredKeys = [
+    "name",
+    "category",
+    "price",
+    ...(needsAirlinePrice ? ["priceForAirline"] : []),
+  ];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
+
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData({
       name: "",
       category: "",
@@ -89,7 +102,7 @@ function CreateRequestTarifCategory({
     setIsEdited(false);
     setSeasonDrafts([]);
     setSeasonErrors({});
-  }, []);
+  }, [resetRequired]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
@@ -170,39 +183,10 @@ function CreateRequestTarifCategory({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const isFormValid = () => {
-    const nameTrim = String(formData.name ?? "").trim();
-    if (!formData.category || !nameTrim) return false;
-
-    const priceNum = parseFloat(formData.price);
-    if (
-      formData.price === "" ||
-      formData.price === null ||
-      Number.isNaN(priceNum)
-    ) {
-      return false;
-    }
-
-    const needsAirlinePrice = !user?.hotelId && !formData.priceForAirReq;
-    if (needsAirlinePrice) {
-      const airlineNum = parseFloat(formData.priceForAirline);
-      if (
-        formData.priceForAirline === "" ||
-        formData.priceForAirline === null ||
-        Number.isNaN(airlineNum)
-      ) {
-        return false;
-      }
-    }
-
-    return true;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!isFormValid()) {
-      showAlert(REQUIRED_FIELDS_MESSAGE);
+    if (!validate()) {
       return;
     }
 
@@ -356,13 +340,19 @@ function CreateRequestTarifCategory({
         <MUILoader loadSize={"50px"} fullHeight={"90vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               <span className={classes.hint}>* — обязательные поля</span>
-              <label className={classes.required}>Выберите категорию</label>
+              <label
+                className={`${classes.required} ${invalid("category") ? "fieldInvalid" : ""
+                  }`}
+              >
+                Выберите категорию
+              </label>
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите категорию"}
+                error={invalid("category")}
                 options={useCategories.map((category) => category.label)}
                 value={
                   useCategories.find(
@@ -381,29 +371,49 @@ function CreateRequestTarifCategory({
                 }}
               />
 
-              <label className={classes.required}>Название тарифа</label>
+              <label
+                className={`${classes.required} ${invalid("name") ? "fieldInvalid" : ""
+                  }`}
+              >
+                Название тарифа
+              </label>
               <input
                 type="text"
                 name="name"
+                className={invalid("name") ? "inputInvalid" : undefined}
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Например: Стандарт, Люкс"
               />
 
-              <label className={classes.required}>Стоимость</label>
+              <label
+                className={`${classes.required} ${invalid("price") ? "fieldInvalid" : ""
+                  }`}
+              >
+                Стоимость
+              </label>
               <input
                 type="number"
                 name="price"
+                className={invalid("price") ? "inputInvalid" : undefined}
                 value={formData.price}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
               />
               {!user?.hotelId && (
                 <>
-                  <label className={!formData.priceForAirReq ? classes.required : undefined}>Стоимость для авиакомпании</label>
+                  <label
+                    className={`${needsAirlinePrice ? classes.required : ""} ${invalid("priceForAirline") ? "fieldInvalid" : ""
+                      }`}
+                  >
+                    Стоимость для авиакомпании
+                  </label>
                   <input
                     type="number"
                     name="priceForAirline"
+                    className={
+                      invalid("priceForAirline") ? "inputInvalid" : undefined
+                    }
                     value={formData.priceForAirline}
                     onChange={handleChange}
                     placeholder="Введите стоимость для авиакомпании"

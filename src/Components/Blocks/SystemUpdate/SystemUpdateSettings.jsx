@@ -25,6 +25,7 @@ import {
   convertToDate,
   getCookie,
 } from "../../../../graphQL_requests";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 const VERSION_RE = /^\d+\.\d+\.\d+(?:-\d+)?$/;
 
@@ -40,6 +41,9 @@ function SystemUpdateSettings() {
   const [title, setTitle] = useState("");
   const [audiencesState, setAudiencesState] = useState(emptyState);
   const [activeAud, setActiveAud] = useState(AUDIENCE_ORDER[0]);
+
+  const requiredKeys = enabled ? ["title"] : [];
+  const { invalid, validate } = useRequiredFields({ title }, requiredKeys);
 
   const { loading, error, data } = useQuery(SYSTEM_UPDATE, {
     fetchPolicy: "cache-and-network",
@@ -123,10 +127,7 @@ function SystemUpdateSettings() {
       //   notifyError("Версия должна быть в формате X.Y.Z");
       //   return;
       // }
-      if (!title.trim()) {
-        notifyError("Заполните заголовок");
-        return;
-      }
+      if (!validate()) return;
       if (countItems(audiencesArray) < 1) {
         notifyError("Добавьте хотя бы один пункт");
         return;
@@ -212,10 +213,10 @@ function SystemUpdateSettings() {
           </label>
 
           <label className={classes.field}>
-            <span className={`${classes.label} ${enabled ? classes.required : ""}`}>Заголовок</span>
+            <span className={`${classes.label} ${enabled ? classes.required : ""} ${invalid("title") ? "fieldInvalid" : ""}`}>Заголовок</span>
             <input
               type="text"
-              className={classes.input}
+              className={`${classes.input} ${invalid("title") ? "inputInvalid" : ""}`}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Что нового в версии 3.6.0"

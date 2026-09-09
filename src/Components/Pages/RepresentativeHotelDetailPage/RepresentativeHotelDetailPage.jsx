@@ -28,6 +28,7 @@ import {
   isAirlineRole as isAirlineRoleCheck,
 } from "../../../utils/access";
 import { getExternalAuthErrorMessage } from "../../../constants/externalAuthErrors";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 const ACCESS_TYPE_CRM = "CRM";
 const ACCESS_TYPE_PWA = "PWA";
@@ -125,12 +126,16 @@ function RepresentativeHotelDetailPage({ user }) {
     }
   );
 
+  const requiredKeys = ["issueLinkEmail"];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields({ issueLinkEmail }, requiredKeys);
+
   const handleIssueLink = async () => {
-    const email = issueLinkEmail?.trim() || null;
-    if (!email) {
-      addNotification("Укажите email (обязательно).", "error");
-      return;
-    }
+    if (!validate()) return;
+    const email = issueLinkEmail.trim() || null;
     if (!hotel?.hotelId) {
       addNotification("Не удалось определить отель. Обновите страницу.", "error");
       return;
@@ -183,6 +188,7 @@ function RepresentativeHotelDetailPage({ user }) {
 
   const handleCloseIssueLinkModal = () => {
     if (!issueLinkLoading) {
+      resetRequired();
       setShowIssueLinkModal(false);
       resetIssueLinkModal();
     }
@@ -346,7 +352,7 @@ function RepresentativeHotelDetailPage({ user }) {
             ) : (
               <>
                 <p style={{ marginBottom: 8 }}>
-                  Ссылка позволит пользователю без аккаунта войти и вносить данные по броням и отчёту по этой гостинице. Для CRM письмо отправится на email; для PVA email необязателен.
+                  Ссылка позволит пользователю без аккаунта войти и вносить данные по броням и отчёту по этой гостинице. Письмо со ссылкой отправится на указанный email.
                 </p>
                 <div style={{ marginBottom: 12 }}>
                   <label style={{ display: "block", marginBottom: 6, fontSize: 14, color: "var(--main-gray)" }}>Тип учётной записи *</label>
@@ -374,6 +380,7 @@ function RepresentativeHotelDetailPage({ user }) {
                 <MUITextField
                   label="Email"
                   required
+                  error={invalid("issueLinkEmail")}
                   value={issueLinkEmail}
                   onChange={(e) => setIssueLinkEmail(e.target.value)}
                   placeholder="email@example.com"

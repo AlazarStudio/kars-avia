@@ -9,6 +9,7 @@ import { getCookie, UPDATE_HOTEL } from "../../../../graphQL_requests";
 import { useMutation } from "@apollo/client";
 import { ROOM_FUND_CATEGORIES as categories } from "../../../utils/roomCategories";
 import classes from "./CreateRoomModal.module.css";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 const bedsCategories = [
   { value: 1.0, label: "Одна кровать" },
@@ -34,6 +35,13 @@ const CreateRoomModal = ({ open, onClose, hotelId, setNewRoom }) => {
   const [updateHotel] = useMutation(UPDATE_HOTEL, {
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
+
+  const requiredKeys = ["nomerName", "category"];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -63,8 +71,7 @@ const CreateRoomModal = ({ open, onClose, hotelId, setNewRoom }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!formData.nomerName.trim() || !formData.category) {
-      alert("Пожалуйста, заполните обязательные поля.");
+    if (!validate()) {
       return;
     }
     try {
@@ -101,6 +108,7 @@ const CreateRoomModal = ({ open, onClose, hotelId, setNewRoom }) => {
 
   useEffect(() => {
     if (!open) {
+      resetRequired();
       setFormData({
         nomerName: "",
         category: "",
@@ -108,7 +116,7 @@ const CreateRoomModal = ({ open, onClose, hotelId, setNewRoom }) => {
         reserve: "",
       });
     }
-  }, [open]);
+  }, [open, resetRequired]);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
@@ -129,20 +137,32 @@ const CreateRoomModal = ({ open, onClose, hotelId, setNewRoom }) => {
             }}
           />
 
-          <label className={classes.required}>Название номера</label>
+          <label
+            className={`${classes.required} ${invalid("nomerName") ? "fieldInvalid" : ""
+              }`}
+          >
+            Название номера
+          </label>
           <input
             type="text"
             name="nomerName"
+            className={invalid("nomerName") ? "inputInvalid" : undefined}
             value={formData.nomerName}
             onChange={handleChange}
             placeholder="Введите название номера"
           />
 
-          <label className={classes.required}>Категория</label>
+          <label
+            className={`${classes.required} ${invalid("category") ? "fieldInvalid" : ""
+              }`}
+          >
+            Категория
+          </label>
           <MUIAutocomplete
             listboxHeight={"120px"}
             dropdownWidth="100%"
             label="Выберите категорию"
+            error={invalid("category")}
             options={categories.map((cat) => cat.label)}
             value={
               categories.find((cat) => cat.value === formData.category)

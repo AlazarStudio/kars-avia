@@ -21,6 +21,7 @@ function ExistRequestEditForm({
   onReserveChange,
   formDataExtend,
   onExtendChange,
+  invalid = () => false,
 }) {
   if (formData.status === "created" || formData.status === "opened") {
     return null;
@@ -204,12 +205,13 @@ function ExistRequestEditForm({
         </>
       )}
       <div className={classes.requestDataInfo}>
-        <div className={`${classes.requestDataInfo_title} ${isEditing && formDataExtend && onExtendChange ? classes.required : ""}`}>Заезд</div>
+        <div className={`${classes.requestDataInfo_title} ${isEditing && formDataExtend && onExtendChange ? classes.required : ""} ${invalid("arrivalDate") || invalid("arrivalTime") ? "fieldInvalid" : ""}`}>Заезд</div>
         {isEditing && formDataExtend && onExtendChange ? (
           <div className={classes.reis_info} style={{ width: "60%" }}>
             <input
               type="date"
               name="arrivalDate"
+              className={invalid("arrivalDate") ? "inputInvalid" : undefined}
               value={formDataExtend.arrivalDate || ""}
               onChange={onExtendChange}
               placeholder="Дата"
@@ -217,6 +219,7 @@ function ExistRequestEditForm({
             <input
               type="time"
               name="arrivalTime"
+              className={invalid("arrivalTime") ? "inputInvalid" : undefined}
               value={formDataExtend.arrivalTime || ""}
               onChange={onExtendChange}
               placeholder="Время"
@@ -308,12 +311,13 @@ function ExistRequestEditForm({
         )}
       </div>
       <div className={classes.requestDataInfo}>
-        <div className={`${classes.requestDataInfo_title} ${isEditing && formDataExtend && onExtendChange ? classes.required : ""}`}>Выезд</div>
+        <div className={`${classes.requestDataInfo_title} ${isEditing && formDataExtend && onExtendChange ? classes.required : ""} ${invalid("departureDate") || invalid("departureTime") ? "fieldInvalid" : ""}`}>Выезд</div>
         {isEditing && formDataExtend && onExtendChange ? (
           <div className={classes.reis_info} style={{ width: "60%" }}>
             <input
               type="date"
               name="departureDate"
+              className={invalid("departureDate") ? "inputInvalid" : undefined}
               value={formDataExtend.departureDate || ""}
               onChange={onExtendChange}
               placeholder="Дата"
@@ -321,6 +325,7 @@ function ExistRequestEditForm({
             <input
               type="time"
               name="departureTime"
+              className={invalid("departureTime") ? "inputInvalid" : undefined}
               value={formDataExtend.departureTime || ""}
               onChange={onExtendChange}
               placeholder="Время"

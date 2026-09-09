@@ -17,6 +17,7 @@ import { AddressField } from "../AddressField/AddressField.jsx";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
 import { toLocalInputValue, formatDateTime } from "../FapV2/fapConstants";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL" }) {
   const token = getCookie("token");
@@ -24,6 +25,7 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
   const { success, error: notifyError } = useToast();
   const [isEdited, setIsEdited] = useState(false);
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
   const [selectedDriver, setSelectedDriver] = useState(null);
   const [showQuickCreate, setShowQuickCreate] = useState(false);
   const [quickCreate, setQuickCreate] = useState({
@@ -42,6 +44,13 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
     link: "",
     pickupAt: "",
   });
+
+  const requiredKeys = ["fullName", "peopleCount", "addressFrom", "addressTo"];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
 
   const [selectedHotel, setSelectedHotel] = useState(null);
   const hotelOptions = useMemo(
@@ -136,6 +145,7 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
   });
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setSelectedDriver(null);
     setSelectedHotel(null);
     setFormData({
@@ -150,7 +160,7 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
     setShowQuickCreate(false);
     setQuickCreate({ name: "", number: "", email: "", password: "" });
     setIsEdited(false);
-  }, []);
+  }, [resetRequired]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
@@ -200,18 +210,6 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
     setFormData((prev) => ({ ...prev, [name]: value }));
   }, [remainingServicePeople, notifyError]);
 
-  const isFormValid = () => {
-    return (
-      formData.fullName?.trim() &&
-      formData.peopleCount !== "" &&
-      Number(formData.peopleCount) > 0 &&
-      formData.addressFrom?.trim() &&
-      formData.addressTo?.trim() &&
-      (typeof remainingServicePeople !== "number" ||
-        Number(formData.peopleCount) <= remainingServicePeople)
-    );
-  };
-
   const handleQuickCreate = async () => {
     if (creatingDriver) return;
     const name = quickCreate.name?.trim();
@@ -257,24 +255,27 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
   };
 
   const handleSubmit = async () => {
-    if (!isFormValid()) {
-      if (
-        typeof remainingServicePeople === "number" &&
-        remainingServicePeople <= 0
-      ) {
-        notifyError(
-          "Нельзя добавить водителя: все места по услуге трансфера уже распределены."
-        );
-      } else if (
-        typeof remainingServicePeople === "number" &&
-        Number(formData.peopleCount) > remainingServicePeople
-      ) {
-        notifyError(
-          `Количество мест превышает доступное по услуге (${remainingServicePeople}).`
-        );
-      } else {
-        showAlert("Пожалуйста, заполните все обязательные поля.");
-      }
+    if (!validate()) return;
+    if (!(Number(formData.peopleCount) > 0)) {
+      showAlert("Пожалуйста, заполните все обязательные поля.");
+      return;
+    }
+    if (
+      typeof remainingServicePeople === "number" &&
+      remainingServicePeople <= 0
+    ) {
+      notifyError(
+        "Нельзя добавить водителя: все места по услуге трансфера уже распределены."
+      );
+      return;
+    }
+    if (
+      typeof remainingServicePeople === "number" &&
+      Number(formData.peopleCount) > remainingServicePeople
+    ) {
+      notifyError(
+        `Количество мест превышает доступное по услуге (${remainingServicePeople}).`
+      );
       return;
     }
     const driver = {
@@ -337,13 +338,20 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
         <MUILoader loadSize={"50px"} fullHeight={"75vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               <span className={classes.hint}>* — обязательные поля</span>
-              <label className={classes.required}>Водитель</label>
+              <label
+                className={`${classes.required} ${
+                  invalid("fullName") ? "fieldInvalid" : ""
+                }`}
+              >
+                Водитель
+              </label>
               <MUIAutocompleteColor
                 dropdownWidth="100%"
                 label="Выберите водителя"
+                error={invalid("fullName")}
                 options={drivers}
                 getOptionLabel={(option) =>
                   option
@@ -457,6 +465,7 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
               <AddressField
                 label="Адрес отправления"
                 required
+                error={invalid("addressFrom")}
                 placeholder="г. Черкесск, Ленина, 57Б"
                 value={formData.addressFrom}
                 onChange={(addr) => {
@@ -469,6 +478,7 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
               <AddressField
                 label="Адрес прибытия"
                 required
+                error={invalid("addressTo")}
                 placeholder="г. Минеральные Воды, Ленина, 10К1"
                 value={formData.addressTo}
                 onChange={(addr) => {
@@ -478,10 +488,17 @@ function AddRepresentativeDriver({ show, onClose, request, direction = "ARRIVAL"
               />
               {airportField === "addressTo" && airportHint}
 
-              <label className={classes.required}>Количество людей</label>
+              <label
+                className={`${classes.required} ${
+                  invalid("peopleCount") ? "fieldInvalid" : ""
+                }`}
+              >
+                Количество людей
+              </label>
               <input
                 type="number"
                 name="peopleCount"
+                className={invalid("peopleCount") ? "inputInvalid" : undefined}
                 min={1}
                 max={
                   typeof remainingServicePeople === "number"

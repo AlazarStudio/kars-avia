@@ -15,6 +15,7 @@ import CloseIcon from "../../../shared/icons/CloseIcon";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
 import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function UpdateRequestAirlineStaff({
   show,
@@ -51,7 +52,16 @@ function UpdateRequestAirlineStaff({
 
   const sidebarRef = useRef();
   const menuRef = useRef(null);
+  const formBodyRef = useRef(null);
   const [anchorEl, setAnchorEl] = useState(null);
+
+  const requiredKeys = ["name", "number", "gender"];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
+  const invalidNow = (key) => isEditing && invalid(key);
 
   useEffect(() => {
     if (show && selectedStaff) {
@@ -66,6 +76,7 @@ function UpdateRequestAirlineStaff({
   }, [show, selectedStaff]);
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData({
       id: selectedStaff?.id || "",
       name: selectedStaff?.name || "",
@@ -75,7 +86,7 @@ function UpdateRequestAirlineStaff({
     });
     setIsEdited(false); // Сброс флага изменений
     setIsEditing(false);
-  }, []);
+  }, [resetRequired]);
 
   const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -130,6 +141,12 @@ function UpdateRequestAirlineStaff({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+
+    if (!validate()) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const selectedPosition = positions.find(
         (position) => position.name === formData.position
@@ -250,17 +267,18 @@ function UpdateRequestAirlineStaff({
         <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               {isEditing && (
                 <div className={classes.hint}>* — обязательные поля</div>
               )}
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>ФИО</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("name") ? "fieldInvalid" : ""}`}>ФИО</div>
                 {isEditing ? (
                   <input
                     type="text"
                     name="name"
+                    className={invalidNow("name") ? "inputInvalid" : undefined}
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="Пример: Иванов Иван Иванович"
@@ -273,13 +291,14 @@ function UpdateRequestAirlineStaff({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Номер телефона</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("number") ? "fieldInvalid" : ""}`}>Номер телефона</div>
                 {isEditing ? (
                   <InputMask
                     type="text"
                     mask="+7 (___) ___-__-__"
                     replacement={{ _: /\d/ }}
                     name="number"
+                    className={invalidNow("number") ? "inputInvalid" : undefined}
                     value={formData.number}
                     onChange={handleChange}
                     placeholder="+7 (___) ___-__-__"
@@ -318,12 +337,13 @@ function UpdateRequestAirlineStaff({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Пол</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("gender") ? "fieldInvalid" : ""}`}>Пол</div>
                 {isEditing ? (
                   <div className={classes.dropdown}>
                     <MUIAutocomplete
                       dropdownWidth={"100%"}
                       label={"Выберите пол"}
+                      error={invalidNow("gender")}
                       options={["Мужской", "Женский"]}
                       value={formData.gender}
                       onChange={(event, newValue) => {

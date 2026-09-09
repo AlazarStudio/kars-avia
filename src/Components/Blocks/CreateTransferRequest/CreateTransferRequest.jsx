@@ -27,6 +27,7 @@ import { roles } from "../../../roles";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 // Компонент для создания новой заявки
 function CreateTransferRequest({ show, onClose, user }) {
@@ -39,7 +40,9 @@ function CreateTransferRequest({ show, onClose, user }) {
   const [selectedAirline, setSelectedAirline] = useState(null); // Выбранная авиакомпания
   const [newStaffId, setNewStaffId] = useState(null);
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
   const [disableAutocomplete, setDisableAutocomplete] = useState(false);
+  const showAirlineField = !user?.airlineId;
 
   // Запрос данных авиакомпаний и аэропортов
   const { data, refetch } = useQuery(GET_AIRLINES_RELAY, {
@@ -65,6 +68,16 @@ function CreateTransferRequest({ show, onClose, user }) {
     passengersCount: 0,
     description: "",
   });
+
+  const requiredKeys = [
+    ...(showAirlineField ? ["airlineId"] : []),
+    "scheduledPickupAt",
+  ];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
 
   const { data: dataSubscription } = useSubscription(
     GET_AIRLINES_SUBSCRIPTION,
@@ -157,6 +170,7 @@ function CreateTransferRequest({ show, onClose, user }) {
 
   // Сброс формы к начальному состоянию
   const resetForm = useCallback(() => {
+    resetRequired();
     setActiveTab("Общая");
     setSelectedAirline(user?.airlineId ? airlineForAirlineAdmin : null);
     setFormData({
@@ -170,7 +184,7 @@ function CreateTransferRequest({ show, onClose, user }) {
     });
     setIsEdited(false); // Сбрасываем флаг, что форма не изменена
     setDisableAutocomplete(false);
-  }, [userID]);
+  }, [userID, resetRequired]);
 
   // Закрытие формы с проверкой на несохраненные изменения
   const closeButton = useCallback(async () => {
@@ -216,10 +230,6 @@ function CreateTransferRequest({ show, onClose, user }) {
   // Обработчик переключения вкладок
   const handleTabChange = useCallback((tab) => setActiveTab(tab), []);
 
-  const isFormValid = () => {
-    return formData.airlineId && formData.scheduledPickupAt;
-  };
-
   const [isLoading, setIsLoading] = useState(false);
 
   // console.log(formData);
@@ -228,8 +238,7 @@ function CreateTransferRequest({ show, onClose, user }) {
   const handleSubmit = async () => {
     setIsLoading(true);
 
-    if (!isFormValid()) {
-      showAlert("Пожалуйста, заполните все обязательные поля.");
+    if (!validate()) {
       setIsLoading(false);
       return;
     }
@@ -347,14 +356,37 @@ function CreateTransferRequest({ show, onClose, user }) {
           <MUILoader loadSize={"50px"} fullHeight={"75vh"} />
         ) : (
           <>
-            <div className={classes.requestMiddle}>
+            <div className={classes.requestMiddle} ref={formBodyRef}>
               {/* Вкладка "Общая" */}
               {activeTab === "Общая" && (
                 <div className={classes.requestData}>
                   <span className={classes.hint}>* — обязательные поля</span>
-                  {user?.airlineId ? (
+                  {showAirlineField ? (
                     <>
-                      {/* Для airlineAdmin показываем только выбор сотрудников своей авиакомпании */}
+                      <label
+                        className={`${classes.required} ${invalid("airlineId") ? "fieldInvalid" : ""
+                          }`}
+                      >
+                        Авиакомпания
+                      </label>
+                      <MUIAutocomplete
+                        dropdownWidth={"100%"}
+                        label={"Введите авиакомпанию"}
+                        error={invalid("airlineId")}
+                        options={airlines?.map((airline) => airline.name)}
+                        value={selectedAirline ? selectedAirline?.name : ""}
+                        onChange={(event, newValue) => {
+                          const selectedAirline = airlines.find(
+                            (airline) => airline.name === newValue
+                          );
+                          setSelectedAirline(selectedAirline);
+                          setFormData((prevFormData) => ({
+                            ...prevFormData,
+                            airlineId: selectedAirline?.id || "",
+                          }));
+                          setIsEdited(true);
+                        }}
+                      />
                       {selectedAirline && (
                         <>
                           <label>Сотрудник авиакомпании</label>
@@ -380,24 +412,7 @@ function CreateTransferRequest({ show, onClose, user }) {
                     </>
                   ) : (
                     <>
-                      <label className={classes.required}>Авиакомпания</label>
-                      <MUIAutocomplete
-                        dropdownWidth={"100%"}
-                        label={"Введите авиакомпанию"}
-                        options={airlines?.map((airline) => airline.name)}
-                        value={selectedAirline ? selectedAirline?.name : ""}
-                        onChange={(event, newValue) => {
-                          const selectedAirline = airlines.find(
-                            (airline) => airline.name === newValue
-                          );
-                          setSelectedAirline(selectedAirline);
-                          setFormData((prevFormData) => ({
-                            ...prevFormData,
-                            airlineId: selectedAirline?.id || "",
-                          }));
-                          setIsEdited(true);
-                        }}
-                      />
+                      {/* Для airlineAdmin показываем только выбор сотрудников своей авиакомпании */}
                       {selectedAirline && (
                         <>
                           <label>Сотрудник авиакомпании</label>
@@ -448,11 +463,19 @@ function CreateTransferRequest({ show, onClose, user }) {
                     }}
                   />
 
-                  <label className={classes.required}>Дата и время заказа</label>
+                  <label
+                    className={`${classes.required} ${invalid("scheduledPickupAt") ? "fieldInvalid" : ""
+                      }`}
+                  >
+                    Дата и время заказа
+                  </label>
                   <div className={classes.reis_info}>
                     <input
                       type="date"
                       name="scheduledPickupAt"
+                      className={
+                        invalid("scheduledPickupAt") ? "inputInvalid" : undefined
+                      }
                       value={formData.scheduledPickupAt || today}
                       min={today}
                       // min={minArrivalDate}

@@ -31,6 +31,7 @@ export const AddressField = ({
   placeholder,
   compact = false,
   required = false,
+  error = false,
 }) => {
   const [query, setQuery] = useState(value || "");
   const [anchor, setAnchor] = useState(null); // координаты ПОДТВЕРЖДЁННОГО адреса
@@ -196,7 +197,7 @@ export const AddressField = ({
       ref={containerRef}
     >
       {label && (
-        <span className={classes.addressLabel}>
+        <span className={`${classes.addressLabel} ${error ? "fieldInvalid" : ""}`}>
           {label}
           {required && <span className={classes.req}>{" *"}</span>}
         </span>
@@ -205,7 +206,7 @@ export const AddressField = ({
       <div className={classes.inputRow} ref={inputRowRef}>
         <input
           type="text"
-          className={classes.addressInput}
+          className={`${classes.addressInput} ${error ? "inputInvalid" : ""}`}
           value={query}
           onChange={handleInputChange}
           onFocus={requestAnchor}

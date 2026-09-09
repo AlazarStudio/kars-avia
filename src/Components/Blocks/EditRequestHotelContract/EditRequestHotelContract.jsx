@@ -43,6 +43,7 @@ import ArchiveIcon from "../../../shared/icons/ArchiveIcon.jsx";
 import RestoreIcon from "../../../shared/icons/RestoreIcon.jsx";
 import ArchiveContractModal from "../ArchiveContractModal/ArchiveContractModal.jsx";
 import { getExpirationBadge } from "../../../utils/contractExpiration.js";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function EditRequestHotelContract({
   show,
@@ -321,6 +322,25 @@ function EditRequestHotelContract({
 
   const [files, setFiles] = useState([]);
 
+  const formBodyRef = useRef(null);
+  const requiredKeys = [
+    "contractNumber",
+    "date",
+    "companyId",
+    "hotelId",
+    "cityId",
+    "applicationType",
+  ];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
+
+  // через ref, чтобы не тянуть resetRequired в зависимости useCallback/useEffect
+  const resetRequiredRef = useRef(resetRequired);
+  resetRequiredRef.current = resetRequired;
+
   // Гидрация из запроса
   useEffect(() => {
     if (!data) return;
@@ -408,6 +428,7 @@ function EditRequestHotelContract({
     setIsEditing(false);
     setIsEdited(false);
     setActiveTab("Общая");
+    resetRequiredRef.current();
   }, [isEditing, isEdited, onClose, isDialogOpen, confirm]);
 
   useEffect(() => {
@@ -607,6 +628,10 @@ function EditRequestHotelContract({
       setIsEditing(true);
       return;
     }
+    if (!validate()) {
+      setActiveTab("Общая");
+      return;
+    }
     try {
       setIsLoading(true);
       // тут подставь свои мутации обновления договора/ДС,
@@ -674,6 +699,7 @@ function EditRequestHotelContract({
       success("Изменения сохранены.");
       onClose();
       setIsEditing(false);
+      resetRequired();
     } catch (err) {
       console.error(err);
       showAlert("Произошла ошибка при сохранении договора.");
@@ -777,6 +803,7 @@ function EditRequestHotelContract({
             {activeTab === "Общая" ? (
               <div
                 className={classes.requestMiddle}
+                ref={formBodyRef}
                 style={!canEdit ? { height: "calc(100% - 148px)" } : isEditing ? {height: "calc(100vh - 198px)"} : {height: "calc(100vh - 117px)"}}
               >
                 <div className={classes.requestData}>
@@ -787,10 +814,21 @@ function EditRequestHotelContract({
                   <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
                     {isEditing ? (
                       <>
-                        <label className={classes.required}>№ Договора</label>
+                        <label
+                          className={`${classes.required} ${
+                            invalid("contractNumber") ? "fieldInvalid" : ""
+                          }`}
+                        >
+                          № Договора
+                        </label>
                         <input
                           type="text"
                           name="contractNumber"
+                          className={
+                            invalid("contractNumber")
+                              ? "inputInvalid"
+                              : undefined
+                          }
                           value={formData.contractNumber}
                           onChange={handleChange}
                           placeholder="Например: Договор №1"
@@ -807,10 +845,17 @@ function EditRequestHotelContract({
                   <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
                     {isEditing ? (
                       <>
-                        <label className={classes.required}>Дата заключения</label>
+                        <label
+                          className={`${classes.required} ${
+                            invalid("date") ? "fieldInvalid" : ""
+                          }`}
+                        >
+                          Дата заключения
+                        </label>
                         <input
                           type="date"
                           name="date"
+                          className={invalid("date") ? "inputInvalid" : undefined}
                           value={formData.date ? formData.date.slice(0, 10) : ""}
                           onChange={handleChange}
                           placeholder="Дата"
@@ -913,10 +958,17 @@ function EditRequestHotelContract({
                   <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
                     {isEditing ? (
                       <>
-                        <label className={classes.required}>ГК КАРС</label>
+                        <label
+                          className={`${classes.required} ${
+                            invalid("companyId") ? "fieldInvalid" : ""
+                          }`}
+                        >
+                          ГК КАРС
+                        </label>
                         <MUIAutocomplete
                           dropdownWidth={"59%"}
                           label={"Введите компанию"}
+                          error={invalid("companyId")}
                           options={companies?.map((item) => item.name) || []}
                           value={
                             companies?.find((item) => item.id === formData.companyId)
@@ -947,7 +999,11 @@ function EditRequestHotelContract({
                   <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
                     {isEditing ? (
                       <>
-                        <label className={classes.required}>
+                        <label
+                          className={`${classes.required} ${
+                            invalid("hotelId") ? "fieldInvalid" : ""
+                          }`}
+                        >
                           {activeFilterTab === "hotels"
                             ? "Гостиница"
                             : "Организация"}
@@ -959,6 +1015,7 @@ function EditRequestHotelContract({
                               ? "Выберите гостиницу"
                               : "Выберите организацию"
                           }
+                          error={invalid("hotelId")}
                           options={hotels}
                           getOptionLabel={(option) => {
                             if (!option) return "";
@@ -1036,10 +1093,17 @@ function EditRequestHotelContract({
                   <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
                     {isEditing ? (
                       <>
-                        <label className={classes.required}>Город</label>
+                        <label
+                          className={`${classes.required} ${
+                            invalid("cityId") ? "fieldInvalid" : ""
+                          }`}
+                        >
+                          Город
+                        </label>
                         <MUIAutocompleteColor
                           dropdownWidth="59%"
                           label={"Выберите город"}
+                          error={invalid("cityId")}
                           options={cities}
                           getOptionLabel={(option) => {
                             if (!option) return "";
@@ -1189,10 +1253,21 @@ function EditRequestHotelContract({
                   <div className={isEditing ? classes.requestDataItem : classes.requestDataInfo}>
                     {isEditing ? (
                       <>
-                        <label className={classes.required}>Вид услуги</label>
+                        <label
+                          className={`${classes.required} ${
+                            invalid("applicationType") ? "fieldInvalid" : ""
+                          }`}
+                        >
+                          Вид услуги
+                        </label>
                         <input
                           type="text"
                           name="applicationType"
+                          className={
+                            invalid("applicationType")
+                              ? "inputInvalid"
+                              : undefined
+                          }
                           value={formData.applicationType}
                           onChange={handleChange}
                           placeholder="Например: Проживание"
@@ -1343,6 +1418,7 @@ function EditRequestHotelContract({
                   onClick={() => {
                     setIsEditing(false);
                     setIsEdited(false);
+                    resetRequired();
                   }}
                   backgroundcolor="var(--hover-gray)"
                   color="#000"

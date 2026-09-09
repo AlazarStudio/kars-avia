@@ -12,6 +12,7 @@ import MUILoader from "../MUILoader/MUILoader";
 import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { rolesObject } from "../../../roles";
 import CloseIcon from "../../../shared/icons/CloseIcon";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function CreateRequestTransferCompany({
   show,
@@ -34,8 +35,17 @@ function CreateRequestTransferCompany({
   });
 
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
+
+  const requiredKeys = ["name", "email", "role", "position", "login", "password"];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData({
       images: null,
       name: "",
@@ -46,7 +56,7 @@ function CreateRequestTransferCompany({
       password: "",
     });
     setIsEdited(false); // Сброс флага изменений
-  }, []);
+  }, [resetRequired]);
 
   const closeButton = useCallback(() => {
     if (!isEdited) {
@@ -111,26 +121,12 @@ function CreateRequestTransferCompany({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    // Проверяем обязательные поля
-    const requiredFields = [
-      "name",
-      "email",
-      "role",
-      "position",
-      "login",
-      "password",
-    ];
-    const emptyFields = requiredFields.filter(
-      (field) => !formData[field]?.trim()
-    );
-
-    if (emptyFields.length > 0) {
-      alert("Пожалуйста, заполните все обязательные поля.");
-      setIsLoading(false);
+    if (!validate()) {
       return;
     }
+
+    setIsLoading(true);
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(formData.email)) {
@@ -257,33 +253,48 @@ function CreateRequestTransferCompany({
         <MUILoader loadSize={"50px"} fullHeight={"80vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               <span className={classes.hint}>* — обязательные поля</span>
-              <label className={classes.required}>ФИО</label>
+              <label
+                className={`${classes.required} ${invalid("name") ? "fieldInvalid" : ""}`}
+              >
+                ФИО
+              </label>
               <input
                 type="text"
                 name="name"
+                className={invalid("name") ? "inputInvalid" : undefined}
                 placeholder="Иванов Иван Иванович"
                 value={formData.name}
                 onChange={handleChange}
                 autoComplete="new-password"
               />
 
-              <label className={classes.required}>Почта</label>
+              <label
+                className={`${classes.required} ${invalid("email") ? "fieldInvalid" : ""}`}
+              >
+                Почта
+              </label>
               <input
                 type="email"
                 name="email"
+                className={invalid("email") ? "inputInvalid" : undefined}
                 placeholder="example@mail.ru"
                 value={formData.email}
                 onChange={handleChange}
                 autoComplete="new-password"
               />
 
-              <label className={classes.required}>Роль</label>
+              <label
+                className={`${classes.required} ${invalid("role") ? "fieldInvalid" : ""}`}
+              >
+                Роль
+              </label>
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите роль"}
+                error={invalid("role")}
                 options={rolesObject.dispatcher}
                 value={
                   rolesObject.dispatcher.find(
@@ -300,10 +311,15 @@ function CreateRequestTransferCompany({
                 }}
               />
 
-              <label className={classes.required}>Должность</label>
+              <label
+                className={`${classes.required} ${invalid("position") ? "fieldInvalid" : ""}`}
+              >
+                Должность
+              </label>
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите должность"}
+                error={invalid("position")}
                 options={positions.map((position) => position.name)}
                 value={formData.position}
                 onChange={(event, newValue) => {
@@ -315,20 +331,30 @@ function CreateRequestTransferCompany({
                 }}
               />
 
-              <label className={classes.required}>Логин</label>
+              <label
+                className={`${classes.required} ${invalid("login") ? "fieldInvalid" : ""}`}
+              >
+                Логин
+              </label>
               <input
                 type="text"
                 name="login"
+                className={invalid("login") ? "inputInvalid" : undefined}
                 placeholder="Логин"
                 value={formData.login}
                 onChange={handleChange}
                 autoComplete="new-password"
               />
 
-              <label className={classes.required}>Пароль</label>
+              <label
+                className={`${classes.required} ${invalid("password") ? "fieldInvalid" : ""}`}
+              >
+                Пароль
+              </label>
               <input
                 type="password"
                 name="password"
+                className={invalid("password") ? "inputInvalid" : undefined}
                 placeholder="Пароль"
                 value={formData.password}
                 onChange={handleChange}

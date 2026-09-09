@@ -48,6 +48,7 @@ import ExistRequestEditForm from "./ExistRequestEditForm";
 import { roles, roleLabels } from "../../../roles";
 import { useDialog } from "../../../contexts/DialogContext";
 import { calculateEffectiveCostDays } from "../../../utils/effectiveCostDays";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function ExistRequest({
   show,
@@ -171,6 +172,20 @@ function ExistRequest({
     actualCheckInTime: "",
   });
   const [isEditing, setIsEditing] = useState(false);
+
+  // Обязательные поля правки: время входит в ISO-строку заезда/выезда, дефолта нет
+  const formBodyRef = useRef(null);
+  const requiredExtendKeys = [
+    "arrivalDate",
+    "arrivalTime",
+    "departureDate",
+    "departureTime",
+  ];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formDataExtend, requiredExtendKeys, formBodyRef);
 
   useEffect(() => {
     if (show && openInEditMode) {
@@ -323,13 +338,14 @@ function ExistRequest({
     setSelectedEmployee(null);
     setNewStaffId(null);
     setIsEditing(false);
+    resetRequired();
     // Сброс состояния гостиницы, номера и аэропорта
     setSelectedHotelId(null);
     setSelectedRoomId(null);
     setSelectedPlace(null);
     setSelectedAirportId(null);
     setSelectedReserve(null);
-  }, [onClose, setChooseRequestID, isDialogOpen]);
+  }, [onClose, setChooseRequestID, isDialogOpen, resetRequired]);
 
   const resetForm = useCallback(() => setActiveTab("Общая"), []);
 
@@ -1022,7 +1038,12 @@ function ExistRequest({
 
   const handleUpdateRequest = async () => {
     if (isEditing) {
+      if (!validate()) {
+        setActiveTab("Общая");
+        return;
+      }
       await handleExtendChangeRequest();
+      resetRequired();
     } else {
       setActiveTab("Общая");
     }
@@ -1203,6 +1224,7 @@ function ExistRequest({
               </div>
 
               <div
+                ref={formBodyRef}
                 className={classes.requestMiddle}
                 style={{
                   height: (isEditing) ? "calc(100vh - 198px)" : "calc(100vh - 120px)"
@@ -1591,6 +1613,7 @@ function ExistRequest({
                           onReserveChange={setSelectedReserve}
                           formDataExtend={formDataExtend}
                           onExtendChange={handleExtendChange}
+                          invalid={(key) => isEditing && invalid(key)}
                         />
                       )}
 
@@ -1600,12 +1623,17 @@ function ExistRequest({
                         <>
                           <div className={classes.requestDataTitle}>Информация о заявке</div>
                           <div className={classes.requestDataInfo}>
-                            <div className={classes.requestDataInfo_title}>Заезд</div>
+                            <div
+                              className={`${classes.requestDataInfo_title} ${isEditing && (invalid("arrivalDate") || invalid("arrivalTime")) ? "fieldInvalid" : ""}`}
+                            >
+                              Заезд
+                            </div>
                             {isEditing ? (
                               <div className={classes.reis_info} style={{ width: "60%" }}>
                                 <input
                                   type="date"
                                   name="arrivalDate"
+                                  className={invalid("arrivalDate") ? "inputInvalid" : undefined}
                                   value={formDataExtend.arrivalDate}
                                   onChange={handleExtendChange}
                                   placeholder="Дата"
@@ -1613,6 +1641,7 @@ function ExistRequest({
                                 <input
                                   type="time"
                                   name="arrivalTime"
+                                  className={invalid("arrivalTime") ? "inputInvalid" : undefined}
                                   value={formDataExtend.arrivalTime}
                                   onChange={handleExtendChange}
                                   placeholder="Время"
@@ -1626,12 +1655,17 @@ function ExistRequest({
                             )}
                           </div>
                           <div className={classes.requestDataInfo}>
-                            <div className={classes.requestDataInfo_title}>Выезд</div>
+                            <div
+                              className={`${classes.requestDataInfo_title} ${isEditing && (invalid("departureDate") || invalid("departureTime")) ? "fieldInvalid" : ""}`}
+                            >
+                              Выезд
+                            </div>
                             {isEditing ? (
                               <div className={classes.reis_info} style={{ width: "60%" }}>
                                 <input
                                   type="date"
                                   name="departureDate"
+                                  className={invalid("departureDate") ? "inputInvalid" : undefined}
                                   value={formDataExtend.departureDate}
                                   onChange={handleExtendChange}
                                   placeholder="Дата"
@@ -1639,6 +1673,7 @@ function ExistRequest({
                                 <input
                                   type="time"
                                   name="departureTime"
+                                  className={invalid("departureTime") ? "inputInvalid" : undefined}
                                   value={formDataExtend.departureTime}
                                   onChange={handleExtendChange}
                                   placeholder="Время"
@@ -2323,7 +2358,10 @@ function ExistRequest({
                 isEditing && (
                   <div className={classes.requestButton}>
                     <Button
-                      onClick={() => setIsEditing(false)}
+                      onClick={() => {
+                        setIsEditing(false);
+                        resetRequired();
+                      }}
                       backgroundcolor="var(--hover-gray)"
                       color="#000"
                     >

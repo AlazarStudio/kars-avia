@@ -17,6 +17,7 @@ import StarRatingFilter from "../StarRatingFilter/StarRatingFilter";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function CreateRequestHotel({ show, onClose, addHotel }) {
   const token = getCookie("token");
@@ -37,8 +38,26 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
   });
 
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
+
+  const requiredKeys = [
+    "name",
+    "city",
+    "airportId",
+    "address",
+    "capacity",
+    "stars",
+    "usStars",
+    "images",
+  ];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData({
       name: "",
       city: "",
@@ -51,7 +70,7 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
       capacity: "",
     });
     setIsEdited(false); // Сброс флага изменений
-  }, []);
+  }, [resetRequired]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
@@ -120,24 +139,7 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
     e.preventDefault();
     setIsLoading(true);
 
-    // Проверяем, заполнены ли все поля
-    if (
-      !formData.name.trim() ||
-      !formData.city.trim() ||
-      !formData.address.trim() ||
-      !formData.stars.trim() ||
-      !formData.usStars.trim() ||
-      !formData.images ||
-      !formData.airportId ||
-      !formData.capacity
-    ) {
-      showAlert("Пожалуйста, заполните все обязательные поля.");
-      setIsLoading(false);
-      return;
-    }
-
-    if (!formData.images) {
-      showAlert("Пожалуйста, выберите файл для загрузки");
+    if (!validate()) {
       setIsLoading(false);
       return;
     }
@@ -250,22 +252,34 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
         <MUILoader loadSize={"50px"} fullHeight={"80vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               <span className={classes.hint}>* — обязательные поля</span>
-              <label className={classes.required}>Название</label>
+              <label
+                className={`${classes.required} ${invalid("name") ? "fieldInvalid" : ""
+                  }`}
+              >
+                Название
+              </label>
               <input
                 type="text"
                 name="name"
+                className={invalid("name") ? "inputInvalid" : undefined}
                 value={formData.name}
                 placeholder="Гостиница Славянка"
                 onChange={handleChange}
               />
 
-              <label className={classes.required}>Город</label>
+              <label
+                className={`${classes.required} ${invalid("city") ? "fieldInvalid" : ""
+                  }`}
+              >
+                Город
+              </label>
               <MUIAutocompleteColor
                 dropdownWidth={"100%"}
                 label={"Выберите город"}
+                error={invalid("city")}
                 options={cities}
                 getOptionLabel={(option) =>
                   option ? `${option.city} ${option.region}`.trim() : ""
@@ -303,10 +317,16 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
                 }}
               />
 
-              <label className={classes.required}>Аэропорт</label>
+              <label
+                className={`${classes.required} ${invalid("airportId") ? "fieldInvalid" : ""
+                  }`}
+              >
+                Аэропорт
+              </label>
               <MUIAutocompleteColor
                 dropdownWidth={"100%"}
                 label={"Выберите аэропорт"}
+                error={invalid("airportId")}
                 options={airports}
                 getOptionLabel={(option) =>
                   option
@@ -348,25 +368,42 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
                 }}
               />
 
-              <label className={classes.required}>Адрес</label>
+              <label
+                className={`${classes.required} ${invalid("address") ? "fieldInvalid" : ""
+                  }`}
+              >
+                Адрес
+              </label>
               <input
                 type="text"
                 name="address"
+                className={invalid("address") ? "inputInvalid" : undefined}
                 value={formData.address}
                 placeholder="ул. Лесная  147"
                 onChange={handleChange}
               />
 
-              <label className={classes.required}>Мощность</label>
+              <label
+                className={`${classes.required} ${invalid("capacity") ? "fieldInvalid" : ""
+                  }`}
+              >
+                Мощность
+              </label>
               <input
                 type="number"
                 name="capacity"
+                className={invalid("capacity") ? "inputInvalid" : undefined}
                 value={formData.capacity}
                 placeholder="Например: 5"
                 onChange={handleChange}
               />
 
-              <label className={classes.required}>Оценка</label>
+              <label
+                className={`${classes.required} ${invalid("stars") ? "fieldInvalid" : ""
+                  }`}
+              >
+                Оценка
+              </label>
               <StarRatingFilter
                 integer
                 value={formData.stars}
@@ -375,7 +412,12 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
                 }
               />
 
-              <label className={classes.required}>Звёздность</label>
+              <label
+                className={`${classes.required} ${invalid("usStars") ? "fieldInvalid" : ""
+                  }`}
+              >
+                Звёздность
+              </label>
               <StarRatingFilter
                 integer
                 value={formData.usStars}
@@ -394,7 +436,12 @@ function CreateRequestHotel({ show, onClose, addHotel }) {
                 onChange={handleChange}
               />
 
-              <label className={classes.required}>Картинка</label>
+              <label
+                className={`${classes.required} ${invalid("images") ? "fieldInvalid" : ""
+                  }`}
+              >
+                Картинка
+              </label>
               <input
                 type="file"
                 name="images"

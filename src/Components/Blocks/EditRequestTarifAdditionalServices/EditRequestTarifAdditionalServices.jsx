@@ -10,6 +10,7 @@ import { useMutation } from "@apollo/client";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function EditRequestTarifAdditionalServices({
   show,
@@ -30,7 +31,23 @@ function EditRequestTarifAdditionalServices({
 
   const sidebarRef = useRef();
   const menuRef = useRef(null);
+  const formBodyRef = useRef(null);
   const [anchorEl, setAnchorEl] = useState(null);
+
+  const showAirlinePrice = !user?.hotelId;
+  const requiredKeys = [
+    "name",
+    "price",
+    ...(showAirlinePrice && !formData.priceForAirReq
+      ? ["priceForAirline"]
+      : []),
+  ];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
+  const invalidNow = (key) => isEditing && invalid(key);
 
   const [updateHotelTarif] = useMutation(UPDATE_HOTEL_TARIF, {
     context: {
@@ -49,15 +66,17 @@ function EditRequestTarifAdditionalServices({
   }, [show, tarif, isEditing]);
 
   const resetForm = useCallback(() => {
+    resetRequired();
     if (tarif) setFormData({ ...tarif });
     setIsEdited(false);
-  }, [tarif]);
+  }, [tarif, resetRequired]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
     setAnchorEl(null);
 
     if (!isEdited) {
+      resetRequired();
       onClose();
       setIsEditing(false);
       return;
@@ -71,7 +90,7 @@ function EditRequestTarifAdditionalServices({
       onClose();
       setIsEditing(false);
     }
-  }, [confirm, isDialogOpen, isEdited, onClose, resetForm]);
+  }, [confirm, isDialogOpen, isEdited, onClose, resetForm, resetRequired]);
 
   const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -104,10 +123,15 @@ function EditRequestTarifAdditionalServices({
     e.preventDefault();
     setIsLoading(true);
 
+    if (!validate()) {
+      setIsLoading(false);
+      return;
+    }
+
     try {
       const airlineNum = parseFloat(formData.priceForAirline);
       const hasAirlinePrice =
-        !user?.hotelId &&
+        showAirlinePrice &&
         !formData.priceForAirReq &&
         !Number.isNaN(airlineNum);
       await updateHotelTarif({
@@ -120,7 +144,7 @@ function EditRequestTarifAdditionalServices({
                 name: formData.name,
                 price: parseFloat(formData.price),
                 ...(hasAirlinePrice && { priceForAirline: airlineNum }),
-                ...(!user?.hotelId && {
+                ...(showAirlinePrice && {
                   priceForAirReq: Boolean(formData.priceForAirReq),
                 }),
               },
@@ -129,6 +153,7 @@ function EditRequestTarifAdditionalServices({
         },
       });
 
+      resetRequired();
       onClose();
       setIsLoading(false);
       setIsEditing(false);
@@ -187,6 +212,7 @@ function EditRequestTarifAdditionalServices({
       ) : (
         <>
           <div
+            ref={formBodyRef}
             className={classes.requestMiddle}
             style={
               isEditing
@@ -199,13 +225,14 @@ function EditRequestTarifAdditionalServices({
                 <div className={classes.hint}>* — обязательные поля</div>
               )}
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("name") ? "fieldInvalid" : ""}`}>
                   Название доп услуги
                 </div>
                 {isEditing ? (
                   <input
                     type="text"
                     name="name"
+                    className={invalidNow("name") ? "inputInvalid" : undefined}
                     value={formData.name || ""}
                     onChange={handleChange}
                     placeholder=""
@@ -218,11 +245,12 @@ function EditRequestTarifAdditionalServices({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Стоимость</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("price") ? "fieldInvalid" : ""}`}>Стоимость</div>
                 {isEditing ? (
                   <input
                     type="number"
                     name="price"
+                    className={invalidNow("price") ? "inputInvalid" : undefined}
                     value={formData.price ?? ""}
                     onChange={handleChange}
                     placeholder="Введите стоимость"
@@ -236,16 +264,17 @@ function EditRequestTarifAdditionalServices({
                 )}
               </div>
 
-              {!user?.hotelId && (
+              {showAirlinePrice && (
                 <>
                   <div className={classes.requestDataInfo}>
-                    <div className={`${classes.requestDataInfo_title} ${isEditing && !formData.priceForAirReq ? classes.required : ""}`}>
+                    <div className={`${classes.requestDataInfo_title} ${isEditing && !formData.priceForAirReq ? classes.required : ""} ${invalidNow("priceForAirline") ? "fieldInvalid" : ""}`}>
                       Стоимость для авиакомпании
                     </div>
                     {isEditing ? (
                       <input
                         type="number"
                         name="priceForAirline"
+                        className={invalidNow("priceForAirline") ? "inputInvalid" : undefined}
                         value={formData.priceForAirline ?? ""}
                         onChange={handleChange}
                         placeholder="Введите стоимость"

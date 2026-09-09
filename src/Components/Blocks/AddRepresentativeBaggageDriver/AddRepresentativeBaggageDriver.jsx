@@ -16,6 +16,7 @@ import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.j
 import { AddressField } from "../AddressField/AddressField.jsx";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function AddRepresentativeBaggageDriver({ show, onClose, request }) {
   const token = getCookie("token");
@@ -23,6 +24,7 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
   const { success, error: notifyError } = useToast();
   const [isEdited, setIsEdited] = useState(false);
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
   const [selectedDriver, setSelectedDriver] = useState(null);
   const [showQuickCreate, setShowQuickCreate] = useState(false);
   const [quickCreate, setQuickCreate] = useState({
@@ -53,6 +55,13 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
 
   const drivers = driversData?.drivers?.drivers ?? [];
 
+  const requiredKeys = ["peopleCount", "fullName"];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
+
   const [createDriverMutation, { loading: creatingDriver }] = useMutation(
     CREATE_DRIVER_MUTATION,
     {
@@ -81,6 +90,7 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
   });
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setSelectedDriver(null);
     setFormData({
       peopleCount: "",
@@ -93,7 +103,7 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
     setShowQuickCreate(false);
     setQuickCreate({ name: "", number: "", email: "", password: "" });
     setIsEdited(false);
-  }, []);
+  }, [resetRequired]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
@@ -129,13 +139,6 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
   // Конкретных пассажиров здесь не выбирают — на этом шаге известно только
   // сколько их ожидается; сами пассажиры добавляются из реестра на странице
   // поездки вместе со своими адресами, бирками и ценами.
-  const isFormValid = () => {
-    return Boolean(
-      formData.fullName?.trim() &&
-        formData.peopleCount !== "" &&
-        Number(formData.peopleCount) >= 1
-    );
-  };
 
   const handleQuickCreate = async () => {
     if (creatingDriver) return;
@@ -182,7 +185,8 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
   };
 
   const handleSubmit = async () => {
-    if (!isFormValid()) {
+    if (!validate()) return;
+    if (!(Number(formData.peopleCount) >= 1)) {
       showAlert("Пожалуйста, заполните все обязательные поля.");
       return;
     }
@@ -247,13 +251,20 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
         <MUILoader loadSize={"50px"} fullHeight={"75vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               <span className={classes.hint}>* — обязательные поля</span>
-              <label className={classes.required}>Количество пассажиров</label>
+              <label
+                className={`${classes.required} ${
+                  invalid("peopleCount") ? "fieldInvalid" : ""
+                }`}
+              >
+                Количество пассажиров
+              </label>
               <input
                 type="number"
                 name="peopleCount"
+                className={invalid("peopleCount") ? "inputInvalid" : undefined}
                 min={1}
                 step={1}
                 value={formData.peopleCount}
@@ -261,10 +272,17 @@ function AddRepresentativeBaggageDriver({ show, onClose, request }) {
                 placeholder="Сколько пассажиров ожидается"
               />
 
-              <label className={classes.required}>Водитель</label>
+              <label
+                className={`${classes.required} ${
+                  invalid("fullName") ? "fieldInvalid" : ""
+                }`}
+              >
+                Водитель
+              </label>
               <MUIAutocompleteColor
                 dropdownWidth="100%"
                 label="Выберите водителя"
+                error={invalid("fullName")}
                 options={drivers}
                 getOptionLabel={(option) =>
                   option

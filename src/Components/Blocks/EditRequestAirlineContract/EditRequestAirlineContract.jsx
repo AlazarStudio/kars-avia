@@ -41,6 +41,7 @@ import ArchiveIcon from "../../../shared/icons/ArchiveIcon.jsx";
 import RestoreIcon from "../../../shared/icons/RestoreIcon.jsx";
 import ArchiveContractModal from "../ArchiveContractModal/ArchiveContractModal.jsx";
 import { getExpirationBadge } from "../../../utils/contractExpiration.js";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 /**
  * Компонент редактирования договора авиакомпании.
@@ -275,6 +276,24 @@ function EditRequestAirlineContract({
   });
   const [files, setFiles] = useState([]);
 
+  const formBodyRef = useRef(null);
+  const requiredKeys = [
+    "contractNumber",
+    "date",
+    "companyId",
+    "airlineId",
+    "applicationType",
+  ];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
+
+  // через ref, чтобы не тянуть resetRequired в зависимости useCallback/useEffect
+  const resetRequiredRef = useRef(resetRequired);
+  resetRequiredRef.current = resetRequired;
+
   // Гидрация из запроса
   useEffect(() => {
     if (!data?.airlineContract) return;
@@ -338,6 +357,7 @@ function EditRequestAirlineContract({
     setIsEditing(false);
     setIsEdited(false);
     setActiveTab("Общая");
+    resetRequiredRef.current();
   }, [isEditing, isEdited, onClose, isDialogOpen, confirm]);
   // console.log(isEdited);
 
@@ -533,6 +553,10 @@ function EditRequestAirlineContract({
       setIsEditing(true);
       return;
     }
+    if (!validate()) {
+      setActiveTab("Общая");
+      return;
+    }
     try {
       setIsLoading(true);
       // тут подставь свои мутации обновления договора/ДС,
@@ -569,6 +593,7 @@ function EditRequestAirlineContract({
       success("Изменения сохранены.");
       onClose();
       setIsEditing(false);
+      resetRequired();
     } catch (err) {
       console.error(err);
       showAlert("Произошла ошибка при сохранении договора.");
@@ -676,6 +701,7 @@ function EditRequestAirlineContract({
             {activeTab === "Общая" ? (
               <div
                 className={classes.requestMiddle}
+                ref={formBodyRef}
                 style={
                   !canEdit
                     ? { height: "calc(100% - 148px)" }
@@ -698,10 +724,21 @@ function EditRequestAirlineContract({
                   >
                     {isEditing ? (
                       <>
-                        <label className={classes.required}>№ Договора</label>
+                        <label
+                          className={`${classes.required} ${
+                            invalid("contractNumber") ? "fieldInvalid" : ""
+                          }`}
+                        >
+                          № Договора
+                        </label>
                         <input
                           type="text"
                           name="contractNumber"
+                          className={
+                            invalid("contractNumber")
+                              ? "inputInvalid"
+                              : undefined
+                          }
                           value={formData.contractNumber}
                           onChange={handleChange}
                           placeholder="Например: Договор №1"
@@ -728,10 +765,17 @@ function EditRequestAirlineContract({
                   >
                     {isEditing ? (
                       <>
-                        <label className={classes.required}>Дата заключения</label>
+                        <label
+                          className={`${classes.required} ${
+                            invalid("date") ? "fieldInvalid" : ""
+                          }`}
+                        >
+                          Дата заключения
+                        </label>
                         <input
                           type="date"
                           name="date"
+                          className={invalid("date") ? "inputInvalid" : undefined}
                           value={
                             formData.date ? formData.date.slice(0, 10) : ""
                           }
@@ -859,10 +903,17 @@ function EditRequestAirlineContract({
                   >
                     {isEditing ? (
                       <>
-                        <label className={classes.required}>ГК КАРС</label>
+                        <label
+                          className={`${classes.required} ${
+                            invalid("companyId") ? "fieldInvalid" : ""
+                          }`}
+                        >
+                          ГК КАРС
+                        </label>
                         <MUIAutocomplete
                           dropdownWidth={"59%"}
                           label={"Введите компанию"}
+                          error={invalid("companyId")}
                           options={companies?.map((item) => item.name)}
                           value={
                             companies.find(
@@ -904,10 +955,17 @@ function EditRequestAirlineContract({
                   >
                     {isEditing ? (
                       <>
-                        <label className={classes.required}>Авиакомпания</label>
+                        <label
+                          className={`${classes.required} ${
+                            invalid("airlineId") ? "fieldInvalid" : ""
+                          }`}
+                        >
+                          Авиакомпания
+                        </label>
                         <MUIAutocomplete
                           dropdownWidth={"59%"}
                           label={"Выберите авиакомпанию"}
+                          error={invalid("airlineId")}
                           options={airlines?.map((airline) => airline.name)}
                           value={
                             airlines?.find(
@@ -980,10 +1038,17 @@ function EditRequestAirlineContract({
                   >
                     {isEditing ? (
                       <>
-                        <label className={classes.required}>Предмет договора</label>
+                        <label
+                          className={`${classes.required} ${
+                            invalid("applicationType") ? "fieldInvalid" : ""
+                          }`}
+                        >
+                          Предмет договора
+                        </label>
                         <MUIAutocomplete
                           dropdownWidth={"59%"}
                           label={"Выберите предмет договора"}
+                          error={invalid("applicationType")}
                           options={action}
                           value={
                             action.find(
@@ -1154,6 +1219,7 @@ function EditRequestAirlineContract({
                   onClick={() => {
                     setIsEditing(false);
                     setIsEdited(false);
+                    resetRequired();
                   }}
                   backgroundcolor="var(--hover-gray)"
                   color="#000"

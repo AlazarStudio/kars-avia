@@ -7,6 +7,7 @@ import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutoc
 import Button from "../../Standart/Button/Button.jsx";
 import { createEmptyTransferPriceInput, DEFAULT_TRANSFER_PRICES } from "../../../utils/transferPrices.js";
 import { useDialog } from "../../../contexts/DialogContext";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function TransferPriceSidebarForm({
   show,
@@ -19,7 +20,7 @@ function TransferPriceSidebarForm({
   onDelete,
   initialEditMode = false,
 }) {
-  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { confirm, isDialogOpen } = useDialog();
   const sidebarRef = useRef(null);
   const menuRef = useRef(null);
   const [formData, setFormData] = useState(createEmptyTransferPriceInput());
@@ -28,6 +29,16 @@ function TransferPriceSidebarForm({
   const [anchorEl, setAnchorEl] = useState(null);
 
   const isEditMode = mode === "edit";
+  const canEdit = !isEditMode || isEditing;
+
+  const requiredKeys = ["name"];
+  const formBodyRef = useRef(null);
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
+  const invalidNow = (key) => canEdit && invalid(key);
 
   const getInitialFormData = useCallback(() => {
     if (!isEditMode || !initialValue) return createEmptyTransferPriceInput();
@@ -57,9 +68,10 @@ function TransferPriceSidebarForm({
   }, [show, isEditMode, getInitialFormData]);
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData(getInitialFormData());
     setIsEdited(false);
-  }, [getInitialFormData]);
+  }, [getInitialFormData, resetRequired]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
@@ -144,10 +156,7 @@ function TransferPriceSidebarForm({
     e?.preventDefault?.();
     if (isEditMode && !isEditing) return;
 
-    if (!formData.name?.trim()) {
-      showAlert("Пожалуйста, укажите название договора.");
-      return;
-    }
+    if (!validate()) return;
 
     if (isEditMode) {
       onSubmit(formData);
@@ -171,8 +180,6 @@ function TransferPriceSidebarForm({
     { seatKey: "fiftySeater", routeKey: "intercity", title: "Межгород (50-местный), ₽" },
     { seatKey: "fiftySeater", routeKey: "city", title: "Город (50-местный), ₽" },
   ];
-
-  const canEdit = !isEditMode || isEditing;
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -198,16 +205,17 @@ function TransferPriceSidebarForm({
       </div>
 
       <>
-        <div className={classes.requestMiddle}>
+        <div className={classes.requestMiddle} ref={formBodyRef}>
           <div className={classes.requestData}>
             {canEdit && (
               <div className={classes.hint}>* — обязательные поля</div>
             )}
             <div className={classes.requestDataInfo}>
-              <div className={`${classes.requestDataInfo_title} ${canEdit ? classes.required : ""}`}>Название</div>
+              <div className={`${classes.requestDataInfo_title} ${canEdit ? classes.required : ""} ${invalidNow("name") ? "fieldInvalid" : ""}`}>Название</div>
               {canEdit ? (
                 <input
                   type="text"
+                  className={invalidNow("name") ? "inputInvalid" : undefined}
                   value={formData.name ?? ''}
                   onChange={(e) => {
                     setIsEdited(true);

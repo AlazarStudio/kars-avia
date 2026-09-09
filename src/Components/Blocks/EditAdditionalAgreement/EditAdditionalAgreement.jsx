@@ -23,6 +23,7 @@ import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import EditContractAdditionalMenu from "../EditContractAdditionalMenu/EditContractAdditionalMenu.jsx";
 import MUISwitch from "../MUISwitch/MUISwitch.jsx";
 import { getExpirationBadge } from "../../../utils/contractExpiration.js";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function EditAdditionalAgreement({
   show,
@@ -52,6 +53,18 @@ function EditAdditionalAgreement({
   const [agFiles, setAgFiles] = useState([]);
   const menuRef = useRef(null);
   const { confirm } = useDialog();
+
+  const formBodyRef = useRef(null);
+  const requiredKeys = ["contractNumber", "date"];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(local, requiredKeys, formBodyRef);
+
+  // через ref, чтобы не тянуть resetRequired в зависимости эффектов
+  const resetRequiredRef = useRef(resetRequired);
+  resetRequiredRef.current = resetRequired;
 
   // console.log(agreement);
 
@@ -86,6 +99,7 @@ function EditAdditionalAgreement({
   );
 
   useEffect(() => {
+    resetRequiredRef.current();
     if (agreement) setLocal({ ...agreement, files: "" });
   }, [agreement]);
 
@@ -108,6 +122,7 @@ function EditAdditionalAgreement({
       ) {
         onClose?.();
         setIsEditing(false);
+        resetRequiredRef.current();
       }
     };
     document.addEventListener("mousedown", handleClickOutside);
@@ -167,6 +182,7 @@ function EditAdditionalAgreement({
       setIsEditing(true);
       return;
     }
+    if (!validate()) return;
     setIsLoading(true);
     // agreement?.id ?
     await updateAirlineAA({
@@ -207,6 +223,7 @@ function EditAdditionalAgreement({
     //   });
     refetch();
     setIsEditing(false);
+    resetRequired();
     setIsLoading(false);
     onSave?.(local);
     setFileName([]);
@@ -232,6 +249,7 @@ function EditAdditionalAgreement({
   const handleClose = () => {
     onClose?.();
     setIsEditing(false);
+    resetRequired();
   };
 
   const handleRemoveFile = async (fileUrl) => {
@@ -282,6 +300,7 @@ function EditAdditionalAgreement({
         <>
           <div
             className={classes.requestMiddle}
+            ref={formBodyRef}
             style={!canEdit ? { height: "calc(100% - 148px)" } : isEditing ? {height: "calc(100vh - 161px)"} : {height: "calc(100vh - 80px)"}}
           >
             <div className={classes.requestData}>
@@ -296,10 +315,19 @@ function EditAdditionalAgreement({
                   </>
                 ) : (
                   <>
-                    <label className={classes.required}>№ ДС</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("contractNumber") ? "fieldInvalid" : ""
+                      }`}
+                    >
+                      № ДС
+                    </label>
                     <input
                       type="text"
                       name="contractNumber"
+                      className={
+                        invalid("contractNumber") ? "inputInvalid" : undefined
+                      }
                       value={local.contractNumber}
                       onChange={handleChange}
                       placeholder="Например: ДС №1"
@@ -317,10 +345,17 @@ function EditAdditionalAgreement({
                   </>
                 ) : (
                   <>
-                    <label className={classes.required}>Дата заключения</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("date") ? "fieldInvalid" : ""
+                      }`}
+                    >
+                      Дата заключения
+                    </label>
                     <input
                       type="date"
                       name="date"
+                      className={invalid("date") ? "inputInvalid" : undefined}
                       value={local.date ? local.date.slice(0, 10) : ""}
                       onChange={handleChange}
                       placeholder="Дата"

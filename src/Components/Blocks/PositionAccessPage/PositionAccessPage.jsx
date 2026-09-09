@@ -22,6 +22,7 @@ import { useToast } from "../../../contexts/ToastContext";
 import { useDialog } from "../../../contexts/DialogContext";
 import { buildAccessPayload, ALL_TRUE_ACCESS } from "../../../utils/accessPayload";
 import { canAccessMenu, canManageAirlineAccess } from "../../../utils/access";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 export default function PositionAccessPage({ user, accessMenu }) {
   const token = getCookie("token");
@@ -75,6 +76,13 @@ export default function PositionAccessPage({ user, accessMenu }) {
   const [formMode, setFormMode] = useState("create"); // "create" | "edit"
   const [formId, setFormId] = useState(null);
   const [formName, setFormName] = useState("");
+
+  const requiredKeys = ["formName"];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields({ formName }, requiredKeys);
 
   const selected = useMemo(
     () => positions.find((p) => p.id === selectedId) || null,
@@ -133,6 +141,7 @@ export default function PositionAccessPage({ user, accessMenu }) {
   };
 
   const openCreate = () => {
+    resetRequired();
     setFormMode("create");
     setFormId(null);
     setFormName("");
@@ -140,6 +149,7 @@ export default function PositionAccessPage({ user, accessMenu }) {
   };
 
   const openEdit = (p) => {
+    resetRequired();
     setFormMode("edit");
     setFormId(p.id);
     setFormName(p.name || "");
@@ -147,11 +157,8 @@ export default function PositionAccessPage({ user, accessMenu }) {
   };
 
   const handleFormSubmit = async () => {
+    if (!validate()) return;
     const name = formName.trim();
-    if (!name) {
-      notifyError("Введите название должности.");
-      return;
-    }
     try {
       setSaving(true);
       if (formMode === "create") {
@@ -394,6 +401,7 @@ export default function PositionAccessPage({ user, accessMenu }) {
             <MUITextField
               label="Название должности"
               required
+              error={invalid("formName")}
               value={formName}
               onChange={(e) => setFormName(e.target.value)}
             />

@@ -14,6 +14,7 @@ import {
   formatCountdown,
   useMaintenanceCountdown,
 } from "./useMaintenanceCountdown";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 // Готовые тексты плашки — клик по чипу подставляет текст в редактор
 const MESSAGE_PRESETS = [
@@ -48,6 +49,9 @@ function MaintenanceBannerSettings() {
   const [message, setMessage] = useState("");
   const [endsAtLocal, setEndsAtLocal] = useState("");
 
+  const requiredKeys = enabled ? ["message"] : [];
+  const { invalid, validate } = useRequiredFields({ message }, requiredKeys);
+
   const { loading, error, data } = useQuery(MAINTENANCE_BANNER, {
     fetchPolicy: "cache-and-network",
   });
@@ -69,10 +73,7 @@ function MaintenanceBannerSettings() {
   );
 
   const handleSave = async () => {
-    if (enabled && !message.trim()) {
-      notifyError("Укажите текст плашки");
-      return;
-    }
+    if (!validate()) return;
 
     try {
       await updateBanner({
@@ -127,7 +128,7 @@ function MaintenanceBannerSettings() {
           <div className={classes.divider} />
 
           <div className={classes.field}>
-            <label htmlFor="maintenance-banner-message" className={`${classes.label} ${enabled ? classes.required : ""}`}>
+            <label htmlFor="maintenance-banner-message" className={`${classes.label} ${enabled ? classes.required : ""} ${invalid("message") ? "fieldInvalid" : ""}`}>
               Текст плашки
             </label>
             <div className={classes.audPills} role="group" aria-label="Готовые тексты">
@@ -145,7 +146,7 @@ function MaintenanceBannerSettings() {
             <div className={classes.textareaShell}>
               <textarea
                 id="maintenance-banner-message"
-                className={classes.textareaField}
+                className={`${classes.textareaField} ${invalid("message") ? "inputInvalid" : ""}`}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={3}

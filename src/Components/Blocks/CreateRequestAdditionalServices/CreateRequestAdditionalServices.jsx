@@ -11,9 +11,7 @@ import TextEditor from "../TextEditor/TextEditor.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
-
-const REQUIRED_FIELDS_MESSAGE =
-  "Пожалуйста, заполните все обязательные поля.";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function CreateRequestAdditionalServices({
   show,
@@ -42,9 +40,24 @@ function CreateRequestAdditionalServices({
   });
 
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
   const [isEdited, setIsEdited] = useState(false);
 
+  const showAirlineField = !user?.hotelId;
+  const priceForAirlineRequired = showAirlineField && !formData.priceForAirReq;
+  const requiredKeys = [
+    "name",
+    "price",
+    ...(priceForAirlineRequired ? ["priceForAirline"] : []),
+  ];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
+
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData({
       name: "",
       price: "",
@@ -52,7 +65,7 @@ function CreateRequestAdditionalServices({
       priceForAirReq: false,
     });
     setIsEdited(false);
-  }, []);
+  }, [resetRequired]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
@@ -83,53 +96,34 @@ function CreateRequestAdditionalServices({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const isFormValid = () => {
-    const nameTrim = String(formData.name ?? "").trim();
-    if (!nameTrim) return false;
-
-    const priceNum = parseFloat(formData.price);
-    if (
-      formData.price === "" ||
-      formData.price === null ||
-      Number.isNaN(priceNum)
-    ) {
-      return false;
-    }
-
-    if (!user?.hotelId && !formData.priceForAirReq) {
-      const airlineNum = parseFloat(formData.priceForAirline);
-      if (
-        formData.priceForAirline === "" ||
-        formData.priceForAirline === null ||
-        Number.isNaN(airlineNum)
-      ) {
-        return false;
-      }
-    }
-
-    return true;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!isFormValid()) {
-      showAlert(REQUIRED_FIELDS_MESSAGE);
+    if (!validate()) {
+      return;
+    }
+
+    const priceNum = parseFloat(formData.price);
+    const airlineNum = parseFloat(formData.priceForAirline);
+
+    if (
+      Number.isNaN(priceNum) ||
+      (priceForAirlineRequired && Number.isNaN(airlineNum))
+    ) {
+      showAlert("Введите корректную стоимость.");
       return;
     }
 
     const nameTrim = String(formData.name ?? "").trim();
-    const priceNum = parseFloat(formData.price);
-    const airlineNum = parseFloat(formData.priceForAirline);
 
     setIsLoading(true);
 
     try {
       const hasAirlinePrice =
-        !user?.hotelId &&
+        showAirlineField &&
         !formData.priceForAirReq &&
         !Number.isNaN(airlineNum);
-      let response_update_tarif = await updateHotelTarif({
+      await updateHotelTarif({
         variables: {
           updateHotelId: id,
           input: {
@@ -138,7 +132,7 @@ function CreateRequestAdditionalServices({
                 name: nameTrim,
                 price: priceNum,
                 ...(hasAirlinePrice && { priceForAirline: airlineNum }),
-                ...(!user?.hotelId && {
+                ...(showAirlineField && {
                   priceForAirReq: Boolean(formData.priceForAirReq),
                 }),
               },
@@ -197,32 +191,50 @@ function CreateRequestAdditionalServices({
         <MUILoader loadSize={"50px"} fullHeight={"90vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               <span className={classes.hint}>* — обязательные поля</span>
-              <label className={classes.required}>Название доп услуги</label>
+              <label
+                className={`${classes.required} ${invalid("name") ? "fieldInvalid" : ""}`}
+              >
+                Название доп услуги
+              </label>
               <input
                 type="text"
                 name="name"
+                className={invalid("name") ? "inputInvalid" : undefined}
                 value={formData.name}
                 onChange={handleChange}
                 placeholder=""
               />
 
-              <label className={classes.required}>Стоимость</label>
+              <label
+                className={`${classes.required} ${invalid("price") ? "fieldInvalid" : ""}`}
+              >
+                Стоимость
+              </label>
               <input
                 type="number"
                 name="price"
+                className={invalid("price") ? "inputInvalid" : undefined}
                 value={formData.price}
                 onChange={handleChange}
                 placeholder="Введите стоимость"
               />
-              {!user?.hotelId && (
+              {showAirlineField && (
                 <>
-                  <label className={!formData.priceForAirReq ? classes.required : undefined}>Стоимость для авиакомпании</label>
+                  <label
+                    className={`${priceForAirlineRequired ? classes.required : ""} ${invalid("priceForAirline") ? "fieldInvalid" : ""
+                      }`}
+                  >
+                    Стоимость для авиакомпании
+                  </label>
                   <input
                     type="number"
                     name="priceForAirline"
+                    className={
+                      invalid("priceForAirline") ? "inputInvalid" : undefined
+                    }
                     value={formData.priceForAirline}
                     onChange={handleChange}
                     placeholder="Введите стоимость для авиакомпании"

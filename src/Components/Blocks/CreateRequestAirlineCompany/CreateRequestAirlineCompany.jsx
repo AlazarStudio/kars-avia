@@ -19,6 +19,7 @@ import { rolesObject } from "../../../roles";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function CreateRequestAirlineCompany({
   show,
@@ -58,12 +59,28 @@ function CreateRequestAirlineCompany({
   });
 
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
+
+  const showEmail = !representative;
+  const requiredKeys = [
+    "name",
+    ...(showEmail ? ["email"] : []),
+    "position",
+    "login",
+    "password",
+  ];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
 
   useEffect(() => {
     setLocalPositions(positions || []);
   }, [positions]);
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData({
       images: null,
       name: "",
@@ -77,7 +94,7 @@ function CreateRequestAirlineCompany({
     setIsEdited(false);
     setIsCreatingPosition(false);
     setNewPositionName("");
-  }, []);
+  }, [resetRequired]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
@@ -177,31 +194,19 @@ function CreateRequestAirlineCompany({
     }
   }, [newPositionName, localPositions, createPosition, id, onPositionCreated, showAlert, success, notifyError]);
 
-  const isFormValid = () => {
-    return (
-      formData.name &&
-      // formData.email &&
-      // formData.role &&
-      formData.position &&
-      formData.login &&
-      formData.password
-    );
-  };
-
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    if (!isFormValid()) {
-      showAlert("Пожалуйста, заполните все обязательные поля.");
-      setIsLoading(false);
+    if (!validate()) {
       return;
     }
 
+    setIsLoading(true);
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.email)) {
+    if (showEmail && !emailRegex.test(formData.email)) {
       showAlert("Введите корректный email.");
       setIsLoading(false);
       return;
@@ -364,13 +369,18 @@ function CreateRequestAirlineCompany({
         <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               <span className={classes.hint}>* — обязательные поля</span>
-              <label className={classes.required}>ФИО</label>
+              <label
+                className={`${classes.required} ${invalid("name") ? "fieldInvalid" : ""}`}
+              >
+                ФИО
+              </label>
               <input
                 type="text"
                 name="name"
+                className={invalid("name") ? "inputInvalid" : undefined}
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Введите ФИО"
@@ -389,12 +399,17 @@ function CreateRequestAirlineCompany({
                 autoComplete="new-password"
               />
 
-              {!representative && (
+              {showEmail && (
                 <>
-                  <label className={classes.required}>Почта</label>
+                  <label
+                    className={`${classes.required} ${invalid("email") ? "fieldInvalid" : ""}`}
+                  >
+                    Почта
+                  </label>
                   <input
                     type="email"
                     name="email"
+                    className={invalid("email") ? "inputInvalid" : undefined}
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="Введите email"
@@ -423,7 +438,11 @@ function CreateRequestAirlineCompany({
               )}
 
               <div className={classes.fieldHeader}>
-                <label className={classes.required}>Должность</label>
+                <label
+                  className={`${classes.required} ${invalid("position") ? "fieldInvalid" : ""}`}
+                >
+                  Должность
+                </label>
                 <div
                   className={classes.addPosition}
                   onClick={() => setIsCreatingPosition((prev) => !prev)}
@@ -435,6 +454,7 @@ function CreateRequestAirlineCompany({
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите должность"}
+                error={invalid("position")}
                 options={localPositions.map((position) => position.name)}
                 value={formData.position}
                 onChange={(event, newValue) => {
@@ -463,20 +483,30 @@ function CreateRequestAirlineCompany({
                 </div>
               )}
 
-              <label className={classes.required}>Логин</label>
+              <label
+                className={`${classes.required} ${invalid("login") ? "fieldInvalid" : ""}`}
+              >
+                Логин
+              </label>
               <input
                 type="text"
                 name="login"
+                className={invalid("login") ? "inputInvalid" : undefined}
                 value={formData.login}
                 onChange={handleChange}
                 placeholder="Введите логин"
                 autoComplete="new-password"
               />
 
-              <label className={classes.required}>Пароль</label>
+              <label
+                className={`${classes.required} ${invalid("password") ? "fieldInvalid" : ""}`}
+              >
+                Пароль
+              </label>
               <input
                 type="password"
                 name="password"
+                className={invalid("password") ? "inputInvalid" : undefined}
                 value={formData.password}
                 onChange={handleChange}
                 placeholder="Введите пароль"

@@ -17,6 +17,7 @@ import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 // `id` уходит на бэк в `filter.position` и обязан совпадать с enum
 // PositionFilter { all, squadron, technician } — «engineers» бэк отвергает
@@ -68,6 +69,37 @@ function CreateRequestReport({ show, onClose, positions, airports, isAirline }) 
   });
 
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
+
+  const isAirlineReport = airOrHotel === "airline";
+  const showAirlineField = isAirlineReport && !user.airlineId;
+  const showHotelField = !isAirlineReport && !user.hotelId;
+
+  const requiredKeys = [
+    "startDate",
+    "endDate",
+    // «Включить в отчёт» — хотя бы один из вариантов
+    "mealOrLiving",
+    ...(showAirlineField ? ["airlineId"] : []),
+    ...(isAirlineReport ? ["airportId"] : []),
+    ...(showHotelField ? ["hotelId"] : []),
+  ];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(
+    {
+      ...formData,
+      mealOrLiving: formData.living || formData.meal ? "ok" : "",
+    },
+    requiredKeys,
+    formBodyRef
+  );
+
+  // через ref, чтобы resetForm оставался стабильным для useCallback/useEffect ниже
+  const resetRequiredRef = useRef(resetRequired);
+  resetRequiredRef.current = resetRequired;
 
   const { data } = useQuery(GET_AIRLINES_RELAY, {
     context: { headers: { Authorization: `Bearer ${token}` } },
@@ -84,6 +116,7 @@ function CreateRequestReport({ show, onClose, positions, airports, isAirline }) 
 
   // Сброс формы
   const resetForm = useCallback(() => {
+    resetRequiredRef.current();
     setFormData({
       startDate: "",
       endDate: "",
@@ -181,30 +214,11 @@ function CreateRequestReport({ show, onClose, positions, airports, isAirline }) 
     }));
   }, []);
 
-  const isFormValid = () => {
-    if (airOrHotel === "airline") {
-      return (
-        formData.startDate &&
-        formData.endDate &&
-        formData.airlineId &&
-        formData.airportId &&
-        (formData.living || formData.meal)
-      );
-    }
-    return (
-      formData.startDate &&
-      formData.endDate &&
-      formData.hotelId &&
-      (formData.living || formData.meal)
-    );
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
 
-    if (!isFormValid()) {
-      showAlert("Пожалуйста, заполните все обязательные поля.");
+    if (!validate()) {
       setIsLoading(false);
       return;
     }
@@ -277,6 +291,7 @@ function CreateRequestReport({ show, onClose, positions, airports, isAirline }) 
           </li>
         );
       }}
+      error={invalid("hotelId")}
       value={selectedHotel || ""}
       onChange={(event, newValue) => {
         const matched = hotels.find((h) => h === newValue);
@@ -292,6 +307,7 @@ function CreateRequestReport({ show, onClose, positions, airports, isAirline }) 
       dropdownWidth={"100%"}
       label={"Выберите авиакомпанию"}
       options={airlines?.map((a) => a.name)}
+      error={invalid("airlineId")}
       value={selectedAirline?.name || ""}
       onChange={(event, newValue) => {
         const matched = airlines.find((a) => a.name === newValue);
@@ -315,7 +331,7 @@ function CreateRequestReport({ show, onClose, positions, airports, isAirline }) 
         <MUILoader loadSize={"50px"} fullHeight={"80vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
 
               <span className={classes.hint}>* — обязательные поля</span>
@@ -344,9 +360,15 @@ function CreateRequestReport({ show, onClose, positions, airports, isAirline }) 
               {/* Авиакомпания */}
               {airOrHotel === "airline" && (
                 <>
-                  {!user.airlineId && (
+                  {showAirlineField && (
                     <>
-                      <label className={classes.required}>Авиакомпания</label>
+                      <label
+                        className={`${classes.required} ${
+                          invalid("airlineId") ? "fieldInvalid" : ""
+                        }`}
+                      >
+                        Авиакомпания
+                      </label>
                       {airlineAutocomplete}
                     </>
                   )}
@@ -356,10 +378,17 @@ function CreateRequestReport({ show, onClose, positions, airports, isAirline }) 
 
                   {(selectedAirline || user.airlineId) && (
                     <>
-                      <label className={classes.required}>Аэропорт</label>
+                      <label
+                        className={`${classes.required} ${
+                          invalid("airportId") ? "fieldInvalid" : ""
+                        }`}
+                      >
+                        Аэропорт
+                      </label>
                       <MUIAutocompleteColor
                         dropdownWidth="100%"
                         label={"Выберите аэропорт"}
+                        error={invalid("airportId")}
                         options={airports}
                         getOptionLabel={(option) => {
                           if (!option) return "";
@@ -457,9 +486,15 @@ function CreateRequestReport({ show, onClose, positions, airports, isAirline }) 
               {/* Гостиница */}
               {airOrHotel === "hotel" && (
                 <>
-                  {!user.hotelId && (
+                  {showHotelField && (
                     <>
-                      <label className={classes.required}>Гостиница</label>
+                      <label
+                        className={`${classes.required} ${
+                          invalid("hotelId") ? "fieldInvalid" : ""
+                        }`}
+                      >
+                        Гостиница
+                      </label>
                       {hotelAutocomplete}
                     </>
                   )}
@@ -469,7 +504,12 @@ function CreateRequestReport({ show, onClose, positions, airports, isAirline }) 
                 </>
               )}
 
-              <label className={classes.required} style={{ marginBottom: -8 }}>
+              <label
+                className={`${classes.required} ${
+                  invalid("mealOrLiving") ? "fieldInvalid" : ""
+                }`}
+                style={{ marginBottom: -8 }}
+              >
                 Включить в отчёт
               </label>
               <span className={classes.hint}>хотя бы один из вариантов</span>
@@ -484,18 +524,32 @@ function CreateRequestReport({ show, onClose, positions, airports, isAirline }) 
                 Питание
               </label>
 
-              <label className={classes.required}>Начальная дата</label>
+              <label
+                className={`${classes.required} ${
+                  invalid("startDate") ? "fieldInvalid" : ""
+                }`}
+              >
+                Начальная дата
+              </label>
               <input
                 type="date"
                 name="startDate"
+                className={invalid("startDate") ? "inputInvalid" : undefined}
                 value={formData.startDate}
                 onChange={handleChange}
               />
 
-              <label className={classes.required}>Конечная дата</label>
+              <label
+                className={`${classes.required} ${
+                  invalid("endDate") ? "fieldInvalid" : ""
+                }`}
+              >
+                Конечная дата
+              </label>
               <input
                 type="date"
                 name="endDate"
+                className={invalid("endDate") ? "inputInvalid" : undefined}
                 min={formData.startDate}
                 value={formData.endDate}
                 onChange={handleChange}

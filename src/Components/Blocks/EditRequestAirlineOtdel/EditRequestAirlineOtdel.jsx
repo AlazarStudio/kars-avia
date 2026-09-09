@@ -13,6 +13,7 @@ import CloseIcon from "../../../shared/icons/CloseIcon";
 import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function EditRequestAirlineOtdel({
   show,
@@ -45,6 +46,15 @@ function EditRequestAirlineOtdel({
     email: category?.email || "",
   });
 
+  const requiredKeys = ["type"];
+  const formBodyRef = useRef(null);
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
+  const invalidNow = (key) => isEditing && invalid(key);
+
   // Инициализируем выбранные должности из category?.position (если они есть)
   // const [selectedPositions, setSelectedPositions] = useState(
   //   category && category.position ? category.position.map((pos) => pos.id) : []
@@ -64,6 +74,7 @@ function EditRequestAirlineOtdel({
   }, [show, category]);
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData({
       type: category?.name || "",
       email: category?.email || "",
@@ -72,7 +83,7 @@ function EditRequestAirlineOtdel({
     //   category && category.position ? category.position.map((pos) => pos.id) : []
     // );
     setIsEdited(false);
-  }, [category]);
+  }, [category, resetRequired]);
 
   const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -140,6 +151,11 @@ function EditRequestAirlineOtdel({
   const handleSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
+
+    if (!validate()) {
+      setIsLoading(false);
+      return;
+    }
 
     if (formData.email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -240,15 +256,16 @@ function EditRequestAirlineOtdel({
         <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               {isEditing && (
                 <span className={classes.hint}>* — обязательные поля</span>
               )}
-              <label className={isEditing ? classes.required : undefined}>Название отдела</label>
+              <label className={`${isEditing ? classes.required : ""} ${invalidNow("type") ? "fieldInvalid" : ""}`}>Название отдела</label>
               <input
                 type="text"
                 name="type"
+                className={invalidNow("type") ? "inputInvalid" : undefined}
                 value={formData.type}
                 onChange={handleChange}
                 placeholder="Пример: Отдел продаж"

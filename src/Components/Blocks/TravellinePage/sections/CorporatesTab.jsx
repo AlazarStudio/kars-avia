@@ -10,6 +10,7 @@ import {
 } from "../../../../../graphQL_requests"
 import classes from "../TravellinePage.module.css"
 import { Btn, SectionCard } from "../shared/ui"
+import useRequiredFields from "../../../../hooks/useRequiredFields.js"
 
 export default function CorporatesTab() {
   const [form, setForm] = useState({ inn: "", kpp: "", companyId: "" })
@@ -22,6 +23,9 @@ export default function CorporatesTab() {
 
   const [corporatesList, setCorporatesList] = useState(null)
   const [listError, setListError] = useState("")
+
+  const requiredKeys = ["companyId", "inn", "kpp"]
+  const { invalid, validate, reset: resetRequired } = useRequiredFields(form, requiredKeys)
 
   const { data: companiesData } = useQuery(GET_ALL_COMPANIES, { fetchPolicy: "cache-first" })
   const companies = companiesData?.getAllCompany ?? []
@@ -44,12 +48,9 @@ export default function CorporatesTab() {
   const handleCreate = async () => {
     setCreateError("")
     setCreated(null)
+    if (!validate()) return
     const inn = form.inn.trim()
     const kpp = form.kpp.trim()
-    if (!inn || !kpp) {
-      setCreateError("ИНН и КПП обязательны")
-      return
-    }
     if (!/^\d+$/.test(inn)) {
       setCreateError("ИНН должен содержать только цифры")
       return
@@ -58,16 +59,13 @@ export default function CorporatesTab() {
       setCreateError("КПП должен содержать ровно 9 цифр")
       return
     }
-    if (!form.companyId) {
-      setCreateError("Выберите юрлицо — без него корпоративный тариф не подставится в бронирование")
-      return
-    }
     try {
       const res = await createCorporate({
         variables: { input: { inn, kpp, companyId: form.companyId } }
       })
       setCreated(res.data?.tlCreateCorporate)
       setForm({ inn: "", kpp: "", companyId: "" })
+      resetRequired()
       handleList()
     } catch (err) {
       setCreateError(err.message)
@@ -185,11 +183,11 @@ export default function CorporatesTab() {
         </p>
 
         <div className={classes.fieldGroup} style={{ marginBottom: 12 }}>
-          <label className={classes.fieldLabel}>Юрлицо<span className={classes.required}>*</span></label>
+          <label className={`${classes.fieldLabel}${invalid("companyId") ? " fieldInvalid" : ""}`}>Юрлицо<span className={classes.required}>*</span></label>
           <select
             value={form.companyId}
             onChange={(e) => handlePickCompany(e.target.value)}
-            className={classes.input}
+            className={`${classes.input}${invalid("companyId") ? " inputInvalid" : ""}`}
           >
             <option value="">Выберите юрлицо</option>
             {companies.map((company) => (
@@ -202,23 +200,23 @@ export default function CorporatesTab() {
 
         <div className={classes.gridForm2} style={{ marginBottom: 12 }}>
           <div className={classes.fieldGroup}>
-            <label className={classes.fieldLabel}>ИНН<span className={classes.required}>*</span></label>
+            <label className={`${classes.fieldLabel}${invalid("inn") ? " fieldInvalid" : ""}`}>ИНН<span className={classes.required}>*</span></label>
             <input
               type="text"
               value={form.inn}
               onChange={(e) => setForm({ ...form, inn: e.target.value })}
               placeholder="7704935811"
-              className={classes.input}
+              className={`${classes.input}${invalid("inn") ? " inputInvalid" : ""}`}
             />
           </div>
           <div className={classes.fieldGroup}>
-            <label className={classes.fieldLabel}>КПП<span className={classes.required}>*</span> (9 цифр)</label>
+            <label className={`${classes.fieldLabel}${invalid("kpp") ? " fieldInvalid" : ""}`}>КПП<span className={classes.required}>*</span> (9 цифр)</label>
             <input
               type="text"
               value={form.kpp}
               onChange={(e) => setForm({ ...form, kpp: e.target.value })}
               placeholder="771401001"
-              className={classes.input}
+              className={`${classes.input}${invalid("kpp") ? " inputInvalid" : ""}`}
             />
           </div>
         </div>
@@ -227,7 +225,7 @@ export default function CorporatesTab() {
           <p className={classes.statusWarn} style={{ marginBottom: 12 }}>{createError}</p>
         )}
 
-        <Btn onClick={handleCreate} loading={creating} disabled={!form.inn.trim() || !form.kpp.trim()}>
+        <Btn onClick={handleCreate} loading={creating}>
           Создать в TravelLine
         </Btn>
 

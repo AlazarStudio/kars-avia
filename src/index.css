@@ -386,13 +386,15 @@ textarea {
     color: #e53935;
 }
 
-/* Подсветка незаполненных обязательных полей после попытки отправки (useRequiredFields) */
+/* Подсветка незаполненных обязательных полей после попытки отправки (useRequiredFields).
+   !important — это классы состояния: подписи/инпуты в модулях задают свой color/border
+   с той же специфичностью, а CSS ленивых страниц грузится позже index.css. */
 .fieldInvalid {
-    color: #e53935;
+    color: #e53935 !important;
 }
 
 input.inputInvalid,
 select.inputInvalid,
 textarea.inputInvalid {
-    border-color: #e53935;
+    border-color: #e53935 !important;
 }

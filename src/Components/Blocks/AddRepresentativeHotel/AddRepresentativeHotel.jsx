@@ -17,6 +17,7 @@ import Button from "../../Standart/Button/Button.jsx";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function AddRepresentativeHotel({ show, onClose, request }) {
   const token = getCookie("token");
@@ -24,6 +25,7 @@ function AddRepresentativeHotel({ show, onClose, request }) {
   const { success, error: notifyError } = useToast();
   const [isEdited, setIsEdited] = useState(false);
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
   const [selectedHotel, setSelectedHotel] = useState(null);
   const [showQuickCreate, setShowQuickCreate] = useState(false);
   const [quickCreate, setQuickCreate] = useState({
@@ -71,6 +73,13 @@ function AddRepresentativeHotel({ show, onClose, request }) {
 
   const hotels = hotelsData?.hotels?.hotels ?? [];
 
+  const requiredKeys = ["name", "peopleCount"];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
+
   const { data: citiesData } = useQuery(GET_CITIES, {
     context: { headers: { Authorization: `Bearer ${token}` } },
     skip: !show,
@@ -102,6 +111,7 @@ function AddRepresentativeHotel({ show, onClose, request }) {
   });
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setSelectedHotel(null);
     setFormData({
       name: "",
@@ -119,7 +129,7 @@ function AddRepresentativeHotel({ show, onClose, request }) {
       locationCountry: "",
     });
     setIsEdited(false);
-  }, []);
+  }, [resetRequired]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
@@ -155,16 +165,6 @@ function AddRepresentativeHotel({ show, onClose, request }) {
     },
     []
   );
-
-  const isFormValid = () => {
-    // Остаток по плану услуги (remainingServicePeople) здесь намеренно не проверяется —
-    // превышение плана допустимо.
-    return (
-      formData.name?.trim() &&
-      formData.peopleCount !== "" &&
-      Number(formData.peopleCount) > 0
-    );
-  };
 
   const handleQuickCreate = async () => {
     if (creatingHotel) return;
@@ -234,9 +234,10 @@ function AddRepresentativeHotel({ show, onClose, request }) {
   };
 
   const handleSubmit = async () => {
-    if (!isFormValid()) {
-      // Блокировки по остатку плана услуги здесь больше нет — сабмит не зависит
-      // от remainingServicePeople, остаются только базовые проверки формы.
+    if (!validate()) return;
+    // Блокировки по остатку плана услуги здесь больше нет — сабмит не зависит
+    // от remainingServicePeople, остаются только базовые проверки формы.
+    if (!(Number(formData.peopleCount) > 0)) {
       showAlert(
         "Выберите гостиницу из списка (или создайте новую) и укажите корректное количество мест."
       );
@@ -295,13 +296,20 @@ function AddRepresentativeHotel({ show, onClose, request }) {
         <MUILoader loadSize={"50px"} fullHeight={"75vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               <span className={classes.hint}>* — обязательные поля</span>
-              <label className={classes.required}>Гостиница</label>
+              <label
+                className={`${classes.required} ${
+                  invalid("name") ? "fieldInvalid" : ""
+                }`}
+              >
+                Гостиница
+              </label>
               <MUIAutocompleteColor
                 dropdownWidth="100%"
                 label="Выберите гостиницу"
+                error={invalid("name")}
                 options={hotels}
                 getOptionLabel={(option) =>
                   option
@@ -414,10 +422,17 @@ function AddRepresentativeHotel({ show, onClose, request }) {
                 )}
               </div>
 
-              <label className={classes.required}>Количество мест</label>
+              <label
+                className={`${classes.required} ${
+                  invalid("peopleCount") ? "fieldInvalid" : ""
+                }`}
+              >
+                Количество мест
+              </label>
               <input
                 type="number"
                 name="peopleCount"
+                className={invalid("peopleCount") ? "inputInvalid" : undefined}
                 min={1}
                 value={formData.peopleCount}
                 onChange={handleChange}

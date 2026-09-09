@@ -24,6 +24,7 @@ import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import PickedFilesEditor from "../PickedFilesEditor/PickedFilesEditor.jsx";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 function CreateRequestContract({
   show,
   id,
@@ -131,8 +132,35 @@ function CreateRequestContract({
 
   const [tarifNames, setTarifNames] = useState([]);
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
+
+  const requiredKeys = [
+    "contractNumber",
+    "date",
+    "companyId",
+    "airlineId",
+    "applicationType",
+  ];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(
+    {
+      ...formData,
+      contractNumber: formData.contractNumber?.trim(),
+      applicationType: formData.applicationType?.trim(),
+    },
+    requiredKeys,
+    formBodyRef
+  );
+
+  // через ref, чтобы resetForm оставался стабильным для useCallback/useEffect ниже
+  const resetRequiredRef = useRef(resetRequired);
+  resetRequiredRef.current = resetRequired;
 
   const resetForm = () => {
+    resetRequiredRef.current();
     setActiveTab("Общая");
     setFormData({
       contractNumber: "",
@@ -338,16 +366,6 @@ function CreateRequestContract({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const isFormValid = () => {
-    return (
-      formData.contractNumber?.trim() &&
-      formData.date &&
-      formData.companyId &&
-      formData.airlineId &&
-      formData.applicationType?.trim()
-    );
-  };
-
   const hasValidContractDate = () => {
     const contractDate = new Date(formData.date);
     return !Number.isNaN(contractDate.getTime());
@@ -378,8 +396,8 @@ function CreateRequestContract({
     setIsLoading(true);
 
     try {
-      if (!isFormValid()) {
-        showAlert("Пожалуйста, заполните все обязательные поля договора.");
+      if (!validate()) {
+        setActiveTab("Общая");
         setIsLoading(false);
         return;
       }
@@ -528,22 +546,38 @@ function CreateRequestContract({
       ) : (
         <>
           {activeTab === "Общая" ? (
-            <div className={classes.requestMiddle}>
+            <div className={classes.requestMiddle} ref={formBodyRef}>
               <div className={classes.requestData}>
                 <span className={classes.hint}>* — обязательные поля</span>
-                <label className={classes.required}>№ Договора</label>
+                <label
+                  className={`${classes.required} ${
+                    invalid("contractNumber") ? "fieldInvalid" : ""
+                  }`}
+                >
+                  № Договора
+                </label>
                 <input
                   type="text"
                   name="contractNumber"
+                  className={
+                    invalid("contractNumber") ? "inputInvalid" : undefined
+                  }
                   value={formData.contractNumber}
                   onChange={handleChange}
                   placeholder="Например: Договор №1"
                 />
 
-                <label className={classes.required}>Дата заключения</label>
+                <label
+                  className={`${classes.required} ${
+                    invalid("date") ? "fieldInvalid" : ""
+                  }`}
+                >
+                  Дата заключения
+                </label>
                 <input
                   type="date"
                   name="date"
+                  className={invalid("date") ? "inputInvalid" : undefined}
                   value={formData.date}
                   onChange={handleChange}
                   placeholder="Дата"
@@ -571,10 +605,17 @@ function CreateRequestContract({
                   }}
                 />
 
-                <label className={classes.required}>ГК КАРС</label>
+                <label
+                  className={`${classes.required} ${
+                    invalid("companyId") ? "fieldInvalid" : ""
+                  }`}
+                >
+                  ГК КАРС
+                </label>
                 <MUIAutocomplete
                   dropdownWidth={"100%"}
                   label={"Выберите компанию"}
+                  error={invalid("companyId")}
                   options={companies?.map((item) => item.name)}
                   value={selectedCompany ? selectedCompany?.name : ""}
                   onChange={(event, newValue) => {
@@ -590,10 +631,17 @@ function CreateRequestContract({
                   }}
                 />
 
-                <label className={classes.required}>Авиакомпания</label>
+                <label
+                  className={`${classes.required} ${
+                    invalid("airlineId") ? "fieldInvalid" : ""
+                  }`}
+                >
+                  Авиакомпания
+                </label>
                 <MUIAutocomplete
                   dropdownWidth={"100%"}
                   label={"Выберите авиакомпанию"}
+                  error={invalid("airlineId")}
                   options={airlines?.map((airline) => airline.name)}
                   value={selectedAirline ? selectedAirline?.name : ""}
                   onChange={(event, newValue) => {
@@ -644,10 +692,17 @@ function CreateRequestContract({
                 }}
               /> */}
 
-                <label className={classes.required}>Предмет договора</label>
+                <label
+                  className={`${classes.required} ${
+                    invalid("applicationType") ? "fieldInvalid" : ""
+                  }`}
+                >
+                  Предмет договора
+                </label>
                 <MUIAutocomplete
                   dropdownWidth={"100%"}
                   label={"Выберите предмет договора"}
+                  error={invalid("applicationType")}
                   options={action}
                   value={
                     action.find(

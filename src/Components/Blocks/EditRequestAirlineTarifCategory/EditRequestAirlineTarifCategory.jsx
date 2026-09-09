@@ -19,6 +19,7 @@ import { AIRLINE_PRICE_ROWS } from "../../../utils/roomCategories.js";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete.jsx";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function EditRequestAirlineTarifCategory({
   show,
@@ -62,6 +63,21 @@ function EditRequestAirlineTarifCategory({
 
   const [contractType, setContractType] = useState("individual");
   const [appliesTo, setAppliesTo] = useState(DEFAULT_APPLIES_TO);
+
+  const requiredKeys = [
+    "name",
+    ...(contractType === "individual" ? ["airportIds"] : ["geography"]),
+  ];
+  const formBodyRef = useRef(null);
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(
+    { ...formData, geography: rowsToGeographyInput(formData.geography) },
+    requiredKeys,
+    formBodyRef,
+  );
 
   const [airports, setAirports] = useState([]); // Список аэропортов
   const sidebarRef = useRef();
@@ -131,9 +147,11 @@ function EditRequestAirlineTarifCategory({
   };
 
   const [isEditing, setIsEditing] = useState(false);
+  const invalidNow = (key) => isEditing && invalid(key);
 
   useEffect(() => {
     if (show && tarif) {
+      resetRequired();
       setFormData(getInitialFormData());
       setContractType(getContractType(tarif));
       setAppliesTo(normalizeAppliesTo(tarif?.contractType));
@@ -142,16 +160,17 @@ function EditRequestAirlineTarifCategory({
       setSkippedAirports([]);
       setRemovedByAppliesTo(null);
     }
-  }, [show, tarif?.id, getInitialFormData]);
+  }, [show, tarif?.id, getInitialFormData, resetRequired]);
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData(getInitialFormData());
     setContractType(getContractType(tarif));
     setAppliesTo(normalizeAppliesTo(tarif?.contractType));
     setIsEdited(false);
     setSkippedAirports([]);
     setRemovedByAppliesTo(null);
-  }, [getInitialFormData, tarif]);
+  }, [getInitialFormData, tarif, resetRequired]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
@@ -224,19 +243,11 @@ function EditRequestAirlineTarifCategory({
     if (!isEditing) return;
     e.preventDefault();
 
-    const geographyInput = rowsToGeographyInput(formData.geography);
+    if (!validate()) return;
+
     const isIndividual = contractType === "individual";
 
-    if (isIndividual) {
-      if ((formData.airportIds?.length || 0) === 0) {
-        showAlert("Выберите хотя бы один аэропорт.");
-        return;
-      }
-    } else {
-      if (geographyInput.length === 0) {
-        showAlert("Выберите хотя бы один регион или город.");
-        return;
-      }
+    if (!isIndividual) {
       const duplicateGeo = findDuplicateGeoRow(formData.geography);
       if (duplicateGeo) {
         const what = duplicateGeo.kind === "city" ? "Город" : "Регион";
@@ -319,6 +330,7 @@ function EditRequestAirlineTarifCategory({
         <>
           <div
             className={classes.requestMiddle}
+            ref={formBodyRef}
             style={
               isEditing
                 ? { height: "calc(100vh - 161px)" }
@@ -330,13 +342,14 @@ function EditRequestAirlineTarifCategory({
                 <div className={classes.hint}>* — обязательные поля</div>
               )}
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("name") ? "fieldInvalid" : ""}`}>
                   Название договора
                 </div>
                 {isEditing ? (
                   <input
                     type="text"
                     name="name"
+                    className={invalidNow("name") ? "inputInvalid" : undefined}
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="Например: Договор №1"
@@ -411,7 +424,7 @@ function EditRequestAirlineTarifCategory({
 
               {contractType === "individual" && (
               <div className={classes.requestDataInfo_block}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Аэропорты</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("airportIds") ? "fieldInvalid" : ""}`}>Аэропорты</div>
                 {isEditing ? (
                   <div className={classes.dropdown}>
                     {allAirportsUsed && (
@@ -433,6 +446,7 @@ function EditRequestAirlineTarifCategory({
                       showSelectAll={true}
                       dropdownWidth={"100%"}
                       label={"Выберите аэропорты"}
+                      error={invalidNow("airportIds")}
                       options={airportOptions}
                       getOptionDisabled={(opt) =>
                         usedAirportIds.has(String(opt.value))
@@ -488,6 +502,7 @@ function EditRequestAirlineTarifCategory({
                 <TariffGeographyList
                   value={formData.geography}
                   disabled={!isEditing}
+                  error={invalidNow("geography")}
                   usedRegionIds={usedGeo.regionIds}
                   usedCityIds={usedGeo.cityIds}
                   onChange={(rows) => {

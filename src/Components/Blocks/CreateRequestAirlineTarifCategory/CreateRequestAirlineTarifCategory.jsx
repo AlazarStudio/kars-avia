@@ -23,6 +23,7 @@ import {
 } from "../../../utils/roomCategories.js";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 
 function CreateRequestAirlineTarifCategory({
@@ -57,6 +58,22 @@ function CreateRequestAirlineTarifCategory({
   const [contractType, setContractType] = useState("individual");
 
   const [appliesTo, setAppliesTo] = useState(DEFAULT_APPLIES_TO);
+
+  const formBodyRef = useRef(null);
+  const requiredKeys = [
+    "name",
+    ...(contractType === "individual" ? ["airportIds"] : []),
+    ...(contractType !== "individual" ? ["geography"] : []),
+  ];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(
+    { ...formData, geography: rowsToGeographyInput(formData.geography) },
+    requiredKeys,
+    formBodyRef,
+  );
 
   useEffect(() => {
     if (infoAirports.data) {
@@ -126,13 +143,14 @@ function CreateRequestAirlineTarifCategory({
   const sidebarRef = useRef();
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData(createEmptyTariffInput());
     setIsEdited(false);
     setSkippedAirports([]);
     setRemovedByAppliesTo(null);
     setContractType("individual");
     setAppliesTo(DEFAULT_APPLIES_TO);
-  }, []);
+  }, [resetRequired]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
@@ -186,24 +204,11 @@ function CreateRequestAirlineTarifCategory({
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    if (!formData.name?.trim()) {
-      showAlert("Пожалуйста, укажите название договора.");
+    if (!validate()) {
       return;
     }
 
-    const geographyInput = rowsToGeographyInput(formData.geography);
-    const isIndividual = contractType === "individual";
-
-    if (isIndividual) {
-      if ((formData.airportIds?.length || 0) === 0) {
-        showAlert("Выберите хотя бы один аэропорт.");
-        return;
-      }
-    } else {
-      if (geographyInput.length === 0) {
-        showAlert("Выберите хотя бы один регион или город.");
-        return;
-      }
+    if (contractType !== "individual") {
       const duplicateGeo = findDuplicateGeoRow(formData.geography);
       if (duplicateGeo) {
         const what = duplicateGeo.kind === "city" ? "Город" : "Регион";
@@ -284,7 +289,7 @@ function CreateRequestAirlineTarifCategory({
 
       {(
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               {/* <label>Выберите категорию</label>
               <MUIAutocomplete
@@ -309,10 +314,16 @@ function CreateRequestAirlineTarifCategory({
               /> */}
 
               <span className={classes.hint}>* — обязательные поля</span>
-              <label className={classes.required}>Название договора</label>
+              <label
+                className={`${classes.required} ${invalid("name") ? "fieldInvalid" : ""
+                  }`}
+              >
+                Название договора
+              </label>
               <input
                 type="text"
                 name="name"
+                className={invalid("name") ? "inputInvalid" : undefined}
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Например: Договор №1"
@@ -356,7 +367,12 @@ function CreateRequestAirlineTarifCategory({
 
               {contractType === "individual" ? (
                 <>
-                  <label className={classes.required}>Аэропорты</label>
+                  <label
+                    className={`${classes.required} ${invalid("airportIds") ? "fieldInvalid" : ""
+                      }`}
+                  >
+                    Аэропорты
+                  </label>
                   {allAirportsUsed && (
                     <div className={classes.airportHint}>
                       Все аэропорты уже используются в других договорах — свободных нет.
@@ -376,6 +392,7 @@ function CreateRequestAirlineTarifCategory({
                     showSelectAll={true}
                     dropdownWidth={"100%"}
                     label={"Выберите аэропорты"}
+                    error={invalid("airportIds")}
                     options={airportOptions}
                     getOptionDisabled={(opt) => usedAirportIds.has(String(opt.id))}
                     value={airportOptions.filter((option) =>
@@ -403,6 +420,7 @@ function CreateRequestAirlineTarifCategory({
               ) : (
                 <TariffGeographyList
                   value={formData.geography}
+                  error={invalid("geography")}
                   usedRegionIds={usedGeo.regionIds}
                   usedCityIds={usedGeo.cityIds}
                   onChange={(rows) => {

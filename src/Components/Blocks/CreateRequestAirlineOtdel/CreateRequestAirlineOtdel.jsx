@@ -12,6 +12,7 @@ import MUILoader from "../MUILoader/MUILoader";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 const ALL_ACCESS_ENABLED = {
   requestMenu: true, requestCreate: true, requestUpdate: true, requestChat: true,
@@ -70,15 +71,24 @@ function CreateRequestAirlineOtdel({
   const [selectedPositions, setSelectedPositions] = useState([]);
 
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
+
+  const requiredKeys = ["category"];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData({
       category: "",
       email: "",
     });
     setSelectedPositions([]);
     setIsEdited(false); // Сброс флага изменений
-  }, []);
+  }, [resetRequired]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
@@ -131,14 +141,12 @@ function CreateRequestAirlineOtdel({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    // Проверка на заполненность поля
-    if (!formData.category.trim()) {
-      showAlert("Пожалуйста, введите название отдела.");
-      setIsLoading(false);
+    if (!validate()) {
       return;
     }
+
+    setIsLoading(true);
 
     if (formData.email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -225,13 +233,18 @@ function CreateRequestAirlineOtdel({
         <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               <span className={classes.hint}>* — обязательные поля</span>
-              <label className={classes.required}>Название</label>
+              <label
+                className={`${classes.required} ${invalid("category") ? "fieldInvalid" : ""}`}
+              >
+                Название
+              </label>
               <input
                 type="text"
                 name="category"
+                className={invalid("category") ? "inputInvalid" : undefined}
                 value={formData.category}
                 onChange={handleChange}
                 placeholder="Пример: Отдел продаж"

@@ -20,9 +20,7 @@ import {
   APARTMENT_CATEGORIES,
   ROOM_FUND_CATEGORIES,
 } from "../../../utils/roomCategories.js";
-
-const REQUIRED_FIELDS_MESSAGE =
-  "Пожалуйста, заполните все обязательные поля.";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function CreateRequestNomerFond({
   type,
@@ -38,6 +36,7 @@ function CreateRequestNomerFond({
   const token = getCookie("token");
   const { confirm, showAlert, isDialogOpen } = useDialog();
   const { success, error: notifyError } = useToast();
+  const isApartment = type === "apartment";
   const [isEdited, setIsEdited] = useState(false);
   const [isMultipleRooms, setIsMultipleRooms] = useState(false); // Флаг для выбора множества комнат
 
@@ -48,7 +47,7 @@ function CreateRequestNomerFond({
     reserve: "",
     description: "",
     descriptionSecond: "",
-    price: type === "apartment" ? null : "",
+    price: isApartment ? null : "",
     roomImages: null,
     roomsName: "",
     roomsQuantity: 0, // количество комнат
@@ -56,6 +55,21 @@ function CreateRequestNomerFond({
   const [selectedRoomKind, setSelectedRoomKind] = useState(null);
   const [hotelTariff, setHotelTariff] = useState([]);
   const [coverImage, setCoverImage] = useState(null);
+  const formBodyRef = useRef(null);
+
+  const requiredKeys = [
+    "nomerName",
+    ...(!isApartment ? ["selectedRoomKind"] : []),
+  ];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(
+    { ...formData, selectedRoomKind },
+    requiredKeys,
+    formBodyRef
+  );
 
   const { loading, error, data, refetch } = useQuery(GET_HOTEL_TARIFS, {
     context: {
@@ -101,6 +115,7 @@ function CreateRequestNomerFond({
   const sidebarRef = useRef();
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData({
       nomerName: "",
       category: null,
@@ -108,7 +123,7 @@ function CreateRequestNomerFond({
       reserve: "",
       description: "",
       descriptionSecond: "",
-      price: type === "apartment" ? null : "",
+      price: isApartment ? null : "",
       roomImages: null,
       roomsName: "",
       roomsQuantity: 0,
@@ -116,7 +131,7 @@ function CreateRequestNomerFond({
     setIsEdited(false); // Сброс флага изменений
     setSelectedRoomKind(null);
     setCoverImage(null);
-  }, [type]);
+  }, [isApartment, resetRequired]);
 
   useEffect(() => {
     if (show) {
@@ -190,19 +205,10 @@ function CreateRequestNomerFond({
 
   const [isLoading, setIsLoading] = useState(false);
 
-  const isFormValid = () => {
-    const raw = formData.nomerName;
-    const nameStr = typeof raw === "number" ? String(raw) : String(raw ?? "");
-    if (!nameStr.trim()) return false;
-    if (!selectedRoomKind && type !== "apartment") return false;
-    return true;
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (!isFormValid()) {
-      showAlert(REQUIRED_FIELDS_MESSAGE);
+    if (!validate()) {
       return;
     }
 
@@ -395,8 +401,9 @@ function CreateRequestNomerFond({
     },
   ];
 
-  const useCategories =
-    type === "apartment" ? APARTMENT_CATEGORIES : ROOM_FUND_CATEGORIES;
+  const useCategories = isApartment
+    ? APARTMENT_CATEGORIES
+    : ROOM_FUND_CATEGORIES;
 
   return (
     <Sidebar show={show} sidebarRef={sidebarRef}>
@@ -411,7 +418,7 @@ function CreateRequestNomerFond({
         <MUILoader loadSize={"50px"} fullHeight={"80vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               <span className={classes.hint}>* — обязательные поля</span>
               {/* Checkbox для выбора множества комнат */}
@@ -426,7 +433,7 @@ function CreateRequestNomerFond({
                 />
                 Создать несколько номеров
               </label>
-              {type === "apartment" ? null : (
+              {isApartment ? null : (
                 <>
                   <label>Квота или резерв</label>
                   <MUIAutocomplete
@@ -443,10 +450,16 @@ function CreateRequestNomerFond({
                     }}
                   />
 
-                  <label className={classes.required}>Тариф</label>
+                  <label
+                    className={`${classes.required} ${invalid("selectedRoomKind") ? "fieldInvalid" : ""
+                      }`}
+                  >
+                    Тариф
+                  </label>
                   <MUIAutocomplete
                     dropdownWidth={"100%"}
                     label={"Выберите тариф"}
+                    error={invalid("selectedRoomKind")}
                     options={hotelTariff.map((tariff) => tariff.name)}
                     value={
                       selectedRoomKind &&
@@ -466,10 +479,16 @@ function CreateRequestNomerFond({
                 </>
               )}
 
-              <label className={classes.required}>Название номера</label>
+              <label
+                className={`${classes.required} ${invalid("nomerName") ? "fieldInvalid" : ""
+                  }`}
+              >
+                Название номера
+              </label>
               <input
                 type={isMultipleRooms ? "number" : "text"}
                 name="nomerName"
+                className={invalid("nomerName") ? "inputInvalid" : undefined}
                 value={formData.nomerName}
                 onChange={handleChange}
                 placeholder="Пример: № 151"
@@ -509,7 +528,7 @@ function CreateRequestNomerFond({
                 }}
               />
 
-              {type === "apartment" ? (
+              {isApartment ? (
                 <>
                   <label>Категория</label>
                   <MUIAutocomplete

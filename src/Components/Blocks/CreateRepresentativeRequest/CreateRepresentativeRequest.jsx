@@ -26,6 +26,7 @@ import ManifestUploadField from "../FapV2/ManifestUploadField/ManifestUploadFiel
 import { buildManifestUpload } from "../FapV2/fapManifestFiles.js";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 // Компонент для создания новой заявки
 function CreateRepresentativeRequest({
@@ -41,6 +42,7 @@ function CreateRepresentativeRequest({
   const [airlines, setAirlines] = useState([]); // Список авиакомпаний
   const [selectedAirline, setSelectedAirline] = useState(null); // Выбранная авиакомпания
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
 
   const [airports, setAirports] = useState([]); // Список аэропортов
   const [selectedCrew, setSelectedCrew] = useState([]); // Выбранный экипаж (опции стаффа)
@@ -85,6 +87,70 @@ function CreateRepresentativeRequest({
     baggageDeliveryPlannedAt: "",
     city: "",
   });
+
+  const showAirlineField = !user?.airlineId;
+
+  // Составные правила («хотя бы один») — синтетическими ключами поверх formData
+  const requiredValues = {
+    ...formData,
+    crewOrPassengers:
+      formData.includesCrew || formData.includesPassengers ? "ok" : "",
+    anyService:
+      formData.waterSupply ||
+      formData.foodSupply ||
+      formData.habitation ||
+      formData.transferArrival ||
+      formData.transferDeparture ||
+      formData.baggageDelivery
+        ? "ok"
+        : "",
+  };
+
+  const requiredKeys = [
+    ...(showAirlineField ? ["airlineId"] : []),
+    "airportId",
+    "flightNumber",
+    "crewOrPassengers",
+    "anyService",
+    ...(formData.waterSupply
+      ? ["waterPeopleCount", "waterPlannedDate", "waterPlannedAt"]
+      : []),
+    ...(formData.foodSupply
+      ? ["foodPeopleCount", "foodPlannedDate", "foodPlannedAt"]
+      : []),
+    ...(formData.habitation
+      ? [
+          "habitationPeopleCount",
+          "habitationPlannedFromDate",
+          "habitationPlannedFromTime",
+          "habitationPlannedToDate",
+          "habitationPlannedToTime",
+        ]
+      : []),
+    ...(formData.transferArrival
+      ? [
+          "transferArrivalPeopleCount",
+          "transferArrivalPlannedDate",
+          "transferArrivalPlannedAt",
+        ]
+      : []),
+    ...(formData.transferDeparture
+      ? [
+          "transferDeparturePeopleCount",
+          "transferDeparturePlannedDate",
+          "transferDeparturePlannedAt",
+        ]
+      : []),
+    ...(formData.baggageDelivery
+      ? ["baggageDeliveryPlannedDate", "baggageDeliveryPlannedAt"]
+      : []),
+  ];
+
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(requiredValues, requiredKeys, formBodyRef);
 
   // Распарсенный манифест: { people, flightNumber, fileName } | null
   const [manifest, setManifest] = useState(null);
@@ -273,6 +339,7 @@ function CreateRepresentativeRequest({
 
   // Сброс формы
   const resetForm = useCallback(() => {
+    resetRequired();
     const baseAirline = user?.airlineId ? airlineForAirlineAdmin : null;
 
     setSelectedAirline(baseAirline || null);
@@ -314,7 +381,7 @@ function CreateRepresentativeRequest({
     setManifest(null);
     setIsEdited(false);
     setWarningMessage("");
-  }, [user, airlineForAirlineAdmin]);
+  }, [user, airlineForAirlineAdmin, resetRequired]);
 
   const handleManifestParsed = useCallback((result) => {
     setManifest(result);
@@ -493,52 +560,13 @@ function CreateRepresentativeRequest({
     return date.toISOString();
   };
 
-  const isFormValid = () => {
-    const hasAnyService =
-      formData.habitation ||
-      formData.transferArrival ||
-      formData.transferDeparture ||
-      formData.baggageDelivery ||
-      formData.foodSupply ||
-      formData.waterSupply;
-
-    if (
-      !formData.airportId ||
-      !formData.airlineId ||
-      !formData.flightNumber ||
-      !hasAnyService
-    ) {
-      return false;
-    }
-
-    // должен быть включён хотя бы экипаж или пассажиры
-    if (!formData.includesCrew && !formData.includesPassengers) return false;
-
-    // для каждой выбранной услуги — количество человек, дата и время
-    if (formData.waterSupply && (!formData.waterPeopleCount || !formData.waterPlannedDate || !formData.waterPlannedAt))
-      return false;
-    if (formData.foodSupply && (!formData.foodPeopleCount || !formData.foodPlannedDate || !formData.foodPlannedAt))
-      return false;
-    if (formData.habitation && (!formData.habitationPeopleCount || !formData.habitationPlannedFromDate || !formData.habitationPlannedFromTime || !formData.habitationPlannedToDate || !formData.habitationPlannedToTime))
-      return false;
-    if (formData.transferArrival && (!formData.transferArrivalPeopleCount || !formData.transferArrivalPlannedDate || !formData.transferArrivalPlannedAt))
-      return false;
-    if (formData.transferDeparture && (!formData.transferDeparturePeopleCount || !formData.transferDeparturePlannedDate || !formData.transferDeparturePlannedAt))
-      return false;
-    if (formData.baggageDelivery && (!formData.baggageDeliveryPlannedDate || !formData.baggageDeliveryPlannedAt))
-      return false;
-
-    return true;
-  };
-
   const [isLoading, setIsLoading] = useState(false);
 
   // Отправка формы на сервер (новый input)
   const handleSubmit = async () => {
     setIsLoading(true);
 
-    if (!isFormValid()) {
-      showAlert("Пожалуйста, заполните все обязательные поля.");
+    if (!validate()) {
       setIsLoading(false);
       return;
     }
@@ -739,7 +767,7 @@ function CreateRepresentativeRequest({
           <MUILoader loadSize={"50px"} fullHeight={"75vh"} />
         ) : (
           <>
-            <div className={classes.requestMiddle}>
+            <div className={classes.requestMiddle} ref={formBodyRef}>
               <div className={classes.requestData}>
                 <span className={classes.hint}>* — обязательные поля</span>
                 {warningMessage && (
@@ -761,12 +789,19 @@ function CreateRepresentativeRequest({
                   </div>
                 ) : null}
 
-                {!user?.airlineId && (
+                {showAirlineField && (
                   <>
-                    <label className={classes.required}>Введите авиакомпанию</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("airlineId") ? "fieldInvalid" : ""
+                      }`}
+                    >
+                      Введите авиакомпанию
+                    </label>
                     <MUIAutocomplete
                       dropdownWidth={"100%"}
                       label={"Введите авиакомпанию"}
+                      error={invalid("airlineId")}
                       options={airlines?.map((airline) => airline.name)}
                       value={selectedAirline ? selectedAirline?.name : ""}
                       onChange={(event, newValue) => {
@@ -785,10 +820,17 @@ function CreateRepresentativeRequest({
                   </>
                 )}
 
-                <label className={classes.required}>Выберите аэропорт</label>
+                <label
+                  className={`${classes.required} ${
+                    invalid("airportId") ? "fieldInvalid" : ""
+                  }`}
+                >
+                  Выберите аэропорт
+                </label>
                 <MUIAutocompleteColor
                   dropdownWidth="100%"
                   label={"Введите аэропорт"}
+                  error={invalid("airportId")}
                   options={airports}
                   getOptionLabel={(option) => {
                     if (!option) return "";
@@ -836,10 +878,17 @@ function CreateRepresentativeRequest({
                   }}
                 />
 
-                <label className={classes.required}>Введите рейс</label>
+                <label
+                  className={`${classes.required} ${
+                    invalid("flightNumber") ? "fieldInvalid" : ""
+                  }`}
+                >
+                  Введите рейс
+                </label>
                 <input
                   type="text"
                   name="flightNumber"
+                  className={invalid("flightNumber") ? "inputInvalid" : undefined}
                   placeholder="Рейс"
                   value={formData.flightNumber}
                   onChange={handleChange}
@@ -853,7 +902,13 @@ function CreateRepresentativeRequest({
                   onChange={handleChange}
                 />
 
-                <div className={`${classes.typeServices} ${classes.required}`}>Состав заявки</div>
+                <div
+                  className={`${classes.typeServices} ${classes.required} ${
+                    invalid("crewOrPassengers") ? "fieldInvalid" : ""
+                  }`}
+                >
+                  Состав заявки
+                </div>
                 <span className={classes.hintCenter}>хотя бы один вариант</span>
 
                 <label className={classes.checkBoxWrapper}>
@@ -923,7 +978,13 @@ function CreateRepresentativeRequest({
                   </>
                 )}
 
-                <div className={`${classes.typeServices} ${classes.required}`}>Вид услуг</div>
+                <div
+                  className={`${classes.typeServices} ${classes.required} ${
+                    invalid("anyService") ? "fieldInvalid" : ""
+                  }`}
+                >
+                  Вид услуг
+                </div>
                 <span className={classes.hintCenter}>хотя бы одна услуга</span>
 
                 <label className={classes.checkBoxWrapper}>
@@ -938,25 +999,48 @@ function CreateRepresentativeRequest({
 
                 {formData.waterSupply && (
                   <>
-                    <label className={classes.required}>Введите количество человек</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("waterPeopleCount") ? "fieldInvalid" : ""
+                      }`}
+                    >
+                      Введите количество человек
+                    </label>
                     <input
                       type="number"
                       name="waterPeopleCount"
+                      className={
+                        invalid("waterPeopleCount") ? "inputInvalid" : undefined
+                      }
                       value={formData.waterPeopleCount}
                       onChange={handleChange}
                     />
 
-                    <label className={classes.required}>Дата и время подачи в аэропорт</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("waterPlannedDate") ? "fieldInvalid" : ""
+                      }`}
+                    >
+                      Дата и время подачи в аэропорт
+                    </label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
                         name="waterPlannedDate"
+                        className={
+                          invalid("waterPlannedDate")
+                            ? "inputInvalid"
+                            : undefined
+                        }
                         value={formData.waterPlannedDate}
                         onChange={handleChange}
                       />
                       <input
                         type="time"
                         name="waterPlannedAt"
+                        className={
+                          invalid("waterPlannedAt") ? "inputInvalid" : undefined
+                        }
                         value={formData.waterPlannedAt}
                         onChange={handleChange}
                         placeholder="Время"
@@ -977,25 +1061,46 @@ function CreateRepresentativeRequest({
 
                 {formData.foodSupply && (
                   <>
-                    <label className={classes.required}>Введите количество человек</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("foodPeopleCount") ? "fieldInvalid" : ""
+                      }`}
+                    >
+                      Введите количество человек
+                    </label>
                     <input
                       type="number"
                       name="foodPeopleCount"
+                      className={
+                        invalid("foodPeopleCount") ? "inputInvalid" : undefined
+                      }
                       value={formData.foodPeopleCount}
                       onChange={handleChange}
                     />
 
-                    <label className={classes.required}>Дата и время подачи в аэропорт</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("foodPlannedDate") ? "fieldInvalid" : ""
+                      }`}
+                    >
+                      Дата и время подачи в аэропорт
+                    </label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
                         name="foodPlannedDate"
+                        className={
+                          invalid("foodPlannedDate") ? "inputInvalid" : undefined
+                        }
                         value={formData.foodPlannedDate}
                         onChange={handleChange}
                       />
                       <input
                         type="time"
                         name="foodPlannedAt"
+                        className={
+                          invalid("foodPlannedAt") ? "inputInvalid" : undefined
+                        }
                         value={formData.foodPlannedAt}
                         onChange={handleChange}
                         placeholder="Время"
@@ -1016,38 +1121,83 @@ function CreateRepresentativeRequest({
 
                 {formData.habitation && (
                   <>
-                    <label className={classes.required}>Введите количество человек</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("habitationPeopleCount") ? "fieldInvalid" : ""
+                      }`}
+                    >
+                      Введите количество человек
+                    </label>
                     <input
                       type="number"
                       name="habitationPeopleCount"
+                      className={
+                        invalid("habitationPeopleCount")
+                          ? "inputInvalid"
+                          : undefined
+                      }
                       value={formData.habitationPeopleCount}
                       onChange={handleChange}
                     />
 
-                    <label className={classes.required}>Дата и время заезда</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("habitationPlannedFromDate")
+                          ? "fieldInvalid"
+                          : ""
+                      }`}
+                    >
+                      Дата и время заезда
+                    </label>
                     <input
                       type="date"
                       name="habitationPlannedFromDate"
+                      className={
+                        invalid("habitationPlannedFromDate")
+                          ? "inputInvalid"
+                          : undefined
+                      }
                       value={formData.habitationPlannedFromDate}
                       onChange={handleChange}
                     />
                     <input
                       type="time"
                       name="habitationPlannedFromTime"
+                      className={
+                        invalid("habitationPlannedFromTime")
+                          ? "inputInvalid"
+                          : undefined
+                      }
                       value={formData.habitationPlannedFromTime}
                       onChange={handleChange}
                     />
 
-                    <label className={classes.required}>Дата и время выезда</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("habitationPlannedToDate") ? "fieldInvalid" : ""
+                      }`}
+                    >
+                      Дата и время выезда
+                    </label>
                     <input
                       type="date"
                       name="habitationPlannedToDate"
+                      className={
+                        invalid("habitationPlannedToDate")
+                          ? "inputInvalid"
+                          : undefined
+                      }
                       value={formData.habitationPlannedToDate}
                       onChange={handleChange}
                     />
                     <input
                       type="time"
                       name="habitationPlannedToTime"
+                      className={
+                        invalid("habitationPlannedToTime")
+                          ? "inputInvalid"
+                          : undefined
+                      }
                       value={formData.habitationPlannedToTime}
                       onChange={handleChange}
                     />
@@ -1066,25 +1216,56 @@ function CreateRepresentativeRequest({
 
                 {formData.transferArrival && (
                   <>
-                    <label className={classes.required}>Введите количество человек</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("transferArrivalPeopleCount")
+                          ? "fieldInvalid"
+                          : ""
+                      }`}
+                    >
+                      Введите количество человек
+                    </label>
                     <input
                       type="number"
                       name="transferArrivalPeopleCount"
+                      className={
+                        invalid("transferArrivalPeopleCount")
+                          ? "inputInvalid"
+                          : undefined
+                      }
                       value={formData.transferArrivalPeopleCount}
                       onChange={handleChange}
                     />
 
-                    <label className={classes.required}>Дата и время подачи в аэропорт</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("transferArrivalPlannedDate")
+                          ? "fieldInvalid"
+                          : ""
+                      }`}
+                    >
+                      Дата и время подачи в аэропорт
+                    </label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
                         name="transferArrivalPlannedDate"
+                        className={
+                          invalid("transferArrivalPlannedDate")
+                            ? "inputInvalid"
+                            : undefined
+                        }
                         value={formData.transferArrivalPlannedDate}
                         onChange={handleChange}
                       />
                       <input
                         type="time"
                         name="transferArrivalPlannedAt"
+                        className={
+                          invalid("transferArrivalPlannedAt")
+                            ? "inputInvalid"
+                            : undefined
+                        }
                         value={formData.transferArrivalPlannedAt}
                         onChange={handleChange}
                         placeholder="Время"
@@ -1105,25 +1286,56 @@ function CreateRepresentativeRequest({
 
                 {formData.transferDeparture && (
                   <>
-                    <label className={classes.required}>Введите количество человек</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("transferDeparturePeopleCount")
+                          ? "fieldInvalid"
+                          : ""
+                      }`}
+                    >
+                      Введите количество человек
+                    </label>
                     <input
                       type="number"
                       name="transferDeparturePeopleCount"
+                      className={
+                        invalid("transferDeparturePeopleCount")
+                          ? "inputInvalid"
+                          : undefined
+                      }
                       value={formData.transferDeparturePeopleCount}
                       onChange={handleChange}
                     />
 
-                    <label className={classes.required}>Дата и время прибытия пассажиров в аэропорт</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("transferDeparturePlannedDate")
+                          ? "fieldInvalid"
+                          : ""
+                      }`}
+                    >
+                      Дата и время прибытия пассажиров в аэропорт
+                    </label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
                         name="transferDeparturePlannedDate"
+                        className={
+                          invalid("transferDeparturePlannedDate")
+                            ? "inputInvalid"
+                            : undefined
+                        }
                         value={formData.transferDeparturePlannedDate}
                         onChange={handleChange}
                       />
                       <input
                         type="time"
                         name="transferDeparturePlannedAt"
+                        className={
+                          invalid("transferDeparturePlannedAt")
+                            ? "inputInvalid"
+                            : undefined
+                        }
                         value={formData.transferDeparturePlannedAt}
                         onChange={handleChange}
                         placeholder="Время"
@@ -1144,17 +1356,35 @@ function CreateRepresentativeRequest({
 
                 {formData.baggageDelivery && (
                   <>
-                    <label className={classes.required}>Дата и время</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("baggageDeliveryPlannedDate")
+                          ? "fieldInvalid"
+                          : ""
+                      }`}
+                    >
+                      Дата и время
+                    </label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
                         name="baggageDeliveryPlannedDate"
+                        className={
+                          invalid("baggageDeliveryPlannedDate")
+                            ? "inputInvalid"
+                            : undefined
+                        }
                         value={formData.baggageDeliveryPlannedDate}
                         onChange={handleChange}
                       />
                       <input
                         type="time"
                         name="baggageDeliveryPlannedAt"
+                        className={
+                          invalid("baggageDeliveryPlannedAt")
+                            ? "inputInvalid"
+                            : undefined
+                        }
                         value={formData.baggageDeliveryPlannedAt}
                         onChange={handleChange}
                         placeholder="Время"

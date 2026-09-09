@@ -21,6 +21,7 @@ import CloseIcon from "../../../shared/icons/CloseIcon";
 import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function ExistRequestCompany({
   show,
@@ -78,6 +79,15 @@ function ExistRequestCompany({
     departmentId: chooseObject?.dispatcherDepartmentId || "",
   });
 
+  const showRole = !isDispatcherModerator(user);
+  const requiredKeys = ["name", "email", ...(showRole ? ["role"] : []), "login"];
+  const formBodyRef = useRef(null);
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
+
   const sidebarRef = useRef();
   const menuRef = useRef(null);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -110,6 +120,7 @@ function ExistRequestCompany({
   }, [positions]);
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData({
       id: chooseObject?.id || "",
       images: null,
@@ -129,9 +140,10 @@ function ExistRequestCompany({
     setShowOldPassword(false);
     setShowNewPassword(false);
     if (chooseObject?.images) setShowIMG(chooseObject.images);
-  }, [chooseObject]);
+  }, [chooseObject, resetRequired]);
 
   const [isEditing, setIsEditing] = useState(false);
+  const invalidNow = (key) => isEditing && invalid(key);
 
   useEffect(() => {
     if (show) setIsEditing(initialEditMode);
@@ -267,14 +279,8 @@ function ExistRequestCompany({
   const handleUpdate = async () => {
     if (isEditing) {
       setIsLoading(true);
-      // Проверяем обязательные поля
-      const requiredFields = ["name", "email", "role", "login"];
-      const emptyFields = requiredFields.filter(
-        (field) => !formData[field]?.trim()
-      );
 
-      if (emptyFields.length > 0) {
-        showAlert("Пожалуйста, заполните все обязательные поля.");
+      if (!validate()) {
         setIsLoading(false);
         return;
       }
@@ -399,7 +405,7 @@ function ExistRequestCompany({
         <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               {isEditing && (
                 <div className={classes.hint}>* — обязательные поля</div>
@@ -419,11 +425,12 @@ function ExistRequestCompany({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>ФИО</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("name") ? "fieldInvalid" : ""}`}>ФИО</div>
                 {isEditing ? (
                   <input
                     type="text"
                     name="name"
+                    className={invalidNow("name") ? "inputInvalid" : undefined}
                     placeholder="Иванов Иван Иванович"
                     value={formData.name}
                     onChange={handleChange}
@@ -436,11 +443,12 @@ function ExistRequestCompany({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Почта</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("email") ? "fieldInvalid" : ""}`}>Почта</div>
                 {isEditing ? (
                   <input
                     type="email"
                     name="email"
+                    className={invalidNow("email") ? "inputInvalid" : undefined}
                     placeholder="example@mail.ru"
                     value={formData.email}
                     onChange={handleChange}
@@ -500,16 +508,17 @@ function ExistRequestCompany({
                   </div>
                 )}
               </div>
-              {isDispatcherModerator(user) ? null : (
+              {showRole && (
                 <>
                   <div className={classes.requestDataInfo}>
-                    <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Роль</div>
+                    <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("role") ? "fieldInvalid" : ""}`}>Роль</div>
                     {isEditing ? (
                       <div className={classes.dropdown}>
                         <MUIAutocomplete
                           dropdownWidth={"100%"}
                           isDisabled={false}
                           label={"Выберите роль"}
+                          error={invalidNow("role")}
                           options={rolesObject.dispatcher}
                           value={
                             rolesObject.dispatcher.find(
@@ -592,11 +601,12 @@ function ExistRequestCompany({
                 </div>
               )}
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Логин</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("login") ? "fieldInvalid" : ""}`}>Логин</div>
                 {isEditing ? (
                   <input
                     type="text"
                     name="login"
+                    className={invalidNow("login") ? "inputInvalid" : undefined}
                     placeholder="Логин"
                     value={formData.login}
                     onChange={handleChange}

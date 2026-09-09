@@ -21,6 +21,7 @@ import CloseIcon from "../../../shared/icons/CloseIcon";
 import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function ExistRequestMyCompany({
   show,
@@ -31,7 +32,7 @@ function ExistRequestMyCompany({
 }) {
   const token = getCookie("token");
   const user = decodeJWT(token);
-  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { confirm, isDialogOpen } = useDialog();
   const { success } = useToast();
 
   const { data: companyData, refetch } = useQuery(GET_COMPANY, {
@@ -78,6 +79,14 @@ function ExistRequestMyCompany({
     index: "",
   });
 
+  const requiredKeys = ["name"];
+  const formBodyRef = useRef(null);
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
+
   const [cities, setCities] = useState([]);
   useEffect(() => {
     if (infoCities.data) {
@@ -116,6 +125,7 @@ function ExistRequestMyCompany({
   }, [companyData, show]);
 
   const resetForm = useCallback(() => {
+    resetRequired();
     const company = companyData?.getCompany;
     setFormData({
       id: company?.id || "",
@@ -132,10 +142,11 @@ function ExistRequestMyCompany({
       index: company?.information?.index || "",
     });
     setIsEdited(false);
-  }, [companyData]);
+  }, [companyData, resetRequired]);
 
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const invalidNow = (key) => isEditing && invalid(key);
 
   useEffect(() => {
     if (show) setIsEditing(initialEditMode);
@@ -207,13 +218,8 @@ function ExistRequestMyCompany({
   const handleSubmit = async (e) => {
     e?.preventDefault?.();
     setIsLoading(true);
-    const requiredFields = ["name"];
-    const emptyFields = requiredFields.filter(
-      (field) => !formData[field]?.trim()
-    );
 
-    if (emptyFields.length > 0) {
-      showAlert("Пожалуйста, заполните все обязательные поля.");
+    if (!validate()) {
       setIsLoading(false);
       return;
     }
@@ -303,17 +309,18 @@ function ExistRequestMyCompany({
         <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle} style={isEditing ? { height: "calc(100vh - 161px)" } : { height: "calc(100vh - 80px)" }}>
+          <div className={classes.requestMiddle} ref={formBodyRef} style={isEditing ? { height: "calc(100vh - 161px)" } : { height: "calc(100vh - 80px)" }}>
             <div className={classes.requestData}>
               {isEditing && (
                 <span className={classes.hint}>* — обязательные поля</span>
               )}
               {isEditing ? (
                 <>
-                  <label className={classes.required}>Название</label>
+                  <label className={`${classes.required} ${invalidNow("name") ? "fieldInvalid" : ""}`}>Название</label>
                   <input
                     type="text"
                     name="name"
+                    className={invalidNow("name") ? "inputInvalid" : undefined}
                     placeholder=""
                     value={formData.name}
                     onChange={handleChange}

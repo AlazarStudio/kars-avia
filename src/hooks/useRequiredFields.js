@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 // Селектор первого «горящего» элемента формы: подпись / нативный инпут / поле MUI
 export const INVALID_SELECTOR = ".fieldInvalid, .inputInvalid, .Mui-error";
@@ -35,7 +35,8 @@ function useRequiredFields(values, requiredKeys, containerRef) {
     return false;
   };
 
-  const reset = () => setAttempt(0);
+  // стабильная ссылка: формы кладут reset в deps useCallback/useEffect
+  const reset = useCallback(() => setAttempt(0), []);
 
   return { invalid, validate, reset };
 }

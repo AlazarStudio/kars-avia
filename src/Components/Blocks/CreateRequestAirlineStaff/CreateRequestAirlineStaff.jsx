@@ -17,6 +17,7 @@ import { positions } from "../../../roles";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function CreateRequestAirlineStaff({
   show,
@@ -30,7 +31,7 @@ function CreateRequestAirlineStaff({
   setNewStaffId,
   isExist,
 }) {
-  const { confirm, showAlert, isDialogOpen } = useDialog();
+  const { confirm, isDialogOpen } = useDialog();
   const { success, error: notifyError } = useToast();
 
   const [userRole, setUserRole] = useState();
@@ -49,8 +50,17 @@ function CreateRequestAirlineStaff({
   });
 
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
+
+  const requiredKeys = ["name", "number", "gender"];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData({
       name: "",
       number: "",
@@ -58,7 +68,7 @@ function CreateRequestAirlineStaff({
       gender: "",
     });
     setIsEdited(false); // Сбрасываем флаг изменений
-  }, []);
+  }, [resetRequired]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
@@ -97,23 +107,16 @@ function CreateRequestAirlineStaff({
     refetchQueries: [{ query: GET_AIRLINES_RELAY }],
   });
 
-  const isFormValid = () => {
-    return (
-      formData.name && formData.number && formData.gender
-    );
-  };
-
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    if (!isFormValid()) {
-      showAlert("Пожалуйста, заполните все обязательные поля.");
-      setIsLoading(false);
+    if (!validate()) {
       return;
     }
+
+    setIsLoading(true);
 
     // Проверка на заполненность полей
     // const requiredFields = ["name", "number", "position", "gender"];
@@ -216,25 +219,35 @@ function CreateRequestAirlineStaff({
         <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               <span className={classes.hint}>* — обязательные поля</span>
-              <label className={classes.required}>Фамилия И.О.</label>
+              <label
+                className={`${classes.required} ${invalid("name") ? "fieldInvalid" : ""}`}
+              >
+                Фамилия И.О.
+              </label>
               <input
                 type="text"
                 name="name"
+                className={invalid("name") ? "inputInvalid" : undefined}
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Пример: Иванов И.И."
                 autoComplete="new-password"
               />
 
-              <label className={classes.required}>Номер телефона</label>
+              <label
+                className={`${classes.required} ${invalid("number") ? "fieldInvalid" : ""}`}
+              >
+                Номер телефона
+              </label>
               <InputMask
                 type="text"
                 mask="+7 (___) ___-__-__"
                 replacement={{ _: /\d/ }}
                 name="number"
+                className={invalid("number") ? "inputInvalid" : undefined}
                 value={formData.number}
                 onChange={handleChange}
                 placeholder="+7 (___) ___-__-__"
@@ -256,11 +269,16 @@ function CreateRequestAirlineStaff({
                 }}
               />
 
-              <label className={classes.required}>Пол</label>
+              <label
+                className={`${classes.required} ${invalid("gender") ? "fieldInvalid" : ""}`}
+              >
+                Пол
+              </label>
 
               <MUIAutocomplete
                 dropdownWidth={"100%"}
                 label={"Выберите пол"}
+                error={invalid("gender")}
                 options={["Мужской", "Женский"]}
                 value={formData.gender}
                 onChange={(event, newValue) => {

@@ -12,10 +12,11 @@ import TextEditor from "../TextEditor/TextEditor";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function CreateRequestPatchNote({ show, onClose, refetchPatchNotes }) {
   const token = getCookie("token");
-  const { showAlert, confirm: confirmDialog } = useDialog();
+  const { confirm: confirmDialog } = useDialog();
   const { success, error: notifyError } = useToast();
 
   const [isEdited, setIsEdited] = useState(false); // Флаг, указывающий, были ли изменения в форме
@@ -26,15 +27,33 @@ function CreateRequestPatchNote({ show, onClose, refetchPatchNotes }) {
   });
 
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
+
+  const requiredKeys = ["name", "date", "description"];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(
+    {
+      ...formData,
+      description: formData.description.replace(/<[^>]*>/g, "").trim()
+        ? formData.description
+        : "",
+    },
+    requiredKeys,
+    formBodyRef
+  );
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData({
       name: "",
       description: "",
       date: "",
     });
     setIsEdited(false); // Сброс флага изменений
-  }, []);
+  }, [resetRequired]);
 
   const closeButton = useCallback(async () => {
     if (!isEdited) {
@@ -101,13 +120,7 @@ function CreateRequestPatchNote({ show, onClose, refetchPatchNotes }) {
     e.preventDefault();
     setIsLoading(true);
 
-    // Проверяем, заполнены ли все поля
-    if (
-      !formData.name.trim() ||
-      !formData.description.trim() ||
-      !formData.date
-    ) {
-      showAlert("Пожалуйста, заполните все поля!");
+    if (!validate()) {
       setIsLoading(false);
       return;
     }
@@ -189,7 +202,7 @@ function CreateRequestPatchNote({ show, onClose, refetchPatchNotes }) {
         <MUILoader loadSize={"50px"} fullHeight={"80vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               <span className={classes.hint}>* — обязательные поля</span>
               <div className={classes.formHint}>
@@ -197,10 +210,16 @@ function CreateRequestPatchNote({ show, onClose, refetchPatchNotes }) {
               </div>
 
               <div className={classes.fieldGroup}>
-                <label className={classes.required}>Название</label>
+                <label
+                  className={`${classes.required} ${invalid("name") ? "fieldInvalid" : ""
+                    }`}
+                >
+                  Название
+                </label>
                 <input
                   type="text"
                   name="name"
+                  className={invalid("name") ? "inputInvalid" : undefined}
                   value={formData.name}
                   placeholder="Например: Улучшили поиск по заявкам"
                   onChange={handleChange}
@@ -208,10 +227,16 @@ function CreateRequestPatchNote({ show, onClose, refetchPatchNotes }) {
               </div>
 
               <div className={classes.fieldGroup}>
-                <label className={classes.required}>Дата</label>
+                <label
+                  className={`${classes.required} ${invalid("date") ? "fieldInvalid" : ""
+                    }`}
+                >
+                  Дата
+                </label>
                 <input
                   type="date"
                   name="date"
+                  className={invalid("date") ? "inputInvalid" : undefined}
                   value={formData.date}
                   onChange={handleChange}
                   placeholder="Дата"
@@ -219,7 +244,12 @@ function CreateRequestPatchNote({ show, onClose, refetchPatchNotes }) {
               </div>
 
               <div className={classes.fieldGroup}>
-                <label className={classes.required}>Описание</label>
+                <label
+                  className={`${classes.required} ${invalid("description") ? "fieldInvalid" : ""
+                    }`}
+                >
+                  Описание
+                </label>
                 <TextEditor
                   anotherDescription={formData.description}
                   isEditing={true}

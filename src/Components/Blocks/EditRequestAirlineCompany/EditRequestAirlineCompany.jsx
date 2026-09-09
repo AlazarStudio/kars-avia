@@ -19,6 +19,7 @@ import CloseIcon from "../../../shared/icons/CloseIcon";
 import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function EditRequestAirlineCompany({
   show,
@@ -127,6 +128,23 @@ function EditRequestAirlineCompany({
     department: department || "",
   });
 
+  const showEmail = !representative;
+  const showRole = !representative && user?.role !== roles.airlineModerator;
+  const requiredKeys = [
+    "name",
+    ...(showEmail ? ["email"] : []),
+    ...(showRole ? ["role"] : []),
+    "position",
+    "department",
+    "login",
+  ];
+  const formBodyRef = useRef(null);
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
+
   const sidebarRef = useRef();
   const menuRef = useRef(null);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -153,6 +171,7 @@ function EditRequestAirlineCompany({
   }, [show, department, selectedUser]);
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData({
       images: null,
       name: selectedUser?.name || "",
@@ -171,12 +190,13 @@ function EditRequestAirlineCompany({
     setIsCreatingPosition(false);
     setNewPositionName("");
     if (selectedUser?.images) setShowIMG(selectedUser.images);
-  }, [selectedUser, department]);
+  }, [selectedUser, department, resetRequired]);
 
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const invalidNow = (key) => isEditing && invalid(key);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
@@ -234,22 +254,10 @@ function EditRequestAirlineCompany({
     }));
   };
 
-  const isFormValid = () => {
-    return (
-      formData.name &&
-      formData.email &&
-      formData.role &&
-      formData.position &&
-      formData.login &&
-      formData.department
-    );
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (isEditing) {
-      if (!isFormValid()) {
-        showAlert("Пожалуйста, заполните все обязательные поля.");
+      if (!validate()) {
         setIsLoading(false);
         return;
       }
@@ -411,7 +419,7 @@ function EditRequestAirlineCompany({
         <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               {isEditing && (
                 <div className={classes.hint}>* — обязательные поля</div>
@@ -429,11 +437,12 @@ function EditRequestAirlineCompany({
                 </div>
               </div>
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>ФИО</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("name") ? "fieldInvalid" : ""}`}>ФИО</div>
                 {isEditing ? (
                   <input
                     type="text"
                     name="name"
+                    className={invalidNow("name") ? "inputInvalid" : undefined}
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="Введите ФИО"
@@ -445,14 +454,15 @@ function EditRequestAirlineCompany({
                 )}
               </div>
 
-              {!representative && (
+              {showEmail && (
                 <>
                   <div className={classes.requestDataInfo}>
-                    <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Почта</div>
+                    <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("email") ? "fieldInvalid" : ""}`}>Почта</div>
                     {isEditing ? (
                       <input
                         type="email"
                         name="email"
+                        className={invalidNow("email") ? "inputInvalid" : undefined}
                         value={formData.email}
                         onChange={handleChange}
                         placeholder="Введите email"
@@ -464,15 +474,16 @@ function EditRequestAirlineCompany({
                     )}
                   </div>
 
-                  {user?.role === roles.airlineModerator ? null : (
+                  {showRole && (
                     <div className={classes.requestDataInfo}>
-                      <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Роль</div>
+                      <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("role") ? "fieldInvalid" : ""}`}>Роль</div>
                       {isEditing ? (
                         <div className={classes.dropdown}>
                           <MUIAutocomplete
                             dropdownWidth={"100%"}
                             isDisabled={false}
                             label={"Выберите роль"}
+                            error={invalidNow("role")}
                             options={rolesObject.airline}
                             value={
                               rolesObject.airline.find(
@@ -523,7 +534,7 @@ function EditRequestAirlineCompany({
                 {isEditing ? (
                   <>
                     <div className={`${classes.fieldHeader} ${classes.positionTitleArea}`}>
-                      <div className={`${classes.requestDataInfo_title} ${classes.required}`}>Должность</div>
+                      <div className={`${classes.requestDataInfo_title} ${classes.required} ${invalidNow("position") ? "fieldInvalid" : ""}`}>Должность</div>
                       <div
                         className={classes.addPosition}
                         onClick={() => setIsCreatingPosition((prev) => !prev)}
@@ -538,6 +549,7 @@ function EditRequestAirlineCompany({
                           dropdownWidth={"100%"}
                           isDisabled={false}
                           label={"Выберите должность"}
+                          error={invalidNow("position")}
                           options={localPositions.map((position) => position.name)}
                           value={formData.position}
                           onChange={(event, newValue) => {
@@ -579,13 +591,14 @@ function EditRequestAirlineCompany({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Отдел</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("department") ? "fieldInvalid" : ""}`}>Отдел</div>
                 {isEditing ? (
                   <div className={classes.dropdown}>
                     <MUIAutocomplete
                       dropdownWidth={"100%"}
                       isDisabled={false}
                       label={"Выберите отдел"}
+                      error={invalidNow("department")}
                       options={addTarif.map((department) => department.name)}
                       value={formData.department}
                       onChange={(event, newValue) => {
@@ -605,11 +618,12 @@ function EditRequestAirlineCompany({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Логин</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("login") ? "fieldInvalid" : ""}`}>Логин</div>
                 {isEditing ? (
                   <input
                     type="text"
                     name="login"
+                    className={invalidNow("login") ? "inputInvalid" : undefined}
                     value={formData.login}
                     onChange={handleChange}
                     placeholder="Введите логин"

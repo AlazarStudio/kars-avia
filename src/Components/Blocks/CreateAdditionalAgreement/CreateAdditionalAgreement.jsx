@@ -13,6 +13,7 @@ import AttachIcon from "../../../shared/icons/AttachIcon.jsx";
 import PickedFilesEditor from "../PickedFilesEditor/PickedFilesEditor.jsx";
 import MUILoader from "../MUILoader/MUILoader.jsx";
 import MUISwitch from "../MUISwitch/MUISwitch.jsx";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function CreateAdditionalAgreement({
   show,
@@ -37,6 +38,18 @@ function CreateAdditionalAgreement({
   });
   // console.log(agreement);
 
+  const formBodyRef = useRef(null);
+  const requiredKeys = ["contractNumber", "date"];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(local, requiredKeys, formBodyRef);
+
+  // через ref, чтобы не тянуть resetRequired в зависимости эффекта
+  const resetRequiredRef = useRef(resetRequired);
+  resetRequiredRef.current = resetRequired;
+
   const [createAirlineAA] = useMutation(CREATE_AIRLINE_AA, {
     context: {
       headers: {
@@ -52,6 +65,7 @@ function CreateAdditionalAgreement({
 
   useEffect(() => {
     if (!show) {
+      resetRequiredRef.current();
       setLocal({
         id: undefined,
         contractNumber: "",
@@ -129,6 +143,7 @@ function CreateAdditionalAgreement({
 
   const typeId = activeFilterTab === "hotels" ? "hotelContractId": activeFilterTab === "airlines" ? "airlineContractId" : "organizationContractId"
   const create = async () => {
+    if (!validate()) return;
     setIsLoading(true);
     await createAirlineAA({
       variables: {
@@ -180,22 +195,38 @@ function CreateAdditionalAgreement({
         <MUILoader loadSize={"50px"} fullHeight={"90vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               <span className={classes.hint}>* — обязательные поля</span>
-              <label className={classes.required}>№ ДС</label>
+              <label
+                className={`${classes.required} ${
+                  invalid("contractNumber") ? "fieldInvalid" : ""
+                }`}
+              >
+                № ДС
+              </label>
               <input
                 type="text"
                 name="contractNumber"
+                className={
+                  invalid("contractNumber") ? "inputInvalid" : undefined
+                }
                 value={local.contractNumber}
                 onChange={handleChange}
                 placeholder="Например: ДС №1"
               />
 
-              <label className={classes.required}>Дата заключения</label>
+              <label
+                className={`${classes.required} ${
+                  invalid("date") ? "fieldInvalid" : ""
+                }`}
+              >
+                Дата заключения
+              </label>
               <input
                 type="date"
                 name="date"
+                className={invalid("date") ? "inputInvalid" : undefined}
                 value={local.date ? local.date.slice(0, 10) : ""}
                 onChange={handleChange}
                 placeholder="Дата"

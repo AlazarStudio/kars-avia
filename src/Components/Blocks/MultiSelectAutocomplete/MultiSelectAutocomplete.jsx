@@ -32,6 +32,7 @@ function MultiSelectAutocomplete({
   showSelectAll = false,
   scriptRunnerId,
   getOptionDisabled,
+  error = false,
   ...props
 }) {
   const icon = <CheckBoxOutlineBlankIcon fontSize="small" />;
@@ -186,6 +187,7 @@ function MultiSelectAutocomplete({
       renderInput={(params) => (
         <TextField
           {...params}
+          error={error}
           inputProps={{
             ...params.inputProps,
             [SCRIPT_RUNNER_ID_ATTR]: runnerIds.inputId,
@@ -201,6 +203,9 @@ function MultiSelectAutocomplete({
               transition: "all 0.1s ease-out", // Плавная анимация при фокусе
               fontSize: "14px",
             },
+            "& label.Mui-error": {
+              color: "#e53935",
+            },
             "& .MuiInputBase-root": {
               // height: "40px",
               display: "flex",
@@ -211,6 +216,9 @@ function MultiSelectAutocomplete({
             "& .MuiOutlinedInput-root": {
               padding: "0 8px",
               borderRadius: "10px !important",
+              "&.Mui-error .MuiOutlinedInput-notchedOutline": {
+                borderColor: "#e53935",
+              },
             },
             "& .MuiInputLabel-shrink": {
               padding: "0",

@@ -12,6 +12,7 @@ import CloseIcon from "../../../shared/icons/CloseIcon";
 import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function EditRequestDispatcherDepartment({
   show,
@@ -36,6 +37,15 @@ function EditRequestDispatcherDepartment({
     email: department?.email || "",
   });
 
+  const requiredKeys = ["name"];
+  const formBodyRef = useRef(null);
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
+  const invalidNow = (key) => isEditing && invalid(key);
+
   const sidebarRef = useRef();
   const menuRef = useRef(null);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -50,12 +60,13 @@ function EditRequestDispatcherDepartment({
   }, [show, department]);
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData({
       name: department?.name || "",
       email: department?.email || "",
     });
     setIsEdited(false);
-  }, [department]);
+  }, [department, resetRequired]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
@@ -118,8 +129,7 @@ function EditRequestDispatcherDepartment({
     e?.preventDefault?.();
     setIsLoading(true);
 
-    if (!formData.name.trim()) {
-      showAlert("Пожалуйста, введите название отдела.");
+    if (!validate()) {
       setIsLoading(false);
       return;
     }
@@ -213,19 +223,20 @@ function EditRequestDispatcherDepartment({
         <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               {isEditing && (
                 <div className={classes.hint}>* — обязательные поля</div>
               )}
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("name") ? "fieldInvalid" : ""}`}>
                   Название отдела
                 </div>
                 {isEditing ? (
                   <input
                     type="text"
                     name="name"
+                    className={invalidNow("name") ? "inputInvalid" : undefined}
                     value={formData.name}
                     onChange={handleChange}
                     placeholder="Пример: Отдел продаж"

@@ -12,6 +12,7 @@ import {
   getCookie,
 } from "../../../../graphQL_requests.js";
 import classes from "./AddRepresentativeBooking.module.css";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 const emptyForm = {
   fullName: "",
@@ -31,6 +32,13 @@ function AddRepresentativeBooking({
 }) {
   const [formData, setFormData] = useState(emptyForm);
   const isEditMode = initialPerson != null && personIndex != null;
+
+  const requiredKeys = ["fullName"];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys);
 
   useEffect(() => {
     if (open) {
@@ -90,16 +98,14 @@ function AddRepresentativeBooking({
   }, []);
 
   const handleClose = useCallback(() => {
+    resetRequired();
     setFormData(emptyForm);
     onClose();
-  }, [onClose]);
+  }, [onClose, resetRequired]);
 
   const handleSubmit = async () => {
-    const fullName = formData.fullName?.trim();
-    if (!fullName) {
-      addNotification?.("Укажите ФИО пассажира.", "error");
-      return;
-    }
+    if (!validate()) return;
+    const fullName = formData.fullName.trim();
 
     const person = {
       fullName,
@@ -149,7 +155,11 @@ function AddRepresentativeBooking({
         {isEditMode ? "Редактировать бронь" : "Добавить бронь"}
       </DialogTitle>
       <DialogContent className={classes.content}>
-        <label className={`${classes.label} ${classes.required}`}>
+        <label
+          className={`${classes.label} ${classes.required} ${
+            invalid("fullName") ? "fieldInvalid" : ""
+          }`}
+        >
           ФИО пассажира
         </label>
         <input
@@ -158,7 +168,9 @@ function AddRepresentativeBooking({
           value={formData.fullName}
           onChange={handleChange}
           placeholder="ФИО пассажира"
-          className={classes.input}
+          className={`${classes.input} ${
+            invalid("fullName") ? "inputInvalid" : ""
+          }`}
         />
         <label className={classes.label}>Номер телефона</label>
         <input

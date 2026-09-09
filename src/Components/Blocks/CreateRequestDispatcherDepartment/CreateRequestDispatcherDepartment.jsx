@@ -11,6 +11,7 @@ import MUILoader from "../MUILoader/MUILoader";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 const ALL_ACCESS_ENABLED = {
   requestMenu: true, requestCreate: true, requestUpdate: true, requestChat: true,
@@ -55,11 +56,20 @@ function CreateRequestDispatcherDepartment({
   });
 
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
+
+  const requiredKeys = ["name"];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData({ name: "", email: "" });
     setIsEdited(false);
-  }, []);
+  }, [resetRequired]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
@@ -103,13 +113,12 @@ function CreateRequestDispatcherDepartment({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
-    if (!formData.name.trim()) {
-      showAlert("Пожалуйста, введите название отдела.");
-      setIsLoading(false);
+    if (!validate()) {
       return;
     }
+
+    setIsLoading(true);
 
     if (formData.email) {
       const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -183,13 +192,18 @@ function CreateRequestDispatcherDepartment({
         <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               <span className={classes.hint}>* — обязательные поля</span>
-              <label className={classes.required}>Название</label>
+              <label
+                className={`${classes.required} ${invalid("name") ? "fieldInvalid" : ""}`}
+              >
+                Название
+              </label>
               <input
                 type="text"
                 name="name"
+                className={invalid("name") ? "inputInvalid" : undefined}
                 value={formData.name}
                 onChange={handleChange}
                 placeholder="Пример: Отдел продаж"

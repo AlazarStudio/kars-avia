@@ -22,6 +22,7 @@ import {
   APARTMENT_CATEGORIES,
   ROOM_FUND_CATEGORIES,
 } from "../../../utils/roomCategories.js";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function EditRequestNomerFond({
   type,
@@ -92,9 +93,27 @@ function EditRequestNomerFond({
 
   const sidebarRef = useRef();
   const menuRef = useRef(null);
+  const formBodyRef = useRef(null);
   const [anchorEl, setAnchorEl] = useState(null);
 
+  const isApartment = type === "apartment";
+  const requiredKeys = [
+    "nomerName",
+    ...(isApartment ? [] : ["selectedRoomKind"]),
+  ];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(
+    { ...formData, selectedRoomKind },
+    requiredKeys,
+    formBodyRef,
+  );
+  const invalidNow = (key) => isEditing && invalid(key);
+
   const resetForm = useCallback(() => {
+    resetRequired();
     if (nomer) {
       setFormData({
         nomerName: nomer?.name || nomer?.id || "",
@@ -116,7 +135,7 @@ function EditRequestNomerFond({
       setSelectedRoomKind(preselected || null);
     }
     setIsEdited(false);
-  }, [nomer, type, category, hotelTariff]);
+  }, [nomer, type, category, hotelTariff, resetRequired]);
 
   useEffect(() => {
     if (show) {
@@ -411,6 +430,11 @@ function EditRequestNomerFond({
       e.preventDefault();
       setIsLoading(true);
 
+      if (!validate()) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         // const finalImagesOrder = imagesArray; // Задаем порядок изображений
         // if (finalImagesOrder && finalImagesOrder.length && imagesArray2.length === 0) {
@@ -601,6 +625,7 @@ function EditRequestNomerFond({
       ) : (
         <>
           <div
+            ref={formBodyRef}
             className={classes.requestMiddle}
             style={
               isEditing
@@ -612,7 +637,7 @@ function EditRequestNomerFond({
               {isEditing && (
                 <div className={classes.hint}>* — обязательные поля</div>
               )}
-              {type !== "apartment" && (
+              {!isApartment && (
                 <>
                   <div className={classes.requestDataInfo}>
                     <div className={classes.requestDataInfo_title}>
@@ -642,12 +667,13 @@ function EditRequestNomerFond({
                     )}
                   </div>
                   <div className={classes.requestDataInfo}>
-                    <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Тариф</div>
+                    <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("selectedRoomKind") ? "fieldInvalid" : ""}`}>Тариф</div>
                     {isEditing ? (
                       <div className={classes.dropdown}>
                         <MUIAutocomplete
                           dropdownWidth={"100%"}
                           label={"Выберите тариф"}
+                          error={invalidNow("selectedRoomKind")}
                           options={(hotelTariff || []).map((t) => t?.name)}
                           value={
                             selectedRoomKind
@@ -676,13 +702,14 @@ function EditRequestNomerFond({
               )}
 
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("nomerName") ? "fieldInvalid" : ""}`}>
                   Название номера
                 </div>
                 {isEditing ? (
                   <input
                     type="text"
                     name="nomerName"
+                    className={invalidNow("nomerName") ? "inputInvalid" : undefined}
                     value={
                       formData.nomerName?.includes("резерв")
                         ? formData.nomerName.split(" (резерв)")[0]
@@ -793,7 +820,7 @@ function EditRequestNomerFond({
                 )}
               </div>
 
-              {type === "apartment" && (
+              {isApartment && (
                 <>
                   <div className={classes.requestDataInfo}>
                     <div className={classes.requestDataInfo_title}>

@@ -16,6 +16,7 @@ import { roles } from "../../../roles.js";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function EditRequestPatchNote({
   show,
@@ -32,6 +33,21 @@ function EditRequestPatchNote({
   const [formData, setFormData] = useState();
 
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
+
+  const requiredKeys = ["name", "date", "description"];
+  const requiredValues = {
+    ...formData,
+    description: (formData?.description || "").replace(/<[^>]*>/g, "").trim()
+      ? formData.description
+      : "",
+  };
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(requiredValues, requiredKeys, formBodyRef);
+  const invalidNow = (key) => isEditing && invalid(key);
 
   const { loading, error, data } = useQuery(GET_PATCH_NOTE, {
     context: {
@@ -65,6 +81,7 @@ function EditRequestPatchNote({
 
   const closeButton = useCallback(async () => {
     if (!isEdited) {
+      resetRequired();
       onClose();
       setIsEditing(false);
       return;
@@ -74,11 +91,12 @@ function EditRequestPatchNote({
       "Вы уверены? Все несохраненные данные будут удалены."
     );
     if (ok) {
+      resetRequired();
       onClose();
       setIsEditing(false);
       setIsEdited(false);
     }
-  }, [isEdited, confirmDialog, onClose]);
+  }, [isEdited, confirmDialog, onClose, resetRequired]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -96,6 +114,11 @@ function EditRequestPatchNote({
       e.preventDefault();
       setIsLoading(true);
 
+      if (!validate()) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         const isoDate = new Date(formData.date).toISOString();
         await updatePatchNote({
@@ -110,6 +133,7 @@ function EditRequestPatchNote({
         });
         refetchPatchNotes();
         setIsEdited(false);
+        resetRequired();
         onClose();
         setIsLoading(false);
         success("Редактирование патча прошло успешно.");
@@ -160,7 +184,7 @@ function EditRequestPatchNote({
         </div>
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               {isEditing && (
                 <span className={classes.hint}>* — обязательные поля</span>
@@ -174,10 +198,15 @@ function EditRequestPatchNote({
               {isEditing ? (
                 <>
                   <div className={classes.fieldGroup}>
-                    <label className={classes.required}>Название</label>
+                    <label
+                      className={`${classes.required} ${invalidNow("name") ? "fieldInvalid" : ""}`}
+                    >
+                      Название
+                    </label>
                     <input
                       type="text"
                       name="name"
+                      className={invalidNow("name") ? "inputInvalid" : undefined}
                       value={formData?.name || ""}
                       onChange={handleChange}
                       placeholder=""
@@ -186,10 +215,15 @@ function EditRequestPatchNote({
                   </div>
 
                   <div className={classes.fieldGroup}>
-                    <label className={classes.required}>Дата</label>
+                    <label
+                      className={`${classes.required} ${invalidNow("date") ? "fieldInvalid" : ""}`}
+                    >
+                      Дата
+                    </label>
                     <input
                       type="date"
                       name="date"
+                      className={invalidNow("date") ? "inputInvalid" : undefined}
                       value={patchDate || ""}
                       onChange={handleChange}
                       disabled={!isEditing}
@@ -198,7 +232,11 @@ function EditRequestPatchNote({
                   </div>
 
                   <div className={classes.fieldGroup}>
-                    <label className={classes.required}>Описание</label>
+                    <label
+                      className={`${classes.required} ${invalidNow("description") ? "fieldInvalid" : ""}`}
+                    >
+                      Описание
+                    </label>
                     <TextEditor
                       anotherDescription={formData?.description || ""}
                       isEditing={isEditing}

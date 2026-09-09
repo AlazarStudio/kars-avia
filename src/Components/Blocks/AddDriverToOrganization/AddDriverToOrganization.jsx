@@ -14,6 +14,7 @@ import MUIAutocomplete from "../MUIAutocomplete/MUIAutocomplete";
 import { rolesObject } from "../../../roles";
 import MultiSelectAutocomplete from "../MultiSelectAutocomplete/MultiSelectAutocomplete";
 import CloseIcon from "../../../shared/icons/CloseIcon";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function AddDriverToOrganization({
   show,
@@ -32,13 +33,22 @@ function AddDriverToOrganization({
   });
 
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
+
+  const requiredKeys = ["driverIds"];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData({
       driverIds: [],
     });
     setIsEdited(false); // Сброс флага изменений
-  }, []);
+  }, [resetRequired]);
 
   const closeButton = useCallback(() => {
     if (!isEdited) {
@@ -86,11 +96,8 @@ function AddDriverToOrganization({
         return;
       }
 
+      if (!validate()) return;
       const ids = formData.driverIds || [];
-      if (!ids.length) {
-        addNotification?.("Выберите хотя бы одного водителя", "warning");
-        return;
-      }
 
       // ✅ цикл: обновляем каждого водителя
       const results = [];
@@ -167,14 +174,21 @@ function AddDriverToOrganization({
         <MUILoader loadSize={"50px"} fullHeight={"80vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               <span className={classes.hint}>* — обязательные поля</span>
-              <label className={classes.required}>Водители</label>
+              <label
+                className={`${classes.required} ${
+                  invalid("driverIds") ? "fieldInvalid" : ""
+                }`}
+              >
+                Водители
+              </label>
               <MultiSelectAutocomplete
                 isMultiple={true}
                 dropdownWidth={"100%"}
                 label={"Выберите водителей"}
+                error={invalid("driverIds")}
                 options={filteredDrivers}
                 value={filteredDrivers.filter((option) =>
                   formData.driverIds?.includes(option.id)

@@ -22,6 +22,7 @@ import {
   APARTMENT_CATEGORIES,
   TARIF_ROOM_CATEGORIES,
 } from "../../../utils/roomCategories.js";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function EditRequestTarifCategory({
   show,
@@ -53,7 +54,24 @@ function EditRequestTarifCategory({
 
   const sidebarRef = useRef();
   const menuRef = useRef(null);
+  const formBodyRef = useRef(null);
   const [anchorEl, setAnchorEl] = useState(null);
+
+  const showAirlinePrice = !user?.hotelId;
+  const requiredKeys = [
+    "category",
+    "name",
+    "price",
+    ...(showAirlinePrice && !formData.priceForAirReq
+      ? ["priceForAirline"]
+      : []),
+  ];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
+  const invalidNow = (key) => isEditing && invalid(key);
 
   const [updateHotelTarif] = useMutation(UPDATE_HOTEL_TARIF, {
     context: {
@@ -84,19 +102,21 @@ function EditRequestTarifCategory({
   //   console.log(formData);
 
   const resetForm = useCallback(() => {
+    resetRequired();
     if (!tarif) return;
     setFormData({ ...tarif, images: null });
     setCoverImage(tarif?.images?.[0] || null);
     setCoverImage2(null);
     setDeletedImages([]);
     setIsEdited(false);
-  }, [tarif]);
+  }, [tarif, resetRequired]);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
 
     setAnchorEl(null);
     if (!isEdited) {
+      resetRequired();
       onClose();
       setIsEditing(false);
       return;
@@ -109,7 +129,7 @@ function EditRequestTarifCategory({
       onClose();
       setIsEditing(false);
     }
-  }, [confirm, isDialogOpen, isEdited, onClose, resetForm]);
+  }, [confirm, isDialogOpen, isEdited, onClose, resetForm, resetRequired]);
 
   const handleMenuOpen = (e) => setAnchorEl(e.currentTarget);
   const handleMenuClose = () => setAnchorEl(null);
@@ -302,6 +322,11 @@ function EditRequestTarifCategory({
       e.preventDefault();
       setIsLoading(true);
 
+      if (!validate()) {
+        setIsLoading(false);
+        return;
+      }
+
       try {
         // Обновление тарифа
         // Формирование финального списка изображений, с учетом удалённых
@@ -338,6 +363,7 @@ function EditRequestTarifCategory({
         });
 
         // Сброс состояний после успешного обновления
+        resetRequired();
         onClose();
         // refetch();
         setIsLoading(false);
@@ -405,6 +431,7 @@ function EditRequestTarifCategory({
       ) : (
         <>
           <div
+            ref={formBodyRef}
             className={classes.requestMiddle}
             style={
               isEditing
@@ -417,12 +444,13 @@ function EditRequestTarifCategory({
                 <div className={classes.hint}>* — обязательные поля</div>
               )}
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Категория</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("category") ? "fieldInvalid" : ""}`}>Категория</div>
                 {isEditing ? (
                   <div className={classes.dropdown}>
                     <MUIAutocomplete
                       dropdownWidth={"100%"}
                       label={"Выберите категорию"}
+                      error={invalidNow("category")}
                       options={useCategories.map((category) => category.label)}
                       value={
                         useCategories.find(
@@ -453,13 +481,14 @@ function EditRequestTarifCategory({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("name") ? "fieldInvalid" : ""}`}>
                   Название тарифа
                 </div>
                 {isEditing ? (
                   <input
                     type="text"
                     name="name"
+                    className={invalidNow("name") ? "inputInvalid" : undefined}
                     value={formData.name || ""}
                     onChange={handleChange}
                     placeholder="Например: Стандарт, Люкс"
@@ -472,11 +501,12 @@ function EditRequestTarifCategory({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Стоимость</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("price") ? "fieldInvalid" : ""}`}>Стоимость</div>
                 {isEditing ? (
                   <input
                     type="number"
                     name="price"
+                    className={invalidNow("price") ? "inputInvalid" : undefined}
                     value={formData.price ?? ""}
                     onChange={handleChange}
                     placeholder="Введите стоимость"
@@ -490,16 +520,17 @@ function EditRequestTarifCategory({
                 )}
               </div>
 
-              {!user?.hotelId && (
+              {showAirlinePrice && (
                 <>
                   <div className={classes.requestDataInfo}>
-                    <div className={`${classes.requestDataInfo_title} ${isEditing && !formData.priceForAirReq ? classes.required : ""}`}>
+                    <div className={`${classes.requestDataInfo_title} ${isEditing && !formData.priceForAirReq ? classes.required : ""} ${invalidNow("priceForAirline") ? "fieldInvalid" : ""}`}>
                       Стоимость для авиакомпании
                     </div>
                     {isEditing ? (
                       <input
                         type="number"
                         name="priceForAirline"
+                        className={invalidNow("priceForAirline") ? "inputInvalid" : undefined}
                         value={formData.priceForAirline ?? ""}
                         onChange={handleChange}
                         placeholder="Введите стоимость"
@@ -548,7 +579,7 @@ function EditRequestTarifCategory({
               <RoomKindSeasons
                 roomKindId={formData.id}
                 canEdit={isEditing}
-                showAirlinePrice={!user?.hotelId}
+                showAirlinePrice={showAirlinePrice}
               />
 
               <div className={classes.requestDataInfo}>

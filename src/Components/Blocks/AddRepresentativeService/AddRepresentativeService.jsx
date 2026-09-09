@@ -22,6 +22,7 @@ import ManifestUploadField from "../FapV2/ManifestUploadField/ManifestUploadFiel
 import { buildManifestUpload } from "../FapV2/fapManifestFiles.js";
 import { manifestNameKey, isSameFlight } from "../../../utils/parseManifestXlsx.js";
 import { useDialog } from "../../../contexts/DialogContext";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function AddRepresentativeService({
   show,
@@ -34,6 +35,7 @@ function AddRepresentativeService({
   const { confirm } = useDialog();
   const [isEdited, setIsEdited] = useState(false);
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
 
   // Экипаж заявки
   const airlineId = request?.airline?.id ?? request?.airlineId;
@@ -199,6 +201,52 @@ function AddRepresentativeService({
     baggageDeliveryPlannedAt: "",
   });
 
+  // Номер и дата рейса живут отдельными состояниями — собираем их вместе
+  // с formData для проверки обязательных полей
+  const requiredValues = { ...formData, flightNumber, flightDate };
+
+  const requiredKeys = [
+    "flightNumber",
+    ...(formData.waterSupply
+      ? ["waterPeopleCount", "waterPlannedDate", "waterPlannedAt"]
+      : []),
+    ...(formData.foodSupply
+      ? ["foodPeopleCount", "foodPlannedDate", "foodPlannedAt"]
+      : []),
+    ...(formData.habitation
+      ? [
+          "habitationPeopleCount",
+          "habitationPlannedFromDate",
+          "habitationPlannedFromTime",
+          "habitationPlannedToDate",
+          "habitationPlannedToTime",
+        ]
+      : []),
+    ...(formData.transferArrival
+      ? [
+          "transferArrivalPeopleCount",
+          "transferArrivalPlannedDate",
+          "transferArrivalPlannedAt",
+        ]
+      : []),
+    ...(formData.transferDeparture
+      ? [
+          "transferDeparturePeopleCount",
+          "transferDeparturePlannedDate",
+          "transferDeparturePlannedAt",
+        ]
+      : []),
+    ...(formData.baggageDelivery
+      ? ["baggageDeliveryPlannedDate", "baggageDeliveryPlannedAt"]
+      : []),
+  ];
+
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(requiredValues, requiredKeys, formBodyRef);
+
   // Префилл формы из существующих сервисов при открытии
   useEffect(() => {
     if (!show) return;
@@ -285,6 +333,7 @@ function AddRepresentativeService({
   };
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData({
       waterSupply: false,
       waterPeopleCount: "",
@@ -315,7 +364,7 @@ function AddRepresentativeService({
     setFlightDate("");
     setManifest(null);
     setIsEdited(false);
-  }, []);
+  }, [resetRequired]);
 
   const closeButton = useCallback(() => {
     if (!isEdited) {
@@ -381,38 +430,12 @@ function AddRepresentativeService({
     return date.toISOString();
   };
 
-  const isFormValid = () => {
-    // const hasAnyNewService =
-    //   (!hasWaterService && formData.waterSupply) ||
-    //   (!hasMealService && formData.foodSupply) ||
-    //   (!hasLivingService && formData.habitation) ||
-    //   (!hasTransferService && formData.transferHabitation);
-
-    // if (!hasAnyNewService) return false;
-
-    // if (!hasWaterService && formData.waterSupply) {
-    //   if (!formData.waterPeopleCount || !formData.waterPlannedAt) return false;
-    // }
-    // if (!hasMealService && formData.foodSupply) {
-    //   if (!formData.foodPeopleCount || !formData.foodPlannedAt) return false;
-    // }
-    // if (!hasLivingService && formData.habitation) {
-    //   if (!formData.habitationPeopleCount || !formData.habitationPlannedAt) return false;
-    // }
-    // if (!hasTransferService && formData.transferHabitation) {
-    //   if (!formData.transferHabitationPeopleCount || !formData.transferHabitationPlannedAt) return false;
-    // }
-
-    return true;
-  };
-
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async () => {
     setIsLoading(true);
 
-    if (!isFormValid()) {
-      alert("Пожалуйста, заполните все обязательные поля для выбранных услуг.");
+    if (!validate()) {
       setIsLoading(false);
       return;
     }
@@ -662,13 +685,20 @@ function AddRepresentativeService({
           <MUILoader loadSize={"50px"} fullHeight={"75vh"} />
         ) : (
           <>
-            <div className={classes.requestMiddle}>
+            <div className={classes.requestMiddle} ref={formBodyRef}>
               <div className={classes.requestData}>
                 <span className={classes.hint}>* — обязательные поля</span>
-                <label className={classes.required}>Номер рейса</label>
+                <label
+                  className={`${classes.required} ${
+                    invalid("flightNumber") ? "fieldInvalid" : ""
+                  }`}
+                >
+                  Номер рейса
+                </label>
                 <input
                   type="text"
                   value={flightNumber}
+                  className={invalid("flightNumber") ? "inputInvalid" : undefined}
                   placeholder="SU1177"
                   onChange={(e) => {
                     setFlightNumber(e.target.value);
@@ -741,24 +771,47 @@ function AddRepresentativeService({
                 </label>
                 {formData.waterSupply && (
                   <>
-                    <label className={classes.required}>Введите количество человек</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("waterPeopleCount") ? "fieldInvalid" : ""
+                      }`}
+                    >
+                      Введите количество человек
+                    </label>
                     <input
                       type="number"
                       name="waterPeopleCount"
+                      className={
+                        invalid("waterPeopleCount") ? "inputInvalid" : undefined
+                      }
                       value={formData.waterPeopleCount}
                       onChange={handleChange}
                     />
-                    <label className={classes.required}>Дата и время подачи в аэропорт</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("waterPlannedDate") ? "fieldInvalid" : ""
+                      }`}
+                    >
+                      Дата и время подачи в аэропорт
+                    </label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
                         name="waterPlannedDate"
+                        className={
+                          invalid("waterPlannedDate")
+                            ? "inputInvalid"
+                            : undefined
+                        }
                         value={formData.waterPlannedDate}
                         onChange={handleChange}
                       />
                       <input
                         type="time"
                         name="waterPlannedAt"
+                        className={
+                          invalid("waterPlannedAt") ? "inputInvalid" : undefined
+                        }
                         value={formData.waterPlannedAt}
                         onChange={handleChange}
                         placeholder="Время"
@@ -782,24 +835,45 @@ function AddRepresentativeService({
                 </label>
                 {formData.foodSupply && (
                   <>
-                    <label className={classes.required}>Введите количество человек</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("foodPeopleCount") ? "fieldInvalid" : ""
+                      }`}
+                    >
+                      Введите количество человек
+                    </label>
                     <input
                       type="number"
                       name="foodPeopleCount"
+                      className={
+                        invalid("foodPeopleCount") ? "inputInvalid" : undefined
+                      }
                       value={formData.foodPeopleCount}
                       onChange={handleChange}
                     />
-                    <label className={classes.required}>Дата и время подачи в аэропорт</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("foodPlannedDate") ? "fieldInvalid" : ""
+                      }`}
+                    >
+                      Дата и время подачи в аэропорт
+                    </label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
                         name="foodPlannedDate"
+                        className={
+                          invalid("foodPlannedDate") ? "inputInvalid" : undefined
+                        }
                         value={formData.foodPlannedDate}
                         onChange={handleChange}
                       />
                       <input
                         type="time"
                         name="foodPlannedAt"
+                        className={
+                          invalid("foodPlannedAt") ? "inputInvalid" : undefined
+                        }
                         value={formData.foodPlannedAt}
                         onChange={handleChange}
                         placeholder="Время"
@@ -823,36 +897,81 @@ function AddRepresentativeService({
                 </label>
                 {formData.habitation && (
                   <>
-                    <label className={classes.required}>Введите количество человек</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("habitationPeopleCount") ? "fieldInvalid" : ""
+                      }`}
+                    >
+                      Введите количество человек
+                    </label>
                     <input
                       type="number"
                       name="habitationPeopleCount"
+                      className={
+                        invalid("habitationPeopleCount")
+                          ? "inputInvalid"
+                          : undefined
+                      }
                       value={formData.habitationPeopleCount}
                       onChange={handleChange}
                     />
-                    <label className={classes.required}>Дата и время заезда</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("habitationPlannedFromDate")
+                          ? "fieldInvalid"
+                          : ""
+                      }`}
+                    >
+                      Дата и время заезда
+                    </label>
                     <input
                       type="date"
                       name="habitationPlannedFromDate"
+                      className={
+                        invalid("habitationPlannedFromDate")
+                          ? "inputInvalid"
+                          : undefined
+                      }
                       value={formData.habitationPlannedFromDate}
                       onChange={handleChange}
                     />
                     <input
                       type="time"
                       name="habitationPlannedFromTime"
+                      className={
+                        invalid("habitationPlannedFromTime")
+                          ? "inputInvalid"
+                          : undefined
+                      }
                       value={formData.habitationPlannedFromTime}
                       onChange={handleChange}
                     />
-                    <label className={classes.required}>Дата и время выезда</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("habitationPlannedToDate") ? "fieldInvalid" : ""
+                      }`}
+                    >
+                      Дата и время выезда
+                    </label>
                     <input
                       type="date"
                       name="habitationPlannedToDate"
+                      className={
+                        invalid("habitationPlannedToDate")
+                          ? "inputInvalid"
+                          : undefined
+                      }
                       value={formData.habitationPlannedToDate}
                       onChange={handleChange}
                     />
                     <input
                       type="time"
                       name="habitationPlannedToTime"
+                      className={
+                        invalid("habitationPlannedToTime")
+                          ? "inputInvalid"
+                          : undefined
+                      }
                       value={formData.habitationPlannedToTime}
                       onChange={handleChange}
                     />
@@ -874,24 +993,55 @@ function AddRepresentativeService({
                 </label>
                 {formData.transferArrival && (
                   <>
-                    <label className={classes.required}>Введите количество человек</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("transferArrivalPeopleCount")
+                          ? "fieldInvalid"
+                          : ""
+                      }`}
+                    >
+                      Введите количество человек
+                    </label>
                     <input
                       type="number"
                       name="transferArrivalPeopleCount"
+                      className={
+                        invalid("transferArrivalPeopleCount")
+                          ? "inputInvalid"
+                          : undefined
+                      }
                       value={formData.transferArrivalPeopleCount}
                       onChange={handleChange}
                     />
-                    <label className={classes.required}>Дата и время подачи в аэропорт</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("transferArrivalPlannedDate")
+                          ? "fieldInvalid"
+                          : ""
+                      }`}
+                    >
+                      Дата и время подачи в аэропорт
+                    </label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
                         name="transferArrivalPlannedDate"
+                        className={
+                          invalid("transferArrivalPlannedDate")
+                            ? "inputInvalid"
+                            : undefined
+                        }
                         value={formData.transferArrivalPlannedDate}
                         onChange={handleChange}
                       />
                       <input
                         type="time"
                         name="transferArrivalPlannedAt"
+                        className={
+                          invalid("transferArrivalPlannedAt")
+                            ? "inputInvalid"
+                            : undefined
+                        }
                         value={formData.transferArrivalPlannedAt}
                         onChange={handleChange}
                         placeholder="Время"
@@ -915,24 +1065,55 @@ function AddRepresentativeService({
                 </label>
                 {formData.transferDeparture && (
                   <>
-                    <label className={classes.required}>Введите количество человек</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("transferDeparturePeopleCount")
+                          ? "fieldInvalid"
+                          : ""
+                      }`}
+                    >
+                      Введите количество человек
+                    </label>
                     <input
                       type="number"
                       name="transferDeparturePeopleCount"
+                      className={
+                        invalid("transferDeparturePeopleCount")
+                          ? "inputInvalid"
+                          : undefined
+                      }
                       value={formData.transferDeparturePeopleCount}
                       onChange={handleChange}
                     />
-                    <label className={classes.required}>Дата и время прибытия пассажиров в аэропорт</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("transferDeparturePlannedDate")
+                          ? "fieldInvalid"
+                          : ""
+                      }`}
+                    >
+                      Дата и время прибытия пассажиров в аэропорт
+                    </label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
                         name="transferDeparturePlannedDate"
+                        className={
+                          invalid("transferDeparturePlannedDate")
+                            ? "inputInvalid"
+                            : undefined
+                        }
                         value={formData.transferDeparturePlannedDate}
                         onChange={handleChange}
                       />
                       <input
                         type="time"
                         name="transferDeparturePlannedAt"
+                        className={
+                          invalid("transferDeparturePlannedAt")
+                            ? "inputInvalid"
+                            : undefined
+                        }
                         value={formData.transferDeparturePlannedAt}
                         onChange={handleChange}
                         placeholder="Время"
@@ -956,17 +1137,35 @@ function AddRepresentativeService({
                 </label>
                 {formData.baggageDelivery && (
                   <>
-                    <label className={classes.required}>Дата и время</label>
+                    <label
+                      className={`${classes.required} ${
+                        invalid("baggageDeliveryPlannedDate")
+                          ? "fieldInvalid"
+                          : ""
+                      }`}
+                    >
+                      Дата и время
+                    </label>
                     <div className={classes.reis_info}>
                       <input
                         type="date"
                         name="baggageDeliveryPlannedDate"
+                        className={
+                          invalid("baggageDeliveryPlannedDate")
+                            ? "inputInvalid"
+                            : undefined
+                        }
                         value={formData.baggageDeliveryPlannedDate}
                         onChange={handleChange}
                       />
                       <input
                         type="time"
                         name="baggageDeliveryPlannedAt"
+                        className={
+                          invalid("baggageDeliveryPlannedAt")
+                            ? "inputInvalid"
+                            : undefined
+                        }
                         value={formData.baggageDeliveryPlannedAt}
                         onChange={handleChange}
                         placeholder="Время"

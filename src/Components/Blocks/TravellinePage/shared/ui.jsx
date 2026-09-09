@@ -48,10 +48,10 @@ export function JsonViewer({ data }) {
   )
 }
 
-export function Field({ label, value, onChange, type = "text", placeholder, required }) {
+export function Field({ label, value, onChange, type = "text", placeholder, required, error = false }) {
   return (
     <div className={classes.fieldGroup}>
-      <label className={classes.fieldLabel}>
+      <label className={cn(classes.fieldLabel, error && "fieldInvalid")}>
         {label}
         {required && <span className={classes.required}>*</span>}
       </label>
@@ -60,7 +60,7 @@ export function Field({ label, value, onChange, type = "text", placeholder, requ
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className={classes.input}
+        className={cn(classes.input, error && "inputInvalid")}
       />
     </div>
   )

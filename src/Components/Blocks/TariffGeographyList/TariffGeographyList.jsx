@@ -29,6 +29,7 @@ function TariffGeographyList({
   disabled = false,
   usedRegionIds = [],
   usedCityIds = [],
+  error = false,
 }) {
   const token = getCookie("token");
   const [skippedRegions, setSkippedRegions] = useState([]);
@@ -142,6 +143,7 @@ function TariffGeographyList({
         value={selectedRegions}
         onChange={handleRegionsChange}
         isDisabled={disabled || regionsQuery.loading}
+        error={error}
       />
 
       {allCitiesUsed && (
@@ -165,6 +167,7 @@ function TariffGeographyList({
         value={selectedCities}
         onChange={handleCitiesChange}
         isDisabled={disabled || citiesQuery.loading}
+        error={error}
       />
 
       <div className={classes.hint}>
@@ -181,6 +184,7 @@ TariffGeographyList.propTypes = {
   disabled: PropTypes.bool,
   usedRegionIds: PropTypes.array,
   usedCityIds: PropTypes.array,
+  error: PropTypes.bool,
 };
 
 export default TariffGeographyList;

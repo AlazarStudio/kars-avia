@@ -36,6 +36,7 @@ import DeleteComponent from "../../Blocks/DeleteComponent/DeleteComponent";
 import Notification from "../../Notification/Notification";
 import EditPencilIcon from "../../../shared/icons/EditPencilIcon";
 import DeleteIcon from "../../../shared/icons/DeleteIcon";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function RepresentativeDriverDetailPage({ user }) {
   const token = getCookie("token");
@@ -54,6 +55,13 @@ function RepresentativeDriverDetailPage({ user }) {
   const [notifications, setNotifications] = useState([]);
   const [searchQuery, setSearchQuery] = useState("");
   const accessMenu = useEffectiveAccessMenu(user);
+
+  const requiredKeys = ["fullName"];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(personForm, requiredKeys);
 
   const addNotification = useCallback((text, status) => {
     const id = Date.now();
@@ -155,17 +163,15 @@ function RepresentativeDriverDetailPage({ user }) {
   }, [people]);
 
   const closePersonModal = useCallback(() => {
+    resetRequired();
     setShowPersonModal(false);
     setEditingPersonIndex(null);
     setPersonForm({ fullName: "", phone: "" });
-  }, []);
+  }, [resetRequired]);
 
   const handlePersonSubmit = useCallback(async () => {
-    const fullName = personForm.fullName?.trim();
-    if (!fullName) {
-      addNotification("Укажите ФИО пассажира.", "error");
-      return;
-    }
+    if (!validate()) return;
+    const fullName = personForm.fullName.trim();
     const person = {
       fullName,
       phone: personForm.phone?.trim() || null,
@@ -207,6 +213,7 @@ function RepresentativeDriverDetailPage({ user }) {
     updateDriverPerson,
     addNotification,
     closePersonModal,
+    validate,
   ]);
 
   const handleRemovePerson = useCallback(
@@ -438,7 +445,9 @@ function RepresentativeDriverDetailPage({ user }) {
         </DialogTitle>
         <DialogContent className={dialogFormClasses.content}>
           <label
-            className={`${dialogFormClasses.label} ${dialogFormClasses.required}`}
+            className={`${dialogFormClasses.label} ${dialogFormClasses.required} ${
+              invalid("fullName") ? "fieldInvalid" : ""
+            }`}
           >
             ФИО
           </label>
@@ -450,7 +459,9 @@ function RepresentativeDriverDetailPage({ user }) {
               setPersonForm((p) => ({ ...p, [e.target.name]: e.target.value }))
             }
             placeholder="ФИО"
-            className={dialogFormClasses.input}
+            className={`${dialogFormClasses.input} ${
+              invalid("fullName") ? "inputInvalid" : ""
+            }`}
           />
           <label className={dialogFormClasses.label}>Телефон</label>
           <input

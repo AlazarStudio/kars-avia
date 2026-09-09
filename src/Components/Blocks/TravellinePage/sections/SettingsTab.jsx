@@ -8,6 +8,7 @@ import {
 } from "../../../../../graphQL_requests"
 import classes from "../TravellinePage.module.css"
 import { Badge, Btn, Field, SectionCard, Spinner } from "../shared/ui"
+import useRequiredFields from "../../../../hooks/useRequiredFields.js"
 
 const DOC_LINKS = [
   ["Процесс бронирования (обзор)", "https://partner.qatl.ru/docs/booking-process/"],
@@ -27,6 +28,9 @@ export default function SettingsTab({ onResync, lastSyncAt, syncing, autoSyncHou
   const [error, setError] = useState("")
   const [info, setInfo] = useState("")
 
+  const requiredKeys = ["clientId", "clientSecret"]
+  const { invalid, validate } = useRequiredFields({ clientId, clientSecret }, requiredKeys)
+
   useEffect(() => {
     if (config) {
       setClientId(config.clientId ?? "")
@@ -37,8 +41,7 @@ export default function SettingsTab({ onResync, lastSyncAt, syncing, autoSyncHou
   const save = async () => {
     setError("")
     setInfo("")
-    if (!clientId.trim()) return setError("Укажите Client ID")
-    if (!clientSecret.trim()) return setError("Укажите Client Secret")
+    if (!validate()) return
     try {
       await setConfig({
         variables: {
@@ -81,7 +84,14 @@ export default function SettingsTab({ onResync, lastSyncAt, syncing, autoSyncHou
           <div className={classes.infoBox}>
             TravelLine использует OAuth2 (client_credentials). Введите clientId и clientSecret — система автоматически получит и обновит access token.
           </div>
-          <Field label="Client ID" value={clientId} onChange={setClientId} placeholder="bapi_qa0" required />
+          <Field
+            label="Client ID"
+            value={clientId}
+            onChange={setClientId}
+            placeholder="bapi_qa0"
+            required
+            error={invalid("clientId")}
+          />
           <Field
             label="Client Secret"
             value={clientSecret}
@@ -89,8 +99,9 @@ export default function SettingsTab({ onResync, lastSyncAt, syncing, autoSyncHou
             type="password"
             placeholder="Ваш clientSecret"
             required
+            error={invalid("clientSecret")}
           />
-          <Field label="Base URL" value={baseUrl} onChange={setBaseUrl} placeholder="https://partner.qatl.ru" required />
+          <Field label="Base URL" value={baseUrl} onChange={setBaseUrl} placeholder="https://partner.qatl.ru" />
           {error && <div className={classes.statusWarn} style={{ fontSize: 12 }}>{error}</div>}
           {info && <div className={classes.statusOk} style={{ fontSize: 12 }}>{info}</div>}
           <div>

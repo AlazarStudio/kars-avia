@@ -31,6 +31,7 @@ import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import PickedFilesEditor from "../PickedFilesEditor/PickedFilesEditor.jsx";
 import { useDialog } from "../../../contexts/DialogContext.jsx";
 import { useToast } from "../../../contexts/ToastContext.jsx";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 function CreateRequestHotelContract({
   show,
   id,
@@ -168,8 +169,36 @@ function CreateRequestHotelContract({
   const [tarifNames, setTarifNames] = useState([]);
   const [isEdited, setIsEdited] = useState(false); // Флаг «грязной» формы
   const sidebarRef = useRef();
+  const formBodyRef = useRef(null);
+
+  const requiredKeys = [
+    "contractNumber",
+    "date",
+    "companyId",
+    "hotelId",
+    "cityId",
+    "applicationType",
+  ];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(
+    {
+      ...formData,
+      contractNumber: formData.contractNumber?.trim(),
+      applicationType: formData.applicationType?.trim(),
+    },
+    requiredKeys,
+    formBodyRef
+  );
+
+  // через ref, чтобы resetForm оставался стабильным для useCallback/useEffect ниже
+  const resetRequiredRef = useRef(resetRequired);
+  resetRequiredRef.current = resetRequired;
 
   const resetForm = () => {
+    resetRequiredRef.current();
     setActiveTab("Общая");
     setFormData({
       contractNumber: "",
@@ -377,17 +406,6 @@ function CreateRequestHotelContract({
   };
   const [isLoading, setIsLoading] = useState(false);
 
-  const isFormValid = () => {
-    return (
-      formData.contractNumber?.trim() &&
-      formData.date &&
-      formData.companyId &&
-      formData.hotelId &&
-      formData.cityId &&
-      formData.applicationType?.trim()
-    );
-  };
-
   const hasValidContractDate = () => {
     const contractDate = new Date(formData.date);
     return !Number.isNaN(contractDate.getTime());
@@ -418,8 +436,8 @@ function CreateRequestHotelContract({
     setIsLoading(true);
 
     try {
-      if (!isFormValid()) {
-        showAlert("Пожалуйста, заполните все обязательные поля договора.");
+      if (!validate()) {
+        setActiveTab("Общая");
         setIsLoading(false);
         return;
       }
@@ -616,22 +634,38 @@ function CreateRequestHotelContract({
       ) : (
         <>
           {activeTab === "Общая" ? (
-            <div className={classes.requestMiddle}>
+            <div className={classes.requestMiddle} ref={formBodyRef}>
               <div className={classes.requestData}>
                 <span className={classes.hint}>* — обязательные поля</span>
-                <label className={classes.required}>№ Договора</label>
+                <label
+                  className={`${classes.required} ${
+                    invalid("contractNumber") ? "fieldInvalid" : ""
+                  }`}
+                >
+                  № Договора
+                </label>
                 <input
                   type="text"
                   name="contractNumber"
+                  className={
+                    invalid("contractNumber") ? "inputInvalid" : undefined
+                  }
                   value={formData.contractNumber}
                   onChange={handleChange}
                   placeholder="Например: Договор №1"
                 />
 
-                <label className={classes.required}>Дата заключения</label>
+                <label
+                  className={`${classes.required} ${
+                    invalid("date") ? "fieldInvalid" : ""
+                  }`}
+                >
+                  Дата заключения
+                </label>
                 <input
                   type="date"
                   name="date"
+                  className={invalid("date") ? "inputInvalid" : undefined}
                   value={formData.date}
                   onChange={handleChange}
                   placeholder="Дата"
@@ -659,10 +693,17 @@ function CreateRequestHotelContract({
                   }}
                 />
 
-                <label className={classes.required}>ГК КАРС</label>
+                <label
+                  className={`${classes.required} ${
+                    invalid("companyId") ? "fieldInvalid" : ""
+                  }`}
+                >
+                  ГК КАРС
+                </label>
                 <MUIAutocomplete
                   dropdownWidth={"100%"}
                   label={"Выберите компанию"}
+                  error={invalid("companyId")}
                   options={companies?.map((item) => item.name)}
                   value={selectedCompany ? selectedCompany?.name : ""}
                   onChange={(event, newValue) => {
@@ -678,7 +719,11 @@ function CreateRequestHotelContract({
                   }}
                 />
 
-                <label className={classes.required}>
+                <label
+                  className={`${classes.required} ${
+                    invalid("hotelId") ? "fieldInvalid" : ""
+                  }`}
+                >
                   {activeFilterTab === "hotels" ? "Гостиница" : "Организация"}
                 </label>
                 <MUIAutocompleteColor
@@ -688,6 +733,7 @@ function CreateRequestHotelContract({
                       ? "Выберите гостиницу"
                       : "Выберите организацию"
                   }
+                  error={invalid("hotelId")}
                   options={airlines}
                   getOptionLabel={(option) =>
                     option
@@ -754,10 +800,17 @@ function CreateRequestHotelContract({
                   }}
                 />
 
-                <label className={classes.required}>Город</label>
+                <label
+                  className={`${classes.required} ${
+                    invalid("cityId") ? "fieldInvalid" : ""
+                  }`}
+                >
+                  Город
+                </label>
                 <MUIAutocompleteColor
                   dropdownWidth="100%"
                   label={"Выберите город"}
+                  error={invalid("cityId")}
                   options={cities}
                   getOptionLabel={(option) => {
                     if (!option) return "";
@@ -868,10 +921,19 @@ function CreateRequestHotelContract({
                   </>
                 )}
 
-                <label className={classes.required}>Вид услуги</label>
+                <label
+                  className={`${classes.required} ${
+                    invalid("applicationType") ? "fieldInvalid" : ""
+                  }`}
+                >
+                  Вид услуги
+                </label>
                 <input
                   type="text"
                   name="applicationType"
+                  className={
+                    invalid("applicationType") ? "inputInvalid" : undefined
+                  }
                   value={formData.applicationType}
                   onChange={handleChange}
                   placeholder="Введите вид услуги"

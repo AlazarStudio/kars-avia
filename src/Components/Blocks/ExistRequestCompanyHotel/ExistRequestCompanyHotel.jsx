@@ -20,6 +20,7 @@ import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import AdditionalMenu from "../../Standart/AdditionalMenu/AdditionalMenu";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
+import useRequiredFields from "../../../hooks/useRequiredFields.js";
 
 function ExistRequestCompanyHotel({
   show,
@@ -62,6 +63,15 @@ function ExistRequestCompanyHotel({
     password: chooseObject?.password || "",
   });
 
+  const showRole = user?.role !== roles.hotelModerator;
+  const requiredKeys = ["name", "email", ...(showRole ? ["role"] : []), "position", "login"];
+  const formBodyRef = useRef(null);
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields(formData, requiredKeys, formBodyRef);
+
   const sidebarRef = useRef();
   const menuRef = useRef(null);
   const [anchorEl, setAnchorEl] = useState(null);
@@ -90,6 +100,7 @@ function ExistRequestCompanyHotel({
   }, [chooseObject]);
 
   const resetForm = useCallback(() => {
+    resetRequired();
     setFormData({
       id: chooseObject?.id || "",
       images: null,
@@ -106,12 +117,13 @@ function ExistRequestCompanyHotel({
     setShowOldPassword(false);
     setShowNewPassword(false);
     if (chooseObject?.images) setShowIMG(chooseObject.images);
-  }, [chooseObject]);
+  }, [chooseObject, resetRequired]);
 
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showOldPassword, setShowOldPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
+  const invalidNow = (key) => isEditing && invalid(key);
 
   const closeButton = useCallback(async () => {
     if (isDialogOpen) return;
@@ -169,14 +181,8 @@ function ExistRequestCompanyHotel({
   const handleUpdate = async () => {
     if (isEditing) {
       setIsLoading(true); // Устанавливаем isLoading перед началом загрузки
-      // Проверяем обязательные поля
-      const requiredFields = ["name", "email", "role", "position", "login"];
-      const emptyFields = requiredFields.filter(
-        (field) => !formData[field]?.trim()
-      );
 
-      if (emptyFields.length > 0) {
-        showAlert("Пожалуйста, заполните все обязательные поля.");
+      if (!validate()) {
         setIsLoading(false);
         return;
       }
@@ -303,7 +309,7 @@ function ExistRequestCompanyHotel({
         <MUILoader loadSize={"50px"} fullHeight={"85vh"} />
       ) : (
         <>
-          <div className={classes.requestMiddle}>
+          <div className={classes.requestMiddle} ref={formBodyRef}>
             <div className={classes.requestData}>
               {isEditing && (
                 <div className={classes.hint}>* — обязательные поля</div>
@@ -322,11 +328,12 @@ function ExistRequestCompanyHotel({
               </div>
 
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>ФИО</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("name") ? "fieldInvalid" : ""}`}>ФИО</div>
                 {isEditing ? (
                   <input
                     type="text"
                     name="name"
+                    className={invalidNow("name") ? "inputInvalid" : undefined}
                     placeholder="Иванов Иван Иванович"
                     value={formData.name}
                     onChange={handleChange}
@@ -338,11 +345,12 @@ function ExistRequestCompanyHotel({
                 )}
               </div>
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Почта</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("email") ? "fieldInvalid" : ""}`}>Почта</div>
                 {isEditing ? (
                   <input
                     type="email"
                     name="email"
+                    className={invalidNow("email") ? "inputInvalid" : undefined}
                     placeholder="example@mail.ru"
                     value={formData.email}
                     onChange={handleChange}
@@ -371,15 +379,16 @@ function ExistRequestCompanyHotel({
                   </div>
                 )}
               </div>
-              {user?.role === roles.hotelModerator ? null : (
+              {showRole && (
                 <div className={classes.requestDataInfo}>
-                  <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Роль</div>
+                  <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("role") ? "fieldInvalid" : ""}`}>Роль</div>
                   {isEditing ? (
                     <div className={classes.dropdown}>
                       <MUIAutocomplete
                         dropdownWidth={"100%"}
                         isDisabled={false}
                         label={"Выберите роль"}
+                        error={invalidNow("role")}
                         options={rolesObject.hotel}
                         value={
                           rolesObject.hotel.find(
@@ -406,13 +415,14 @@ function ExistRequestCompanyHotel({
               )}
 
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Должность</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("position") ? "fieldInvalid" : ""}`}>Должность</div>
                 {isEditing ? (
                   <div className={classes.dropdown}>
                     <MUIAutocomplete
                       dropdownWidth={"100%"}
                       isDisabled={false}
                       label={"Выберите должность"}
+                      error={invalidNow("position")}
                       options={positions?.map((position) => position.name) || []}
                       value={formData.position}
                       onChange={(event, newValue) => {
@@ -431,11 +441,12 @@ function ExistRequestCompanyHotel({
                 )}
               </div>
               <div className={classes.requestDataInfo}>
-                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""}`}>Логин</div>
+                <div className={`${classes.requestDataInfo_title} ${isEditing ? classes.required : ""} ${invalidNow("login") ? "fieldInvalid" : ""}`}>Логин</div>
                 {isEditing ? (
                   <input
                     type="text"
                     name="login"
+                    className={invalidNow("login") ? "inputInvalid" : undefined}
                     placeholder="Логин"
                     value={formData.login}
                     onChange={handleChange}

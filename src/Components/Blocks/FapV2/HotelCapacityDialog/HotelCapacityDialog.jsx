@@ -5,6 +5,7 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "../../../Standart/Button/Button";
 import classes from "./HotelCapacityDialog.module.css";
+import useRequiredFields from "../../../../hooks/useRequiredFields.js";
 
 // Диалог «Изменить количество мест». Валидирует только то, что защищает от потери данных:
 // положительное число и не ниже уже размещённых. Ограничение «сумма мест ≤ план услуги»
@@ -22,16 +23,25 @@ export default function HotelCapacityDialog({
   const [value, setValue] = useState("");
   const prevOpenRef = useRef(false);
 
+  const requiredKeys = ["value"];
+  const {
+    invalid,
+    validate,
+    reset: resetRequired,
+  } = useRequiredFields({ value }, requiredKeys);
+
   // Предзаполняем ТОЛЬКО на открытии. placed — живая величина (подписка на заявку),
   // и держать её в зависимостях означало бы затирать уже набранное пользователем.
   useEffect(() => {
     if (open && !prevOpenRef.current) {
+      resetRequired();
       setValue(String(initialValue ?? placed ?? 0));
     }
     prevOpenRef.current = open;
-  }, [open, initialValue, placed]);
+  }, [open, initialValue, placed, resetRequired]);
 
   const handleSubmit = () => {
+    if (!validate()) return;
     const next = Number(value);
     if (!Number.isFinite(next) || next <= 0) {
       onError?.("Укажите корректное количество мест");
@@ -69,13 +79,19 @@ export default function HotelCapacityDialog({
           Гостиница: <strong>{hotelName || "—"}</strong>
         </div>
         <div className={classes.editHotelField}>
-          <label className={classes.editHotelLabel}>
+          <label
+            className={`${classes.editHotelLabel} ${
+              invalid("value") ? "fieldInvalid" : ""
+            }`}
+          >
             Количество мест <span className={classes.req}>*</span>
           </label>
           <input
             type="number"
             min={1}
-            className={classes.editHotelInput}
+            className={`${classes.editHotelInput} ${
+              invalid("value") ? "inputInvalid" : ""
+            }`}
             value={value}
             onChange={(e) => setValue(e.target.value)}
             autoFocus
