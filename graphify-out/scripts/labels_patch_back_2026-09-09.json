@@ -1,0 +1,9 @@
+{
+  "22": "Hotel Preview: hotelPreviewLink.js, roomUtils, hotelFilters",
+  "23": "Resolvers: representative, global, city, airport, log, airline",
+  "31": "Request Pricing: requestPricing.js allocation & clustering",
+  "58": "FAP: driverVehicle.js & hotelReportRows.js",
+  "29": "Access: assertCanManageAccess.js guards & Travelline role checks",
+  "38": "Auth Email: authEmailTemplates.js, sendAuthEmails.js, sendMail.js",
+  "48": "Analytics: dispatchersPerformance.js"
+}

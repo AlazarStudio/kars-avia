@@ -1,58 +1,61 @@
-# Graph Report - .  (2026-09-07)
+# Graph Report - .  (2026-09-09)
 
 ## Corpus Check
-- 802 files · ~644,417 words
+- 809 files · ~655,228 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4224 nodes · 13831 edges · 210 communities (157 shown, 53 thin omitted)
-- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 429 edges (avg confidence: 0.79)
+- 4263 nodes · 14106 edges · 227 communities (171 shown, 56 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 431 edges (avg confidence: 0.79)
 - Token cost: 0 input · 0 output
 
 ## Community Hubs (Navigation)
 - ФАП: багаж и поездки
-- Сезонные цены категорий номеров (RoomKindSeasons)
+- GraphQL: ядро запросов и формы заявок
 - ФАП: трансфер — FapTransferPage и факт поездки
 - ФАП: реестр и группы пассажиров
-- specs
+- ФАП: отчёт по гостинице — FapHotelPage, FapReportView, fapRooms
 - Категории номеров и цены авиакомпании
+- ФАП: трансфер — FapTransferPage и факт поездки
 - Договоры: формы создания и правки
+- Договоры: формы создания и правки
+- ФАП: отчёт по гостинице — FapHotelPage, FapReportView, fapRooms
 - ФАП: книга отчёта Excel (buildReportSheets)
 - ФАП-аналитика: PassengerAnalytics и мапперы
+- specs
 - ФАП: деталка заявки, проживание, доступ к отчёту
-- specs
-- PassengerAnalytics
-- specs
 - access.js: предикаты ролей и гостиницы
 - access.js: предикаты ролей и гостиницы
-- utils
+- ФАП-аналитика: PassengerAnalytics и мапперы
+- ФАП: импорт манифеста — parseManifestXlsx, ManifestUploadField, manifestCore
+- Passenger Analytics Summary Charts
 - Passenger Analytics Aggregation
+- PassengerAnalytics
 - AddressField и геосаджест
-- utils
+- ФАП: профили манифеста (manifestProfiles, PLI, cleanFullName)
+- ФАП: импорт манифеста — parseManifestXlsx, ManifestUploadField, manifestCore
 - groupsCount и linkedPeopleCount в аналитике по пассажирам
-- utils
+- ФАП: подсказки групп по фамилиям (surnameForms, fapGroupSuggestions)
 - ФАП: страницы-роуты и гейты доступа
 - Passenger Document Recognition
-- Passenger Analytics Summary Charts
 - AnalyticsForAvia
 - Системные уведомления и патч-ноуты
-- Роли, шапка и реестры договоров
-- FapHotelPage.jsx
 - ФАП: страницы услуг и константы
 - SettingsSidebar: права отдела и уведомления
+- PassengerAnalytics
 - utils
-- ФАП: книга отчёта Excel (buildReportSheets)
-- Эскадрилья: Estafeta, ExistRequest, статусы и roles
-- utils
-- GraphQL: ядро запросов и формы заявок
+- ФАП: профили манифеста (manifestProfiles, PLI, cleanFullName)
 - NotificationsSidebar.jsx
-- Резерв и размещение представителя
 - Passenger Identity & Roster
-- SettingsSidebar: права отдела и уведомления
+- FapHotelPage.jsx
+- SettingsSidebar: панель уведомлений (notificationSections, payload)
+- ФАП: страницы-роуты и гейты доступа
+- UI-примитивы: Button, MUILoader, Toast, Sidebar
 - Цепочка accessMenu рвётся до таба шахматки
 - Геометрия сетки (dayWidth, rowHeight = 50 × places)
 - Известные расхождения шахматки с конвенциями репозитория
 - NewPlacementV2.jsx — оркестратор (1701 строка, 52% модуля)
+- Цепочка accessMenu рвётся до таба шахматки
 - Placement Dead Code Defects
 - Placement Filters & Virtualization
 - SHAHMATKA ARCHITECTURE
@@ -60,24 +63,25 @@
 - Цвета статусов и расхождение translateStatus с roles.js
 - Placement Board Data Mapping
 - Транскрипт звонка 04.08.2026: правки по учётке гостиницы (00:00–15:08)
-- HotelAboutTariffs
 - Call Backlog Review 03.08
 - Call Backlog Review 03.08
+- Call Backlog Review 03.08
+- docs
+- Доки ФАП: FAP.md, FAP2.md, FAP-DECISIONS, FAP-HANDOVER
 - docs
 - docs
 - docs
-- docs
-- docs
-- services
-- SettingsSidebar: права отдела и уведомления
-- RoleContent: точки входа ролей и роуты FapV2
-- Сессия и контексты: getCookie, useToast, useDialog, JWT
+- ФАП: страницы-роуты и гейты доступа
+- SettingsSidebar: компонент и GraphQL-операции отдела
+- Эскадрилья: Estafeta, ExistRequest, статусы и roles
+- ФАП: страницы-роуты и гейты доступа
 - Шахматка v2: NewPlacementV2, utils и история версий
 - CLAUDE.md / AGENTS.md: руководство и MUI-примитивы
+- ФАП: страницы-роуты и гейты доступа
 - TransferOrder
-- CLAUDE
-- ReportsV2
-- Отчёты v2: редактор черновика (ReportDraftEditor, поля, сортировка)
+- SettingsSidebar: права отдела и уведомления
+- Отчёты v2: выпущенные отчёты, plural, hotelAddress (README v12.14)
+- Отчёты v2: правила расчёта суток (reportRules, ReportRulesSidebar)
 - README: история версий
 - README: история версий
 - README: история версий
@@ -92,42 +96,50 @@
 - README: история версий
 - utils
 - README: история версий
-- CLAUDE
 - README: история версий
 - utils
 - README: история версий
 - README: история версий
 - Меню, роли и эффективные права
+- ФАП: страницы услуг и константы
+- ФАП: манифест фиксированной ширины и ICAO (manifestFixedWidth)
 - utils
-- ReportDraftEditor
+- Описание гостиницы: парсер hotelDescription и HotelPreview
+- Сезонные цены категорий номеров (RoomKindSeasons)
 - utils
-- utils
-- utils
-- graphQL requests
-- DocumentationList
 - DocumentationList1
-- DocumentationListLeftPanel
-- DocumentationListPanelContent
+- storage
+- Документация: загрузка файлов (UploadContext, imageDropPlugin)
 - Документация: редактор Tiptap и расширения
-- components
-- src
-- Таблицы заявок: InfoTable, GroupedRequests, convertToDate / getMediaUrl
-- TravelLine: поиск, бронирование, синхронизация
-- Авторизация: App, AuthContext, authService
-- UI-примитивы: Button, MUILoader, Toast, Sidebar
-- Карточки «О компании» и медиа (getMediaUrl)
-- Чаты и поддержка: Message, SupportPage, getMediaUrl
+- Документация: редактор Tiptap и расширения
+- Сессия и контексты: getCookie, useToast, useDialog, JWT
 - Резерв и размещение представителя
-- icons
+- TravelLine: поиск, бронирование, синхронизация
+- Резерв представителя: вкладки услуг (Habitation / Water / Power / Baggage) и DeleteIcon
+- Таблицы заявок: InfoTable, GroupedRequests, convertToDate / getMediaUrl
+- Сезонные цены категорий номеров (RoomKindSeasons)
+- Авторизация: App, AuthContext, authService
+- Роли, шапка и реестры договоров
+- Карточки «О компании» и медиа (getMediaUrl)
+- Сессия и контексты: getCookie, useToast, useDialog, JWT
+- NotificationsSidebar
 - HotelTable
+- Чаты и поддержка: Message, SupportPage, getMediaUrl
 - CreateRequestDocumentation
 - Страница гостиницы: HotelPage, роутинг по ролям, ссылка предпросмотра
+- Описание гостиницы: парсер hotelDescription и HotelPreview
 - «О гостинице»: HotelAbout и иконки удобств
+- Шахматка v2: NewPlacementV2, utils и история версий
 - Аналитика АК: AirlineAnalytics, мапперы и сортировка таблиц
+- GraphQL: ядро запросов и формы заявок
+- Отчёты v2: таблица черновика — ReportDraftTable, Summary, группировка по гостиницам
 - Отчёты v2: черновик — reportDraftRows, useReportDraft
-- EditRequestDocumentation
+- Системные уведомления и патч-ноуты
+- Системные уведомления и патч-ноуты
+- Системные уведомления и патч-ноуты
+- Документация: EditRequestDocumentation, дерево и TextEditorOutput
 - package
-- package
+- package.json: dependencies (Tiptap, MUI)
 - package
 - package
 - package
@@ -166,44 +178,49 @@
 - package
 - package
 - ФАП: манифест из реестра и импорт (fapManifestBuild, ManifestImportModal)
-- package
+- package.json: devDependencies (Vite, ESLint)
 - Страницы АК и автопарка: AirlinePage, DriversCompanyPage, роутинг по ролям
-- Таблицы InfoTableData* и готовность отделов (readiness)
+- RoleContent: точки входа ролей и роуты FapV2
 - GraphQL: ядро запросов и формы заявок
-- storage
+- UI-примитивы: Button, MUILoader, Toast, Sidebar
+- DocumentationListPanelContent
 - Документация: медиа-блоки редактора
 - Документация: тулбар и экспорт в Office
-- src
+- Документация: якоря навигации (AnchorHashOverlay)
+- Документация: перетаскивание блоков (BlockDragOverlay)
 - components
-- components
-- components
+- Документация: LinkModal и иконки редактора
 - extensions
-- extensions
-- extensions
-- extensions
-- extensions
-- extensions
-- utils
+- Документация: блоки цитаты и рамки (quoteBlock, frameBlock)
+- Документация: высота строк таблицы (tableRowResizing)
+- Документация: обёртка таблицы, перенос строк и колонок (tableWrapperView)
+- Документация: импорт DOCX (docxImport)
 - Svg-обёртка, иконки действий и меню «⋮»
 - EditRequestDocumentation
 - FapV2
-- ФАП: книга отчёта Excel (buildReportSheets)
+- ФАП: отчёт по гостинице — FapHotelPage, FapReportView, fapRooms
+- Таблицы заявок: InfoTable, GroupedRequests, convertToDate / getMediaUrl
+- Категории номеров и цены авиакомпании
+- HotelAboutTariffs
 - HotelAbout tabComponent
+- Таблицы InfoTableData* и готовность отделов (readiness)
 - ReportsV2
-- ReportDraftEditor
-- ReportsV2
-- ReportDraftEditor
-- ScriptRunner
-- ScriptRunner
-- ScriptRunner
+- Таблицы заявок: InfoTable, GroupedRequests, convertToDate / getMediaUrl
+- Отчёты v2: строка черновика — ReportDraftRow, editorUtils, formatMoney
+- Сезонные цены категорий номеров (RoomKindSeasons)
+- ScriptRunner: исполнение действий и DOM-хелперы
+- ScriptRunner: компонент, сбор скриптов и селекторы
+- ScriptRunner: исполнение действий и DOM-хелперы
 - ScriptRunner
 - ScriptRunner
 - HotelPMS (мок-данные)
-- utils
-- utils
-- contexts
-- utils
-- utils
+- Аналитика АК: AirlineAnalytics, мапперы и сортировка таблиц
+- Шахматка v2: плашки, лоток и бейджи статусов (PlacementBarV2, TrayCardV2)
+- Шахматка v2: период и шапка сетки (placementPeriod, GridHeader)
+- hooks
+- services
+- Excel-даты и парсер массового импорта (excelDate, parseBulkXlsx)
+- ФАП: тесты профилей манифеста
 - utils
 
 ## God Nodes (most connected - your core abstractions)
@@ -212,11 +229,11 @@
 3. `MUILoader()` - 147 edges
 4. `useDialog()` - 143 edges
 5. `getMediaUrl()` - 133 edges
-6. `Button()` - 132 edges
-7. `convertToDate()` - 87 edges
-8. `Sidebar()` - 87 edges
-9. `CloseIcon()` - 82 edges
-10. `README — история обновлений Kars Avia (v0.1 → v12.15)` - 70 edges
+6. `Button()` - 133 edges
+7. `useRequiredFields()` - 112 edges
+8. `convertToDate()` - 87 edges
+9. `Sidebar()` - 87 edges
+10. `CloseIcon()` - 82 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `ФАП: карточка доставки багажа по составу реальных документов` --semantically_similar_to--> `FapTransferPage()`  [INFERRED] [semantically similar]
@@ -286,573 +303,629 @@
 - **Контур ворнингов расселения: группы + требование + единый roomKey + вычислитель** — docs_superpowers_specs_2026_07_22_fap_passenger_groups_design_passenger_groups, docs_superpowers_specs_2026_07_22_fap_passenger_groups_design_placement_requirement, docs_superpowers_specs_2026_07_22_fap_passenger_groups_design_room_key_single_source, docs_superpowers_specs_2026_07_22_fap_passenger_groups_design_group_warnings, docs_superpowers_specs_2026_07_22_fap_passenger_groups_design_group_chip [EXTRACTED 1.00]
 - **Канонический пассажир ФАП: ростер + гидрация + категория + экран реестра** — docs_superpowers_specs_2026_07_06_fap_unified_passengers_design_canonical_roster, docs_superpowers_specs_2026_07_06_fap_unified_passengers_design_hydration_overlay, docs_superpowers_plans_2026_07_06_fap_stage1_personcategory_roster_person_category_in_roster, docs_superpowers_specs_2026_07_06_fap_unified_passengers_design_backfill_migration, docs_superpowers_specs_2026_07_20_fap_registry_access_design_registry_section [INFERRED 0.95]
 
-## Communities (210 total, 53 thin omitted)
+## Communities (227 total, 56 thin omitted)
 
 ### Community 15 - "ФАП: багаж и поездки"
 Cohesion: 0.06
-Nodes (36): ФАП: карточка доставки багажа по составу реальных документов, Поле baggageTags (номера багажных бирок), Ловушка: скалярный список в composite-типе Prisma приходит null, Дата доставки как единственный признак завершённости, Строгий порядок выката: бэк → фронт, Итерация 2: поездка с несколькими пассажирами, Побочный эффект: метрика transferBaggage перестаёт быть нулевой, BaggageTagsInput — ввод бирок чипами (+28 more)
-
-### Community 33 - "Сезонные цены категорий номеров (RoomKindSeasons)"
-Cohesion: 0.11
-Nodes (29): Своя багажная мутация updatePassengerRequestBaggageDriver, v12.15 — сезонные цены тарифов гостиницы (RoomKindSeasons, roomKindSeasons.js, apolloErrorText.js), ADD_PASSENGER_REQUEST_BAGGAGE_DRIVER, UPDATE_PASSENGER_REQUEST_BAGGAGE_DRIVER, GET_ROOM_KIND_SEASONS, CREATE_ROOM_KIND_SEASON, UPDATE_ROOM_KIND_SEASON, DELETE_ROOM_KIND_SEASON (+21 more)
-
-### Community 12 - "ФАП: трансфер — FapTransferPage и факт поездки"
-Cohesion: 0.05
-Nodes (50): Общий справочник VEHICLE_TYPES в fapConstants, Шапка Вариант B: одна primary-кнопка + overflow «⋯», Отклонение от макета: у авиакомпании остаются «История» и chip «Реестр», Поле «перевезено N» на поездке (transportedCount), Факт поездки = max(поимённый список, transportedCount), Ослабление guard патча водителя: COMPLETED разрешён, режется только CANCELLED, Числовая правка вверх не реоткрывает COMPLETED-услугу, Порядок выката: бэк → фронт (новые поля трансфера) (+42 more)
-
-### Community 10 - "ФАП: реестр и группы пассажиров"
-Cohesion: 0.06
-Nodes (62): GroupChip: гибридная кодировка связи (цвет + иконка + слово), Пять SVG-иконок типов связи в shared/icons, Handoff prompt: FAP passenger groups (2026-07-22), Passenger groups execution invariants (hard constraints), Спека: группы пассажиров + требование вида размещения, Группы пассажиров (PassengerRequestGroup): 5 типов + уровень «вместе», placementRequirement — требование вида размещения на человеке, Ловушка allowlist в normalizeSavedPerson/mergeSavedPerson (+54 more)
-
-### Community 1 - "specs"
-Cohesion: 0.03
-Nodes (95): Отчёт: чипы групп в шапке номера (вариант Y), Отчёт: точка группы в строке гостя, Гейт видимости ворнингов групп: метки всем, ⚠ только canEdit, Инварианты рендера групп в FapHotelPage, Отчёт по гостинице: режимы Просмотр / Редактирование, FapReportView — read-only детализация отчёта, FapModeToggle — сегмент Просмотр/Редактирование, Spec: FAP hotel tariff billing mode «Койко-место»/«Номер» (2026-07-21) (+87 more)
-
-### Community 5 - "Категории номеров и цены авиакомпании"
-Cohesion: 0.05
-Nodes (76): Исключение занятых аэропортов между договорами авиакомпании, «Выбрать всё» уважает getOptionDisabled, Подсказка о пропущенных аэропортах, Занятые аэропорты выводятся на клиенте из пропа addTarif, Ловушка: Create-опции по id, Edit-опции по value, SegmentedToggle — generic переключатель взаимоисключающих значений, Точное совпадение фильтра на бэке + fail-closed отправка полей, Спека: цены авиакомпании как источник тарифа в проживании ФАП (+68 more)
-
-### Community 18 - "Договоры: формы создания и правки"
-Cohesion: 0.11
-Nodes (35): Spec: Contract registry frontend edits (2026-07-07), Contract registry frontend edits (6 changes, front-only), Rationale: registry edits need zero backend change, ДС end date + prolongation + archive/restore, «Архив ДС» tab (client-side active/archived split), «ДС: N» badge + agreements popover in the registry list, Prolongation chip in the contract list row, Unified expiration badge helper (getExpirationBadge) (+27 more)
-
-### Community 28 - "ФАП: книга отчёта Excel (buildReportSheets)"
-Cohesion: 0.14
-Nodes (40): Rationale: XLSX export needs no change under PER_ROOM, Excel-лист проживания: 22 колонки, дата рейса в шапке, единый экспортёр, Удаление легаси-контура отчёта: FapReport, маршрут report/:hotelIndex, SheetJS-экспорт, Колонка «Перевезено» в Excel-листе трансфера (сдвиг «Суммы» I→J), Excel-отчёт: колонка «Ланчбокс» (23 → 24) и SUMPRODUCT в итогах, Приоритет plannedFromAt над plannedAt в дате заезда Excel, placementKindLabel(), PERSON_CATEGORY_LABEL (+32 more)
-
-### Community 23 - "ФАП-аналитика: PassengerAnalytics и мапперы"
-Cohesion: 0.10
-Nodes (38): Spec: «Пассажиры» filters modal restyle, stage G (2026-07-24), Sectioned passenger filters modal (Период / Статусы / Параметры), Active filters badge on the «Фильтры» button, Decade preset highlight via sameRange day comparison, Rationale: Аналитика АК: AirlineAnalytics, мапперы и сортировка таблиц.module.css must not be touched, Спека: визуальный полиш «Пассажиры → По заявкам» (этап E, 2026-07-24), План: визуальный полиш аналитики по заявкам (5 задач), Список «По заявкам»: 14 колонок → 6 двухэтажных (+30 more)
-
-### Community 9 - "ФАП: деталка заявки, проживание, доступ к отчёту"
-Cohesion: 0.06
-Nodes (64): Спека: отчёт ФАП открывается АК только после «Отправить на проверку» (2026-07-31), План реализации: «Отправить на проверку» (7 задач, бэк→фронт), Отправка отчёта по проживанию на проверку (гейт видимости для АК), fapReportAccess — единственное правило видимости отчёта, Кнопка «Скрыть» и мутация hidePassengerRequestHotelReport (дополнение того же дня), Спека: ФАП — подсчёт суток проживания по длительности, Правило суток ФАП: минимум 1 сутки + 0.5 за начатый 12-часовой блок, Пересчёт daysCount при открытии сохранённого отчёта (+56 more)
-
-### Community 112 - "specs"
-Cohesion: 0.18
-Nodes (11): Поле submittedAt на PassengerRequestHotelReport + мутация submitPassengerRequestHotelReport, Сброс флага отправки только при реально изменившихся строках, Ловушки реализации гейта отчёта, Три новых поля строки отчёта: tariffName, pricePerDay, placementKind, Ловушка деплоя: бэк раньше фронта (иначе сохранение отчёта падает на новых полях инпута), Теневые строки и восстановление тарифов по tariffName, reportRows — Json-колонка: новые поля строки отчёта без миграции, Порядок выката строго бэк → фронт (deploy coupling селекции) (+3 more)
-
-### Community 77 - "PassengerAnalytics"
-Cohesion: 0.19
-Nodes (18): Белый список hotelIndexes в пяти точках выгрузки XLSX, Выгрузка текущей сводки одним листом XLSX, Экспорт полного отчёта одной книгой (5 листов), Номер заявки в таблице и в листах Excel (сдвиг колонок), Метрики связей в аналитике ФАП: groupsCount и linkedPeopleCount, Столбец «Группы», KPI «Связано пассажиров» и колонка XLSX, Тотал linkedPeopleCount считается по ВСЕМ строкам, включая costMissing, Сдвиг firstMoneyCol при вставке не-денежной колонки (load-bearing) (+10 more)
-
-### Community 125 - "specs"
-Cohesion: 0.29
-Nodes (7): Гейт только клиентский — серверной фильтрации reportRows не будет, Спека: проверка соответствия рейса манифеста рейсу заявки (2026-07-22), План: проверка рейса манифеста (5 задач), Проверка расхождения рейса манифеста и рейса заявки, Предупреждение + подтверждение вместо жёсткого блока, Дата рейса (flightDate) сквозняком: формы, деталка, карточка списка, шапка Excel, AddRepresentativeService()
-
-### Community 135 - "access.js: предикаты ролей и гостиницы"
-Cohesion: 0.40
-Nodes (5): Спека: фильтр гостиниц по видимости (show) и активности (active) (2026-07-15), План: фильтр гостиниц active/show (6 задач), Фильтр списка гостиниц по show/active + бейджи состояния, Гейтинг по роли вместо User.dispatcher (вариант B), GET_HOTELS
-
-### Community 42 - "access.js: предикаты ролей и гостиницы"
-Cohesion: 0.12
-Nodes (25): HotelStatusBadge — пилюля «Неактивна»/«Скрыта», Права доступа к заявкам через accessMenu, v12.7 — бейдж «Готовность к работе» + браузерные push-уведомления, GET_HOTEL_USERS, AirlineRegisterOfContracts(), ExistRequest(), HotelReadinessIndicator(), HotelRegisterOfContracts() (+17 more)
-
-### Community 56 - "utils"
-Cohesion: 0.14
-Nodes (22): isSameFlight/normalizeFlightNumber — нечёткое сравнение номеров рейсов, Spec: FAP multi-format manifest parsing via profiles (2026-07-07), Manifest format profiles (data-described formats + header auto-detection), manifestCore.js — shared engine (normHeader, detectProfile, extractPeople), Preserved parser contract: {people, flightNumber, error} + manifestNameKey re-export, Verification by Node scripts against real sample files (no frontend test runner), Блок загрузки манифеста ManifestUploadField, Младенцы на руках: счётчик на сопровождающем (хук lapInfants) (+14 more)
-
-### Community 64 - "Passenger Analytics Aggregation"
-Cohesion: 0.14
-Nodes (21): Спека: сводки по измерениям в аналитике по пассажирам (этап D1, 2026-07-23), План: сводки по измерениям (D1, 3 задачи), Режим «Сводки» во вкладке «Пассажиры» (по аэропортам/АК/месяцам), buildSummary — движок агрегации сводок (passengerAnalyticsAggregations), Месяц считается сдвигом +3ч (МСК), а не по локали браузера, Семантика counted/all в сводках = семантика KPI-тоталов, Агрегация на фронте — бэк не трогаем, buildChartData: топ-8 + «Прочие», исключение бакета без даты (+13 more)
-
-### Community 19 - "AddressField и геосаджест"
-Cohesion: 0.07
-Nodes (43): Spec: AddressField / YandexMapModal address data integrity (2026-07-14), AddressField query/anchor state model with lastEmittedRef echo detection, useAddressSuggestions hook (debounce + generation counter + accept), useReverseGeocode hook (generation counter + pending-coords buffer, ymaps in state), Geocoder contract change: {address, approximate} instead of '≈' baked into the string, Trap: anchor must be read via ref and kept out of the search effect deps, Decision: delete the Search/Map toggle and browser geolocation entirely, Deferred: YMaps provider, focus-trap/Escape, ARIA and dead CSS defects (+35 more)
-
-### Community 50 - "utils"
-Cohesion: 0.14
-Nodes (27): PM and PNL profiles (two opposite age-category mechanics), Trap: remark tokens lie — INFT sits on the accompanying adults, Decision: PNL row anchor is a valid category code, not the registration number, Захват номера рейса с пробелом в PNL-манифесте, Спека: третий формат манифеста ФАП — PLI (выгрузка DCS), Профиль манифеста PLI (третий формат после ПМ и PNL), Хуки профиля readName/readSeat + firstLine для многострочных ячеек, v12.14 — манифест ПЛИ, младенцы отдельными строками, excelDate.js (+19 more)
-
-### Community 67 - "groupsCount и linkedPeopleCount в аналитике по пассажирам"
-Cohesion: 0.10
-Nodes (21): Spec: passenger analytics money/people detail pack, stage B (2026-07-23), Analytics detail pack: 18 new per-request scalars + 8 new totals, PassengerAnalyticsHotelBreakdown (live headcount vs report snapshot), Transfer split invariant: round2(arrival+departure+baggage+intercity) == transfer, Invariant: ghost report rows excluded from every new reportRows sum, Legacy fallbacks: personCategory null → ADULT, meal count ?? (price>0 ? 1 : 0), Deploy gate: backend first, frontend second (widened selection breaks old backend), Спека: аналитика ФАП — сводная таблица по заявкам (v1) (+13 more)
-
-### Community 52 - "utils"
-Cohesion: 0.12
-Nodes (24): Спека: распознавание женской формы фамилии в подсказках групп ФАП (2026-07-28), canonicalSurname — общий бесполый корень фамилии (латиница и кириллица), familyLabel — русский плюрал семьи с обратным транслитом (best-effort), sameStem и defaultGroupLabel переписаны через canonical (снят гейт CYRILLIC_RE), Гейтинг подсказок (соседние места / ребёнок) намеренно не меняется, Тесты морфологии на встроенном node --test (TDD, без новых зависимостей), Зеркало бэкового normalizeFullNameKey на фронте (manifestNameKey), Подсказки групп из манифеста (фронт-only, без персиста) (+16 more)
-
-### Community 3 - "ФАП: страницы-роуты и гейты доступа"
-Cohesion: 0.06
-Nodes (71): Спека: приоритет доступа должность>отдел везде — общий хук useEffectiveAccessMenu (2026-07-08), Баг: роут-компоненты считали доступ только из отдела, игнорируя должность, useEffectiveAccessMenu(user) — единый источник резолюции, мёрж { ...отдел, ...effective }, Аутентификация — JWT в cookie (token, refreshToken, auth_fingerprint), Внешние пользователи — subjectType EXTERNAL_USER + cookie externalUserContext, effectiveAccessMenu — переопределения по должности, считается на бэке, v12.13 — useEffectiveAccessMenu в роут-компонентах, отчёты открыты авиакомпаниям, v12.14 — reopenPassengerRequestService, «Вернуть в работу», гейт reserveUpdateCompleted (+63 more)
-
-### Community 105 - "Passenger Document Recognition"
-Cohesion: 0.18
-Nodes (12): Спека: распознавание документа с фото (RepresentativePWA), Распознавание документа по фото (путь без штрихкода), Выбор связки Vision OCR → YandexGPT (Конфиг A), Мутация recognizePassengerDocument + тип RecognizedPassengerDoc, Контракт деградации: распознавание никогда не роняет поток, Единый объект boarding для фото- и штрихкод-пути, ScanTabs + DocumentPhotoScanner и редактируемое ФИО, Нормализация полей и эвристика confidence (+4 more)
-
-### Community 123 - "Passenger Analytics Summary Charts"
-Cohesion: 0.25
-Nodes (8): Спека: единый поток аналитики «Пассажиры» (этап F), Единый скролл вкладки «Пассажиры» вместо тумблера режимов, Инварианты этапа F: фронт-only, ровно 3 файла, Спека: графики в аналитике по пассажирам (этап D2), Блок графиков сводки: стек-бары + донат расходов, Грабля H-скролла: min-width 0 и нейтрализация карточки чарта, CHART_METRICS, DONUT_COLORS
-
-### Community 53 - "AnalyticsForAvia"
-Cohesion: 0.15
-Nodes (20): Аддитивное расширение AnalyticsChart: case stackedBar + pieValueFormat, Персист состояния вкладок аналитики (обе смонтированы), GET_DISPATCHERS, GET_ANALYTICS_AIRLINE_REQUESTS, GET_ANALYTICS_USERS, barDensityProps(), groupedSeriesDataIsEffectivelyEmpty(), simpleBarDataIsEffectivelyEmpty() (+12 more)
-
-### Community 13 - "Системные уведомления и патч-ноуты"
-Cohesion: 0.06
-Nodes (49): Спека: backfill патч-ноутов 3.2.0 → 4.3.0, Backfill публичных патч-ноутов из README-чейнджлога, Переработка нумерации: patch-компонент вместо только minor, Хелперы: generateTimestampId / getMediaUrl / decodeJWT, v12.15 — патч-ноут 4.4.0 и шаблон «Что нового» (patchNotes.data.mjs, systemUpdate.data.mjs), generateTimestampId(), MAINTENANCE_BANNER, UPDATE_MAINTENANCE_BANNER (+41 more)
-
-### Community 7 - "Роли, шапка и реестры договоров"
-Cohesion: 0.06
-Nodes (61): Два идемпотентных способа заливки патч-ноутов, DRIVERS_QUERY, ORGANIZATION_CREATED_SUBSCRIPTION, DRIVER_UPDATED_SUBSCRIPTION, GET_ALL_POSITIONS, GET_AIRLINE_USERS_POSITIONS, GET_HOTEL_POSITIONS, GET_DISPATCHER_POSITIONS (+53 more)
-
-### Community 126 - "FapHotelPage.jsx"
-Cohesion: 0.29
-Nodes (7): Узкая мутация assignPassengerRequestHotelRoom, Ловушка: updatePassengerRequestHotelPerson затирает поля гостя, Потеря полей гостя в updatePassengerRequestHotelPerson, Объединение трёх панелей уведомлений отдела, Мёртвые чекбоксы каналов на легаси-страницах, Затирание канальных флагов в true при частичном payload, Инъекция CSS-модуля пропом styles + showBulkToggle
-
-### Community 11 - "ФАП: страницы услуг и константы"
-Cohesion: 0.04
-Nodes (52): Привязка поездки трансфера ФАП к гостинице (hotelItemId), Фильтр «Гостиница» и предвыбор заселённых в CatalogPickerModal, Отклонения при исполнении плана трансфера (одобрены ревью), recomputeServiceStatus(prev, prevCount, nextCount) — единый пересчёт статуса услуги ФАП, Правила переоткрытия статуса услуги при изменении числа людей, Living и baggage добавлены в пересчёт статуса при правке плана (осознанная смена поведения), Update-мутации персон намеренно не трогаются, Массовые мутации удаления: removePassengerRequestPeople и removePassengerRequestDriverPeople (+44 more)
-
-### Community 35 - "SettingsSidebar: права отдела и уведомления"
-Cohesion: 0.12
-Nodes (31): Единая AccessPermissionsPanel с пропами granularity/styles/sections/showBulkToggle, Конфиг секций прав accessSections.js (секции как данные), Стили инъекцией пропом styles вместо общего CSS, В режиме detailed нет каскада «доступ гасит действия», Отложено: слияние панелей уведомлений и расхождение organization/contracts, Разделы прав доступа (Эскадрилья, Трансфер, Пассажиры, Отчёты…), accessMenu — feature-флаги внутри роли, Ключи accessMenu (menuAccess в roles.js) (+23 more)
-
-### Community 119 - "utils"
-Cohesion: 0.36
-Nodes (6): Отдельная функция вместо флага-режима у существующей, calculateEffectiveCostDays(arrival, departure) — эффективные сутки с частичными, v11.11 (10.03.2026), v11.11 — появление эффективных суток (effectiveCostDays.js), v12.14 — calculateCostDaysByDuration: минимум сутки, +0,5 за каждый начатый 12-часовой блок, calculateEffectiveCostDays()
-
-### Community 71 - "ФАП: книга отчёта Excel (buildReportSheets)"
-Cohesion: 0.22
-Nodes (16): Спека: пакет качества отчёта ФАП (personId, период, мелкие фиксы), personId в строках отчёта и единый матчинг строк к гостям, toNum(), lunchboxCountOf(), rowFoodCost(), isPersonRow(), frozenFieldsOf(), withoutTypename() (+8 more)
-
-### Community 8 - "Эскадрилья: Estafeta, ExistRequest, статусы и roles"
-Cohesion: 0.07
-Nodes (58): Фильтр по периоду в списке заявок ФАП (/far), TZ off-by-one: рейс 1-го числа выпадал из обоих месяцев, Эскадрилья (модуль заявок на размещение экипажа), Многоуровневая серверная фильтрация заявок, Серверный поиск с debounce 500 мс, Пагинация заявок с синхронизацией URL (take: 50), GET_ORGANIZATIONS, GET_ORGANIZATION_CONTRACTS (+50 more)
-
-### Community 89 - "utils"
-Cohesion: 0.24
-Nodes (13): Спека: импорт пассажирского манифеста (ПМ) в каталог заявки ФАП, Импорт пассажирского манифеста (форма ПМ) в каталог savedPassengers, Парсер формы ПМ на фронте (parseManifestXlsx), Отклонение от спеки: автоподстановка № рейса только при создании, Вне скоупа импорта манифеста ПМ, pad(), s(), excelSerialToParts() (+5 more)
+Nodes (32): ФАП: карточка доставки багажа по составу реальных документов, Поле baggageTags (номера багажных бирок), Ловушка: скалярный список в composite-типе Prisma приходит null, Дата доставки как единственный признак завершённости, Строгий порядок выката: бэк → фронт, Итерация 2: поездка с несколькими пассажирами, Побочный эффект: метрика transferBaggage перестаёт быть нулевой, BaggageTagsInput — ввод бирок чипами (+24 more)
 
 ### Community 0 - "GraphQL: ядро запросов и формы заявок"
 Cohesion: 0.02
-Nodes (119): Ловушка: contractType обязателен в обеих живых подписках цен, Размещение заявки в гостинице (выбор города и отеля, ветка access), makeFormatter(), GET_MESSAGES_TRANSFER, GET_TRANSFER_REQUESTS, CREATE_TRANSFER_REQUEST_MUTATION, UPDATE_DRIVER_WITH_PHOTO_MUTATION, CREATE_ORGANIZATION (+111 more)
+Nodes (118): Своя багажная мутация updatePassengerRequestBaggageDriver, Ловушка: contractType обязателен в обеих живых подписках цен, Поток создания заявки (sidebar → мутация → подписка → refetch), Проверка на дубликаты заявок при создании, GET_MESSAGES_TRANSFER, GET_TRANSFER_REQUESTS, GET_TRANSFERS_COUNT, CREATE_TRANSFER_REQUEST_MUTATION (+110 more)
 
-### Community 96 - "NotificationsSidebar.jsx"
-Cohesion: 0.20
-Nodes (12): Спека: бесконечный скролл в списке заявок ФАП (/far), Бесконечный скролл списка заявок ФАП (страница 30), refreshWindow() — перезапрос всего загруженного окна одним запросом, Ловушка: сентинел внутри грида нужно обернуть в grid-column: 1 / -1, v12.9 (28.06.2026), v12.9 — единый FilterPopoverButton и useInfiniteScroll, v12.13 — список /far на бесконечном скролле, refreshWindow() в useInfiniteScroll, notificationDedupeKey() (+4 more)
+### Community 19 - "ФАП: трансфер — FapTransferPage и факт поездки"
+Cohesion: 0.08
+Nodes (29): Общий справочник VEHICLE_TYPES в fapConstants, Поле «перевезено N» на поездке (transportedCount), Факт поездки = max(поимённый список, transportedCount), Ослабление guard патча водителя: COMPLETED разрешён, режется только CANCELLED, Числовая правка вверх не реоткрывает COMPLETED-услугу, Порядок выката: бэк → фронт (новые поля трансфера), 7 аддитивных полей строки отчёта (counts, ЛБ-флаги, lunchboxPrice), PWA: ввод «перевезено N» — диалог у водителя и поле у представителя (+21 more)
 
-### Community 97 - "Резерв и размещение представителя"
+### Community 10 - "ФАП: реестр и группы пассажиров"
+Cohesion: 0.05
+Nodes (70): GroupChip: гибридная кодировка связи (цвет + иконка + слово), Пять SVG-иконок типов связи в shared/icons, Rationale: strict backend→frontend deploy window (baggage), Handoff prompt: FAP passenger groups (2026-07-22), Passenger groups execution invariants (hard constraints), Дедуп каталога при импорте: mergeManifestPeopleIntoRoster (жадный 1:1 по ФИО), Bulk-мутация addPassengerRequestSavedPeople, Зеркало бэкового normalizeFullNameKey на фронте (manifestNameKey) (+62 more)
+
+### Community 3 - "ФАП: отчёт по гостинице — FapHotelPage, FapReportView, fapRooms"
+Cohesion: 0.04
+Nodes (90): Отчёт: чипы групп в шапке номера (вариант Y), Отчёт: точка группы в строке гостя, Гейт видимости ворнингов групп: метки всем, ⚠ только canEdit, Инварианты рендера групп в FapHotelPage, Отчёт по гостинице: режимы Просмотр / Редактирование, FapReportView — read-only детализация отчёта, FapModeToggle — сегмент Просмотр/Редактирование, Spec: FAP living — pick real hotel rooms from the room fund (2026-07-28) (+82 more)
+
+### Community 7 - "Категории номеров и цены авиакомпании"
+Cohesion: 0.06
+Nodes (76): Исключение занятых аэропортов между договорами авиакомпании, «Выбрать всё» уважает getOptionDisabled, Подсказка о пропущенных аэропортах, Занятые аэропорты выводятся на клиенте из пропа addTarif, Ловушка: Create-опции по id, Edit-опции по value, SegmentedToggle — generic переключатель взаимоисключающих значений, Точное совпадение фильтра на бэке + fail-closed отправка полей, Спека: цены авиакомпании как источник тарифа в проживании ФАП (+68 more)
+
+### Community 11 - "ФАП: трансфер — FapTransferPage и факт поездки"
+Cohesion: 0.05
+Nodes (57): Шапка Вариант B: одна primary-кнопка + overflow «⋯», Отклонение от макета: у авиакомпании остаются «История» и chip «Реестр», PassengerRequestDetailPanel — плитки услуг + чипы в палитре ФАП, D3 (per-passenger аналитика) отменён владельцем, Дата рейса (flightDate) сквозняком: формы, деталка, карточка списка, шапка Excel, Единая шапка действий услуг ФАП, Правила видимости пунктов «Отчёт» и «История», accommodationDiscountPercent — проценты скидки, выраженные через chargeFactor (+49 more)
+
+### Community 81 - "Договоры: формы создания и правки"
+Cohesion: 0.18
+Nodes (13): Spec: Contract registry frontend edits (2026-07-07), Contract registry frontend edits (6 changes, front-only), Rationale: registry edits need zero backend change, «ДС: N» badge + agreements popover in the registry list, Prolongation chip in the contract list row, Unified expiration badge helper (getExpirationBadge), Rename «Вид приложения» → «Предмет договора» (airline-only), Active filters badge on the «Фильтры» button (+5 more)
+
+### Community 16 - "Договоры: формы создания и правки"
+Cohesion: 0.11
+Nodes (37): ДС end date + prolongation + archive/restore, «Архив ДС» tab (client-side active/archived split), Rationale: DeleteComponent in the list, useDialog confirm() in the forms, normalize(), GET_ORGANIZATION_CONTRACT, CREATE_ORGANIZATION_CONTRACT, UPDATE_ORGANIZATION_CONTRACT, UPDATE_AIRLINE_TARIF (+29 more)
+
+### Community 69 - "ФАП: отчёт по гостинице — FapHotelPage, FapReportView, fapRooms"
+Cohesion: 0.12
+Nodes (17): Spec: FAP hotel tariff billing mode «Койко-место»/«Номер» (2026-07-21), Tariff billingMode: PER_BED | PER_ROOM, Carrier guest — PER_ROOM accommodation charged once, Front-only persistence of billingMode via ghost-row roomKind, «в сумме номера» display for non-carrier guests, Rationale: PER_ROOM v1 scope limits and legacy compatibility, Plan: FAP baggage delivery — many passengers per trip (2026-07-27), Baggage delivery as a trip with a passenger list (+9 more)
+
+### Community 8 - "ФАП: книга отчёта Excel (buildReportSheets)"
+Cohesion: 0.06
+Nodes (82): Rationale: XLSX export needs no change under PER_ROOM, Белый список hotelIndexes в пяти точках выгрузки XLSX, Excel-лист проживания: 22 колонки, дата рейса в шапке, единый экспортёр, Удаление легаси-контура отчёта: FapReport, маршрут report/:hotelIndex, SheetJS-экспорт, Колонка «Перевезено» в Excel-листе трансфера (сдвиг «Суммы» I→J), Excel-отчёт: колонка «Ланчбокс» (23 → 24) и SUMPRODUCT в итогах, Спека: пакет качества отчёта ФАП (personId, период, мелкие фиксы), personId в строках отчёта и единый матчинг строк к гостям (+74 more)
+
+### Community 106 - "ФАП-аналитика: PassengerAnalytics и мапперы"
+Cohesion: 0.15
+Nodes (13): Spec: «Пассажиры» filters modal restyle, stage G (2026-07-24), Sectioned passenger filters modal (Период / Статусы / Параметры), Decade preset highlight via sameRange day comparison, Rationale: AirlineAnalytics.module.css must not be touched, Период по flightDate и счётчик noFlightDateCount, Пресеты декад в фильтре периода аналитики ФАП, Фильтр по периоду в списке заявок ФАП (/far), Аналитика по пассажирам, этап C: фильтры (статусы, мульти-аэропорт, АК-пикер) и период-UX (+5 more)
+
+### Community 85 - "specs"
+Cohesion: 0.12
+Nodes (17): Спека: отчёт ФАП открывается АК только после «Отправить на проверку» (2026-07-31), План реализации: «Отправить на проверку» (7 задач, бэк→фронт), Отправка отчёта по проживанию на проверку (гейт видимости для АК), Поле submittedAt на PassengerRequestHotelReport + мутация submitPassengerRequestHotelReport, Сброс флага отправки только при реально изменившихся строках, Гейт только клиентский — серверной фильтрации reportRows не будет, Кнопка «Скрыть» и мутация hidePassengerRequestHotelReport (дополнение того же дня), Ловушки реализации гейта отчёта (+9 more)
+
+### Community 14 - "ФАП: деталка заявки, проживание, доступ к отчёту"
+Cohesion: 0.08
+Nodes (45): fapReportAccess — единственное правило видимости отчёта, Спека: раздел «Реестр» на заявке ФАП + терминология «гости» → «пассажиры», Терминология ФАП: «гости» → «пассажиры / экипаж», v12.14 — отчёт по гостинице открывается АК после «Отправить на проверку» (submittedAt), v12.14 — изоляция данных ФАП по гостинице (isHotelScoped / scopedHotelId / canSeeExternalLinks), v12.15 — согласование цен отчёта по проживанию ФАП (fapReportAccess.js, hideMoney для АК до approve), v12.15 — видимость услуг для гостиницы: fapServiceVisibility.js + useHotelServiceVisibility, v12.15 — деньги отчёта скрыты от гостиницы (hideMoney, preserveMoneyFields) (+37 more)
+
+### Community 148 - "access.js: предикаты ролей и гостиницы"
+Cohesion: 0.40
+Nodes (5): Спека: фильтр гостиниц по видимости (show) и активности (active) (2026-07-15), План: фильтр гостиниц active/show (6 задач), Фильтр списка гостиниц по show/active + бейджи состояния, Гейтинг по роли вместо User.dispatcher (вариант B), GET_HOTELS
+
+### Community 54 - "access.js: предикаты ролей и гостиницы"
+Cohesion: 0.13
+Nodes (14): HotelStatusBadge — пилюля «Неактивна»/«Скрыта», v12.7 — бейдж «Готовность к работе» + браузерные push-уведомления, GET_HOTEL_USERS, AirlineReadinessIndicator(), HotelReadinessIndicator(), HotelStatusBadge(), InfoTableDataHotels(), ReadinessIndicator() (+6 more)
+
+### Community 44 - "ФАП-аналитика: PassengerAnalytics и мапперы"
+Cohesion: 0.17
+Nodes (23): Спека: визуальный полиш «Пассажиры → По заявкам» (этап E, 2026-07-24), План: визуальный полиш аналитики по заявкам (5 задач), Список «По заявкам»: 14 колонок → 6 двухэтажных, Зебра по индексу map, а не через nth-child, formatNights/formatMoneyShort переезжают в passengerAnalyticsMappers, Frontend: 2 new columns, accordion row detail, 2 KPI tiles, 2-sheet XLSX, Drill-down из аналитики в заявку по /far/:requestId, STATUS_ORDER (+15 more)
+
+### Community 62 - "ФАП: импорт манифеста — parseManifestXlsx, ManifestUploadField, manifestCore"
 Cohesion: 0.16
-Nodes (12): Массовые мутации выселения и переселения ФАП, Проверка вместимости на всю пачку при переселении, Пакетные мутации заявки — строго последовательные await, ADD_PASSENGER_REQUEST_HOTEL_PERSON, REMOVE_PASSENGER_REQUEST_HOTEL_PERSON, RELOCATE_PASSENGER_REQUEST_HOTEL_PEOPLE, EVICT_PASSENGER_REQUEST_HOTEL_PEOPLE, UPDATE_PASSENGER_REQUEST_HOTEL_PERSON (+4 more)
+Nodes (17): Спека: проверка соответствия рейса манифеста рейсу заявки (2026-07-22), План: проверка рейса манифеста (5 задач), Проверка расхождения рейса манифеста и рейса заявки, isSameFlight/normalizeFlightNumber — нечёткое сравнение номеров рейсов, Preserved parser contract: {people, flightNumber, error} + manifestNameKey re-export, Блок загрузки манифеста ManifestUploadField, ManifestImportModal(), ManifestUploadField() (+9 more)
 
-### Community 124 - "Passenger Identity & Roster"
+### Community 100 - "Passenger Analytics Summary Charts"
+Cohesion: 0.14
+Nodes (14): Спека: сводки по измерениям в аналитике по пассажирам (этап D1, 2026-07-23), План: сводки по измерениям (D1, 3 задачи), Режим «Сводки» во вкладке «Пассажиры» (по аэропортам/АК/месяцам), Агрегация на фронте — бэк не трогаем, Спека: единый поток аналитики «Пассажиры» (этап F), Единый скролл вкладки «Пассажиры» вместо тумблера режимов, Инварианты этапа F: фронт-only, ровно 3 файла, Спека: графики в аналитике по пассажирам (этап D2) (+6 more)
+
+### Community 86 - "Passenger Analytics Aggregation"
+Cohesion: 0.21
+Nodes (16): buildSummary — движок агрегации сводок (passengerAnalyticsAggregations), Месяц считается сдвигом +3ч (МСК), а не по локали браузера, Семантика counted/all в сводках = семантика KPI-тоталов, buildChartData: топ-8 + «Прочие», исключение бакета без даты, МСК-границы периода аналитики (resolvePeriodBounds), Инвариант: гибрид периода и Mongo-грабля не трогаются, Программа доработки аналитики: этапы A→D, round2() (+8 more)
+
+### Community 108 - "PassengerAnalytics"
+Cohesion: 0.31
+Nodes (12): Выгрузка текущей сводки одним листом XLSX, Экспорт полного отчёта одной книгой (5 листов), Номер заявки в таблице и в листах Excel (сдвиг колонок), REQUEST_STATUS_CONFIG, statusLabel(), SUMMARY_SHEETS, fillSummarySheet(), fillRequestsSheet() (+4 more)
+
+### Community 26 - "AddressField и геосаджест"
+Cohesion: 0.10
+Nodes (35): Spec: AddressField / YandexMapModal address data integrity (2026-07-14), AddressField query/anchor state model with lastEmittedRef echo detection, useAddressSuggestions hook (debounce + generation counter + accept), useReverseGeocode hook (generation counter + pending-coords buffer, ymaps in state), Geocoder contract change: {address, approximate} instead of '≈' baked into the string, Trap: anchor must be read via ref and kept out of the search effect deps, Decision: delete the Search/Map toggle and browser geolocation entirely, Deferred: YMaps provider, focus-trap/Escape, ARIA and dead CSS defects (+27 more)
+
+### Community 91 - "ФАП: профили манифеста (manifestProfiles, PLI, cleanFullName)"
+Cohesion: 0.12
+Nodes (16): Spec: FAP multi-format manifest parsing via profiles (2026-07-07), Manifest format profiles (data-described formats + header auto-detection), PM and PNL profiles (two opposite age-category mechanics), Trap: remark tokens lie — INFT sits on the accompanying adults, Decision: PNL row anchor is a valid category code, not the registration number, Verification by Node scripts against real sample files (no frontend test runner), Спека: импорт пассажирского манифеста (ПМ) в каталог заявки ФАП, Импорт пассажирского манифеста (форма ПМ) в каталог savedPassengers (+8 more)
+
+### Community 123 - "ФАП: импорт манифеста — parseManifestXlsx, ManifestUploadField, manifestCore"
+Cohesion: 0.38
+Nodes (9): manifestCore.js — shared engine (normHeader, detectProfile, extractPeople), Хуки профиля readName/readSeat + firstLine для многострочных ячеек, normHeader(), cleanFullName(), firstLine(), matchRowColumns(), findColumns(), detectProfile() (+1 more)
+
+### Community 74 - "groupsCount и linkedPeopleCount в аналитике по пассажирам"
+Cohesion: 0.12
+Nodes (19): Spec: passenger analytics money/people detail pack, stage B (2026-07-23), Analytics detail pack: 18 new per-request scalars + 8 new totals, PassengerAnalyticsHotelBreakdown (live headcount vs report snapshot), Transfer split invariant: round2(arrival+departure+baggage+intercity) == transfer, Invariant: ghost report rows excluded from every new reportRows sum, Legacy fallbacks: personCategory null → ADULT, meal count ?? (price>0 ? 1 : 0), Deploy gate: backend first, frontend second (widened selection breaks old backend), Спека: аналитика ФАП — сводная таблица по заявкам (v1) (+11 more)
+
+### Community 32 - "ФАП: подсказки групп по фамилиям (surnameForms, fapGroupSuggestions)"
+Cohesion: 0.10
+Nodes (28): Спека: распознавание женской формы фамилии в подсказках групп ФАП (2026-07-28), canonicalSurname — общий бесполый корень фамилии (латиница и кириллица), familyLabel — русский плюрал семьи с обратным транслитом (best-effort), sameStem и defaultGroupLabel переписаны через canonical (снят гейт CYRILLIC_RE), Гейтинг подсказок (соседние места / ребёнок) намеренно не меняется, Тесты морфологии на встроенном node --test (TDD, без новых зависимостей), Подсказки групп из манифеста (фронт-only, без персиста), hotelOverbookedBy() (+20 more)
+
+### Community 38 - "ФАП: страницы-роуты и гейты доступа"
+Cohesion: 0.14
+Nodes (23): Спека: приоритет доступа должность>отдел везде — общий хук useEffectiveAccessMenu (2026-07-08), Баг: роут-компоненты считали доступ только из отдела, игнорируя должность, useEffectiveAccessMenu(user) — единый источник резолюции, мёрж { ...отдел, ...effective }, Поток accessMenu: Main_Page → MenuDispetcher → AllRoles → RoleContent, RoleContent — AllRoles.jsx выбирает контент по роли, GET_USER_EFFECTIVE_ACCESS_MENU, CookiesNotice(), MenuDispetcher() (+15 more)
+
+### Community 122 - "Passenger Document Recognition"
+Cohesion: 0.22
+Nodes (10): Спека: распознавание документа с фото (RepresentativePWA), Распознавание документа по фото (путь без штрихкода), Выбор связки Vision OCR → YandexGPT (Конфиг A), Мутация recognizePassengerDocument + тип RecognizedPassengerDoc, Контракт деградации: распознавание никогда не роняет поток, Единый объект boarding для фото- и штрихкод-пути, ScanTabs + DocumentPhotoScanner и редактируемое ФИО, Нормализация полей и эвристика confidence (+2 more)
+
+### Community 45 - "AnalyticsForAvia"
+Cohesion: 0.15
+Nodes (20): Аддитивное расширение AnalyticsChart: case stackedBar + pieValueFormat, Персист состояния вкладок аналитики (обе смонтированы), GET_DISPATCHERS, GET_ANALYTICS_AIRLINE_REQUESTS, GET_ANALYTICS_USERS, barDensityProps(), groupedSeriesDataIsEffectivelyEmpty(), simpleBarDataIsEffectivelyEmpty() (+12 more)
+
+### Community 75 - "Системные уведомления и патч-ноуты"
+Cohesion: 0.15
+Nodes (16): Спека: backfill патч-ноутов 3.2.0 → 4.3.0, Backfill публичных патч-ноутов из README-чейнджлога, Переработка нумерации: patch-компонент вместо только minor, Два идемпотентных способа заливки патч-ноутов, v12.15 — патч-ноут 4.4.0 и шаблон «Что нового» (patchNotes.data.mjs, systemUpdate.data.mjs), CREATE_PATCH_NOTE, args, DRY_RUN (+8 more)
+
+### Community 13 - "ФАП: страницы услуг и константы"
+Cohesion: 0.04
+Nodes (44): Привязка поездки трансфера ФАП к гостинице (hotelItemId), Фильтр «Гостиница» и предвыбор заселённых в CatalogPickerModal, Отклонения при исполнении плана трансфера (одобрены ревью), recomputeServiceStatus(prev, prevCount, nextCount) — единый пересчёт статуса услуги ФАП, Правила переоткрытия статуса услуги при изменении числа людей, Living и baggage добавлены в пересчёт статуса при правке плана (осознанная смена поведения), Update-мутации персон намеренно не трогаются, Массовые мутации удаления: removePassengerRequestPeople и removePassengerRequestDriverPeople (+36 more)
+
+### Community 57 - "SettingsSidebar: права отдела и уведомления"
+Cohesion: 0.18
+Nodes (20): Единая AccessPermissionsPanel с пропами granularity/styles/sections/showBulkToggle, Конфиг секций прав accessSections.js (секции как данные), Стили инъекцией пропом styles вместо общего CSS, В режиме detailed нет каскада «доступ гасит действия», Отложено: слияние панелей уведомлений и расхождение organization/contracts, Вкладка «Доступ», Разделы прав доступа (Эскадрилья, Трансфер, Пассажиры, Отчёты…), accessMenu — feature-флаги внутри роли (+12 more)
+
+### Community 149 - "PassengerAnalytics"
+Cohesion: 0.40
+Nodes (5): Метрики связей в аналитике ФАП: groupsCount и linkedPeopleCount, Столбец «Группы», KPI «Связано пассажиров» и колонка XLSX, Тотал linkedPeopleCount считается по ВСЕМ строкам, включая costMissing, Сдвиг firstMoneyCol при вставке не-денежной колонки (load-bearing), COLUMN_TYPE
+
+### Community 79 - "utils"
+Cohesion: 0.18
+Nodes (13): Договорная цена живая, а не замороженная в отчёте, Спека: ФАП — подсчёт суток проживания по длительности, Правило суток ФАП: минимум 1 сутки + 0.5 за начатый 12-часовой блок, Отдельная функция вместо флага-режима у существующей, Пересчёт daysCount при открытии сохранённого отчёта, calculateEffectiveCostDays(arrival, departure) — эффективные сутки с частичными, v11.11 (10.03.2026), v11.11 — появление эффективных суток (effectiveCostDays.js) (+5 more)
+
+### Community 76 - "ФАП: профили манифеста (manifestProfiles, PLI, cleanFullName)"
+Cohesion: 0.20
+Nodes (17): Захват номера рейса с пробелом в PNL-манифесте, Младенцы на руках: счётчик на сопровождающем (хук lapInfants), v12.13 — реестр пассажиров ФАП (FapRegistryPage), группы и профили манифестов (ПМ, ПНЛ), v12.14 — манифест ПЛИ, младенцы отдельными строками, excelDate.js, s(), isMark(), cell(), isInt() (+9 more)
+
+### Community 107 - "NotificationsSidebar.jsx"
+Cohesion: 0.22
+Nodes (11): Спека: бесконечный скролл в списке заявок ФАП (/far), Бесконечный скролл списка заявок ФАП (страница 30), refreshWindow() — перезапрос всего загруженного окна одним запросом, Ловушка: сентинел внутри грида нужно обернуть в grid-column: 1 / -1, v12.9 (28.06.2026), v12.9 — единый FilterPopoverButton и useInfiniteScroll, v12.13 — список /far на бесконечном скролле, refreshWindow() в useInfiniteScroll, PassengerRequestLogs() (+3 more)
+
+### Community 135 - "Passenger Identity & Roster"
 Cohesion: 0.29
 Nodes (7): Правило: пачка = один read-modify-write, Пакетное заселение из реестра в PWA (useCatalogAdd), Гидрация заявки ФАП из ростера savedPassengers, Backend-propagation правки идентичности в ростер, Отклонение от спеки: propagation на бэке вместо маршрутизации на фронте, Backfill personId и ростера для исторических заявок, Граница: единство пассажира только через каталог
 
-### Community 72 - "SettingsSidebar: права отдела и уведомления"
+### Community 150 - "FapHotelPage.jsx"
+Cohesion: 0.40
+Nodes (5): Потеря полей гостя в updatePassengerRequestHotelPerson, Объединение трёх панелей уведомлений отдела, Мёртвые чекбоксы каналов на легаси-страницах, Затирание канальных флагов в true при частичном payload, Инъекция CSS-модуля пропом styles + showBulkToggle
+
+### Community 70 - "SettingsSidebar: панель уведомлений (notificationSections, payload)"
 Cohesion: 0.21
 Nodes (14): Конфиг секций уведомлений и правило имён каналов, Общий buildNotificationPayload на 30 ключей, Пробел: секция «Брони» не показана ни одной панелью, Вкладка «Уведомления», Структура строки уведомления (текст → MUISwitch → почта → браузер), EMPTY_MENU, NotificationsPermissionsPanel(), NotificationRow() (+6 more)
 
-### Community 34 - "Цепочка accessMenu рвётся до таба шахматки"
-Cohesion: 0.09
-Nodes (36): Голый маршрут /newPlacementV2/:idHotel — ни одного пропса, Цепочка accessMenu рвётся до таба шахматки, roles в модуле используются только для пикселей, Дефект: AddPassengersModalV2 недостижима, Дефект: запросы AddPassengersModalV2 уходят без skip, Дефект: отменённая бронь всегда возвращается в сайдбар эскадрильи, Дефект: пустое состояние сайдбаров проверяет нефильтрованный массив, PlacementDND v1 недостижим, но остаётся в бандле (+28 more)
-
-### Community 93 - "Геометрия сетки (dayWidth, rowHeight = 50 × places)"
-Cohesion: 0.29
-Nodes (14): DAY_WIDTH = 40 живёт двумя жизнями: стартовый стейт и масштаб сайдбара, Расхождение 228 против 220 между шапкой и телом, Дефект: ResizeObserver пересоздаётся на каждом рендере, Дефект: containerRef пишут строка и все ячейки дня, Дубликат: 50 * room.type и голая 50, Шов: хук usePlacementGeometry, Вопрос: DAY_WIDTH = 40 должен был остаться масштабом сайдбара?, TimelineV2 — липкая шапка с полосой дней (+6 more)
-
-### Community 76 - "Известные расхождения шахматки с конвенциями репозитория"
-Cohesion: 0.13
-Nodes (19): Горизонтальная координата дропа не читается никогда, Дефект: document-слушатели resize переживают unmount, Дефект: resize не валидирует порядок дат, Дефект: заблокированный по isOverlap resize всё равно открывает модалку, Ноль содержательных медиазапросов и нет тач-поддержки, Дубликат: блок resize-ручки — 2 дословные копии, Отклонение: инлайн sx вместо CSS-модулей, Отклонение: собственная очередь тостов вместо useToast (+11 more)
-
-### Community 94 - "NewPlacementV2.jsx — оркестратор (1701 строка, 52% модуля)"
-Cohesion: 0.21
-Nodes (14): Дефект: resize сдвигает дату на сутки, Дефект: resize срабатывает без движения мыши, Дефект: по размещённой плашке нельзя открыть карточку заявки, Дефект: нарушение правил хуков в RoomRowV2, Дефект: простое наведение перерисовывает всю доску, ОПРОВЕРГНУТО: дубль useDraggable с тем же id в DragOverlay, ОПРОВЕРГНУТО: круг «UTC-цифр» внутри модуля рассогласован, Дубликат: сборка new Date(`${date}T${time}`) — 10 мест (+6 more)
-
-### Community 60 - "Placement Dead Code Defects"
-Cohesion: 0.17
-Nodes (24): Дефект: заявку можно бросить в отключённую комнату, Дефект: нет onDragCancel — доска залипает в перетаскивании, Дефект: молчаливые провалы мутаций, Дефект: сдвиг койки внутри номера жёстко пишет status done, Клавиатурный drag-and-drop живёт по случайности, Кластер мёртвого кода модуля, Дубликат: блок оптимистичной вставки — 3 копии, Дубликат: сборка hotelChesses — 3 разошедшиеся копии (+16 more)
-
-### Community 95 - "Placement Filters & Virtualization"
-Cohesion: 0.22
-Nodes (14): Дефект: рендерный TypeError при активном поиске, Дефект: мемоизация обнулена свежими Date вне мемо, Дефект: поиск матчит requestID, а показывается requestNumber, ОПРОВЕРГНУТО: getRoomHeight/itemKey падают на сжимающемся списке, Дубликат: eachDayOfInterval по месяцу — 4 раза за рендер, Вопрос: room.requests из buildFilteredRooms предполагался источником рендера?, placementFilters — поиск и сборка filteredRooms, Виртуализация строк (VariableSizeList) (+6 more)
-
-### Community 58 - "SHAHMATKA ARCHITECTURE"
-Cohesion: 0.13
-Nodes (25): Дефект: getOverlappingRequests разыменовывает draggedRequest без защиты, Дефект: три документа пишут одно поле кэша hotel({id}), ОПРОВЕРГНУТО: эффект usePlacementData:329 зацикливается, Оценка точности SHAHMATKA_ARCHITECTURE.md, Дубликат: маппер пассажиров резерва — 2 копии по ~55 строк, Правка: открепить квоту и резерв в шахматке, Шахматка v2 — timeline-календарь размещения, usePlacementData — весь слой данных шахматки (+17 more)
-
-### Community 92 - "Placement Overlap Logic"
-Cohesion: 0.29
-Nodes (15): Дефект: окно двойного бронирования после подтверждения, Дубликат: предикат пересечения — 4 копии, Отклонение: ноль тестов при чистой доменной логике, Инвариант: hasOverlap и getOverlappingRequests не взаимозаменяемы, Инвариант: getAvailablePosition возвращает undefined, а 0 — валидный ответ, Инвариант: интервалы полуоткрытые [in, out) во всех четырёх копиях, placementOverlap — две проверки пересечений, placementPositions.getAvailablePosition — выбор свободной койки (+7 more)
-
-### Community 66 - "Цвета статусов и расхождение translateStatus с roles.js"
-Cohesion: 0.15
-Nodes (21): Дефект: handleSaveChanges отправляет status: "" для нераспознанного статуса, Дефект: оптимистичный дроп не удаляет карточку из newRequests, Дефект: статус резолвится по наличию chess.request, а не по значению, Русская строка статуса используется как ключ карты цветов, Дубликат: карта статус→цвет — 4 копии, Шов: единый словарь статусов на enum-ключах, Вопрос: удалять translateStatus в пользу roles.js?, Цвета статусов и расхождение translateStatus с roles.js (+13 more)
-
-### Community 104 - "Placement Board Data Mapping"
-Cohesion: 0.27
-Nodes (12): Дефект: EditRequestNomerFond из шахматки получает урезанную комнату, Дефект: hotelChess с room: null исчезает бесследно, Отклонение: ~120 строк инлайн-JSX внутри колбэка VariableSizeList, Шов: компонент RoomLabelCell, Инвариант: сортировка mapRooms выживает только как tiebreak, Инвариант: инверсию room.id = имя / room.roomId = id нельзя потерять, Вопрос: hotelChess с room: null — реальное состояние бэка?, placementTransforms — сервер → «карточка размещения» (+4 more)
-
-### Community 90 - "Транскрипт звонка 04.08.2026: правки по учётке гостиницы (00:00–15:08)"
-Cohesion: 0.17
-Nodes (15): Транскрипт звонка 04.08.2026: правки по учётке гостиницы (00:00–15:08), Правка: список заявок ФАП в учётке гостиницы — только заявки, где выбрана эта гостиница, Правка: во вкладке «О гостинице» показывать контакты самой гостиницы, Правка: убрать поле «рейтинг» из настроек гостиницы, Правка: убрать поле «скидка» из настроек гостиницы, Правка: убрать переключатель «видимость гостиницы» из настроек в учётке гостиницы, Правка: раздача ролей пользователям гостиницы (как у диспетчера и авиакомпании), Заметка: отчёты по эскадрилье в учётке гостиницы не проверены (+7 more)
-
-### Community 113 - "HotelAboutTariffs"
-Cohesion: 0.25
-Nodes (10): Правка: услугу «трансфер» в заявке ФАП скрыть от гостиниц, не оказывающих трансфер, Правка: трансферные тарифы во вкладке «Тарифы» гостиницы — только если гостиница сама оказывает трансфер, SERVICE_KEYS, mealLabels, transferLabels, fmt(), fmtWithVat(), declension() (+2 more)
-
-### Community 120 - "Call Backlog Review 03.08"
-Cohesion: 0.25
-Nodes (9): Правка: в проживании ФАП показывать гостинице тариф по договору Карс Авиа↔гостиница, Правка: во вкладке «Номера» показывать цены гостиницы, а не цены для авиакомпании, Правка: во вкладке «Тарифы» раздела «О гостинице» показывать тарифы гостиницы, а не авиакомпании, Выбор источника тарифа проживания, Расчёт по койко-местам или по номерам, Цена за одного в двухместном номере, Сезонность и сроки действия тарифов, Баг: тариф из гостиницы не считает проживание (+1 more)
-
-### Community 63 - "Call Backlog Review 03.08"
-Cohesion: 0.13
-Nodes (22): Созвон 03.08.2026: конструктор расчёта отчётов, Виды исчисления проживания, Часовая оплата — для АК «Россия», Скидки на проживание, Виды исчисления трансфера, Выбор тарифа трансфера, Расчёт по людям на авто или по авто, Скидки на авто (+14 more)
-
-### Community 133 - "docs"
-Cohesion: 0.50
-Nodes (5): FAP-DECISIONS.md — decision history, Decision: baggage = trip with per-passenger tags and prices, FAP-HANDOVER.md — module handover to backend dev, FAP.md — backend documentation, FAP2.md — frontend documentation
-
-### Community 46 - "docs"
-Cohesion: 0.08
-Nodes (30): Decision: no embedded→relational rewrite, Decision: report opens to airline only on submit, Decision: pin figures only in submitted reports, Decision: FAP days rules (duration, manual override, evictions), Decision: billing mode belongs to tariff (PER_BED/PER_ROOM), Decision: airline contract prices as third tariff source, Decision: personId is the identity canon, Decision: overbooking allowed, no hard blocks in FAP (+22 more)
-
-### Community 111 - "docs"
-Cohesion: 0.18
-Nodes (11): Decision: row-level authorization, not content filtering, Decision: observation mode before hard enforcement, Constraint: role middleware ban in FAP, Passenger LK concept (target: October 2026), FAP_SCOPE_ENFORCE rollout (observation → hard mode), checkFapScopeReadiness.js (enforcement readiness probe), ExternalUser & magic links, withFapAuthGuard (auth whitelist) (+3 more)
-
-### Community 134 - "docs"
-Cohesion: 0.40
-Nodes (5): Method: finder → adversarial verifier → stand measurement, Two-tier mutation envelope (withPassengerRequest), prismaDouble (test harness), Resolver split — stages 0–3 (12 resolver files + 23 services), Characterization test net (300+ tests)
-
-### Community 80 - "services"
-Cohesion: 0.17
-Nodes (16): index.html — HTML-оболочка приложения, #root — точка монтирования React, Google Fonts: Montserrat, Inter, Nunito Sans, REFRESH_TOKEN, App(), DialogProvider(), ToastProvider(), isExternalUser() (+8 more)
-
-### Community 101 - "SettingsSidebar: права отдела и уведомления"
-Cohesion: 0.21
-Nodes (13): SettingsSidebar — компонент настроек через боковое меню, Состав папки SettingsSidebar, Двойной режим type="airline" / type="dispatcher", Контракт пропсов SettingsSidebar, Вкладка «Доступ», Режимы «Просмотр» и «Редактирование», Выбор должностей для авиакомпаний, GraphQL-операции SettingsSidebar (+5 more)
-
-### Community 21 - "RoleContent: точки входа ролей и роуты FapV2"
-Cohesion: 0.13
-Nodes (37): Экскурс: Эскадрилья и система заявок в KARS-AVIA CRM, Поток accessMenu: Main_Page → MenuDispetcher → AllRoles → RoleContent, RoleContent — AllRoles.jsx выбирает контент по роли, DocumentationList.jsx — обёртка с Header «Инструкции» и переключателем типа, AirlinePage(), AirlinesList(), Company(), DocumentationList() (+29 more)
-
-### Community 4 - "Сессия и контексты: getCookie, useToast, useDialog, JWT"
-Cohesion: 0.05
-Nodes (90): Поток создания заявки (sidebar → мутация → подписка → refetch), Проверка на дубликаты заявок при создании, getCookie(), decodeJWT(), LOGOUT, UPDATE_PASSENGER_REQUEST, UPDATE_HOTEL, DELETE_HOTEL_CATEGORY (+82 more)
-
-### Community 37 - "Шахматка v2: NewPlacementV2, utils и история версий"
-Cohesion: 0.13
-Nodes (25): Маршруты заявок (/relay, /hotels/:hotelId/:requestId, /newPlacement/:hotelId), Структура src/ (App, main, AuthContext, services, contexts, hooks, utils, Components), Шахматка — PlacementDNDV2 (timeline-календарь заселения), v10.8 (17.01.2026), v10.8 — появление шахматки V2 с модульной структурой, v12.15 — редизайн шахматки (NewPlacementV2, виды Неделя / Декада / Месяц, портал-поповер), v12.15 — единая доска без «Квота | Резерв» (−1260 строк), v12.15 — снос PlacementDND v1, react-window, TransferAdminOrdersContent (+17 more)
-
-### Community 32 - "CLAUDE.md / AGENTS.md: руководство и MUI-примитивы"
-Cohesion: 0.09
-Nodes (36): CLAUDE.md — руководство по репозиторию для Claude Code, Работа с кодом — правила кода, Визуальный стиль — следовать существующим паттернам, Экономия токенов — не объяснять, просто делать, Kars Avia — система размещения экипажей в гостиницах, Стек: React 18 (JSX), Vite 5, Apollo Client 3, MUI 6, React Router 6, Команды npm: dev / build / preview / lint, Окружения (.env): dev / demo / production, переключение в graphQL_requests.js (+28 more)
-
-### Community 69 - "TransferOrder"
-Cohesion: 0.15
-Nodes (13): Хелперы дат: convertToDate / convertToDateNew / buildScheduledISO, buildScheduledISO(), GET_TRANSFER_REQUEST, UPDATE_TRANSFER_REQUEST_MUTATION, TRANSFER_UPDATED_SUBSCRIPTION, DriverItem(), isFinishedOrCanceled(), EDITABLE_STATUSES (+5 more)
-
-### Community 116 - "CLAUDE"
-Cohesion: 0.33
-Nodes (10): Черновики отчётов: createAirlineReportDraft / createHotelReportDraft → confirmReportDraft, Что нельзя ломать в «Отчётах v2», Границы периода …T00:10:00 / …T23:50:00 — часть расчёта, не форматирование, recalcRow — только для строк, которые правил пользователь, updateReportDraft перезаписывает весь массив строк без версии → явная кнопка сохранения, Что нельзя ломать в «Отчётах v2», Границы периода …T00:10:00 / …T23:50:00 — часть расчёта, не форматирование, recalcRow — только для строк, которые правил пользователь (+2 more)
-
-### Community 82 - "ReportsV2"
-Cohesion: 0.26
-Nodes (15): Пороги частичных суток — ReportPartialDaySetting, уровни GLOBAL / AIRLINE / HOTEL, v12.15 — «Правила расчёта суток» с уровнями GLOBAL / AIRLINE / HOTEL, resolveDraftPartialDayRules, ReportRulesSidebar(), PARTIAL_DAY_DEFAULTS, RULE_TIME_FIELDS, RULE_DAY_FIELDS, parseHhMm(), toRulesForm() (+7 more)
-
-### Community 62 - "Отчёты v2: редактор черновика (ReportDraftEditor, поля, сортировка)"
-Cohesion: 0.16
-Nodes (14): Доменная логика без JSX: reportRules.js / reportDraftRows.js / reportDraftAge.js (+ node --test), GET_REPORT_PARTIAL_DAY_SETTINGS, MY_REPORT_EDITABLE_FIELDS, SET_MY_REPORT_EDITABLE_FIELDS, ReportDraftDialog(), ReportDraftEditor(), ReportDraftErrorBanner(), ReportFieldSettingsModal() (+6 more)
-
-### Community 29 - "README: история версий"
-Cohesion: 0.05
-Nodes (41): README — история обновлений Kars Avia (v0.1 → v12.15), v0.1 (02.12.2024), v0.2 (04.12.2024), v0.3 (07.12.2024), v1.1 (18.12.2024), v1.2 (21.12.2024), v2.0 (09.01.2025), v2.1 (15.01.2025) (+33 more)
-
-### Community 143 - "README: история версий"
-Cohesion: 0.67
-Nodes (3): v10.0 (19.09.2025), v10.1 (04.10.2025), v10.0 — страницы «Обновления» и «Инструкции» (древовидные статьи)
-
-### Community 142 - "CLAUDE"
-Cohesion: 0.67
-Nodes (3): v12.2 (14.04.2026), v12.2 — единый airlineAnalytics и экспорт аналитики в PDF, v12.2 — Script Runner (запись и воспроизведение сценариев, только SUPERADMIN)
-
-### Community 136 - "utils"
-Cohesion: 0.40
-Nodes (5): v12.6 (18.05.2026), v12.7 (22.05.2026), v12.6+ — интеграция с TravelLine, v12.13 — TravelLine сертификация: дедлайн отмены, часовые пояса, корп. клиенты, v12.14 — TravelLine: корпоративный клиент в сайдбаре номеров, отдельный пункт меню
-
-### Community 57 - "Меню, роли и эффективные права"
-Cohesion: 0.13
-Nodes (20): v12.12 (30.06.2026), v12.12 — сгруппированные компактные меню на data-driven рендере, Маршрут /documentation и пункт меню «Помощь», GET_TRANSFERS_COUNT, TRANSFER_CREATED_SUBSCRIPTION, GET_REQUESTS_COUNT, GET_PASSENGER_REQUESTS_COUNT, GET_USER_SUPPORT_CHATS (+12 more)
-
-### Community 127 - "utils"
-Cohesion: 0.29
-Nodes (7): v12.13 (27.07.2026), v12.13 — реестр пассажиров ФАП (FapRegistryPage), группы и профили манифестов (ПМ, ПНЛ), v12.13 — ланчбокс и количества приёмов пищи, выгрузка до 24 колонок, v12.13 — аналитика «Пассажиры» (KPI, таблицы, графики, XLSX одной книгой), v12.13 — приложение представителя: распознавание документа по фото (Yandex Vision → GPT), v12.15 — файл манифеста во вложениях заявки (FapManifestFiles, fapManifestFiles.js), v12.15 — xlsx ФАП: finishSheet, лист «Доставка багажа», первые тесты reports/
-
-### Community 75 - "ReportDraftEditor"
-Cohesion: 0.15
-Nodes (14): v12.14 (14.08.2026), v12.14 — релиз раздела «Отчёты v2» (черновики + пороги частичных суток), v12.14 — редактор черновика повторяет печатную форму реестра (18 колонок), группировка по гостиницам, v12.14 — выпущенный отчёт в режиме только чтения (ReportDraftEditor mode=view), plural.js, v12.14 — заселение сверх плана, массовые мутации, hotelAddress.js, v12.14 — FapSelect для всех списков, удалён RepresentativeHotelReportPage, v12.14 — шахматка: cache-and-network, мемоизация контекста, точечные подписки, v12.14 — лимит тела запроса 2 МБ (SAVE_PAYLOAD_LIMIT_BYTES как зеркало бэка) (+6 more)
-
-### Community 54 - "utils"
-Cohesion: 0.14
-Nodes (24): v12.15 — «О гостинице» адаптив, чипы удобств (hotelDescription.js, +26 тестов), AUTHORIZE_HOTEL_PREVIEW, HotelAbout_tabComponent(), HotelPreview(), VOID_TAGS, PARAGRAPH_TAGS, NAMED_ENTITIES, isCodePoint() (+16 more)
-
-### Community 114 - "utils"
-Cohesion: 0.24
-Nodes (9): v12.15 — TravelLine SyncIndicator; поиск цен трансфера matchesTransferPriceSearch, DEFAULT_TRANSFER_PRICES, TRANSFER_SEATER_KEYS, matchesTransferPriceSearch(), toRoutePricesInput(), airports, cities, refs (+1 more)
-
-### Community 65 - "graphQL requests"
-Cohesion: 0.19
-Nodes (21): Раздел «Помощь» (Инструкции) — модуль документации, Иерархия компонентов: DocumentationList → DocumentationList1 → панели, DocumentationList1 — трёхзонный layout (дерево / контент / якоря), GraphQL API документации: sectionsWithHierarhy, article, CRUD секций/статей, upload, Левая панель — дерево инструкций (поиск, фильтр по типу узла), Центральная панель — DocumentListTiptapPanelContent (пустое состояние / статья), Сохранение: onDraftPersist(docId, 'content') → UPDATE_ARTICLE, DocumentationUploadContext (uploadImage / uploadFile) + DocumentationUploadStore (+13 more)
-
-### Community 115 - "DocumentationList"
-Cohesion: 0.31
-Nodes (10): Типы документации: dispatcher / airline / hotel / representation → apiType, Переключатель типа только у superAdmin (hasDocumentationFilterSwitcherAccess), isUnsupportedInputFieldError(), DocumentationListLeftPanel(), DOCUMENTATION_FILTER_OPTIONS, FILTER_OPTION_MAP, normalizeDocumentationFilter(), getDocumentationFilterOption() (+2 more)
-
-### Community 43 - "DocumentationList1"
-Cohesion: 0.14
-Nodes (28): Нормализация дерева section/article из ответа (toLocalTreeNode), Состояние секций «открыт/закрыт» в localStorage (doclist_section_open_state_v1), Legacy: контент статьи из метаданных в description, Вспомогательные модули: docTreeUtils.findDocById, tree.loadTree, cn(), clampLeftPanelWidth(), getInitialLeftPanelWidth(), isPlainObject() (+20 more)
-
-### Community 48 - "DocumentationListLeftPanel"
-Cohesion: 0.12
-Nodes (24): canManage — создание, переименование, удаление, DnD, копирование в дереве, CREATE_SECTION, DELETE_SECTION, CREATE_ARTICLE, DELETE_ARTICLE, getDeleteModalStartPosition(), TreeItem(), CopyModal() (+16 more)
-
-### Community 44 - "DocumentationListPanelContent"
-Cohesion: 0.15
-Nodes (28): Лейаут статьи (ширина, отступы) — saveDocLayout / docDraftStore, EMPTY_DOC, DEFAULT_ARTICLE_PADDING, ARTICLE_WIDTH_PRESET_MAX, isDocJson(), normalizeIncomingDocContent(), isSameDocContentSemantically(), clamp() (+20 more)
-
-### Community 16 - "Документация: редактор Tiptap и расширения"
-Cohesion: 0.06
-Nodes (27): Редактор Tiptap — базовые расширения (StarterKit, Color, Highlight, FontSize, …), Табличные расширения (TableWrapper, RowHeight, RowResizing, CellCursorPad, SelectionLock), Блоки контента: Quote, Toggle, Frame, Columns, Image, Gallery, Video, Audio, File, Ограничение VK-видео: iframe разрешён только на официальных сайтах партнёров, FontSize, BackgroundColor, editorExtensions, AudioBlock (+19 more)
-
-### Community 102 - "components"
-Cohesion: 0.28
-Nodes (11): NavigationAnchor — атрибуты anchorTag / anchorId на paragraph и heading, TEXT_NODE_TYPES, TEXT_BLOCK_TAGS, TABLE_NODE_TYPES, normalizeLabel(), buildAnchorsSignature(), isInsideTableNode(), AnchorHashOverlay() (+3 more)
-
-### Community 78 - "src"
-Cohesion: 0.17
-Nodes (14): SlashInterceptor + SlashCommand, BlockLassoSelectionPlugin, imageDropPlugin, DocumentationUploadContext, isSameOriginAsServer(), ensureUploadedPath(), ensureLeadingSlash(), normalizeUploadsPath(), appendToken(), uniqueUrls() (+6 more)
-
-### Community 17 - "Таблицы заявок: InfoTable, GroupedRequests, convertToDate / getMediaUrl"
-Cohesion: 0.09
-Nodes (36): getMediaUrl(), convertToDate(), convertToDateNew(), MONTHS, WORK_STATUSES, requestWord(), tileInitials(), groupStats() (+28 more)
-
-### Community 6 - "TravelLine: поиск, бронирование, синхронизация"
-Cohesion: 0.06
-Nodes (66): mediaSrc(), GET_TL_CONFIG, SET_TL_CONFIG, GET_TL_ROOM_TYPES, GET_TL_RATE_PLANS, TL_AVAILABILITY, TL_PROPERTY_CALENDAR, TL_PROPERTIES_AVAILABILITY (+58 more)
-
-### Community 98 - "Авторизация: App, AuthContext, authService"
-Cohesion: 0.25
-Nodes (10): TRANSFER_SING_IN, SINGIN, SINGUP, Login(), LoginRedirect(), NO_RETURN_PATHS, normalizePath(), isReturnable() (+2 more)
+### Community 47 - "ФАП: страницы-роуты и гейты доступа"
+Cohesion: 0.23
+Nodes (19): Страница поездки доставки багажа, Маппинг serviceKey → компонент услуги (FapServicePage), PASSENGER_REQUEST_UPDATED_SUBSCRIPTION, GET_PASSENGER_REQUEST, react, react, FapCancelledBanner(), isRequestCancelled() (+11 more)
 
 ### Community 2 - "UI-примитивы: Button, MUILoader, Toast, Sidebar"
 Cohesion: 0.13
-Nodes (36): CREATE_DRIVER_MUTATION, UPDATE_DRIVER_MUTATION, CREATE_POSITION, GET_HOTEL_TARIFS, REORDER_ROOM_KIND_IMAGES, UPDATE_HOTEL_TARIF, CREATE_AIRLINE, CREATE_AIRLINE_DEPARTMERT (+28 more)
+Nodes (40): TZ off-by-one: рейс 1-го числа выпадал из обоих месяцев, Стилизация и переиспользование UI-примитивов, CREATE_DRIVER_MUTATION, UPDATE_DRIVER_MUTATION, CREATE_POSITION, CREATE_PASSENGER_REQUEST, GET_HOTEL_TARIFS, REORDER_ROOM_KIND_IMAGES (+32 more)
 
-### Community 41 - "Карточки «О компании» и медиа (getMediaUrl)"
-Cohesion: 0.12
-Nodes (23): GET_ORGANIZATION, UPDATE_ORGANIZATION, DELETE_ORGANIZATION_TRANSFER_PRICE, GET_HOTEL_LOGS, GET_AIRLINE_LOGS, REORDER_GALLERY, DELETE_HOTEL, GET_AIRLINE_TRANSFER_PRICES (+15 more)
+### Community 80 - "Цепочка accessMenu рвётся до таба шахматки"
+Cohesion: 0.18
+Nodes (18): Голый маршрут /newPlacementV2/:idHotel — ни одного пропса, Цепочка accessMenu рвётся до таба шахматки, roles в модуле используются только для пикселей, PlacementDND v1 недостижим, но остаётся в бандле, Вопрос: CurrentTimeIndicator из v1 выброшен намеренно?, Вопрос: можно ли удалять PlacementDND/?, Шахматка v1 (PlacementDND) — недостижимая из маршрутов, Гейты доступа шахматки (canAccessMenu requestMenu) (+10 more)
 
-### Community 26 - "Чаты и поддержка: Message, SupportPage, getMediaUrl"
-Cohesion: 0.08
-Nodes (34): REQUEST_MESSAGES_SUBSCRIPTION, GET_MESSAGES_HOTEL, GET_PASSENGER_REQUEST_CHATS, SEND_FAP_MESSAGE, MESSAGE_SENT_SUBSCRIPTION, MARK_MESSAGE_AS_READ, MARK_ALL_MESSAGES_AS_READ, UPDATE_MESSAGE_BRON (+26 more)
+### Community 98 - "Геометрия сетки (dayWidth, rowHeight = 50 × places)"
+Cohesion: 0.29
+Nodes (14): DAY_WIDTH = 40 живёт двумя жизнями: стартовый стейт и масштаб сайдбара, Расхождение 228 против 220 между шапкой и телом, Дефект: ResizeObserver пересоздаётся на каждом рендере, Дефект: containerRef пишут строка и все ячейки дня, Дубликат: 50 * room.type и голая 50, Шов: хук usePlacementGeometry, Вопрос: DAY_WIDTH = 40 должен был остаться масштабом сайдбара?, TimelineV2 — липкая шапка с полосой дней (+6 more)
 
-### Community 14 - "Резерв и размещение представителя"
-Cohesion: 0.08
-Nodes (43): GET_HOTELS_RELAY, UPDATE_HOTEL_BRON, CANCEL_PASSENGER_REQUEST, COMPLETE_PASSENGER_REQUEST_EARLY, GET_RESERVE_LOGS, REQUEST_RESERVE_UPDATED_SUBSCRIPTION, GET_RESERVE_REQUEST, CREATE_RESERVE_REPORT (+35 more)
-
-### Community 47 - "icons"
+### Community 60 - "Известные расхождения шахматки с конвенциями репозитория"
 Cohesion: 0.11
-Nodes (19): SET_PASSENGER_SERVICE_STATUS, REMOVE_PASSENGER_REQUEST_HOTEL, REMOVE_PASSENGER_REQUEST_DRIVER, COMPLETE_PASSENGER_REQUEST_WATER_EARLY, COMPLETE_PASSENGER_REQUEST_MEAL_EARLY, COMPLETE_PASSENGER_REQUEST_TRANSFER_EARLY, COMPLETE_PASSENGER_REQUEST_LIVING_EARLY, BaggageDeliveryTab() (+11 more)
+Nodes (22): Горизонтальная координата дропа не читается никогда, Дефект: оптимистичный дроп не удаляет карточку из newRequests, Дефект: document-слушатели resize переживают unmount, Дефект: resize не валидирует порядок дат, Дефект: заблокированный по isOverlap resize всё равно открывает модалку, Ноль содержательных медиазапросов и нет тач-поддержки, Дубликат: блок resize-ручки — 2 дословные копии, Отклонение: инлайн sx вместо CSS-модулей (+14 more)
 
-### Community 91 - "HotelTable"
+### Community 99 - "NewPlacementV2.jsx — оркестратор (1701 строка, 52% модуля)"
 Cohesion: 0.21
-Nodes (12): GET_BRONS_HOTEL, Booking(), BronInfo(), initialState(), reducer(), checkBookingConflict(), HotelTablePageComponent(), initialState() (+4 more)
+Nodes (14): Дефект: resize сдвигает дату на сутки, Дефект: resize срабатывает без движения мыши, Дефект: по размещённой плашке нельзя открыть карточку заявки, Дефект: нарушение правил хуков в RoomRowV2, Дефект: простое наведение перерисовывает всю доску, ОПРОВЕРГНУТО: дубль useDraggable с тем же id в DragOverlay, ОПРОВЕРГНУТО: круг «UTC-цифр» внутри модуля рассогласован, Дубликат: сборка new Date(`${date}T${time}`) — 10 мест (+6 more)
 
-### Community 73 - "CreateRequestDocumentation"
+### Community 84 - "Цепочка accessMenu рвётся до таба шахматки"
+Cohesion: 0.17
+Nodes (17): Дефект: AddPassengersModalV2 недостижима, Дефект: запросы AddPassengersModalV2 уходят без skip, Дефект: отменённая бронь всегда возвращается в сайдбар эскадрильи, Дефект: пустое состояние сайдбаров проверяет нефильтрованный массив, Дубликат: «Заявок не найдено» — 3 копии, Шов: компонент ReservePanel, NewPlacementV2.jsx — оркестратор (1701 строка, 52% модуля), AddPassengersModalV2 — пассажир/сотрудник в резерв (284 строки) (+9 more)
+
+### Community 53 - "Placement Dead Code Defects"
+Cohesion: 0.17
+Nodes (24): Дефект: заявку можно бросить в отключённую комнату, Дефект: нет onDragCancel — доска залипает в перетаскивании, Дефект: молчаливые провалы мутаций, Дефект: сдвиг койки внутри номера жёстко пишет status done, Клавиатурный drag-and-drop живёт по случайности, Кластер мёртвого кода модуля, Дубликат: блок оптимистичной вставки — 3 копии, Дубликат: сборка hotelChesses — 3 разошедшиеся копии (+16 more)
+
+### Community 115 - "Placement Filters & Virtualization"
+Cohesion: 0.31
+Nodes (11): Дефект: рендерный TypeError при активном поиске, Дефект: мемоизация обнулена свежими Date вне мемо, Дефект: поиск матчит requestID, а показывается requestNumber, ОПРОВЕРГНУТО: getRoomHeight/itemKey падают на сжимающемся списке, Дубликат: eachDayOfInterval по месяцу — 4 раза за рендер, Вопрос: room.requests из buildFilteredRooms предполагался источником рендера?, placementFilters — поиск и сборка filteredRooms, Виртуализация строк (VariableSizeList) (+3 more)
+
+### Community 56 - "SHAHMATKA ARCHITECTURE"
+Cohesion: 0.15
+Nodes (23): Дефект: getOverlappingRequests разыменовывает draggedRequest без защиты, Дефект: три документа пишут одно поле кэша hotel({id}), ОПРОВЕРГНУТО: эффект usePlacementData:329 зацикливается, Оценка точности SHAHMATKA_ARCHITECTURE.md, Дубликат: маппер пассажиров резерва — 2 копии по ~55 строк, Шахматка v2 — timeline-календарь размещения, usePlacementData — весь слой данных шахматки, Матчинг заявок и резервов с гостиницей по airport.id (+15 more)
+
+### Community 95 - "Placement Overlap Logic"
+Cohesion: 0.29
+Nodes (15): Дефект: окно двойного бронирования после подтверждения, Дубликат: предикат пересечения — 4 копии, Отклонение: ноль тестов при чистой доменной логике, Инвариант: hasOverlap и getOverlappingRequests не взаимозаменяемы, Инвариант: getAvailablePosition возвращает undefined, а 0 — валидный ответ, Инвариант: интервалы полуоткрытые [in, out) во всех четырёх копиях, placementOverlap — две проверки пересечений, placementPositions.getAvailablePosition — выбор свободной койки (+7 more)
+
+### Community 90 - "Цвета статусов и расхождение translateStatus с roles.js"
+Cohesion: 0.22
+Nodes (16): Дефект: handleSaveChanges отправляет status: "" для нераспознанного статуса, Дефект: статус резолвится по наличию chess.request, а не по значению, Русская строка статуса используется как ключ карты цветов, Дубликат: карта статус→цвет — 4 копии, Шов: единый словарь статусов на enum-ключах, Вопрос: удалять translateStatus в пользу roles.js?, Цвета статусов и расхождение translateStatus с roles.js, translateStatus — код статуса → русская строка (+8 more)
+
+### Community 109 - "Placement Board Data Mapping"
+Cohesion: 0.27
+Nodes (12): Дефект: EditRequestNomerFond из шахматки получает урезанную комнату, Дефект: hotelChess с room: null исчезает бесследно, Отклонение: ~120 строк инлайн-JSX внутри колбэка VariableSizeList, Шов: компонент RoomLabelCell, Инвариант: сортировка mapRooms выживает только как tiebreak, Инвариант: инверсию room.id = имя / room.roomId = id нельзя потерять, Вопрос: hotelChess с room: null — реальное состояние бэка?, placementTransforms — сервер → «карточка размещения» (+4 more)
+
+### Community 71 - "Транскрипт звонка 04.08.2026: правки по учётке гостиницы (00:00–15:08)"
+Cohesion: 0.13
+Nodes (19): Транскрипт звонка 04.08.2026: правки по учётке гостиницы (00:00–15:08), Правка: список заявок ФАП в учётке гостиницы — только заявки, где выбрана эта гостиница, Правка: услугу «трансфер» в заявке ФАП скрыть от гостиниц, не оказывающих трансфер, Правка: трансферные тарифы во вкладке «Тарифы» гостиницы — только если гостиница сама оказывает трансфер, Правка: открепить квоту и резерв в шахматке, Правка: убрать поле «рейтинг» из настроек гостиницы, Правка: убрать поле «скидка» из настроек гостиницы, Правка: убрать переключатель «видимость гостиницы» из настроек в учётке гостиницы (+11 more)
+
+### Community 139 - "Call Backlog Review 03.08"
+Cohesion: 0.40
+Nodes (6): Правка: в проживании ФАП показывать гостинице тариф по договору Карс Авиа↔гостиница, Правка: во вкладке «Тарифы» раздела «О гостинице» показывать тарифы гостиницы, а не авиакомпании, Выбор источника тарифа проживания, Сезонность и сроки действия тарифов, Баг: тариф из гостиницы не считает проживание, HotelTarifsTab
+
+### Community 151 - "Call Backlog Review 03.08"
+Cohesion: 0.40
+Nodes (5): Правка: во вкладке «О гостинице» показывать контакты самой гостиницы, Правка: во вкладке «Номера» показывать цены гостиницы, а не цены для авиакомпании, Расчёт по койко-местам или по номерам, Цена за одного в двухместном номере, HotelAboutTab
+
+### Community 61 - "Call Backlog Review 03.08"
+Cohesion: 0.13
+Nodes (22): Созвон 03.08.2026: конструктор расчёта отчётов, Виды исчисления проживания, Часовая оплата — для АК «Россия», Скидки на проживание, Виды исчисления трансфера, Выбор тарифа трансфера, Расчёт по людям на авто или по авто, Скидки на авто (+14 more)
+
+### Community 146 - "docs"
+Cohesion: 0.50
+Nodes (5): FAP-DECISIONS.md — decision history, Decision: baggage = trip with per-passenger tags and prices, FAP-HANDOVER.md — module handover to backend dev, FAP.md — backend documentation, FAP2.md — frontend documentation
+
+### Community 39 - "Доки ФАП: FAP.md, FAP2.md, FAP-DECISIONS, FAP-HANDOVER"
+Cohesion: 0.08
+Nodes (30): Decision: no embedded→relational rewrite, Decision: report opens to airline only on submit, Decision: pin figures only in submitted reports, Decision: FAP days rules (duration, manual override, evictions), Decision: billing mode belongs to tariff (PER_BED/PER_ROOM), Decision: airline contract prices as third tariff source, Decision: personId is the identity canon, Decision: overbooking allowed, no hard blocks in FAP (+22 more)
+
+### Community 114 - "docs"
+Cohesion: 0.18
+Nodes (11): Decision: row-level authorization, not content filtering, Decision: observation mode before hard enforcement, Constraint: role middleware ban in FAP, Passenger LK concept (target: October 2026), FAP_SCOPE_ENFORCE rollout (observation → hard mode), checkFapScopeReadiness.js (enforcement readiness probe), ExternalUser & magic links, withFapAuthGuard (auth whitelist) (+3 more)
+
+### Community 147 - "docs"
+Cohesion: 0.40
+Nodes (5): Method: finder → adversarial verifier → stand measurement, Two-tier mutation envelope (withPassengerRequest), prismaDouble (test harness), Resolver split — stages 0–3 (12 resolver files + 23 services), Characterization test net (300+ tests)
+
+### Community 37 - "ФАП: страницы-роуты и гейты доступа"
+Cohesion: 0.11
+Nodes (22): index.html — HTML-оболочка приложения, #root — точка монтирования React, Google Fonts: Montserrat, Inter, Nunito Sans, REQUEST_RESET_PASSWORD, RESET_PASSWORD, VERIFY_EMAIL, TransferOrder, TravellinePage (+14 more)
+
+### Community 125 - "SettingsSidebar: компонент и GraphQL-операции отдела"
+Cohesion: 0.27
+Nodes (10): SettingsSidebar — компонент настроек через боковое меню, Состав папки SettingsSidebar, Двойной режим type="airline" / type="dispatcher", Контракт пропсов SettingsSidebar, Режимы «Просмотр» и «Редактирование», Выбор должностей для авиакомпаний, GraphQL-операции SettingsSidebar, Обработка ошибок сохранения настроек (+2 more)
+
+### Community 21 - "Эскадрилья: Estafeta, ExistRequest, статусы и roles"
+Cohesion: 0.07
+Nodes (34): Экскурс: Эскадрилья и система заявок в KARS-AVIA CRM, Эскадрилья (модуль заявок на размещение экипажа), Жизненный цикл заявки (created → opened → done → archived), Маппинг статусов заявки (англ. код → русское название), Многоуровневая серверная фильтрация заявок, Серверный поиск с debounce 500 мс, Пагинация заявок с синхронизацией URL (take: 50), Упрощённая обработка подписок через refetch() (+26 more)
+
+### Community 31 - "ФАП: страницы-роуты и гейты доступа"
+Cohesion: 0.13
+Nodes (28): Права доступа к заявкам через accessMenu, effectiveAccessMenu — переопределения по должности, считается на бэке, v12.13 — useEffectiveAccessMenu в роут-компонентах, отчёты открыты авиакомпаниям, v12.15 — canManageAirlineAccess и resolveEffectiveAccessMenu в utils/access.js, GET_AIRLINE_DEPARTMENT, AirlineRegisterOfContracts(), ExistRequest(), HotelRegisterOfContracts() (+20 more)
+
+### Community 49 - "Шахматка v2: NewPlacementV2, utils и история версий"
+Cohesion: 0.16
+Nodes (17): Маршруты заявок (/relay, /hotels/:hotelId/:requestId, /newPlacement/:hotelId), Шахматка — PlacementDNDV2 (timeline-календарь заселения), v12.15 (02.09.2026), v10.8 — появление шахматки V2 с модульной структурой, v12.15 — редизайн шахматки (NewPlacementV2, виды Неделя / Декада / Месяц, портал-поповер), v12.15 — единая доска без «Квота | Резерв» (−1260 строк), v12.15 — снос PlacementDND v1, react-window, TransferAdminOrdersContent, sameId() (+9 more)
+
+### Community 29 - "CLAUDE.md / AGENTS.md: руководство и MUI-примитивы"
+Cohesion: 0.10
+Nodes (35): CLAUDE.md — руководство по репозиторию для Claude Code, Работа с кодом — правила кода, Визуальный стиль — следовать существующим паттернам, Экономия токенов — не объяснять, просто делать, Kars Avia — система размещения экипажей в гостиницах, Стек: React 18 (JSX), Vite 5, Apollo Client 3, MUI 6, React Router 6, Команды npm: dev / build / preview / lint, Окружения (.env): dev / demo / production, переключение в graphQL_requests.js (+27 more)
+
+### Community 58 - "ФАП: страницы-роуты и гейты доступа"
+Cohesion: 0.11
+Nodes (14): Аутентификация — JWT в cookie (token, refreshToken, auth_fingerprint), Внешние пользователи — subjectType EXTERNAL_USER + cookie externalUserContext, Хелперы: generateTimestampId / getMediaUrl / decodeJWT, REFRESH_TOKEN, AUTHORIZE_EXTERNAL_AUTH, ExternalLogin(), Empty(), TokenRefresher() (+6 more)
+
+### Community 67 - "TransferOrder"
+Cohesion: 0.15
+Nodes (13): Хелперы дат: convertToDate / convertToDateNew / buildScheduledISO, buildScheduledISO(), GET_TRANSFER_REQUEST, UPDATE_TRANSFER_REQUEST_MUTATION, TRANSFER_UPDATED_SUBSCRIPTION, DriverItem(), OrderInfoSidebar(), isFinishedOrCanceled() (+5 more)
+
+### Community 94 - "SettingsSidebar: права отдела и уведомления"
+Cohesion: 0.22
+Nodes (14): SettingsSidebar — панель прав доступа отдела (airline / dispatcher), accessStateRef — ref с внутренним состоянием панели прав, buildAccessPayload(internalState) — internal → raw API, positionAccessMenusByPosId — доступ должностей к разделам (PositionOnDepartment), AccessPermissionsPanel — чисто UI, всё через пропсы, Визуальный disabled — opacity 0.55 на контейнере (класс rowDisabled), Визуальный disabled — opacity 0.55 на контейнере (класс rowDisabled), v12.5 (12.05.2026) (+6 more)
+
+### Community 34 - "Отчёты v2: выпущенные отчёты, plural, hotelAddress (README v12.14)"
+Cohesion: 0.11
+Nodes (27): Раздел «Отчёты v2» (ReportsV2) — отчёты по заявкам эскадрильи, Гейты ролей раздела «Отчёты»: reportMenu, старый раздел только у SUPERADMIN, Черновики отчётов: createAirlineReportDraft / createHotelReportDraft → confirmReportDraft, Доменная логика без JSX: reportRules.js / reportDraftRows.js / reportDraftAge.js (+ node --test), Что нельзя ломать в «Отчётах v2», Границы периода …T00:10:00 / …T23:50:00 — часть расчёта, не форматирование, recalcRow — только для строк, которые правил пользователь, updateReportDraft перезаписывает весь массив строк без версии → явная кнопка сохранения (+19 more)
+
+### Community 59 - "Отчёты v2: правила расчёта суток (reportRules, ReportRulesSidebar)"
+Cohesion: 0.19
+Nodes (20): Пороги частичных суток — ReportPartialDaySetting, уровни GLOBAL / AIRLINE / HOTEL, v12.15 — «Правила расчёта суток» с уровнями GLOBAL / AIRLINE / HOTEL, resolveDraftPartialDayRules, UPSERT_REPORT_PARTIAL_DAY_SETTING, DELETE_REPORT_PARTIAL_DAY_SETTING, GET_AIRLINES_LIGHT, FIELD_GROUPS, LEVEL_OPTIONS, LEVEL_INFO_TEXT (+12 more)
+
+### Community 24 - "README: история версий"
+Cohesion: 0.05
+Nodes (41): README — история обновлений Kars Avia (v0.1 → v12.15), v0.1 (02.12.2024), v0.2 (04.12.2024), v0.3 (07.12.2024), v1.1 (18.12.2024), v1.2 (21.12.2024), v2.0 (09.01.2025), v2.1 (15.01.2025) (+33 more)
+
+### Community 158 - "README: история версий"
+Cohesion: 0.67
+Nodes (3): v10.0 (19.09.2025), v10.1 (04.10.2025), v10.0 — страницы «Обновления» и «Инструкции» (древовидные статьи)
+
+### Community 134 - "utils"
+Cohesion: 0.29
+Nodes (8): v12.6 (18.05.2026), v12.7 (22.05.2026), v12.13 (27.07.2026), v12.6+ — интеграция с TravelLine, v12.13 — аналитика «Пассажиры» (KPI, таблицы, графики, XLSX одной книгой), v12.13 — TravelLine сертификация: дедлайн отмены, часовые пояса, корп. клиенты, v12.13 — приложение представителя: распознавание документа по фото (Yandex Vision → GPT), v12.14 — TravelLine: корпоративный клиент в сайдбаре номеров, отдельный пункт меню
+
+### Community 82 - "Меню, роли и эффективные права"
+Cohesion: 0.18
+Nodes (12): v12.12 (30.06.2026), v12.12 — сгруппированные компактные меню на data-driven рендере, Маршрут /documentation и пункт меню «Помощь», DelayedText(), HotelAdminMenu(), ItemIcon, RailIcon, CATEGORIES (+4 more)
+
+### Community 118 - "ФАП: страницы услуг и константы"
+Cohesion: 0.25
+Nodes (8): v12.14 — reopenPassengerRequestService, «Вернуть в работу», гейт reserveUpdateCompleted, canEditCompletedRequest(), DISPATCHER, SUPER, EXT_HOTEL, WITH, WITHOUT, FapDetailPage()
+
+### Community 63 - "ФАП: манифест фиксированной ширины и ICAO (manifestFixedWidth)"
+Cohesion: 0.16
+Nodes (19): v12.15 — форматы манифеста: фиксированная ширина, ICAO, Руслайн (шесть профилей), FIELDS, FIXED_WIDTH_HEADER, toLines(), nextTokenStart(), readLayout(), cut(), isReg() (+11 more)
+
+### Community 50 - "Описание гостиницы: парсер hotelDescription и HotelPreview"
+Cohesion: 0.17
+Nodes (22): v12.15 — «О гостинице» адаптив, чипы удобств (hotelDescription.js, +26 тестов), HotelAbout_tabComponent(), VOID_TAGS, PARAGRAPH_TAGS, NAMED_ENTITIES, isCodePoint(), decodeEntities(), toHtmlString() (+14 more)
+
+### Community 102 - "Сезонные цены категорий номеров (RoomKindSeasons)"
+Cohesion: 0.21
+Nodes (9): v12.15 — сезонные цены тарифов гостиницы (RoomKindSeasons, roomKindSeasons.js, apolloErrorText.js), GET_ROOM_KIND_SEASONS, CREATE_ROOM_KIND_SEASON, UPDATE_ROOM_KIND_SEASON, DELETE_ROOM_KIND_SEASON, EMPTY_FORM, SeasonRowEditor(), useRoomKindSeasons() (+1 more)
+
+### Community 96 - "utils"
+Cohesion: 0.21
+Nodes (13): v12.15 — TravelLine SyncIndicator; поиск цен трансфера matchesTransferPriceSearch, AirlineTransferPrices_tabComponent(), OrganizationTransferPrices_tabComponent(), DEFAULT_TRANSFER_PRICES, TRANSFER_SEATER_KEYS, matchesTransferPriceSearch(), transferPriceToInput(), toRoutePricesInput() (+5 more)
+
+### Community 6 - "DocumentationList1"
+Cohesion: 0.05
+Nodes (81): Раздел «Помощь» (Инструкции) — модуль документации, Иерархия компонентов: DocumentationList → DocumentationList1 → панели, DocumentationList.jsx — обёртка с Header «Инструкции» и переключателем типа, DocumentationList1 — трёхзонный layout (дерево / контент / якоря), Типы документации: dispatcher / airline / hotel / representation → apiType, Переключатель типа только у superAdmin (hasDocumentationFilterSwitcherAccess), GraphQL API документации: sectionsWithHierarhy, article, CRUD секций/статей, upload, Нормализация дерева section/article из ответа (toLocalTreeNode) (+73 more)
+
+### Community 77 - "storage"
+Cohesion: 0.25
+Nodes (16): Лейаут статьи (ширина, отступы) — saveDocLayout / docDraftStore, buildDocDraftId(), buildDocLayoutId(), loadDocContent(), loadDocDraft(), saveDocContent(), saveDocLayout(), randomId() (+8 more)
+
+### Community 66 - "Документация: загрузка файлов (UploadContext, imageDropPlugin)"
+Cohesion: 0.17
+Nodes (16): DocumentationUploadContext (uploadImage / uploadFile) + DocumentationUploadStore, UPLOAD_DOCUMENTATION_IMAGE, UPLOAD_DOCUMENTATION_FILE, DocumentationUploadContext, isSameOriginAsServer(), ensureUploadedPath(), ensureLeadingSlash(), normalizeUploadsPath() (+8 more)
+
+### Community 17 - "Документация: редактор Tiptap и расширения"
+Cohesion: 0.06
+Nodes (24): Редактор Tiptap — базовые расширения (StarterKit, Color, Highlight, FontSize, …), NavigationAnchor — атрибуты anchorTag / anchorId на paragraph и heading, Табличные расширения (TableWrapper, RowHeight, RowResizing, CellCursorPad, SelectionLock), Блоки контента: Quote, Toggle, Frame, Columns, Image, Gallery, Video, Audio, File, Ограничение VK-видео: iframe разрешён только на официальных сайтах партнёров, FontSize, BackgroundColor, NavigationAnchor (+16 more)
+
+### Community 51 - "Документация: редактор Tiptap и расширения"
+Cohesion: 0.13
+Nodes (17): SlashInterceptor + SlashCommand, BlockLassoSelectionPlugin, imageDropPlugin, clampNumber(), getTopLevelBlockPos(), getTopLevelStartPositions(), getInsertTargetPosForBlock(), PlusButtonOverlay(), clampDocPos(), getFirstTextCursorPosInNode() (+9 more)
+
+### Community 5 - "Сессия и контексты: getCookie, useToast, useDialog, JWT"
+Cohesion: 0.06
+Nodes (89): getCookie(), decodeJWT(), UPDATE_PASSENGER_REQUEST, REMOVE_PASSENGER_REQUEST_HOTEL_PERSON, DELETE_HOTEL_CATEGORY, DELETE_HOTEL_TARIFF, DELETE_ADDITIONAL_SERVICE, UPDATE_MAINTENANCE_BANNER (+81 more)
+
+### Community 4 - "Резерв и размещение представителя"
+Cohesion: 0.05
+Nodes (69): getMediaUrl(), GET_AIRLINES_RELAY, GET_HOTELS_RELAY, GET_HOTELS_WITH_PRICES, UPDATE_HOTEL_BRON, COMPLETE_PASSENGER_REQUEST_EARLY, GET_MESSAGES_HOTEL, SEND_FAP_MESSAGE (+61 more)
+
+### Community 9 - "TravelLine: поиск, бронирование, синхронизация"
+Cohesion: 0.06
+Nodes (66): mediaSrc(), GET_TL_CONFIG, SET_TL_CONFIG, GET_TL_ROOM_TYPES, GET_TL_RATE_PLANS, TL_AVAILABILITY, TL_PROPERTY_CALENDAR, TL_PROPERTIES_AVAILABILITY (+58 more)
+
+### Community 40 - "Резерв представителя: вкладки услуг (Habitation / Water / Power / Baggage) и DeleteIcon"
+Cohesion: 0.11
+Nodes (22): makeFormatter(), convertToDate(), SET_PASSENGER_SERVICE_STATUS, REMOVE_PASSENGER_REQUEST_HOTEL, COMPLETE_PASSENGER_REQUEST_WATER_EARLY, COMPLETE_PASSENGER_REQUEST_MEAL_EARLY, COMPLETE_PASSENGER_REQUEST_BAGGAGE_EARLY, COMPLETE_PASSENGER_REQUEST_LIVING_EARLY (+14 more)
+
+### Community 110 - "Таблицы заявок: InfoTable, GroupedRequests, convertToDate / getMediaUrl"
+Cohesion: 0.30
+Nodes (5): convertToDateNew(), InfoTableDataPatchNotes(), InfoTableDataSupport(), InfoTableRepresentativeData(), InfoTable()
+
+### Community 153 - "Сезонные цены категорий номеров (RoomKindSeasons)"
+Cohesion: 0.83
+Nodes (3): generateTimestampId(), emptySeasonDraft(), RoomKindSeasonsDraft()
+
+### Community 117 - "Авторизация: App, AuthContext, authService"
+Cohesion: 0.29
+Nodes (8): TRANSFER_SING_IN, SINGIN, SINGUP, Login(), NO_RETURN_PATHS, normalizePath(), isReturnable(), resolveLoginTarget()
+
+### Community 1 - "Роли, шапка и реестры договоров"
+Cohesion: 0.06
+Nodes (75): DRIVERS_QUERY, GET_ORGANIZATIONS, GET_ORGANIZATION, GET_ORGANIZATION_CONTRACTS, DELETE_ORGANIZATION_CONTRACT, ARCHIVE_AIRLINE_CONTRACT, RESTORE_AIRLINE_CONTRACT, ARCHIVE_HOTEL_CONTRACT (+67 more)
+
+### Community 73 - "Карточки «О компании» и медиа (getMediaUrl)"
+Cohesion: 0.21
+Nodes (12): UPDATE_ORGANIZATION, GET_HOTEL_LOGS, GET_AIRLINE_LOGS, REORDER_GALLERY, DELETE_HOTEL, UPDATE_AIRLINE, toNum(), StarRatingFilter() (+4 more)
+
+### Community 140 - "Сессия и контексты: getCookie, useToast, useDialog, JWT"
+Cohesion: 0.40
+Nodes (5): LOGOUT, MARK_USER_OFFLINE, MARK_USER_ONLINE, lastMinutesPhrase(), UserActivityTracker()
+
+### Community 133 - "NotificationsSidebar"
+Cohesion: 0.32
+Nodes (6): QUERY_NOTIFICATIONS, NOTIFICATIONS_SUBSCRIPTION, notificationDedupeKey(), separatorToType, NotificationsSidebar(), ExportIcon()
+
+### Community 88 - "HotelTable"
+Cohesion: 0.19
+Nodes (13): GET_REQUEST, GET_BRONS_HOTEL, Booking(), BronInfo(), initialState(), reducer(), checkBookingConflict(), HotelTablePageComponent() (+5 more)
+
+### Community 124 - "Чаты и поддержка: Message, SupportPage, getMediaUrl"
+Cohesion: 0.31
+Nodes (9): GET_PASSENGER_REQUEST_CHATS, DEFAULT_POS, SIZE, readMode(), writeMode(), readPos(), writePos(), clampPos() (+1 more)
+
+### Community 72 - "CreateRequestDocumentation"
 Cohesion: 0.19
 Nodes (18): CREATE_HOTEL, CREATE_DOCUMENTATION, newId(), makeEmptyBlock(), updateTree(), removeFromTree(), buildPayload(), BlockItem() (+10 more)
 
-### Community 36 - "Страница гостиницы: HotelPage, роутинг по ролям, ссылка предпросмотра"
+### Community 41 - "Страница гостиницы: HotelPage, роутинг по ролям, ссылка предпросмотра"
 Cohesion: 0.07
-Nodes (22): CREATE_HOTEL_PREVIEW_LINK, GET_HOTEL_NAME, PRESETS, Страница гостиницы: HotelPage, роутинг по ролям, ссылка предпросмотра(), HotelAboutTab, AirlineAdminHotelContent(), HotelAboutTab, HotelCompanyTab (+14 more)
+Nodes (19): CREATE_HOTEL_PREVIEW_LINK, PRESETS, HotelPreviewShareButton(), HotelAboutTab, HotelCompanyTab, HotelNomerFondTab, HotelShahmatkaTab, HotelTarifsTab (+11 more)
 
-### Community 30 - "«О гостинице»: HotelAbout и иконки удобств"
+### Community 25 - "«О гостинице»: HotelAbout и иконки удобств"
 Cohesion: 0.07
 Nodes (17): GET_HOTEL_PREVIEW, GET_HOTEL_MEAL_PRICE, GET_HOTEL_TRANSFER_PRICE, AMENITY_ICONS, TABS, AirConditionerIcon(), BarIcon(), ConferenceIcon() (+9 more)
 
-### Community 20 - "Аналитика АК: AirlineAnalytics, мапперы и сортировка таблиц"
-Cohesion: 0.10
-Nodes (44): GET_AIRLINES, GET_AIRLINE_ANALYTICS, SERVICE_OPTIONS, isPeriodRangeComplete(), formatPeriodHuman(), formatPeriodWithDays(), ALL_AIRPORTS_OPTION, ALL_SERVICES_OPTION (+36 more)
+### Community 130 - "Шахматка v2: NewPlacementV2, utils и история версий"
+Cohesion: 0.47
+Nodes (7): GET_HOTEL_MIN, usePlacementData(), translateStatus(), mapRooms(), mapHotelChessToRequest(), mapRequestToPlacement(), mapUpdatedRequestFromSubscription()
 
-### Community 40 - "Отчёты v2: черновик — reportDraftRows, useReportDraft"
+### Community 27 - "Аналитика АК: AirlineAnalytics, мапперы и сортировка таблиц"
 Cohesion: 0.12
-Nodes (29): GET_REPORT_DRAFT, GET_REPORT_DRAFT_PRESENTATION, UPDATE_REPORT_DRAFT, RECREATE_REPORT_DRAFT, CONFIRM_REPORT_DRAFT, SUBMIT_AIRLINE_REPORT_DRAFT, UNSUBMIT_AIRLINE_REPORT_DRAFT, DELETE_REPORT_DRAFT (+21 more)
+Nodes (36): GET_AIRLINES, GET_AIRLINE_ANALYTICS, SERVICE_OPTIONS, isPeriodRangeComplete(), formatPeriodHuman(), formatPeriodWithDays(), ALL_AIRPORTS_OPTION, ALL_SERVICES_OPTION (+28 more)
 
-### Community 84 - "EditRequestDocumentation"
+### Community 101 - "GraphQL: ядро запросов и формы заявок"
 Cohesion: 0.20
-Nodes (14): GET_DOCUMENTATION, GET_DOCUMENTATION_TREE, UPDATE_DOCUMENTATION, newId(), toLocalNode(), stripNode(), collectImageGroups(), updateTreeById() (+6 more)
+Nodes (10): GET_AIRLINE_REPORT, GET_REPORTS_SUBSCRIPTION, GET_HOTEL_REPORT, DELETE_REPORT, ARCHIVE_REPORT, RESTORE_REPORT, GET_REPORT_DRAFTS, buildDraftByReport() (+2 more)
 
-### Community 117 - "package"
+### Community 35 - "Отчёты v2: таблица черновика — ReportDraftTable, Summary, группировка по гостиницам"
+Cohesion: 0.10
+Nodes (22): GET_REPORT_PARTIAL_DAY_SETTINGS, MY_REPORT_EDITABLE_FIELDS, SET_MY_REPORT_EDITABLE_FIELDS, ReportDraftDialog(), ReportDraftEmptyState(), ReportDraftErrorBanner(), ReportDraftFilters(), NAME_WIDTHS (+14 more)
+
+### Community 30 - "Отчёты v2: черновик — reportDraftRows, useReportDraft"
+Cohesion: 0.11
+Nodes (32): GET_REPORT_DRAFT, GET_REPORT_DRAFT_PRESENTATION, UPDATE_REPORT_DRAFT, RECREATE_REPORT_DRAFT, CONFIRM_REPORT_DRAFT, SUBMIT_AIRLINE_REPORT_DRAFT, UNSUBMIT_AIRLINE_REPORT_DRAFT, DELETE_REPORT_DRAFT (+24 more)
+
+### Community 136 - "Системные уведомления и патч-ноуты"
+Cohesion: 0.48
+Nodes (5): MAINTENANCE_BANNER, MAINTENANCE_BANNER_UPDATED, MaintenanceBannerBar(), useMaintenanceCountdown(), formatCountdown()
+
+### Community 116 - "Системные уведомления и патч-ноуты"
+Cohesion: 0.24
+Nodes (7): SYSTEM_UPDATE, MARK_SYSTEM_UPDATE_SEEN, SYSTEM_UPDATE_PUBLISHED, SystemNotificationsSettings(), SystemUpdateGate(), SystemUpdateModal(), useSystemUpdate()
+
+### Community 65 - "Системные уведомления и патч-ноуты"
+Cohesion: 0.25
+Nodes (18): UPDATE_SYSTEM_UPDATE, hasItems(), SystemUpdateCard(), emptyState(), SystemUpdateSettings(), AUDIENCE_ORDER, AUDIENCE_LABELS, SECTION_KEYS (+10 more)
+
+### Community 126 - "Документация: EditRequestDocumentation, дерево и TextEditorOutput"
+Cohesion: 0.38
+Nodes (9): UPDATE_DOCUMENTATION, newId(), toLocalNode(), stripNode(), collectImageGroups(), updateTreeById(), removeFromTreeById(), BlockItem() (+1 more)
+
+### Community 127 - "package"
 Cohesion: 0.20
 Nodes (9): name, private, version, type, scripts, dev, build, lint (+1 more)
 
-### Community 70 - "package"
+### Community 68 - "package.json: dependencies (Tiptap, MUI)"
 Cohesion: 0.12
 Nodes (20): dependencies, @mui/icons-material, @mui/icons-material, @tiptap/extension-color, @tiptap/extension-color, @tiptap/extension-highlight, @tiptap/extension-highlight, @tiptap/extension-table (+12 more)
 
-### Community 141 - "package"
+### Community 157 - "package"
 Cohesion: 0.67
 Nodes (3): @tiptap/extension-table-cell, @tiptap/extension-table-cell, @tiptap/extension-table-header
 
-### Community 130 - "ScriptRunner"
+### Community 141 - "ScriptRunner"
 Cohesion: 0.33
 Nodes (6): react-dom, react-dom, useDragResize(), DraggableWindow(), PickHighlight(), TargetMarkers()
 
-### Community 74 - "ФАП: манифест из реестра и импорт (fapManifestBuild, ManifestImportModal)"
-Cohesion: 0.21
-Nodes (16): xlsx, xlsx, fileLabel(), openFile(), FapManifestFiles(), manifestPeople(), mark(), hasManifestRoster() (+8 more)
+### Community 103 - "ФАП: манифест из реестра и импорт (fapManifestBuild, ManifestImportModal)"
+Cohesion: 0.29
+Nodes (12): xlsx, xlsx, manifestPeople(), mark(), hasManifestRoster(), buildManifestRows(), buildManifestWorkbook(), manifestDownloadName() (+4 more)
 
-### Community 83 - "package"
+### Community 87 - "package.json: devDependencies (Vite, ESLint)"
 Cohesion: 0.12
 Nodes (17): devDependencies, @types/react, @types/react, @types/react-dom, @types/react-dom, @vitejs/plugin-react, @vitejs/plugin-react, eslint (+9 more)
 
-### Community 38 - "Страницы АК и автопарка: AirlinePage, DriversCompanyPage, роутинг по ролям"
+### Community 33 - "Страницы АК и автопарка: AirlinePage, DriversCompanyPage, роутинг по ролям"
 Cohesion: 0.07
 Nodes (28): DriversCompanyPage(), DriversCompanyTab, AirlineTarifsTab, AirlineRegisterOfContracts, AirlineShahmatkaTabStaff, OrganizationAboutTab, OrganizationRegisterOfContracts, OrganizationTransferPricesTab (+20 more)
 
-### Community 39 - "Таблицы InfoTableData* и готовность отделов (readiness)"
-Cohesion: 0.10
-Nodes (21): AirlineReadinessIndicator(), collapseBtnStyle, InfoTableDataAirlineCompany(), InfoTableDataAirlines(), collapseBtnStyle, InfoTableDataDispatcherCompany(), InfoTableDataMyCompany(), setIndeterminate() (+13 more)
+### Community 28 - "RoleContent: точки входа ролей и роуты FapV2"
+Cohesion: 0.15
+Nodes (30): AirlinePage(), AirlinesList(), Company(), DocumentationList(), Estafeta(), HotelPage(), HotelsList(), MyCompany() (+22 more)
 
-### Community 137 - "GraphQL: ядро запросов и формы заявок"
+### Community 152 - "GraphQL: ядро запросов и формы заявок"
 Cohesion: 0.70
 Nodes (4): initialState(), reducer(), packIntoLanes(), AirlineTablePageComponent()
 
-### Community 85 - "storage"
-Cohesion: 0.28
-Nodes (14): buildDocDraftId(), buildDocLayoutId(), loadDocContent(), loadDocDraft(), saveDocContent(), randomId(), saveBlobAsFile(), saveFile() (+6 more)
+### Community 42 - "DocumentationListPanelContent"
+Cohesion: 0.16
+Nodes (26): EMPTY_DOC, DEFAULT_ARTICLE_PADDING, ARTICLE_WIDTH_PRESET_MAX, isDocJson(), normalizeIncomingDocContent(), isSameDocContentSemantically(), clamp(), normalizePadding() (+18 more)
 
-### Community 24 - "Документация: медиа-блоки редактора"
-Cohesion: 0.12
-Nodes (29): useDocumentationUpload(), notifyDocumentationUploadFailure(), FONT_SIZE_MODAL_ESTIMATED_SIZE, fontSizeOptions, FontSizeSelect(), AUDIO_MODAL_ESTIMATED_SIZE, loadYouTubeIframeApi(), loadVkVideoApi() (+21 more)
+### Community 12 - "Документация: медиа-блоки редактора"
+Cohesion: 0.07
+Nodes (50): useDocumentationUpload(), notifyDocumentationUploadFailure(), FONT_SIZE_MODAL_ESTIMATED_SIZE, fontSizeOptions, FontSizeSelect(), AudioBlock, AUDIO_MODAL_ESTIMATED_SIZE, loadYouTubeIframeApi() (+42 more)
 
-### Community 27 - "Документация: тулбар и экспорт в Office"
+### Community 22 - "Документация: тулбар и экспорт в Office"
 Cohesion: 0.09
 Nodes (36): getDocumentationUploadFile(), textColors, bgColors, ColorModal(), CustomStyleModal(), EXPORT_FORMATS, ExportModal(), ImportModal() (+28 more)
 
-### Community 131 - "src"
-Cohesion: 0.60
-Nodes (5): clampNumber(), getTopLevelBlockPos(), getTopLevelStartPositions(), getInsertTargetPosForBlock(), PlusButtonOverlay()
+### Community 119 - "Документация: якоря навигации (AnchorHashOverlay)"
+Cohesion: 0.36
+Nodes (9): TEXT_NODE_TYPES, TEXT_BLOCK_TAGS, TABLE_NODE_TYPES, normalizeLabel(), buildAnchorsSignature(), isInsideTableNode(), AnchorHashOverlay(), buildAnchorDomId() (+1 more)
 
-### Community 86 - "components"
+### Community 89 - "Документация: перетаскивание блоков (BlockDragOverlay)"
 Cohesion: 0.24
 Nodes (16): getEditorViewSafe(), getEditorDomSafe(), getClientPointFromEvent(), getTopLevelStartPositions(), getTopLevelBlockEl(), getTopLevelBlockPos(), getNodePosByDom(), getNearestTopLevelBlockElByClientY() (+8 more)
 
-### Community 106 - "components"
+### Community 111 - "components"
 Cohesion: 0.27
 Nodes (9): rectFromPoints(), intersectRect(), isFormFieldTarget(), normalizeTargetToElement(), hasNativeTextSelectionInActiveField(), BlockSelectionOverlay(), BlockLassoSelectionKey, BlockLassoSelectionPMPlugin (+1 more)
 
-### Community 99 - "components"
+### Community 104 - "Документация: LinkModal и иконки редактора"
 Cohesion: 0.24
 Nodes (11): linkStyles, renderLinkIcon(), getLinkStylePreviewStyle(), LinkModal(), LinkIcon(), ButtonIcon(), HighlightIcon(), DashedIcon() (+3 more)
 
-### Community 128 - "extensions"
-Cohesion: 0.48
-Nodes (5): clampDocPos(), getFirstTextCursorPosInNode(), getMatchingAncestorFromSelection(), placeCursorInsideNearestNode(), schedulePlaceCursorInsideNearestNode()
-
-### Community 55 - "extensions"
-Cohesion: 0.13
-Nodes (20): FILE_MODAL_ESTIMATED_SIZE, BLOCK_TARGET_OPTIONS, getFileExtension(), getOfficePreviewUrl(), getPreviewKind(), TEXT_FILE_EXTENSIONS, CODE_FILE_EXTENSIONS, TEXT_FILENAMES (+12 more)
-
-### Community 87 - "extensions"
-Cohesion: 0.19
-Nodes (11): FrameBlock, FrameBlockView(), QuoteBlock, QUOTE_MODAL_ESTIMATED_SIZE, PRESET_COLORS, hexToRgb(), toQuoteBorderColor(), toQuoteAccentColor() (+3 more)
-
-### Community 107 - "extensions"
+### Community 112 - "extensions"
 Cohesion: 0.23
 Nodes (8): parseMaybeInt(), GALLERY_LAYOUTS, GALLERY_FITS, normalizeGalleryLayout(), normalizeGalleryColumns(), normalizeGalleryGap(), normalizeGalleryFit(), GalleryBlock
 
-### Community 51 - "extensions"
+### Community 120 - "Документация: блоки цитаты и рамки (quoteBlock, frameBlock)"
+Cohesion: 0.35
+Nodes (9): QuoteBlock, QUOTE_MODAL_ESTIMATED_SIZE, PRESET_COLORS, hexToRgb(), toQuoteBorderColor(), toQuoteAccentColor(), toQuoteButtonColor(), toQuoteTextColor() (+1 more)
+
+### Community 43 - "Документация: высота строк таблицы (tableRowResizing)"
 Cohesion: 0.12
 Nodes (24): tableRowResizingPluginKey, RowResizeState, domCellAround(), rowDomAtCellPos(), edgeCell(), edgeCellHorizontal(), updateHandle(), updateCornerHandle() (+16 more)
 
-### Community 79 - "extensions"
+### Community 78 - "Документация: обёртка таблицы, перенос строк и колонок (tableWrapperView)"
 Cohesion: 0.24
 Nodes (18): TABLE_HEADER_MODAL_ESTIMATE, TABLE_HEADER_PRESET_COLORS, findTable(), ensureSelectionInThisTable(), isSelectionInsideTable(), forceCursorBackIntoTable(), moveCursorLeft(), removeLastRow() (+10 more)
 
-### Community 59 - "utils"
+### Community 52 - "Документация: импорт DOCX (docxImport)"
 Cohesion: 0.19
 Nodes (24): escapeHtml(), wordVal(), relId(), wordBoolean(), halfPointsToPx(), wordColorToCss(), wordHighlightToCss(), findFirstChild() (+16 more)
 
-### Community 22 - "Svg-обёртка, иконки действий и меню «⋮»"
-Cohesion: 0.07
-Nodes (15): ExistRequestAdditionalMenu(), MENU_ITEMS, ProfileSidebar(), AdditionalMenuIcon(), CancelIcon(), ExitIcon(), ExportIcon(), NotificationIcon() (+7 more)
+### Community 18 - "Svg-обёртка, иконки действий и меню «⋮»"
+Cohesion: 0.08
+Nodes (17): ExistRequestAdditionalMenu(), FapHeaderActions(), MENU_ITEMS, AdditionalMenuIcon(), CancelIcon(), DownloadIcon(), EditIcon(), ExitIcon() (+9 more)
 
-### Community 121 - "EditRequestDocumentation"
+### Community 131 - "EditRequestDocumentation"
 Cohesion: 0.44
 Nodes (8): newId(), toLocalNode(), stripNode(), collectImageGroups(), updateTreeById(), removeFromTreeById(), BlockItem(), EditRequestUpdates()
 
-### Community 108 - "FapV2"
-Cohesion: 0.36
-Nodes (9): baseNameOf(), withoutTimestamp(), extensionOf(), flightSlug(), manifestUploadName(), isManifestFile(), parseManifestFile(), manifestFilesNewestFirst() (+1 more)
+### Community 83 - "FapV2"
+Cohesion: 0.22
+Nodes (13): QUICK_PERCENTS, EMPTY_PRESETS, EMPTY_CUSTOM, clampInput(), FapDiscountDialog(), DISCOUNT_ZONES, clampPercent(), zoneMembers() (+5 more)
 
-### Community 61 - "ФАП: книга отчёта Excel (buildReportSheets)"
+### Community 142 - "ФАП: отчёт по гостинице — FapHotelPage, FapReportView, fapRooms"
+Cohesion: 0.53
+Nodes (3): toNum(), round2(), splitRoomAccommodation()
+
+### Community 97 - "Таблицы заявок: InfoTable, GroupedRequests, convertToDate / getMediaUrl"
+Cohesion: 0.24
+Nodes (12): MONTHS, WORK_STATUSES, requestWord(), tileInitials(), groupStats(), metaFor(), GroupAvatar(), GroupedRequests() (+4 more)
+
+### Community 144 - "Категории номеров и цены авиакомпании"
+Cohesion: 0.47
+Nodes (3): declension(), HotelAboutRoomBlock(), TextEditorOutput()
+
+### Community 137 - "HotelAboutTariffs"
+Cohesion: 0.48
+Nodes (6): mealLabels, fmt(), fmtWithVat(), declension(), TariffSection(), HotelAboutTariffs()
+
+### Community 46 - "Таблицы InfoTableData* и готовность отделов (readiness)"
 Cohesion: 0.14
-Nodes (20): makeRequest(), makeRequestWithGuest(), guestSheet(), combinedSheet(), makeBaggageRequest(), baggageSheet(), makeFullServiceRequest(), throwOnError() (+12 more)
+Nodes (16): collapseBtnStyle, collapseBtnStyle, InfoTableDataDispatcherCompany(), InfoTableDataMyCompany(), setIndeterminate(), InfoTableDataNomerFond(), VAT_PERCENT, fmtPrice() (+8 more)
 
-### Community 122 - "ReportsV2"
-Cohesion: 0.31
-Nodes (6): ReportDraftEmptyState(), ReportDraftFilters(), DRAFT_FILTERS, iconPropTypes, SearchIcon(), DocIcon()
-
-### Community 49 - "ReportDraftEditor"
+### Community 92 - "ReportsV2"
 Cohesion: 0.20
-Nodes (25): ReportDraftFooter(), ReportDraftGroupHeader(), ReportDraftRow(), formatMoney(), formatDays(), trimSeconds(), reportDateToInputValue(), inputValueToReportDate() (+17 more)
+Nodes (9): InfoTableDataReports(), ReportDraftHeader(), SKELETON_NAME_WIDTHS, reportsWord(), ReportsV2List(), ArchiveIcon(), DownloadReportIcon(), RestoreIcon() (+1 more)
 
-### Community 109 - "ReportsV2"
-Cohesion: 0.27
-Nodes (7): ReportDraftHeader(), SKELETON_NAME_WIDTHS, reportsWord(), ReportsV2List(), DownloadReportIcon(), RestoreIcon(), ViewReportIcon()
+### Community 145 - "Таблицы заявок: InfoTable, GroupedRequests, convertToDate / getMediaUrl"
+Cohesion: 0.47
+Nodes (4): InfoTableDataTransferOrders(), formatTimeRemaining(), ReportTimer(), statusLabels
 
-### Community 103 - "ReportDraftEditor"
-Cohesion: 0.21
-Nodes (9): NAME_WIDTHS, ROOM_WIDTHS, HOTEL_WIDTHS, ReportDraftSkeleton(), hintTooltipSlotProps, ReportDraftSummary(), ReportDraftTable(), buildShareClusters() (+1 more)
+### Community 23 - "Отчёты v2: строка черновика — ReportDraftRow, editorUtils, formatMoney"
+Cohesion: 0.14
+Nodes (37): ReportDraftEditor(), ReportDraftFooter(), ReportDraftGroupHeader(), ReportDraftRow(), formatMoney(), formatDays(), trimSeconds(), reportDateToInputValue() (+29 more)
 
-### Community 45 - "ScriptRunner"
+### Community 93 - "Сезонные цены категорий номеров (RoomKindSeasons)"
+Cohesion: 0.31
+Nodes (14): RoomKindSeasons(), buildDateInputValue(), toDateInputValue(), toDisplayDate(), formatSeasonRange(), seasonsOverlap(), findOverlappingSeason(), parsePrice() (+6 more)
+
+### Community 48 - "ScriptRunner: исполнение действий и DOM-хелперы"
 Cohesion: 0.08
-Nodes (10): sleep(), getUnderlyingElement(), resolveEditableElement(), normalizeDateLikeValue(), setElementValue(), ACTION_TYPES, KEY_OPTIONS, isScriptRunnerControl() (+2 more)
+Nodes (6): collectScripts(), collectAllScripts(), countScripts(), ACTION_TYPES, KEY_OPTIONS, RESIZE_DIRS
 
-### Community 81 - "ScriptRunner"
+### Community 64 - "ScriptRunner: компонент, сбор скриптов и селекторы"
 Cohesion: 0.12
-Nodes (18): generateSelector(), makeSafeFileName(), updateNodeById(), collectScripts(), collectAllScripts(), countScripts(), buildLibraryExportPayload(), buildSingleScriptExportPayload() (+10 more)
+Nodes (22): generateSelector(), makeSafeFileName(), findNodeById(), updateNodeById(), removeNodeById(), insertNode(), isDescendantOf(), moveNode() (+14 more)
 
-### Community 118 - "ScriptRunner"
+### Community 138 - "ScriptRunner: исполнение действий и DOM-хелперы"
+Cohesion: 0.29
+Nodes (7): sleep(), getUnderlyingElement(), resolveEditableElement(), normalizeDateLikeValue(), setElementValue(), isScriptRunnerControl(), executeAction()
+
+### Community 128 - "ScriptRunner"
 Cohesion: 0.33
 Nodes (10): isPlainObject(), isValidActionItem(), isValidActionsArray(), generateId(), assignIdsToTree(), migrateFromFlatFormat(), flatObjectToTree(), isValidTreeNode() (+2 more)
 
-### Community 129 - "ScriptRunner"
-Cohesion: 0.38
-Nodes (7): findNodeById(), removeNodeById(), insertNode(), isDescendantOf(), moveNode(), insertRelativeToNode(), reorderNode()
-
-### Community 110 - "ScriptRunner"
+### Community 113 - "ScriptRunner"
 Cohesion: 0.24
 Nodes (12): parseActionDate(), formatIsoDate(), formatRuDate(), generateRandomDateValue(), parseActionTime(), formatTimeFromMinutes(), randomInt(), getPreviousActionValue() (+4 more)
 
-### Community 25 - "HotelPMS (мок-данные)"
+### Community 20 - "HotelPMS (мок-данные)"
 Cohesion: 0.09
 Nodes (27): HotelPMS(), uid(), Bookings(), Dashboard(), HK_FLOW, Housekeeping(), Reports(), Rooms() (+19 more)
 
-### Community 31 - "utils"
-Cohesion: 0.08
-Nodes (25): LEGEND_ITEMS, BoardToolbar(), PlacementBarV2(), TrayCardV2(), UnplacedTray(), countOccupiedLanes(), waitBadge(), bedsLabel() (+17 more)
+### Community 132 - "Аналитика АК: AirlineAnalytics, мапперы и сортировка таблиц"
+Cohesion: 0.44
+Nodes (8): cmpNum(), cmpStr(), STR_SORT_KEYS, sortRowsByKey(), sortPositionRows(), sortAirportRows(), sortMergedRequestRows(), sortSegmentBlocks()
 
-### Community 88 - "utils"
-Cohesion: 0.21
-Nodes (12): VIEW_TABS, GridHeader(), capitalize(), weekTitle(), decadeIndex(), decadeRange(), periodRange(), buildPeriod() (+4 more)
+### Community 36 - "Шахматка v2: плашки, лоток и бейджи статусов (PlacementBarV2, TrayCardV2)"
+Cohesion: 0.10
+Nodes (21): MEAL_LABELS, BarPopover(), LEGEND_ITEMS, BoardToolbar(), TrayCardV2(), UnplacedTray(), countOccupiedLanes(), waitBadge() (+13 more)
 
-### Community 138 - "contexts"
-Cohesion: 0.50
-Nodes (3): Empty(), ScriptRunnerContext, ScriptRunnerProvider()
+### Community 55 - "Шахматка v2: период и шапка сетки (placementPeriod, GridHeader)"
+Cohesion: 0.14
+Nodes (16): VIEW_TABS, GridHeader(), layoutBar(), fmtShort(), MONTH, req(), capitalize(), weekTitle() (+8 more)
 
-### Community 68 - "utils"
-Cohesion: 0.17
-Nodes (18): FIELDS, FIXED_WIDTH_HEADER, toLines(), nextTokenStart(), readLayout(), cut(), isReg(), isBrokenWord() (+10 more)
+### Community 129 - "services"
+Cohesion: 0.36
+Nodes (9): isExternalUser(), AUTH_CODES_NO_RETRY, AUTH_CODES_REFRESH, isAuthError(), shouldLogoutImmediately(), isRefreshOrLogin(), doRefresh(), singleFlightRefresh() (+1 more)
 
-### Community 100 - "utils"
+### Community 121 - "Excel-даты и парсер массового импорта (excelDate, parseBulkXlsx)"
+Cohesion: 0.44
+Nodes (8): pad(), s(), excelSerialToParts(), fmtDate(), fmtTime(), BULK_HEADERS, s(), parseBulkXlsx()
+
+### Community 105 - "ФАП: тесты профилей манифеста"
 Cohesion: 0.15
 Nodes (10): WIDE_HEADER, NARROW_HEADER, narrowSheet(), detectNarrow(), VED_AT, VED_ROWS, ICAO_ROWS, RUSLINE_GROUPS (+2 more)
 
-### Community 140 - "utils"
+### Community 155 - "utils"
 Cohesion: 0.83
 Nodes (3): normalizePart(), buildScriptRunnerBaseId(), buildAutocompleteOptionKey()
 
@@ -863,9 +936,9 @@ Nodes (3): normalizePart(), buildScriptRunnerBaseId(), buildAutocompleteOptionKe
   src/Components/Blocks/SettingsSidebar/README.md · relation: references
 
 ## Knowledge Gaps
-- **511 isolated node(s):** `Побочный эффект: метрика transferBaggage перестаёт быть нулевой`, `Подсказка о пропущенных аэропортах`, `Spec: Contract registry frontend edits (2026-07-07)`, `Prolongation chip in the contract list row`, `Spec: FAP hotel tariff billing mode «Койко-место»/«Номер» (2026-07-21)` (+506 more)
+- **515 isolated node(s):** `Побочный эффект: метрика transferBaggage перестаёт быть нулевой`, `Подсказка о пропущенных аэропортах`, `Spec: Contract registry frontend edits (2026-07-07)`, `Prolongation chip in the contract list row`, `Spec: FAP hotel tariff billing mode «Койко-место»/«Номер» (2026-07-21)` (+510 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **53 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **56 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
@@ -874,13 +947,13 @@ _Questions this graph is uniquely positioned to answer:_
   _Edge tagged AMBIGUOUS (relation: conceptually_related_to) - confidence is low._
 - **What is the exact relationship between `Обработка ошибок сохранения настроек` and `useToast()`?**
   _Edge tagged AMBIGUOUS (relation: references) - confidence is low._
-- **Why does `getCookie()` connect `Сессия и контексты: getCookie, useToast, useDialog, JWT` to `GraphQL: ядро запросов и формы заявок`, `specs`, `UI-примитивы: Button, MUILoader, Toast, Sidebar`, `ФАП: страницы-роуты и гейты доступа`, `Категории номеров и цены авиакомпании`, `TravelLine: поиск, бронирование, синхронизация`, `Роли, шапка и реестры договоров`, `Эскадрилья: Estafeta, ExistRequest, статусы и roles`, `GraphQL: ядро запросов и формы заявок`, `ФАП: деталка заявки, проживание, доступ к отчёту`, `ФАП: страницы услуг и константы`, `ФАП: трансфер — FapTransferPage и факт поездки`, `ФАП: реестр и группы пассажиров`, `Резерв и размещение представителя`, `ФАП: багаж и поездки`, `Системные уведомления и патч-ноуты`, `Таблицы заявок: InfoTable, GroupedRequests, convertToDate / getMediaUrl`, `Договоры: формы создания и правки`, `Аналитика АК: AirlineAnalytics, мапперы и сортировка таблиц`, `RoleContent: точки входа ролей и роуты FapV2`, `ФАП-аналитика: PassengerAnalytics и мапперы`, `Документация: медиа-блоки редактора`, `«О гостинице»: HotelAbout и иконки удобств`, `Сезонные цены категорий номеров (RoomKindSeasons)`, `Страница гостиницы: HotelPage, роутинг по ролям, ссылка предпросмотра`, `Шахматка v2: NewPlacementV2, utils и история версий`, `Страницы АК и автопарка: AirlinePage, DriversCompanyPage, роутинг по ролям`, `Отчёты v2: черновик — reportDraftRows, useReportDraft`, `Карточки «О компании» и медиа (getMediaUrl)`, `access.js: предикаты ролей и гостиницы`, `DocumentationList1`, `DocumentationListPanelContent`, `icons`, `DocumentationListLeftPanel`, `AnalyticsForAvia`, `utils`, `Меню, роли и эффективные права`, `Отчёты v2: редактор черновика (ReportDraftEditor, поля, сортировка)`, `TransferOrder`, `CreateRequestDocumentation`, `src`, `ReportsV2`, `EditRequestDocumentation`, `extensions`, `HotelTable`, `Резерв и размещение представителя`, `SettingsSidebar: права отдела и уведомления`, `DocumentationList`, `EditRequestDocumentation`, `specs`?**
+- **Why does `getCookie()` connect `Сессия и контексты: getCookie, useToast, useDialog, JWT` to `GraphQL: ядро запросов и формы заявок`, `Роли, шапка и реестры договоров`, `UI-примитивы: Button, MUILoader, Toast, Sidebar`, `EditRequestDocumentation`, `Резерв и размещение представителя`, `ФАП: отчёт по гостинице — FapHotelPage, FapReportView, fapRooms`, `DocumentationList1`, `Категории номеров и цены авиакомпании`, `TravelLine: поиск, бронирование, синхронизация`, `ФАП: реестр и группы пассажиров`, `ФАП: трансфер — FapTransferPage и факт поездки`, `Документация: медиа-блоки редактора`, `ФАП: страницы услуг и константы`, `ФАП: деталка заявки, проживание, доступ к отчёту`, `ФАП: багаж и поездки`, `Договоры: формы создания и правки`, `Сессия и контексты: getCookie, useToast, useDialog, JWT`, `ФАП: трансфер — FapTransferPage и факт поездки`, `Эскадрилья: Estafeta, ExistRequest, статусы и roles`, `Отчёты v2: строка черновика — ReportDraftRow, editorUtils, formatMoney`, `GraphQL: ядро запросов и формы заявок`, `«О гостинице»: HotelAbout и иконки удобств`, `Аналитика АК: AirlineAnalytics, мапперы и сортировка таблиц`, `RoleContent: точки входа ролей и роуты FapV2`, `Отчёты v2: черновик — reportDraftRows, useReportDraft`, `ФАП: страницы-роуты и гейты доступа`, `Страницы АК и автопарка: AirlinePage, DriversCompanyPage, роутинг по ролям`, `Отчёты v2: таблица черновика — ReportDraftTable, Summary, группировка по гостиницам`, `ФАП: страницы-роуты и гейты доступа`, `Резерв представителя: вкладки услуг (Habitation / Water / Power / Baggage) и DeleteIcon`, `Страница гостиницы: HotelPage, роутинг по ролям, ссылка предпросмотра`, `DocumentationListPanelContent`, `ФАП-аналитика: PassengerAnalytics и мапперы`, `AnalyticsForAvia`, `ФАП: страницы-роуты и гейты доступа`, `Шахматка v2: NewPlacementV2, utils и история версий`, `Описание гостиницы: парсер hotelDescription и HotelPreview`, `access.js: предикаты ролей и гостиницы`, `Отчёты v2: правила расчёта суток (reportRules, ReportRulesSidebar)`, `Системные уведомления и патч-ноуты`, `Документация: загрузка файлов (UploadContext, imageDropPlugin)`, `TransferOrder`, `CreateRequestDocumentation`, `Карточки «О компании» и медиа (getMediaUrl)`, `HotelTable`, `utils`, `GraphQL: ядро запросов и формы заявок`, `Сезонные цены категорий номеров (RoomKindSeasons)`, `NotificationsSidebar.jsx`, `Документация: блоки цитаты и рамки (quoteBlock, frameBlock)`, `SettingsSidebar: компонент и GraphQL-операции отдела`, `Документация: EditRequestDocumentation, дерево и TextEditorOutput`?**
   _High betweenness centrality (0.215) - this node is a cross-community bridge._
-- **Why does `dependencies` connect `package` to `ScriptRunner`, `ФАП: страницы-роуты и гейты доступа`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `ФАП: манифест из реестра и импорт (fapManifestBuild, ManifestImportModal)`, `package`?**
+- **Why does `dependencies` connect `package.json: dependencies (Tiptap, MUI)` to `ScriptRunner`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `ФАП: страницы-роуты и гейты доступа`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `package`, `ФАП: манифест из реестра и импорт (fapManifestBuild, ManifestImportModal)`, `package`?**
   _High betweenness centrality (0.075) - this node is a cross-community bridge._
-- **Why does `README — история обновлений Kars Avia (v0.1 → v12.15)` connect `README: история версий` to `utils`, `ФАП: деталка заявки, проживание, доступ к отчёту`, `CLAUDE`, `README: история версий`, `CLAUDE.md / AGENTS.md: руководство и MUI-примитивы`, `SettingsSidebar: права отдела и уведомления`, `Шахматка v2: NewPlacementV2, utils и история версий`, `README: история версий`, `README: история версий`, `README: история версий`, `README: история версий`, `README: история версий`, `utils`, `README: история версий`, `README: история версий`, `Меню, роли и эффективные права`, `README: история версий`, `README: история версий`, `README: история версий`, `README: история версий`, `README: история версий`, `README: история версий`, `README: история версий`, `ReportDraftEditor`, `NotificationsSidebar.jsx`, `utils`, `utils`?**
+- **Why does `README — история обновлений Kars Avia (v0.1 → v12.15)` connect `README: история версий` to `utils`, `ФАП: трансфер — FapTransferPage и факт поездки`, `CLAUDE.md / AGENTS.md: руководство и MUI-примитивы`, `README: история версий`, `Отчёты v2: выпущенные отчёты, plural, hotelAddress (README v12.14)`, `Шахматка v2: NewPlacementV2, utils и история версий`, `README: история версий`, `README: история версий`, `README: история версий`, `README: история версий`, `README: история версий`, `utils`, `README: история версий`, `README: история версий`, `README: история версий`, `README: история версий`, `utils`, `README: история версий`, `README: история версий`, `Меню, роли и эффективные права`, `README: история версий`, `README: история версий`, `README: история версий`, `SettingsSidebar: права отдела и уведомления`, `NotificationsSidebar.jsx`?**
   _High betweenness centrality (0.056) - this node is a cross-community bridge._
 - **What connects `Побочный эффект: метрика transferBaggage перестаёт быть нулевой`, `Подсказка о пропущенных аэропортах`, `Spec: Contract registry frontend edits (2026-07-07)` to the rest of the system?**
-  _511 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _515 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `ФАП: багаж и поездки` be split into smaller, more focused modules?**
-  _Cohesion score 0.05807622504537205 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.062409288824383166 - nodes in this community are weakly interconnected._

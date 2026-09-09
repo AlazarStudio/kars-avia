@@ -1,0 +1,18 @@
+{
+  "101": "Отчёты v2: выпущенные отчёты, GraphQL и SegmentedToggle",
+  "69": "ФАП: спека billingMode «Койко-место»/«Номер» и багаж на много пассажиров",
+  "19": "ФАП: трансфер — FapTransferPage, transportedCount и водитель",
+  "81": "Реестр договоров: фронт-правки (ДС-бейдж, пролонгация, истечение)",
+  "51": "Документация: slash-команды и PlusButtonOverlay (Tiptap)",
+  "37": "App.jsx, AuthContext и index.html: точка входа приложения",
+  "38": "useEffectiveAccessMenu: поток accessMenu Main_Page → MenuDispetcher → AllRoles",
+  "47": "ФАП: страницы-детали (FapBaggageTripDetailPage, FapDriverDetailPage) и useRepresentativeLink",
+  "58": "Аутентификация: authService, ExternalLogin и externalAuthErrors",
+  "106": "ФАП-аналитика: спеки фильтров «Пассажиры» и period-UX",
+  "94": "SettingsSidebar: accessPayload.js и история версий доступа",
+  "75": "Патч-ноуты: backfill и seedPatchNotes.mjs",
+  "91": "ФАП: спеки профилей манифеста (ПМ/PNL/PLI)",
+  "96": "Цены трансфера: transferPrices.js и поиск по маршрутам",
+  "84": "Шахматка v2: разбор дефектов (SHAHMATKA_ARCHITECTURE, study 17.08)",
+  "102": "Сезонные цены тарифов: RoomKindSeasons UI и apolloErrorText"
+}
