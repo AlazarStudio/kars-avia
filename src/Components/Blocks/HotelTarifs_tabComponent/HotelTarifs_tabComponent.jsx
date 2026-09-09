@@ -93,11 +93,13 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
     breakfast: 0,
     lunch: 0,
     dinner: 0,
+    lunchbox: 0,
   });
   const [mealPricesAirline, setMealPricesAirline] = useState({
     breakfast: 0,
     lunch: 0,
     dinner: 0,
+    lunchbox: 0,
   });
 
   const [mealPriceForAirReq, setMealPriceForAirReq] = useState(false);
@@ -165,11 +167,13 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
         breakfast: mealPriceData.hotel?.mealPrice?.breakfast,
         lunch: mealPriceData.hotel?.mealPrice?.lunch,
         dinner: mealPriceData.hotel?.mealPrice?.dinner,
+        lunchbox: mealPriceData.hotel?.mealPrice?.lunchbox,
       });
       setMealPricesAirline({
         breakfast: mealPriceData.hotel?.mealPriceForAir?.breakfast,
         lunch: mealPriceData.hotel?.mealPriceForAir?.lunch,
         dinner: mealPriceData.hotel?.mealPriceForAir?.dinner,
+        lunchbox: mealPriceData.hotel?.mealPriceForAir?.lunchbox,
       });
       setMealPriceForAirReq(
         Boolean(mealPriceData.hotel?.mealPriceForAirReq)
@@ -487,6 +491,12 @@ function HotelTarifs_tabComponent({ children, id, user, height, ...props }) {
       name: "Ужин",
       price: mealPrices.dinner,
       priceForAir: mealPricesAirline.dinner,
+      priceForAirReq: mealPriceForAirReq,
+    },
+    {
+      name: "Ланчбокс",
+      price: mealPrices.lunchbox,
+      priceForAir: mealPricesAirline.lunchbox,
       priceForAirReq: mealPriceForAirReq,
     },
   ];

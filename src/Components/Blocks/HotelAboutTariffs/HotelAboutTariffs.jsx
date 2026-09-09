@@ -5,6 +5,7 @@ const mealLabels = {
   breakfast: "Завтрак",
   lunch: "Обед",
   dinner: "Ужин",
+  lunchbox: "Ланчбокс",
 };
 
 const transferLabels = {
@@ -114,7 +115,7 @@ export default function HotelAboutTariffs({
   // это логика счёта для авиакомпании.
   hotelSide = false,
 }) {
-  const mealKeys = ["breakfast", "lunch", "dinner"];
+  const mealKeys = ["breakfast", "lunch", "dinner", "lunchbox"];
   const transferKeys = ["arrival", "departure"];
 
   const hasMeals =

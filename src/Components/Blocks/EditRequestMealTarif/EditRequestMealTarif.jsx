@@ -37,9 +37,11 @@ function EditRequestMealTarif({
     breakfast: "",
     lunch: "",
     dinner: "",
+    lunchbox: "",
     breakfastForAirline: "",
     lunchForAirline: "",
     dinnerForAirline: "",
+    lunchboxForAirline: "",
     mealPriceForAirReq: false,
   });
 
@@ -52,9 +54,11 @@ function EditRequestMealTarif({
       breakfast: mealPrices?.breakfast ?? "",
       lunch: mealPrices?.lunch ?? "",
       dinner: mealPrices?.dinner ?? "",
+      lunchbox: mealPrices?.lunchbox ?? "",
       breakfastForAirline: mealPricesAirline?.breakfast ?? "",
       lunchForAirline: mealPricesAirline?.lunch ?? "",
       dinnerForAirline: mealPricesAirline?.dinner ?? "",
+      lunchboxForAirline: mealPricesAirline?.lunchbox ?? "",
       mealPriceForAirReq: Boolean(mealPriceForAirReq),
     });
     setIsEdited(false);
@@ -78,9 +82,11 @@ function EditRequestMealTarif({
         breakfast: mealPrices?.breakfast ?? "",
         lunch: mealPrices?.lunch ?? "",
         dinner: mealPrices?.dinner ?? "",
+        lunchbox: mealPrices?.lunchbox ?? "",
         breakfastForAirline: mealPricesAirline?.breakfast ?? "",
         lunchForAirline: mealPricesAirline?.lunch ?? "",
         dinnerForAirline: mealPricesAirline?.dinner ?? "",
+        lunchboxForAirline: mealPricesAirline?.lunchbox ?? "",
         mealPriceForAirReq: Boolean(mealPriceForAirReq),
       });
       setIsEdited(false);
@@ -141,15 +147,17 @@ function EditRequestMealTarif({
           breakfast: Number(formData.breakfast) || 0,
           lunch: Number(formData.lunch) || 0,
           dinner: Number(formData.dinner) || 0,
+          lunchbox: Number(formData.lunchbox) || 0,
         },
         ...(isHotel
           ? {
               mealPriceForAir: byReq
-                ? { breakfast: 0, lunch: 0, dinner: 0 }
+                ? { breakfast: 0, lunch: 0, dinner: 0, lunchbox: 0 }
                 : {
                     breakfast: Number(formData.breakfastForAirline) || 0,
                     lunch: Number(formData.lunchForAirline) || 0,
                     dinner: Number(formData.dinnerForAirline) || 0,
+                    lunchbox: Number(formData.lunchboxForAirline) || 0,
                   },
               mealPriceForAirReq: byReq,
             }
@@ -158,6 +166,7 @@ function EditRequestMealTarif({
                 breakfast: Number(formData.breakfastForAirline) || 0,
                 lunch: Number(formData.lunchForAirline) || 0,
                 dinner: Number(formData.dinnerForAirline) || 0,
+                lunchbox: Number(formData.lunchboxForAirline) || 0,
               },
             }),
       };
@@ -276,6 +285,7 @@ function EditRequestMealTarif({
                 {renderRow("Завтрак", "breakfast", formData.breakfast)}
                 {renderRow("Обед", "lunch", formData.lunch)}
                 {renderRow("Ужин", "dinner", formData.dinner)}
+                {renderRow("Ланчбокс", "lunchbox", formData.lunchbox)}
               </div>
 
               {user?.hotelId ? null : (
@@ -303,6 +313,15 @@ function EditRequestMealTarif({
                     "Ужин",
                     "dinnerForAirline",
                     formData.dinnerForAirline,
+                    {
+                      disabled: formData.mealPriceForAirReq,
+                      byRequest: formData.mealPriceForAirReq,
+                    }
+                  )}
+                  {renderRow(
+                    "Ланчбокс",
+                    "lunchboxForAirline",
+                    formData.lunchboxForAirline,
                     {
                       disabled: formData.mealPriceForAirReq,
                       byRequest: formData.mealPriceForAirReq,

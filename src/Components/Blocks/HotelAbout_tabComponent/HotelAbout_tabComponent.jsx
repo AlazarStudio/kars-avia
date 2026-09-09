@@ -223,6 +223,7 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
     breakfast: 0,
     lunch: 0,
     dinner: 0,
+    lunchbox: 0,
   });
   const [mealPriceForAirReq, setMealPriceForAirReq] = useState(false);
   const [mealPricesHotel, setMealPricesHotel] = useState(null);
@@ -255,6 +256,7 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
         breakfast: preview.mealPriceForAir?.breakfast,
         lunch: preview.mealPriceForAir?.lunch,
         dinner: preview.mealPriceForAir?.dinner,
+        lunchbox: preview.mealPriceForAir?.lunchbox,
       });
       setMealPriceForAirReq(Boolean(preview.mealPriceForAirReq));
       setTransferPricesAirline({
@@ -271,6 +273,7 @@ function HotelAbout_tabComponent({ id, isPreview = false, previewToken }) {
         breakfast: mealPriceData.hotel?.mealPriceForAir?.breakfast,
         lunch: mealPriceData.hotel?.mealPriceForAir?.lunch,
         dinner: mealPriceData.hotel?.mealPriceForAir?.dinner,
+        lunchbox: mealPriceData.hotel?.mealPriceForAir?.lunchbox,
       });
       setMealPriceForAirReq(Boolean(mealPriceData.hotel?.mealPriceForAirReq));
       setMealPricesHotel(mealPriceData.hotel?.mealPrice ?? null);

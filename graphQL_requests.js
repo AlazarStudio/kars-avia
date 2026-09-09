@@ -4968,6 +4968,7 @@ export const GET_HOTEL_PREVIEW = gql`
         breakfast
         lunch
         dinner
+        lunchbox
       }
       mealPriceForAirReq
       transferPriceForAir {
@@ -5135,11 +5136,13 @@ export const GET_HOTEL_MEAL_PRICE = gql`
         breakfast
         lunch
         dinner
+        lunchbox
       }
       mealPriceForAir {
         breakfast
         lunch
         dinner
+        lunchbox
       }
       mealPriceForAirReq
     }
@@ -5361,11 +5364,13 @@ export const UPDATE_HOTEL_MEAL_TARIF = gql`
         breakfast
         lunch
         dinner
+        lunchbox
       }
       mealPriceForAir {
         breakfast
         lunch
         dinner
+        lunchbox
       }
       mealPriceForAirReq
     }
