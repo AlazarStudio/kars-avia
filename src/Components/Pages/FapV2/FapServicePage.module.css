@@ -101,6 +101,9 @@
 .content {
   flex: 1;
   min-height: 0;
+  /* Иначе flex-элемент растягивается до min-content вложенной страницы
+     и уезжает за окно вместе с ней (overflow: hidden у .contentRow всё режет). */
+  min-width: 0;
   display: flex;
   flex-direction: column;
 }
