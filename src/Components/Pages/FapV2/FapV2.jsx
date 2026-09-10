@@ -32,6 +32,10 @@ import DateRangeModalSelector from "../../Blocks/DateRangeModalSelector/DateRang
 import Header from "../../Blocks/Header/Header";
 import ServiceProgressDot from "../../Blocks/FapV2/ServiceProgressDot/ServiceProgressDot";
 import FapReportStageChip from "../../Blocks/FapV2/FapReportStageChip/FapReportStageChip";
+import {
+  REPORT_STAGE_NAMES,
+  reportStageLabel,
+} from "../../Blocks/FapV2/fapReportStages";
 import { roles } from "../../../roles";
 import {
   canAccessMenu,
@@ -115,6 +119,26 @@ const STATUS_OPTIONS = [
   })),
 ];
 
+// Вид услуг — в порядке точек услуг на карточке, чтобы фильтр и карточка
+// перечисляли услуги одинаково. Бэк принимает список, но выбор здесь один:
+// MUIAutocomplete множественный не умеет.
+const SERVICE_OPTIONS = [
+  { value: null, label: "Все услуги" },
+  ...SERVICE_ORDER.map((key) => ({
+    value: SERVICE_CONFIG[key].serviceKind,
+    label: SERVICE_CONFIG[key].label,
+  })),
+];
+
+// Подписи стадий — те же, что у чипа отчёта в карточке (reportStageLabel).
+const REPORT_STAGE_OPTIONS = [
+  { value: null, label: "Все стадии" },
+  ...REPORT_STAGE_NAMES.map((value, stage) => ({
+    value,
+    label: reportStageLabel(stage),
+  })),
+];
+
 const LS_STATUS_KEY = "statusFilterFapV2";
 const LIST_STATE_KEY = "fapListScrollState";
 
@@ -132,6 +156,10 @@ export default function FapV2({ user, accessMenu }) {
 
   const [selectedAirline, setSelectedAirline] = useState(null);
   const [selectedAirport, setSelectedAirport] = useState(null);
+  const [serviceOption, setServiceOption] = useState(SERVICE_OPTIONS[0]);
+  const [reportStageOption, setReportStageOption] = useState(
+    REPORT_STAGE_OPTIONS[0],
+  );
   const [dateRange, setDateRange] = useState({ startDate: null, endDate: null });
   const [airlines, setAirlines] = useState([]);
   const [airports, setAirports] = useState([]);
@@ -162,6 +190,8 @@ export default function FapV2({ user, accessMenu }) {
     debouncedSearch,
     effectiveAirlineId,
     selectedAirport?.id,
+    serviceOption?.value,
+    reportStageOption?.value,
     dateRange.startDate,
     dateRange.endDate,
   ];
@@ -214,6 +244,8 @@ export default function FapV2({ user, accessMenu }) {
         search: debouncedSearch || undefined,
         airlineId: effectiveAirlineId,
         airportId: selectedAirport?.id,
+        services: serviceOption?.value ? [serviceOption.value] : undefined,
+        reportStage: reportStageOption?.value ?? undefined,
         dateFrom: dateRange.startDate
           ? dateRange.startDate.toISOString()
           : undefined,
@@ -286,11 +318,15 @@ export default function FapV2({ user, accessMenu }) {
     (selectedAirline ? 1 : 0) +
     (selectedAirport ? 1 : 0) +
     (statusOption?.value ? 1 : 0) +
+    (serviceOption?.value ? 1 : 0) +
+    (reportStageOption?.value ? 1 : 0) +
     (dateRange.startDate || dateRange.endDate ? 1 : 0);
 
   const handleResetFilters = () => {
     setSelectedAirline(null);
     setSelectedAirport(null);
+    setServiceOption(SERVICE_OPTIONS[0]);
+    setReportStageOption(REPORT_STAGE_OPTIONS[0]);
     setDateRange({ startDate: null, endDate: null });
     handleStatusChange(STATUS_OPTIONS[0]);
   };
@@ -366,6 +402,28 @@ export default function FapV2({ user, accessMenu }) {
             options={STATUS_OPTIONS}
             value={statusOption}
             onChange={(_, val) => handleStatusChange(val)}
+            getOptionLabel={(o) => o?.label ?? ""}
+            isOptionEqualToValue={(o, v) => o?.value === v?.value}
+          />
+          <MUIAutocomplete
+            dropdownWidth="100%"
+            label="Вид услуг"
+            hideLabelOnFocus={false}
+            options={SERVICE_OPTIONS}
+            value={serviceOption}
+            onChange={(_, val) => setServiceOption(val || SERVICE_OPTIONS[0])}
+            getOptionLabel={(o) => o?.label ?? ""}
+            isOptionEqualToValue={(o, v) => o?.value === v?.value}
+          />
+          <MUIAutocomplete
+            dropdownWidth="100%"
+            label="Согласованность отчёта"
+            hideLabelOnFocus={false}
+            options={REPORT_STAGE_OPTIONS}
+            value={reportStageOption}
+            onChange={(_, val) =>
+              setReportStageOption(val || REPORT_STAGE_OPTIONS[0])
+            }
             getOptionLabel={(o) => o?.label ?? ""}
             isOptionEqualToValue={(o, v) => o?.value === v?.value}
           />
