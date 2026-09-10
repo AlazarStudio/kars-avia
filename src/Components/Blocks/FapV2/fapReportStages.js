@@ -22,6 +22,16 @@ export const REPORT_STEPS = [
 
 export const REPORT_STAGE_DONE = REPORT_STEPS.length;
 
+// Имена стадий в схеме бэка (enum PassengerReportStage) по тому же порядку
+// шагов: индекс имени и есть стадия. Через них ходит фильтр списка, поэтому он
+// и чип обязаны говорить об одном и том же.
+export const REPORT_STAGE_NAMES = [
+  "NOT_SUBMITTED",
+  "SUBMITTED",
+  "PRICING_APPROVED",
+  "AIRLINE_APPROVED",
+];
+
 // Даты шагов по порядку REPORT_STEPS; непройденный шаг — null.
 function reportDates(request, hotelIndex) {
   return [
