@@ -1,0 +1,171 @@
+/* Чип стадии отчёта в шапке карточки списка ФАП. Цвета шагов — из цепочки
+   шапки FapHotelPage (.reportStep*), подсказка — стилем подсказки иконок услуг
+   (ServiceProgressDot.module.css), чтобы в одной карточке не было двух разных. */
+
+.wrap {
+  position: relative;
+  display: inline-flex;
+  min-width: 0;
+}
+
+/* overflow: hidden — только на чипе, не на .wrap: иначе обрежет подсказку.
+   На узкой карточке сжимается только текст стадии. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 5px 10px;
+  border-radius: 10px;
+  background: #F4F5F9;
+  color: #545873;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 15px;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.chipDone {
+  background: #ECFDF5;
+  color: #15803D;
+}
+
+.caption {
+  flex-shrink: 0;
+  font-size: 10px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  opacity: 0.75;
+}
+
+.steps {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.dot {
+  box-sizing: border-box;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 1.5px dashed #B8BDD0;
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 8px;
+  line-height: 1;
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.dotDone {
+  border: none;
+  background: #10B981;
+}
+
+.conn {
+  width: 8px;
+  height: 1.5px;
+  background: #E4E4EF;
+  flex-shrink: 0;
+}
+
+.connDone {
+  background: #C9E9D8;
+}
+
+.text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.count {
+  flex-shrink: 0;
+  padding: 0 6px;
+  border-radius: 8px;
+  background: #fff;
+  color: #545873;
+  font-size: 11px;
+  line-height: 15px;
+}
+
+/* Подсказка — как .tooltip в ServiceProgressDot.module.css, но прижата к
+   правому краю: чип стоит у правого края карточки. */
+.tooltip {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 8px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background-color: #4e4e4e;
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  text-align: left;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s ease-in-out;
+  pointer-events: none;
+  visibility: hidden;
+  z-index: 999;
+  box-shadow: 0 4px 12px rgba(20, 30, 60, 0.18);
+}
+
+.tooltip::before {
+  content: "";
+  position: absolute;
+  top: -4px;
+  right: 14px;
+  transform: rotate(45deg);
+  width: 8px;
+  height: 8px;
+  background: #4e4e4e;
+  border-radius: 2px;
+}
+
+.wrap:hover .tooltip {
+  opacity: 0.95;
+  visibility: visible;
+}
+
+.tipHotel {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tipName {
+  font-weight: 700;
+}
+
+.tipStep {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tipStepWait {
+  color: rgba(255, 255, 255, 0.6);
+}
+
+/* Непройденный шаг на тёмном фоне: прозрачный кружок со светлым пунктиром.
+   Объявлен после .dot — перекрывает фон и цвет рамки. */
+.dotOnDark {
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.5);
+}
+
+.tipDate {
+  margin-left: auto;
+  padding-left: 12px;
+  color: rgba(255, 255, 255, 0.75);
+  font-weight: 400;
+}

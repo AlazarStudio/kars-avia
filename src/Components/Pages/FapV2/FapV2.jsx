@@ -31,6 +31,7 @@ import InfiniteScrollSentinel from "../../Blocks/InfiniteScrollSentinel/Infinite
 import DateRangeModalSelector from "../../Blocks/DateRangeModalSelector/DateRangeModalSelector";
 import Header from "../../Blocks/Header/Header";
 import ServiceProgressDot from "../../Blocks/FapV2/ServiceProgressDot/ServiceProgressDot";
+import FapReportStageChip from "../../Blocks/FapV2/FapReportStageChip/FapReportStageChip";
 import { roles } from "../../../roles";
 import {
   canAccessMenu,
@@ -424,6 +425,7 @@ export default function FapV2({ user, accessMenu }) {
                     {req.requestNumber || req.flightNumber}
                   </span>
                   <span className={classes.cardKickerSpacer} />
+                  <FapReportStageChip request={req} user={user} />
                   <span
                     className={classes.statusBadge}
                     style={{

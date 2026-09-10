@@ -3701,6 +3701,12 @@ export const GET_PASSENGER_REQUESTS = gql`
           name
         }
       }
+      hotelReports {
+        hotelIndex
+        submittedAt
+        pricingApprovedAt
+        airlineApprovedAt
+      }
       transferService {
         status
         plan {
