@@ -1,0 +1,12 @@
+{
+  "22": "Requests: number generation, bulk create & date formatting",
+  "20": "Auth Middleware: role decorators & report resolver",
+  "47": "Reserve & Meals: calculateMeal, updateDailyMeals, mutationError",
+  "42": "External Links: driver PWA & representative links (serviceDrivers)",
+  "49": "MongoDB Replica Set & Backfill Scripts",
+  "23": "FAP Edit Guard: fapEditGuard, serviceTable, patchIsNoop",
+  "24": "FAP Request Envelope: envelope.js & service resolvers",
+  "29": "Airline Analytics: cost allocation & stay summaries",
+  "33": "Push Notifications: Firebase tokens & transferPushService",
+  "35": "Action Log: logaction.js sanitization"
+}

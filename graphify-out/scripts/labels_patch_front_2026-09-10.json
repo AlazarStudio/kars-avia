@@ -1,0 +1,18 @@
+{
+  "11": "Цены авиакомпании: тарифы, география и договорный тариф ФАП",
+  "32": "Номерной фонд: roomCategories.js, категории и номера гостиницы",
+  "65": "ФАП: тесты книги отчёта Excel (buildReportSheets.test)",
+  "74": "ФАП: деньги строк отчёта — fapReportMoney и reportRowMatch",
+  "26": "Создание заявок: мутации, аэропорты, должности и проверка дублей",
+  "90": "Диспетчер: автопарк, трансфер, шапка и поддержка",
+  "42": "Водители, организации и диспетчеры: списки и подписки",
+  "103": "Шахматка v2: данные — usePlacementData, placementTransforms, подписки",
+  "99": "Эскадрилья: группировка заявок — GroupedRequests, RequestRow",
+  "25": "Таблицы заявок: InfoTable и хелперы дат convertToDate / buildScheduledISO",
+  "108": "Плашка техработ: MaintenanceBanner, пресеты и обратный отсчёт",
+  "49": "Документация: файловый блок (fileBlockView, превью офисных файлов)",
+  "95": "Шахматка v2: лоток неразмещённых — TrayCardV2, UnplacedTray, placementBadges",
+  "55": "Шахматка v2: плашки, поповер и тулбар (PlacementBarV2, BarPopover, BoardToolbar)",
+  "85": "Сутки проживания: effectiveCostDays и fapPersonDays",
+  "5": "Документация «Помощь»: DocumentationList1, дерево и левая панель"
+}

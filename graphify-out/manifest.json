@@ -20,14 +20,14 @@
     "semantic_hash": "f1205ee50ce7486fc412175265947d3c"
   },
   "graphQL_requests.js": {
-    "mtime": 1788953065.9992232,
-    "ast_hash": "6b3b166e69ce7ad3025e5a68e8f98359",
-    "semantic_hash": "6b3b166e69ce7ad3025e5a68e8f98359"
+    "mtime": 1788966893.903117,
+    "ast_hash": "998dc50109d7d01291405f27a1d89e02",
+    "semantic_hash": "998dc50109d7d01291405f27a1d89e02"
   },
   "scripts/patchNotes.data.mjs": {
-    "mtime": 1788787498.9715636,
-    "ast_hash": "bfc212c061a04132221e2c67cca0ac31",
-    "semantic_hash": "bfc212c061a04132221e2c67cca0ac31"
+    "mtime": 1788966537.7599192,
+    "ast_hash": "b738e54969e9bb467e53a34557b47664",
+    "semantic_hash": "b738e54969e9bb467e53a34557b47664"
   },
   "scripts/seedPatchNotes.mjs": {
     "mtime": 1782922037.4670498,
@@ -35,9 +35,9 @@
     "semantic_hash": "da14bba29ad3820e8a431fd09cc49a4c"
   },
   "scripts/systemUpdate.data.mjs": {
-    "mtime": 1788787506.389202,
-    "ast_hash": "c47567a6db271be010fd434e56dd045d",
-    "semantic_hash": "c47567a6db271be010fd434e56dd045d"
+    "mtime": 1788966537.7604418,
+    "ast_hash": "31909971a5453e346ccff9a344dbc682",
+    "semantic_hash": "31909971a5453e346ccff9a344dbc682"
   },
   "src/App.jsx": {
     "mtime": 1788434500.6302855,
@@ -240,9 +240,9 @@
     "semantic_hash": "8caee093f7c40470c5e480017f9c8f92"
   },
   "src/Components/Blocks/CreateRequestAirlineOtdel/CreateRequestAirlineOtdel.jsx": {
-    "mtime": 1788939983.272151,
-    "ast_hash": "cfe17214b05bdb3409bf9f6f1b3dfcd4",
-    "semantic_hash": "cfe17214b05bdb3409bf9f6f1b3dfcd4"
+    "mtime": 1788966470.275568,
+    "ast_hash": "e871bb2bbe1e5b3a8b99d7b6c858e602",
+    "semantic_hash": "e871bb2bbe1e5b3a8b99d7b6c858e602"
   },
   "src/Components/Blocks/CreateRequestAirlineStaff/CreateRequestAirlineStaff.jsx": {
     "mtime": 1788939987.8790803,
@@ -290,9 +290,9 @@
     "semantic_hash": "dee704224ee27d5ddd08de8cad354c26"
   },
   "src/Components/Blocks/CreateRequestDispatcherDepartment/CreateRequestDispatcherDepartment.jsx": {
-    "mtime": 1788940006.9602857,
-    "ast_hash": "fa1c412e9778b58e5904eaa43027341f",
-    "semantic_hash": "fa1c412e9778b58e5904eaa43027341f"
+    "mtime": 1788966470.2745602,
+    "ast_hash": "2d9a6a1a430d163ce9401aa3ec6e3f2c",
+    "semantic_hash": "2d9a6a1a430d163ce9401aa3ec6e3f2c"
   },
   "src/Components/Blocks/CreateRequestDocumentation/CreateRequestDocumentation.jsx": {
     "mtime": 1771410138.2511833,
@@ -840,9 +840,9 @@
     "semantic_hash": "ffaca49386dd63778782f424f0deb32d"
   },
   "src/Components/Blocks/EditRequestMealTarif/EditRequestMealTarif.jsx": {
-    "mtime": 1780403667.7333305,
-    "ast_hash": "3fbec5b0449a381cf83d70dd75694f14",
-    "semantic_hash": "3fbec5b0449a381cf83d70dd75694f14"
+    "mtime": 1788958762.0444844,
+    "ast_hash": "001d94eac6e607dba0b1aad0e76d66bd",
+    "semantic_hash": "001d94eac6e607dba0b1aad0e76d66bd"
   },
   "src/Components/Blocks/EditRequestNomerFond/EditRequestNomerFond.jsx": {
     "mtime": 1788940048.0209968,
@@ -1290,9 +1290,9 @@
     "semantic_hash": "fe01566dc29f0b3b2dae6e51ecc3241e"
   },
   "src/Components/Blocks/HotelAboutTariffs/HotelAboutTariffs.jsx": {
-    "mtime": 1787131581.8192275,
-    "ast_hash": "a928c3e40fa0ce5a4b8ff31e378f5d27",
-    "semantic_hash": "a928c3e40fa0ce5a4b8ff31e378f5d27"
+    "mtime": 1788958762.0454834,
+    "ast_hash": "df09e5dc0e951c45885037d15d5965af",
+    "semantic_hash": "df09e5dc0e951c45885037d15d5965af"
   },
   "src/Components/Blocks/HotelAbout_tabComponent/HotelAboutGallery.jsx": {
     "mtime": 1787850259.9016106,
@@ -1300,9 +1300,9 @@
     "semantic_hash": "2af1c52cdf64f64d995a70b217888444"
   },
   "src/Components/Blocks/HotelAbout_tabComponent/HotelAbout_tabComponent.jsx": {
-    "mtime": 1787858841.1208482,
-    "ast_hash": "55e4756763e7caaf0a681852581c9c25",
-    "semantic_hash": "55e4756763e7caaf0a681852581c9c25"
+    "mtime": 1788958762.0464852,
+    "ast_hash": "e2e272938aff14ff8348aab25055aea1",
+    "semantic_hash": "e2e272938aff14ff8348aab25055aea1"
   },
   "src/Components/Blocks/HotelCompany_tabComponent/HotelCompany_tabComponent.jsx": {
     "mtime": 1779444529.727059,
@@ -1360,9 +1360,9 @@
     "semantic_hash": "9f49a5c6f23915c4fe3207aa38f99e78"
   },
   "src/Components/Blocks/HotelTarifs_tabComponent/HotelTarifs_tabComponent.jsx": {
-    "mtime": 1788203309.5112126,
-    "ast_hash": "f3939c682351a9f6854d0c8b6c1c02b5",
-    "semantic_hash": "f3939c682351a9f6854d0c8b6c1c02b5"
+    "mtime": 1788958762.047484,
+    "ast_hash": "c547feb2ccf0a5fc97b5f9f22b6b7bfb",
+    "semantic_hash": "c547feb2ccf0a5fc97b5f9f22b6b7bfb"
   },
   "src/Components/Blocks/HotelsList/HotelsList.jsx": {
     "mtime": 1784201323.7800727,
@@ -1880,9 +1880,9 @@
     "semantic_hash": "292b39373f40ce758819b641c4ca7893"
   },
   "src/Components/Blocks/SettingsSidebar/AccessPermissionsPanel.jsx": {
-    "mtime": 1788780140.7652986,
-    "ast_hash": "82215ba7a7d3f0995fd99e96769c3d3d",
-    "semantic_hash": "82215ba7a7d3f0995fd99e96769c3d3d"
+    "mtime": 1788966470.2698562,
+    "ast_hash": "fa5cd899867cc3184beff11998b79641",
+    "semantic_hash": "fa5cd899867cc3184beff11998b79641"
   },
   "src/Components/Blocks/SettingsSidebar/NotificationsPermissionsPanel.jsx": {
     "mtime": 1785418946.755441,
@@ -1895,14 +1895,14 @@
     "semantic_hash": "5d527a838cf9e57fcd375160f850686e"
   },
   "src/Components/Blocks/SettingsSidebar/accessSections.js": {
-    "mtime": 1788780140.7663324,
-    "ast_hash": "518fc08a9f72c1c2e544e78e48d58b7d",
-    "semantic_hash": "518fc08a9f72c1c2e544e78e48d58b7d"
+    "mtime": 1788966470.267241,
+    "ast_hash": "158f2019b5be33c8aea13b7c6daba9d9",
+    "semantic_hash": "158f2019b5be33c8aea13b7c6daba9d9"
   },
   "src/Components/Blocks/SettingsSidebar/accessSections.test.js": {
-    "mtime": 1788780140.766851,
-    "ast_hash": "845de9094f3bed40cac6a6a2464821d8",
-    "semantic_hash": "845de9094f3bed40cac6a6a2464821d8"
+    "mtime": 1788966470.275568,
+    "ast_hash": "2c40c9d5f56def9aa05d27582f39e626",
+    "semantic_hash": "2c40c9d5f56def9aa05d27582f39e626"
   },
   "src/Components/Blocks/SettingsSidebar/notificationSections.js": {
     "mtime": 1785412025.4644465,
@@ -2190,9 +2190,9 @@
     "semantic_hash": "af7516fd76f6270ae05471e89c490887"
   },
   "src/Components/Pages/AnalyticsForAvia/Analytics/Analytics.jsx": {
-    "mtime": 1784901105.0375051,
-    "ast_hash": "87eb3eb5a55a4dd111b2bb0b7b78cee8",
-    "semantic_hash": "87eb3eb5a55a4dd111b2bb0b7b78cee8"
+    "mtime": 1788963288.6637013,
+    "ast_hash": "c0ecf35343401e4fffe686c1561d3e6a",
+    "semantic_hash": "c0ecf35343401e4fffe686c1561d3e6a"
   },
   "src/Components/Pages/AnalyticsForAvia/DateRangePickerCustom.jsx": {
     "mtime": 1779457238.3619654,
@@ -2420,9 +2420,9 @@
     "semantic_hash": "8db6ff01b2b8283d1293076a017313a7"
   },
   "src/Components/RoleContent/AirlineAdminContent/AirlineAdminContent.jsx": {
-    "mtime": 1788259358.466255,
-    "ast_hash": "342192ccd1d3c846807c29b142871405",
-    "semantic_hash": "342192ccd1d3c846807c29b142871405"
+    "mtime": 1788962918.8505733,
+    "ast_hash": "d5375f8ff1b7650aaaed63de39e75756",
+    "semantic_hash": "d5375f8ff1b7650aaaed63de39e75756"
   },
   "src/Components/RoleContent/AirlineAdminContent/AirlineAdminHotelContent/AirlineAdminHotelContent.jsx": {
     "mtime": 1771410138.4481838,
@@ -2430,9 +2430,9 @@
     "semantic_hash": "bd5e90e954b40a2d6994ccdb344c2593"
   },
   "src/Components/RoleContent/AirlineAdminContent/AirlineAdminMenu/AirlineAdminMenu.jsx": {
-    "mtime": 1788514424.7345154,
-    "ast_hash": "ec53650de4c77014028db36b46d102cf",
-    "semantic_hash": "ec53650de4c77014028db36b46d102cf"
+    "mtime": 1788966011.4414225,
+    "ast_hash": "d67c7131e91a7d25f868678683d8d519",
+    "semantic_hash": "d67c7131e91a7d25f868678683d8d519"
   },
   "src/Components/RoleContent/AllRoles.jsx": {
     "mtime": 1788265415.1736157,
@@ -2455,9 +2455,9 @@
     "semantic_hash": "4e28a088181d86f52f626daf56b9b0ee"
   },
   "src/Components/RoleContent/DispatcherAdminContent/DisAdminMenu/DisAdminMenu.jsx": {
-    "mtime": 1788514424.7452419,
-    "ast_hash": "f4c1a78362afc9ffecc1ad29dedb3a64",
-    "semantic_hash": "f4c1a78362afc9ffecc1ad29dedb3a64"
+    "mtime": 1788966011.4778965,
+    "ast_hash": "4d931556961ebf51fb73bbebc3b5dd98",
+    "semantic_hash": "4d931556961ebf51fb73bbebc3b5dd98"
   },
   "src/Components/RoleContent/DispatcherAdminContent/DisAdminTransferContent/DisAdminTransferContent.jsx": {
     "mtime": 1774531068.316118,
@@ -2465,9 +2465,9 @@
     "semantic_hash": "ed4904070f7127e78391925cd462c71c"
   },
   "src/Components/RoleContent/DispatcherAdminContent/DispatcherAdminContent.jsx": {
-    "mtime": 1788269802.4011745,
-    "ast_hash": "92a402d76361da8cf46b3c1bd47c77db",
-    "semantic_hash": "92a402d76361da8cf46b3c1bd47c77db"
+    "mtime": 1788962924.8251271,
+    "ast_hash": "60321a2ceee948ea54462842ad5385b8",
+    "semantic_hash": "60321a2ceee948ea54462842ad5385b8"
   },
   "src/Components/RoleContent/HotelAdminContent/HotelAdminContent.jsx": {
     "mtime": 1788259358.4933262,
@@ -2480,9 +2480,9 @@
     "semantic_hash": "5f6eae03c1ef48fe2508919ea6ecb222"
   },
   "src/Components/RoleContent/HotelAdminContent/HotelAdminMenu/HotelAdminMenu.jsx": {
-    "mtime": 1788514424.7562432,
-    "ast_hash": "9c9b127252df4db46fcd2e9ca5def83c",
-    "semantic_hash": "9c9b127252df4db46fcd2e9ca5def83c"
+    "mtime": 1788966011.516499,
+    "ast_hash": "290978f8210da681eca4367b9550d866",
+    "semantic_hash": "290978f8210da681eca4367b9550d866"
   },
   "src/Components/RoleContent/SuperAdminContent/SuperAdminAirlineContent/SuperAdminAirlineContent.jsx": {
     "mtime": 1779444529.7542436,
@@ -2500,9 +2500,9 @@
     "semantic_hash": "547321b3b8099a7d4e8c912fa2dc76c1"
   },
   "src/Components/RoleContent/SuperAdminContent/SuperAdminMenu/SuperAdminMenu.jsx": {
-    "mtime": 1788514424.7671144,
-    "ast_hash": "4399cdc21b6f2b45c908913e12e5f8dc",
-    "semantic_hash": "4399cdc21b6f2b45c908913e12e5f8dc"
+    "mtime": 1788966011.5513394,
+    "ast_hash": "51b59d3c0cfb6df2b980ab2ebff13b7d",
+    "semantic_hash": "51b59d3c0cfb6df2b980ab2ebff13b7d"
   },
   "src/Components/Standart/AdditionalMenu/AdditionalMenu.jsx": {
     "mtime": 1776152177.8360686,
@@ -2655,9 +2655,9 @@
     "semantic_hash": "0bd0788f1d6fe5abec963f2927422e98"
   },
   "src/roles.js": {
-    "mtime": 1788348104.1409683,
-    "ast_hash": "29f5d5f4080f41145cb3587266609971",
-    "semantic_hash": "29f5d5f4080f41145cb3587266609971"
+    "mtime": 1788966470.2714224,
+    "ast_hash": "eeb982666f8243b2f09c8971aa67e31d",
+    "semantic_hash": "eeb982666f8243b2f09c8971aa67e31d"
   },
   "src/services/authErrorLink.js": {
     "mtime": 1777969162.2140238,
@@ -2985,9 +2985,9 @@
     "semantic_hash": "c0d5359be171da6ee8b6bab1bb6b765f"
   },
   "src/utils/access.js": {
-    "mtime": 1788269762.8852103,
-    "ast_hash": "7057b6d2a24ab90fc2887468da7c47db",
-    "semantic_hash": "7057b6d2a24ab90fc2887468da7c47db"
+    "mtime": 1788962899.029815,
+    "ast_hash": "2926bdca4af785becb4b6707405389eb",
+    "semantic_hash": "2926bdca4af785becb4b6707405389eb"
   },
   "src/utils/accessExternalLinks.test.js": {
     "mtime": 1786012959.0802338,
@@ -2995,9 +2995,9 @@
     "semantic_hash": "a13a7dddac06d9a36ce1c2bcd8aa3aa6"
   },
   "src/utils/accessPayload.js": {
-    "mtime": 1788780140.7673757,
-    "ast_hash": "bca78fc665a2f4c1c38359f80569be1f",
-    "semantic_hash": "bca78fc665a2f4c1c38359f80569be1f"
+    "mtime": 1788966470.270377,
+    "ast_hash": "1a8f05166bdf8665766f53b618caeaf9",
+    "semantic_hash": "1a8f05166bdf8665766f53b618caeaf9"
   },
   "src/utils/airlineReadiness.js": {
     "mtime": 1779444529.7577171,
@@ -3247,7 +3247,7 @@
   "src/Components/Blocks/SettingsSidebar/README.md": {
     "mtime": 1785418977.4702132,
     "ast_hash": "db6f2472030ffc816739a145e825e85b",
-    "semantic_hash": "db6f2472030ffc816739a145e825e85b"
+    "semantic_hash": ""
   },
   "\u042d\u041a\u0421\u041a\u0423\u0420\u0421_\u042d\u0421\u041a\u0410\u0414\u0420\u0418\u041b\u042c\u042f_\u0418_\u0417\u0410\u042f\u0412\u041a\u0418.md": {
     "mtime": 1771410138.4741836,
@@ -3815,9 +3815,9 @@
     "semantic_hash": "f66345cf7190431985d0ee85d2eeb8a5"
   },
   "src/utils/access.test.js": {
-    "mtime": 1788269772.873937,
-    "ast_hash": "c328cd9c36a4978370983ed3b8e3e228",
-    "semantic_hash": "c328cd9c36a4978370983ed3b8e3e228"
+    "mtime": 1788962890.6780467,
+    "ast_hash": "8099cb1be3807b592f45d20d235a6066",
+    "semantic_hash": "8099cb1be3807b592f45d20d235a6066"
   },
   "src/utils/hotelDescription.js": {
     "mtime": 1787858128.968912,
@@ -4043,5 +4043,15 @@
     "mtime": 1788944007.4892163,
     "ast_hash": "a3c6640033333bd2f8a6768a47caa759",
     "semantic_hash": "a3c6640033333bd2f8a6768a47caa759"
+  },
+  "src/Components/Pages/AnalyticsForAvia/Analytics/analyticsTabs.js": {
+    "mtime": 1788963081.5998993,
+    "ast_hash": "9af3d2a33ddb2c5084d42e3c8b054edf",
+    "semantic_hash": "9af3d2a33ddb2c5084d42e3c8b054edf"
+  },
+  "src/Components/Pages/AnalyticsForAvia/Analytics/analyticsTabs.test.js": {
+    "mtime": 1788963072.1373987,
+    "ast_hash": "f6b30bd6b12c9db55593b3cef79085b4",
+    "semantic_hash": "f6b30bd6b12c9db55593b3cef79085b4"
   }
 }
