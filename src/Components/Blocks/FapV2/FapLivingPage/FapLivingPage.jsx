@@ -485,7 +485,9 @@ export default function FapLivingPage({
               reportAirlineApprovedAt={hotelReportAirlineApprovedAt(request, origIdx)}
               reportAirlineRevoked={isHotelReportAirlineRevoked(request, origIdx)}
               reportAirlineComment={hotelReportAirlineComment(request, origIdx)?.text ?? null}
-              showReportState={!isAirlineRole(user)}
+              // Бейджи стадий отчёта — диспетчеру: авиакомпания видит отчёт
+              // только отправленным, а гостинице стадии не показываем вовсе.
+              showReportState={!isAirlineRole(user) && !isHotelScoped(user)}
               onOpen={() => navigate(`/far/${requestId}/service/living/hotel/${origIdx}`)}
               onCopyLink={copyLink}
               onEdit={() => openEditHotel(origIdx)}

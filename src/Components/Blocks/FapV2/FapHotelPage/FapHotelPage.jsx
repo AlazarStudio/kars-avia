@@ -3504,8 +3504,9 @@ export default function FapHotelPage({
             </div>
           </div>
           {/* Стадии отчёта — метрика, а не плашки в названии: строка названия
-              не переносится, полоса метрик умеет. */}
-          {canEdit && reportSubmitted && (
+              не переносится, полоса метрик умеет. Гостинице стадии (отправка,
+              согласование цен, утверждение АК) не показываем. */}
+          {canEdit && reportSubmitted && !hotelScoped && (
             <>
               <div className={classes.metricDivider} />
               <div className={classes.metric}>
@@ -3556,8 +3557,10 @@ export default function FapHotelPage({
 
       {/* Последнее слово авиакомпании — под шапкой, а не на вкладке отчёта:
           причину отзыва исправляют и в составе гостей, её должно быть видно
-          с любой вкладки. Авиакомпании — только пока отчёт ей открыт. */}
-      {reportAirlineComment && !reportHidden && (
+          с любой вкладки. Авиакомпании — только пока отчёт ей открыт;
+          гостинице — никогда: утверждение АК её не касается, что исправить,
+          ей передаст диспетчер. */}
+      {reportAirlineComment && !reportHidden && !hotelScoped && (
         <FapAirlineCommentNote
           comment={reportAirlineComment}
           revoked={reportAirlineRevoked}

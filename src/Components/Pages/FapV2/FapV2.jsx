@@ -21,6 +21,7 @@ import {
 import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import MUITextField from "../../Blocks/MUITextField/MUITextField";
 import MUIAutocomplete from "../../Blocks/MUIAutocomplete/MUIAutocomplete";
+import MultiSelectAutocomplete from "../../Blocks/MultiSelectAutocomplete/MultiSelectAutocomplete";
 import FilterPopoverButton from "../../Blocks/FilterPopoverButton/FilterPopoverButton";
 import MUIAutocompleteColor from "../../Blocks/MUIAutocompleteColor/MUIAutocompleteColor";
 import Button from "../../Standart/Button/Button";
@@ -120,15 +121,12 @@ const STATUS_OPTIONS = [
 ];
 
 // Вид услуг — в порядке точек услуг на карточке, чтобы фильтр и карточка
-// перечисляли услуги одинаково. Бэк принимает список, но выбор здесь один:
-// MUIAutocomplete множественный не умеет.
-const SERVICE_OPTIONS = [
-  { value: null, label: "Все услуги" },
-  ...SERVICE_ORDER.map((key) => ({
-    value: SERVICE_CONFIG[key].serviceKind,
-    label: SERVICE_CONFIG[key].label,
-  })),
-];
+// перечисляли услуги одинаково. Выбор множественный: бэк принимает список и
+// ищет заявки, где есть хоть одна из выбранных услуг; пустой выбор — все.
+const SERVICE_OPTIONS = SERVICE_ORDER.map((key) => ({
+  value: SERVICE_CONFIG[key].serviceKind,
+  label: SERVICE_CONFIG[key].label,
+}));
 
 // Подписи стадий — те же, что у чипа отчёта в карточке, кроме шага АК: отзыв
 // бэк отдельной стадией не считает, поэтому пункт говорит «/ отозвано»
@@ -158,7 +156,7 @@ export default function FapV2({ user, accessMenu }) {
 
   const [selectedAirline, setSelectedAirline] = useState(null);
   const [selectedAirport, setSelectedAirport] = useState(null);
-  const [serviceOption, setServiceOption] = useState(SERVICE_OPTIONS[0]);
+  const [selectedServices, setSelectedServices] = useState([]);
   const [reportStageOption, setReportStageOption] = useState(
     REPORT_STAGE_OPTIONS[0],
   );
@@ -197,7 +195,7 @@ export default function FapV2({ user, accessMenu }) {
     debouncedSearch,
     effectiveAirlineId,
     selectedAirport?.id,
-    serviceOption?.value,
+    selectedServices.map((o) => o.value).join(","),
     reportStageOption?.value,
     dateRange.startDate,
     dateRange.endDate,
@@ -251,7 +249,9 @@ export default function FapV2({ user, accessMenu }) {
         search: debouncedSearch || undefined,
         airlineId: effectiveAirlineId,
         airportId: selectedAirport?.id,
-        services: serviceOption?.value ? [serviceOption.value] : undefined,
+        services: selectedServices.length
+          ? selectedServices.map((o) => o.value)
+          : undefined,
         reportStage: reportStageOption?.value ?? undefined,
         dateFrom: dateRange.startDate
           ? dateRange.startDate.toISOString()
@@ -325,14 +325,14 @@ export default function FapV2({ user, accessMenu }) {
     (selectedAirline ? 1 : 0) +
     (selectedAirport ? 1 : 0) +
     (statusOption?.value ? 1 : 0) +
-    (serviceOption?.value ? 1 : 0) +
+    (selectedServices.length ? 1 : 0) +
     (reportStageOption?.value ? 1 : 0) +
     (dateRange.startDate || dateRange.endDate ? 1 : 0);
 
   const handleResetFilters = () => {
     setSelectedAirline(null);
     setSelectedAirport(null);
-    setServiceOption(SERVICE_OPTIONS[0]);
+    setSelectedServices([]);
     setReportStageOption(REPORT_STAGE_OPTIONS[0]);
     setDateRange({ startDate: null, endDate: null });
     handleStatusChange(STATUS_OPTIONS[0]);
@@ -414,29 +414,32 @@ export default function FapV2({ user, accessMenu }) {
           />
           {/* Ряд услуг на карточке гостинице не показывается — фильтр по ним ей тоже не нужен */}
           {!isHotelScoped(user) && (
-            <MUIAutocomplete
+            <MultiSelectAutocomplete
               dropdownWidth="100%"
               label="Вид услуг"
-              hideLabelOnFocus={false}
               options={SERVICE_OPTIONS}
-              value={serviceOption}
-              onChange={(_, val) => setServiceOption(val || SERVICE_OPTIONS[0])}
+              value={selectedServices}
+              onChange={(_, val) => setSelectedServices(val || [])}
+              isMultiple
+              limitTags={1}
+              flexWrap
+            />
+          )}
+          {/* Как и чип стадии в карточке — гостинице стадии отчёта не показываем */}
+          {!isHotelScoped(user) && (
+            <MUIAutocomplete
+              dropdownWidth="100%"
+              label="Согласованность отчёта"
+              hideLabelOnFocus={false}
+              options={reportStageOptions}
+              value={reportStageOption}
+              onChange={(_, val) =>
+                setReportStageOption(val || REPORT_STAGE_OPTIONS[0])
+              }
               getOptionLabel={(o) => o?.label ?? ""}
               isOptionEqualToValue={(o, v) => o?.value === v?.value}
             />
           )}
-          <MUIAutocomplete
-            dropdownWidth="100%"
-            label="Согласованность отчёта"
-            hideLabelOnFocus={false}
-            options={reportStageOptions}
-            value={reportStageOption}
-            onChange={(_, val) =>
-              setReportStageOption(val || REPORT_STAGE_OPTIONS[0])
-            }
-            getOptionLabel={(o) => o?.label ?? ""}
-            isOptionEqualToValue={(o, v) => o?.value === v?.value}
-          />
           <DateRangeModalSelector
             initialRange={dateRange}
             onChange={(startDate, endDate) => setDateRange({ startDate, endDate })}
@@ -493,7 +496,8 @@ export default function FapV2({ user, accessMenu }) {
                     {req.requestNumber || req.flightNumber}
                   </span>
                   <span className={classes.cardKickerSpacer} />
-                  <FapReportStageChip request={req} user={user} />
+                  {/* Стадии отчёта — дело диспетчера и авиакомпании; гостинице их не показываем */}
+                  {!isHotelScoped(user) && <FapReportStageChip request={req} user={user} />}
                   <span
                     className={classes.statusBadge}
                     style={{
