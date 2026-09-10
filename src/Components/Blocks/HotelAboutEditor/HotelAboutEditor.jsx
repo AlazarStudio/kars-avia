@@ -11,6 +11,7 @@ import {
   INFRASTRUCTURE_ITEMS,
   FACILITY_ITEMS,
   ROOM_GROUPS,
+  RARE_ITEM_KEYS,
   buildHotelAboutHtml,
   parseHotelAbout,
 } from "../../../utils/hotelAbout.js";
@@ -83,6 +84,7 @@ export default function HotelAboutEditor({ description, name, location, isEditin
           title="Оснащение объекта"
           groups={FACILITY_GROUPS}
           value={state.facility}
+          rareKeys={RARE_ITEM_KEYS.facility}
           extraLabel="Другое"
           extraPlaceholder="Через запятую: комната отдыха, сауна с бассейном"
           disabled={disabled}
@@ -92,6 +94,7 @@ export default function HotelAboutEditor({ description, name, location, isEditin
           title="Оснащение номерного фонда"
           groups={ROOM_GROUPS}
           value={state.rooms}
+          rareKeys={RARE_ITEM_KEYS.rooms}
           extraLabel="Другое"
           extraPlaceholder="Через запятую: утюг, гладильная доска"
           disabled={disabled}

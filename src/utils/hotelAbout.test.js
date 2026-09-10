@@ -5,6 +5,9 @@ import {
   parseHotelAbout,
   buildHotelAboutHtml,
   aboutLocationLine,
+  FACILITY_ITEMS,
+  ROOM_ITEMS,
+  RARE_ITEM_KEYS,
 } from "./hotelAbout.js";
 import { parseHotelDescription, extractAmenities } from "./hotelDescription.js";
 
@@ -198,4 +201,11 @@ test("номерной фонд: добранные синонимы и пунк
     ],
     extra: "",
   });
+});
+
+test("редкие пункты — существующие ключи своих словарей", () => {
+  const facilityKeys = new Set(FACILITY_ITEMS.map((entry) => entry.key));
+  const roomKeys = new Set(ROOM_ITEMS.map((entry) => entry.key));
+  RARE_ITEM_KEYS.facility.forEach((key) => assert.ok(facilityKeys.has(key), key));
+  RARE_ITEM_KEYS.rooms.forEach((key) => assert.ok(roomKeys.has(key), key));
 });

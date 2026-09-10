@@ -164,6 +164,24 @@ export const ROOM_GROUPS = [
 
 export const ROOM_ITEMS = ROOM_GROUPS.flatMap((group) => group.items);
 
+// Редкие пункты — в редакторе прячутся под «ещё», пока не отмечены. Порог по
+// замеру дев-стенда 10.09.2026: пункт отмечен меньше чем у 20 из 360 описаний.
+// Инфраструктуру не прячем: её 16 пунктов — шаблон Валерии, а низкие цифры
+// там оттого, что старые описания называют места, а не типы.
+export const RARE_ITEM_KEYS = {
+  facility: new Set([
+    "reception24", "shoeShine", "sewing", "concierge", "excursions", "tableTennis",
+    "beauty", "playground", "terrace", "library", "electronicLocks", "massage",
+    "kitchen", "lunchbox", "businessCentre", "microwave", "atm", "bikeRental",
+    "roomService", "dietMenu", "kidsMenu", "jacuzzi", "solarium", "relaxZone",
+    "boardGames", "babyCot",
+  ]),
+  rooms: new Set([
+    "sofa", "coffeeTable", "orthoMattress", "iron", "ventilation", "alarmClock",
+    "linen", "carpet", "pillows", "mosquitoNet", "balcony",
+  ]),
+};
+
 const DICTIONARIES = {
   infrastructure: INFRASTRUCTURE_ITEMS,
   facility: FACILITY_ITEMS,

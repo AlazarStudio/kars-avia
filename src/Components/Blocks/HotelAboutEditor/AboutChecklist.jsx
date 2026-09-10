@@ -1,16 +1,22 @@
+import { useState } from "react";
 import classes from "./HotelAboutEditor.module.css";
 
 // Раздел описания: галки-чипы по группам и поле для всего, что в словарь не попало.
+// Редкие пункты (rareKeys) спрятаны под «ещё», пока не отмечены: отмеченный
+// редкий пункт виден всегда, иначе галку было бы не снять.
 export default function AboutChecklist({
   title,
   groups,
   value,
+  rareKeys,
   extraLabel,
   extraPlaceholder,
   disabled,
   onChange,
 }) {
+  const [expanded, setExpanded] = useState(false);
   const checked = new Set(value.checked);
+  const isRareUnchecked = (key) => Boolean(rareKeys?.has(key)) && !checked.has(key);
 
   const toggle = (key) => {
     const next = new Set(checked);
@@ -28,6 +34,13 @@ export default function AboutChecklist({
     .filter(Boolean)
     .join(" · ");
 
+  // Каждой группе — свои скрытые (редкие и не отмеченные) пункты; общий счёт — для кнопки.
+  const groupsWithHidden = groups.map((group) => ({
+    ...group,
+    hidden: group.items.filter((entry) => isRareUnchecked(entry.key)),
+  }));
+  const hiddenCount = groupsWithHidden.reduce((sum, group) => sum + group.hidden.length, 0);
+
   return (
     <section className={classes.section}>
       <div className={classes.sectionHead}>
@@ -35,25 +48,38 @@ export default function AboutChecklist({
         {summary && <span className={classes.sectionCount}>{summary}</span>}
       </div>
 
-      {groups.map((group) => (
+      {groupsWithHidden.map((group, index, arr) => (
         <div key={group.title || "all"} className={classes.group}>
           {group.title && <div className={classes.groupTitle}>{group.title}</div>}
           <div className={classes.chips}>
-            {group.items.map((entry) => {
-              const on = checked.has(entry.key);
-              return (
-                <button
-                  key={entry.key}
-                  type="button"
-                  className={`${classes.chip} ${on ? classes.chipOn : ""}`}
-                  aria-pressed={on}
-                  disabled={disabled}
-                  onClick={() => toggle(entry.key)}
-                >
-                  {entry.label}
-                </button>
-              );
-            })}
+            {group.items
+              .filter((entry) => expanded || !isRareUnchecked(entry.key))
+              .map((entry) => {
+                const on = checked.has(entry.key);
+                return (
+                  <button
+                    key={entry.key}
+                    type="button"
+                    className={`${classes.chip} ${on ? classes.chipOn : ""}`}
+                    aria-pressed={on}
+                    disabled={disabled}
+                    onClick={() => toggle(entry.key)}
+                  >
+                    {entry.label}
+                  </button>
+                );
+              })}
+            {/* Раскрытие — навигация, а не правка: доступно и без режима редактирования. */}
+            {index === arr.length - 1 && hiddenCount > 0 && (
+              <button
+                type="button"
+                className={classes.moreToggle}
+                aria-expanded={expanded}
+                onClick={() => setExpanded((prev) => !prev)}
+              >
+                {expanded ? "Свернуть" : `Ещё ${hiddenCount}`}
+              </button>
+            )}
           </div>
         </div>
       ))}

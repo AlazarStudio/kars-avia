@@ -108,6 +108,25 @@
   opacity: 0.55;
 }
 
+/* «Ещё N» — раскрывает редкие пункты раздела; стоит в ряду чипов последним. */
+.moreToggle {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px dashed #c9d2e4;
+  border-radius: 8px;
+  background: transparent;
+  color: #0057C3;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.moreToggle:hover {
+  border-color: #0057C3;
+}
+
 .extra {
   display: flex;
   flex-direction: column;
