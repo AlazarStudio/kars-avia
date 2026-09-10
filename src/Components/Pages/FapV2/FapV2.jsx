@@ -421,6 +421,8 @@ export default function FapV2({ user, accessMenu }) {
               value={selectedServices}
               onChange={(_, val) => setSelectedServices(val || [])}
               isMultiple
+              // Список не закрывается после каждой галочки — услуги выбирают пачкой
+              disableCloseOnSelect
               limitTags={1}
               flexWrap
             />
