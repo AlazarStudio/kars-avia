@@ -167,3 +167,35 @@ test("пустое и не-строка — пустое состояние", ()
   assert.deepEqual(parseHotelAbout(null), emptyHotelAbout());
   assert.deepEqual(parseHotelAbout(undefined), emptyHotelAbout());
 });
+
+test("прачечная: частые фразы стенда включают переключатели", () => {
+  const on = parseHotelAbout(
+    "<p><strong>Услуги прачечной/глажки:</strong> Услуги прачечной и глажки предоставляются.</p>"
+  );
+  assert.deepEqual(on.laundry, { laundry: true, ironing: true, extra: "" });
+  const off = parseHotelAbout("<p><strong>Услуги прачечной/глажки:</strong> не предоставляют</p>");
+  assert.deepEqual(off.laundry, { laundry: false, ironing: false, extra: "" });
+});
+
+test("оснащение объекта: добранные синонимы и пункты", () => {
+  const state = parseHotelAbout(
+    "<p><strong>Оснащение объекта:</strong> Телефон, массажный кабинет, spa-центр, предоставление ланч-боксов, кафе-бар, кулеры на этажах, летняя веранда.</p>"
+  );
+  assert.deepEqual(state.facility, {
+    checked: ["bar", "spa", "cooler", "terrace", "phone", "massage", "lunchbox"],
+    extra: "",
+  });
+});
+
+test("номерной фонд: добранные синонимы и пункты", () => {
+  const state = parseHotelAbout(
+    "<p><strong>Оснащение номерного фонда:</strong> Гигиенические средства, набор полотенец, стаканы, ковровое покрытие, подушки, банный халат, журнальный столик, тумба, утюг, шкаф/гардероб, настенное зеркало.</p>"
+  );
+  assert.deepEqual(state.rooms, {
+    checked: [
+      "wardrobe", "nightstands", "mirror", "coffeeTable", "iron",
+      "towels", "bathrobes", "toiletries", "glassware", "carpet", "pillows",
+    ],
+    extra: "",
+  });
+});
