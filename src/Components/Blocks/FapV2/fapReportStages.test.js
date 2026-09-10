@@ -2,7 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   REPORT_STEPS,
+  REPORT_STAGE_DONE,
+  REPORT_STAGE_NAMES,
   hotelReportStage,
+  reportStageFilterLabel,
   reportStageLabel,
   requestReportSummary,
 } from "./fapReportStages.js";
@@ -209,4 +212,18 @@ test("отзыв, а затем снятое согласование цен: с
   assert.equal(reportStageLabel(summary.stage, summary.revoked), "Цены не согласованы");
   assert.equal(summary.hotels[0].revoked, true);
   assert.equal(summary.hotels[0].comment, "Неверные даты выезда");
+});
+
+// ── Фильтр списка по стадии ──
+test("имена стадий бэка идут по шагам чипа: индекс имени — стадия", () => {
+  assert.equal(REPORT_STAGE_NAMES.length, REPORT_STAGE_DONE + 1);
+  assert.equal(REPORT_STAGE_NAMES[0], "NOT_SUBMITTED");
+  assert.equal(REPORT_STAGE_NAMES[REPORT_STAGE_DONE], "AIRLINE_APPROVED");
+});
+
+test("подпись стадии в фильтре: у шага АК — «/ отозвано», остальные как у чипа", () => {
+  assert.deepEqual(
+    REPORT_STAGE_NAMES.map((_, stage) => reportStageFilterLabel(stage)),
+    ["Не отправлен", "Цены не согласованы", "Ждёт утверждения АК / отозвано", "Утверждён АК"]
+  );
 });

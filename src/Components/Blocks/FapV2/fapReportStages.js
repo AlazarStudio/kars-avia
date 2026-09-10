@@ -62,6 +62,15 @@ export function reportStageLabel(stage, revoked = false) {
   return REPORT_STEPS[stage].wait;
 }
 
+// Подпись стадии в фильтре списка. Отзыв утверждения АК отдельной стадией бэк
+// не считает — это та же PRICING_APPROVED (цены согласованы, подписи нет),
+// поэтому пункт шага авиакомпании прямо говорит, что в нём и отозванные.
+export function reportStageFilterLabel(stage) {
+  return stage === REPORT_STAGE_AIRLINE
+    ? `${REPORT_STEPS[stage].wait} / отозвано`
+    : reportStageLabel(stage);
+}
+
 // Сводка для карточки списка по гостиницам, которые пользователь вправе видеть
 // (visibleHotelIndexes — то же правило, что у выгрузок отчёта). null — чипа нет.
 // stage — самая отстающая гостиница, laggingCount — сколько гостиниц на ней.

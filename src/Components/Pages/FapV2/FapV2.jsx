@@ -34,7 +34,7 @@ import ServiceProgressDot from "../../Blocks/FapV2/ServiceProgressDot/ServicePro
 import FapReportStageChip from "../../Blocks/FapV2/FapReportStageChip/FapReportStageChip";
 import {
   REPORT_STAGE_NAMES,
-  reportStageLabel,
+  reportStageFilterLabel,
 } from "../../Blocks/FapV2/fapReportStages";
 import { roles } from "../../../roles";
 import {
@@ -130,12 +130,14 @@ const SERVICE_OPTIONS = [
   })),
 ];
 
-// Подписи стадий — те же, что у чипа отчёта в карточке (reportStageLabel).
+// Подписи стадий — те же, что у чипа отчёта в карточке, кроме шага АК: отзыв
+// бэк отдельной стадией не считает, поэтому пункт говорит «/ отозвано»
+// (reportStageFilterLabel).
 const REPORT_STAGE_OPTIONS = [
   { value: null, label: "Все стадии" },
   ...REPORT_STAGE_NAMES.map((value, stage) => ({
     value,
-    label: reportStageLabel(stage),
+    label: reportStageFilterLabel(stage),
   })),
 ];
 
@@ -160,6 +162,11 @@ export default function FapV2({ user, accessMenu }) {
   const [reportStageOption, setReportStageOption] = useState(
     REPORT_STAGE_OPTIONS[0],
   );
+  // Авиакомпания видит только отправленные отчёты (стадия у неё не ниже 1) —
+  // пункт «Не отправлен» всегда давал бы ей пустой список.
+  const reportStageOptions = isAirlineRole(user)
+    ? REPORT_STAGE_OPTIONS.filter((o) => o.value !== REPORT_STAGE_NAMES[0])
+    : REPORT_STAGE_OPTIONS;
   const [dateRange, setDateRange] = useState({ startDate: null, endDate: null });
   const [airlines, setAirlines] = useState([]);
   const [airports, setAirports] = useState([]);
@@ -405,21 +412,24 @@ export default function FapV2({ user, accessMenu }) {
             getOptionLabel={(o) => o?.label ?? ""}
             isOptionEqualToValue={(o, v) => o?.value === v?.value}
           />
-          <MUIAutocomplete
-            dropdownWidth="100%"
-            label="Вид услуг"
-            hideLabelOnFocus={false}
-            options={SERVICE_OPTIONS}
-            value={serviceOption}
-            onChange={(_, val) => setServiceOption(val || SERVICE_OPTIONS[0])}
-            getOptionLabel={(o) => o?.label ?? ""}
-            isOptionEqualToValue={(o, v) => o?.value === v?.value}
-          />
+          {/* Ряд услуг на карточке гостинице не показывается — фильтр по ним ей тоже не нужен */}
+          {!isHotelScoped(user) && (
+            <MUIAutocomplete
+              dropdownWidth="100%"
+              label="Вид услуг"
+              hideLabelOnFocus={false}
+              options={SERVICE_OPTIONS}
+              value={serviceOption}
+              onChange={(_, val) => setServiceOption(val || SERVICE_OPTIONS[0])}
+              getOptionLabel={(o) => o?.label ?? ""}
+              isOptionEqualToValue={(o, v) => o?.value === v?.value}
+            />
+          )}
           <MUIAutocomplete
             dropdownWidth="100%"
             label="Согласованность отчёта"
             hideLabelOnFocus={false}
-            options={REPORT_STAGE_OPTIONS}
+            options={reportStageOptions}
             value={reportStageOption}
             onChange={(_, val) =>
               setReportStageOption(val || REPORT_STAGE_OPTIONS[0])
