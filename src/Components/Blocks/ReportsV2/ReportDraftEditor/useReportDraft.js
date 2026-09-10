@@ -6,6 +6,7 @@ import {
   CONFIRM_REPORT_DRAFT,
   SUBMIT_AIRLINE_REPORT_DRAFT,
   UNSUBMIT_AIRLINE_REPORT_DRAFT,
+  REJECT_AIRLINE_REPORT_DRAFT,
   DELETE_REPORT_DRAFT,
   RECREATE_REPORT_DRAFT,
   getCookie,
@@ -52,6 +53,7 @@ export default function useReportDraft(draftId) {
   const [confirming, setConfirming] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [unsubmitting, setUnsubmitting] = useState(false);
+  const [rejecting, setRejecting] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [recreating, setRecreating] = useState(false);
 
@@ -236,6 +238,9 @@ export default function useReportDraft(draftId) {
   const [unsubmitAirlineReportDraft] = useMutation(UNSUBMIT_AIRLINE_REPORT_DRAFT, {
     context: authContext,
   });
+  const [rejectAirlineReportDraft] = useMutation(REJECT_AIRLINE_REPORT_DRAFT, {
+    context: authContext,
+  });
   const [recreateReportDraftMutation] = useMutation(RECREATE_REPORT_DRAFT, {
     context: authContext,
   });
@@ -311,6 +316,24 @@ export default function useReportDraft(draftId) {
     }
   }, [draftId, unsubmitAirlineReportDraft]);
 
+  // Возврат авиакомпанией: SUBMITTED → DRAFT с обязательной причиной.
+  // Сохранять нечего — у АК редактор read-only. Мутация возвращает
+  // status/rejectedAt/комментарий того же ReportDraft — кэш обновится сам.
+  const reject = useCallback(
+    async (comment) => {
+      setRejecting(true);
+      try {
+        const { data: result } = await rejectAirlineReportDraft({
+          variables: { id: draftId, comment },
+        });
+        return result?.rejectAirlineReportDraft;
+      } finally {
+        setRejecting(false);
+      }
+    },
+    [draftId, rejectAirlineReportDraft]
+  );
+
   // Пересоздание НА МЕСТЕ (recreateReportDraft): бэк собирает строки заново
   // из свежих заявок и СЛИВАЕТ ручные правки по «липким» полям, помечая
   // изменившиеся ячейки changedKeys. Прежняя пара «создать новый + удалить
@@ -357,6 +380,7 @@ export default function useReportDraft(draftId) {
     confirming,
     submitting,
     unsubmitting,
+    rejecting,
     deleting,
     recreating,
     dirty,
@@ -375,6 +399,7 @@ export default function useReportDraft(draftId) {
     confirmAndExport,
     submit,
     unsubmit,
+    reject,
     recreate,
     removeDraft,
   };

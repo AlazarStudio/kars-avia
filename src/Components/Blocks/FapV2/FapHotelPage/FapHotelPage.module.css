@@ -477,6 +477,14 @@
   flex-shrink: 0;
 }
 .reportStepConnDone { background: #C9E9D8; }
+/* Отзыв утверждения АК — янтарь «требует внимания» (как .staleBadge в
+   отчётах), не красный: отчёт не сломан, он ждёт исправлений. */
+.reportStepRevoked { color: #B8741A; }
+.reportStepRevoked .reportStepDot {
+  background: #FCEFDA;
+  border: 1.5px solid #E09A3A;
+  color: #B8741A;
+}
 
 .reportPending {
   padding: 48px 16px;

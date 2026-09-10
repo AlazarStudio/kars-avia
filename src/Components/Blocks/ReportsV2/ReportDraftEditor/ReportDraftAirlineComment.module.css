@@ -1,0 +1,50 @@
+/* Плашка комментария авиакомпании в редакторе черновика. Палитра — как у
+   панели черновиков (ReportDraftsPanel.module.css): возврат — янтарь
+   «требует внимания», прошлый комментарий — нейтральный. flex-shrink: 0 —
+   .wrap редактора flex-колонка с min-height: 0. */
+.note {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 16px;
+  border-radius: 14px;
+  background: #F6F7FB;
+  border: 1px solid #E4E4EF;
+}
+
+.rejected {
+  background: #FFFBF3;
+  border-color: #F0E2CC;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #191919;
+}
+
+.rejected .title {
+  color: #B8741A;
+}
+
+.date {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: #8B90A5;
+}
+
+.text {
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #545873;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

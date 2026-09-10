@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PropTypes from "prop-types";
 import { useMutation, useQuery } from "@apollo/client";
 import classes from "./ReportDraftEditor.module.css";
@@ -14,6 +14,7 @@ import ReportDraftDialog from "./ReportDraftDialog";
 import ReportDraftPreview from "./ReportDraftPreview";
 import ReportDraftSummary from "./ReportDraftSummary";
 import ReportFieldSettingsModal from "./ReportFieldSettingsModal";
+import ReportDraftAirlineComment from "./ReportDraftAirlineComment";
 import {
   DRAFT_FILTERS,
   applyDateChange,
@@ -38,6 +39,7 @@ import {
 } from "../../../../../graphQL_requests";
 import { EDITABLE_FIELDS, measureSavePayload, rowHasWarning } from "../reportDraftRows";
 import { isDraftStale, getDraftAgeDays } from "../reportDraftAge";
+import { draftAirlineNote } from "../reportDraftComment";
 import { resolveDraftPartialDayRules } from "../reportRules";
 import { roles } from "../../../../roles";
 
@@ -53,9 +55,11 @@ export default function ReportDraftEditor({
   onConfirmed,
   onSubmitted,
   onUnsubmitted,
+  onRejected,
   airports,
   accessMenu,
   mode = "edit",
+  isAirlineViewer = false,
 }) {
   const {
     draft,
@@ -65,6 +69,7 @@ export default function ReportDraftEditor({
     confirming,
     submitting,
     unsubmitting,
+    rejecting,
     deleting,
     recreating,
     dirty,
@@ -83,6 +88,7 @@ export default function ReportDraftEditor({
     confirmAndExport,
     submit,
     unsubmit,
+    reject,
     recreate,
     removeDraft,
   } = useReportDraft(draftId);
@@ -103,6 +109,10 @@ export default function ReportDraftEditor({
   // отправки, и жмут его обе стороны (assertDraftAccess пускает и диспетчера).
   const canConfirm =
     mode !== "view" && (isSubmitted || (!isAirlineDraft && draft?.status === "DRAFT"));
+  // Возврат на доработку — только авиакомпании на её экране проверки и только
+  // у отправленного: выпущенный отчёт неотзывен (файл уже выдан), диспетчеру
+  // бэк отказывает — у него свой «Отозвать».
+  const canReject = mode === "review" && isAirlineDraft && isSubmitted;
 
   const { success, error: notifyError } = useToast();
 
@@ -196,10 +206,12 @@ export default function ReportDraftEditor({
   // Замер строк на момент неудачного сохранения: {bytes, limit} — если строки
   // не влезли в лимит тела запроса, и null во всех остальных случаях.
   const [oversize, setOversize] = useState(null);
-  // dialog: null | { type: "leave" | "delete" | "recreate" } | { type: "deleteRow", row }
+  // dialog: null | { type: "leave" | "delete" | "recreate" | "reject" } | { type: "deleteRow", row }
   //       | { type: "stale", action: "confirm" | "submit" } — что продолжить, если всё равно
   const [dialog, setDialog] = useState(null);
   const closeDialog = () => setDialog(null);
+  // Причина возврата на доработку — здесь, а не в диалоге: ReportDraftDialog чисто UI.
+  const [rejectComment, setRejectComment] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
   // Наведённая группа соседей по номеру — подсвечивает все её строки разом.
   const [hoveredCluster, setHoveredCluster] = useState(null);
@@ -399,6 +411,34 @@ export default function ReportDraftEditor({
       onUnsubmitted();
     } catch (e) {
       notifyError(e?.graphQLErrors?.[0]?.message || "Не удалось отозвать отправку");
+    }
+  };
+
+  const handleRejectClick = () => {
+    setRejectComment("");
+    setDialog({ type: "reject" });
+  };
+
+  // Пока запрос возврата в полёте, диалог не закрываем ни Esc, ни кликом мимо,
+  // ни «Отменой»: мутация всё равно завершится, и её тост с закрытием экрана
+  // пришли бы уже после «отмены». useCallback обязателен: ReportDraftDialog
+  // держит onClose в deps эффекта, который ставит фокус на «Отмену», — новая
+  // функция на каждом рендере уводила бы фокус из поля причины после каждой буквы.
+  const closeRejectDialog = useCallback(() => {
+    if (!rejecting) setDialog(null);
+  }, [rejecting]);
+
+  // Возврат переводит черновик обратно в DRAFT, и авиакомпания его больше не
+  // видит — поэтому после успеха экран закрывается, а не перерисовывается.
+  // При ошибке диалог остаётся: причину не придётся набирать заново.
+  const runReject = async () => {
+    try {
+      await reject(rejectComment.trim());
+      closeDialog();
+      success("Отчёт возвращён на доработку");
+      onRejected?.();
+    } catch (e) {
+      notifyError(e?.graphQLErrors?.[0]?.message || "Не удалось вернуть отчёт");
     }
   };
 
@@ -630,6 +670,13 @@ export default function ReportDraftEditor({
         onConfirm={handleConfirmClick}
         onSubmit={handleSubmitClick}
         onUnsubmit={canUnsubmit ? runUnsubmit : undefined}
+        rejecting={rejecting}
+        onReject={canReject ? handleRejectClick : undefined}
+      />
+
+      <ReportDraftAirlineComment
+        note={draftAirlineNote(draft)}
+        isAirlineViewer={isAirlineViewer}
       />
 
       {saveFailed && (
@@ -790,6 +837,30 @@ export default function ReportDraftEditor({
         onPrimary={handleConfirmDeleteRow}
       />
 
+      <ReportDraftDialog
+        open={dialog?.type === "reject"}
+        onClose={closeRejectDialog}
+        symbol="↩"
+        symbolBg="#FFF6E8"
+        symbolColor="#D9891F"
+        title="Вернуть отчёт на доработку?"
+        message="Отчёт вернётся диспетчеру в черновики, он получит письмо с вашим комментарием. Подтвердить отчёт можно будет после повторной отправки."
+        cancelLabel="Отмена"
+        onCancel={closeRejectDialog}
+        primaryLabel={rejecting ? "Возврат…" : "Вернуть"}
+        primaryColor="#D97A22"
+        primaryDisabled={!rejectComment.trim() || rejecting}
+        onPrimary={runReject}
+      >
+        <textarea
+          className={classes.rejectComment}
+          rows={4}
+          placeholder="Что нужно исправить"
+          value={rejectComment}
+          onChange={(e) => setRejectComment(e.target.value)}
+        />
+      </ReportDraftDialog>
+
       <ReportDraftPreview
         open={previewOpen}
         draftId={draftId}
@@ -817,6 +888,8 @@ ReportDraftEditor.propTypes = {
   onConfirmed: PropTypes.func.isRequired,
   onSubmitted: PropTypes.func.isRequired,
   onUnsubmitted: PropTypes.func.isRequired,
+  // Авиакомпания вернула черновик — родитель закрывает экран.
+  onRejected: PropTypes.func,
   airports: PropTypes.array,
   // Эффективное accessMenu текущего пользователя — для права на шестерёнку
   // настройки редактируемых полей (reportFieldSettings).
@@ -824,4 +897,7 @@ ReportDraftEditor.propTypes = {
   // review — экран авиакомпании: читает отправленный ей черновик и
   // подтверждает его, но ничего не правит.
   mode: PropTypes.oneOf(["edit", "view", "review"]),
+  // Смотрит ли авиакомпания — для формулировки плашки комментария. По mode
+  // не вывести: «view» бывает и у диспетчера.
+  isAirlineViewer: PropTypes.bool,
 };

@@ -1,0 +1,50 @@
+/* Плашка под шапкой страницы гостиницы. Стоит в .root (flex-колонка с
+   gap 12px) рядом с шапкой и табами — поэтому без внешних отступов, во всю
+   ширину, как они. Скругление и внутренние отступы — как .pricesPendingBanner. */
+.note {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: var(--gray, #F1F4FB);
+  border: 1px solid #E4E4EF;
+}
+
+/* Отзыв — янтарь панели черновиков отчётов: «требует внимания», не ошибка. */
+.revoked {
+  background: #FFFBF3;
+  border-color: #F0E2CC;
+}
+
+.head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--main-gray);
+}
+
+.revoked .title {
+  color: #B8741A;
+}
+
+.date {
+  font-size: 12px;
+  font-weight: 600;
+  color: #8A8FA8;
+}
+
+.text {
+  font-size: 13px;
+  line-height: 1.5;
+  color: #545873;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

@@ -26,6 +26,15 @@ function notificationDedupeKey(it) {
   );
 }
 
+// Решения по черновику отчёта эскадрильи: отправка АК, её согласование и
+// возврат на доработку. draftId в списке уведомлений бэк не хранит — ведём в
+// раздел отчётов целиком.
+const REPORT_DRAFT_ACTIONS = new Set([
+  "submit_airline_report_draft",
+  "confirm_airline_report_draft",
+  "reject_airline_report_draft",
+]);
+
 const separatorToType = {
   All: undefined,
   request: "request",
@@ -173,13 +182,14 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
                       notify.passengerRequestId != null;
                     const isReserve =
                       notify.reserveId != null && !isPassengerRequest;
-                    // Отчёт отправлен авиакомпании на подтверждение. Тип
-                    // определяем по action: в списке (QUERY_NOTIFICATIONS) тип
-                    // плоский, без фрагментов, и draftId в него не приходит —
-                    // ведём в раздел отчётов, где черновик ждёт в панели
-                    // «На подтверждении».
-                    const isReportSubmitted =
-                      notify?.description?.action === "submit_airline_report_draft";
+                    // Решения по черновику отчёта — по action: в списке
+                    // (QUERY_NOTIFICATIONS) тип плоский, без фрагментов.
+                    // Суперу — v2 по его адресу: его /reports — старый раздел.
+                    const isReportDraftNotice = REPORT_DRAFT_ACTIONS.has(
+                      notify?.description?.action
+                    );
+                    const reportsLink =
+                      user?.role === roles.superAdmin ? "/reportsV2" : "/reports";
                     const passengerRequestLink = `/far/${notify.passengerRequestId}`;
                     const reserveLink = `/reserve/reservePlacement/${notify.reserveId}`;
                     return (
@@ -209,10 +219,10 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
                               />
                             )}
                           </div>
-                          {isReportSubmitted ? (
+                          {isReportDraftNotice ? (
                             <p
                               className={classes.toRequest}
-                              onClick={() => navigate("/reports")}
+                              onClick={() => navigate(reportsLink)}
                             >
                               <ExportIcon />
                             </p>

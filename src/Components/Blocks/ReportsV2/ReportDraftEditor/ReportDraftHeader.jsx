@@ -24,6 +24,7 @@ export default function ReportDraftHeader({
   confirming,
   submitting,
   unsubmitting,
+  rejecting,
   canEdit = true,
   canSubmit = false,
   canConfirm = false,
@@ -36,6 +37,7 @@ export default function ReportDraftHeader({
   onConfirm,
   onSubmit,
   onUnsubmit,
+  onReject,
 }) {
   return (
     <div className={classes.bar}>
@@ -168,6 +170,20 @@ export default function ReportDraftHeader({
           </button>
         )}
 
+        {/* Возврат на доработку — у авиакомпании рядом с подтверждением,
+            вторичной кнопкой: основное действие экрана — всё-таки выпуск.
+            Показывается по наличию обработчика, как «Отозвать». */}
+        {onReject && (
+          <button
+            type="button"
+            className={classes.secondaryBtn}
+            disabled={rejecting}
+            onClick={onReject}
+          >
+            {rejecting ? "Возврат…" : "Вернуть на доработку"}
+          </button>
+        )}
+
         {canConfirm && (
           <button
             type="button"
@@ -198,6 +214,7 @@ ReportDraftHeader.propTypes = {
   confirming: PropTypes.bool,
   submitting: PropTypes.bool,
   unsubmitting: PropTypes.bool,
+  rejecting: PropTypes.bool,
   canEdit: PropTypes.bool,
   canSubmit: PropTypes.bool,
   canConfirm: PropTypes.bool,
@@ -213,4 +230,7 @@ ReportDraftHeader.propTypes = {
   // Отзыв показывается по наличию обработчика — как удаление в плашке
   // черновиков: отдельный флаг дублировал бы то же условие.
   onUnsubmit: PropTypes.func,
+  // Возврат на доработку — по наличию обработчика: право (АК, SUBMITTED)
+  // решает редактор.
+  onReject: PropTypes.func,
 };

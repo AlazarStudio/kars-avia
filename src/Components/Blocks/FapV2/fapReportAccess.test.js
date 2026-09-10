@@ -5,6 +5,8 @@ import {
   isHotelReportSubmitted,
   hotelReportPricingApprovedAt,
   isHotelReportPricingApproved,
+  hotelReportAirlineComment,
+  isHotelReportAirlineRevoked,
   airlineMoneyHidden,
   visibleHotelIndexes,
 } from "./fapReportAccess.js";
@@ -170,4 +172,66 @@ test("правило про деньги — только про авиаком�
   assert.equal(airlineMoneyHidden(pricedRequest, dispatcher), false);
   assert.equal(airlineMoneyHidden(pricedRequest, { role: "HOTELADMIN", hotelId: "h-2" }), false);
   assert.equal(airlineMoneyHidden(pricedRequest, extHotel), false);
+});
+
+// ── Комментарий авиакомпании ──
+// Три отчёта: отозванный (текст без подписи), утверждённый с текстом и
+// с пробельным текстом, который бэк бы обрезал до пустоты.
+const COMMENTED = "2026-09-10T09:00:00.000Z";
+const commentRequest = {
+  livingService: { hotels: [{ hotelId: "h-1" }, { hotelId: "h-2" }, { hotelId: "h-3" }] },
+  hotelReports: [
+    {
+      hotelIndex: 0,
+      airlineApprovedAt: null,
+      airlineComment: "  Неверные даты выезда  ",
+      airlineCommentAt: COMMENTED,
+    },
+    {
+      hotelIndex: 1,
+      airlineApprovedAt: COMMENTED,
+      airlineComment: "Ок, но проверьте питание",
+      airlineCommentAt: COMMENTED,
+    },
+    { hotelIndex: 2, airlineApprovedAt: null, airlineComment: "   ", airlineCommentAt: COMMENTED },
+  ],
+};
+
+test("комментарий авиакомпании — обрезанный текст и дата", () => {
+  assert.deepEqual(hotelReportAirlineComment(commentRequest, 0), {
+    text: "Неверные даты выезда",
+    at: COMMENTED,
+  });
+  assert.deepEqual(hotelReportAirlineComment(commentRequest, "1"), {
+    text: "Ок, но проверьте питание",
+    at: COMMENTED,
+  });
+});
+
+test("пустой, пробельный или отсутствующий комментарий — null", () => {
+  assert.equal(hotelReportAirlineComment(commentRequest, 2), null);
+  assert.equal(hotelReportAirlineComment(commentRequest, 5), null);
+  assert.equal(hotelReportAirlineComment(undefined, 0), null);
+  assert.equal(
+    hotelReportAirlineComment({ hotelReports: [{ hotelIndex: 0, airlineComment: null }] }, 0),
+    null
+  );
+});
+
+test("дата комментария без поля — null, а не undefined", () => {
+  assert.deepEqual(
+    hotelReportAirlineComment({ hotelReports: [{ hotelIndex: 0, airlineComment: "x" }] }, 0),
+    { text: "x", at: null }
+  );
+});
+
+test("отзыв — комментарий есть, утверждения нет", () => {
+  assert.equal(isHotelReportAirlineRevoked(commentRequest, 0), true);
+  assert.equal(isHotelReportAirlineRevoked(commentRequest, "0"), true);
+});
+
+test("утверждённый с комментарием и отчёт без комментария — не отзыв", () => {
+  assert.equal(isHotelReportAirlineRevoked(commentRequest, 1), false);
+  assert.equal(isHotelReportAirlineRevoked(commentRequest, 2), false);
+  assert.equal(isHotelReportAirlineRevoked(commentRequest, 5), false);
 });

@@ -1,4 +1,4 @@
-import { useParams } from 'react-router-dom'
+import { Navigate, useLocation, useParams } from 'react-router-dom'
 
 import AirlinePage from '../../Blocks/AirlinePage/AirlinePage'
 import AirlinesList from '../../Blocks/AirlinesList/AirlinesList'
@@ -22,9 +22,18 @@ import DisAdminTransferContent from '../DispatcherAdminContent/DisAdminTransferC
 import DisAdminAutoparkContent from '../DispatcherAdminContent/DisAdminAutoparkContent/DisAdminAutoparkContent'
 import PositionAccessPage from '../../Blocks/PositionAccessPage/PositionAccessPage'
 import SystemNotificationsSettings from '../../Blocks/SystemUpdate/SystemNotificationsSettings'
+import { hasReportLink } from '../../Blocks/ReportsV2/reportDraftLink'
 
 const SuperAdminContent = ({ user }) => {
   const { id, hotelID, airlineID, orderId, driversCompanyID } = useParams()
+  const location = useLocation()
+
+  // Ссылки из писем бэка ведут на /reports?reportid=…|reportdraftid=…, а у
+  // супера /reports — старый раздел, который их не понимает. Такие ссылки
+  // уводим в v2 с теми же параметрами; без них /reports — прежний раздел.
+  if (id === 'reports' && hasReportLink(location.search)) {
+    return <Navigate to={`/reportsV2${location.search}`} replace />
+  }
 
   const isTransfer =
     id === 'orders' || !!orderId;

@@ -23,6 +23,8 @@ export default function ReportDraftDialog({
   onPrimary,
   tertiaryLabel,
   onTertiary,
+  primaryDisabled = false,
+  children,
 }) {
   const cancelRef = useRef(null);
 
@@ -62,6 +64,8 @@ export default function ReportDraftDialog({
             </div>
             <div className={classes.message}>{message}</div>
             {note && <div className={classes.note}>{note}</div>}
+            {/* Доп. содержимое диалога (например, поле причины) — под текстом. */}
+            {children}
           </div>
         </div>
 
@@ -84,6 +88,7 @@ export default function ReportDraftDialog({
             className={classes.primaryBtn}
             style={{ background: primaryColor }}
             onClick={onPrimary}
+            disabled={primaryDisabled}
           >
             {primaryLabel}
           </button>
@@ -109,4 +114,8 @@ ReportDraftDialog.propTypes = {
   onPrimary: PropTypes.func.isRequired,
   tertiaryLabel: PropTypes.string,
   onTertiary: PropTypes.func,
+  // Основное действие недоступно, пока не выполнено условие (например,
+  // не заполнена обязательная причина).
+  primaryDisabled: PropTypes.bool,
+  children: PropTypes.node,
 };

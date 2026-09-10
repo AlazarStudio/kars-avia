@@ -14,14 +14,14 @@ export default function FapReportStageChip({ request, user }) {
   const summary = requestReportSummary(request, user);
   if (!summary) return null;
 
-  const { stage, laggingCount, total, hotels } = summary;
-  const label = reportStageLabel(stage);
+  const { stage, laggingCount, total, hotels, revoked } = summary;
+  const label = reportStageLabel(stage, revoked);
   const allDone = stage === REPORT_STAGE_DONE;
 
   return (
     <span className={classes.wrap}>
       <span
-        className={`${classes.chip} ${allDone ? classes.chipDone : ""}`}
+        className={`${classes.chip} ${allDone ? classes.chipDone : ""} ${revoked ? classes.chipRevoked : ""}`}
         aria-label={`Отчёт: ${label}`}
       >
         <span className={classes.caption}>Отчёт</span>
@@ -53,6 +53,8 @@ export default function FapReportStageChip({ request, user }) {
                 невозможны. */}
             {(hotel.stage === 0 ? REPORT_STEPS.slice(0, 1) : REPORT_STEPS).map((step, i) => {
               const done = i < hotel.stage;
+              // Шаг авиакомпании у отозванного отчёта — «Утверждение отозвано».
+              const revokedStep = !done && hotel.revoked && Boolean(step.revoked);
               return (
                 <span
                   key={step.done}
@@ -61,11 +63,15 @@ export default function FapReportStageChip({ request, user }) {
                   <span className={`${classes.dot} ${done ? classes.dotDone : classes.dotOnDark}`}>
                     {done ? "✓" : null}
                   </span>
-                  {done ? step.done : step.wait}
+                  {done ? step.done : revokedStep ? step.revoked : step.wait}
                   {done && <span className={classes.tipDate}>{formatDateTime(hotel.dates[i])}</span>}
                 </span>
               );
             })}
+            {/* Причина отзыва — последнее слово АК, её исправляют. */}
+            {hotel.revoked && hotel.comment && (
+              <span className={classes.tipComment}>«{hotel.comment}»</span>
+            )}
           </span>
         ))}
       </span>

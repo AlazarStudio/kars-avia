@@ -51,6 +51,27 @@ export function isHotelReportAirlineApproved(request, hotelIndex) {
   return hotelReportAirlineApprovedAt(request, hotelIndex) != null;
 }
 
+// Последнее слово авиакомпании по отчёту: { text, at } или null. Бэк
+// перезаписывает комментарий КАЖДЫМ её решением (утверждение без текста его
+// гасит), поэтому пустой текст — «комментария нет», а не «пустой комментарий».
+export function hotelReportAirlineComment(request, hotelIndex) {
+  const report = findHotelReport(request, hotelIndex);
+  const text =
+    typeof report?.airlineComment === "string" ? report.airlineComment.trim() : "";
+  if (!text) return null;
+  return { text, at: report.airlineCommentAt ?? null };
+}
+
+// Утверждение отозвано: комментарий есть, а подписи нет. Через интерфейс
+// комментарий оставляют только при отзыве, поэтому пара «текст без подписи»
+// и есть отзыв.
+export function isHotelReportAirlineRevoked(request, hotelIndex) {
+  return (
+    hotelReportAirlineComment(request, hotelIndex) != null &&
+    !isHotelReportAirlineApproved(request, hotelIndex)
+  );
+}
+
 // Индексы гостиниц, отчёты которых этот пользователь имеет право видеть.
 // Диспетчер — все; авиакомпания — только отправленные; гостиница — только свою.
 //

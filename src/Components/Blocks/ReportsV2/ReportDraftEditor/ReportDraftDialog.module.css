@@ -118,3 +118,10 @@
 .primaryBtn:hover {
   filter: brightness(0.94);
 }
+/* Неактивная основная кнопка — прозрачностью поверх родного цвета, как во
+   всём проекте, а не подменой палитры. Объявлено после :hover — перекрывает. */
+.primaryBtn:disabled {
+  opacity: 0.55;
+  cursor: default;
+  filter: none;
+}

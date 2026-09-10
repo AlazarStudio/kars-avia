@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import PropTypes from "prop-types";
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import classes from "./ReportsV2.module.css";
@@ -19,6 +20,12 @@ import { useToast } from "../../../contexts/ToastContext";
 import { roles } from "../../../roles";
 import { buildDraftByReport, splitDraftsByStatus } from "./releasedReports";
 import { canDeleteReport } from "./reportsV2Access.js";
+import {
+  draftModeForRole,
+  readReportLink,
+  resolveEditorTarget,
+  withReportLink,
+} from "./reportDraftLink.js";
 import {
   ARCHIVE_REPORT,
   convertToDate,
@@ -114,18 +121,39 @@ export default function ReportsV2({ user, accessMenu }) {
     localStorage.setItem(IS_AIRLINE_STORAGE_KEY, JSON.stringify(isAirline));
   }, [isAirline]);
 
+  // Открытый черновик живёт в адресе, а не в стейте: по ?reportdraftid= и
+  // ?reportid= ведут ссылки из писем бэка, F5 не выкидывает из редактора, а
+  // ссылку можно переслать. Пишем с replace — «Назад» браузера по-прежнему
+  // уводит из раздела, а не закрывает редактор мимо диалога несохранённых правок.
+  const [searchParams, setSearchParams] = useSearchParams();
+  const link = readReportLink(searchParams);
+  // Колбэки приходят после await — из редактора (пересоздание, выпуск,
+  // удаление) и из сайдбара создания черновика: если за это время ушли в другой
+  // раздел, navigate React Router из старого замыкания вернул бы на
+  // /reports?… — поэтому после размонтирования адрес не трогаем.
+  const mountedRef = useRef(false);
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+  const setLink = (next) => {
+    if (!mountedRef.current) return;
+    setSearchParams(withReportLink(searchParams, next), { replace: true });
+  };
+
   // Вкладка раздела: "current" | "drafts" | "archive". Намеренно НЕ ложится в
   // localStorage: раздел всегда должен открываться на «Текущих», иначе учётка
   // после одного захода в архив каждый раз видит его вместо рабочего списка.
-  const [view, setView] = useState("current");
+  // Исключение — черновик из письма: он живёт во «Черновиках», и закрытие
+  // редактора должно вернуть туда.
+  const [view, setView] = useState(() =>
+    link.draftId && (showDrafts || isAirlineUser) ? "drafts" : "current"
+  );
   const isArchive = view === "archive";
 
   const [searchQuery, setSearchQuery] = useState("");
-  const [draftId, setDraftId] = useState(null);
-  // Один и тот же экран открывается в двух ролях: черновик правят, выпущенный
-  // отчёт только смотрят. Отдельного маршрута не заводим — раздел живёт на
-  // одном /reportsV2.
-  const [draftMode, setDraftMode] = useState("edit");
   const [showCreate, setShowCreate] = useState(false);
   const [showRules, setShowRules] = useState(false);
   const [archiveTarget, setArchiveTarget] = useState(null);
@@ -159,7 +187,12 @@ export default function ReportsV2({ user, accessMenu }) {
   // независимых кэша одного и того же списка и требовали трёх рефетчей после
   // каждой отправки/отзыва. Скоуп режет бэк: авиакомпании он отдаёт только
   // SUBMITTED и CONFIRMED её собственной АК.
-  const { data: draftsData, refetch: refetchDrafts } = useQuery(GET_REPORT_DRAFTS, {
+  const {
+    data: draftsData,
+    loading: draftsLoading,
+    error: draftsError,
+    refetch: refetchDrafts,
+  } = useQuery(GET_REPORT_DRAFTS, {
     context: { headers: { Authorization: `Bearer ${token}` } },
     variables: { filter: { type: isAirline ? "AIRLINE" : "HOTEL" } },
   });
@@ -212,6 +245,59 @@ export default function ReportsV2({ user, accessMenu }) {
   // Список отчётов сам не знает, у какой строки есть экранный вид: связь живёт
   // на стороне черновика (savedReportId). Карту строим здесь и отдаём в список.
   const draftByReport = useMemo(() => buildDraftByReport(draftsConfirmed), [draftsConfirmed]);
+
+  // Что открыто по адресу. Режим — тот же, что дают кнопки «Открыть» у этой
+  // роли; выпущенный отчёт открывается экранным видом своего черновика. Уже
+  // выпущенный черновик по ?reportdraftid= (фолбэк письма «согласован») — тоже
+  // только на просмотр, как из списка.
+  const confirmedDraftIds = useMemo(
+    () => new Set(draftsConfirmed.map((draft) => draft.id)),
+    [draftsConfirmed]
+  );
+  const editorTarget = resolveEditorTarget(
+    link,
+    draftByReport,
+    draftModeForRole({ showDrafts, isAirlineUser })
+  );
+  const draftId = editorTarget?.draftId ?? null;
+  const draftMode =
+    draftId && confirmedDraftIds.has(draftId) ? "view" : (editorTarget?.mode ?? "edit");
+
+  // ?reportid= без черновика в выборке: у ролей с переключателем типа отчёт
+  // мог оказаться другого типа — переключаем один раз для этого id; не нашёлся
+  // и там (или выборка не загрузилась) — ссылка битая или отчёт выпущен без
+  // черновика: говорим и снимаем параметр. При ?reportdraftid= reportid не
+  // смотрим — черновик в приоритете (resolveEditorTarget).
+  const typeFlippedForRef = useRef(null);
+  const linkReportId = link.draftId ? null : link.reportId;
+  useEffect(() => {
+    if (!linkReportId) {
+      typeFlippedForRef.current = null;
+      return;
+    }
+    if (draftsLoading) return;
+    if (!draftsData && !draftsError) return;
+    if (draftByReport.has(linkReportId)) return;
+    if (showTypeToggle && typeFlippedForRef.current !== linkReportId) {
+      typeFlippedForRef.current = linkReportId;
+      setIsAirline((prev) => !prev);
+      return;
+    }
+    notifyError("Отчёт не найден");
+    // Инлайн, а не setLink: тот пересоздаётся каждый рендер и в deps эффекта
+    // не годится, а смонтированность здесь гарантирует сам эффект.
+    setSearchParams(withReportLink(searchParams, null), { replace: true });
+  }, [
+    linkReportId,
+    draftsLoading,
+    draftsData,
+    draftsError,
+    draftByReport,
+    showTypeToggle,
+    notifyError,
+    searchParams,
+    setSearchParams,
+  ]);
 
   // Сегмент черновиков видят только те, у кого они бывают: у диспетчерских
   // ролей это своя кухня выпуска (незавершённые + отправленные), у
@@ -336,49 +422,43 @@ export default function ReportsV2({ user, accessMenu }) {
   };
 
   const handleDraftCreated = (id) => {
-    setDraftId(id);
+    setLink({ draftId: id });
     // Новый черновик живёт во вкладке «Черновики» — чтобы «назад» из редактора
     // вернуло туда, где он лежит, а не в список выпущенных.
     setView("drafts");
     refetchDrafts();
   };
 
+  // Режим открытого черновика выводится из роли (draftModeForRole): одна и та
+  // же кнопка «Открыть» даёт диспетчеру правку, авиакомпании — проверку
+  // отправленного ей черновика (без правки строк и без отзыва).
   const handleOpenDraft = (id) => {
-    setDraftMode("edit");
-    setDraftId(id);
+    setLink({ draftId: id });
   };
 
-  // Авиакомпания открывает отправленный ей черновик на чтение и подтверждение:
-  // тот же экран, но без правки строк и без отзыва.
-  const handleOpenSubmitted = (id) => {
-    setDraftMode("review");
-    setDraftId(id);
-  };
-
+  // Экранный вид выпущенного — по id отчёта: так же ведёт ссылка из письма.
   const handleOpenReleased = (reportId) => {
-    const id = draftByReport.get(reportId);
-    if (!id) return;
-    setDraftMode("view");
-    setDraftId(id);
+    setLink({ reportId });
   };
 
   // Вкладку здесь не трогаем: черновик открывают из «Черновиков», а экранный
   // вид выпущенного — из списка, и `view` за время редактора не менялся —
   // закрытие само возвращает туда, откуда пришли.
   const handleDraftBack = () => {
-    setDraftId(null);
-    setDraftMode("edit");
+    setLink(null);
     refetchDrafts();
   };
 
+  // Пересоздание идёт на месте и id не меняет — адрес трогаем, только если
+  // черновик действительно другой: холостая навигация после await могла бы
+  // снова открыть редактор, из которого за это время вышли «назад».
   const handleDraftReplaced = (newId) => {
-    setDraftId(newId);
+    if (newId !== draftId) setLink({ draftId: newId });
     refetchDrafts();
   };
 
   const handleDraftConfirmed = () => {
-    setDraftId(null);
-    setDraftMode("edit");
+    setLink(null);
     // Подтверждённый черновик выпущен: его строка теперь в «Текущих», во
     // вкладке черновиков искать нечего.
     setView("current");
@@ -397,6 +477,13 @@ export default function ReportsV2({ user, accessMenu }) {
     refetchDrafts();
   };
 
+  // Возврат авиакомпанией: черновик ушёл диспетчеру в DRAFT и из её выборки
+  // пропал — закрываем экран и перечитываем панели.
+  const handleDraftRejected = () => {
+    setLink(null);
+    refetchDrafts();
+  };
+
   const archiveEntityLabel = archiveTarget
     ? `Отчёт «${(isAirline ? archiveTarget?.airline?.name : archiveTarget?.hotel?.name) || "—"}» за ${convertToDateNew(archiveTarget.startDate)} – ${convertToDateNew(archiveTarget.endDate)}`
     : "";
@@ -408,6 +495,9 @@ export default function ReportsV2({ user, accessMenu }) {
           с проверкой несохранённых правок, и жить он должен там же. */}
       {draftId ? (
         <ReportDraftEditor
+          // key — чтобы смена черновика по адресу собирала редактор заново, а
+          // не оставляла фильтры, диалоги и несохранённые правки прошлого.
+          key={draftId}
           draftId={draftId}
           mode={draftMode}
           airports={airports}
@@ -417,6 +507,8 @@ export default function ReportsV2({ user, accessMenu }) {
           onConfirmed={handleDraftConfirmed}
           onSubmitted={handleDraftSubmitted}
           onUnsubmitted={handleDraftUnsubmitted}
+          onRejected={handleDraftRejected}
+          isAirlineViewer={isAirlineUser}
         />
       ) : (
         <>
@@ -527,7 +619,7 @@ export default function ReportsV2({ user, accessMenu }) {
                   isAirline
                   title="На подтверждении"
                   variant="submitted"
-                  onOpen={handleOpenSubmitted}
+                  onOpen={handleOpenDraft}
                 />
               )}
 

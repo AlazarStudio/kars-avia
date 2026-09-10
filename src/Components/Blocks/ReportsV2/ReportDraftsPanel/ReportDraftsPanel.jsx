@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import classes from "./ReportDraftsPanel.module.css";
 import { convertToDate, convertToDateNew } from "../../../../../graphQL_requests";
 import { isDraftStale } from "../reportDraftAge";
+import { draftAirlineNote } from "../reportDraftComment";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 
 // Плашка черновиков раздела «Отчёты v2»: висит над таблицей готовых отчётов
@@ -23,8 +24,9 @@ const formatDateTime = (value) => {
 };
 
 // Один и тот же список рисует две панели: незавершённые черновики диспетчера
-// и отправленные авиакомпании. Отличий ровно два — заголовок и подпись справа
-// («изменён» против «отправлено»), поэтому вариант, а не второй компонент.
+// и отправленные авиакомпании. Отличия — заголовок, подпись справа («изменён»
+// против «отправлено») и пометка возврата АК (только у незавершённых), поэтому
+// вариант, а не второй компонент.
 export default function ReportDraftsPanel({
   drafts,
   isAirline,
@@ -54,12 +56,20 @@ export default function ReportDraftsPanel({
           // Бейдж «устарел» в обоих вариантах считается от создания: отправка
           // авиакомпании данные заявок не освежает, снимок остаётся тем же.
           const stale = isDraftStale(draft.createdAt);
+          // Возврат авиакомпанией — только у незавершённых: повторная отправка
+          // гасит rejectedAt, и строка уходит в «У авиакомпании на
+          // подтверждении» уже без пометки.
+          const note = submitted ? null : draftAirlineNote(draft);
+          const returned = Boolean(note?.rejected);
           const timeLabel = submitted
             ? formatDateTime(draft.submittedAt)
-            : formatDateTime(draft.updatedAt);
+            : returned
+              ? formatDateTime(draft.rejectedAt)
+              : formatDateTime(draft.updatedAt);
+          const timeWord = submitted ? "отправлено" : returned ? "возвращён" : "изменён";
 
           return (
-            <div className={classes.row} key={draft.id}>
+            <div className={`${classes.row} ${returned ? classes.rowTall : ""}`} key={draft.id}>
               <div className={classes.info}>
                 <div className={classes.nameRow}>
                   <span className={classes.name} title={name || "—"}>
@@ -74,17 +84,28 @@ export default function ReportDraftsPanel({
                       устарел
                     </span>
                   )}
+                  {returned && (
+                    <span className={classes.rejectedBadge} title={note.text}>
+                      возвращён АК
+                    </span>
+                  )}
                 </div>
                 {/* Границы периода — сентинелы T00:10/T23:50 в UTC; московский рендер сдвигал конец на +1 день */}
                 <div className={classes.period}>
                   {convertToDateNew(draft.startDate)} – {convertToDateNew(draft.endDate)}
                 </div>
+                {/* Что просила исправить авиакомпания — одной строкой, целиком в подсказке и в редакторе */}
+                {returned && (
+                  <div className={classes.comment} title={note.text}>
+                    «{note.text}»
+                  </div>
+                )}
               </div>
 
               <div className={classes.rowsCount}>строк: {rowsCount}</div>
 
               <div className={classes.updated}>
-                {timeLabel ? `${submitted ? "отправлено" : "изменён"} ${timeLabel}` : ""}
+                {timeLabel ? `${timeWord} ${timeLabel}` : ""}
               </div>
 
               <div className={classes.actions}>

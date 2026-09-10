@@ -35,6 +35,8 @@ import {
   isHotelReportPricingApproved,
   hotelReportAirlineApprovedAt,
   isHotelReportAirlineApproved,
+  hotelReportAirlineComment,
+  isHotelReportAirlineRevoked,
 } from "../fapReportAccess";
 import { lunchboxCountOf, preserveMoneyFields, reportMoneyDiffers } from "../fapReportMoney";
 import { splitRoomAccommodation } from "../fapRoomSplit.js";
@@ -81,6 +83,7 @@ import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
 import Button from "../../../Standart/Button/Button";
 import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
+import FapAirlineCommentNote from "../FapAirlineCommentNote/FapAirlineCommentNote";
 import CatalogPickerModal, { personKey } from "../CatalogPickerModal/CatalogPickerModal";
 import PersonTypeToggle from "../PersonTypeToggle/PersonTypeToggle";
 import PersonBadge from "../PersonBadge/PersonBadge";
@@ -437,6 +440,7 @@ export default function FapHotelPage({
   const [submitting, setSubmitting] = useState(false);
   const [approvingPrices, setApprovingPrices] = useState(false);
   const [approvingAirline, setApprovingAirline] = useState(false);
+  const [revokeOpen, setRevokeOpen] = useState(false);
   const [capacityOpen, setCapacityOpen] = useState(false);
 
   // Refs хранят актуальное состояние для отложенного автосохранения —
@@ -574,6 +578,9 @@ export default function FapHotelPage({
   // с суммами. До согласования цен бэк отвечает отказом, поэтому тумблера там
   // нет вовсе, как и у диспетчера с гостиницей.
   const canApproveAsAirline = isAirline && reportSubmitted && reportPricingApproved;
+  // Последнее слово авиакомпании: при отзыве — причина и что исправить.
+  const reportAirlineComment = hotelReportAirlineComment(request, hotelIndex);
+  const reportAirlineRevoked = isHotelReportAirlineRevoked(request, hotelIndex);
   const hasSavedReport = hasHotelReport(request, hotelIndex);
 
   const { data: hotelTariffData, loading: hotelTariffLoading } = useQuery(
@@ -2979,26 +2986,36 @@ export default function FapHotelPage({
   // Утверждение отчёта авиакомпанией — её подпись под составом и суммами.
   // Спрашиваем в обе стороны, в отличие от согласования цен: там снятие ничего
   // не разглашает, а здесь и утверждение, и отзыв — заявление второй стороне.
+  // Отзыв — модалкой с обязательной причиной: бэк без неё отказывает, а
+  // диспетчер и гостиница из неё узнают, что исправлять (уходит им письмом).
   const handleAirlineApproved = async (next) => {
     if (approvingAirline || next === reportAirlineApproved) return;
+    if (!next) {
+      setRevokeOpen(true);
+      return;
+    }
     const go = await confirm({
-      message: next
-        ? "Утвердить отчёт? Диспетчер получит уведомление"
-        : "Отозвать утверждение отчёта?",
-      confirmText: next ? "Утвердить" : "Отозвать",
+      message: "Утвердить отчёт? Диспетчер получит уведомление",
+      confirmText: "Утвердить",
       cancelText: "Отмена",
     });
     if (!go) return;
+    await applyAirlineApproved(true);
+  };
+
+  const applyAirlineApproved = async (approved, comment) => {
     try {
       setApprovingAirline(true);
       await setAirlineApproved({
-        variables: { ...reportMutationVars(), approved: next },
+        variables: { ...reportMutationVars(), approved, comment },
       });
-      success(next ? "Отчёт утверждён" : "Утверждение отозвано");
+      setRevokeOpen(false);
+      success(approved ? "Отчёт утверждён" : "Утверждение отозвано");
       onRefetch?.();
     } catch (e) {
       // Текст бэка объясняет отказ по делу («только после согласования цен»,
-      // «только авиакомпания») — своей формулировкой его не подменяем.
+      // «укажите причину») — своей формулировкой его не подменяем. Модалка
+      // отзыва при ошибке остаётся открытой: причину не придётся набирать заново.
       notifyError(e?.message || "Не удалось изменить утверждение отчёта");
       console.error(e);
     } finally {
@@ -3519,6 +3536,11 @@ export default function FapHotelPage({
                       <span className={classes.reportStepDot}>✓</span>
                       Утверждён АК <span className={classes.reportStepDate}>{formatDateTime(reportAirlineApprovedAt)}</span>
                     </span>
+                  ) : reportAirlineRevoked ? (
+                    <span className={`${classes.reportStep} ${classes.reportStepRevoked}`} title={reportAirlineComment.text}>
+                      <span className={classes.reportStepDot}>!</span>
+                      Утверждение отозвано
+                    </span>
                   ) : (
                     <span className={`${classes.reportStep} ${classes.reportStepWait}`} title="Ждём утверждения отчёта авиакомпанией">
                       <span className={classes.reportStepDot} />
@@ -3531,6 +3553,17 @@ export default function FapHotelPage({
           )}
         </div>
       </div>
+
+      {/* Последнее слово авиакомпании — под шапкой, а не на вкладке отчёта:
+          причину отзыва исправляют и в составе гостей, её должно быть видно
+          с любой вкладки. Авиакомпании — только пока отчёт ей открыт. */}
+      {reportAirlineComment && !reportHidden && (
+        <FapAirlineCommentNote
+          comment={reportAirlineComment}
+          revoked={reportAirlineRevoked}
+          isAirlineViewer={isAirline}
+        />
+      )}
 
       {/* ── Tabs ── */}
       <div className={classes.tabs}>
@@ -4572,6 +4605,23 @@ export default function FapHotelPage({
       </div>
 
       {/* ── Dialogs ── */}
+      {/* Отзыв утверждения авиакомпанией: причина обязательна (бэк без неё
+          отказывает) и уходит письмом диспетчеру и гостинице. */}
+      <FapDestructiveModal
+        open={revokeOpen}
+        // Пока запрос в полёте, не закрываем: причина потерялась бы при ошибке,
+        // а тост успеха пришёл бы уже после «отмены».
+        onClose={() => {
+          if (!approvingAirline) setRevokeOpen(false);
+        }}
+        onConfirm={(reason) => applyAirlineApproved(false, reason)}
+        title="Отозвать утверждение отчёта?"
+        description="Диспетчер и гостиница получат письмо с вашим комментарием и исправят отчёт."
+        reasonLabel="Что нужно исправить"
+        placeholder="Например: у двух гостей неверные даты выезда"
+        confirmText="Отозвать"
+        saving={approvingAirline}
+      />
       <FapDestructiveModal
         open={evictState !== null}
         onClose={() => setEvictState(null)}

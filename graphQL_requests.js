@@ -3706,6 +3706,8 @@ export const GET_PASSENGER_REQUESTS = gql`
         submittedAt
         pricingApprovedAt
         airlineApprovedAt
+        airlineComment
+        airlineCommentAt
       }
       transferService {
         status
@@ -4183,6 +4185,8 @@ export const GET_PASSENGER_REQUEST = gql`
         pricingApproved
         airlineApprovedAt
         airlineApproved
+        airlineComment
+        airlineCommentAt
         reportRows {
           fullName
           personId
@@ -4304,6 +4308,8 @@ export const GET_PASSENGER_REQUEST_REPORT = gql`
         pricingApproved
         airlineApprovedAt
         airlineApproved
+        airlineComment
+        airlineCommentAt
         reportRows {
           fullName
           personId
@@ -4381,6 +4387,8 @@ export const SAVE_PASSENGER_REQUEST_HOTEL_REPORT = gql`
       pricingApproved
       airlineApprovedAt
       airlineApproved
+      airlineComment
+      airlineCommentAt
       reportRows {
         fullName
         personId
@@ -4424,6 +4432,8 @@ export const SUBMIT_PASSENGER_REQUEST_HOTEL_REPORT = gql`
       pricingApproved
       airlineApprovedAt
       airlineApproved
+      airlineComment
+      airlineCommentAt
     }
   }
 `;
@@ -4441,6 +4451,8 @@ export const HIDE_PASSENGER_REQUEST_HOTEL_REPORT = gql`
       pricingApproved
       airlineApprovedAt
       airlineApproved
+      airlineComment
+      airlineCommentAt
     }
   }
 `;
@@ -4463,6 +4475,8 @@ export const SET_PASSENGER_REQUEST_HOTEL_REPORT_PRICING_APPROVED = gql`
       pricingApproved
       airlineApprovedAt
       airlineApproved
+      airlineComment
+      airlineCommentAt
     }
   }
 `;
@@ -4472,11 +4486,13 @@ export const SET_PASSENGER_REQUEST_HOTEL_REPORT_AIRLINE_APPROVED = gql`
     $requestId: ID!
     $hotelIndex: Int!
     $approved: Boolean!
+    $comment: String
   ) {
     setPassengerRequestHotelReportAirlineApproved(
       requestId: $requestId
       hotelIndex: $hotelIndex
       approved: $approved
+      comment: $comment
     ) {
       id
       hotelIndex
@@ -4485,6 +4501,8 @@ export const SET_PASSENGER_REQUEST_HOTEL_REPORT_AIRLINE_APPROVED = gql`
       pricingApproved
       airlineApprovedAt
       airlineApproved
+      airlineComment
+      airlineCommentAt
     }
   }
 `;
@@ -6981,6 +6999,9 @@ export const GET_REPORT_DRAFTS = gql`
       endDate
       createdAt
       submittedAt
+      rejectedAt
+      airlineComment
+      airlineCommentAt
       updatedAt
       airline {
         id
@@ -7014,6 +7035,9 @@ export const GET_REPORT_DRAFT = gql`
       endDate
       createdAt
       submittedAt
+      rejectedAt
+      airlineComment
+      airlineCommentAt
       updatedAt
       savedReport {
         id
@@ -7260,6 +7284,7 @@ export const SUBMIT_AIRLINE_REPORT_DRAFT = gql`
       id
       status
       submittedAt
+      rejectedAt
     }
   }
 `;
@@ -7270,6 +7295,23 @@ export const UNSUBMIT_AIRLINE_REPORT_DRAFT = gql`
       id
       status
       submittedAt
+      rejectedAt
+    }
+  }
+`;
+
+// Возврат авиакомпанией отправленного ей черновика: SUBMITTED → DRAFT.
+// comment обязателен — бэк без него отвечает BAD_USER_INPUT. Ответ несёт
+// status/rejectedAt/комментарий того же ReportDraft — кэш обновится сам.
+export const REJECT_AIRLINE_REPORT_DRAFT = gql`
+  mutation RejectAirlineReportDraft($id: ID!, $comment: String!) {
+    rejectAirlineReportDraft(id: $id, comment: $comment) {
+      id
+      status
+      submittedAt
+      rejectedAt
+      airlineComment
+      airlineCommentAt
     }
   }
 `;

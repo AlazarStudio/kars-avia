@@ -169,3 +169,20 @@
   color: rgba(255, 255, 255, 0.75);
   font-weight: 400;
 }
+
+/* Отзыв утверждения АК — янтарь шага «Утверждение отозвано» из цепочки
+   FapHotelPage (.reportStepRevoked): «требует внимания», не ошибка. */
+.chipRevoked {
+  background: #FFFBF3;
+  color: #B8741A;
+}
+
+/* Причина отзыва в подсказке: одной строкой с многоточием — подсказка
+   nowrap и иначе растянулась бы на длину текста. */
+.tipComment {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: rgba(255, 255, 255, 0.85);
+  font-weight: 400;
+}

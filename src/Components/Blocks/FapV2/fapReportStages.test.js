@@ -70,7 +70,17 @@ test("одна гостиница — её стадия, имя и даты по
     stage: 2,
     laggingCount: 1,
     total: 1,
-    hotels: [{ index: 0, name: "Анзас", stage: 2, dates: [SENT, PRICED, null] }],
+    revoked: false,
+    hotels: [
+      {
+        index: 0,
+        name: "Анзас",
+        stage: 2,
+        dates: [SENT, PRICED, null],
+        revoked: false,
+        comment: null,
+      },
+    ],
   });
 });
 
@@ -137,4 +147,66 @@ test("гостинице — только своя, даже неотправл�
     summary.hotels.map((h) => [h.name, h.stage]),
     [["Каспий", 0]]
   );
+});
+
+// ── Отзыв утверждения авиакомпанией ──
+const REVOKED = {
+  submittedAt: SENT,
+  pricingApprovedAt: PRICED,
+  airlineApprovedAt: null,
+  airlineComment: "Неверные даты выезда",
+  airlineCommentAt: APPROVED,
+};
+
+test("подпись «Утверждение отозвано» — только на шаге авиакомпании", () => {
+  assert.equal(reportStageLabel(2, true), "Утверждение отозвано");
+  assert.equal(reportStageLabel(2, false), "Ждёт утверждения АК");
+  assert.equal(reportStageLabel(1, true), "Цены не согласованы");
+  assert.equal(reportStageLabel(3, true), "Утверждён АК");
+});
+
+test("отозванный отчёт — revoked и комментарий у гостиницы и в сводке", () => {
+  const summary = requestReportSummary(oneHotel(REVOKED), dispatcher);
+  assert.equal(summary.stage, 2);
+  assert.equal(summary.revoked, true);
+  assert.equal(summary.hotels[0].revoked, true);
+  assert.equal(summary.hotels[0].comment, "Неверные даты выезда");
+});
+
+test("утверждённый с комментарием — не отзыв", () => {
+  const summary = requestReportSummary(
+    oneHotel({ ...REVOKED, airlineApprovedAt: APPROVED }),
+    dispatcher
+  );
+  assert.equal(summary.stage, 3);
+  assert.equal(summary.revoked, false);
+  assert.equal(summary.hotels[0].revoked, false);
+});
+
+test("отзыв у обогнавшей гостиницы не перекрашивает отстающую стадию", () => {
+  const request = {
+    livingService: { hotels: [{ name: "Анзас" }, { name: "Каспий" }] },
+    hotelReports: [
+      { hotelIndex: 0, ...REVOKED },
+      { hotelIndex: 1, submittedAt: SENT },
+    ],
+  };
+  const summary = requestReportSummary(request, dispatcher);
+  assert.equal(summary.stage, 1);
+  assert.equal(summary.revoked, false);
+  assert.equal(summary.hotels[0].revoked, true);
+});
+
+test("отзыв, а затем снятое согласование цен: стадия 1, причина остаётся у гостиницы", () => {
+  // Бэк при снятии цен гасит airlineApprovedAt, но комментарий АК не трогает:
+  // чип стоит на «Цены не согласованы», а гостиница в подсказке помнит отзыв.
+  const summary = requestReportSummary(
+    oneHotel({ ...REVOKED, pricingApprovedAt: null }),
+    dispatcher
+  );
+  assert.equal(summary.stage, 1);
+  assert.equal(summary.revoked, false);
+  assert.equal(reportStageLabel(summary.stage, summary.revoked), "Цены не согласованы");
+  assert.equal(summary.hotels[0].revoked, true);
+  assert.equal(summary.hotels[0].comment, "Неверные даты выезда");
 });

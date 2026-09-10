@@ -23,6 +23,8 @@ import {
   hotelReportSubmittedAt,
   hotelReportPricingApprovedAt,
   hotelReportAirlineApprovedAt,
+  hotelReportAirlineComment,
+  isHotelReportAirlineRevoked,
   airlineMoneyHidden,
 } from "../fapReportAccess";
 import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
@@ -481,6 +483,8 @@ export default function FapLivingPage({
               reportSubmittedAt={hotelReportSubmittedAt(request, origIdx)}
               reportPricingApprovedAt={hotelReportPricingApprovedAt(request, origIdx)}
               reportAirlineApprovedAt={hotelReportAirlineApprovedAt(request, origIdx)}
+              reportAirlineRevoked={isHotelReportAirlineRevoked(request, origIdx)}
+              reportAirlineComment={hotelReportAirlineComment(request, origIdx)?.text ?? null}
               showReportState={!isAirlineRole(user)}
               onOpen={() => navigate(`/far/${requestId}/service/living/hotel/${origIdx}`)}
               onCopyLink={copyLink}
@@ -561,6 +565,7 @@ export default function FapLivingPage({
 function HotelCard({
   hotel, showLinks, canEdit, isExtHotel, isCompleted,
   reportSubmittedAt, reportPricingApprovedAt, reportAirlineApprovedAt, showReportState,
+  reportAirlineRevoked, reportAirlineComment,
   onOpen, onCopyLink, onEdit, onRemove,
 }) {
   const cap = hotel.peopleCount || 0;
@@ -618,6 +623,11 @@ function HotelCard({
             {showReportState && placed > 0 && reportPricingApprovedAt && (
               reportAirlineApprovedAt ? (
                 <span className={classes.reportBadgeSent}>утверждён АК</span>
+              ) : reportAirlineRevoked ? (
+                // Отозванный отчёт ждёт уже не АК, а исправлений — причина в подсказке.
+                <span className={classes.reportBadgePending} title={reportAirlineComment || undefined}>
+                  утверждение отозвано
+                </span>
               ) : (
                 <span className={classes.reportBadgeMuted}>ждёт утверждения АК</span>
               )

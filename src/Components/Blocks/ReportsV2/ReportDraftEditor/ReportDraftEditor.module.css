@@ -61,3 +61,25 @@
 
 /* Показывается вместо шапки, пока не пришёл первый ответ по черновику —
    без него заголовок/бейдж/кнопки некому строить (нужны поля draft). */
+
+/* Поле причины в диалоге возврата на доработку (передаётся в ReportDraftDialog
+   как children): рамка и скругление — как у полей редактора. */
+.rejectComment {
+  display: block;
+  width: 100%;
+  margin-top: 14px;
+  padding: 10px 12px;
+  border: 1px solid #E4E4EF;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 14px;
+  color: #191919;
+  background: #fff;
+  resize: vertical;
+  outline: none;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+.rejectComment:focus {
+  border-color: #0057C3;
+}
