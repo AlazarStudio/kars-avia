@@ -1,0 +1,241 @@
+/* Вкладка «Описание» в настройках гостиницы: слева разделы, справа просмотр.
+   Поля и подписи — как в соседних вкладках (HotelSettings_tabComponent.module.css). */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 360px;
+  gap: 20px;
+  align-items: start;
+}
+
+@media (max-width: 1280px) {
+  .layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.editor {
+  border: 1px solid #e8eaf1;
+  border-radius: 14px;
+  background: #fff;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.section + .section {
+  padding-top: 20px;
+  border-top: 1px solid #f0f2f7;
+}
+
+.sectionHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sectionTitle {
+  font-size: 15px;
+  font-weight: 700;
+  color: #2d3147;
+}
+
+.sectionCount {
+  font-size: 13px;
+  color: #6b7090;
+  white-space: nowrap;
+}
+
+.group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.groupTitle {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7090;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip {
+  height: 32px;
+  padding: 0 12px;
+  border: 1px solid #e0e3ed;
+  border-radius: 8px;
+  background: #fff;
+  color: #2d3147;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.2s, background 0.2s, color 0.2s;
+}
+
+.chip:hover:not(:disabled) {
+  border-color: #b9c6e8;
+}
+
+/* Выбранный — как активные кнопки ФАП: рамка и текст акцентом, фон #EAF1FB. */
+.chipOn,
+.chipOn:hover:not(:disabled) {
+  border-color: #0057C3;
+  background: #EAF1FB;
+  color: #0057C3;
+  font-weight: 600;
+}
+
+.chip:disabled {
+  cursor: default;
+}
+
+.chip:disabled:not(.chipOn) {
+  opacity: 0.55;
+}
+
+.extra {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.extraLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: #6b7090;
+}
+
+.textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 64px;
+  padding: 10px 14px;
+  border: 1px solid #e0e3ed;
+  border-radius: 10px;
+  background: #fafbfd;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #2d3147;
+  resize: vertical;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.textarea:focus {
+  border-color: #3b6ce7;
+  background: #fff;
+}
+
+.textarea:disabled {
+  background: #f5f6f9;
+  color: #6b7090;
+  resize: none;
+}
+
+.switches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 32px;
+}
+
+/* Визуальный disabled проекта: затемнение контейнера вместо MUI-пропа. */
+.rowDisabled {
+  opacity: 0.55;
+  pointer-events: none;
+}
+
+.metaRow {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.metaLabel {
+  flex: 0 0 200px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6b7090;
+}
+
+.metaValue {
+  flex: 1;
+  max-width: 420px;
+  min-width: 0;
+  height: 42px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  border-radius: 10px;
+  background: #f5f6f9;
+  color: #6b7090;
+  font-size: 14px;
+}
+
+.metaText {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.metaHint {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: #9aa0b5;
+}
+
+/* Просмотр прилипает к верху прокручиваемой области вкладки (.content настроек). */
+.preview {
+  position: sticky;
+  top: 0;
+  min-width: 0;
+  border: 1px solid #e8eaf1;
+  border-radius: 14px;
+  background: #fbfcfe;
+  padding: 20px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.previewCaption {
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  font-weight: 700;
+  color: #9aa0b5;
+}
+
+/* Типографика — как у описания во вкладке «О гостинице» (.descBody). */
+.previewBody {
+  font-size: 15px;
+  line-height: 1.6;
+  color: #4a4f6a;
+}
+
+/* TextEditorOutput вешает инлайн overflow-y: scroll — в просмотре полоса не нужна. */
+.previewBody > div {
+  overflow-y: visible !important;
+}
+
+.previewEmpty {
+  font-size: 14px;
+  color: #9aa0b5;
+}

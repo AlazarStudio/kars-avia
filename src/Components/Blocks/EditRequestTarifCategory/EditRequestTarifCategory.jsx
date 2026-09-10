@@ -603,7 +603,6 @@ function EditRequestTarifCategory({
                 <div className={classes.requestDataInfo_title}>Описание</div>
                 {isEditing ? (
                   <TextEditor
-                    hotel={null}
                     anotherDescription={formData.description || ""}
                     isEditing={true}
                     onChange={(newDescription) => {

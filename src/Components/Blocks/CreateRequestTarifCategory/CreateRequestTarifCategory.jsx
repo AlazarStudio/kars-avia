@@ -453,7 +453,6 @@ function CreateRequestTarifCategory({
 
               <label>Описание</label>
               <TextEditor
-                hotel={null}
                 anotherDescription={formData.description || ""}
                 isEditing={true}
                 onChange={(newDescription) => {

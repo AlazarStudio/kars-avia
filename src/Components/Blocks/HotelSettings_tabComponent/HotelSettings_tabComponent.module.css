@@ -256,25 +256,6 @@
   max-width: 420px;
 }
 
-/* ===== Description (TextEditor) ===== */
-.descriptionRow {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.descriptionRow > .fieldLabel {
-  flex: none;
-}
-
-.descriptionRow :global(.ql-editor) {
-  min-height: 0 !important;
-}
-
-.descriptionRow :global(.ql-snow) {
-  overflow-y: visible !important;
-}
-
 /* ===== Switch rows ===== */
 .switchGroup {
   display: flex;

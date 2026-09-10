@@ -46,7 +46,7 @@ const NAMED_ENTITIES = {
 const isCodePoint = (point) =>
   Number.isInteger(point) && point >= 0 && point <= 0x10ffff;
 
-function decodeEntities(text) {
+export function decodeEntities(text) {
   return text
     .replace(/&nbsp;/gi, " ")
     .replace(/&#x([0-9a-f]+);/gi, (whole, code) => {
@@ -95,7 +95,7 @@ export function hasRichText(html) {
 
 // Верхнеуровневые блоки описания. Вложенность считаем по счётчику глубины:
 // редактор даёт плоскую структуру, а списки/таблицы нас интересуют целиком.
-function splitTopLevelBlocks(html) {
+export function splitTopLevelBlocks(html) {
   const blocks = [];
   // Кавычка обязана матчиться только парной альтернативой: если пустить её ещё
   // и в общий класс, у движка появляется экспоненциальный перебор — десятки

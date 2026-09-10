@@ -5,15 +5,6 @@ import TextEditorOutput from "../TextEditorOutput/TextEditorOutput";
 import "react-quill/dist/quill.snow.css";
 import "./TextEditor.module.css";
 
-const TEMPLATE_CONTENT = `
-  <p>Название гостиницы: </p>
-  <p>Локация: </p>
-  <p>Инфраструктура: </p>
-  <p>Оснащение объекта: </p>
-  <p>Оснащение номерного фонда: </p>
-  <p>Услуги прачечной/глажки: </p>
-`;
-
 const toolbarOptions = [
   // [{ size: ["small", false, "large", "huge"] }], // custom dropdown
   [{ header: [1, 2, 3, 4, 5, 6, false] }],
@@ -37,22 +28,12 @@ const toolbarOptions = [
   ["clean"], // remove formatting button
 ];
 
-function TextEditor({ hotel, anotherDescription, isEditing, onChange }) {
-  const [description, setDescription] = useState(
-    hotel ? hotel.information?.description : anotherDescription
-  );
-  // console.log(hotel)
+function TextEditor({ anotherDescription, isEditing, onChange }) {
+  const [description, setDescription] = useState(anotherDescription);
 
   useEffect(() => {
-    setDescription(hotel ? hotel.information?.description : anotherDescription);
-  }, [hotel, anotherDescription]);
-
-  useEffect(() => {
-    if (isEditing && !description && !anotherDescription && hotel) {
-      setDescription(TEMPLATE_CONTENT);
-      onChange(TEMPLATE_CONTENT);
-    }
-  }, [isEditing]);
+    setDescription(anotherDescription);
+  }, [anotherDescription]);
 
   const handleChange = (content) => {
     setDescription(content);

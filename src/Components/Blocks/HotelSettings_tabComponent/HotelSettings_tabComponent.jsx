@@ -23,7 +23,8 @@ import MUILoader from "../MUILoader/MUILoader.jsx";
 import AvatarUpload from "../AvatarUpload/AvatarUpload.jsx";
 import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
-import TextEditor from "../TextEditor/TextEditor.jsx";
+import HotelAboutEditor from "../HotelAboutEditor/HotelAboutEditor.jsx";
+import { aboutLocationLine } from "../../../utils/hotelAbout.js";
 import MUIAutocompleteColor from "../MUIAutocompleteColor/MUIAutocompleteColor.jsx";
 import StarRatingFilter from "../StarRatingFilter/StarRatingFilter.jsx";
 import MUISwitch from "../MUISwitch/MUISwitch.jsx";
@@ -34,6 +35,7 @@ import ScheduleIcon from "../../../shared/icons/ScheduleIcon.jsx";
 import DeleteIcon from "../../../shared/icons/DeleteIcon.jsx";
 import PinIcon from "../../../shared/icons/PinIcon.jsx";
 import ContactsIcon from "../../../shared/icons/ContactsIcon.jsx";
+import DescriptionIcon from "../../../shared/icons/DescriptionIcon.jsx";
 
 function HotelSettings_tabComponent({ id }) {
   // const [userRole, setUserRole] = useState();
@@ -434,6 +436,7 @@ function HotelSettings_tabComponent({ id }) {
 
   const SETTINGS_TABS = [
     { key: "generalInfo", label: "Общая информация", icon: <HomeIcon /> },
+    { key: "about", label: "Описание", icon: <DescriptionIcon /> },
     { key: "settings", label: "Настройки", icon: <SettingsIcon width={18} height={18} strokeWidth={1.7} /> },
     ...(hotel?.meal
       ? [{ key: "schedule", label: "Расписание", icon: <ScheduleIcon /> }]
@@ -635,23 +638,6 @@ function HotelSettings_tabComponent({ id }) {
                   />
                 </div>
 
-                <div className={classes.descriptionRow}>
-                  <span className={classes.fieldLabel}>Описание</span>
-                  <TextEditor
-                    hotel={hotel}
-                    isEditing={isEditing}
-                    onChange={(newDescription) =>
-                      setHotel((prevHotel) => ({
-                        ...prevHotel,
-                        information: {
-                          ...prevHotel.information,
-                          description: newDescription,
-                        },
-                      }))
-                    }
-                  />
-                </div>
-
                 {isEditing && (
                   <>
                     <div className={`${classes.fileRow} ${classes.avatarFileRow}`}>
@@ -732,6 +718,24 @@ function HotelSettings_tabComponent({ id }) {
                   </div>
                 )}
               </div>
+            )}
+
+            {displayInfo === "about" && (
+              <HotelAboutEditor
+                description={hotel.information?.description || ""}
+                name={hotel.name || ""}
+                location={aboutLocationLine(hotel)}
+                isEditing={isEditing}
+                onChange={(description) =>
+                  setHotel((prevHotel) => ({
+                    ...prevHotel,
+                    information: {
+                      ...prevHotel.information,
+                      description,
+                    },
+                  }))
+                }
+              />
             )}
 
             {displayInfo === "settings" && (
