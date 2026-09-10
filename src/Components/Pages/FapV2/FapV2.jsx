@@ -43,6 +43,7 @@ import {
   isAirlineRole,
   isHotelScoped,
 } from "../../../utils/access";
+import { serializeListFilters, parseListFilters } from "./fapListFilters";
 
 const SERVICE_ORDER = [
   "water",
@@ -141,12 +142,27 @@ const REPORT_STAGE_OPTIONS = [
 
 const LS_STATUS_KEY = "statusFilterFapV2";
 const LIST_STATE_KEY = "fapListScrollState";
+const LIST_FILTERS_KEY = "fapListFilters";
 
 export default function FapV2({ user, accessMenu }) {
   const navigate = useNavigate();
   const token = getCookie("token");
 
-  const [searchQuery, setSearchQuery] = useState("");
+  // Все фильтры, кроме статуса, живут в sessionStorage — переживают уход на
+  // деталку заявки (список размонтируется) и F5, но не тянут старый период
+  // в новую вкладку/сессию, в отличие от localStorage. userId в сохранённых
+  // данных страхует от подмены фильтров при logout в той же вкладке
+  // (sessionStorage при выходе не чистится).
+  const userId = user?.userId ?? null;
+  const [savedFilters] = useState(() => {
+    try {
+      return parseListFilters(sessionStorage.getItem(LIST_FILTERS_KEY), userId);
+    } catch {
+      return null;
+    }
+  });
+
+  const [searchQuery, setSearchQuery] = useState(() => savedFilters?.search ?? "");
   const debouncedSearch = useDebounce(searchQuery, 400);
 
   const [statusOption, setStatusOption] = useState(() => {
@@ -154,21 +170,73 @@ export default function FapV2({ user, accessMenu }) {
     return STATUS_OPTIONS.find((o) => o.value === saved) ?? STATUS_OPTIONS[0];
   });
 
-  const [selectedAirline, setSelectedAirline] = useState(null);
-  const [selectedAirport, setSelectedAirport] = useState(null);
-  const [selectedServices, setSelectedServices] = useState([]);
-  const [reportStageOption, setReportStageOption] = useState(
-    REPORT_STAGE_OPTIONS[0],
+  // У авиакомпании фильтр «Авиакомпания» скрыт (её авиакомпания — из
+  // user.airlineId), поэтому сохранённое значение ей не подставляем.
+  const [selectedAirline, setSelectedAirline] = useState(() =>
+    isAirlineRole(user) ? null : savedFilters?.airline ?? null,
+  );
+  const [selectedAirport, setSelectedAirport] = useState(
+    () => savedFilters?.airport ?? null,
+  );
+  // У гостиницы фильтр «Вид услуг» скрыт — скрытый активный фильтр недопустим.
+  const [selectedServices, setSelectedServices] = useState(() =>
+    savedFilters && !isHotelScoped(user)
+      ? SERVICE_OPTIONS.filter((o) => savedFilters.services.includes(o.value))
+      : [],
+  );
+  // У гостиницы фильтр «Согласованность отчёта» тоже скрыт.
+  const [reportStageOption, setReportStageOption] = useState(() =>
+    !isHotelScoped(user) && savedFilters
+      ? REPORT_STAGE_OPTIONS.find((o) => o.value === savedFilters.reportStage) ??
+        REPORT_STAGE_OPTIONS[0]
+      : REPORT_STAGE_OPTIONS[0],
   );
   // Авиакомпания видит только отправленные отчёты (стадия у неё не ниже 1) —
   // пункт «Не отправлен» всегда давал бы ей пустой список.
   const reportStageOptions = isAirlineRole(user)
     ? REPORT_STAGE_OPTIONS.filter((o) => o.value !== REPORT_STAGE_NAMES[0])
     : REPORT_STAGE_OPTIONS;
-  const [dateRange, setDateRange] = useState({ startDate: null, endDate: null });
+  const [dateRange, setDateRange] = useState(() => ({
+    startDate: savedFilters?.startDate ?? null,
+    endDate: savedFilters?.endDate ?? null,
+  }));
   const [airlines, setAirlines] = useState([]);
   const [airports, setAirports] = useState([]);
   const [showCreate, setShowCreate] = useState(false);
+
+  // Сохраняем debouncedSearch, а не searchQuery: listSignature построена на
+  // debouncedSearch, а useDebounce при монтировании стартует со значения
+  // searchQuery — так сигнатуры совпадают на первом рендере и восстановление
+  // скролла (restoreState ниже) срабатывает.
+  useEffect(() => {
+    try {
+      sessionStorage.setItem(
+        LIST_FILTERS_KEY,
+        serializeListFilters(
+          {
+            search: debouncedSearch,
+            airline: selectedAirline,
+            airport: selectedAirport,
+            services: selectedServices.map((o) => o.value),
+            reportStage: reportStageOption?.value ?? null,
+            startDate: dateRange.startDate,
+            endDate: dateRange.endDate,
+          },
+          userId,
+        ),
+      );
+    } catch {
+      /* приватный режим — просто без сохранения */
+    }
+  }, [
+    debouncedSearch,
+    selectedAirline,
+    selectedAirport,
+    selectedServices,
+    reportStageOption,
+    dateRange,
+    userId,
+  ]);
 
   const { data: airlinesData } = useQuery(GET_AIRLINES_RELAY, {
     context: { headers: { Authorization: `Bearer ${token}` } },
@@ -394,6 +462,9 @@ export default function FapV2({ user, accessMenu }) {
               );
             }}
             value={selectedAirport || ""}
+            // Восстановленный из sessionStorage объект не совпадает по ссылке
+            // с опцией из airports — без этого MUI сравнивал бы через ===.
+            isOptionEqualToValue={(o, v) => o?.id === v?.id}
             onChange={(_, newValue) => {
               if (!newValue || newValue.name === "Все аэропорты") {
                 setSelectedAirport(null);
