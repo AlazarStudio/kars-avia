@@ -5,6 +5,9 @@ import { s, isMark, cleanFullName, firstLine } from "./manifestCore.js";
 import {
   prepareFixedWidthManifest,
   prepareIcaoManifest,
+  prepareAzimutManifest,
+  isAzimutPassenger,
+  stripPartyCount,
 } from "./manifestFixedWidth.js";
 
 const isInt = (v) => /^\d+$/.test(s(v));
@@ -60,6 +63,9 @@ const flightPNL = (rows) => {
 
 // PLI: возрастная категория — латинский код в колонке «Кат».
 const PLI_CATEGORY = { ADT: "ADULT", CHD: "CHILD", INF: "INFANT" };
+
+// Категория латинским кодом в колонке «Кат» — общая у PLI и «Азимута».
+const latinCategory = (row, c) => PLI_CATEGORY[s(row[c.cat]).toUpperCase()] || "ADULT";
 
 // № рейса PLI — из титульной строки «СПИСОК ПАССАЖИРОВ. РЕЙС A4-3051 ДАТА: …».
 const flightPLI = (rows) => {
@@ -162,6 +168,19 @@ const flightRusline = (rows) => {
   return "";
 };
 
+// № рейса манифеста «Азимута» — из служебной строки «РЕЙС: A4 6066».
+const flightAzimut = (rows) => {
+  for (const row of rows || []) {
+    for (const cell of row || []) {
+      for (const line of String(cell ?? "").split(/\r?\n/)) {
+        const found = line.match(/РЕЙС:\s*([A-ZА-ЯЁ0-9]{2,3}[\s-]?\d{1,5}[A-ZА-ЯЁ]?)/i);
+        if (found) return found[1];
+      }
+    }
+  }
+  return "";
+};
+
 export const PROFILES = [
   {
     id: "PM", // Пассажирская ведомость (форма ПМ)
@@ -204,7 +223,7 @@ export const PROFILES = [
     },
     required: ["seq", "name", "cat"],
     isPassenger: (row, c) => isInt(row[c.seq]),
-    category: (row, c) => PLI_CATEGORY[s(row[c.cat]).toUpperCase()] || "ADULT",
+    category: latinCategory,
     // ФИО приходит как «SURNAME/NAME MR», под ним в той же ячейке — номера бирок.
     // Слеш заменяем пробелом: в ПМ и PNL ФИО уже через пробел, а дедуп реестра
     // сравнивает строки буква в букву — иначе один человек задвоится.
@@ -267,5 +286,30 @@ export const PROFILES = [
     flight: flightRusline,
     // lapInfants не подключаем: у младенца здесь СВОЯ строка с категорией
     // «Младенец без места», он и так попадает в people.
+  },
+  {
+    id: "AZIMUT", // Текстовый манифест DCS «ПАССАЖИРСКИЙ МАНИФЕСТ … АЭРОПОРТ» («Азимут»)
+    // Профиль сам приводит файл к таблице: см. manifestFixedWidth.js.
+    prepare: prepareAzimutManifest,
+    columns: {
+      sec: ["РЕГ"],
+      name: ["ФИО"],
+      seat: ["МЕСТО"],
+      cat: ["КАТ"],
+    },
+    // sec в required — чтобы при сыром сопоставлении табличных файлов профиль не
+    // поймал чужую шапку: точной тройки «РЕГ»+«ФИО»+«КАТ» нет ни в одном формате.
+    required: ["sec", "name", "cat"],
+    // У инфанта «РЕГ» пуст, поэтому признак — форма значений (isAzimutPassenger).
+    isPassenger: (row, c) => isAzimutPassenger(row[c.sec], row[c.name]),
+    // «1PETROV/IVAN» → «PETROV IVAN»: счётчик брони срезаем, слеш —
+    // пробелом, как у PLI (иначе один человек из разных файлов задвоится).
+    readName: (row, c) => stripPartyCount(row[c.name]).replace(/\//g, " "),
+    // Коды те же, что у PLI; «1» в «КАТ» — число инфантов у сопровождающего,
+    // сам он взрослый.
+    category: latinCategory,
+    flight: flightAzimut,
+    // lapInfants не подключаем: инфант идёт СВОЕЙ строкой с «INF» в «КАТ» —
+    // развернуть «1» у сопровождающего значило бы задвоить его.
   },
 ];

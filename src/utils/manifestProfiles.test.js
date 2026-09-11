@@ -403,8 +403,62 @@ test("RUSLINE: инфанты идут своими строками, механ
   assert.equal(detected.profile.lapInfants, undefined);
 });
 
+// ── Текстовый манифест DCS «Азимута» ──
+// Офсеты — как в образце МинВоды; ФИО выдуманные.
+const AZ_AT = { reg: 0, name: 4, dir: 24, cat: 28, cls: 32, seat: 35, bag: 41, ssr: 74 };
+
+const azLine = (parts) => {
+  const chars = Array(81).fill(" ");
+  for (const [key, value] of Object.entries(parts)) {
+    [...String(value)].forEach((ch, i) => {
+      chars[AZ_AT[key] + i] = ch;
+    });
+  }
+  return chars.join("");
+};
+
+const AZIMUT_ROWS = [
+  ["ПАССАЖИРСКИЙ МАНИФЕСТ                            АЭРОПОРТ                  1 из 1"],
+  ["ОПЕРАТОР: АЗИМУТ"],
+  ["РЕЙС: A4 6066"],
+  [azLine({
+    reg: "РЕГ", name: "ФИО", dir: "НАП", cat: "КАТ", cls: "КЛ",
+    seat: "МЕСТО", bag: "БАГАЖ", ssr: "УСЛУГИ",
+  })],
+  [azLine({ reg: "4", name: "1PETROV/IVAN", dir: "MRV", cls: "Y", seat: "01D", ssr: "SPML" })],
+  [azLine({ ssr: "WEAP" })],
+  [azLine({ reg: "33", name: "1SIDOROVA/ANNA", dir: "MRV", cat: "1", cls: "Y", seat: "02A" })],
+  [azLine({ name: "SIDOROVA/MARIA", dir: "MRV", cat: "INF", cls: "Y" })],
+  [azLine({ reg: "7", name: "1KOZLOV/PAVEL", dir: "MRV", cat: "CHD", cls: "Y", seat: "02F" })],
+];
+
+test("AZIMUT: манифест распознаётся, ФИО без счётчика брони, категории по «КАТ»", () => {
+  const detected = detectProfile(AZIMUT_ROWS, PROFILES);
+  assert.equal(detected.profile.id, "AZIMUT");
+
+  const people = extractPeople(detected.rows, detected.profile, detected.cols);
+  assert.deepEqual(people, [
+    { fullName: "PETROV IVAN", seat: "01D", personCategory: "ADULT" },
+    { fullName: "SIDOROVA ANNA", seat: "02A", personCategory: "ADULT" },
+    { fullName: "SIDOROVA MARIA", seat: null, personCategory: "INFANT" },
+    { fullName: "KOZLOV PAVEL", seat: "02F", personCategory: "CHILD" },
+  ]);
+});
+
+test("AZIMUT: № рейса берётся из строки «РЕЙС:»", () => {
+  const detected = detectProfile(AZIMUT_ROWS, PROFILES);
+  assert.equal(detected.profile.flight(detected.rows), "A4 6066");
+  assert.equal(detected.profile.flight([["РЕЙС: A4-6066"]]), "A4-6066");
+});
+
+test("AZIMUT: инфанты идут своими строками, механизм lapInfants не подключается", () => {
+  const detected = detectProfile(AZIMUT_ROWS, PROFILES);
+  assert.equal(detected.profile.lapInfants, undefined);
+});
+
 test("RUSLINE и прочие форматы не перехватывают файлы друг друга", () => {
   assert.equal(detectProfile(RUSLINE_ROWS, PROFILES).profile.id, "RUSLINE");
+  assert.equal(detectProfile(AZIMUT_ROWS, PROFILES).profile.id, "AZIMUT");
   assert.equal(detectProfile(ICAO_ROWS, PROFILES).profile.id, "ICAO");
   assert.equal(detectProfile(VED_ROWS, PROFILES).profile.id, "PM_TEXT");
   assert.equal(

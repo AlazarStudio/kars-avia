@@ -6,6 +6,7 @@ import {
   addCombinedSheet,
   addHotelSheet,
   addRequestReportSheets,
+  addTransferSheet,
 } from "./buildReportSheets.js";
 import { preserveMoneyFields } from "../fapReportMoney.js";
 
@@ -134,7 +135,7 @@ test("заголовок колонки остался жирным и полу�
   assert.equal(hdr.alignment.horizontal, "center");
 });
 
-// ── Сводка (addCombinedSheet): merged-сабхедер, разделитель, «Итого» ──
+// ── Прежняя «Сводка» (legacyLayout, детализация аналитики) ──
 //
 // Раскладка фикстуры: 5 — сабхедер «Гостиница: …» (merged A:Y), 6 — гость,
 // 7 — пустая строка-разделитель, 8 — заголовок «Трансфер», 9 — рейс ARRIVAL,
@@ -145,7 +146,9 @@ const combinedSheet = () => {
     plan: { enabled: true, plannedAt: "2026-08-01T08:00:00.000Z" },
     drivers: [{ fullName: "Петров П.П.", vehicleType: "Автобус", reportCost: 3000 }],
   };
-  return addCombinedSheet(new ExcelJS.Workbook(), { request, sheetNames: new Set() });
+  return addCombinedSheet(new ExcelJS.Workbook(), {
+    request, sheetNames: new Set(), legacyLayout: true,
+  });
 };
 
 test("сводка: сабхедер гостиницы остаётся left и не получает денежный формат", () => {
@@ -261,7 +264,7 @@ test("багаж: строка водителя, сабхедер и строк�
   assert.equal(ws.getCell("B6").value, "Пассажир");
   assert.equal(ws.getCell("E6").value, "Адрес доставки");
   assert.equal(ws.getCell("H6").value, "Номера бирок");
-  assert.equal(ws.getCell("J6").value, "Сумма");
+  assert.equal(ws.getCell("J6").value, "Сумма (без НДС)");
   assert.equal(ws.getCell("B6").font.bold, true);
 
   // Пассажиры
@@ -399,10 +402,12 @@ test("книга заявки: без hiddenServiceKeys состав листо�
     "Трансфер (в аэропорт)",
     "Доставка багажа",
   ]);
-  // Позитивный контроль к тестам ниже: в умолчании блок «Трансфер» в «Сводке»
+  // Позитивный контроль к тестам ниже: в умолчании таблицы трансфера в «Сводке»
   // есть. Без этой проверки захардкоженный includeTransfer: false оставил бы
-  // весь набор зелёным, а диспетчер молча потерял бы блок.
-  assert.equal(hasCellValue(wb.getWorksheet("Сводка"), "Трансфер"), true);
+  // весь набор зелёным, а диспетчер молча потерял бы трансфер.
+  const summary = wb.getWorksheet("Сводка");
+  assert.equal(hasCellValue(summary, "Трансфер (в гостиницу)"), true);
+  assert.equal(hasCellValue(summary, "Трансфер (в аэропорт)"), true);
 });
 
 test("книга заявки: скрыты трансфер и багаж — только «Сводка» и лист гостиницы, и в «Сводке» нет блока «Трансфер»", () => {
@@ -412,9 +417,13 @@ test("книга заявки: скрыты трансфер и багаж — �
   assert.equal(ok, true);
   assert.deepEqual(names, ["Сводка", "Гостиница Тест"]);
 
-  // Обход всех ячеек, а не только состава листов: без includeTransfer блок
-  // «Трансфер» внутри «Сводки» вернул бы те же рейсы, ТС и суммы.
-  assert.equal(hasCellValue(wb.getWorksheet("Сводка"), "Трансфер"), false);
+  // Обход всех ячеек, а не только состава листов: без includeTransfer таблицы
+  // трансфера внутри «Сводки» вернули бы тех же водителей, ТС и суммы.
+  const summary = wb.getWorksheet("Сводка");
+  assert.equal(hasCellValue(summary, "Трансфер (в гостиницу)"), false);
+  assert.equal(hasCellValue(summary, "Трансфер (в аэропорт)"), false);
+  assert.equal(hasCellValue(summary, "Петров П.П."), false);
+  assert.equal(hasCellValue(summary, "Сидоров С.С."), false);
 });
 
 test("книга заявки: скрыт только трансфер-прилёт — в «Сводке» осталось одно направление", () => {
@@ -428,12 +437,13 @@ test("книга заявки: скрыт только трансфер-прил
     "Трансфер (в аэропорт)",
     "Доставка багажа",
   ]);
-  // Скрытие по одному ключу: блок «Трансфер» в «Сводке» остаётся ради видимого
-  // направления, но строка скрытого направления из него уходит.
+  // Скрытие по одному ключу: таблица видимого направления в «Сводке» остаётся,
+  // таблица скрытого вместе с его водителями уходит.
   const combined = wb.getWorksheet("Сводка");
-  assert.equal(hasCellValue(combined, "Трансфер"), true);
-  assert.equal(hasCellValue(combined, "аэропорт → гостиницы"), false);
-  assert.equal(hasCellValue(combined, "гостиницы → аэропорт"), true);
+  assert.equal(hasCellValue(combined, "Трансфер (в гостиницу)"), false);
+  assert.equal(hasCellValue(combined, "Петров П.П."), false);
+  assert.equal(hasCellValue(combined, "Трансфер (в аэропорт)"), true);
+  assert.equal(hasCellValue(combined, "Сидоров С.С."), true);
 });
 
 test("книга заявки: скрыт только багаж — листы трансфера на месте", () => {
@@ -467,11 +477,14 @@ test("книга заявки: всё скрыто и белый список г
 // Гостиница заполняет факт, деньги проживания и питания считает диспетчер по
 // ценам для авиакомпании — в её выгрузке этих колонок нет вовсе. Колонка «Итого»
 // остаётся: в ней ещё и суммы трансфера, а они принадлежат гостинице-перевозчику.
+// Все цены в книге подписаны «(без НДС)» (решение владельца 10.09); «Скидка» —
+// процент, подписи у неё нет.
+const VAT = " (без НДС)";
 const MONEY_HEADERS = [
-  "Цена за сутки", "Завтрак", "Обед", "Ужин", "Ланчбокс",
-  "Стоимость питания", "Скидка", "Стоимость проживания", "Итого",
+  `Цена за сутки${VAT}`, `Завтрак${VAT}`, `Обед${VAT}`, `Ужин${VAT}`, `Ланчбокс${VAT}`,
+  `Стоимость питания${VAT}`, "Скидка", `Стоимость проживания${VAT}`, `Итого${VAT}`,
 ];
-const HIDDEN_MONEY_HEADERS = MONEY_HEADERS.filter((h) => h !== "Итого");
+const HIDDEN_MONEY_HEADERS = MONEY_HEADERS.filter((h) => h !== `Итого${VAT}`);
 // Раскладка под гейтом: «Итого» появляется только когда на листе будут деньги
 // трансфера (гостиница-перевозчик), поэтому в базовый набор она не входит.
 const FACT_HEADERS = [
@@ -537,13 +550,13 @@ test("лист гостиницы: перевозчик под hideMoney сох�
     hideMoney: true,
   });
   const headers = headersOf(ws);
-  assert.ok(headers.includes("Итого"));
+  assert.ok(headers.includes(`Итого${VAT}`));
   HIDDEN_MONEY_HEADERS.forEach((h) => assert.ok(!headers.includes(h)));
   assert.equal(hasCellValue(ws, "Трансфер"), true);
   assert.equal(hasCellValue(ws, 3000), true);   // прилёт
   assert.equal(hasCellValue(ws, 2500), true);   // вылет
   assert.equal(hasCellValue(ws, 10000), false); // проживание скрыто
-  const totalCol = headers.indexOf("Итого") + 1;
+  const totalCol = headers.indexOf(`Итого${VAT}`) + 1;
   assert.ok(
     ws.getRow(ws.rowCount).getCell(totalCol).value.formula.startsWith("SUM(")
   );
@@ -679,35 +692,20 @@ test("книга заявки: hideMoney доезжает и до «Сводки
     // одном листе книги — ни в «Сводке», ни на листе гостиницы.
     assert.equal(hasCellValue(ws, 3000), false, `${name}: осталась сумма прилёта`);
     assert.equal(hasCellValue(ws, 2500), false, `${name}: осталась сумма вылета`);
-    assert.equal(hasCellValue(ws, "Трансфер"), false, `${name}: остался блок трансфера`);
+    ["Трансфер", "Трансфер (в гостиницу)", "Трансфер (в аэропорт)"].forEach((caption) =>
+      assert.equal(hasCellValue(ws, caption), false, `${name}: остался «${caption}»`)
+    );
   });
   assert.deepEqual(headersOf(wb.getWorksheet("Гостиница Тест")), FACT_HEADERS);
-});
-
-test("сводка: под hideMoney «Итого» остаётся ради сумм трансфера перевозчика", () => {
-  // У гостиницы-перевозчика hiddenServiceKeys пуст: трансфер — её собственные
-  // деньги, и на её листе «Трансфер» они видны в любом случае.
-  const { wb } = buildBook(makeFullServiceRequest(), { hideMoney: true });
-  const ws = wb.getWorksheet("Сводка");
-  const headers = headersOf(ws);
-  assert.ok(headers.includes("Итого"));
-  HIDDEN_MONEY_HEADERS.forEach((h) => assert.ok(!headers.includes(h)));
-  assert.equal(hasCellValue(ws, 3000), true);   // прилёт
-  assert.equal(hasCellValue(ws, 2500), true);   // вылет
-  assert.equal(hasCellValue(ws, 10000), false); // проживание всё так же скрыто
-  // «Итого:» суммирует колонку, в которой лежат только деньги трансфера.
-  const totalCol = headers.indexOf("Итого") + 1;
-  const totalRow = ws.rowCount;
-  assert.ok(ws.getRow(totalRow).getCell(totalCol).value.formula.startsWith("SUM("));
 });
 
 test("книга заявки: без hideMoney деньги в книге на месте", () => {
   const { wb } = buildBook(makeFullServiceRequest());
   const combined = wb.getWorksheet("Сводка");
-  assert.ok(headersOf(combined).includes("Стоимость проживания"));
+  assert.ok(headersOf(combined).includes(`Стоимость проживания${VAT}`));
   assert.equal(hasCellValue(combined, 10000), true);
   assert.ok(
-    moneyFormatHeaders(wb.getWorksheet("Гостиница Тест")).includes("Стоимость проживания")
+    moneyFormatHeaders(wb.getWorksheet("Гостиница Тест")).includes(`Стоимость проживания${VAT}`)
   );
 });
 
@@ -1228,4 +1226,298 @@ test("титул багажа: у багаж-only заявки города не
   // Гостиниц у такой заявки нет вовсе, аэропорта тоже — реальный прод-случай.
   const ws = baggageSheet();
   assert.equal(ws.getCell("C3").value, "Доставка багажа по рейсу № A4-123");
+});
+
+// ── Режим аналитики (legacyLayout): «Сводка» один в один как до 10.09 ──
+//
+// Эталон снят с кода до правок (компактный «Трансфер» строками в раскладке
+// проживания, одна строка «Итого:», подписи без «(без НДС)»). Детализация Excel
+// аналитики по пассажирам обязана остаться такой — решение владельца 10.09.
+
+// Снимок листа: значения и формулы по ячейкам (даты — меткой: их сдвиг зависит
+// от часового пояса машины), merge-регионы и ширины 25 колонок.
+const sheetSnapshot = (ws) => {
+  const cells = [];
+  ws.eachRow({ includeEmpty: false }, (row) => {
+    row.eachCell({ includeEmpty: false }, (cell) => {
+      if (cell.master !== cell) return;
+      const v = cell.value;
+      const shown = v instanceof Date ? "<date>"
+        : v && typeof v === "object" && "formula" in v ? `=${v.formula}` : v;
+      cells.push(`${cell.address}=${shown}`);
+    });
+  });
+  const widths = [];
+  for (let c = 1; c <= 25; c += 1) widths.push(ws.getColumn(c).width ?? null);
+  return { cells, merges: [...ws.model.merges].sort(), widths };
+};
+
+const LEGACY_HEAD = [
+  "A1=АО «Авиакомпания Азимут»",
+];
+const LEGACY_TITLE = "C3=Детализация оказанных услуг пассажиров задержанного рейса № A4-123 г. Город";
+const LEGACY_GUEST = [
+  "A5=Гостиница: Гостиница Тест · Город, ул. Тестовая 1",
+  "A6=1", "B6=Иванов И.И.", "C6=Пассажир", "D6=Взрослый",
+  "E6=<date>", "F6=<date>", "G6=<date>", "H6=<date>",
+  "I6=101", "J6=одноместное", "K6=Стандарт",
+];
+
+const LEGACY_SUMMARY = {
+  cells: [
+    ...LEGACY_HEAD,
+    'Y1=Договор № или "по согласованию"',
+    LEGACY_TITLE,
+    "A4=ID", "B4=ФИО", "C4=Тип", "D4=Возрастная категория", "E4=Дата заезда",
+    "F4=Время заезда", "G4=Дата выезда", "H4=Время выезда", "I4=Номер",
+    "J4=Вид размещения", "K4=Тариф", "L4=Цена за сутки", "M4=Количество суток",
+    "N4=Количество завтраков", "O4=Завтрак", "P4=Количество обедов", "Q4=Обед",
+    "R4=Количество ужинов", "S4=Ужин", "T4=Количество ланчбоксов", "U4=Ланчбокс",
+    "V4=Стоимость питания", "W4=Скидка", "X4=Стоимость проживания", "Y4=Итого",
+    ...LEGACY_GUEST,
+    "L6=5000", "M6=2", "N6=2", "O6=500", "P6=0", "Q6=0", "R6=0", "S6=0",
+    "T6=0", "U6=0", "V6=1000", "W6=—", "X6=10000", "Y6=11000",
+    "B8=Трансфер",
+    "B9=аэропорт → гостиницы", "C9=Автобус", "E9=<date>", "F9=<date>", "Y9=3000",
+    "B10=гостиницы → аэропорт", "C10=Микроавтобус", "E10=<date>", "F10=<date>", "Y10=2500",
+    "A11=Итого:",
+    "M11==SUM(M6:M6)", "N11==SUM(N6:N6)", "O11==SUMPRODUCT(N6:N6,O6:O6)",
+    "P11==SUM(P6:P6)", "Q11==SUMPRODUCT(P6:P6,Q6:Q6)", "R11==SUM(R6:R6)",
+    "S11==SUMPRODUCT(R6:R6,S6:S6)", "T11==SUM(T6:T6)", "U11==SUMPRODUCT(T6:T6,U6:U6)",
+    "V11==SUM(V6:V6)", "X11==SUM(X6:X6)", "Y11==SUM(Y6:Y10)",
+  ],
+  merges: ["A5:Y5", "B8:H8"],
+  widths: [6, 28, 12, 15, 13, 12, 13, 12, 12, 18, 20, 14, 15, 15, 12, 15, 12, 15, 12, 18, 12, 15, 10, 15, 12],
+};
+
+const LEGACY_SUMMARY_HIDE_MONEY = {
+  cells: [
+    ...LEGACY_HEAD,
+    'Q1=Договор № или "по согласованию"',
+    LEGACY_TITLE,
+    "A4=ID", "B4=ФИО", "C4=Тип", "D4=Возрастная категория", "E4=Дата заезда",
+    "F4=Время заезда", "G4=Дата выезда", "H4=Время выезда", "I4=Номер",
+    "J4=Вид размещения", "K4=Тариф", "L4=Количество суток", "M4=Количество завтраков",
+    "N4=Количество обедов", "O4=Количество ужинов", "P4=Количество ланчбоксов", "Q4=Итого",
+    ...LEGACY_GUEST,
+    "L6=2", "M6=2", "N6=0", "O6=0", "P6=0",
+    "B8=Трансфер",
+    "B9=аэропорт → гостиницы", "C9=Автобус", "E9=<date>", "F9=<date>", "Q9=3000",
+    "B10=гостиницы → аэропорт", "C10=Микроавтобус", "E10=<date>", "F10=<date>", "Q10=2500",
+    "A11=Итого:",
+    "L11==SUM(L6:L6)", "M11==SUM(M6:M6)", "N11==SUM(N6:N6)", "O11==SUM(O6:O6)",
+    "P11==SUM(P6:P6)", "Q11==SUM(Q6:Q10)",
+  ],
+  merges: ["A5:Q5", "B8:H8"],
+  widths: [6, 28, 12, 15, 13, 12, 13, 12, 12, 18, 20, 15, 15, 15, 15, 18, 12,
+    null, null, null, null, null, null, null, null],
+};
+
+test("сводка аналитики (legacyLayout): значения, формулы, merge и ширины — как до 10.09", () => {
+  [[false, LEGACY_SUMMARY], [true, LEGACY_SUMMARY_HIDE_MONEY]].forEach(([hideMoney, expected]) => {
+    const ws = addCombinedSheet(new ExcelJS.Workbook(), {
+      request: makeFullServiceRequest(),
+      sheetNames: new Set(),
+      hideMoney,
+      legacyLayout: true,
+    });
+    assert.deepEqual(sheetSnapshot(ws), expected, `hideMoney=${hideMoney}`);
+  });
+});
+
+// ── Подписи «(без НДС)» на всех листах книги ──
+
+test("подписи: денежные колонки листа гостиницы — «(без НДС)», «Скидка» и факт — без", () => {
+  const headers = headersOf(guestSheet());
+  assert.ok(headers.includes("Цена за сутки (без НДС)"));
+  assert.ok(headers.includes("Итого (без НДС)"));
+  assert.ok(headers.includes("Скидка"));
+  assert.ok(!headers.includes("Скидка (без НДС)"));
+  assert.ok(headers.includes("Количество суток"));
+});
+
+test("подписи: лист трансфера и лист багажа — «Сумма (без НДС)»", () => {
+  const { wb } = buildBook(makeFullServiceRequest());
+  assert.equal(wb.getWorksheet("Трансфер (в гостиницу)").getCell("K4").value, "Сумма (без НДС)");
+  assert.equal(wb.getWorksheet("Трансфер (в аэропорт)").getCell("K4").value, "Сумма (без НДС)");
+  const baggage = wb.getWorksheet("Доставка багажа");
+  assert.equal(baggage.getCell("J4").value, "Сумма (без НДС)");
+  assert.equal(baggage.getCell("J6").value, "Сумма (без НДС)"); // сабхедер мини-таблицы
+});
+
+// ── Лист трансфера: та же таблица потом встаёт в «Сводку» ──
+
+test("лист трансфера: шапка, строки водителей, «Итого:», сетка не шире K", () => {
+  const request = makeFullServiceRequest();
+  request.transferService.drivers = [
+    {
+      fullName: "Петров П.П.", phone: "+79000000001", addressFrom: "Аэропорт",
+      addressTo: "ул. Тестовая 1", pickupAt: "2026-08-01T08:00:00.000Z",
+      vehicleType: "Автобус", vehicleNumber: "А123АА", transportedCount: 17, reportCost: 3000,
+    },
+    { fullName: "Сергеев С.С.", vehicleType: "Минивэн", reportCost: 1500 },
+  ];
+  const ws = addTransferSheet(new ExcelJS.Workbook(), {
+    request, direction: "ARRIVAL", sheetNames: new Set(),
+  });
+  assert.equal(ws.name, "Трансфер (в гостиницу)");
+  assert.deepEqual(ws.getRow(4).values.slice(1), [
+    "№", "ФИО водителя", "Телефон", "Адрес отправления", "Адрес прибытия",
+    "Дата подачи", "Время подачи", "Тип ТС", "Гос. номер", "Перевезено", "Сумма (без НДС)",
+  ]);
+  assert.equal(ws.getCell("A5").value, 1);
+  assert.equal(ws.getCell("B5").value, "Петров П.П.");
+  assert.equal(ws.getCell("D5").value, "Аэропорт");
+  assert.equal(ws.getCell("F5").numFmt, "dd.mm.yyyy");
+  assert.equal(ws.getCell("G5").numFmt, "hh:mm");
+  assert.equal(ws.getCell("I5").value, "А123АА");
+  assert.equal(ws.getCell("J5").value, 17);
+  assert.equal(ws.getCell("K5").value, 3000);
+  assert.equal(ws.getCell("K5").numFmt, "#,##0.00");
+  assert.equal(ws.getCell("A6").value, 2);
+  assert.equal(ws.getCell("A7").value, "Итого:");
+  assert.equal(ws.getCell("J7").value.formula, "SUM(J5:J6)");
+  assert.equal(ws.getCell("K7").value.formula, "SUM(K5:K6)");
+  assert.equal(ws.getCell("B5").alignment.horizontal, "left");
+  assert.ok(!ws.getCell("L5").border, "сетка вышла за K");
+});
+
+test("лист трансфера: водителей нет — «Итого:» без формул", () => {
+  const request = makeFullServiceRequest();
+  request.transferService.drivers = [];
+  const ws = addTransferSheet(new ExcelJS.Workbook(), {
+    request, direction: "ARRIVAL", sheetNames: new Set(),
+  });
+  assert.equal(ws.getCell("A5").value, "Итого:");
+  assert.equal(ws.getCell("K5").value, null);
+});
+
+// ── Новая «Сводка»: трансфер таблицами, как на листах (решение владельца 10.09) ──
+//
+// Раскладка фикстуры makeFullServiceRequest: 5 — «Гостиница: …», 6 — гость,
+// 7 — «Итого:» проживания, 8 — разделитель, 9 — «Трансфер (в гостиницу)»,
+// 10 — шапка, 11 — Петров, 12 — «Итого:», 13 — разделитель,
+// 14 — «Трансфер (в аэропорт)», 15 — шапка, 16 — Сидоров, 17 — «Итого:»,
+// 18 — разделитель, 19 — «Всего по заявке:».
+const summarySheet = (opts = {}) =>
+  addCombinedSheet(new ExcelJS.Workbook(), {
+    request: makeFullServiceRequest(),
+    sheetNames: new Set(),
+    ...opts,
+  });
+
+test("сводка: «Итого:» проживания сразу под гостями, только по их строкам", () => {
+  const ws = summarySheet();
+  assert.equal(ws.getCell("A7").value, "Итого:");
+  assert.equal(ws.getCell("M7").value.formula, "SUM(M6:M6)");
+  assert.equal(ws.getCell("O7").value.formula, "SUMPRODUCT(N6:N6,O6:O6)");
+  assert.equal(ws.getCell("Y7").value.formula, "SUM(Y6:Y6)");
+});
+
+test("сводка: таблица трансфера в раскладке листа — заголовок, шапка, водитель, «Итого:»", () => {
+  const ws = summarySheet();
+  const caption = ws.getCell("A9");
+  assert.equal(caption.value, "Трансфер (в гостиницу)");
+  assert.ok(ws.model.merges.includes("A9:K9"));
+  assert.equal(caption.font.bold, true);
+  assert.equal(caption.alignment.horizontal, "left");
+  assert.equal(caption.fill.fgColor.argb, "FFEEF2F7");
+  assert.deepEqual(ws.getRow(10).values.slice(1), [
+    "№", "ФИО водителя", "Телефон", "Адрес отправления", "Адрес прибытия",
+    "Дата подачи", "Время подачи", "Тип ТС", "Гос. номер", "Перевезено", "Сумма (без НДС)",
+  ]);
+  assert.equal(ws.getCell("A11").value, 1);
+  assert.equal(ws.getCell("B11").value, "Петров П.П.");
+  assert.equal(ws.getCell("H11").value, "Автобус");
+  assert.equal(ws.getCell("K11").value, 3000);
+  assert.equal(ws.getCell("K11").numFmt, "#,##0.00");
+  assert.equal(ws.getCell("A12").value, "Итого:");
+  assert.equal(ws.getCell("J12").value.formula, "SUM(J11:J11)");
+  assert.equal(ws.getCell("K12").value.formula, "SUM(K11:K11)");
+  assert.equal(ws.getCell("A14").value, "Трансфер (в аэропорт)");
+  assert.equal(ws.getCell("B16").value, "Сидоров С.С.");
+  assert.equal(ws.getCell("K16").value, 2500);
+  assert.equal(ws.getCell("K17").value.formula, "SUM(K16:K16)");
+});
+
+test("сводка: «Всего по заявке» = «Итого» проживания + «Итого» таблиц трансфера", () => {
+  const ws = summarySheet();
+  assert.equal(ws.getCell("A19").value, "Всего по заявке:");
+  assert.equal(ws.getCell("A19").font.bold, true);
+  assert.equal(ws.getCell("Y19").value.formula, "Y7+K12+K17");
+  assert.equal(ws.getCell("Y19").numFmt, "#,##0.00");
+  assert.equal(ws.rowCount, 19);
+});
+
+test("сводка: разделители без сетки, сетка таблицы трансфера не шире K", () => {
+  const ws = summarySheet();
+  [8, 13, 18].forEach((r) => {
+    const gap = ws.getCell(`B${r}`);
+    assert.ok(!gap.border || !gap.border.top, `строка ${r} получила сетку`);
+  });
+  assert.equal(ws.getCell("K11").border.top.style, "thin");
+  assert.ok(!ws.getCell("L11").border, "L11 получила сетку");
+  assert.ok(!ws.getCell("Y11").border, "Y11 получила сетку");
+  assert.ok(!ws.getCell("L9").border, "L9 (заголовок таблицы) получила сетку");
+  assert.equal(ws.getCell("Y7").border.top.style, "thin"); // проживание — во всю ширину
+  assert.equal(ws.getCell("B11").alignment.horizontal, "left"); // выравнивание листа трансфера
+});
+
+test("сводка: при трансфере колонки под адреса расширены до ширин листа трансфера", () => {
+  const ws = summarySheet();
+  assert.deepEqual([3, 4, 5, 8, 9].map((c) => ws.getColumn(c).width), [16, 30, 30, 22, 14]);
+  assert.equal(ws.getColumn(2).width, 28); // остальные — по раскладке проживания
+});
+
+test("сводка: без трансфера — ни таблиц, ни «Всего по заявке», ширины прежние", () => {
+  const ws = addCombinedSheet(new ExcelJS.Workbook(), {
+    request: makeRequestWithGuest(),
+    sheetNames: new Set(),
+  });
+  assert.equal(ws.getCell("A7").value, "Итого:");
+  assert.equal(ws.rowCount, 7);
+  assert.equal(hasCellValue(ws, "Всего по заявке:"), false);
+  assert.equal(ws.getColumn(4).width, 15);
+});
+
+test("сводка: скрыт прилёт — одна таблица, «Всего» складывает только её", () => {
+  const ws = summarySheet({ hiddenServiceKeys: ["transfer"] });
+  assert.equal(hasCellValue(ws, "Трансфер (в гостиницу)"), false);
+  assert.equal(hasCellValue(ws, "Петров П.П."), false);
+  assert.equal(ws.getCell("A9").value, "Трансфер (в аэропорт)");
+  assert.equal(ws.getCell("A14").value, "Всего по заявке:");
+  assert.equal(ws.getCell("Y14").value.formula, "Y7+K12");
+});
+
+test("сводка: только трансфер, без гостей — «Всего» из «Итого» таблиц", () => {
+  const request = makeFullServiceRequest();
+  request.livingService = { plan: { enabled: false }, hotels: [] };
+  const ws = addCombinedSheet(new ExcelJS.Workbook(), { request, sheetNames: new Set() });
+  assert.equal(ws.getCell("A6").value, "Трансфер (в гостиницу)");
+  assert.equal(ws.getCell("A9").value, "Итого:");
+  assert.equal(ws.getCell("A16").value, "Всего по заявке:");
+  assert.equal(ws.getCell("Y16").value.formula, "K9+K14");
+});
+
+test("сводка: hideMoney — без денег проживания и «Всего», суммы трансфера в своих таблицах", () => {
+  const ws = summarySheet({ hideMoney: true });
+  assert.deepEqual(headersOf(ws), FACT_HEADERS); // и колонки «Итого» тоже нет
+  assert.equal(hasCellValue(ws, 10000), false);
+  assert.equal(hasCellValue(ws, 3000), true);
+  assert.equal(hasCellValue(ws, 2500), true);
+  assert.equal(hasCellValue(ws, "Всего по заявке:"), false);
+  assert.equal(ws.getCell("A7").value, "Итого:");
+  assert.equal(ws.getCell("L7").value.formula, "SUM(L6:L6)"); // сутки остаются
+  assert.equal(ws.getCell("K11").numFmt, "#,##0.00");
+});
+
+test("сводка: includeTransfer: false — таблиц трансфера и «Всего» нет, ширины прежние", () => {
+  // На этот гейт опирается отчёт «Проживание» (downloadLivingReport): в заявке
+  // трансфер есть, но в отчёт по проживанию он попадать не должен.
+  const ws = summarySheet({ includeTransfer: false });
+  assert.equal(ws.rowCount, 7);
+  assert.equal(hasCellValue(ws, "Трансфер (в гостиницу)"), false);
+  assert.equal(hasCellValue(ws, "Трансфер (в аэропорт)"), false);
+  assert.equal(hasCellValue(ws, "Всего по заявке:"), false);
+  assert.equal(ws.getColumn(4).width, 15);
 });

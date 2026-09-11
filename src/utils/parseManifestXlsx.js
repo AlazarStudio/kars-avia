@@ -28,7 +28,7 @@ export function decodeTextBuffer(buffer) {
 
 // Возвращает { people: [{ fullName, seat, personCategory }], flightNumber, lapInfants, error }.
 // Формат файла — XLSB/XLSX/XLS/CSV; CSV декодируем сами (UTF-8 → windows-1251), разделитель
-// SheetJS угадывает. Формат ведомости (PM / PNL / PLI) определяется автоматически по
+// SheetJS угадывает. Формат манифеста (семь профилей) определяется автоматически по
 // заголовкам (см. manifestProfiles.js). lapInfants = { count, carriers: [{ name, count }] } |
 // null — инфанты на руках, если формат их вообще выделяет. Они попадают и в people (см.
 // expandLapInfants).
@@ -64,7 +64,7 @@ export async function parseManifestXlsx(file) {
       people: [],
       flightNumber: "",
       error:
-        "Файл не распознан как манифест (ведомость ПМ, текстовая ведомость, манифест ИКАО, список PNL, выгрузка PLI или выгрузка «Руслайн»)",
+        "Файл не распознан как манифест (ведомость ПМ, текстовая ведомость, манифест ИКАО, список PNL, выгрузка PLI, выгрузка «Руслайн» или текстовый манифест «Азимута»)",
     };
   }
 

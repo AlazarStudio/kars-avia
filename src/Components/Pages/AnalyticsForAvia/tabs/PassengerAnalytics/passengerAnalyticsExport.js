@@ -308,6 +308,9 @@ export async function exportPassengerAnalyticsFullXlsx({
       // addCombinedSheet (= true) включает пустой блок «Трансфер».
       includeTransfer: !!(arrEnabled || depEnabled),
       hotelIndexes: visibleHotelIndexes(request, user),
+      // Детализация аналитики — прежняя «Сводка»: компактный трансфер и подписи
+      // без «(без НДС)» (решение владельца 10.09.2026).
+      legacyLayout: true,
     });
   });
 

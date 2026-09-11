@@ -51,6 +51,13 @@ const THIN_BORDER = {
   right: { style: "thin" },
 };
 
+// Заливка строк-сабхедеров: «Гостиница: …» и заголовки таблиц трансфера «Сводки».
+const SUBHEADER_FILL = {
+  type: "pattern",
+  pattern: "solid",
+  fgColor: { argb: "FFEEF2F7" },
+};
+
 // Сдвигает Date так, чтобы при сериализации в Excel-serial (UTC-based) ячейка
 // показала локальное время браузера, а не UTC. Без этого «12:12 MSK» в БД
 // (хранится как «09:12Z») попадает в Excel как «09:12».
@@ -120,16 +127,24 @@ const HOTEL_COLUMNS = [
   { key: "total", label: "Итого", width: 12, money: true, shared: true },
 ];
 
+// Все цены в книге отчёта ФАП — без НДС (решение владельца 10.09.2026; НДС
+// выставляется отдельно, вне системы). Подпись дописывается при построении
+// раскладки, а не в HOTEL_COLUMNS: прежняя «Сводка» аналитики живёт без неё.
+const VAT_SUFFIX = " (без НДС)";
+
 // Буква колонки для формул: раскладка не шире 25 колонок, двухбуквенных нет.
 const colLetter = (n) => String.fromCharCode(64 + n);
 
 // Раскладка под текущий режим: индексы колонок по ключу (`at`), запись значения
 // с пропуском отсутствующей колонки (`put`), запись денег проживания (`putMoney`)
 // и наборы для finishSheet.
-function hotelLayout(hideMoney, keepShared = true) {
-  const cols = HOTEL_COLUMNS.filter(
-    (c) => !(hideMoney && c.money && !(c.shared && keepShared))
-  );
+function hotelLayout(hideMoney, keepShared = true, { vatLabels = true } = {}) {
+  const cols = HOTEL_COLUMNS
+    .filter((c) => !(hideMoney && c.money && !(c.shared && keepShared)))
+    // «Скидка» денежная по смыслу, но в ней процент — подпись ей не нужна.
+    .map((c) =>
+      vatLabels && c.money && !c.text ? { ...c, label: `${c.label}${VAT_SUFFIX}` } : c
+    );
   const at = {};
   cols.forEach((c, i) => { at[c.key] = i + 1; });
   return {
@@ -179,6 +194,14 @@ function applyTransferColumnWidths(ws, { vehicleNumber = false } = {}) {
   }
 }
 
+// Ширины колонок «Сводки», под гостями которой стоят таблицы трансфера: колонки
+// A–K у них общие, и без этого адреса легли бы в «Возрастную категорию» (15) и
+// «Дату заезда» (13) столбиком строк на шесть. Берём ширины листа трансфера там,
+// где отличие существенно — C, D, E, H, I (F «Дата подачи» там 13 против 12
+// здесь, дата всё равно влезает) — решение владельца 10.09.2026; первые 11
+// колонок раскладки проживания не денежные, поэтому под hideMoney ширины те же.
+const SUMMARY_TRANSFER_WIDTHS = { 3: 16, 4: 30, 5: 30, 8: 22, 9: 14 };
+
 // Финальный проход по телу листа: шрифт, выравнивание, сетка, формат денег.
 //
 // Почему по ячейкам, а не через `ws.getColumn(n).font` / `ws.getRow(n).font`:
@@ -190,14 +213,31 @@ function applyTransferColumnWidths(ws, { vehicleNumber = false } = {}) {
 // Границы ставятся всем ячейкам диапазона, включая пустые: таблица должна
 // выглядеть сеткой. Но строки из `skipRows` — разделители между таблицами, они
 // вне таблицы: сетка на них склеила бы два блока в один.
-function finishSheet(ws, { lastCol, moneyCols, leftCols, headerRow = 4, skipRows = [] }) {
-  const money = new Set(moneyCols);
-  const left = new Set(leftCols);
+// `rowLayouts` — строки со своей раскладкой (таблицы трансфера в «Сводке»):
+// сетка, деньги и выравнивание у них по своим колонкам, а не по раскладке листа.
+function finishSheet(ws, {
+  lastCol, moneyCols, leftCols, headerRow = 4, skipRows = [], rowLayouts = new Map(),
+}) {
+  const compile = (layout) => ({
+    lastCol: layout.lastCol,
+    money: new Set(layout.moneyCols),
+    left: new Set(layout.leftCols),
+  });
+  const base = compile({ lastCol, moneyCols, leftCols });
+  // У строк одной таблицы трансфера объект раскладки общий — собираем его один раз.
+  const compiled = new Map();
+  const layoutOf = (r) => {
+    const layout = rowLayouts.get(r);
+    if (!layout) return base;
+    if (!compiled.has(layout)) compiled.set(layout, compile(layout));
+    return compiled.get(layout);
+  };
   const skip = new Set(skipRows);
   for (let r = headerRow; r <= ws.rowCount; r += 1) {
     if (skip.has(r)) continue;
+    const { lastCol: rowLastCol, money, left } = layoutOf(r);
     const row = ws.getRow(r);
-    for (let c = 1; c <= lastCol; c += 1) {
+    for (let c = 1; c <= rowLastCol; c += 1) {
       const cell = row.getCell(c);
       if (!cell.font) cell.font = BASE_FONT;
       if (!cell.alignment) {
@@ -216,6 +256,15 @@ function finishSheet(ws, { lastCol, moneyCols, leftCols, headerRow = 4, skipRows
   }
   // Шапка (строки 1..headerRow) остаётся на экране при прокрутке списка гостей.
   ws.views = [{ state: "frozen", ySplit: headerRow }];
+}
+
+// Подпись строки итога в колонке A. Выравнивание явное: иначе finishSheet
+// центрирует с переносом, и в узкой колонке A слово уезжает на две строки.
+function putTotalLabel(row, text) {
+  const cell = row.getCell(1);
+  cell.value = text;
+  cell.font = HEADER_FONT;
+  cell.alignment = { vertical: "middle", horizontal: "left" };
 }
 
 // Количество порций приёма: легаси-строки без количеств — 1 при цене > 0.
@@ -566,11 +615,7 @@ export function addHotelSheet(wb, opts) {
 
   // ── Строка «Итого:» ──
   const totalRow = ws.getRow(rowIdx);
-  totalRow.getCell(1).value = "Итого:";
-  totalRow.getCell(1).font = HEADER_FONT;
-  // Явное выравнивание: иначе проход центрирует с переносом и в колонке шириной 6
-  // слово уезжает на две строки.
-  totalRow.getCell(1).alignment = { vertical: "middle", horizontal: "left" };
+  putTotalLabel(totalRow, "Итого:");
   if (lastPersonRow >= 5) {
     // Диапазон одной колонки и пара колонок для SUMPRODUCT — по ключам раскладки:
     // под hideMoney буквы съезжают, а денежных слагаемых просто нет.
@@ -611,48 +656,44 @@ export function addHotelSheet(wb, opts) {
   return ws;
 }
 
+// Названия листов трансфера — они же заголовки таблиц трансфера в «Сводке».
+const TRANSFER_TITLES = {
+  ARRIVAL: "Трансфер (в гостиницу)",
+  DEPARTURE: "Трансфер (в аэропорт)",
+};
+
 const TRANSFER_HEADERS = [
   "№", "ФИО водителя", "Телефон", "Адрес отправления", "Адрес прибытия",
-  "Дата подачи", "Время подачи", "Тип ТС", "Гос. номер", "Перевезено", "Сумма",
+  "Дата подачи", "Время подачи", "Тип ТС", "Гос. номер", "Перевезено", `Сумма${VAT_SUFFIX}`,
 ];
 
 // Багаж живёт на прежней раскладке из 10 колонок: его мини-таблица пассажиров
 // завязана на жёсткие индексы B/E/H/J, сдвиг колонок её ломает.
 const BAGGAGE_HEADERS = [
   "№", "ФИО водителя", "Телефон", "Адрес отправления", "Адрес прибытия",
-  "Дата подачи", "Время подачи", "Тип ТС", "Перевезено", "Сумма",
+  "Дата подачи", "Время подачи", "Тип ТС", "Перевезено", `Сумма${VAT_SUFFIX}`,
 ];
 
-export function addTransferSheet(wb, opts) {
-  const { request, direction, sheetNames, sheetPrefix = "" } = opts;
-  const service =
-    direction === "DEPARTURE"
-      ? request?.departureTransferService
-      : request?.transferService;
+// Раскладка таблицы водителей трансфера для finishSheet: 11 колонок A–K,
+// деньги — K, влево — ФИО водителя и адреса.
+const TRANSFER_TABLE = { lastCol: 11, moneyCols: [11], leftCols: [2, 4, 5] };
 
-  const baseName =
-    direction === "DEPARTURE" ? "Трансфер (в аэропорт)" : "Трансфер (в гостиницу)";
-  const ws = wb.addWorksheet(chooseSheetName(prefixedSheetName(baseName, sheetPrefix), sheetNames));
-  const city = pickCity(request, request?.livingService?.hotels?.[0]);
-
-  ws.getCell("A1").value = request?.airline?.nameFull || request?.airline?.name || "";
-  ws.getCell("A1").font = HEADER_FONT;
-  ws.getCell("C3").value =
-    `${baseName} по рейсу № ${request?.flightNumber ?? ""}${cityPart(city)}`;
-  ws.getCell("C3").font = HEADER_FONT;
-
+// Таблица водителей трансфера: шапка в строке headerRow, водители под ней,
+// «Итого:» последней строкой. Одна на лист трансфера и на «Сводку» — таблица в
+// «Сводке» обязана совпадать с листом один в один. Возвращает номер строки
+// «Итого:».
+function writeTransferTable(ws, headerRow, drivers) {
   TRANSFER_HEADERS.forEach((label, i) => {
-    const cell = ws.getCell(4, i + 1);
+    const cell = ws.getCell(headerRow, i + 1);
     cell.value = label;
     cell.font = HEADER_FONT;
     cell.alignment = { wrapText: true, vertical: "middle", horizontal: "center" };
   });
-  ws.getRow(4).height = 51;
-  applyTransferColumnWidths(ws, { vehicleNumber: true });
+  ws.getRow(headerRow).height = 51;
 
-  const drivers = service?.drivers ?? [];
-  drivers.forEach((d, i) => {
-    const row = ws.getRow(5 + i);
+  const list = drivers ?? [];
+  list.forEach((d, i) => {
+    const row = ws.getRow(headerRow + 1 + i);
     row.getCell(1).value = i + 1;
     row.getCell(2).value = d.fullName ?? "";
     row.getCell(3).value = d.phone ?? "";
@@ -673,17 +714,74 @@ export function addTransferSheet(wb, opts) {
     if (d.reportCost != null) row.getCell(11).value = d.reportCost;
   });
 
-  const last = drivers.length > 0 ? 4 + drivers.length : 4;
-  const totalRow = ws.getRow(last + 1);
-  totalRow.getCell(1).value = "Итого:";
-  totalRow.getCell(1).font = HEADER_FONT;
-  // Явное выравнивание: иначе проход центрирует с переносом в узкой колонке A.
-  totalRow.getCell(1).alignment = { vertical: "middle", horizontal: "left" };
-  if (drivers.length > 0) {
-    totalRow.getCell(10).value = { formula: `SUM(J5:J${last})` };
-    totalRow.getCell(11).value = { formula: `SUM(K5:K${last})` };
+  const first = headerRow + 1;
+  const last = headerRow + list.length;
+  const totalRowIdx = last + 1;
+  const totalRow = ws.getRow(totalRowIdx);
+  putTotalLabel(totalRow, "Итого:");
+  if (list.length > 0) {
+    totalRow.getCell(10).value = { formula: `SUM(J${first}:J${last})` };
+    totalRow.getCell(11).value = { formula: `SUM(K${first}:K${last})` };
   }
-  finishSheet(ws, { lastCol: 11, moneyCols: [11], leftCols: [2, 4, 5] });
+  return totalRowIdx;
+}
+
+// Таблицы трансфера в «Сводке» — по одной на каждое включённое и видимое
+// направление, в раскладке листа трансфера (решение владельца 10.09.2026).
+// Каждая начинается строкой-разделителем и заголовком-сабхедером. Возвращает
+// строку, следующую за последней таблицей, строки их «Итого:» (слагаемые
+// «Всего по заявке») и служебные наборы для finishSheet.
+function writeSummaryTransferTables(ws, startRow, { request, hidden, includeTransfer }) {
+  const directions = includeTransfer
+    ? [
+      { key: "transfer", caption: TRANSFER_TITLES.ARRIVAL, service: request?.transferService },
+      { key: "transferDeparture", caption: TRANSFER_TITLES.DEPARTURE, service: request?.departureTransferService },
+    ].filter((d) => d.service?.plan?.enabled && !hidden.has(d.key))
+    : [];
+
+  let rowIdx = startRow;
+  const totalRows = [];
+  const skipRows = [];
+  const rowLayouts = new Map();
+  directions.forEach(({ caption, service }) => {
+    skipRows.push(rowIdx); // строка-разделитель перед таблицей
+    rowIdx += 1;
+    const captionRow = rowIdx;
+    ws.mergeCells(`A${captionRow}:K${captionRow}`);
+    const cap = ws.getCell(`A${captionRow}`);
+    cap.value = caption;
+    cap.font = HEADER_FONT;
+    cap.alignment = { horizontal: "left" };
+    cap.fill = SUBHEADER_FILL;
+    const totalRowIdx = writeTransferTable(ws, captionRow + 1, service?.drivers);
+    for (let r = captionRow; r <= totalRowIdx; r += 1) rowLayouts.set(r, TRANSFER_TABLE);
+    totalRows.push(totalRowIdx);
+    rowIdx = totalRowIdx + 1;
+  });
+  return { rowIdx, totalRows, skipRows, rowLayouts };
+}
+
+export function addTransferSheet(wb, opts) {
+  const { request, direction, sheetNames, sheetPrefix = "" } = opts;
+  const service =
+    direction === "DEPARTURE"
+      ? request?.departureTransferService
+      : request?.transferService;
+
+  const baseName =
+    direction === "DEPARTURE" ? TRANSFER_TITLES.DEPARTURE : TRANSFER_TITLES.ARRIVAL;
+  const ws = wb.addWorksheet(chooseSheetName(prefixedSheetName(baseName, sheetPrefix), sheetNames));
+  const city = pickCity(request, request?.livingService?.hotels?.[0]);
+
+  ws.getCell("A1").value = request?.airline?.nameFull || request?.airline?.name || "";
+  ws.getCell("A1").font = HEADER_FONT;
+  ws.getCell("C3").value =
+    `${baseName} по рейсу № ${request?.flightNumber ?? ""}${cityPart(city)}`;
+  ws.getCell("C3").font = HEADER_FONT;
+
+  writeTransferTable(ws, 4, service?.drivers);
+  applyTransferColumnWidths(ws, { vehicleNumber: true });
+  finishSheet(ws, TRANSFER_TABLE);
   return ws;
 }
 
@@ -749,7 +847,7 @@ export function addBaggageSheet(wb, opts) {
     if (people.length === 0) return;
 
     const subRow = ws.getRow(rowIdx);
-    [[2, "Пассажир"], [5, "Адрес доставки"], [8, "Номера бирок"], [10, "Сумма"]].forEach(
+    [[2, "Пассажир"], [5, "Адрес доставки"], [8, "Номера бирок"], [10, `Сумма${VAT_SUFFIX}`]].forEach(
       ([col, label]) => {
         subRow.getCell(col).value = label;
         subRow.getCell(col).font = HEADER_FONT;
@@ -771,10 +869,7 @@ export function addBaggageSheet(wb, opts) {
   });
 
   const totalRow = ws.getRow(rowIdx);
-  totalRow.getCell(1).value = "Итого:";
-  totalRow.getCell(1).font = HEADER_FONT;
-  // Явное выравнивание: иначе проход центрирует с переносом в узкой колонке A.
-  totalRow.getCell(1).alignment = { vertical: "middle", horizontal: "left" };
+  putTotalLabel(totalRow, "Итого:");
   if (driverRows.length > 0) {
     // Перечисление водительских строк, а не SUM диапазона: сумма поездки на бэке —
     // производная (Σ reportCost её пассажиров), и диапазон задвоил бы деньги.
@@ -812,8 +907,13 @@ export async function downloadHotelReport(request, hotelIndex, opts) {
   await downloadWorkbook(wb, filename);
 }
 
-// Сводный лист «Сводка» — все гостиницы заявки одним списком + общий блок трансфера.
+// Сводный лист «Сводка» — все гостиницы заявки одним списком + трансфер.
 // Используется как первый лист в per-living и per-request отчётах.
+//
+// opts.legacyLayout — прежняя «Сводка» (до 10.09.2026): трансфер строками
+// направлений в раскладке проживания, одна строка «Итого:» внизу, подписи без
+// «(без НДС)». Нужна только детализации в Excel аналитики по пассажирам —
+// владелец решил оставить её как есть.
 export function addCombinedSheet(wb, opts) {
   const {
     request,
@@ -823,16 +923,21 @@ export function addCombinedSheet(wb, opts) {
     hotelIndexes = null,
     hiddenServiceKeys = [],
     hideMoney = false,
+    legacyLayout = false,
   } = opts;
-  // includeTransfer отвечает за блок целиком, hiddenServiceKeys — за каждое
-  // направление отдельно: скрыть могут только прилёт или только вылет, а блок
-  // при этом остаётся. Поэтому видимость проверяется и здесь, а не только на
-  // уровне листов: строки блока несут тот же тип ТС, время подачи и суммы.
+  // includeTransfer отвечает за трансфер в «Сводке» целиком, hiddenServiceKeys —
+  // за каждое направление отдельно: скрыть могут только прилёт или только вылет.
+  // Поэтому видимость проверяется и здесь, а не только на уровне листов: таблицы
+  // трансфера (в режиме аналитики — строки блока) несут тех же водителей, ТС,
+  // время подачи и суммы.
   const hidden = new Set(hiddenServiceKeys);
   // «Сводка» — та же раскладка, что у листа гостиницы: без денежных колонок она
   // тоже обязана уметь, иначе гостиница читала бы в книге ровно те суммы,
-  // которые убраны с её листа.
-  const { cols, at, put, putMoney, letter, lastCol, moneyCols, leftCols } = hotelLayout(hideMoney);
+  // которые убраны с её листа. Колонку «Итого» под гейтом держит только прежняя
+  // раскладка: там в неё складывались суммы трансфера, в новой у них свои таблицы.
+  const keepShared = legacyLayout;
+  const { cols, at, put, putMoney, letter, lastCol, moneyCols, leftCols } =
+    hotelLayout(hideMoney, keepShared, { vatLabels: !legacyLayout });
   const ws = wb.addWorksheet(chooseSheetName(prefixedSheetName("Сводка", sheetPrefix), sheetNames));
   const city = pickCity(request, request?.livingService?.hotels?.[0]);
 
@@ -879,11 +984,7 @@ export function addCombinedSheet(wb, opts) {
     hdr.value = `Гостиница: ${pickHotelName(hotel)}${hotel?.address ? ` · ${hotel.address}` : ""}`;
     hdr.font = HEADER_FONT;
     hdr.alignment = { horizontal: "left" };
-    hdr.fill = {
-      type: "pattern",
-      pattern: "solid",
-      fgColor: { argb: "FFEEF2F7" },
-    };
+    hdr.fill = SUBHEADER_FILL;
     rowIdx += 1;
 
     // Источник данных: saved hotelReport, fallback на нули
@@ -962,73 +1063,11 @@ export function addCombinedSheet(wb, opts) {
     });
   });
 
-  // ── Блок «Трансфер» ──
-  let lastTransferRow = null;
-  // Писали ли в колонку «Итого» деньги трансфера — под гейтом это единственное,
-  // что в ней вообще может оказаться.
-  let transferMoney = false;
-  let gapRow = null; // строка-разделитель есть только вместе с блоком трансфера
-  if (includeTransfer) {
-    gapRow = rowIdx;
-    rowIdx += 1;
-    const tHeaderRow = rowIdx;
-    ws.mergeCells(`${letter("fullName")}${tHeaderRow}:${letter("outTime")}${tHeaderRow}`);
-    const tHdr = ws.getCell(`${letter("fullName")}${tHeaderRow}`);
-    tHdr.value = "Трансфер";
-    tHdr.font = HEADER_FONT;
-    tHdr.alignment = { horizontal: "center" };
-    rowIdx += 1;
-
-    // ARRIVAL
-    const arrival = request?.transferService;
-    const aFirstType = (arrival?.drivers ?? []).find((d) => d.vehicleType)?.vehicleType ?? "";
-    const aCost = transferCost(arrival?.drivers);
-    if (arrival?.plan?.enabled && !hidden.has("transfer")) {
-      const aRow = ws.getRow(rowIdx);
-      put(aRow, "fullName", "аэропорт → гостиницы");
-      put(aRow, "personType", aFirstType);
-      if (arrival?.plan?.plannedAt) {
-        const dt = toExcelLocal(new Date(arrival.plan.plannedAt));
-        aRow.getCell(at.inDate).value = dt; aRow.getCell(at.inDate).numFmt = fmtDate;
-        aRow.getCell(at.inTime).value = dt; aRow.getCell(at.inTime).numFmt = fmtTime;
-      }
-      if (aCost != null) {
-        put(aRow, "total", aCost);
-        transferMoney = true;
-      }
-      lastTransferRow = rowIdx;
-      rowIdx += 1;
-    }
-
-    // DEPARTURE
-    const departure = request?.departureTransferService;
-    const dFirstType = (departure?.drivers ?? []).find((d) => d.vehicleType)?.vehicleType ?? "";
-    const dCost = transferCost(departure?.drivers);
-    if (departure?.plan?.enabled && !hidden.has("transferDeparture")) {
-      const dRow = ws.getRow(rowIdx);
-      put(dRow, "fullName", "гостиницы → аэропорт");
-      put(dRow, "personType", dFirstType);
-      if (departure?.plan?.plannedAt) {
-        const dt = toExcelLocal(new Date(departure.plan.plannedAt));
-        dRow.getCell(at.inDate).value = dt; dRow.getCell(at.inDate).numFmt = fmtDate;
-        dRow.getCell(at.inTime).value = dt; dRow.getCell(at.inTime).numFmt = fmtTime;
-      }
-      if (dCost != null) {
-        put(dRow, "total", dCost);
-        transferMoney = true;
-      }
-      lastTransferRow = rowIdx;
-      rowIdx += 1;
-    }
-  }
-
-  // ── Итого ──
-  const totalRow = ws.getRow(rowIdx);
-  totalRow.getCell(1).value = "Итого:";
-  totalRow.getCell(1).font = HEADER_FONT;
-  // Явное выравнивание: иначе проход центрирует с переносом в узкой колонке A.
-  totalRow.getCell(1).alignment = { vertical: "middle", horizontal: "left" };
-  if (firstPersonRow != null && lastPersonRow != null) {
+  // «Итого:» по колонкам проживания — общий кусок обеих раскладок: прежняя
+  // пишет строку внизу, под блоком трансфера, новая — сразу под гостями.
+  const putLivingTotals = (totalRow) => {
+    putTotalLabel(totalRow, "Итого:");
+    if (firstPersonRow == null || lastPersonRow == null) return;
     const range = (key) => `${letter(key)}${firstPersonRow}:${letter(key)}${lastPersonRow}`;
     const sum = (key) => ({ formula: `SUM(${range(key)})` });
     const product = (countKey, priceKey) => ({
@@ -1048,22 +1087,135 @@ export function addCombinedSheet(wb, opts) {
     putMoney(totalRow, "foodCost", sum("foodCost"));
     // «Скидка» — не суммируется.
     putMoney(totalRow, "accommodationCost", sum("accommodationCost"));
-  }
-  const sumStart = firstPersonRow ?? 5;
-  const sumEnd = lastTransferRow ?? lastPersonRow ?? sumStart;
-  // Под гейтом суммировать нечего, пока в колонке нет денег трансфера.
-  if (!hideMoney || transferMoney) {
-    put(totalRow, "total", {
-      formula: `SUM(${letter("total")}${sumStart}:${letter("total")}${sumEnd})`,
+  };
+
+  if (legacyLayout) {
+    // ── Прежний блок «Трансфер» ──
+    let lastTransferRow = null;
+    // Писали ли в колонку «Итого» деньги трансфера — под гейтом это единственное,
+    // что в ней вообще может оказаться.
+    let transferMoney = false;
+    let gapRow = null; // строка-разделитель есть только вместе с блоком трансфера
+    if (includeTransfer) {
+      gapRow = rowIdx;
+      rowIdx += 1;
+      const tHeaderRow = rowIdx;
+      ws.mergeCells(`${letter("fullName")}${tHeaderRow}:${letter("outTime")}${tHeaderRow}`);
+      const tHdr = ws.getCell(`${letter("fullName")}${tHeaderRow}`);
+      tHdr.value = "Трансфер";
+      tHdr.font = HEADER_FONT;
+      tHdr.alignment = { horizontal: "center" };
+      rowIdx += 1;
+
+      // ARRIVAL
+      const arrival = request?.transferService;
+      const aFirstType = (arrival?.drivers ?? []).find((d) => d.vehicleType)?.vehicleType ?? "";
+      const aCost = transferCost(arrival?.drivers);
+      if (arrival?.plan?.enabled && !hidden.has("transfer")) {
+        const aRow = ws.getRow(rowIdx);
+        put(aRow, "fullName", "аэропорт → гостиницы");
+        put(aRow, "personType", aFirstType);
+        if (arrival?.plan?.plannedAt) {
+          const dt = toExcelLocal(new Date(arrival.plan.plannedAt));
+          aRow.getCell(at.inDate).value = dt; aRow.getCell(at.inDate).numFmt = fmtDate;
+          aRow.getCell(at.inTime).value = dt; aRow.getCell(at.inTime).numFmt = fmtTime;
+        }
+        if (aCost != null) {
+          put(aRow, "total", aCost);
+          transferMoney = true;
+        }
+        lastTransferRow = rowIdx;
+        rowIdx += 1;
+      }
+
+      // DEPARTURE
+      const departure = request?.departureTransferService;
+      const dFirstType = (departure?.drivers ?? []).find((d) => d.vehicleType)?.vehicleType ?? "";
+      const dCost = transferCost(departure?.drivers);
+      if (departure?.plan?.enabled && !hidden.has("transferDeparture")) {
+        const dRow = ws.getRow(rowIdx);
+        put(dRow, "fullName", "гостиницы → аэропорт");
+        put(dRow, "personType", dFirstType);
+        if (departure?.plan?.plannedAt) {
+          const dt = toExcelLocal(new Date(departure.plan.plannedAt));
+          dRow.getCell(at.inDate).value = dt; dRow.getCell(at.inDate).numFmt = fmtDate;
+          dRow.getCell(at.inTime).value = dt; dRow.getCell(at.inTime).numFmt = fmtTime;
+        }
+        if (dCost != null) {
+          put(dRow, "total", dCost);
+          transferMoney = true;
+        }
+        lastTransferRow = rowIdx;
+        rowIdx += 1;
+      }
+    }
+
+    // ── Итого ──
+    const totalRow = ws.getRow(rowIdx);
+    putLivingTotals(totalRow);
+    const sumStart = firstPersonRow ?? 5;
+    const sumEnd = lastTransferRow ?? lastPersonRow ?? sumStart;
+    // Под гейтом суммировать нечего, пока в колонке нет денег трансфера.
+    if (!hideMoney || transferMoney) {
+      put(totalRow, "total", {
+        formula: `SUM(${letter("total")}${sumStart}:${letter("total")}${sumEnd})`,
+      });
+    }
+
+    applyHotelColumnWidths(ws, cols);
+    finishSheet(ws, {
+      lastCol,
+      moneyCols,
+      leftCols,
+      skipRows: gapRow == null ? [] : [gapRow],
     });
+    return ws;
+  }
+
+  // ── «Итого:» проживания — сразу под гостями ──
+  let livingTotalRow = null;
+  if (firstPersonRow != null) {
+    livingTotalRow = rowIdx;
+    const totalRow = ws.getRow(rowIdx);
+    putLivingTotals(totalRow);
+    putMoney(totalRow, "total", {
+      formula: `SUM(${letter("total")}${firstPersonRow}:${letter("total")}${lastPersonRow})`,
+    });
+    rowIdx += 1;
+  }
+
+  // ── Таблицы трансфера — как на листах «Трансфер (в гостиницу/в аэропорт)» ──
+  const transfer = writeSummaryTransferTables(ws, rowIdx, { request, hidden, includeTransfer });
+  rowIdx = transfer.rowIdx;
+  const skipRows = [...transfer.skipRows];
+
+  // ── «Всего по заявке» ──
+  // Проживание + трансфер одной суммой — то, что раньше давала нижняя строка
+  // «Итого:». Под hideMoney денег проживания нет, а у трансфера свои «Итого».
+  if (transfer.totalRows.length > 0 && !hideMoney) {
+    skipRows.push(rowIdx); // строка-разделитель
+    rowIdx += 1;
+    const grandRow = ws.getRow(rowIdx);
+    putTotalLabel(grandRow, "Всего по заявке:");
+    const terms = [
+      ...(livingTotalRow != null ? [`${letter("total")}${livingTotalRow}`] : []),
+      ...transfer.totalRows.map((r) => `K${r}`),
+    ];
+    put(grandRow, "total", { formula: terms.join("+") });
   }
 
   applyHotelColumnWidths(ws, cols);
+  if (transfer.totalRows.length > 0) {
+    Object.entries(SUMMARY_TRANSFER_WIDTHS).forEach(([col, width]) => {
+      ws.getColumn(Number(col)).width = width;
+    });
+  }
   finishSheet(ws, {
     lastCol,
     moneyCols,
     leftCols,
-    skipRows: gapRow == null ? [] : [gapRow],
+    skipRows,
+    rowLayouts: transfer.rowLayouts,
   });
   return ws;
 }
@@ -1141,14 +1293,14 @@ export function addRequestReportSheets(wb, request, opts = {}) {
       sheetPrefix,
       hotelIndexes,
       // Без !! отсутствующая услуга (arrEnabled и depEnabled оба undefined)
-      // даёт includeTransfer: undefined, а дефолт деструктуризации в
-      // addCombinedSheet (= true) включает пустой блок «Трансфер».
+      // дала бы includeTransfer: undefined, а дефолт деструктуризации в
+      // addCombinedSheet (= true) — трансфер там, где его нет.
       // Считаем по *Visible, а не по *Enabled: это обязательная часть гейта —
-      // блок «Трансфер» внутри «Сводки» отдаёт направления, типы ТС, время
-      // подачи и суммы, то есть ровно то, что убрали с отдельных листов.
+      // трансфер внутри «Сводки» отдаёт водителей, типы ТС, время подачи и
+      // суммы, то есть ровно то, что убрали с отдельных листов.
       includeTransfer: !!(arrVisible || depVisible),
-      // includeTransfer говорит только «есть ли блок»; какие из двух
-      // направлений внутри него рисовать, решает тот же список ключей.
+      // includeTransfer говорит только «есть ли трансфер»; какие из двух
+      // направлений рисовать, решает тот же список ключей.
       hiddenServiceKeys,
       hideMoney,
     });
