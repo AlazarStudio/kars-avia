@@ -20,9 +20,9 @@
     "semantic_hash": "f1205ee50ce7486fc412175265947d3c"
   },
   "graphQL_requests.js": {
-    "mtime": 1788966893.903117,
-    "ast_hash": "998dc50109d7d01291405f27a1d89e02",
-    "semantic_hash": "998dc50109d7d01291405f27a1d89e02"
+    "mtime": 1789037215.9117827,
+    "ast_hash": "d1fd6d502bd57f5a391b88f1a38d68db",
+    "semantic_hash": "d1fd6d502bd57f5a391b88f1a38d68db"
   },
   "scripts/patchNotes.data.mjs": {
     "mtime": 1788966537.7599192,
@@ -345,9 +345,9 @@
     "semantic_hash": "47305aea00620fd20e21e1a906401f9f"
   },
   "src/Components/Blocks/CreateRequestTarifCategory/CreateRequestTarifCategory.jsx": {
-    "mtime": 1788940027.9002535,
-    "ast_hash": "ba45e9158c09726001d75ea0673c36f7",
-    "semantic_hash": "ba45e9158c09726001d75ea0673c36f7"
+    "mtime": 1789033765.1078954,
+    "ast_hash": "2b2e07d0aa5294952b552b28f717d3a1",
+    "semantic_hash": "2b2e07d0aa5294952b552b28f717d3a1"
   },
   "src/Components/Blocks/CreateRequestTarif/CreateRequestTarif.jsx": {
     "mtime": 1771410138.2601833,
@@ -860,9 +860,9 @@
     "semantic_hash": "70b6c83ba4c1c52695d1c48e8692b5b2"
   },
   "src/Components/Blocks/EditRequestTarifCategory/EditRequestTarifCategory.jsx": {
-    "mtime": 1788940081.3878944,
-    "ast_hash": "ff691e10bb47ca23a47c71f9672f25d3",
-    "semantic_hash": "ff691e10bb47ca23a47c71f9672f25d3"
+    "mtime": 1789033766.9708228,
+    "ast_hash": "c6d234dcea3bef0dd879c9de3bb24a15",
+    "semantic_hash": "c6d234dcea3bef0dd879c9de3bb24a15"
   },
   "src/Components/Blocks/EditRequestTarif/EditRequestTarif.jsx": {
     "mtime": 1788533400.7167454,
@@ -1010,14 +1010,14 @@
     "semantic_hash": "a5b8bd2e8a75a99fb12e2a45e195e709"
   },
   "src/Components/Blocks/FapV2/FapHotelPage/FapHotelPage.jsx": {
-    "mtime": 1788956087.0904722,
-    "ast_hash": "2707ecb54412ad6d51be644f8ffaa07c",
-    "semantic_hash": "2707ecb54412ad6d51be644f8ffaa07c"
+    "mtime": 1789047196.8318787,
+    "ast_hash": "7c7049f65e8744dd0574e910614e4358",
+    "semantic_hash": "7c7049f65e8744dd0574e910614e4358"
   },
   "src/Components/Blocks/FapV2/FapLivingPage/FapLivingPage.jsx": {
-    "mtime": 1788953066.003227,
-    "ast_hash": "ba7bb0d41ea2c8ede2681925ed2454a2",
-    "semantic_hash": "ba7bb0d41ea2c8ede2681925ed2454a2"
+    "mtime": 1789047198.3267334,
+    "ast_hash": "5bbaae4585ab0b95d68df5dc9177fdd5",
+    "semantic_hash": "5bbaae4585ab0b95d68df5dc9177fdd5"
   },
   "src/Components/Blocks/FapV2/FapModeToggle/FapModeToggle.jsx": {
     "mtime": 1784568350.0425403,
@@ -1170,14 +1170,14 @@
     "semantic_hash": "c731b5d86e9dc98138e8faded11ef310"
   },
   "src/Components/Blocks/FapV2/fapReportAccess.js": {
-    "mtime": 1788953066.003227,
-    "ast_hash": "8b19dec9a9790597f1d13cb7ce6f44fd",
-    "semantic_hash": "8b19dec9a9790597f1d13cb7ce6f44fd"
+    "mtime": 1789037215.9254644,
+    "ast_hash": "308ce018147a648adc3eff23e5849b80",
+    "semantic_hash": "308ce018147a648adc3eff23e5849b80"
   },
   "src/Components/Blocks/FapV2/fapReportAccess.test.js": {
-    "mtime": 1788348178.0650928,
-    "ast_hash": "f7be0897ac32f3d3207c73ad71feeeb0",
-    "semantic_hash": "f7be0897ac32f3d3207c73ad71feeeb0"
+    "mtime": 1789037215.9274645,
+    "ast_hash": "b066a6224bb3fef33db86aff5ffd6f0b",
+    "semantic_hash": "b066a6224bb3fef33db86aff5ffd6f0b"
   },
   "src/Components/Blocks/FapV2/fapRooms.js": {
     "mtime": 1786732321.3159838,
@@ -1230,14 +1230,14 @@
     "semantic_hash": "76a98c205d59904d7536bb0651c7e72a"
   },
   "src/Components/Blocks/FapV2/reports/buildReportSheets.js": {
-    "mtime": 1788440037.118624,
-    "ast_hash": "438326fa3f131c63982a6f0e6505526f",
-    "semantic_hash": "438326fa3f131c63982a6f0e6505526f"
+    "mtime": 1789112569.7913902,
+    "ast_hash": "2a0813fea31ef68f19516e2ca5b38c05",
+    "semantic_hash": "2a0813fea31ef68f19516e2ca5b38c05"
   },
   "src/Components/Blocks/FapV2/reports/buildReportSheets.test.js": {
-    "mtime": 1788341628.8006787,
-    "ast_hash": "04d5f7b8891fd9c7ea671ff4306b5b70",
-    "semantic_hash": "04d5f7b8891fd9c7ea671ff4306b5b70"
+    "mtime": 1789112549.691634,
+    "ast_hash": "e72e9aa216f1d5898ccddce043cb427d",
+    "semantic_hash": "e72e9aa216f1d5898ccddce043cb427d"
   },
   "src/Components/Blocks/FapV2/reports/reportRowMatch.js": {
     "mtime": 1784710686.6323118,
@@ -1335,9 +1335,9 @@
     "semantic_hash": "41104637727232a505d542d38ee38d2a"
   },
   "src/Components/Blocks/HotelSettings_tabComponent/HotelSettings_tabComponent.jsx": {
-    "mtime": 1787132447.0250857,
-    "ast_hash": "ab2a55f10904a4357e8c3cf664a69e3c",
-    "semantic_hash": "ab2a55f10904a4357e8c3cf664a69e3c"
+    "mtime": 1789033889.311471,
+    "ast_hash": "3a2d6d099098f8b8c865d30a90b2a72b",
+    "semantic_hash": "3a2d6d099098f8b8c865d30a90b2a72b"
   },
   "src/Components/Blocks/HotelShahmatka_tabComponent/HotelShahmatka_tabComponent.jsx": {
     "mtime": 1788015414.9559386,
@@ -1610,9 +1610,9 @@
     "semantic_hash": "91be8673bd27e8f86488e252e76688f2"
   },
   "src/Components/Blocks/NotificationsSidebar/NotificationsSidebar.jsx": {
-    "mtime": 1788348936.1879897,
-    "ast_hash": "4320b83a8cd476cb3fafdd0464af0e1c",
-    "semantic_hash": "4320b83a8cd476cb3fafdd0464af0e1c"
+    "mtime": 1789044237.202288,
+    "ast_hash": "9cbbf26a9754fc78d6aa59b5849573d9",
+    "semantic_hash": "9cbbf26a9754fc78d6aa59b5849573d9"
   },
   "src/Components/Blocks/OrderInfoSidebar/OrderInfoSidebar.jsx": {
     "mtime": 1784032032.4680219,
@@ -1680,14 +1680,14 @@
     "semantic_hash": "84128dd0b245a3854de28d4018b704b0"
   },
   "src/Components/Blocks/ReportsV2/ReportDraftEditor/ReportDraftDialog.jsx": {
-    "mtime": 1786128728.8377357,
-    "ast_hash": "68eb195e626d5584654ee17abc8e073e",
-    "semantic_hash": "68eb195e626d5584654ee17abc8e073e"
+    "mtime": 1789042005.414018,
+    "ast_hash": "e4c216d9fa01d2e07c9a71ea64581285",
+    "semantic_hash": "e4c216d9fa01d2e07c9a71ea64581285"
   },
   "src/Components/Blocks/ReportsV2/ReportDraftEditor/ReportDraftEditor.jsx": {
-    "mtime": 1788856490.7434328,
-    "ast_hash": "646b6a8e14ed3d0c0789e3e53895c4db",
-    "semantic_hash": "646b6a8e14ed3d0c0789e3e53895c4db"
+    "mtime": 1789044233.3868155,
+    "ast_hash": "9476f17a93abb2e365859e80164bddfb",
+    "semantic_hash": "9476f17a93abb2e365859e80164bddfb"
   },
   "src/Components/Blocks/ReportsV2/ReportDraftEditor/ReportDraftEmptyState.jsx": {
     "mtime": 1786129100.3092926,
@@ -1715,9 +1715,9 @@
     "semantic_hash": "9079945e3925b6a2b7f4a58b2390d874"
   },
   "src/Components/Blocks/ReportsV2/ReportDraftEditor/ReportDraftHeader.jsx": {
-    "mtime": 1788780140.7553365,
-    "ast_hash": "c2af45b2718b19af9e16bedfad5dbb80",
-    "semantic_hash": "c2af45b2718b19af9e16bedfad5dbb80"
+    "mtime": 1789042020.3189034,
+    "ast_hash": "67022879771e9b67ba0125de1799d935",
+    "semantic_hash": "67022879771e9b67ba0125de1799d935"
   },
   "src/Components/Blocks/ReportsV2/ReportDraftEditor/ReportDraftPreview.jsx": {
     "mtime": 1788780140.756978,
@@ -1760,14 +1760,14 @@
     "semantic_hash": "9a0390cce13f55aeacb814a2582b2736"
   },
   "src/Components/Blocks/ReportsV2/ReportDraftEditor/useReportDraft.js": {
-    "mtime": 1788856490.747439,
-    "ast_hash": "540d3daecc8fd2b6def2669372d3fa0c",
-    "semantic_hash": "540d3daecc8fd2b6def2669372d3fa0c"
+    "mtime": 1789042033.5203965,
+    "ast_hash": "a68500e7dbe1a688c48b6ddb33c4fb04",
+    "semantic_hash": "a68500e7dbe1a688c48b6ddb33c4fb04"
   },
   "src/Components/Blocks/ReportsV2/ReportDraftsPanel/ReportDraftsPanel.jsx": {
-    "mtime": 1788349052.8464446,
-    "ast_hash": "f718a3291388f23b5dc435f5c33f467a",
-    "semantic_hash": "f718a3291388f23b5dc435f5c33f467a"
+    "mtime": 1789044239.6741064,
+    "ast_hash": "2a9c2b3e5be381848d0de953618f1b6c",
+    "semantic_hash": "2a9c2b3e5be381848d0de953618f1b6c"
   },
   "src/Components/Blocks/ReportsV2/ReportRulesSidebar/ReportRulesSidebar.jsx": {
     "mtime": 1787589720.2589636,
@@ -1775,9 +1775,9 @@
     "semantic_hash": "ec2348fc312d15864bb4bb75e5fd9b9e"
   },
   "src/Components/Blocks/ReportsV2/ReportsV2.jsx": {
-    "mtime": 1788780140.7637491,
-    "ast_hash": "c13737fa0e61fdea166ff14477bd5dfc",
-    "semantic_hash": "c13737fa0e61fdea166ff14477bd5dfc"
+    "mtime": 1789044242.3836102,
+    "ast_hash": "a0bd140e1f91eaa0fa106b38b2bd8985",
+    "semantic_hash": "a0bd140e1f91eaa0fa106b38b2bd8985"
   },
   "src/Components/Blocks/ReportsV2/ReportsV2Icons.jsx": {
     "mtime": 1786621633.4960778,
@@ -1995,9 +1995,9 @@
     "semantic_hash": "925d4ea897862176e4c613cbea5cf522"
   },
   "src/Components/Blocks/TextEditor/TextEditor.jsx": {
-    "mtime": 1771410138.4121852,
-    "ast_hash": "0d93f32e7ebab284ef2d9c126be0f849",
-    "semantic_hash": "0d93f32e7ebab284ef2d9c126be0f849"
+    "mtime": 1789033763.3429248,
+    "ast_hash": "be39da609b499c813fbc54fa3cea9a5a",
+    "semantic_hash": "be39da609b499c813fbc54fa3cea9a5a"
   },
   "src/Components/Blocks/TlCancelDialog/TlCancelDialog.jsx": {
     "mtime": 1781606418.1888857,
@@ -2245,9 +2245,9 @@
     "semantic_hash": "e186b9b9a21d9514a38ebdac451667a3"
   },
   "src/Components/Pages/AnalyticsForAvia/tabs/PassengerAnalytics/passengerAnalyticsExport.js": {
-    "mtime": 1787643022.3127768,
-    "ast_hash": "5dacabb2b8d1bb798f4bd3d5cd8b161e",
-    "semantic_hash": "5dacabb2b8d1bb798f4bd3d5cd8b161e"
+    "mtime": 1789110594.9261065,
+    "ast_hash": "92ce0e0702a1fad84890833dbad8a48f",
+    "semantic_hash": "92ce0e0702a1fad84890833dbad8a48f"
   },
   "src/Components/Pages/AnalyticsForAvia/tabs/PassengerAnalytics/passengerAnalyticsMappers.js": {
     "mtime": 1784883595.233973,
@@ -2305,9 +2305,9 @@
     "semantic_hash": "93dfa773b3d8a9d714d94bc2da6f2494"
   },
   "src/Components/Pages/FapV2/FapV2.jsx": {
-    "mtime": 1788266125.738629,
-    "ast_hash": "8b7e8b60f2318bd323103e6456c404d4",
-    "semantic_hash": "8b7e8b60f2318bd323103e6456c404d4"
+    "mtime": 1789049023.627376,
+    "ast_hash": "f0c12388a808aeaa399c9622a43ba4ce",
+    "semantic_hash": "f0c12388a808aeaa399c9622a43ba4ce"
   },
   "src/Components/Pages/HotelPreview/HotelPreview.jsx": {
     "mtime": 1782281566.4773004,
@@ -2490,9 +2490,9 @@
     "semantic_hash": "3f750d5aba5c0cd65b382890a34e03ca"
   },
   "src/Components/RoleContent/SuperAdminContent/SuperAdminContent.jsx": {
-    "mtime": 1786113221.2281044,
-    "ast_hash": "49572db271640223b52ac7660f99948a",
-    "semantic_hash": "49572db271640223b52ac7660f99948a"
+    "mtime": 1789042357.1449647,
+    "ast_hash": "5bead0607eba37b485ccb33243c14a2b",
+    "semantic_hash": "5bead0607eba37b485ccb33243c14a2b"
   },
   "src/Components/RoleContent/SuperAdminContent/SuperAdminHotelContent/SuperAdminHotelContent.jsx": {
     "mtime": 1787848865.2774885,
@@ -3105,24 +3105,24 @@
     "semantic_hash": "8a3c69b9ad821a989fd54f91973fad8f"
   },
   "src/utils/manifestFixedWidth.js": {
-    "mtime": 1786770792.78808,
-    "ast_hash": "acf56c5ef9bcd0054cf8e9c7730e0447",
-    "semantic_hash": "acf56c5ef9bcd0054cf8e9c7730e0447"
+    "mtime": 1789111793.4467304,
+    "ast_hash": "596ec2fe99c0a4ae58429404ab6b124f",
+    "semantic_hash": "596ec2fe99c0a4ae58429404ab6b124f"
   },
   "src/utils/manifestFixedWidth.test.js": {
-    "mtime": 1786770777.5102468,
-    "ast_hash": "57d8ec6a3236d95af1a71391a4f1cb99",
-    "semantic_hash": "57d8ec6a3236d95af1a71391a4f1cb99"
+    "mtime": 1789111800.0467336,
+    "ast_hash": "517ad65a3503aa737e144817bb7b53b6",
+    "semantic_hash": "517ad65a3503aa737e144817bb7b53b6"
   },
   "src/utils/manifestProfiles.js": {
-    "mtime": 1787916519.5240753,
-    "ast_hash": "300911ca1fe599588b8f1d10d86291d5",
-    "semantic_hash": "300911ca1fe599588b8f1d10d86291d5"
+    "mtime": 1789111810.2656362,
+    "ast_hash": "eb9424fae1648e444fc049ffb7086427",
+    "semantic_hash": "eb9424fae1648e444fc049ffb7086427"
   },
   "src/utils/manifestProfiles.test.js": {
-    "mtime": 1787916499.6239524,
-    "ast_hash": "65be5b77c1ebe3f9db1398de190d6d79",
-    "semantic_hash": "65be5b77c1ebe3f9db1398de190d6d79"
+    "mtime": 1789111918.8263805,
+    "ast_hash": "b5acd1d8479774a0cb4e9b991acf63eb",
+    "semantic_hash": "b5acd1d8479774a0cb4e9b991acf63eb"
   },
   "src/utils/messageStyles.js": {
     "mtime": 1779444529.758873,
@@ -3145,9 +3145,9 @@
     "semantic_hash": "51212004252afea5c1fc400cfe478d60"
   },
   "src/utils/parseManifestXlsx.js": {
-    "mtime": 1788943981.5274253,
-    "ast_hash": "86fe6af07339b664034e7fcf21c2bc47",
-    "semantic_hash": "86fe6af07339b664034e7fcf21c2bc47"
+    "mtime": 1789111823.0744977,
+    "ast_hash": "dfb02e3a02b9528abbfef3584b92e938",
+    "semantic_hash": "dfb02e3a02b9528abbfef3584b92e938"
   },
   "src/utils/plural.js": {
     "mtime": 1786480512.4986591,
@@ -3232,7 +3232,7 @@
   "docs/FAP2.md": {
     "mtime": 1787305019.5297737,
     "ast_hash": "efa527afd96d4faf14139ffb37852051",
-    "semantic_hash": "efa527afd96d4faf14139ffb37852051"
+    "semantic_hash": ""
   },
   "index.html": {
     "mtime": 1778579898.6912577,
@@ -3820,9 +3820,9 @@
     "semantic_hash": "8099cb1be3807b592f45d20d235a6066"
   },
   "src/utils/hotelDescription.js": {
-    "mtime": 1787858128.968912,
-    "ast_hash": "7b04832cccf95737350f556a8aa74709",
-    "semantic_hash": "7b04832cccf95737350f556a8aa74709"
+    "mtime": 1789033537.4640787,
+    "ast_hash": "c199c8a180e814eb56e517da2d89f4e5",
+    "semantic_hash": "c199c8a180e814eb56e517da2d89f4e5"
   },
   "src/utils/hotelDescription.test.js": {
     "mtime": 1787858045.1238723,
@@ -4053,5 +4053,90 @@
     "mtime": 1788963072.1373987,
     "ast_hash": "f6b30bd6b12c9db55593b3cef79085b4",
     "semantic_hash": "f6b30bd6b12c9db55593b3cef79085b4"
+  },
+  "src/Components/Blocks/FapV2/FapAirlineCommentNote/FapAirlineCommentNote.jsx": {
+    "mtime": 1789036933.3655164,
+    "ast_hash": "a1de52b3af4cfb58d75c0cd191f3bcab",
+    "semantic_hash": "a1de52b3af4cfb58d75c0cd191f3bcab"
+  },
+  "src/Components/Blocks/FapV2/FapReportStageChip/FapReportStageChip.jsx": {
+    "mtime": 1789037215.922457,
+    "ast_hash": "7afe2c0749a4a28fee4830f409cd34c4",
+    "semantic_hash": "7afe2c0749a4a28fee4830f409cd34c4"
+  },
+  "src/Components/Blocks/FapV2/fapReportStages.js": {
+    "mtime": 1789046292.4639559,
+    "ast_hash": "c7fd8a121d760da3f78fe6e7f76afa79",
+    "semantic_hash": "c7fd8a121d760da3f78fe6e7f76afa79"
+  },
+  "src/Components/Blocks/FapV2/fapReportStages.test.js": {
+    "mtime": 1789046285.1622818,
+    "ast_hash": "0e8f59b5e54d9e793fa9b8eaf1343d78",
+    "semantic_hash": "0e8f59b5e54d9e793fa9b8eaf1343d78"
+  },
+  "src/Components/Blocks/HotelAboutEditor/AboutChecklist.jsx": {
+    "mtime": 1789035351.5326228,
+    "ast_hash": "028f56f1df8312915b76ab76f4d2fcc9",
+    "semantic_hash": "028f56f1df8312915b76ab76f4d2fcc9"
+  },
+  "src/Components/Blocks/HotelAboutEditor/AboutLaundry.jsx": {
+    "mtime": 1789033878.3244197,
+    "ast_hash": "5cd42cbd65cd1116a8b8ed3c1f596cb2",
+    "semantic_hash": "5cd42cbd65cd1116a8b8ed3c1f596cb2"
+  },
+  "src/Components/Blocks/HotelAboutEditor/HotelAboutEditor.jsx": {
+    "mtime": 1789035186.2750714,
+    "ast_hash": "1de22deb995037c3ef60ca0516995a0b",
+    "semantic_hash": "1de22deb995037c3ef60ca0516995a0b"
+  },
+  "src/Components/Blocks/ReportsV2/ReportDraftEditor/ReportDraftAirlineComment.jsx": {
+    "mtime": 1789042735.2223914,
+    "ast_hash": "3b18ad0678304404806424b830adfac3",
+    "semantic_hash": "3b18ad0678304404806424b830adfac3"
+  },
+  "src/Components/Blocks/ReportsV2/reportDraftComment.js": {
+    "mtime": 1789037137.4912498,
+    "ast_hash": "a7ffcc9e644f421690e41ca3dfa1f1fd",
+    "semantic_hash": "a7ffcc9e644f421690e41ca3dfa1f1fd"
+  },
+  "src/Components/Blocks/ReportsV2/reportDraftComment.test.js": {
+    "mtime": 1789037120.0601847,
+    "ast_hash": "ef15c871341b72f1e2cc90356d779704",
+    "semantic_hash": "ef15c871341b72f1e2cc90356d779704"
+  },
+  "src/Components/Blocks/ReportsV2/reportDraftLink.js": {
+    "mtime": 1789037149.6846938,
+    "ast_hash": "2d83f8d2380bb04ed0d41868f7eb10de",
+    "semantic_hash": "2d83f8d2380bb04ed0d41868f7eb10de"
+  },
+  "src/Components/Blocks/ReportsV2/reportDraftLink.test.js": {
+    "mtime": 1789042280.2664075,
+    "ast_hash": "dde54565fa9183af09561777f065435d",
+    "semantic_hash": "dde54565fa9183af09561777f065435d"
+  },
+  "src/Components/Pages/FapV2/fapListFilters.js": {
+    "mtime": 1789048738.9643712,
+    "ast_hash": "09a8b98c4f82d0240203c9ef662db9c4",
+    "semantic_hash": "09a8b98c4f82d0240203c9ef662db9c4"
+  },
+  "src/Components/Pages/FapV2/fapListFilters.test.js": {
+    "mtime": 1789048752.3496847,
+    "ast_hash": "c48dc068357d5317eb47b62b25141ea0",
+    "semantic_hash": "c48dc068357d5317eb47b62b25141ea0"
+  },
+  "src/shared/icons/DescriptionIcon.jsx": {
+    "mtime": 1789033879.8323178,
+    "ast_hash": "d3fb214a22bb2edfeafb1dde90327359",
+    "semantic_hash": "d3fb214a22bb2edfeafb1dde90327359"
+  },
+  "src/utils/hotelAbout.js": {
+    "mtime": 1789035158.7268858,
+    "ast_hash": "67ecd42c61836645a2e811d668710a44",
+    "semantic_hash": "67ecd42c61836645a2e811d668710a44"
+  },
+  "src/utils/hotelAbout.test.js": {
+    "mtime": 1789035168.165126,
+    "ast_hash": "9474450c781b7008d6dee3e24302bcd4",
+    "semantic_hash": "9474450c781b7008d6dee3e24302bcd4"
   }
 }
