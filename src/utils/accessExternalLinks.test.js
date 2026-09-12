@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { canSeeExternalLinks, canReopenPassengerService } from "./access.js";
+import {
+  canSeeExternalLinks,
+  canReopenPassengerService,
+  canSeeInternalFapCosts,
+} from "./access.js";
 import { roles } from "../roles.js";
 
 const user = (role, extra = {}) => ({ role, ...extra });
@@ -62,4 +66,21 @@ test("гостиница, авиакомпания и внешний польз�
   assert.equal(canReopenPassengerService(user(roles.airlineAdmin)), false);
   assert.equal(canReopenPassengerService(external("HOTEL")), false);
   assert.equal(canReopenPassengerService(null), false);
+});
+
+test("внутренние деньги ФАП видит диспетчер и супер-админ", () => {
+  assert.equal(canSeeInternalFapCosts(user(roles.superAdmin)), true);
+  assert.equal(canSeeInternalFapCosts(user(roles.dispatcerAdmin)), true);
+  assert.equal(canSeeInternalFapCosts(user(roles.dispatcherModerator)), true);
+});
+
+test("авиакомпания, гостиница и внешний внутренних денег не видят", () => {
+  // Стоимость водителю, километраж и стоимость поставщику в реестр для АК не
+  // идут: бэк отдаёт им null, фронт не должен показывать даже пустое поле.
+  assert.equal(canSeeInternalFapCosts(user(roles.airlineAdmin)), false);
+  assert.equal(canSeeInternalFapCosts(user(roles.airlineModerator)), false);
+  assert.equal(canSeeInternalFapCosts(user(roles.hotelAdmin)), false);
+  assert.equal(canSeeInternalFapCosts(user(roles.hotelModerator)), false);
+  assert.equal(canSeeInternalFapCosts(external("HOTEL")), false);
+  assert.equal(canSeeInternalFapCosts(null), false);
 });

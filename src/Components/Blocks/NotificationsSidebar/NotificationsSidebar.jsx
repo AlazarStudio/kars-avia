@@ -35,6 +35,15 @@ const REPORT_DRAFT_ACTIONS = new Set([
   "reject_airline_report_draft",
 ]);
 
+// Реестры услуг ФАП: отправка АК, утверждение, отзыв. registryId в списке
+// уведомлений бэк не хранит — ведём на страницу реестров; ссылка из письма
+// открывает нужный реестр по ?registryid=.
+const REGISTRY_ACTIONS = new Set([
+  "submit_passenger_service_registry",
+  "approve_passenger_service_registry_airline",
+  "revoke_passenger_service_registry_airline",
+]);
+
 const separatorToType = {
   All: undefined,
   request: "request",
@@ -188,6 +197,9 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
                     const isReportDraftNotice = REPORT_DRAFT_ACTIONS.has(
                       notify?.description?.action
                     );
+                    const isRegistryNotice = REGISTRY_ACTIONS.has(
+                      notify?.description?.action
+                    );
                     const reportsLink =
                       user?.role === roles.superAdmin ? "/reportsV2" : "/reports";
                     const passengerRequestLink = `/far/${notify.passengerRequestId}`;
@@ -219,7 +231,14 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
                               />
                             )}
                           </div>
-                          {isReportDraftNotice ? (
+                          {isRegistryNotice ? (
+                            <p
+                              className={classes.toRequest}
+                              onClick={() => navigate("/far/registries")}
+                            >
+                              <ExportIcon />
+                            </p>
+                          ) : isReportDraftNotice ? (
                             <p
                               className={classes.toRequest}
                               onClick={() => navigate(reportsLink)}

@@ -55,6 +55,12 @@
   border-color: var(--dark-blue);
 }
 
+/* Стоимость водителю: тот же countInput, только шире под сумму в рублях —
+   вешается вторым классом рядом с ним. */
+.moneyInput {
+  width: 110px;
+}
+
 .saveBtn {
   margin-left: auto;
   border: none;

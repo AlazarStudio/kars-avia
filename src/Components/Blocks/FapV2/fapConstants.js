@@ -122,6 +122,40 @@ export const toLocalInputValue = (iso) => {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 };
 
+// Обратная к toLocalInputValue: значение <input type="datetime-local"> → ISO.
+// Пустое и нераспознанное → null, чтобы на сервер не уходил Invalid Date.
+export const fromLocalInputValue = (value) => {
+  if (!value) return null;
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? null : d.toISOString();
+};
+
+// Пусто по-бэковому: null/undefined и строка из одних пробелов.
+const isBlankValue = (value) =>
+  value == null || (typeof value === "string" && !value.trim());
+
+// Зеркало бэкового services/passengerRequest/coerce.js: отрицательное, нечисловое
+// и пустое → null, иначе округление до сотых. Сравнивать черновик с сервером нужно
+// через эту же нормализацию, иначе «60.10» ≠ 60.1 и черновик залипает «грязным».
+export const toMoneyOrNull = (value) => {
+  if (isBlankValue(value)) return null;
+  const num = Number(value);
+  if (!Number.isFinite(num) || num < 0) return null;
+  return Math.round(num * 100) / 100;
+};
+
+// Целое ≥ 0 либо null (количества). Дробное бэк не округляет, а роняет в null —
+// повторяем, иначе «94.5» показывалось бы сохранённым, а в базе лежало бы пусто.
+export const toWholeCountOrNull = (value) => {
+  if (isBlankValue(value)) return null;
+  const num = Number(value);
+  if (!Number.isFinite(num) || num < 0 || !Number.isInteger(num)) return null;
+  return num;
+};
+
+// Число/null сервера → строка для <input type="number"> ("" = не задано).
+export const toDraftString = (v) => (v == null ? "" : String(v));
+
 // Подпись вида размещения: 1 → «одноместное», … 10 → «десятиместное».
 // Словарь покрывает все категории номеров, которые есть в системе (onePlace…tenPlace);
 // число сверх десяти в фонде не встречается, для него остаётся запасная форма «N-местное».

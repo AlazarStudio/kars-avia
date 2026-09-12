@@ -74,6 +74,13 @@ export default function FapBaggageTripFields({
   peopleCount,
   onPeopleCountChange,
   peopleCountMin,
+  // Внутренние поля поездки — только диспетчеру (showInternal): АК и гостиница
+  // с бэка получают null и полей не видят.
+  showInternal = false,
+  driverCost,
+  onDriverCostChange,
+  distanceKm,
+  onDistanceKmChange,
   deliveredAtText,
   costText,
   costHint,
@@ -100,6 +107,20 @@ export default function FapBaggageTripFields({
           <span className={classes.reportFieldLabel}>Дата доставки</span>
           <span className={classes.reportValue}>{deliveredAtText}</span>
         </span>
+        {showInternal && (
+          <>
+            <span className={classes.reportField}>
+              <span className={classes.reportFieldLabel}>Водителю</span>
+              <span className={classes.reportValue}>
+                {driverCost != null ? `${Number(driverCost).toLocaleString("ru-RU")} ₽` : "—"}
+              </span>
+            </span>
+            <span className={classes.reportField}>
+              <span className={classes.reportFieldLabel}>Межгород, км</span>
+              <span className={classes.reportValue}>{distanceKm != null ? distanceKm : "—"}</span>
+            </span>
+          </>
+        )}
       </div>
     );
   }
@@ -137,6 +158,36 @@ export default function FapBaggageTripFields({
             className={classes.countInput}
           />
         </label>
+      )}
+
+      {showInternal && (
+        <>
+          <label className={classes.reportField}>
+            <span className={classes.reportFieldLabel}>Водителю, ₽</span>
+            <input
+              type="number"
+              min={0}
+              step="0.01"
+              value={driverCost ?? ""}
+              onChange={(e) => onDriverCostChange?.(e.target.value)}
+              placeholder="—"
+              className={`${classes.countInput} ${classes.moneyInput}`}
+              title="Стоимость водителю без НДС. В реестр для АК не идёт"
+            />
+          </label>
+          <label className={classes.reportField}>
+            <span className={classes.reportFieldLabel}>Межгород, км</span>
+            <input
+              type="number"
+              min={0}
+              step="0.1"
+              value={distanceKm ?? ""}
+              onChange={(e) => onDistanceKmChange?.(e.target.value)}
+              placeholder="—"
+              className={classes.countInput}
+            />
+          </label>
+        </>
       )}
 
       <span className={classes.reportField}>

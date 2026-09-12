@@ -89,6 +89,15 @@ export const canSeeExternalLinks = (user) =>
 export const canReopenPassengerService = (user) =>
   !isExternalUser(user) && (isSuperAdmin(user) || isDispatcherRole(user));
 
+/**
+ * Кому в ФАП показывать внутренние деньги: стоимость водителю и километраж
+ * поездки багажа, стоимость поставщику на поставке. Список положительный,
+ * как у ссылок-входов: внешний JWT несёт scope, а не role, но защитный
+ * шаблон файла — отсекать внешних явно.
+ */
+export const canSeeInternalFapCosts = (user) =>
+  !isExternalUser(user) && (isSuperAdmin(user) || isDispatcherRole(user));
+
 export const hasAccessMenu = (accessMenu, key) => {
   if (!key) return true;
   const safeMenu = safeAccessMenu(accessMenu);

@@ -15,6 +15,7 @@ import {
 } from "../fapConstants";
 import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
+import { canSeeInternalFapCosts } from "../../../../utils/access";
 import { useBaggageTripDraft } from "../hooks/useBaggageTripDraft";
 import FapBaggageTripFields, {
   deriveTripCost,
@@ -191,6 +192,9 @@ export default function FapBaggagePage({
     onDone: onRefetch,
   });
   const [saving, setSaving] = useState(false);
+  // Стоимость водителю и километраж бэк отдаёт и принимает только от
+  // диспетчерских ролей — авиакомпания и гостиница получают null.
+  const showInternal = canSeeInternalFapCosts(user);
 
   const [completeDelivery] = useMutation(
     COMPLETE_PASSENGER_REQUEST_BAGGAGE_DRIVER_DELIVERY,
@@ -441,6 +445,7 @@ export default function FapBaggagePage({
               canEdit={canEdit}
               canCompleteDelivery={canCompleteDelivery}
               showLinks={showLinks}
+              showInternal={showInternal}
               saving={saving}
               onOpen={() =>
                 navigate(`/far/${requestId}/service/baggage/trip/${idx}`)
@@ -508,6 +513,7 @@ function TaskCard({
   canEdit,
   canCompleteDelivery,
   showLinks,
+  showInternal,
   saving,
   onOpen,
   onComplete,
@@ -536,6 +542,10 @@ function TaskCard({
   const {
     vehicleType,
     setVehicleType,
+    driverCost,
+    setDriverCost,
+    distanceKm,
+    setDistanceKm,
     dirty,
     save,
     saving: savingFields,
@@ -710,6 +720,11 @@ function TaskCard({
         hasReportData={hasReportData}
         vehicleType={canAct ? vehicleType : driver.vehicleType || ""}
         onVehicleTypeChange={setVehicleType}
+        showInternal={showInternal}
+        driverCost={canAct ? driverCost : driver.driverCost}
+        onDriverCostChange={setDriverCost}
+        distanceKm={canAct ? distanceKm : driver.distanceKm}
+        onDistanceKmChange={setDistanceKm}
         deliveredAtText={
           driver.deliveryCompletedAt
             ? formatDateTime(driver.deliveryCompletedAt)

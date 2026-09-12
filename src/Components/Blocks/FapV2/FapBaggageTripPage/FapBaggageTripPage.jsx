@@ -10,6 +10,7 @@ import {
 import { formatDateTime, formatTime } from "../fapConstants";
 import { useToast } from "../../../../contexts/ToastContext";
 import { useDialog } from "../../../../contexts/DialogContext";
+import { canSeeInternalFapCosts } from "../../../../utils/access";
 import { useBaggageTripDraft } from "../hooks/useBaggageTripDraft";
 import FapBaggageTripFields, {
   deriveTripCost,
@@ -177,6 +178,9 @@ export default function FapBaggageTripPage({
   // «план по головам набран», а не «всё развезено». Подробнее — в комментарии
   // у canCompleteDelivery в FapBaggagePage.
   const canCompleteDelivery = canEdit && !isCancelled;
+  // Стоимость водителю и километраж бэк отдаёт и принимает только от
+  // диспетчерских ролей — авиакомпания и гостиница получают null.
+  const showInternal = canSeeInternalFapCosts(user);
 
   const savedPassengers = useMemo(
     () => request?.savedPassengers || [],
@@ -234,6 +238,10 @@ export default function FapBaggageTripPage({
     setVehicleType,
     peopleCount,
     setPeopleCount,
+    driverCost,
+    setDriverCost,
+    distanceKm,
+    setDistanceKm,
     dirty: tripFieldsDirty,
     save: saveTrip,
     saving: savingFields,
@@ -731,6 +739,11 @@ export default function FapBaggageTripPage({
             peopleCount={peopleCount}
             onPeopleCountChange={setPeopleCount}
             peopleCountMin={peopleDraft.length}
+            showInternal={showInternal}
+            driverCost={canAct ? driverCost : driver.driverCost}
+            onDriverCostChange={setDriverCost}
+            distanceKm={canAct ? distanceKm : driver.distanceKm}
+            onDistanceKmChange={setDistanceKm}
             deliveredAtText={
               driver.deliveryCompletedAt
                 ? formatDateTime(driver.deliveryCompletedAt)

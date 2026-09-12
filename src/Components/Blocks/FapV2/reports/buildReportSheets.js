@@ -41,8 +41,8 @@ export function chooseSheetName(rawName, existingNames) {
 const fmtDate = "dd.mm.yyyy";
 const fmtTime = "hh:mm";
 
-const BASE_FONT = { name: "Times New Roman", size: 12 };
-const HEADER_FONT = { ...BASE_FONT, bold: true };
+export const BASE_FONT = { name: "Times New Roman", size: 12 };
+export const HEADER_FONT = { ...BASE_FONT, bold: true };
 const FMT_MONEY = "#,##0.00";
 const THIN_BORDER = {
   top: { style: "thin" },
@@ -61,7 +61,7 @@ const SUBHEADER_FILL = {
 // Сдвигает Date так, чтобы при сериализации в Excel-serial (UTC-based) ячейка
 // показала локальное время браузера, а не UTC. Без этого «12:12 MSK» в БД
 // (хранится как «09:12Z») попадает в Excel как «09:12».
-const toExcelLocal = (d) => {
+export const toExcelLocal = (d) => {
   if (!(d instanceof Date) || Number.isNaN(d.getTime())) return d;
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000);
 };
@@ -215,7 +215,7 @@ const SUMMARY_TRANSFER_WIDTHS = { 3: 16, 4: 30, 5: 30, 8: 22, 9: 14 };
 // вне таблицы: сетка на них склеила бы два блока в один.
 // `rowLayouts` — строки со своей раскладкой (таблицы трансфера в «Сводке»):
 // сетка, деньги и выравнивание у них по своим колонкам, а не по раскладке листа.
-function finishSheet(ws, {
+export function finishSheet(ws, {
   lastCol, moneyCols, leftCols, headerRow = 4, skipRows = [], rowLayouts = new Map(),
 }) {
   const compile = (layout) => ({
@@ -260,7 +260,7 @@ function finishSheet(ws, {
 
 // Подпись строки итога в колонке A. Выравнивание явное: иначе finishSheet
 // центрирует с переносом, и в узкой колонке A слово уезжает на две строки.
-function putTotalLabel(row, text) {
+export function putTotalLabel(row, text) {
   const cell = row.getCell(1);
   cell.value = text;
   cell.font = HEADER_FONT;

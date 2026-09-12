@@ -21,6 +21,12 @@ import FapDestructiveModal from "../FapDestructiveModal/FapDestructiveModal";
 import FapActionButton from "../FapActionButton/FapActionButton";
 import FapHeaderActions from "../FapHeaderActions/FapHeaderActions";
 import useServiceReopen from "../useServiceReopen";
+import FapSupplyCard from "../FapSupplyCard/FapSupplyCard";
+import {
+  canSeeInternalFapCosts,
+  isHotelScoped,
+  isExternalUser,
+} from "../../../../utils/access";
 import CatalogPickerModal, { personKey } from "../CatalogPickerModal/CatalogPickerModal";
 import EditPencilIcon from "../../../../shared/icons/EditPencilIcon";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
@@ -369,6 +375,9 @@ export default function FapWaterMealPage({
   }
 
   const canMutate = canEdit && !isCancelled;
+  // Стоимость поставщику бэк отдаёт и принимает только от диспетчерских ролей —
+  // авиакомпания получает null.
+  const showInternal = canSeeInternalFapCosts(user);
   const hasFreeSlots = planCount == null || people.length < planCount;
   const HeadIcon = SERVICE_HEAD_ICON[serviceKind];
 
@@ -450,6 +459,22 @@ export default function FapWaterMealPage({
           </div>
         </div>
       </div>
+
+      {/* Факт поставки — одна на рейс. Гостинице и внешним карточка не нужна:
+          реестр их не касается. Правится, пока заявка не заперта, независимо
+          от статуса услуги (в т.ч. отменённой) — canEdit страницы без учёта
+          isCancelled. */}
+      {!isHotelScoped(user) && !isExternalUser(user) && (
+        <FapSupplyCard
+          service={service}
+          serviceKind={serviceKind}
+          requestId={request?.id}
+          color={color}
+          canEdit={canEdit}
+          showInternal={showInternal}
+          onRefetch={onRefetch}
+        />
+      )}
 
       {/* List card */}
       <div className={classes.listCard}>

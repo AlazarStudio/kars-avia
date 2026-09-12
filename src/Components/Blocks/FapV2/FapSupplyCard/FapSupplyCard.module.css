@@ -1,0 +1,118 @@
+/* Карточка «Поставка» — в стиле карточек FapWaterMealPage (.kpi / .listCard). */
+.card {
+  background: #fff;
+  border: 1px solid #E4E4EF;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  /* .root — flex-колонка, где .listCard растягивается на остаток. Без этого
+     на низком окне сжимался бы не список (у него свой скролл), а карточка. */
+  flex-shrink: 0;
+}
+
+.title {
+  font-size: 10px;
+  font-weight: 700;
+  color: #545873;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+
+.empty {
+  font-size: 13px;
+  color: #8A8FA8;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px 14px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.label {
+  font-size: 10px;
+  font-weight: 600;
+  color: #545873;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.input {
+  width: 100%;
+  min-width: 0;
+  height: 38px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid #E4E4EF;
+  background: #fff;
+  font-size: 13px;
+  font-family: inherit;
+  color: var(--text);
+  outline: none;
+}
+
+.input:focus {
+  border-color: var(--dark-blue);
+}
+
+.footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.total {
+  font-size: 13px;
+  color: #545873;
+}
+
+.saveBtn {
+  height: 34px;
+  padding: 0 16px;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 12.5px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+/* !important: инлайновый background: color на кнопке иначе побеждает. */
+.saveBtn:disabled {
+  background: #CBD2E4 !important;
+  cursor: not-allowed;
+}
+
+.readGrid {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 6px 16px;
+  font-size: 13px;
+}
+
+.readLabel {
+  color: #64748B;
+}
+
+.readValue {
+  font-weight: 600;
+  color: var(--text);
+}
+
+@media (max-width: 1100px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

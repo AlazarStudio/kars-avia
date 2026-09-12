@@ -525,6 +525,15 @@ export default function FapV2({ user, accessMenu }) {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
+        {!isHotelScoped(user) && (
+          <Button
+            backgroundcolor="#fff"
+            color="var(--dark-blue)"
+            onClick={() => navigate("/far/registries")}
+          >
+            Реестры услуг
+          </Button>
+        )}
         {canAccessMenu(accessMenu, "reserveCreate", user) && (
           <Button
             backgroundcolor="var(--dark-blue)"

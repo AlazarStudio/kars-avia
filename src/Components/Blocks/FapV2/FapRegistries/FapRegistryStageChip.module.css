@@ -1,0 +1,32 @@
+.chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 10px;
+  background: #F4F5F9;
+  color: #545873;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 15px;
+  white-space: nowrap;
+}
+
+.draft {
+  background: #F4F5F9;
+  color: #545873;
+}
+
+.submitted {
+  background: #EFF6FF;
+  color: #1D4ED8;
+}
+
+.returned {
+  background: #FFFBF3;
+  color: #B8741A;
+}
+
+.approved {
+  background: #ECFDF5;
+  color: #15803D;
+}

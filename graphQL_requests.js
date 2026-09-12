@@ -2376,6 +2376,22 @@ export const REMOVE_PASSENGER_REQUEST_PEOPLE = gql`
   }
 `;
 
+export const UPDATE_PASSENGER_REQUEST_SUPPLY = gql`
+  mutation UpdatePassengerRequestSupply(
+    $requestId: ID!
+    $service: PassengerWaterFoodKind!
+    $patch: PassengerServiceSupplyPatchInput!
+  ) {
+    updatePassengerRequestSupply(
+      requestId: $requestId
+      service: $service
+      patch: $patch
+    ) {
+      id
+    }
+  }
+`;
+
 export const SET_PASSENGER_SERVICE_STATUS = gql`
   mutation SetPassengerServiceStatus($id: ID!, $service: PassengerServiceKind!, $status: PassengerServiceStatus!) {
     setPassengerRequestServiceStatus(id: $id, service: $service, status: $status) {
@@ -2642,6 +2658,8 @@ export const COMPLETE_PASSENGER_REQUEST_BAGGAGE_DRIVER_DELIVERY = gql`
           deliveryCompletedAt
           vehicleType
           reportCost
+          driverCost
+          distanceKm
           people {
             personId
             fullName
@@ -2804,6 +2822,8 @@ export const ADD_PASSENGER_REQUEST_BAGGAGE_DRIVER = gql`
           deliveryCompletedAt
           vehicleType
           reportCost
+          driverCost
+          distanceKm
           people {
             personId
             fullName
@@ -4108,6 +4128,8 @@ export const GET_PASSENGER_REQUEST = gql`
           deliveryCompletedAt
           vehicleType
           reportCost
+          driverCost
+          distanceKm
           people {
             personId
             fullName
@@ -4142,6 +4164,12 @@ export const GET_PASSENGER_REQUEST = gql`
           personCategory
           seat
         }
+        supplier
+        suppliedAt
+        quantity
+        unitPrice
+        deliveryCost
+        supplierCost
       }
       plannedPassengersCount
       files
@@ -4176,6 +4204,12 @@ export const GET_PASSENGER_REQUEST = gql`
           personCategory
           seat
         }
+        supplier
+        suppliedAt
+        quantity
+        unitPrice
+        deliveryCost
+        supplierCost
       }
       hotelReports {
         id
@@ -4503,6 +4537,205 @@ export const SET_PASSENGER_REQUEST_HOTEL_REPORT_AIRLINE_APPROVED = gql`
       airlineApproved
       airlineComment
       airlineCommentAt
+    }
+  }
+`;
+
+// ───────── Реестры услуг ФАП за период (PassengerServiceRegistry) ─────────
+// Поля общие для чтения и ответов мутаций: у типа есть id, Apollo нормализует.
+const PASSENGER_SERVICE_REGISTRY_FIELDS = `
+  id
+  createdAt
+  updatedAt
+  kind
+  airlineId
+  airline {
+    id
+    name
+    nameFull
+  }
+  airportId
+  airport {
+    id
+    name
+    code
+    city
+  }
+  periodStart
+  periodEnd
+  number
+  header {
+    appendixLabel
+    contractNumber
+    contractDate
+    executorName
+    executorTitle
+    executorSignatory
+    customerName
+    customerTitle
+    customerSignatory
+  }
+  rows {
+    requestId
+    requestNumber
+    flightNumber
+    flightDate
+    fullName
+    baggageTags
+    addressTo
+    deliveredAt
+    price
+    tripId
+    driverName
+    driverCost
+    distanceKm
+    serviceKind
+    suppliedAt
+    quantity
+    unitPrice
+    amount
+    deliveryCost
+    total
+    supplier
+    supplierCost
+  }
+  totals {
+    rowsCount
+    airlineTotal
+    internalCost
+  }
+  stage
+  createdById
+  submittedAt
+  airlineApprovedAt
+  airlineComment
+  airlineCommentAt
+`;
+
+export const GET_PASSENGER_SERVICE_REGISTRIES = gql`
+  query PassengerServiceRegistries(
+    $filter: PassengerServiceRegistryFilterInput
+    $skip: Int
+    $take: Int
+  ) {
+    passengerServiceRegistries(filter: $filter, skip: $skip, take: $take) {
+      id
+      kind
+      airline {
+        id
+        name
+      }
+      airport {
+        id
+        city
+      }
+      periodStart
+      periodEnd
+      number
+      totals {
+        rowsCount
+        airlineTotal
+      }
+      stage
+      submittedAt
+      airlineApprovedAt
+      airlineCommentAt
+    }
+  }
+`;
+
+export const GET_PASSENGER_SERVICE_REGISTRY = gql`
+  query PassengerServiceRegistry($id: ID!) {
+    passengerServiceRegistry(id: $id) {
+      ${PASSENGER_SERVICE_REGISTRY_FIELDS}
+    }
+  }
+`;
+
+export const GET_PASSENGER_SERVICE_REGISTRY_DEFAULTS = gql`
+  query PassengerServiceRegistryDefaults(
+    $kind: PassengerServiceRegistryKind!
+    $airlineId: ID!
+  ) {
+    passengerServiceRegistryDefaults(kind: $kind, airlineId: $airlineId) {
+      lastNumber
+      header {
+        appendixLabel
+        contractNumber
+        contractDate
+        executorName
+        executorTitle
+        executorSignatory
+        customerName
+        customerTitle
+        customerSignatory
+      }
+      contract {
+        number
+        date
+      }
+    }
+  }
+`;
+
+export const CREATE_PASSENGER_SERVICE_REGISTRY = gql`
+  mutation CreatePassengerServiceRegistry($input: PassengerServiceRegistryCreateInput!) {
+    createPassengerServiceRegistry(input: $input) {
+      ${PASSENGER_SERVICE_REGISTRY_FIELDS}
+    }
+  }
+`;
+
+export const UPDATE_PASSENGER_SERVICE_REGISTRY = gql`
+  mutation UpdatePassengerServiceRegistry($id: ID!, $patch: PassengerServiceRegistryPatchInput!) {
+    updatePassengerServiceRegistry(id: $id, patch: $patch) {
+      ${PASSENGER_SERVICE_REGISTRY_FIELDS}
+    }
+  }
+`;
+
+export const REBUILD_PASSENGER_SERVICE_REGISTRY = gql`
+  mutation RebuildPassengerServiceRegistry($id: ID!) {
+    rebuildPassengerServiceRegistry(id: $id) {
+      ${PASSENGER_SERVICE_REGISTRY_FIELDS}
+    }
+  }
+`;
+
+export const DELETE_PASSENGER_SERVICE_REGISTRY = gql`
+  mutation DeletePassengerServiceRegistry($id: ID!) {
+    deletePassengerServiceRegistry(id: $id)
+  }
+`;
+
+export const SUBMIT_PASSENGER_SERVICE_REGISTRY = gql`
+  mutation SubmitPassengerServiceRegistry($id: ID!) {
+    submitPassengerServiceRegistry(id: $id) {
+      ${PASSENGER_SERVICE_REGISTRY_FIELDS}
+    }
+  }
+`;
+
+export const UNSUBMIT_PASSENGER_SERVICE_REGISTRY = gql`
+  mutation UnsubmitPassengerServiceRegistry($id: ID!) {
+    unsubmitPassengerServiceRegistry(id: $id) {
+      ${PASSENGER_SERVICE_REGISTRY_FIELDS}
+    }
+  }
+`;
+
+export const SET_PASSENGER_SERVICE_REGISTRY_AIRLINE_APPROVED = gql`
+  mutation SetPassengerServiceRegistryAirlineApproved(
+    $id: ID!
+    $approved: Boolean!
+    $comment: String
+  ) {
+    setPassengerServiceRegistryAirlineApproved(
+      id: $id
+      approved: $approved
+      comment: $comment
+    ) {
+      ${PASSENGER_SERVICE_REGISTRY_FIELDS}
     }
   }
 `;
