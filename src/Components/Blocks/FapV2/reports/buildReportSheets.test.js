@@ -195,8 +195,12 @@ test("сводка: Y1 остаётся справа и без границ (с�
 
 // ── Доставка багажа (addBaggageSheet) ──
 //
-// Раскладка фикстуры: 5 — водитель №1, 6 — сабхедер мини-таблицы, 7-8 — его
-// пассажиры, 9 — водитель №2 (пассажиров нет → сабхедера нет), 10 — «Итого:».
+// Реестр по багажу: строка = пассажир. Раскладка фикстуры: 5 — подзаголовок
+// поездки №1, 6-7 — её пассажиры, 8 — подзаголовок поездки №2 (пассажиров нет),
+// 9 — подзаголовок поездки №3, 10 — её пассажир, 11 — «Итого:».
+//
+// pickupAt/addressFrom/addressTo водителя в фикстуре нет намеренно: у багажных
+// поездок они не заполняются, и раскладка их больше не печатает.
 function makeBaggageRequest() {
   return {
     airline: { id: "a1", name: "Азимут", nameFull: "АО «Авиакомпания Азимут»" },
@@ -207,12 +211,10 @@ function makeBaggageRequest() {
         {
           fullName: "Водителев В.В.",
           phone: "+7 900 000-00-01",
-          pickupAt: "2026-08-01T12:00:00.000Z",
-          addressFrom: "Аэропорт",
-          addressTo: "Город",
           vehicleType: "Легковой",
           reportCost: 3500,
-          peopleCount: 2, // не читается кодом — поле здесь зеркалит реальный payload
+          deliveryCompletedAt: "2026-08-01T12:00:00.000Z",
+          peopleCount: 2, // читается кодом только когда поимённого списка нет
           people: [
             {
               personId: "p1",
@@ -233,13 +235,28 @@ function makeBaggageRequest() {
         {
           fullName: "Пустов П.П.",
           phone: null,
-          pickupAt: null,
-          addressFrom: null,
-          addressTo: null,
           vehicleType: null,
           reportCost: null,
+          deliveryCompletedAt: null,
           peopleCount: 0,
           people: [],
+        },
+        {
+          fullName: "Возов В.В.",
+          phone: "+7 900 000-00-03",
+          vehicleType: "Грузовой",
+          reportCost: 800,
+          deliveryCompletedAt: null, // доставка не завершена
+          peopleCount: 1,
+          people: [
+            {
+              personId: "p3",
+              fullName: "Сидоров С.С.",
+              baggageTags: ["CD900"],
+              reportCost: 800,
+              addressTo: "ул. Третья 3",
+            },
+          ],
         },
       ],
     },
@@ -252,66 +269,85 @@ const baggageSheet = () =>
     sheetNames: new Set(),
   });
 
-test("багаж: строка водителя, сабхедер и строки пассажиров под ним", () => {
+test("багаж: подзаголовок поездки и строки пассажиров под ним", () => {
   const ws = baggageSheet();
   assert.equal(ws.name, "Доставка багажа");
 
-  // Водитель №1
-  assert.equal(ws.getCell("B5").value, "Водителев В.В.");
-  assert.equal(ws.getCell("H5").value, "Легковой");
-  assert.equal(ws.getCell("J5").value, 3500);
-  assert.equal(ws.getCell("I5").value, 2); // «Перевезено» = число пассажиров
+  assert.deepEqual(ws.getRow(4).values.slice(1), [
+    "№", "ФИО пассажира", "Номера бирок", "Адрес доставки",
+    "Дата доставки", "Время доставки", `Сумма${VAT}`,
+  ]);
 
-  // Сабхедер мини-таблицы
-  assert.equal(ws.getCell("B6").value, "Пассажир");
-  assert.equal(ws.getCell("E6").value, "Адрес доставки");
-  assert.equal(ws.getCell("H6").value, "Номера бирок");
-  assert.equal(ws.getCell("J6").value, "Сумма (без НДС)");
-  assert.equal(ws.getCell("B6").font.bold, true);
+  // Поездка №1 — подзаголовок на объединённой A:D, сумма поездки в G
+  assert.ok(ws.model.merges.includes("A5:D5"));
+  assert.equal(
+    ws.getCell("A5").value,
+    "Поездка 1: Водителев В.В., +7 900 000-00-01, Легковой, перевезено 2"
+  );
+  assert.equal(ws.getCell("A5").font.bold, true);
+  assert.equal(ws.getCell("A5").alignment.horizontal, "left");
+  assert.equal(ws.getCell("G5").value, 3500);
 
-  // Пассажиры
-  assert.equal(ws.getCell("B7").value, "Иванов И.И.");
-  assert.equal(ws.getCell("E7").value, "ул. Первая 1");
-  assert.equal(ws.getCell("H7").value, "AB123, AB124");
-  assert.equal(ws.getCell("J7").value, 2000);
-  assert.equal(ws.getCell("B8").value, "Петров П.П.");
-  assert.equal(ws.getCell("E8").value, "ул. Вторая 2");
-  assert.equal(ws.getCell("H8").value, ""); // бирок нет
-  assert.equal(ws.getCell("J8").value, 1500);
+  // Её пассажиры
+  assert.equal(ws.getCell("A6").value, 1);
+  assert.equal(ws.getCell("B6").value, "Иванов И.И.");
+  assert.equal(ws.getCell("C6").value, "AB123, AB124");
+  assert.equal(ws.getCell("D6").value, "ул. Первая 1");
+  assert.ok(ws.getCell("E6").value instanceof Date);
+  assert.equal(ws.getCell("E6").numFmt, "dd.mm.yyyy");
+  assert.ok(ws.getCell("F6").value instanceof Date);
+  assert.equal(ws.getCell("F6").numFmt, "hh:mm");
+  assert.equal(ws.getCell("G6").value, 2000);
+  assert.equal(ws.getCell("A7").value, 2);
+  assert.equal(ws.getCell("B7").value, "Петров П.П.");
+  assert.equal(ws.getCell("C7").value, ""); // бирок нет
+  assert.equal(ws.getCell("G7").value, 1500);
 
-  // Водитель №2: сумм нет, пассажиров нет → сабхедера под ним тоже нет.
-  assert.equal(ws.getCell("B9").value, "Пустов П.П.");
-  assert.ok(ws.getCell("J9").value == null);
-  assert.ok(ws.getCell("I9").value == null);
-  assert.equal(ws.getCell("A10").value, "Итого:");
+  // Поездка №2 — без пассажиров и без сумм, «перевезено» из peopleCount
+  assert.equal(ws.getCell("A8").value, "Поездка 2: Пустов П.П., перевезено 0");
+  assert.ok(ws.getCell("G8").value == null);
+
+  // Поездка №3 — нумерация пассажиров сквозная по листу
+  assert.equal(
+    ws.getCell("A9").value,
+    "Поездка 3: Возов В.В., +7 900 000-00-03, Грузовой, перевезено 1"
+  );
+  assert.equal(ws.getCell("G9").value, 800);
+  assert.equal(ws.getCell("A10").value, 3);
+  assert.equal(ws.getCell("B10").value, "Сидоров С.С.");
+  assert.equal(ws.getCell("A11").value, "Итого:");
 });
 
-test("багаж: итог перечисляет только водительские строки", () => {
+test("багаж: итог перечисляет только строки поездок", () => {
   const ws = baggageSheet();
-  assert.equal(ws.getCell("J10").formula, "J5+J9");
-  assert.equal(ws.getCell("I10").formula, "I5+I9");
-  // Не проверка поведения кода (тот просто копирует d.reportCost в J5) — фиксация
-  // инварианта бэка на уровне фикстуры: reportCost водителя является производной
+  assert.equal(ws.getCell("G11").formula, "G5+G8+G9");
+  // Не проверка поведения кода (тот просто копирует d.reportCost в G5) — фиксация
+  // инварианта бэка на уровне фикстуры: reportCost поездки является производной
   // от пассажиров (Σ reportCost), поэтому SUM по диапазону задвоил бы деньги.
-  assert.equal(ws.getCell("J5").value, ws.getCell("J7").value + ws.getCell("J8").value);
+  assert.equal(ws.getCell("G5").value, ws.getCell("G6").value + ws.getCell("G7").value);
+});
+
+test("багаж: доставка не завершена — дата и время пусты", () => {
+  const ws = baggageSheet();
+  assert.equal(ws.getCell("E10").value, null);
+  assert.equal(ws.getCell("F10").value, null);
 });
 
 test("багаж: деньги в формате #,##0.00, шапка закреплена по 4-ю строку", () => {
   const ws = baggageSheet();
-  assert.equal(ws.getCell("J5").numFmt, "#,##0.00");
+  assert.equal(ws.getCell("G5").numFmt, "#,##0.00");
+  assert.equal(ws.getCell("G6").numFmt, "#,##0.00");
   assert.equal(ws.views[0].state, "frozen");
   assert.equal(ws.views[0].ySplit, 4);
 });
 
-test("багаж: водителей нет — лист есть, «Итого:» без формул", () => {
+test("багаж: поездок нет — лист есть, «Итого:» без формул", () => {
   const request = makeBaggageRequest();
   request.baggageDeliveryService.drivers = [];
   const ws = addBaggageSheet(new ExcelJS.Workbook(), { request, sheetNames: new Set() });
   assert.equal(ws.getCell("A5").value, "Итого:");
-  const j5 = ws.getCell("J5").value;
-  const i5 = ws.getCell("I5").value;
-  assert.ok(!(j5 != null && typeof j5 === "object" && "formula" in j5));
-  assert.ok(!(i5 != null && typeof i5 === "object" && "formula" in i5));
+  const g5 = ws.getCell("G5").value;
+  assert.ok(!(g5 != null && typeof g5 === "object" && "formula" in g5));
 });
 
 test("книга заявки: только багаж — один лист «Доставка багажа» без сводки", () => {
@@ -1343,8 +1379,7 @@ test("подписи: лист трансфера и лист багажа — �
   assert.equal(wb.getWorksheet("Трансфер (в гостиницу)").getCell("K4").value, "Сумма (без НДС)");
   assert.equal(wb.getWorksheet("Трансфер (в аэропорт)").getCell("K4").value, "Сумма (без НДС)");
   const baggage = wb.getWorksheet("Доставка багажа");
-  assert.equal(baggage.getCell("J4").value, "Сумма (без НДС)");
-  assert.equal(baggage.getCell("J6").value, "Сумма (без НДС)"); // сабхедер мини-таблицы
+  assert.equal(baggage.getCell("G4").value, "Сумма (без НДС)");
 });
 
 // ── Лист трансфера: та же таблица потом встаёт в «Сводку» ──
@@ -1753,41 +1788,41 @@ function makeInternalBaggageRequest() {
   return request;
 }
 
-test("багаж: internal печатает «Водителю» и «Межгород, км» у водителей", () => {
+test("багаж: internal печатает «Водителю» и «Межгород, км» в строках поездок", () => {
   const ws = addBaggageSheet(new ExcelJS.Workbook(), {
     request: makeInternalBaggageRequest(),
     sheetNames: new Set(),
     internal: true,
   });
   assert.deepEqual(ws.getRow(4).values.slice(1), [
-    "№", "ФИО водителя", "Телефон", "Адрес отправления", "Адрес прибытия",
-    "Дата подачи", "Время подачи", "Тип ТС", "Перевезено", `Сумма${VAT}`,
+    "№", "ФИО пассажира", "Номера бирок", "Адрес доставки",
+    "Дата доставки", "Время доставки", `Сумма${VAT}`,
     `Водителю${VAT}`, "Межгород, км",
   ]);
-  assert.equal(ws.getCell("K5").value, 2800);
-  assert.equal(ws.getCell("K5").numFmt, "#,##0.00");
-  assert.equal(ws.getCell("L5").value, 120);
-  assert.equal(ws.getCell("K9").value, 900);
-  assert.equal(ws.getCell("L9").value, null);
+  assert.equal(ws.getCell("H5").value, 2800);
+  assert.equal(ws.getCell("H5").numFmt, "#,##0.00");
+  assert.equal(ws.getCell("I5").value, 120);
+  assert.equal(ws.getCell("H8").value, 900);
+  assert.equal(ws.getCell("I8").value, null);
   // Пассажирские строки внутренних колонок не несут.
-  assert.equal(ws.getCell("K7").value, null);
-  assert.equal(ws.getCell("L7").value, null);
-  // «Итого» по K — перечислением водительских строк, как по J; L не суммируется.
-  assert.equal(ws.getCell("K10").value.formula, "K5+K9");
-  assert.equal(ws.getCell("L10").value, null);
-  // Сетка дотянута до L и не дальше.
-  assert.equal(ws.getCell("L5").border.top.style, "thin");
-  assert.ok(!ws.getCell("M5").border, "сетка вышла за L");
+  assert.equal(ws.getCell("H6").value, null);
+  assert.equal(ws.getCell("I6").value, null);
+  // «Итого» по H — перечислением строк поездок, как по G; I не суммируется.
+  assert.equal(ws.getCell("H11").value.formula, "H5+H8+H9");
+  assert.equal(ws.getCell("I11").value, null);
+  // Сетка дотянута до I и не дальше.
+  assert.equal(ws.getCell("I5").border.top.style, "thin");
+  assert.ok(!ws.getCell("J5").border, "сетка вышла за I");
 });
 
-test("багаж: без internal раскладка прежняя — внутренних чисел в листе нет", () => {
+test("багаж: без internal — 7 колонок, внутренних чисел в листе нет", () => {
   const ws = addBaggageSheet(new ExcelJS.Workbook(), {
     request: makeInternalBaggageRequest(),
     sheetNames: new Set(),
   });
-  assert.equal(ws.getRow(4).values.slice(1).length, 10);
+  assert.equal(ws.getRow(4).values.slice(1).length, 7);
   assert.equal(hasCellValue(ws, 2800), false);
   assert.equal(hasCellValue(ws, 900), false);
   assert.equal(hasCellValue(ws, 120), false);
-  assert.ok(!ws.getCell("K5").border, "сетка вышла за J");
+  assert.ok(!ws.getCell("H5").border, "сетка вышла за G");
 });

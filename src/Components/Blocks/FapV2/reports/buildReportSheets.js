@@ -179,9 +179,9 @@ function applyHotelColumnWidths(ws, cols) {
   cols.forEach((c, i) => { ws.getColumn(i + 1).width = c.width; });
 }
 
-// Применить ширины колонок раскладки водительских листов: базовая часть A–H
-// общая для трансфера и доставки багажа, дальше раскладки расходятся —
-// у трансфера есть колонка I «Гос. номер», у багажа её нет.
+// Применить ширины колонок листа трансфера. Доставка багажа раньше делила эту
+// раскладку, но ушла на реестр по пассажирам (BAGGAGE_WIDTHS) — отсюда ветка
+// vehicleNumber: false, у которой сейчас нет вызывающих.
 function applyTransferColumnWidths(ws, { vehicleNumber = false } = {}) {
   ws.getColumn(1).width = 6;      // №
   ws.getColumn(2).width = 26;     // ФИО водителя
@@ -674,12 +674,19 @@ const TRANSFER_HEADERS = [
   "Дата подачи", "Время подачи", "Тип ТС", "Гос. номер", "Перевезено", `Сумма${VAT_SUFFIX}`,
 ];
 
-// Багаж живёт на прежней раскладке из 10 колонок: его мини-таблица пассажиров
-// завязана на жёсткие индексы B/E/H/J, сдвиг колонок её ломает.
+// Багаж — реестр по пассажирам: строка = пассажир, а не рейс водителя. Колонки
+// водителя (телефон, адреса подачи, тип ТС) ушли в строку-подзаголовок поездки:
+// в водительской раскладке они пустовали у каждой пассажирской строки, а «Дата
+// подачи» пустовала и у водителя — у багажных поездок pickupAt не заполняется.
 const BAGGAGE_HEADERS = [
-  "№", "ФИО водителя", "Телефон", "Адрес отправления", "Адрес прибытия",
-  "Дата подачи", "Время подачи", "Тип ТС", "Перевезено", `Сумма${VAT_SUFFIX}`,
+  "№", "ФИО пассажира", "Номера бирок", "Адрес доставки",
+  "Дата доставки", "Время доставки", `Сумма${VAT_SUFFIX}`,
 ];
+
+// Ширины колонок листа багажа. H и I — внутренние колонки диспетчера, их ставит
+// только режим internal: без него это были бы пустые широкие колонки за сеткой.
+const BAGGAGE_WIDTHS = [6, 32, 22, 40, 14, 12, 16];
+const BAGGAGE_INTERNAL_WIDTHS = [16, 14];
 
 // Раскладка таблицы водителей трансфера для finishSheet: 11 колонок A–K,
 // деньги — K, влево — ФИО водителя и адреса.
@@ -793,16 +800,18 @@ export function addTransferSheet(wb, opts) {
 }
 
 /**
- * Лист «Доставка багажа» — раскладка «водитель + его пассажиры».
+ * Лист «Доставка багажа» — реестр по пассажирам (образец заказчицы).
  *
- * Колонки — BAGGAGE_HEADERS (прежняя раскладка трансфера): поездка багажа — это тот же
- * рейс водителя. Под строкой водителя идёт мини-таблица его пассажиров, которая
- * зеркалит экран поездки (ФИО / адрес доставки / номера бирок / сумма), поэтому у
- * пассажирских строк заполнены только B, E, H, J — остальные колонки водительские.
- * Сабхедер мини-таблицы пишется только при непустом списке пассажиров.
+ * Строка = пассажир: ФИО, номера бирок, адрес доставки, дата и время доставки,
+ * сумма. Поездка стоит над своими пассажирами строкой-подзаголовком (водитель,
+ * телефон, тип ТС, сколько перевезено) и несёт деньги поездки в G — так у
+ * пассажирских строк не остаётся пустых водительских колонок.
  *
- * opts.internal: справа дописываются внутренние колонки поездки — K «Водителю» и
- * L «Межгород, км». Это деньги диспетчера, а не авиакомпании (бэк отдаёт их
+ * Дата доставки берётся из driver.deliveryCompletedAt (кнопка «Завершить»), а не
+ * из pickupAt: у багажных поездок время подачи не заполняется вовсе.
+ *
+ * opts.internal: справа дописываются внутренние колонки поездки — H «Водителю» и
+ * I «Межгород, км». Это деньги диспетчера, а не авиакомпании (бэк отдаёт их
  * только ему, остальным null), поэтому решает вызывающая сторона —
  * canSeeInternalFapCosts(user).
  */
@@ -831,86 +840,79 @@ export function addBaggageSheet(wb, opts) {
     cell.alignment = { wrapText: true, vertical: "middle", horizontal: "center" };
   });
   ws.getRow(4).height = 51;
-  applyTransferColumnWidths(ws);
+  BAGGAGE_WIDTHS.forEach((w, i) => { ws.getColumn(i + 1).width = w; });
   if (internal) {
-    ws.getColumn(11).width = 16; // Водителю
-    ws.getColumn(12).width = 14; // Межгород, км
+    BAGGAGE_INTERNAL_WIDTHS.forEach((w, i) => { ws.getColumn(8 + i).width = w; });
   }
 
   const drivers = request?.baggageDeliveryService?.drivers ?? [];
-  const driverRows = []; // номера строк водителей — для формул итога
+  const tripRows = []; // номера строк-подзаголовков поездок — для формул итога
   let rowIdx = 5;
+  let personNo = 0; // сквозная нумерация пассажиров по всему листу
 
   drivers.forEach((d, i) => {
-    const row = ws.getRow(rowIdx);
-    driverRows.push(rowIdx);
-    row.getCell(1).value = i + 1;               // A № (сквозной по водителям)
-    row.getCell(2).value = d.fullName ?? "";    // B
-    row.getCell(3).value = d.phone ?? "";       // C
-    row.getCell(4).value = d.addressFrom ?? ""; // D
-    row.getCell(5).value = d.addressTo ?? "";   // E
-    if (d.pickupAt) {
-      const dt = toExcelLocal(new Date(d.pickupAt));
-      row.getCell(6).value = dt;
-      row.getCell(6).numFmt = fmtDate;
-      row.getCell(7).value = dt;
-      row.getCell(7).numFmt = fmtTime;
-    }
-    row.getCell(8).value = d.vehicleType ?? ""; // H
     const people = d.people ?? [];
-    // «Перевезено» багажного водителя = число его пассажиров: у доставки багажа
-    // поимённый список — это и есть факт (сумма поездки и состав считаются от
-    // пассажиров, см. deriveTripCost на бэке), чужое transportedCount тут не факт.
-    if (people.length > 0) row.getCell(9).value = people.length; // I
-    if (d.reportCost != null) row.getCell(10).value = d.reportCost; // J
+    // «Перевезено» поездки = число её пассажиров: у доставки багажа поимённый
+    // список — это и есть факт (сумма поездки и состав считаются от пассажиров,
+    // см. deriveTripCost на бэке). peopleCount — запасной вариант для поездки,
+    // которую ещё не расписали по именам.
+    const carried = people.length > 0 ? people.length : (d.peopleCount ?? 0);
+
+    const tripRow = rowIdx;
+    tripRows.push(tripRow);
+    ws.mergeCells(`A${tripRow}:D${tripRow}`);
+    const cap = ws.getCell(`A${tripRow}`);
+    const who = [d.fullName ?? "", d.phone, d.vehicleType].filter(Boolean).join(", ");
+    cap.value = `Поездка ${i + 1}: ${who}, перевезено ${carried}`;
+    cap.font = HEADER_FONT;
+    // Явное выравнивание: иначе finishSheet отцентрировал бы подзаголовок.
+    cap.alignment = { vertical: "middle", horizontal: "left" };
+    const row = ws.getRow(tripRow);
+    if (d.reportCost != null) row.getCell(7).value = d.reportCost;      // G Сумма
     if (internal) {
-      if (d.driverCost != null) row.getCell(11).value = d.driverCost;  // K Водителю
-      if (d.distanceKm != null) row.getCell(12).value = d.distanceKm;  // L Межгород, км
+      if (d.driverCost != null) row.getCell(8).value = d.driverCost;    // H Водителю
+      if (d.distanceKm != null) row.getCell(9).value = d.distanceKm;    // I Межгород, км
     }
     rowIdx += 1;
 
-    if (people.length === 0) return;
-
-    const subRow = ws.getRow(rowIdx);
-    [[2, "Пассажир"], [5, "Адрес доставки"], [8, "Номера бирок"], [10, `Сумма${VAT_SUFFIX}`]].forEach(
-      ([col, label]) => {
-        subRow.getCell(col).value = label;
-        subRow.getCell(col).font = HEADER_FONT;
-        // Явное выравнивание: иначе finishSheet раздаёт B/E/H влево (leftCols),
-        // а J по центру — заголовочная строка мини-таблицы разъезжается.
-        subRow.getCell(col).alignment = { vertical: "middle", horizontal: "center" };
-      }
-    );
-    rowIdx += 1;
-
+    // Дата доставки у поездки одна — ставится кнопкой «Завершить»; пока поездка
+    // не завершена, колонки даты и времени пустуют.
+    const done = d.deliveryCompletedAt ? toExcelLocal(new Date(d.deliveryCompletedAt)) : null;
     people.forEach((p) => {
       const pRow = ws.getRow(rowIdx);
-      pRow.getCell(2).value = p.fullName ?? "";                    // B Пассажир
-      pRow.getCell(5).value = p.addressTo ?? "";                   // E Адрес доставки
-      pRow.getCell(8).value = (p.baggageTags ?? []).join(", ");    // H Номера бирок
-      if (p.reportCost != null) pRow.getCell(10).value = p.reportCost; // J Сумма
+      personNo += 1;
+      pRow.getCell(1).value = personNo;                            // A №
+      pRow.getCell(2).value = p.fullName ?? "";                    // B ФИО пассажира
+      pRow.getCell(3).value = (p.baggageTags ?? []).join(", ");    // C Номера бирок
+      pRow.getCell(4).value = p.addressTo ?? "";                   // D Адрес доставки
+      if (done) {
+        pRow.getCell(5).value = done;
+        pRow.getCell(5).numFmt = fmtDate;
+        pRow.getCell(6).value = done;
+        pRow.getCell(6).numFmt = fmtTime;
+      }
+      if (p.reportCost != null) pRow.getCell(7).value = p.reportCost; // G Сумма
       rowIdx += 1;
     });
   });
 
   const totalRow = ws.getRow(rowIdx);
   putTotalLabel(totalRow, "Итого:");
-  if (driverRows.length > 0) {
-    // Перечисление водительских строк, а не SUM диапазона: сумма поездки на бэке —
+  if (tripRows.length > 0) {
+    // Перечисление строк поездок, а не SUM диапазона: сумма поездки на бэке —
     // производная (Σ reportCost её пассажиров), и диапазон задвоил бы деньги.
-    totalRow.getCell(9).value = { formula: driverRows.map((r) => `I${r}`).join("+") };
-    totalRow.getCell(10).value = { formula: driverRows.map((r) => `J${r}`).join("+") };
+    totalRow.getCell(7).value = { formula: tripRows.map((r) => `G${r}`).join("+") };
     // Стоимость водителям — тем же перечислением: пассажирские строки в диапазон
     // не входят. Километраж не суммируется — это не деньги, а признак поездки.
     if (internal) {
-      totalRow.getCell(11).value = { formula: driverRows.map((r) => `K${r}`).join("+") };
+      totalRow.getCell(8).value = { formula: tripRows.map((r) => `H${r}`).join("+") };
     }
   }
 
   finishSheet(ws, {
-    lastCol: internal ? 12 : 10,
-    moneyCols: internal ? [10, 11] : [10],
-    leftCols: [2, 4, 5, 8],
+    lastCol: internal ? 9 : 7,
+    moneyCols: internal ? [7, 8] : [7],
+    leftCols: [2, 3, 4],
   });
   return ws;
 }
