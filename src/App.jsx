@@ -47,7 +47,6 @@ import FapHotelDetailPage from "./Components/Pages/FapV2/FapHotelDetailPage";
 import FapDriverDetailPage from "./Components/Pages/FapV2/FapDriverDetailPage";
 import FapBaggageTripDetailPage from "./Components/Pages/FapV2/FapBaggageTripDetailPage";
 import FapRegistryPage from "./Components/Pages/FapV2/FapRegistryPage";
-import FapRegistriesPage from "./Components/Pages/FapV2/FapRegistriesPage";
 import HotelPMS from "./Components/HotelPMS/HotelPMS";
 import MaintenanceBannerBar from "./Components/Blocks/MaintenanceBanner/MaintenanceBannerBar";
 import AirlineSystemBanner from "./Components/Blocks/AirlineSystemBanner/AirlineSystemBanner";
@@ -178,9 +177,6 @@ function App() {
               path="/:id/representativeRequestsPlacement/:idRequest/driver/:driverIndex"
               element={<RepresentativeDriverDetailPage user={user} />}
             />
-            {/* Реестры услуг ФАП за период. Статический сегмент ранжируется выше
-                параметра :requestId, коллизии нет. */}
-            <Route path="/far/registries" element={<FapRegistriesPage user={user} />} />
             <Route path="/far/:requestId" element={<FapLayout user={user} />}>
               <Route index element={<FapDetailPage user={user} />} />
               <Route

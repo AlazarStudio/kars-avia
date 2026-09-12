@@ -5,20 +5,13 @@ import { formatDateTime } from "../fapConstants";
 // Последнее слово авиакомпании по отчёту гостиницы — плашкой под шапкой
 // страницы, чтобы её видели на любой вкладке. Чисто UI: что показывать и
 // кому, решает FapHotelPage.
-export default function FapAirlineCommentNote({
-  comment,
-  revoked = false,
-  isAirlineViewer = false,
-  entityLabel = "отчёта",
-  revokedTitle = null,
-}) {
+export default function FapAirlineCommentNote({ comment, revoked = false, isAirlineViewer = false }) {
   if (!comment?.text) return null;
 
   const title = revoked
-    ? (revokedTitle ??
-      (isAirlineViewer
-        ? `Вы отозвали утверждение ${entityLabel}`
-        : `Авиакомпания отозвала утверждение ${entityLabel}`))
+    ? isAirlineViewer
+      ? "Вы отозвали утверждение отчёта"
+      : "Авиакомпания отозвала утверждение отчёта"
     : "Комментарий авиакомпании";
 
   return (
@@ -40,6 +33,4 @@ FapAirlineCommentNote.propTypes = {
   }),
   revoked: PropTypes.bool,
   isAirlineViewer: PropTypes.bool,
-  entityLabel: PropTypes.string,
-  revokedTitle: PropTypes.string,
 };

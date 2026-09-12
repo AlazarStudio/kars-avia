@@ -8,7 +8,7 @@ import PassengerRequestLogs from "../../LogsHistory/PassengerRequestLogs";
 import EditIcon from "../../../../shared/icons/EditIcon";
 import DownloadIcon from "../../../../shared/icons/DownloadIcon";
 import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
-import { isExternalUser, isHotelScoped } from "../../../../utils/access";
+import { isExternalUser, isHotelScoped, canSeeInternalFapCosts } from "../../../../utils/access";
 import { downloadRequestReport } from "../reports/buildReportSheets";
 import { visibleHotelIndexes, airlineMoneyHidden } from "../fapReportAccess";
 import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
@@ -61,6 +61,9 @@ export default function FapHeaderActions({
           // Гостинице деньги отчёта проживания не показываем — ни на экране,
           // ни в книге. Авиакомпании — пока цены не согласованы.
           hideMoney: isHotelScoped(user) || airlineMoneyHidden(request, user),
+          // Внутренние деньги поездки багажа (водителю, километраж) — только
+          // диспетчеру: остальным бэк их и не отдаёт.
+          internal: canSeeInternalFapCosts(user),
         });
     } catch (e) {
       notifyError("Ошибка экспорта");

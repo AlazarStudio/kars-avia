@@ -54,6 +54,7 @@ import {
   isExternalUser,
   isAirlineRole,
   isHotelScoped,
+  canSeeInternalFapCosts,
 } from "../../../../utils/access";
 import { visibleServiceKeys } from "../fapServiceVisibility";
 import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
@@ -741,6 +742,9 @@ export default function FapDetail({ user, canEdit = true, canEditCompleted = fal
                       // Гостинице деньги отчёта проживания не показываем — ни на
                       // экране, ни в книге. Авиакомпании — пока цены не согласованы.
                       hideMoney: isHotelScoped(user) || airlineMoneyHidden(request, user),
+                      // Внутренние деньги поездки багажа (водителю, километраж) —
+                      // только диспетчеру: остальным бэк их и не отдаёт.
+                      internal: canSeeInternalFapCosts(user),
                     });
                   }
                   catch (e) { notifyError("Ошибка экспорта"); console.error(e); }

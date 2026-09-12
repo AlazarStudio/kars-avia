@@ -1,8 +1,15 @@
 import ExcelJS from "exceljs";
-import { PERSON_CATEGORY_LABEL, normalizeCategory, placementKindLabel } from "../fapConstants.js";
+import {
+  PERSON_CATEGORY_LABEL,
+  SERVICE_CONFIG,
+  getServiceByKey,
+  normalizeCategory,
+  placementKindLabel,
+} from "../fapConstants.js";
 import { driverFactCount } from "../fapTransferFact.js";
 import { roomKey } from "../fapGroups.js";
 import { lunchboxCountOf } from "../fapReportMoney.js";
+import { supplyTotal } from "../fapSupply.js";
 import { findRowIndexForPerson } from "./reportRowMatch.js";
 
 // ── helpers ──
@@ -41,8 +48,8 @@ export function chooseSheetName(rawName, existingNames) {
 const fmtDate = "dd.mm.yyyy";
 const fmtTime = "hh:mm";
 
-export const BASE_FONT = { name: "Times New Roman", size: 12 };
-export const HEADER_FONT = { ...BASE_FONT, bold: true };
+const BASE_FONT = { name: "Times New Roman", size: 12 };
+const HEADER_FONT = { ...BASE_FONT, bold: true };
 const FMT_MONEY = "#,##0.00";
 const THIN_BORDER = {
   top: { style: "thin" },
@@ -61,7 +68,7 @@ const SUBHEADER_FILL = {
 // Сдвигает Date так, чтобы при сериализации в Excel-serial (UTC-based) ячейка
 // показала локальное время браузера, а не UTC. Без этого «12:12 MSK» в БД
 // (хранится как «09:12Z») попадает в Excel как «09:12».
-export const toExcelLocal = (d) => {
+const toExcelLocal = (d) => {
   if (!(d instanceof Date) || Number.isNaN(d.getTime())) return d;
   return new Date(d.getTime() - d.getTimezoneOffset() * 60000);
 };
@@ -215,7 +222,7 @@ const SUMMARY_TRANSFER_WIDTHS = { 3: 16, 4: 30, 5: 30, 8: 22, 9: 14 };
 // вне таблицы: сетка на них склеила бы два блока в один.
 // `rowLayouts` — строки со своей раскладкой (таблицы трансфера в «Сводке»):
 // сетка, деньги и выравнивание у них по своим колонкам, а не по раскладке листа.
-export function finishSheet(ws, {
+function finishSheet(ws, {
   lastCol, moneyCols, leftCols, headerRow = 4, skipRows = [], rowLayouts = new Map(),
 }) {
   const compile = (layout) => ({
@@ -260,7 +267,7 @@ export function finishSheet(ws, {
 
 // Подпись строки итога в колонке A. Выравнивание явное: иначе finishSheet
 // центрирует с переносом, и в узкой колонке A слово уезжает на две строки.
-export function putTotalLabel(row, text) {
+function putTotalLabel(row, text) {
   const cell = row.getCell(1);
   cell.value = text;
   cell.font = HEADER_FONT;
@@ -793,9 +800,14 @@ export function addTransferSheet(wb, opts) {
  * зеркалит экран поездки (ФИО / адрес доставки / номера бирок / сумма), поэтому у
  * пассажирских строк заполнены только B, E, H, J — остальные колонки водительские.
  * Сабхедер мини-таблицы пишется только при непустом списке пассажиров.
+ *
+ * opts.internal: справа дописываются внутренние колонки поездки — K «Водителю» и
+ * L «Межгород, км». Это деньги диспетчера, а не авиакомпании (бэк отдаёт их
+ * только ему, остальным null), поэтому решает вызывающая сторона —
+ * canSeeInternalFapCosts(user).
  */
 export function addBaggageSheet(wb, opts) {
-  const { request, sheetNames, sheetPrefix = "" } = opts;
+  const { request, sheetNames, sheetPrefix = "", internal = false } = opts;
   const ws = wb.addWorksheet(
     chooseSheetName(prefixedSheetName("Доставка багажа", sheetPrefix), sheetNames)
   );
@@ -807,7 +819,12 @@ export function addBaggageSheet(wb, opts) {
     `Доставка багажа по рейсу № ${request?.flightNumber ?? ""}${cityPart(city)}`;
   ws.getCell("C3").font = HEADER_FONT;
 
-  BAGGAGE_HEADERS.forEach((label, i) => {
+  // Внутренние колонки дописываются к копии: BAGGAGE_HEADERS — константа модуля,
+  // её мутация протекла бы в следующую книгу той же сессии.
+  const headers = internal
+    ? [...BAGGAGE_HEADERS, `Водителю${VAT_SUFFIX}`, "Межгород, км"]
+    : BAGGAGE_HEADERS;
+  headers.forEach((label, i) => {
     const cell = ws.getCell(4, i + 1);
     cell.value = label;
     cell.font = HEADER_FONT;
@@ -815,6 +832,10 @@ export function addBaggageSheet(wb, opts) {
   });
   ws.getRow(4).height = 51;
   applyTransferColumnWidths(ws);
+  if (internal) {
+    ws.getColumn(11).width = 16; // Водителю
+    ws.getColumn(12).width = 14; // Межгород, км
+  }
 
   const drivers = request?.baggageDeliveryService?.drivers ?? [];
   const driverRows = []; // номера строк водителей — для формул итога
@@ -842,6 +863,10 @@ export function addBaggageSheet(wb, opts) {
     // пассажиров, см. deriveTripCost на бэке), чужое transportedCount тут не факт.
     if (people.length > 0) row.getCell(9).value = people.length; // I
     if (d.reportCost != null) row.getCell(10).value = d.reportCost; // J
+    if (internal) {
+      if (d.driverCost != null) row.getCell(11).value = d.driverCost;  // K Водителю
+      if (d.distanceKm != null) row.getCell(12).value = d.distanceKm;  // L Межгород, км
+    }
     rowIdx += 1;
 
     if (people.length === 0) return;
@@ -875,9 +900,145 @@ export function addBaggageSheet(wb, opts) {
     // производная (Σ reportCost её пассажиров), и диапазон задвоил бы деньги.
     totalRow.getCell(9).value = { formula: driverRows.map((r) => `I${r}`).join("+") };
     totalRow.getCell(10).value = { formula: driverRows.map((r) => `J${r}`).join("+") };
+    // Стоимость водителям — тем же перечислением: пассажирские строки в диапазон
+    // не входят. Километраж не суммируется — это не деньги, а признак поездки.
+    if (internal) {
+      totalRow.getCell(11).value = { formula: driverRows.map((r) => `K${r}`).join("+") };
+    }
   }
 
-  finishSheet(ws, { lastCol: 10, moneyCols: [10], leftCols: [2, 4, 5, 8] });
+  finishSheet(ws, {
+    lastCol: internal ? 12 : 10,
+    moneyCols: internal ? [10, 11] : [10],
+    leftCols: [2, 4, 5, 8],
+  });
+  return ws;
+}
+
+// Услуги поставки на листе «Вода и питание», в порядке печати. Ключи — те же,
+// что у гейта видимости услуг книги; подписи и имена полей заявки берутся из
+// SERVICE_CONFIG, чтобы лист звал услуги так же, как плитки на экране.
+const SUPPLY_SERVICE_KEYS = ["water", "meal"];
+
+// Сумма поставки для авиакомпании = количество × цена за единицу + доставка
+// (supplyTotal — зеркало бэкового расчёта). null, когда денег факта нет вовсе:
+// пустая ячейка вместо нуля, как у transferCost. Стоимость поставщику
+// (supplierCost) в книгу не идёт никогда — это внутренние деньги диспетчера.
+const supplyCost = (service) =>
+  service?.unitPrice == null && service?.deliveryCost == null
+    ? null
+    : supplyTotal(service);
+
+// Включённые и не скрытые поставки заявки — с подписью услуги.
+const visibleSupplies = (request, hidden) =>
+  SUPPLY_SERVICE_KEYS
+    .map((key) => ({ key, label: SERVICE_CONFIG[key].label, service: getServiceByKey(request, key) }))
+    .filter(({ key, service }) => service?.plan?.enabled && !hidden.has(key));
+
+// Раскладка листа «Вода и питание»: денежные колонки под hideMoney не
+// печатаются вовсе — как на листе гостиницы (hotelLayout) и по той же причине:
+// пустой заголовок «Сумма» — тот же ответ на вопрос «почём».
+const WATER_MEAL_COLUMNS = [
+  { key: "id", label: "№" },
+  { key: "service", label: "Услуга" },
+  { key: "supplier", label: "Поставщик", left: true },
+  { key: "suppliedDate", label: "Дата поставки" },
+  { key: "suppliedTime", label: "Время поставки" },
+  { key: "quantity", label: "Количество" },
+  { key: "unitPrice", label: `Цена за единицу${VAT_SUFFIX}`, money: true },
+  { key: "deliveryCost", label: `Доставка${VAT_SUFFIX}`, money: true },
+  { key: "total", label: `Сумма${VAT_SUFFIX}`, money: true },
+];
+
+// Ширины — по ключу раскладки, а не по индексу (как applyTransferColumnWidths):
+// под hideMoney денежные колонки исчезают и индексы съезжают.
+const WATER_MEAL_WIDTHS = {
+  id: 6, service: 20, supplier: 28, suppliedDate: 14, suppliedTime: 14,
+  quantity: 12, unitPrice: 18, deliveryCost: 16, total: 14,
+};
+
+function waterMealLayout(hideMoney) {
+  const cols = WATER_MEAL_COLUMNS.filter((c) => !(hideMoney && c.money));
+  const at = {};
+  cols.forEach((c, i) => { at[c.key] = i + 1; });
+  return {
+    cols,
+    at,
+    lastCol: cols.length,
+    letter: (key) => (at[key] ? colLetter(at[key]) : ""),
+    put: (row, key, value) => {
+      if (at[key]) row.getCell(at[key]).value = value;
+    },
+    moneyCols: cols.map((c, i) => (c.money ? i + 1 : 0)).filter(Boolean),
+    leftCols: cols.map((c, i) => (c.left ? i + 1 : 0)).filter(Boolean),
+  };
+}
+
+/**
+ * Лист «Вода и питание» — по строке на каждую включённую поставку заявки.
+ *
+ * Печатается только ФАКТ (поставщик, время поставки, количество, цены): план
+ * живёт на экране услуги, а в книгу уходит то, что предъявляется авиакомпании.
+ * opts.hideMoney — лист без денежных колонок, как у листа гостиницы.
+ */
+export function addWaterMealSheet(wb, opts) {
+  const { request, sheetNames, sheetPrefix = "", hideMoney = false } = opts;
+  const { cols, at, put, letter, lastCol, moneyCols, leftCols } = waterMealLayout(hideMoney);
+  const ws = wb.addWorksheet(
+    chooseSheetName(prefixedSheetName("Вода и питание", sheetPrefix), sheetNames)
+  );
+  const city = pickCity(request, request?.livingService?.hotels?.[0]);
+
+  ws.getCell("A1").value = request?.airline?.nameFull || request?.airline?.name || "";
+  ws.getCell("A1").font = HEADER_FONT;
+  ws.getCell("C3").value =
+    `Вода и питание по рейсу № ${request?.flightNumber ?? ""}${cityPart(city)}`;
+  ws.getCell("C3").font = HEADER_FONT;
+
+  cols.forEach((c, i) => {
+    const cell = ws.getCell(4, i + 1);
+    cell.value = c.label;
+    cell.font = HEADER_FONT;
+    cell.alignment = { wrapText: true, vertical: "middle", horizontal: "center" };
+    ws.getColumn(i + 1).width = WATER_MEAL_WIDTHS[c.key];
+  });
+  ws.getRow(4).height = 51;
+
+  const firstRow = 5;
+  let rowIdx = firstRow;
+  // Гейт видимости на листе не применяется: какие поставки вообще попадают в
+  // книгу, решает addRequestReportSheets.
+  visibleSupplies(request, new Set()).forEach(({ label, service }, i) => {
+    const row = ws.getRow(rowIdx);
+    put(row, "id", i + 1);
+    put(row, "service", label);
+    put(row, "supplier", service.supplier ?? "");
+    if (service.suppliedAt) {
+      const dt = toExcelLocal(new Date(service.suppliedAt));
+      row.getCell(at.suppliedDate).value = dt;
+      row.getCell(at.suppliedDate).numFmt = fmtDate;
+      row.getCell(at.suppliedTime).value = dt;
+      row.getCell(at.suppliedTime).numFmt = fmtTime;
+    }
+    if (service.quantity != null) put(row, "quantity", service.quantity);
+    if (service.unitPrice != null) put(row, "unitPrice", service.unitPrice);
+    if (service.deliveryCost != null) put(row, "deliveryCost", service.deliveryCost);
+    const cost = supplyCost(service);
+    if (cost != null) put(row, "total", cost);
+    rowIdx += 1;
+  });
+
+  const lastRow = rowIdx - 1;
+  const totalRow = ws.getRow(rowIdx);
+  putTotalLabel(totalRow, "Итого:");
+  if (lastRow >= firstRow) {
+    const sum = (key) => ({ formula: `SUM(${letter(key)}${firstRow}:${letter(key)}${lastRow})` });
+    put(totalRow, "quantity", sum("quantity"));
+    // Под hideMoney колонки «Сумма» нет — put промолчит.
+    put(totalRow, "total", sum("total"));
+  }
+
+  finishSheet(ws, { lastCol, moneyCols, leftCols });
   return ws;
 }
 
@@ -1189,10 +1350,28 @@ export function addCombinedSheet(wb, opts) {
   rowIdx = transfer.rowIdx;
   const skipRows = [...transfer.skipRows];
 
+  // ── «Вода и питание» одной строкой ──
+  // Деталь поставки живёт на своём листе, «Сводке» нужна только сумма для АК —
+  // поэтому значение, а не формула: ссылаться в этом листе не на что. Строки
+  // нет, когда денег поставки не заполнено ни у одной видимой услуги.
+  const supplyCosts = visibleSupplies(request, hidden)
+    .map(({ service }) => supplyCost(service))
+    .filter((c) => c != null);
+  let waterMealRow = null;
+  if (!hideMoney && supplyCosts.length > 0) {
+    skipRows.push(rowIdx); // строка-разделитель
+    rowIdx += 1;
+    waterMealRow = rowIdx;
+    const supplyRow = ws.getRow(rowIdx);
+    putTotalLabel(supplyRow, "Вода и питание:");
+    put(supplyRow, "total", supplyCosts.reduce((s, c) => s + c, 0));
+    rowIdx += 1;
+  }
+
   // ── «Всего по заявке» ──
-  // Проживание + трансфер одной суммой — то, что раньше давала нижняя строка
-  // «Итого:». Под hideMoney денег проживания нет, а у трансфера свои «Итого».
-  if (transfer.totalRows.length > 0 && !hideMoney) {
+  // Проживание + трансфер + поставки одной суммой — то, что раньше давала нижняя
+  // строка «Итого:». Под hideMoney денег проживания нет, а у трансфера свои «Итого».
+  if ((transfer.totalRows.length > 0 || waterMealRow != null) && !hideMoney) {
     skipRows.push(rowIdx); // строка-разделитель
     rowIdx += 1;
     const grandRow = ws.getRow(rowIdx);
@@ -1200,6 +1379,7 @@ export function addCombinedSheet(wb, opts) {
     const terms = [
       ...(livingTotalRow != null ? [`${letter("total")}${livingTotalRow}`] : []),
       ...transfer.totalRows.map((r) => `K${r}`),
+      ...(waterMealRow != null ? [`${letter("total")}${waterMealRow}`] : []),
     ];
     put(grandRow, "total", { formula: terms.join("+") });
   }
@@ -1250,11 +1430,14 @@ export function addRequestReportSheets(wb, request, opts = {}) {
     hotelIndexes = null,
     hiddenServiceKeys = [],
     hideMoney = false,
+    internal = false,
   } = opts;
   const livingEnabled = request?.livingService?.plan?.enabled;
   const arrEnabled = request?.transferService?.plan?.enabled;
   const depEnabled = request?.departureTransferService?.plan?.enabled;
   const bagEnabled = request?.baggageDeliveryService?.plan?.enabled;
+  const waterEnabled = request?.waterService?.plan?.enabled;
+  const mealEnabled = request?.mealService?.plan?.enabled;
   // Ключи услуг (SERVICE_CONFIG), скрытых от текущего пользователя правилом
   // fapServiceVisibility: гостинице, которая сама трансфер не возит, на экранах
   // не показывают трансфер и багаж — в книге они тоже не должны появляться,
@@ -1263,11 +1446,15 @@ export function addRequestReportSheets(wb, request, opts = {}) {
   // Ключи — те же строки, что в HOTEL_RESTRICTED_SERVICE_KEYS
   // (src/Components/Blocks/FapV2/fapServiceVisibility.js); импорт не делаем,
   // чтобы модуль отчётов не зависел от модуля видимости — при переименовании
-  // ключа править оба файла парой.
+  // ключа править оба файла парой. Те же имена — ключи SERVICE_CONFIG
+  // (fapConstants.js), включая "water" и "meal": сегодня правило видимости их не
+  // ограничивает, но гейт книги считает их так же, как остальные услуги.
   const hidden = new Set(hiddenServiceKeys);
   const arrVisible = arrEnabled && !hidden.has("transfer");
   const depVisible = depEnabled && !hidden.has("transferDeparture");
   const bagVisible = bagEnabled && !hidden.has("baggage");
+  const waterVisible = waterEnabled && !hidden.has("water");
+  const mealVisible = mealEnabled && !hidden.has("meal");
   // Пустой белый список = ни одной доступной гостиницы (авиакомпания, пока
   // отчёты не отправлены; гостиница, которой в этой заявке нет). Проживание в
   // такой книге не даст ни листов, ни строк в сводке, поэтому считаем его
@@ -1279,7 +1466,8 @@ export function addRequestReportSheets(wb, request, opts = {}) {
   // livingEnabled — в книге появляется пустая «Сводка» без единой строки.
   const livingVisible =
     livingEnabled && !(Array.isArray(hotelIndexes) && hotelIndexes.length === 0);
-  if (!livingVisible && !arrVisible && !depVisible && !bagVisible) {
+  if (!livingVisible && !arrVisible && !depVisible && !bagVisible
+    && !waterVisible && !mealVisible) {
     notifyError?.("Нет данных для отчёта");
     return false;
   }
@@ -1323,7 +1511,11 @@ export function addRequestReportSheets(wb, request, opts = {}) {
   }
   // Белый список гостиниц багаж не гейтит — как и трансфер.
   if (bagVisible) {
-    addBaggageSheet(wb, { request, sheetNames, sheetPrefix });
+    addBaggageSheet(wb, { request, sheetNames, sheetPrefix, internal });
+  }
+  // Обе поставки живут на одном листе — он добавляется, если видна хоть одна.
+  if (waterVisible || mealVisible) {
+    addWaterMealSheet(wb, { request, sheetNames, sheetPrefix, hideMoney });
   }
 
   return true;
