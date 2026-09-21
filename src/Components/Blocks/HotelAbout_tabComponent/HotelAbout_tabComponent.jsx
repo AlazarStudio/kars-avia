@@ -24,6 +24,7 @@ import {
   parseHotelDescription,
   extractAmenities,
 } from "../../../utils/hotelDescription.js";
+import { parseStarValue } from "../../../utils/starRating.js";
 import WifiIcon from "../../../shared/icons/WifiIcon.jsx";
 import MealIcon from "../../../shared/icons/MealIcon.jsx";
 import BarIcon from "../../../shared/icons/BarIcon.jsx";
@@ -100,7 +101,7 @@ function TagIcon() {
 
 
 function StarRow({ value = 0, size = 16 }) {
-  const filled = Math.max(0, Math.min(5, Math.round(Number(value) || 0)));
+  const filled = Math.max(0, Math.min(5, Math.round(parseStarValue(value))));
   return (
     <span className={classes.stars}>
       {Array.from({ length: 5 }).map((_, i) => (

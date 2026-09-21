@@ -1,14 +1,9 @@
 import React, { useState } from "react";
 import classes from "./StarRatingFilter.module.css";
+import { parseStarValue } from "../../../utils/starRating.js";
 
 const STAR_PATH =
   "M12 2.5l2.95 5.98 6.6.96-4.77 4.65 1.13 6.57L12 17.55l-5.9 3.11 1.13-6.57L2.46 9.44l6.6-.96L12 2.5z";
-
-// Парсит значение, понимая и точку, и запятую (в данных встречаются оба).
-const toNum = (v) => {
-  const n = Number(String(v ?? "").replace(",", "."));
-  return Number.isNaN(n) ? 0 : n;
-};
 
 // Звёздная оценка 1..5. По умолчанию шаг 0.5 (полузвёзды) + число с шагом 0.1.
 // integer — только целые: полные звёзды + число с шагом 1.
@@ -25,7 +20,7 @@ function StarRatingFilter({
   width,
   integer = false,
 }) {
-  const current = toNum(value);
+  const current = parseStarValue(value);
   const [hover, setHover] = useState(0);
   const active = disabled ? current : hover || current;
   const canClear = current > 0 && !disabled;
