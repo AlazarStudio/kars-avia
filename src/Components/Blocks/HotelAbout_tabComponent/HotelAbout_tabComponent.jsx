@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useId, useMemo, useRef, useState } from "react";
 import classes from "./HotelAbout_tabComponent.module.css";
 import { useQuery, useSubscription } from "@apollo/client";
 import HotelAboutRoomBlock from "../HotelAboutRoomBlock/HotelAboutRoomBlock.jsx";
@@ -24,7 +24,7 @@ import {
   parseHotelDescription,
   extractAmenities,
 } from "../../../utils/hotelDescription.js";
-import { parseStarValue } from "../../../utils/starRating.js";
+import { starFractions } from "../../../utils/starRating.js";
 import WifiIcon from "../../../shared/icons/WifiIcon.jsx";
 import MealIcon from "../../../shared/icons/MealIcon.jsx";
 import BarIcon from "../../../shared/icons/BarIcon.jsx";
@@ -100,20 +100,38 @@ function TagIcon() {
 
 
 
+const STAR_PATH =
+  "M12 2.6l2.85 5.78 6.38.93-4.62 4.5 1.09 6.35L12 17.77l-5.7 3 1.09-6.35-4.62-4.5 6.38-.93L12 2.6z";
+
+// Ряд из пяти звёзд с дробной заливкой (4.5 → четыре полных и половина), как в
+// редакторе StarRatingFilter. Частичная звезда: золотая заливка, обрезанная
+// clipPath по доле ширины viewBox, поверх — контур.
 function StarRow({ value = 0, size = 16 }) {
-  const filled = Math.max(0, Math.min(5, Math.round(parseStarValue(value))));
+  const clipId = useId().replace(/:/g, "");
   return (
     <span className={classes.stars}>
-      {Array.from({ length: 5 }).map((_, i) => (
-        <svg key={i} width={size} height={size} viewBox="0 0 24 24" fill={i < filled ? "#F5A623" : "none"}>
-          <path
-            d="M12 2.6l2.85 5.78 6.38.93-4.62 4.5 1.09 6.35L12 17.77l-5.7 3 1.09-6.35-4.62-4.5 6.38-.93L12 2.6z"
-            stroke={i < filled ? "#F5A623" : "#C9CEDD"}
-            strokeWidth="1.3"
-            strokeLinejoin="round"
-          />
-        </svg>
-      ))}
+      {starFractions(value).map((frac, i) => {
+        const full = frac >= 1;
+        const partial = frac > 0 && !full;
+        const id = `${clipId}-${i}`;
+        return (
+          <svg key={i} width={size} height={size} viewBox="0 0 24 24" fill="none">
+            {partial && (
+              <clipPath id={id}>
+                <rect x="0" y="0" width={24 * frac} height="24" />
+              </clipPath>
+            )}
+            {partial && <path d={STAR_PATH} fill="#F5A623" clipPath={`url(#${id})`} />}
+            <path
+              d={STAR_PATH}
+              fill={full ? "#F5A623" : "none"}
+              stroke={frac > 0 ? "#F5A623" : "#C9CEDD"}
+              strokeWidth="1.3"
+              strokeLinejoin="round"
+            />
+          </svg>
+        );
+      })}
     </span>
   );
 }

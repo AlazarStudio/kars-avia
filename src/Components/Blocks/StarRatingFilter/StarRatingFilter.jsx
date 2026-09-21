@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import classes from "./StarRatingFilter.module.css";
-import { parseStarValue } from "../../../utils/starRating.js";
+import { parseStarValue, starFractions } from "../../../utils/starRating.js";
 
 const STAR_PATH =
   "M12 2.5l2.95 5.98 6.6.96-4.77 4.65 1.13 6.57L12 17.55l-5.9 3.11 1.13-6.57L2.46 9.44l6.6-.96L12 2.5z";
@@ -39,6 +39,8 @@ function StarRatingFilter({
     onChange(String(clamped));
   };
 
+  const fractions = starFractions(active, max);
+
   return (
     <div
       className={[
@@ -54,7 +56,7 @@ function StarRatingFilter({
       <div className={classes.controls}>
         <div className={classes.stars} onMouseLeave={() => setHover(0)}>
           {Array.from({ length: max }, (_, i) => i + 1).map((n) => {
-            const frac = Math.max(0, Math.min(1, active - (n - 1)));
+            const frac = fractions[n - 1];
             return (
               <span key={n} className={classes.starWrap}>
                 <svg viewBox="0 0 24 24" className={classes.starBase}>
