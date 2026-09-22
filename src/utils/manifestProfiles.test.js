@@ -456,9 +456,94 @@ test("AZIMUT: инфанты идут своими строками, механ�
   assert.equal(detected.profile.lapInfants, undefined);
 });
 
+// ── Выгрузка DCS FlyDubai «LIST OF - ALL PAX» ──
+// Титул с рейсом (строка 0) и заголовок отчёта (строка 1) идут над шапкой (строка 2);
+// футер «END NAMES» — под данными. ФИО выдуманные.
+const FLYDUBAI_HEADER = [
+  "Name", "Dest", "Pax Status", "Group", "Class", "Seq No.", "Seat",
+  "Pax Type", "Bag Count", "Bag Weight", "Gender", "FFP Tier", "PNR",
+];
+const flyDubaiRow = (name, status, group, seq, seat, type) => [
+  name, "DXB", status, group, "Y", seq, seat, type, "0", "0", "M", "", "ABC123",
+];
+const FLYDUBAI_ROWS = [
+  ["FZ994", "22Sep", "MCX ", "DXB ", "0320", "", "PW", "", "", "FO", "", "", ""],
+  ["LIST OF - ALL PAX", "", "", "", "", "", "1J", "140Y", "PW132/1948", "", "", "", ""],
+  FLYDUBAI_HEADER,
+  flyDubaiRow("PETROV IVAN  MR", "C", "", "124", "30C", "ADT"),
+  flyDubaiRow("SIDOROVA ANNA  MS", "", "", "", "", "ADT"),          // не зарегистрирована: без Seq и места
+  flyDubaiRow("KOZLOV PAVEL  MSTR", "C", "B24", "022", "29F", "CHD"),
+  flyDubaiRow("KOZLOVA MARIA  MISS", "O", "B24", "023", "", "CHD"),  // статус O, без места
+  flyDubaiRow("SIDOROVA EVA", "", "", "", "", "INF"),                // инфант — своя строка, без титула
+  flyDubaiRow("IVANOV PETR SERGEEVICH MR", "C", "", "001", "1A", "ADT"), // три слова + титул
+  ["END NAMES", "", "", "", "", "", "", "", "", "", "", "", ""],
+];
+
+test("FLYDUBAI: детекция по шапке «Name … Pax Type»", () => {
+  const detected = detectProfile(FLYDUBAI_ROWS, PROFILES);
+  assert.ok(detected);
+  assert.equal(detected.profile.id, "FLYDUBAI");
+  assert.equal(detected.headerRow, 2);
+  assert.equal(detected.cols.name, 0);
+  assert.equal(detected.cols.seat, 6);
+  assert.equal(detected.cols.cat, 7);
+});
+
+test("FLYDUBAI: титулы срезаны, безместные включены, категории по Pax Type", () => {
+  const detected = detectProfile(FLYDUBAI_ROWS, PROFILES);
+  const people = extractPeople(FLYDUBAI_ROWS, detected.profile, detected.cols);
+  assert.deepEqual(people, [
+    { fullName: "PETROV IVAN", seat: "30C", personCategory: "ADULT" },
+    { fullName: "SIDOROVA ANNA", seat: null, personCategory: "ADULT" },
+    { fullName: "KOZLOV PAVEL", seat: "29F", personCategory: "CHILD" },
+    { fullName: "KOZLOVA MARIA", seat: null, personCategory: "CHILD" },
+    { fullName: "SIDOROVA EVA", seat: null, personCategory: "INFANT" },
+    { fullName: "IVANOV PETR SERGEEVICH", seat: "1A", personCategory: "ADULT" },
+  ]);
+});
+
+test("FLYDUBAI: шапка и футер END NAMES не становятся пассажирами", () => {
+  const detected = detectProfile(FLYDUBAI_ROWS, PROFILES);
+  const people = extractPeople(FLYDUBAI_ROWS, detected.profile, detected.cols);
+  assert.equal(people.length, 6);
+  assert.ok(!people.some((p) => /Name|END NAMES/.test(p.fullName)));
+});
+
+test("FLYDUBAI: № рейса из титульной строки, не время и не группа", () => {
+  const detected = detectProfile(FLYDUBAI_ROWS, PROFILES);
+  assert.equal(detected.profile.flight(FLYDUBAI_ROWS), "FZ994");
+  assert.equal(
+    detected.profile.flight([
+      ["0320", "22Sep"],
+      FLYDUBAI_HEADER,
+      flyDubaiRow("PETROV IVAN  MR", "C", "B24", "1", "1A", "ADT"),
+    ]),
+    "",
+  );
+});
+
+test("FLYDUBAI: без колонки места — seat null у всех, профиль всё равно узнаётся", () => {
+  const headerNoSeat = FLYDUBAI_HEADER.filter((_, i) => i !== 6);
+  const rowsNoSeat = FLYDUBAI_ROWS.map((row, i) =>
+    i === 2 ? headerNoSeat : row.filter((_, c) => c !== 6),
+  );
+  const detected = detectProfile(rowsNoSeat, PROFILES);
+  assert.ok(detected);
+  assert.equal(detected.profile.id, "FLYDUBAI");
+  const people = extractPeople(rowsNoSeat, detected.profile, detected.cols);
+  assert.ok(people.length > 0);
+  assert.ok(people.every((p) => p.seat === null));
+});
+
+test("FLYDUBAI: инфант идёт своей строкой, механизм lapInfants не подключается", () => {
+  const detected = detectProfile(FLYDUBAI_ROWS, PROFILES);
+  assert.equal(detected.profile.lapInfants, undefined);
+});
+
 test("RUSLINE и прочие форматы не перехватывают файлы друг друга", () => {
   assert.equal(detectProfile(RUSLINE_ROWS, PROFILES).profile.id, "RUSLINE");
   assert.equal(detectProfile(AZIMUT_ROWS, PROFILES).profile.id, "AZIMUT");
+  assert.equal(detectProfile(FLYDUBAI_ROWS, PROFILES).profile.id, "FLYDUBAI");
   assert.equal(detectProfile(ICAO_ROWS, PROFILES).profile.id, "ICAO");
   assert.equal(detectProfile(VED_ROWS, PROFILES).profile.id, "PM_TEXT");
   assert.equal(

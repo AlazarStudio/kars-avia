@@ -1,7 +1,7 @@
 // Профили форматов манифестов. Каждый профиль описывает свой формат данными:
 // какие колонки искать, как определить строку-пассажира, категорию и номер рейса.
 // Новый формат = ещё один профиль в массиве PROFILES.
-import { s, isMark, cleanFullName, firstLine } from "./manifestCore.js";
+import { s, isMark, cleanFullName, firstLine, normHeader } from "./manifestCore.js";
 import {
   prepareFixedWidthManifest,
   prepareIcaoManifest,
@@ -181,6 +181,22 @@ const flightAzimut = (rows) => {
   return "";
 };
 
+// № рейса выгрузки FlyDubai — в титульной строке над шапкой («FZ994 | 22Sep | MCX | DXB | 0320»).
+// Ищем только ВЫШЕ шапки (первой строки с колонкой «Pax Type»): ниже в колонке «Group» лежат
+// коды вида «B24», неотличимые от рейса. Первая буква обязательна — иначе подошло бы время «0320».
+const FLYDUBAI_FLIGHT_RE = /^[A-Z][A-Z0-9]\d{1,4}[A-Z]?$/;
+const flightFlyDubai = (rows) => {
+  for (const row of rows || []) {
+    if (!row) continue;
+    if (row.some((cell) => normHeader(cell) === "PAXTYPE")) return "";
+    for (const cell of row) {
+      const value = s(cell).toUpperCase();
+      if (FLYDUBAI_FLIGHT_RE.test(value)) return value;
+    }
+  }
+  return "";
+};
+
 export const PROFILES = [
   {
     id: "PM", // Пассажирская ведомость (форма ПМ)
@@ -311,5 +327,27 @@ export const PROFILES = [
     flight: flightAzimut,
     // lapInfants не подключаем: инфант идёт СВОЕЙ строкой с «INF» в «КАТ» —
     // развернуть «1» у сопровождающего значило бы задвоить его.
+  },
+  {
+    id: "FLYDUBAI", // Выгрузка DCS FlyDubai «LIST OF - ALL PAX»
+    // Обычная таблица: шапка «Name … Seat | Pax Type …» на третьей строке, над ней —
+    // титул с рейсом, под данными — футер «END NAMES».
+    columns: {
+      name: ["NAME"],
+      seat: ["SEAT"],
+      cat: ["PAXTYPE"],
+    },
+    // seat не в required: выгрузка DCS может прийти без места — тогда seat null у всех.
+    required: ["name", "cat"],
+    // Признак — ФОРМА «Pax Type» (ADT/CHD/INF), а не непустота: иначе пассажирами стали бы
+    // сама шапка и футер «END NAMES» (урок ICAO).
+    isPassenger: (row, c) => PLI_CATEGORY[s(row[c.cat]).toUpperCase()] !== undefined,
+    // Коды те же, что у PLI и «Азимута».
+    category: latinCategory,
+    // ФИО «SURNAME GIVEN  MR»: титул срезает и пробелы схлопывает общий cleanFullName,
+    // порядок «фамилия имя» совпадает с ПМ/PNL — дедуп реестра не задваивает.
+    // По «Pax Status» (C / O / пусто) не отсеиваем: незарегистрированные идут в реестр,
+    // как у PNL. lapInfants не подключаем — колонки «инфант у сопровождающего» нет.
+    flight: flightFlyDubai,
   },
 ];
