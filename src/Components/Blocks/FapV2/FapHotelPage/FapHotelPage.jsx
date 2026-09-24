@@ -798,11 +798,11 @@ export default function FapHotelPage({
     return map;
   }, [reportGroups, findTariff]);
 
-  // Раскладка суммы номера по жильцам при тарифе «Номер» (спека 2026-09-02 §3):
-  // сумма номера T = цена × сутки НЕСУЩЕГО — как и была, — но делится между всеми
-  // заселёнными по их скидкам (взрослый платит полную долю, ребёнок половину,
-  // инфант ничего). Считается на весь номер сразу: доля гостя зависит от состава
-  // соседей, поштучно в getEffectiveRow её не вывести.
+  // Раскладка суммы номера по жильцам при тарифе «Номер» (спека 2026-09-24):
+  // цена номера делится на число живших — это база «за сутки на человека», каждый
+  // платит базу × свои сутки, скидка режет его долю (взрослый полную, ребёнок половину,
+  // инфант ничего). Считается на весь номер сразу: база зависит от числа соседей,
+  // поштучно в getEffectiveRow её не вывести.
   //
   // У ОТПРАВЛЕННОГО отчёта раскладки нет: там строки показываются как сохранены
   // (§3.1), иначе живой пересчёт менял бы числа уже ушедшего документа.
@@ -848,7 +848,6 @@ export default function FapHotelPage({
         });
         return;
       }
-      const total = price * toNum(carrier.pd.daysCount);
       // Вес гостя: ручная скидка строки, иначе дефолт возрастной категории.
       // Явный 0 — это «скидка 0%», а не «авто» (как и в режиме «Койко-место»).
       const factors = {};
@@ -860,7 +859,7 @@ export default function FapHotelPage({
         factors[m.index] = 1 - percent / 100;
       });
       const split = splitRoomAccommodation({
-        total,
+        pricePerDay: price,
         carrierKey: carrier.index,
         members: g.members.map((m) => ({
           key: m.index,
@@ -871,6 +870,7 @@ export default function FapHotelPage({
       // Делить нечего (у всех нулевые сутки) — прежнее поведение:
       // вся сумма на несущем, у соседей «в номере».
       if (!split) {
+        const total = price * toNum(carrier.pd.daysCount);
         g.members.forEach((m) => {
           map[m.index] =
             m.index === carrier.index
@@ -895,7 +895,7 @@ export default function FapHotelPage({
           accommodationCost: split.shares[m.index] ?? 0,
           chargeFactor: factors[m.index],
           warning: null,
-          roomTotal: total,
+          roomTotal: split.nominal,
         };
       });
     });
@@ -921,8 +921,8 @@ export default function FapHotelPage({
       const pinnedPrice = reportSubmitted ? pd.savedPricePerDay ?? null : null;
       const room = roomBillingByIndex[personIndex];
       // Режим «Номер» задаётся тарифом несущего гостя и распространяется на ВЕСЬ
-      // номер: цена номера делится поровну по суткам между жильцами, скидка каждого
-      // режет его долю, итог номера = Σ строк (roomSplitByIndex), независимо от их
+      // номер: цена номера делится на число живших, каждый платит базу × свои сутки,
+      // скидка режет его долю, итог номера = Σ строк (roomSplitByIndex), независимо от их
       // собственного тарифа (или его отсутствия).
       if (room?.perRoom) {
         // ОТПРАВЛЕННЫЙ отчёт — документ: строку показываем ровно как сохранена
@@ -4264,7 +4264,7 @@ export default function FapHotelPage({
                       perRoomCarrier && roomBillingByIndex[perRoomCarrier.index]?.perRoom
                     );
                     let roomAccCost = null;
-                    // Номинал номера T = цена вида × сутки несущего (roomTotal из раскладки). Показываем
+                    // Номинал номера T′ = цена вида × Σ суток / число живших (roomTotal из раскладки). Показываем
                     // рядом с суммой строк только когда скидки её уменьшили — иначе чип дезориентирует.
                     let roomAccNominal = null;
                     let roomAccWarn = "";
