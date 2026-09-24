@@ -1,0 +1,12 @@
+{
+  "60": "FAP Report Stage: hotelReportStage & reportStageList",
+  "9": "Airline Analytics: airlineAnalyticsUtils & service comparison",
+  "16": "Report Utils: reportUtils, request stay dates & living price",
+  "34": "Request Pricing: requestPricing.js (overlapping recalculation)",
+  "35": "Support Chat & Documentation Tree: supportAgent",
+  "55": "Infra: Redis pub/sub & pm2 (package.json)",
+  "45": "Price Resolution by Hotel Location (resolvePriceByHotelLocation)",
+  "47": "Room Kind Season Prices: roomKindSeasonPrice & resolver",
+  "61": "Report Tests: airline draft reject & hotel report resubmit",
+  "44": "FAP Supply Fact: coerce.js, supplyFact.js & waterMeal.resolver"
+}

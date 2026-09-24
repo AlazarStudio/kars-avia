@@ -20,14 +20,14 @@
     "semantic_hash": "f1205ee50ce7486fc412175265947d3c"
   },
   "graphQL_requests.js": {
-    "mtime": 1789037215.9117827,
-    "ast_hash": "d1fd6d502bd57f5a391b88f1a38d68db",
-    "semantic_hash": "d1fd6d502bd57f5a391b88f1a38d68db"
+    "mtime": 1789208552.323264,
+    "ast_hash": "f704ab3530a4fafa0a70d7632138ff4c",
+    "semantic_hash": "f704ab3530a4fafa0a70d7632138ff4c"
   },
   "scripts/patchNotes.data.mjs": {
-    "mtime": 1788966537.7599192,
-    "ast_hash": "b738e54969e9bb467e53a34557b47664",
-    "semantic_hash": "b738e54969e9bb467e53a34557b47664"
+    "mtime": 1789207268.248522,
+    "ast_hash": "748fd325777b81e4726b93f02c2cc6f9",
+    "semantic_hash": "748fd325777b81e4726b93f02c2cc6f9"
   },
   "scripts/seedPatchNotes.mjs": {
     "mtime": 1782922037.4670498,
@@ -35,12 +35,12 @@
     "semantic_hash": "da14bba29ad3820e8a431fd09cc49a4c"
   },
   "scripts/systemUpdate.data.mjs": {
-    "mtime": 1788966537.7604418,
-    "ast_hash": "31909971a5453e346ccff9a344dbc682",
-    "semantic_hash": "31909971a5453e346ccff9a344dbc682"
+    "mtime": 1789207268.2533903,
+    "ast_hash": "1c31b41cbac47cd1f39193a86b8a2af2",
+    "semantic_hash": "1c31b41cbac47cd1f39193a86b8a2af2"
   },
   "src/App.jsx": {
-    "mtime": 1788434500.6302855,
+    "mtime": 1789204782.9302127,
     "ast_hash": "473a656407d3cfae185385abac781a40",
     "semantic_hash": "473a656407d3cfae185385abac781a40"
   },
@@ -965,19 +965,19 @@
     "semantic_hash": "8afc2712eb88b9a858ef0f736e51d6e5"
   },
   "src/Components/Blocks/FapV2/FapBaggagePage/FapBaggagePage.jsx": {
-    "mtime": 1788532996.1843693,
-    "ast_hash": "4bb8b0f10f622b50c9e8a1f5179364b6",
-    "semantic_hash": "4bb8b0f10f622b50c9e8a1f5179364b6"
+    "mtime": 1789202339.52478,
+    "ast_hash": "c126e9c243dad6cdb1571cb89bd22806",
+    "semantic_hash": "c126e9c243dad6cdb1571cb89bd22806"
   },
   "src/Components/Blocks/FapV2/FapBaggageTripFields/FapBaggageTripFields.jsx": {
-    "mtime": 1785165334.7145555,
-    "ast_hash": "778904750c2c541dc1e2139544d4aee1",
-    "semantic_hash": "778904750c2c541dc1e2139544d4aee1"
+    "mtime": 1789202413.0727832,
+    "ast_hash": "5f81cc22bf741b2f7c48baba232ad523",
+    "semantic_hash": "5f81cc22bf741b2f7c48baba232ad523"
   },
   "src/Components/Blocks/FapV2/FapBaggageTripPage/FapBaggageTripPage.jsx": {
-    "mtime": 1785926623.1893637,
-    "ast_hash": "485444dfe0b893991245c27df11be36f",
-    "semantic_hash": "485444dfe0b893991245c27df11be36f"
+    "mtime": 1789202342.705644,
+    "ast_hash": "8bf13c1e3de8e5d342b79ff7af152e23",
+    "semantic_hash": "8bf13c1e3de8e5d342b79ff7af152e23"
   },
   "src/Components/Blocks/FapV2/FapCancelledBanner/FapCancelledBanner.jsx": {
     "mtime": 1786525531.8228037,
@@ -995,9 +995,9 @@
     "semantic_hash": "04164e9610adc9e2ee20f74fdd0a0433"
   },
   "src/Components/Blocks/FapV2/FapDetail/FapDetail.jsx": {
-    "mtime": 1788532996.2157109,
-    "ast_hash": "48f30fbb3a3d256166f60603e4d8c11b",
-    "semantic_hash": "48f30fbb3a3d256166f60603e4d8c11b"
+    "mtime": 1789205411.0237043,
+    "ast_hash": "923e4416809e63a7920c21b03e52f89e",
+    "semantic_hash": "923e4416809e63a7920c21b03e52f89e"
   },
   "src/Components/Blocks/FapV2/FapDriverPage/FapDriverPage.jsx": {
     "mtime": 1787066467.5037348,
@@ -1005,14 +1005,14 @@
     "semantic_hash": "a325ae74c2941552df2985faea18881b"
   },
   "src/Components/Blocks/FapV2/FapHeaderActions/FapHeaderActions.jsx": {
-    "mtime": 1788439346.566253,
-    "ast_hash": "a5b8bd2e8a75a99fb12e2a45e195e709",
-    "semantic_hash": "a5b8bd2e8a75a99fb12e2a45e195e709"
+    "mtime": 1789205418.546687,
+    "ast_hash": "2433bc8d62480dae9eb87b6c1cd8ed8b",
+    "semantic_hash": "2433bc8d62480dae9eb87b6c1cd8ed8b"
   },
   "src/Components/Blocks/FapV2/FapHotelPage/FapHotelPage.jsx": {
-    "mtime": 1789047196.8318787,
-    "ast_hash": "7c7049f65e8744dd0574e910614e4358",
-    "semantic_hash": "7c7049f65e8744dd0574e910614e4358"
+    "mtime": 1790247055.56136,
+    "ast_hash": "765d8c3a3e46fa208f6d225cbb339400",
+    "semantic_hash": "765d8c3a3e46fa208f6d225cbb339400"
   },
   "src/Components/Blocks/FapV2/FapLivingPage/FapLivingPage.jsx": {
     "mtime": 1789047198.3267334,
@@ -1055,9 +1055,9 @@
     "semantic_hash": "88eb388b071bf97ff11c1779d30bfd73"
   },
   "src/Components/Blocks/FapV2/FapWaterMealPage/FapWaterMealPage.jsx": {
-    "mtime": 1788532996.3512723,
-    "ast_hash": "ee8135cd6fee1f5b3225f39fb7c0dcbe",
-    "semantic_hash": "ee8135cd6fee1f5b3225f39fb7c0dcbe"
+    "mtime": 1789202353.8868933,
+    "ast_hash": "e8e0682bdbf7ff1ed3313439694efaab",
+    "semantic_hash": "e8e0682bdbf7ff1ed3313439694efaab"
   },
   "src/Components/Blocks/FapV2/GroupChip/GroupChip.jsx": {
     "mtime": 1784748239.0757737,
@@ -1115,14 +1115,14 @@
     "semantic_hash": "52908816e07c6e2fcae3e45055a07626"
   },
   "src/Components/Blocks/FapV2/fapConstants.js": {
-    "mtime": 1786624256.4934528,
-    "ast_hash": "0b51f9f21bee8966d480f10c90d99e96",
-    "semantic_hash": "0b51f9f21bee8966d480f10c90d99e96"
+    "mtime": 1789202194.2140706,
+    "ast_hash": "a31b0ef0a2064997ec8bdef555d0c717",
+    "semantic_hash": "a31b0ef0a2064997ec8bdef555d0c717"
   },
   "src/Components/Blocks/FapV2/fapConstants.test.js": {
-    "mtime": 1786525628.9616385,
-    "ast_hash": "65b1cdfe5d84c488b75a4c7822266720",
-    "semantic_hash": "65b1cdfe5d84c488b75a4c7822266720"
+    "mtime": 1789202282.523082,
+    "ast_hash": "c0ae796121bb03ebcd8158f8aba63c81",
+    "semantic_hash": "c0ae796121bb03ebcd8158f8aba63c81"
   },
   "src/Components/Blocks/FapV2/fapEditAccess.js": {
     "mtime": 1787066726.2549348,
@@ -1220,9 +1220,9 @@
     "semantic_hash": "0ac4509a8f50fa3fa848075830f1d88c"
   },
   "src/Components/Blocks/FapV2/hooks/useBaggageTripDraft.js": {
-    "mtime": 1787571366.7679849,
-    "ast_hash": "5c4e089cc31aa09b7f6ae25b6b370229",
-    "semantic_hash": "5c4e089cc31aa09b7f6ae25b6b370229"
+    "mtime": 1789202316.5377884,
+    "ast_hash": "b0b646ae9d0c76760ba6044be4c02db6",
+    "semantic_hash": "b0b646ae9d0c76760ba6044be4c02db6"
   },
   "src/Components/Blocks/FapV2/hooks/useRepresentativeLink.js": {
     "mtime": 1786524578.0479307,
@@ -1230,14 +1230,14 @@
     "semantic_hash": "76a98c205d59904d7536bb0651c7e72a"
   },
   "src/Components/Blocks/FapV2/reports/buildReportSheets.js": {
-    "mtime": 1789112569.7913902,
-    "ast_hash": "2a0813fea31ef68f19516e2ca5b38c05",
-    "semantic_hash": "2a0813fea31ef68f19516e2ca5b38c05"
+    "mtime": 1789206713.3772933,
+    "ast_hash": "293655a08ee52f85a89cd927df6888d5",
+    "semantic_hash": "293655a08ee52f85a89cd927df6888d5"
   },
   "src/Components/Blocks/FapV2/reports/buildReportSheets.test.js": {
-    "mtime": 1789112549.691634,
-    "ast_hash": "e72e9aa216f1d5898ccddce043cb427d",
-    "semantic_hash": "e72e9aa216f1d5898ccddce043cb427d"
+    "mtime": 1789206642.234945,
+    "ast_hash": "2005b4b956f8d47a5b17cf3bb2a4ed2d",
+    "semantic_hash": "2005b4b956f8d47a5b17cf3bb2a4ed2d"
   },
   "src/Components/Blocks/FapV2/reports/reportRowMatch.js": {
     "mtime": 1784710686.6323118,
@@ -1300,9 +1300,9 @@
     "semantic_hash": "2af1c52cdf64f64d995a70b217888444"
   },
   "src/Components/Blocks/HotelAbout_tabComponent/HotelAbout_tabComponent.jsx": {
-    "mtime": 1788958762.0464852,
-    "ast_hash": "e2e272938aff14ff8348aab25055aea1",
-    "semantic_hash": "e2e272938aff14ff8348aab25055aea1"
+    "mtime": 1789976452.5408134,
+    "ast_hash": "2fa7efc4eae19f90b2ff27bc090062c0",
+    "semantic_hash": "2fa7efc4eae19f90b2ff27bc090062c0"
   },
   "src/Components/Blocks/HotelCompany_tabComponent/HotelCompany_tabComponent.jsx": {
     "mtime": 1779444529.727059,
@@ -1610,7 +1610,7 @@
     "semantic_hash": "91be8673bd27e8f86488e252e76688f2"
   },
   "src/Components/Blocks/NotificationsSidebar/NotificationsSidebar.jsx": {
-    "mtime": 1789044237.202288,
+    "mtime": 1789204805.7436101,
     "ast_hash": "9cbbf26a9754fc78d6aa59b5849573d9",
     "semantic_hash": "9cbbf26a9754fc78d6aa59b5849573d9"
   },
@@ -1925,9 +1925,9 @@
     "semantic_hash": "615267ca90538fa71b27ae1161f47d2d"
   },
   "src/Components/Blocks/StarRatingFilter/StarRatingFilter.jsx": {
-    "mtime": 1782507920.1229174,
-    "ast_hash": "effb8b2b7491e71fd6120cfc9e349910",
-    "semantic_hash": "effb8b2b7491e71fd6120cfc9e349910"
+    "mtime": 1789976458.9146788,
+    "ast_hash": "f8114ef431bbfa17d8edfa32867c67d0",
+    "semantic_hash": "f8114ef431bbfa17d8edfa32867c67d0"
   },
   "src/Components/Blocks/StatusLegend/StatusLegend.jsx": {
     "mtime": 1771410138.409185,
@@ -2300,12 +2300,12 @@
     "semantic_hash": "54b3f45b43c9053e1c5d6ddabc78e42b"
   },
   "src/Components/Pages/FapV2/FapServicePage.jsx": {
-    "mtime": 1787649263.395228,
+    "mtime": 1789199831.9815652,
     "ast_hash": "93dfa773b3d8a9d714d94bc2da6f2494",
     "semantic_hash": "93dfa773b3d8a9d714d94bc2da6f2494"
   },
   "src/Components/Pages/FapV2/FapV2.jsx": {
-    "mtime": 1789049023.627376,
+    "mtime": 1789204798.4685855,
     "ast_hash": "f0c12388a808aeaa399c9622a43ba4ce",
     "semantic_hash": "f0c12388a808aeaa399c9622a43ba4ce"
   },
@@ -2430,9 +2430,9 @@
     "semantic_hash": "bd5e90e954b40a2d6994ccdb344c2593"
   },
   "src/Components/RoleContent/AirlineAdminContent/AirlineAdminMenu/AirlineAdminMenu.jsx": {
-    "mtime": 1788966011.4414225,
-    "ast_hash": "d67c7131e91a7d25f868678683d8d519",
-    "semantic_hash": "d67c7131e91a7d25f868678683d8d519"
+    "mtime": 1789207268.2573996,
+    "ast_hash": "d6ecbcc1bdf1bb4272a52937e5e98274",
+    "semantic_hash": "d6ecbcc1bdf1bb4272a52937e5e98274"
   },
   "src/Components/RoleContent/AllRoles.jsx": {
     "mtime": 1788265415.1736157,
@@ -2455,9 +2455,9 @@
     "semantic_hash": "4e28a088181d86f52f626daf56b9b0ee"
   },
   "src/Components/RoleContent/DispatcherAdminContent/DisAdminMenu/DisAdminMenu.jsx": {
-    "mtime": 1788966011.4778965,
-    "ast_hash": "4d931556961ebf51fb73bbebc3b5dd98",
-    "semantic_hash": "4d931556961ebf51fb73bbebc3b5dd98"
+    "mtime": 1789207268.2583978,
+    "ast_hash": "2dde7f34017f9d69bbd0190681f1704f",
+    "semantic_hash": "2dde7f34017f9d69bbd0190681f1704f"
   },
   "src/Components/RoleContent/DispatcherAdminContent/DisAdminTransferContent/DisAdminTransferContent.jsx": {
     "mtime": 1774531068.316118,
@@ -2480,9 +2480,9 @@
     "semantic_hash": "5f6eae03c1ef48fe2508919ea6ecb222"
   },
   "src/Components/RoleContent/HotelAdminContent/HotelAdminMenu/HotelAdminMenu.jsx": {
-    "mtime": 1788966011.516499,
-    "ast_hash": "290978f8210da681eca4367b9550d866",
-    "semantic_hash": "290978f8210da681eca4367b9550d866"
+    "mtime": 1789207268.2583978,
+    "ast_hash": "e256ce42c4d376b304c81f5fd5012552",
+    "semantic_hash": "e256ce42c4d376b304c81f5fd5012552"
   },
   "src/Components/RoleContent/SuperAdminContent/SuperAdminAirlineContent/SuperAdminAirlineContent.jsx": {
     "mtime": 1779444529.7542436,
@@ -2500,9 +2500,9 @@
     "semantic_hash": "547321b3b8099a7d4e8c912fa2dc76c1"
   },
   "src/Components/RoleContent/SuperAdminContent/SuperAdminMenu/SuperAdminMenu.jsx": {
-    "mtime": 1788966011.5513394,
-    "ast_hash": "51b59d3c0cfb6df2b980ab2ebff13b7d",
-    "semantic_hash": "51b59d3c0cfb6df2b980ab2ebff13b7d"
+    "mtime": 1789207268.2599032,
+    "ast_hash": "ee23128acde0fbc893f2b4b75478ba9b",
+    "semantic_hash": "ee23128acde0fbc893f2b4b75478ba9b"
   },
   "src/Components/Standart/AdditionalMenu/AdditionalMenu.jsx": {
     "mtime": 1776152177.8360686,
@@ -2985,14 +2985,14 @@
     "semantic_hash": "c0d5359be171da6ee8b6bab1bb6b765f"
   },
   "src/utils/access.js": {
-    "mtime": 1788962899.029815,
-    "ast_hash": "2926bdca4af785becb4b6707405389eb",
-    "semantic_hash": "2926bdca4af785becb4b6707405389eb"
+    "mtime": 1789202324.705585,
+    "ast_hash": "b19a1f62af366fbb6f9030302c33b7d4",
+    "semantic_hash": "b19a1f62af366fbb6f9030302c33b7d4"
   },
   "src/utils/accessExternalLinks.test.js": {
-    "mtime": 1786012959.0802338,
-    "ast_hash": "a13a7dddac06d9a36ce1c2bcd8aa3aa6",
-    "semantic_hash": "a13a7dddac06d9a36ce1c2bcd8aa3aa6"
+    "mtime": 1789202334.6246476,
+    "ast_hash": "6491d7984a74000b13b89b4c540fd5ba",
+    "semantic_hash": "6491d7984a74000b13b89b4c540fd5ba"
   },
   "src/utils/accessPayload.js": {
     "mtime": 1788966470.270377,
@@ -3115,14 +3115,14 @@
     "semantic_hash": "517ad65a3503aa737e144817bb7b53b6"
   },
   "src/utils/manifestProfiles.js": {
-    "mtime": 1789111810.2656362,
-    "ast_hash": "eb9424fae1648e444fc049ffb7086427",
-    "semantic_hash": "eb9424fae1648e444fc049ffb7086427"
+    "mtime": 1790061332.3560789,
+    "ast_hash": "684b99ec67d6973640123160c56f2952",
+    "semantic_hash": "684b99ec67d6973640123160c56f2952"
   },
   "src/utils/manifestProfiles.test.js": {
-    "mtime": 1789111918.8263805,
-    "ast_hash": "b5acd1d8479774a0cb4e9b991acf63eb",
-    "semantic_hash": "b5acd1d8479774a0cb4e9b991acf63eb"
+    "mtime": 1790061263.0159636,
+    "ast_hash": "dfb189bdae86b436ce6e18a263d5df52",
+    "semantic_hash": "dfb189bdae86b436ce6e18a263d5df52"
   },
   "src/utils/messageStyles.js": {
     "mtime": 1779444529.758873,
@@ -3145,9 +3145,9 @@
     "semantic_hash": "51212004252afea5c1fc400cfe478d60"
   },
   "src/utils/parseManifestXlsx.js": {
-    "mtime": 1789111823.0744977,
-    "ast_hash": "dfb02e3a02b9528abbfef3584b92e938",
-    "semantic_hash": "dfb02e3a02b9528abbfef3584b92e938"
+    "mtime": 1790061245.6175086,
+    "ast_hash": "339eada043fe8330ecdc4187adae2dbb",
+    "semantic_hash": "339eada043fe8330ecdc4187adae2dbb"
   },
   "src/utils/plural.js": {
     "mtime": 1786480512.4986591,
@@ -3170,7 +3170,7 @@
     "semantic_hash": "25068dad004d2aed449212267d914bad"
   },
   "src/utils/roomKindSeasons.js": {
-    "mtime": 1788202831.1190953,
+    "mtime": 1789204814.8451629,
     "ast_hash": "957fabe8f0bbc5821dcaab7a39c27829",
     "semantic_hash": "957fabe8f0bbc5821dcaab7a39c27829"
   },
@@ -3855,14 +3855,14 @@
     "semantic_hash": "3ca9bfc8f9b4c5004c6dc4be01953c15"
   },
   "src/Components/Blocks/FapV2/fapRoomSplit.js": {
-    "mtime": 1788786015.2386055,
-    "ast_hash": "0bbf600d46a9e8ebb3490631877d96ed",
-    "semantic_hash": "0bbf600d46a9e8ebb3490631877d96ed"
+    "mtime": 1790247081.6602094,
+    "ast_hash": "324aef5e484e570a94c03cb963b1d8b9",
+    "semantic_hash": "324aef5e484e570a94c03cb963b1d8b9"
   },
   "src/Components/Blocks/FapV2/fapRoomSplit.test.js": {
-    "mtime": 1788786033.9847178,
-    "ast_hash": "1183cfd9ca62792a8633d8e0770aebe9",
-    "semantic_hash": "1183cfd9ca62792a8633d8e0770aebe9"
+    "mtime": 1790247035.702594,
+    "ast_hash": "e3fb0cc2a3355a0594b1e53337466922",
+    "semantic_hash": "e3fb0cc2a3355a0594b1e53337466922"
   },
   "src/Components/Blocks/ReportsV2/reportsV2Access.js": {
     "mtime": 1788347962.2548628,
@@ -4055,7 +4055,7 @@
     "semantic_hash": "f6b30bd6b12c9db55593b3cef79085b4"
   },
   "src/Components/Blocks/FapV2/FapAirlineCommentNote/FapAirlineCommentNote.jsx": {
-    "mtime": 1789036933.3655164,
+    "mtime": 1789204814.7779255,
     "ast_hash": "a1de52b3af4cfb58d75c0cd191f3bcab",
     "semantic_hash": "a1de52b3af4cfb58d75c0cd191f3bcab"
   },
@@ -4138,5 +4138,40 @@
     "mtime": 1789035168.165126,
     "ast_hash": "9474450c781b7008d6dee3e24302bcd4",
     "semantic_hash": "9474450c781b7008d6dee3e24302bcd4"
+  },
+  "src/Components/Blocks/FapV2/FapSupplyCard/FapSupplyCard.jsx": {
+    "mtime": 1789202399.8271773,
+    "ast_hash": "5a817db8a9d1d910479bc730df3db6f8",
+    "semantic_hash": "5a817db8a9d1d910479bc730df3db6f8"
+  },
+  "src/Components/Blocks/FapV2/FapSupplyCard/FapSupplyCardEditor.jsx": {
+    "mtime": 1789202392.7679307,
+    "ast_hash": "8f7c92a0c8ca4aa6a3c294c6628ab7a9",
+    "semantic_hash": "8f7c92a0c8ca4aa6a3c294c6628ab7a9"
+  },
+  "src/Components/Blocks/FapV2/FapSupplyCard/FapSupplyCardView.jsx": {
+    "mtime": 1789202373.0075927,
+    "ast_hash": "da31a2873b700231cf4d289bc82a7ff7",
+    "semantic_hash": "da31a2873b700231cf4d289bc82a7ff7"
+  },
+  "src/Components/Blocks/FapV2/fapSupply.js": {
+    "mtime": 1789202213.424403,
+    "ast_hash": "fd1af4dd97f418dc2d0e4ecdef85e226",
+    "semantic_hash": "fd1af4dd97f418dc2d0e4ecdef85e226"
+  },
+  "src/Components/Blocks/FapV2/fapSupply.test.js": {
+    "mtime": 1789202262.51217,
+    "ast_hash": "0e0e3de5bc945cd3dc219e8e6842bf11",
+    "semantic_hash": "0e0e3de5bc945cd3dc219e8e6842bf11"
+  },
+  "src/utils/starRating.js": {
+    "mtime": 1789976429.7311358,
+    "ast_hash": "688f34607b7133e8945ffc16fa09028c",
+    "semantic_hash": "688f34607b7133e8945ffc16fa09028c"
+  },
+  "src/utils/starRating.test.js": {
+    "mtime": 1789976440.3087125,
+    "ast_hash": "03b5271d40b067e15120bfbe30ac8ee4",
+    "semantic_hash": "03b5271d40b067e15120bfbe30ac8ee4"
   }
 }
