@@ -35,6 +35,7 @@ import {
   canAccessMenu,
   getDispatcherAccess,
 } from "../../utils/access";
+import { canEditArchivedRequest } from "../../utils/requestArchiveAccess";
 import {
   getCookie,
   UPDATE_HOTEL_BRON,
@@ -67,6 +68,9 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
     "requestUpdate",
     user
   );
+  // Даты архивной заявки меняются растягиванием только с правом
+  // «Редактирование заявки в архиве»; перетаскивание в другой номер заперто всегда.
+  const canEditArchived = canEditArchivedRequest(accessMenu, user);
   const canCreate = user?.role !== roles.hotelAdmin;
   const showTray = !user?.hotelId;
 
@@ -390,7 +394,7 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
         return;
       }
 
-      if (draggedRequest?.status === "Архив") {
+      if (draggedRequest?.archived || draggedRequest?.status === "Архив") {
         addNotification(
           "Эту заявку нельзя перемещать, так как она в архиве",
           "error"
@@ -493,7 +497,7 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
             return;
           }
 
-          if (draggedRequest.status === "Архив") {
+          if (draggedRequest?.archived || draggedRequest?.status === "Архив") {
             addNotification(
               "Эту заявку нельзя перемещать, так как она в архиве",
               "error"
@@ -558,7 +562,11 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
 
     let newStatus = updatedRequest.status;
 
-    if (
+    if (editableRequest.archived) {
+      // Архивная заявка остаётся в своём статусе при любой смене дат. Статус берём
+      // у плашки ДО растягивания: handleResize уже перекрасил копию в «Продлен».
+      newStatus = originalRequest?.status ?? editableRequest.status;
+    } else if (
       newCheckIn.getTime() === originalCheckIn.getTime() &&
       newCheckOut.getTime() === originalCheckOut.getTime()
     ) {
@@ -606,20 +614,26 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
           input: {
             arrival: `${requestToSave.checkInDate}T${requestToSave.checkInTime}:00.000Z`,
             departure: `${requestToSave.checkOutDate}T${requestToSave.checkOutTime}:00.000Z`,
-            status:
-              newStatus === "Сокращен"
-                ? "reduced"
-                : newStatus === "Продлен"
-                  ? "extended"
-                  : newStatus === "Ранний заезд"
-                    ? "earlyStart"
-                    : newStatus === "Перенесен"
-                      ? "transferred"
-                      : newStatus === "Забронирован"
-                        ? "done"
-                        : newStatus === "Готов к архиву"
-                          ? "archiving"
-                          : "",
+            // Архивной заявке статус не шлём: сервер оставит прежний. Иначе
+            // «Архив» ушёл бы сюда пустой строкой (в цепочке ниже его нет).
+            ...(editableRequest.archived
+              ? {}
+              : {
+                  status:
+                    newStatus === "Сокращен"
+                      ? "reduced"
+                      : newStatus === "Продлен"
+                        ? "extended"
+                        : newStatus === "Ранний заезд"
+                          ? "earlyStart"
+                          : newStatus === "Перенесен"
+                            ? "transferred"
+                            : newStatus === "Забронирован"
+                              ? "done"
+                              : newStatus === "Готов к архиву"
+                                ? "archiving"
+                                : "",
+                }),
           },
         },
       });
@@ -861,6 +875,7 @@ const NewPlacementV2 = ({ idHotelInfo, user, accessMenu, onCreateRequest }) => {
                     highlightedDates={highlightedDates}
                     requestId={requestId}
                     hotelAccess={hotelInfo?.access}
+                    canEditArchived={canEditArchived}
                     user={user}
                     allRequests={filteredRequests}
                     onUpdateRequest={handleUpdateRequest}

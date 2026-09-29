@@ -23,6 +23,7 @@ const PlacementBarV2 = ({
   requestId,
   request,
   hotelAccess,
+  canEditArchived = false,
   period,
   dayW,
   onUpdateRequest,
@@ -289,10 +290,11 @@ const PlacementBarV2 = ({
   if (!layout && !isOverlay) return null;
 
   const width = layout ? layout.width : 160;
+  // Архив растягивается только с правом «Редактирование заявки в архиве».
   const canResize =
     isRequest &&
     status !== "Ожидает" &&
-    status !== "Архив" &&
+    ((!request?.archived && status !== "Архив") || canEditArchived) &&
     ((user?.hotelId && hotelAccess) || !user?.hotelId);
   const showGrips = hovered && !isLegacy && canResize;
   const showAvatar = !isLegacy && width > 44 && airline;

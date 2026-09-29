@@ -17,6 +17,7 @@ function ExistRequestAdditionalMenu({
   formData,
   user,
   canUpdateActions,
+  archiveLocked = false,
   activeTab,
   onEdit,
   onCancelRequest,
@@ -30,14 +31,18 @@ function ExistRequestAdditionalMenu({
     formData.status !== "opened" &&
     formData.status !== "canceled";
 
+  // Архивная заявка: и правка, и отмена — только с правом «Редактирование
+  // заявки в архиве» (archiveLocked считает ExistRequest через
+  // requestArchiveAccess — тем же правилом, что серверный сторож).
   const showEdit =
     canUpdateActions &&
     formData.status !== "canceled" &&
-    formData.status !== "archived";
+    !archiveLocked;
 
   const showCancel =
     canUpdateActions &&
     formData.status !== "canceled" &&
+    !archiveLocked &&
     activeTab !== "Комментарии" &&
     activeTab !== "История";
 

@@ -1,3 +1,5 @@
+import { isRequestArchived } from "../../../utils/requestArchiveAccess.js";
+
 export const translateStatus = (status) => {
   switch (status) {
     case "done":
@@ -57,6 +59,8 @@ export const mapHotelChessToRequest = (chess) => ({
   checkOutDate: new Date(chess.end).toISOString().split("T")[0],
   checkOutTime: new Date(chess.end).toISOString().split("T")[1].slice(0, 5),
   status: translateStatus(chess.request ? chess.request?.status : chess.status),
+  // Финальный архив — по статусу ИЛИ флагу, как сторож на сервере.
+  archived: isRequestArchived(chess.request),
   guest: chess.client ? chess.client.name : chess.passenger?.name,
   guestPosition: chess.client?.position?.name,
   requestID: chess.request ? chess.request?.id : chess.reserve?.id,
@@ -100,6 +104,7 @@ export const mapUpdatedRequestFromSubscription = (updated) => ({
   checkOutDate: new Date(updated.departure).toISOString().split("T")[0],
   checkOutTime: new Date(updated.departure).toISOString().split("T")[1].slice(0, 5),
   status: translateStatus(updated.status),
+  archived: isRequestArchived(updated),
   guest: updated.person?.name || "Неизвестный гость",
   requestID: updated.id,
   airline: updated.airline,

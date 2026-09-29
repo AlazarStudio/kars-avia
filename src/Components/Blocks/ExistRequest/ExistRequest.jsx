@@ -32,6 +32,10 @@ import {
   isDispatcherAdmin,
   isSuperAdmin,
 } from "../../../utils/access";
+import {
+  isArchiveEditLocked,
+  isRequestArchived,
+} from "../../../utils/requestArchiveAccess";
 import { normalizeAppliesTo } from "../../../utils/airlineTariffPrices";
 import { CATEGORY_LABELS, pickCategories } from "../../../utils/roomCategories";
 import { Link } from "react-router-dom";
@@ -206,6 +210,10 @@ function ExistRequest({
   const canUpdateActions =
     dispatcherCanUpdate ??
     (!user?.airlineId || hasAccessMenu(accessMenu, "requestUpdate"));
+  // Архивная заявка правится только с правом «Редактирование заявки в архиве»
+  // (requestUpdateCompleted); признак архива — как у серверного сторожа.
+  const archived = isRequestArchived(formData);
+  const archiveLocked = isArchiveEditLocked(formData, accessMenu, user);
 
   // Deep-link из письма открывает вкладку «Чат»; без права на чат карточка открывается как обычно.
   useEffect(() => {
@@ -492,10 +500,17 @@ function ExistRequest({
         const requestInput = {
           arrival: `${formDataExtend.arrivalDate}T${formDataExtend.arrivalTime}:00+00:00`,
           departure: `${formDataExtend.departureDate}T${formDataExtend.departureTime}:00+00:00`,
-          status:
-            formData.status === "opened" || formData.status === "created"
-              ? formData.status
-              : newStatus,
+          // Архивной заявке статус не шлём вовсе: сервер пишет status из input,
+          // а статус по датам («Продлён»/«Сокращён») вывел бы её из архива — крон
+          // навсегда оставил бы её в «Готов к архиву». Без поля статус прежний.
+          ...(archived
+            ? {}
+            : {
+                status:
+                  formData.status === "opened" || formData.status === "created"
+                    ? formData.status
+                    : newStatus,
+              }),
         };
 
         if (noteEdit !== (formData.note ?? "")) {
@@ -1137,6 +1152,7 @@ function ExistRequest({
                   formData={formData}
                   user={user}
                   canUpdateActions={canUpdateActions}
+                  archiveLocked={archiveLocked}
                   activeTab={activeTab}
                   onEdit={handleUpdateRequest}
                   onCancelRequest={openDeleteComponent}
@@ -2076,7 +2092,7 @@ function ExistRequest({
                                 min={0}
                                 value={dailyMeal.breakfast}
                                 disabled={
-                                  formData.status === "archived" ||
+                                  archiveLocked ||
                                   formData.status === "canceled" ||
                                   !isEditing
                                 }
@@ -2093,7 +2109,7 @@ function ExistRequest({
                                 min={0}
                                 value={dailyMeal.lunch}
                                 disabled={
-                                  formData.status === "archived" ||
+                                  archiveLocked ||
                                   formData.status === "canceled" ||
                                   !isEditing
                                 }
@@ -2110,7 +2126,7 @@ function ExistRequest({
                                 min={0}
                                 value={dailyMeal.dinner}
                                 disabled={
-                                  formData.status === "archived" ||
+                                  archiveLocked ||
                                   formData.status === "canceled" ||
                                   !isEditing
                                 }
@@ -2127,7 +2143,7 @@ function ExistRequest({
                         </>
                       )}
 
-                      {formData.status !== "archived" &&
+                      {!archiveLocked &&
                         formData.status !== "canceled" &&
                         isEditing && (
                           <Button
@@ -2351,7 +2367,7 @@ function ExistRequest({
               </div>
 
               {formData.status !== "canceled" &&
-                formData.status !== "archived" &&
+                !archiveLocked &&
                 activeTab !== "Чат" &&
                 activeTab !== "История" &&
                 canUpdateActions &&

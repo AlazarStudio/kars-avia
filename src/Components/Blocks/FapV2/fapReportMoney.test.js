@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { preserveMoneyFields, reportMoneyDiffers } from "./fapReportMoney.js";
+import { preserveMoneyFields, reportRowsDiffer } from "./fapReportMoney.js";
 
 // Строка гостя из билдера: факт свежий, деньги посчитаны по ценам смотрящего
 // (у гостиницы — по её прайсу, поэтому в базу они уходить не должны).
@@ -212,11 +212,11 @@ test("однофамильцы без personId разбираются по по�
   assert.equal(rows[1].roomNumber, "202");
 });
 
-// ── reportMoneyDiffers: сохранённое устарело относительно экрана ──
+// ── reportRowsDiffer: сохранённое устарело относительно экрана ──
 
 test("деньги совпадают — синхронизация не нужна", () => {
   const rows = [savedPerson(), shadowRow()];
-  assert.equal(reportMoneyDiffers(rows, rows), false);
+  assert.equal(reportRowsDiffer(rows, rows), false);
 });
 
 test("старая раскладка (вся цена на одном) против деления по жильцам", () => {
@@ -240,34 +240,76 @@ test("старая раскладка (вся цена на одном) прот
       accommodationCost: 5000,
     }),
   ];
-  assert.equal(reportMoneyDiffers(built, saved), true);
+  assert.equal(reportRowsDiffer(built, saved), true);
 });
 
 test("вид размещения разошёлся — тоже расхождение", () => {
   const saved = [savedPerson({ placementKind: 1 })];
   const built = [savedPerson({ placementKind: 2 })];
-  assert.equal(reportMoneyDiffers(built, saved), true);
+  assert.equal(reportRowsDiffer(built, saved), true);
 });
 
-test("изменилось только количество приёмов — деньги проживания те же", () => {
+test("изменилось количество приёмов — расхождение (книга печатает питание из базы)", () => {
   const saved = [savedPerson({ breakfastCount: 1, foodCost: 500 })];
-  const built = [savedPerson({ breakfastCount: 3, foodCost: 1500, roomNumber: "777" })];
-  assert.equal(reportMoneyDiffers(built, saved), false);
+  const built = [savedPerson({ breakfastCount: 3, foodCost: 1500 })];
+  assert.equal(reportRowsDiffer(built, saved), true);
 });
 
 test("новый гость на экране — в базе строки под него нет", () => {
   const saved = [savedPerson()];
   const built = [savedPerson(), savedPerson({ personId: "p2", fullName: "Петров П.П." })];
-  assert.equal(reportMoneyDiffers(built, saved), true);
+  assert.equal(reportRowsDiffer(built, saved), true);
 });
 
 test("сохранённого отчёта нет — синхронизировать нечего", () => {
-  assert.equal(reportMoneyDiffers([builtPerson()], []), false);
-  assert.equal(reportMoneyDiffers([builtPerson()], null), false);
+  assert.equal(reportRowsDiffer([builtPerson()], []), false);
+  assert.equal(reportRowsDiffer([builtPerson()], null), false);
 });
 
 test("теневые тарифные строки в сравнение не входят", () => {
   const saved = [savedPerson(), shadowRow({ pricePerDay: 2500 })];
   const built = [savedPerson(), shadowRow({ pricePerDay: 9999 })];
-  assert.equal(reportMoneyDiffers(built, saved), false);
+  assert.equal(reportRowsDiffer(built, saved), false);
+});
+
+test("разошлось только питание", () => {
+  const saved = [savedPerson({ foodCost: 999 })];
+  const built = [savedPerson()];
+  assert.equal(reportRowsDiffer(built, saved), true);
+});
+
+test("разошлись только сутки", () => {
+  const saved = [savedPerson({ daysCount: 1 })];
+  const built = [savedPerson({ daysCount: 2 })];
+  assert.equal(reportRowsDiffer(built, saved), true);
+});
+
+test("скидка: null против 50 — расхождение", () => {
+  const saved = [savedPerson({ accommodationDiscount: null })];
+  const built = [savedPerson({ accommodationDiscount: 50 })];
+  assert.equal(reportRowsDiffer(built, saved), true);
+});
+
+test("гостя переименовали при том же personId — расхождение", () => {
+  const saved = [savedPerson({ fullName: "Иванов И.И." })];
+  const built = [savedPerson({ fullName: "Иванов Иван Иванович" })];
+  assert.equal(reportRowsDiffer(built, saved), true);
+});
+
+test("номер комнаты разошёлся — расхождение", () => {
+  const saved = [savedPerson({ roomNumber: "100" })];
+  const built = [savedPerson({ roomNumber: "101" })];
+  assert.equal(reportRowsDiffer(built, saved), true);
+});
+
+test("null в сохранённых счётчиках равен нулю построенных — не расхождение", () => {
+  const saved = [savedPerson({ lunchCount: null, lunchboxCount: null })];
+  const built = [savedPerson({ lunchCount: 0, lunchboxCount: 0 })];
+  assert.equal(reportRowsDiffer(built, saved), false);
+});
+
+test("хвостовой пробел категории (сервер её обрезает) — не расхождение", () => {
+  const saved = [savedPerson({ roomCategory: "Стандарт" })];
+  const built = [savedPerson({ roomCategory: "Стандарт " })];
+  assert.equal(reportRowsDiffer(built, saved), false);
 });

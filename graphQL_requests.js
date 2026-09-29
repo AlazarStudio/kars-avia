@@ -1705,6 +1705,7 @@ export const REQUEST_UPDATED_SUBSCRIPTION = gql`
           hotelId
           roomNumber
           status
+          archive
           person {
             id
             name
@@ -2070,6 +2071,7 @@ export const GET_REQUEST = gql`
       hotelId
       roomNumber
       status
+      archive
       logs(pagination: $pagination) {
         logs {
           id
@@ -2939,6 +2941,7 @@ export const GET_BRONS_HOTEL = gql`
         request {
           id
           status
+          archive
           requestNumber
           reserve
           mealPlan {
@@ -6893,6 +6896,7 @@ export const GET_AIRLINE_REPORT = gql`
       reports {
         id
         name
+        title
         url
         createdAt
         airlineId
@@ -6925,6 +6929,7 @@ export const GET_HOTEL_REPORT = gql`
       reports {
         id
         name
+        title
         url
         createdAt
         hotelId
@@ -7037,6 +7042,7 @@ export const GET_REPORT_DRAFTS = gql`
       airlineComment
       airlineCommentAt
       updatedAt
+      title
       airline {
         id
         name

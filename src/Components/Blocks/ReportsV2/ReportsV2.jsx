@@ -333,6 +333,7 @@ export default function ReportsV2({ user, accessMenu }) {
     const endTime = convertToDateNew(report?.endDate);
     return (
       name?.toLowerCase().includes(q) ||
+      report?.title?.toLowerCase().includes(q) ||
       createTime.toLowerCase().includes(q) ||
       startTime.toLowerCase().includes(q) ||
       endTime.toLowerCase().includes(q)

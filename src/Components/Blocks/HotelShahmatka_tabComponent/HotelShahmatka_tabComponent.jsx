@@ -236,6 +236,7 @@ function HotelShahmatka_tabComponent({ id, user, accessMenu }) {
         chooseRequestID={existRequestData}
         handleCancelRequest={handleCancelRequest}
         user={user}
+        accessMenu={accessMenu}
         openDeleteComponent={openDeleteComponent}
         // setRequestId={setChooseRequestId}
       />

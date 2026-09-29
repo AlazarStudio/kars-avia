@@ -136,8 +136,10 @@ export default function ReportsV2List({
                     <div className={classes.avatar}>
                       <img src={getMediaUrl(image) ?? NO_AVATAR} alt="" />
                     </div>
-                    <div className={classes.name} title={name || "—"}>
-                      {name || "—"}
+                    {/* Название реестра — как в ячейке A4 файла; у отчётов без
+                        него (файл утерян) — имя организации, как раньше */}
+                    <div className={classes.name} title={item?.title || name || "—"}>
+                      {item?.title || name || "—"}
                     </div>
                   </div>
                   <div className={classes.colDate}>

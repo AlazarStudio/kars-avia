@@ -72,8 +72,9 @@ export default function ReportDraftsPanel({
             <div className={`${classes.row} ${returned ? classes.rowTall : ""}`} key={draft.id}>
               <div className={classes.info}>
                 <div className={classes.nameRow}>
-                  <span className={classes.name} title={name || "—"}>
-                    {name || "—"}
+                  {/* Название реестра из снимка черновика; нет — имя организации */}
+                  <span className={classes.name} title={draft?.title || name || "—"}>
+                    {draft?.title || name || "—"}
                   </span>
                   {stale && (
                     <span

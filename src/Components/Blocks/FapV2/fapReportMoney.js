@@ -105,22 +105,55 @@ export function preserveMoneyFields(builtRows, savedRows) {
   return [...personRows, ...saved.filter((r) => !isPersonRow(r)).map(withoutTypename)];
 }
 
-// Разошлись ли деньги сохранённого отчёта с тем, что показывает экран.
+// Разошлись ли сохранённые строки отчёта с тем, что показывает экран.
 //
 // Экран считает строки живьём (buildReportRows), а в базу они попадают только
-// при сохранении — простое открытие страницы отчёт не переписывает. Поэтому
-// после смены правил расчёта (например, деления цены номера между жильцами)
-// экран показывает новую раскладку, а заявочная выгрузка печатает СТАРУЮ: она
-// берёт строки из базы. Этот предикат — сигнал «сохранённое устарело».
+// при сохранении — простое открытие страницы отчёт не переписывает. Выгрузка по
+// заявке, страница проживания и аналитика печатают СОХРАНЁННОЕ, поэтому любое
+// расхождение — это книга, которая спорит с экраном. Предикат — сигнал
+// «сохранённое устарело»: сверяется ВСЯ печатаемая строка гостя, а не только
+// деньги проживания (29.09: владелец видел в книге цифры, которые выровнялись
+// лишь ручным «Сохранить отчёт»).
 //
-// Сравниваем ровно три величины, из которых печатается проживание: цену за
-// сутки, стоимость и вид размещения. Питание, номер и счётчики сюда не входят —
-// их синхронизируют собственные пути (правка гостя, присвоение номера), и
-// лишний сейв на каждое их расхождение только гасил бы отметку отправки.
+// Отметку отправки лишний сейв не гасит: вызывающий код сверяет только
+// неотправленный отчёт. Нормализация совпадает с серверной
+// (passengerRequest/report.resolver.js: `?? 0`, `?? null`, trim категории),
+// поэтому после одного сохранения сверка успокаивается.
+//
+// Теневые тарифные строки не сравниваются: книга их не печатает, цены гостя
+// берутся из его собственной строки.
 //
 // Матчинг тот же, что в preserveMoneyFields: personId → ФИО, с consumed-сетом,
 // иначе однофамильцы сравнивались бы с одной и той же строкой.
-export function reportMoneyDiffers(builtRows, savedRows) {
+const TEXT_FIELDS = ["fullName", "roomNumber", "roomCategory", "tariffName"];
+const NUMBER_FIELDS = [
+  "daysCount",
+  "breakfast",
+  "lunch",
+  "dinner",
+  "breakfastCount",
+  "lunchCount",
+  "dinnerCount",
+  "lunchboxPrice",
+  "lunchboxCount",
+  "foodCost",
+  "accommodationCost",
+  "pricePerDay",
+];
+const KIND_FIELDS = ["placementKind", "placementKindOverride"];
+const FLAG_FIELDS = ["breakfastLunchbox", "lunchLunchbox", "dinnerLunchbox"];
+
+const text = (v) => (v ?? "").toString().trim();
+const discount = (v) => (v != null ? toNum(v) : null);
+
+const personRowsEqual = (a, b) =>
+  TEXT_FIELDS.every((f) => text(a?.[f]) === text(b?.[f])) &&
+  NUMBER_FIELDS.every((f) => toNum(a?.[f]) === toNum(b?.[f])) &&
+  KIND_FIELDS.every((f) => (Number(a?.[f]) || 0) === (Number(b?.[f]) || 0)) &&
+  FLAG_FIELDS.every((f) => Boolean(a?.[f]) === Boolean(b?.[f])) &&
+  discount(a?.accommodationDiscount) === discount(b?.accommodationDiscount);
+
+export function reportRowsDiffer(builtRows, savedRows) {
   const built = Array.isArray(builtRows) ? builtRows : [];
   const saved = Array.isArray(savedRows) ? savedRows : [];
   // Отчёта в базе нет — расходиться не с чем. Создание отчёта остаётся за
@@ -129,8 +162,7 @@ export function reportMoneyDiffers(builtRows, savedRows) {
 
   const builtPeople = built.filter(isPersonRow);
   const savedPeople = saved.filter(isPersonRow);
-  // Состав строк разъехался (гость добавлен или выселен) — деньги в базе точно
-  // не те, что на экране.
+  // Состав строк разъехался (гость добавлен или выселен).
   if (builtPeople.length !== savedPeople.length) return true;
 
   const consumed = new Set();
@@ -139,11 +171,6 @@ export function reportMoneyDiffers(builtRows, savedRows) {
     // Гость есть на экране, а строки под него в базе нет.
     if (idx < 0) return true;
     consumed.add(idx);
-    const was = savedPeople[idx];
-    return (
-      toNum(row?.pricePerDay) !== toNum(was?.pricePerDay) ||
-      toNum(row?.accommodationCost) !== toNum(was?.accommodationCost) ||
-      (Number(row?.placementKind) || 0) !== (Number(was?.placementKind) || 0)
-    );
+    return !personRowsEqual(row, savedPeople[idx]);
   });
 }

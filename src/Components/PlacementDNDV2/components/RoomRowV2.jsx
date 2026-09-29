@@ -33,6 +33,7 @@ const RoomRowV2 = memo(
     highlightedDates,
     requestId,
     hotelAccess,
+    canEditArchived,
     onUpdateRequest,
     onOpenModal,
     allRequests,
@@ -166,6 +167,7 @@ const RoomRowV2 = memo(
                 dayW={dayW}
                 requestId={requestId}
                 hotelAccess={hotelAccess}
+                canEditArchived={canEditArchived}
                 user={user}
                 allRequests={allRequests}
                 onUpdateRequest={onUpdateRequest}

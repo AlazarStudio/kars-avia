@@ -38,7 +38,7 @@ import {
   hotelReportAirlineComment,
   isHotelReportAirlineRevoked,
 } from "../fapReportAccess";
-import { lunchboxCountOf, preserveMoneyFields, reportMoneyDiffers } from "../fapReportMoney";
+import { lunchboxCountOf, preserveMoneyFields, reportRowsDiffer } from "../fapReportMoney";
 import { splitRoomAccommodation } from "../fapRoomSplit.js";
 import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
 import { hotelOverbookedBy, livingNameCollisions } from "../fapLivingMismatch";
@@ -582,6 +582,13 @@ export default function FapHotelPage({
   const reportAirlineComment = hotelReportAirlineComment(request, hotelIndex);
   const reportAirlineRevoked = isHotelReportAirlineRevoked(request, hotelIndex);
   const hasSavedReport = hasHotelReport(request, hotelIndex);
+  // Можно ли досохранять отчёт до того, что показывает экран (сверка при открытии
+  // и перед выгрузкой). canEdit — чтобы сохранение не ушло из вкладки
+  // авиакомпании; hasSavedReport — открытие не должно создавать отчёт, которого
+  // ещё нет; !reportSubmitted — простое открытие не снимает отметку отправки (бэк
+  // гасит её при изменении строк); !hideMoney — у гостиницы деньги заморожены
+  // preserveMoneyFields, её сейв только погасил бы отметку.
+  const canSyncSavedRows = canEdit && hasSavedReport && !reportSubmitted && !hideMoney;
 
   const { data: hotelTariffData, loading: hotelTariffLoading } = useQuery(
     GET_FAP_HOTEL_TARIFFS,
@@ -1835,16 +1842,12 @@ export default function FapHotelPage({
   // (buildReportRows), а в базу они попадают только при сохранении — простое
   // открытие страницы отчёт не переписывает. Поэтому после смены правил расчёта
   // (деление цены номера между жильцами) экран показывает новую раскладку, а
-  // выгрузка по заявке печатает СТАРУЮ: она берёт строки из базы. Сверяем деньги
+  // выгрузка по заявке печатает СТАРУЮ: она берёт строки из базы. Сверяем печатаемые строки
   // и, если разошлись, сохраняем — один раз на загруженный снимок.
   //
-  // Условия те же и по тем же причинам, что у синхронизации номера комнаты ниже:
-  // canEdit — чтобы сохранение не ушло из вкладки авиакомпании; hasSavedReport —
-  // чтобы открытие страницы не создавало отчёт, которого ещё нет; !reportSubmitted —
-  // чтобы простое открытие не снимало отметку отправки (бэк гасит её при
-  // изменении строк). Плюс !hideMoney: у гостиницы деньги заморожены
-  // preserveMoneyFields, её buildReportRows отдаёт ровно сохранённое — сверять
-  // нечего, а сейв только погасил бы отметку.
+  // Условия — canSyncSavedRows (см. его объявление). Сверяется вся печатаемая
+  // строка гостя (reportRowsDiffer), а не только деньги: книга по заявке печатает
+  // из базы и питание, и сутки, и номер.
   useEffect(() => {
     // Одна сверка на реконсиляцию: ключ собран из её собственного (заявка +
     // гостиница) и remoteVersion, то есть меняется при смене заявки/гостиницы и
@@ -1862,8 +1865,8 @@ export default function FapHotelPage({
     if (!syncKey || moneySyncKeyRef.current === syncKey) return;
     if (people.length === 0 || Object.keys(personDataRef.current).length === 0) return;
     moneySyncKeyRef.current = syncKey;
-    if (!canEdit || !hasSavedReport || reportSubmitted || hideMoney) return;
-    if (reportMoneyDiffers(buildReportRows(), savedRowsRef.current)) scheduleSave();
+    if (!canSyncSavedRows) return;
+    if (reportRowsDiffer(buildReportRows(), savedRowsRef.current)) scheduleSave();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [personData, tariffs]);
 
@@ -2855,9 +2858,22 @@ export default function FapHotelPage({
       // Авиакомпания не выгружает то, чего не видит.
       if (reportHidden) return;
       // Флаш отложенного автосейва — только если правки разрешены и сейв реально запланирован.
+      // justSaved: сейв этого вызова уже нёс актуальные строки (любая новая правка
+      // взвела бы таймер), а savedRowsRef обновится лишь после рефетча — сверять
+      // с ним сейчас значит отправить второй, одинаковый сейв.
+      let justSaved = false;
       if (canEdit && saveTimerRef.current) {
         clearTimeout(saveTimerRef.current);
         saveTimerRef.current = null;
+        await persistReport();
+        justSaved = true;
+      } else if (inFlightSaveRef.current) {
+        await inFlightSaveRef.current.catch(() => {});
+        justSaved = true;
+      }
+      // Книга со страницы печатает живой расчёт; досохраняем его, чтобы книга
+      // из карточки заявки и страницы проживания напечатала то же самое.
+      if (!justSaved && canSyncSavedRows && reportRowsDiffer(buildReportRows(), savedRowsRef.current)) {
         await persistReport();
       }
       await downloadHotelReport(request, hotelIndex, {
