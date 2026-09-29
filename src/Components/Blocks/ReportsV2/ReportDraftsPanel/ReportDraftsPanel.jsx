@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import classes from "./ReportDraftsPanel.module.css";
 import { convertToDate, convertToDateNew } from "../../../../../graphQL_requests";
 import { isDraftStale } from "../reportDraftAge";
+import { shortReportTitle } from "../reportTitle";
 import { draftAirlineNote } from "../reportDraftComment";
 import DeleteIcon from "../../../../shared/icons/DeleteIcon";
 
@@ -72,9 +73,10 @@ export default function ReportDraftsPanel({
             <div className={`${classes.row} ${returned ? classes.rowTall : ""}`} key={draft.id}>
               <div className={classes.info}>
                 <div className={classes.nameRow}>
-                  {/* Название реестра из снимка черновика; нет — имя организации */}
+                  {/* Короткое название реестра, полный заголовок — в подсказке;
+                      нет заголовка — имя организации */}
                   <span className={classes.name} title={draft?.title || name || "—"}>
-                    {draft?.title || name || "—"}
+                    {shortReportTitle(draft?.title) || draft?.title || name || "—"}
                   </span>
                   {stale && (
                     <span

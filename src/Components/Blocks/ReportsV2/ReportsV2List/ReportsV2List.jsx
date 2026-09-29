@@ -2,6 +2,7 @@ import PropTypes from "prop-types";
 import classes from "./ReportsV2List.module.css";
 import { convertToDate, convertToDateNew, getMediaUrl } from "../../../../../graphQL_requests";
 import { DocIcon } from "../ReportsV2Icons";
+import { shortReportTitle } from "../reportTitle";
 import Button from "../../../Standart/Button/Button";
 import ArchiveIcon from "../../../../shared/icons/ArchiveIcon";
 import RestoreIcon from "../../../../shared/icons/RestoreIcon";
@@ -136,10 +137,11 @@ export default function ReportsV2List({
                     <div className={classes.avatar}>
                       <img src={getMediaUrl(image) ?? NO_AVATAR} alt="" />
                     </div>
-                    {/* Название реестра — как в ячейке A4 файла; у отчётов без
-                        него (файл утерян) — имя организации, как раньше */}
+                    {/* Короткое название реестра («Реестр · Азимут · Минеральные
+                        Воды»), полный заголовок из ячейки A4 — в подсказке; у
+                        отчётов без заголовка (файл утерян) — имя организации */}
                     <div className={classes.name} title={item?.title || name || "—"}>
-                      {item?.title || name || "—"}
+                      {shortReportTitle(item?.title) || item?.title || name || "—"}
                     </div>
                   </div>
                   <div className={classes.colDate}>
