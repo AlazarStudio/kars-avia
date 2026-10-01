@@ -26,6 +26,42 @@ export function decodeTextBuffer(buffer) {
   }
 }
 
+let cp1251Bytes;
+const cp1251ByteOf = (ch) => {
+  if (!cp1251Bytes) {
+    const decoder = new TextDecoder("windows-1251");
+    cp1251Bytes = new Map();
+    for (let byte = 0; byte < 256; byte++) {
+      cp1251Bytes.set(decoder.decode(Uint8Array.of(byte)), byte);
+    }
+  }
+  return cp1251Bytes.get(ch);
+};
+
+// UTF-8 CSV, открытый в Excel как windows-1251 и пересохранённый в XLSX:
+// «Заказ» → «Р—Р°РєР°Р·». Обратно без потерь: символы → байты windows-1251 → UTF-8.
+// Строка, которая так не перекодируется, — не кракозябры, отдаём как есть.
+export function repairCp1251Mojibake(text) {
+  const bytes = [];
+  for (const ch of text) {
+    const byte = cp1251ByteOf(ch);
+    if (byte === undefined) return text;
+    bytes.push(byte);
+  }
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(Uint8Array.from(bytes));
+  } catch {
+    return text;
+  }
+}
+
+const repairRows = (rows) =>
+  rows.map((row) =>
+    (row || []).map((cell) =>
+      typeof cell === "string" ? repairCp1251Mojibake(cell) : cell
+    )
+  );
+
 // Возвращает { people: [{ fullName, seat, personCategory }], flightNumber, lapInfants, error }.
 // Формат файла — XLSB/XLSX/XLS/CSV; CSV декодируем сами (UTF-8 → windows-1251), разделитель
 // SheetJS угадывает. Формат манифеста (восемь профилей) определяется автоматически по
@@ -52,13 +88,19 @@ export async function parseManifestXlsx(file) {
     return { people: [], flightNumber: "", error: "Файл пустой" };
   }
 
-  const rows = XLSX.utils.sheet_to_json(sheet, {
+  let rows = XLSX.utils.sheet_to_json(sheet, {
     header: 1,
     defval: null,
     raw: false,
   });
 
-  const detected = detectProfile(rows, PROFILES);
+  let detected = detectProfile(rows, PROFILES);
+  if (!detected) {
+    // Последняя попытка — кракозябры после пересохранения CSV через Excel.
+    const repaired = repairRows(rows);
+    detected = detectProfile(repaired, PROFILES);
+    if (detected) rows = repaired;
+  }
   if (!detected) {
     return {
       people: [],

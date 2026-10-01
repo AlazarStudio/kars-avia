@@ -1,6 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseManifestXlsx, isCsvFile, decodeTextBuffer } from "./parseManifestXlsx.js";
+import * as XLSX from "xlsx";
+import {
+  parseManifestXlsx,
+  isCsvFile,
+  decodeTextBuffer,
+  repairCp1251Mojibake,
+} from "./parseManifestXlsx.js";
 
 test("decodeTextBuffer: windows-1251 без BOM", () => {
   const buffer = Uint8Array.of(0xcf, 0xe0, 0xf1, 0xf1, 0xe0, 0xe6, 0xe8, 0xf0).buffer;
@@ -67,4 +73,41 @@ test("parseManifestXlsx: CSV-выгрузка «Руслайн» (UTF-8)", async
 
   assert.equal(result.people[1].fullName, "ИВАНОВ ПЁТР ИВАНОВИЧ");
   assert.equal(result.people[1].personCategory, "CHILD");
+});
+
+// UTF-8 текст, прочитанный как windows-1251, — так Excel открывает CSV без BOM.
+const garble = (text) =>
+  new TextDecoder("windows-1251").decode(new TextEncoder().encode(text));
+
+test("repairCp1251Mojibake: восстанавливает кракозябры, включая «И» (байт 0x98)", () => {
+  assert.equal(garble("Заказ"), "Р—Р°РєР°Р·");
+  assert.equal(repairCp1251Mojibake(garble("ДИНА Имя Ёж")), "ДИНА Имя Ёж");
+});
+
+test("repairCp1251Mojibake: обычный текст не трогает", () => {
+  assert.equal(repairCp1251Mojibake("Пассажир"), "Пассажир");
+  assert.equal(repairCp1251Mojibake("AINUTDINOVA 07.02.2026"), "AINUTDINOVA 07.02.2026");
+});
+
+test("parseManifestXlsx: XLSX, пересохранённый из UTF-8 CSV с кракозябрами", async () => {
+  const rows = RUSLINE_CSV.split("\r\n").map((line) => line.split(";").map(garble));
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(rows), "Пассажиры");
+  const buf = XLSX.write(wb, { type: "array", bookType: "xlsx" });
+  const result = await parseManifestXlsx({
+    name: "m.xlsx",
+    type: "",
+    size: buf.byteLength,
+    arrayBuffer: async () => buf,
+  });
+
+  assert.equal(result.error, null);
+  assert.equal(result.flightNumber, "5N-596");
+  assert.deepEqual(
+    result.people.map((p) => [p.fullName, p.personCategory]),
+    [
+      ["ИВАНОВА МАРИЯ ПЕТРОВНА", "ADULT"],
+      ["ИВАНОВ ПЁТР ИВАНОВИЧ", "CHILD"],
+    ]
+  );
 });
