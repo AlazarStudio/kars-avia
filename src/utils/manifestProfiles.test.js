@@ -398,6 +398,21 @@ test("RUSLINE: № рейса берётся из титульной ячейк�
   assert.equal(detected.profile.flight(RUSLINE_ROWS), "7R-398");
 });
 
+// Выгрузка с добавленным блоком «DCS Info» («Место», «Багаж»): «Фамилия» + «Место»
+// в одной строке — это колонки синтетической таблицы ICAO. Профиль с prepare не
+// должен перехватывать сырую таблицу (было: ICAO, 0 пассажиров).
+test("RUSLINE: колонка «Место» из DCS Info не отдаёт файл профилю ICAO", () => {
+  const withSeat = RUSLINE_ROWS.map((row, i) =>
+    i === 4 ? [...row, "Место", "Багаж"] : row
+  );
+  const detected = detectProfile(withSeat, PROFILES);
+  assert.equal(detected.profile.id, "RUSLINE");
+  assert.equal(
+    extractPeople(withSeat, detected.profile, detected.cols).length,
+    4
+  );
+});
+
 test("RUSLINE: инфанты идут своими строками, механизм lapInfants не подключается", () => {
   const detected = detectProfile(RUSLINE_ROWS, PROFILES);
   assert.equal(detected.profile.lapInfants, undefined);

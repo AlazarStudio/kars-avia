@@ -99,6 +99,10 @@ const findColumns = (rows, profiles) => {
 // проверяются первыми — на сыром файле обычное сопоставление всё равно ничего не
 // найдёт. Подготовленные строки возвращаются вызывающему: по ним идут и
 // extractPeople, и чтение номера рейса.
+//
+// По сырым строкам prepare-профили НЕ сопоставляем: их колонки описывают таблицу,
+// которую они строят сами («Фамилия» + «Место» у ICAO), и на чужой таблице с теми же
+// словами профиль перехватил бы файл и не нашёл бы ни одного пассажира.
 export const detectProfile = (rows, profiles) => {
   for (const profile of profiles) {
     if (!profile.prepare) continue;
@@ -107,7 +111,10 @@ export const detectProfile = (rows, profiles) => {
     const found = findColumns(prepared, [profile]);
     if (found) return { ...found, rows: prepared };
   }
-  return findColumns(rows, profiles);
+  return findColumns(
+    rows,
+    profiles.filter((profile) => !profile.prepare)
+  );
 };
 
 // Инфанты на руках → такие же записи, как обычные пассажиры. Своих строк в файле у
