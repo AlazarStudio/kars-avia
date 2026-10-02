@@ -9,6 +9,7 @@ import {
   addTransferSheet,
   addWaterMealSheet,
 } from "./buildReportSheets.js";
+import { fillFormulaResults } from "./formulaResults.js";
 import { preserveMoneyFields } from "../fapReportMoney.js";
 import { supplyTotal } from "../fapSupply.js";
 
@@ -677,9 +678,12 @@ test("лист гостиницы: включён только прилёт — 
   assert.equal(hasCellValue(ws, "гостиница Гостиница Тест-аэропорт"), false);
   assert.equal(hasCellValue(ws, 3000), true);  // деньги прилёта
   assert.equal(hasCellValue(ws, 2500), false); // выключенный вылет денег не даёт
-  // 5 — гость, 6 — разделитель, 7 — «Трансфер», 8 — прилёт, 9 — «Итого:».
-  assert.equal(ws.getCell("A9").value, "Итого:");
-  assert.equal(ws.getCell("Y9").value.formula, "SUM(Y5:Y8)");
+  // 5 — гость, 6 — разделитель, 7 — «Трансфер», 8 — прилёт,
+  // 9 — «Итого трансфер:», 10 — «Итого:».
+  assert.equal(ws.getCell("B9").value, "Итого трансфер:");
+  assert.equal(ws.getCell("Y9").value.formula, "SUM(Y8:Y8)");
+  assert.equal(ws.getCell("A10").value, "Итого:");
+  assert.equal(ws.getCell("Y10").value.formula, "SUM(Y5:Y8)");
 });
 
 test("лист гостиницы: выключенный трансфер не удерживает «Итого» под hideMoney", () => {
@@ -1895,9 +1899,13 @@ test("лист гостиницы: при двух гостиницах — то
     ["гостиница Аквамарин-аэропорт", "автобус до 50", 12900],
     ["гостиница Аквамарин-аэропорт", "микроавтобус (до 20)", 6800],
   ]);
-  // Гостей нет: 5 — разделитель, 6 — «Трансфер», 7–10 — поездки, 11 — «Итого:».
-  assert.equal(aqua.getCell("A11").value, "Итого:");
-  assert.equal(aqua.getCell("Y11").value.formula, "SUM(Y5:Y10)");
+  // Гостей нет: 5 — разделитель, 6 — «Трансфер», 7–10 — поездки,
+  // 11 — «Итого трансфер:», 12 — «Итого:».
+  assert.equal(aqua.getCell("B11").value, "Итого трансфер:");
+  assert.equal(aqua.getCell("Y11").value.formula, "SUM(Y7:Y10)");
+  assert.equal(aqua.getCell("A12").value, "Итого:");
+  // Общий итог кончается на последней поездке — строку «Итого трансфер:» не считает.
+  assert.equal(aqua.getCell("Y12").value.formula, "SUM(Y5:Y10)");
   // Время подачи — своё время водителя.
   assert.equal(aqua.getCell("E7").numFmt, "dd.mm.yyyy");
 
@@ -1934,6 +1942,36 @@ test("лист гостиницы: поездку, которую не отне�
     assert.equal(hasCellValue(ws, "Трансфер"), false);
     assert.equal(hasCellValue(ws, 12900), false);
   });
+});
+
+test("лист гостиницы: «Итого трансфер:» — сумма своих поездок, общий итог без двойного счёта", () => {
+  // Заявка 0095AER0826f: у «Аквамарина» поездки на 39 400, у гостей — проживание.
+  const request = makeTwoHotelRequest(
+    [
+      trip("aqua", AQUA, "автобус до 50", 12900),
+      trip("aqua", AQUA, "микроавтобус (до 20)", 6800),
+      trip("olymp", OLYMP, "автобус до 50", 12900),
+    ],
+    [
+      trip("aqua", AQUA, "автобус до 50", 12900, "DEPARTURE"),
+      trip("aqua", AQUA, "микроавтобус (до 20)", 6800, "DEPARTURE"),
+    ]
+  );
+  const wb = new ExcelJS.Workbook();
+  const ws = addHotelSheet(wb, { request, hotelIndex: 0, sheetNames: new Set() });
+  fillFormulaResults(wb);
+  assert.equal(ws.getCell("B11").value, "Итого трансфер:");
+  assert.equal(ws.getCell("Y11").value.result, 39400);
+  // «Итого:» листа — тоже 39 400 (гостей нет), а не 78 800.
+  assert.equal(ws.getCell("Y12").value.result, 39400);
+});
+
+test("лист гостиницы: у поездок без сумм строки «Итого трансфер:» нет", () => {
+  const request = makeTwoHotelRequest([trip("aqua", AQUA, "автобус до 50", null)]);
+  const ws = hotelSheetAt(request, 0);
+  assert.equal(hasCellValue(ws, "Итого трансфер:"), false);
+  // 5 — разделитель, 6 — «Трансфер», 7 — поездка, 8 — «Итого:».
+  assert.equal(ws.getCell("A8").value, "Итого:");
 });
 
 test("лист гостиницы: у единственной гостиницы поездки без привязки и адреса остаются её", () => {

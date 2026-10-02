@@ -628,12 +628,27 @@ export function addHotelSheet(wb, opts) {
       lastTransferRow = rowIdx;
       rowIdx += 1;
     };
+    const firstTripRow = rowIdx;
     aTrips.forEach((d) =>
       putTrip(d, `аэропорт-гостиница ${hotelName}`, arrival?.plan?.plannedAt)
     );
     dTrips.forEach((d) =>
       putTrip(d, `гостиница ${hotelName}-аэропорт`, departure?.plan?.plannedAt)
     );
+
+    // Итог трансфера гостиницы отдельной строкой (просьба заказчика по
+    // 0095AER0826f): в «Итого:» листа он смешан с проживанием и питанием.
+    // Строка стоит ПОСЛЕ последней поездки, а диапазон «Итого:» на ней и
+    // кончается — двойного счёта нет. Сумм у поездок нет — показывать нечего.
+    if ([...aTrips, ...dTrips].some((d) => d.reportCost != null)) {
+      const subRow = ws.getRow(rowIdx);
+      put(subRow, "fullName", "Итого трансфер:");
+      subRow.getCell(at.fullName).font = HEADER_FONT;
+      put(subRow, "total", {
+        formula: `SUM(${letter("total")}${firstTripRow}:${letter("total")}${lastTransferRow})`,
+      });
+      rowIdx += 1;
+    }
   }
 
   // ── Строка «Итого:» ──
