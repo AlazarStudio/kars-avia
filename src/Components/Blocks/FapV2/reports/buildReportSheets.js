@@ -11,6 +11,7 @@ import { roomKey } from "../fapGroups.js";
 import { lunchboxCountOf } from "../fapReportMoney.js";
 import { supplyTotal } from "../fapSupply.js";
 import { findRowIndexForPerson } from "./reportRowMatch.js";
+import { fillFormulaResults } from "./formulaResults.js";
 
 // ── helpers ──
 
@@ -1060,6 +1061,8 @@ export function addWaterMealSheet(wb, opts) {
 }
 
 export async function downloadWorkbook(wb, filename) {
+  // Итоги-формулы получают кеш значения: превью и защищённый просмотр их не считают.
+  fillFormulaResults(wb);
   const buffer = await wb.xlsx.writeBuffer();
   const blob = new Blob([buffer], {
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
