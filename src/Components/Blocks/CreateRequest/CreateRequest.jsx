@@ -314,10 +314,10 @@ function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, re
   }, [isEdited, resetForm, setMatchingRequest, onClose, isDialogOpen, confirm]);
   const today = new Date().toISOString().split("T")[0];
 
-  // Рассчитываем минимальную дату прибытия как дату, начиная с месяца назад
+  // Рассчитываем минимальную дату прибытия как дату, начиная с полугода назад
   const minArrivalDate = useMemo(() => {
     const date = new Date();
-    date.setMonth(date.getMonth() - 1);
+    date.setMonth(date.getMonth() - 6);
     return date.toISOString().split("T")[0];
   }, []);
 
@@ -485,7 +485,7 @@ function CreateRequest({ show, onClose, onMatchFound, user, embedded = false, re
     // }
 
     if (formData.arrivalDate < minArrivalDate) {
-      showAlert("Дата прибытия не может быть больше месяца назад.");
+      showAlert("Дата прибытия не может быть больше полугода назад.");
       setFormData((prevFormData) => ({
         ...prevFormData,
         arrivalDate: "", // Очищаем дату прибытия
