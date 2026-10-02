@@ -268,7 +268,7 @@ test("sumTotalDebt adds up and survives junk", () => {
   assert.equal(sumTotalDebt([]), 0);
 });
 
-test("editable fields are exactly the three agreed ones", () => {
+test("editable fields: 16 keys in table column order (mirror of REPORT_EDITABLE_FIELD_KEYS on the backend)", () => {
   assert.deepEqual(EDITABLE_FIELDS, [
     "personName",
     "arrival",
@@ -276,13 +276,25 @@ test("editable fields are exactly the three agreed ones", () => {
     "totalDays",
     "category",
     "roomName",
+    "shareNote",
     "personPosition",
     "breakfastCount",
     "lunchCount",
     "dinnerCount",
     "totalMealCost",
     "pricePerDay",
+    "hotelName",
+    "totalLivingCost",
+    "totalDebt",
   ]);
+});
+
+test("draft row carries the manual share note for saving", () => {
+  assert.ok(DRAFT_ROW_FIELDS.includes("shareNoteOverride"));
+  assert.equal(
+    DRAFT_ROW_FIELDS.indexOf("shareNoteOverride"),
+    DRAFT_ROW_FIELDS.indexOf("shareNote") + 1
+  );
 });
 
 test("save payload limit mirrors JSON_BODY_LIMIT=2mb on the backend", () => {

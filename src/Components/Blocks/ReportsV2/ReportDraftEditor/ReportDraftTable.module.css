@@ -289,6 +289,20 @@
   vertical-align: middle;
 }
 
+/* «Вид проживания» в правке: номер группы слева, поле — на остаток ширины.
+   В чтении колонка остаётся блочной — иначе текст стал бы анонимным
+   flex-элементом и перестало бы работать многоточие. */
+.shareEditable {
+  display: flex;
+  align-items: center;
+}
+.shareEditable .clusterBadge {
+  flex-shrink: 0;
+}
+.shareEditable .fieldWrapWide {
+  flex: 1;
+}
+
 .colPosition {
   flex-basis: 120px;
 }
@@ -339,6 +353,13 @@
   display: flex;
   justify-content: flex-end;
   text-align: right;
+}
+
+/* Поля этих двух колонок прижаты вправо — как их заголовки и значения
+   в режиме чтения (у .cellField по умолчанию центр). */
+.colLiving .cellField,
+.colTotal .cellField {
+  align-items: flex-end;
 }
 
 /* «Гостиница» стоит между «Ценой/сут.» и «Стоимостью проживания» (просьба

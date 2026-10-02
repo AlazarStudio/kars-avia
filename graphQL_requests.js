@@ -7114,6 +7114,7 @@ export const GET_REPORT_DRAFT = gql`
         roomName
         roomId
         shareNote
+        shareNoteOverride
         roomGroupId
         shareClusterId
         shareSegments {
@@ -7219,6 +7220,7 @@ export const UPDATE_REPORT_DRAFT = gql`
         roomName
         roomId
         shareNote
+        shareNoteOverride
         breakfastCount
         lunchCount
         dinnerCount
@@ -7259,6 +7261,7 @@ export const RECREATE_REPORT_DRAFT = gql`
         roomName
         roomId
         shareNote
+        shareNoteOverride
         roomGroupId
         shareClusterId
         shareSegments {

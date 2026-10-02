@@ -19,8 +19,12 @@ import {
   DRAFT_FILTERS,
   applyDateChange,
   applyMealCountChange,
+  applyTotalChange,
+  buildHotelOptions,
   buildRoomMates,
+  clampTotalPatch,
   groupRowsByRoom,
+  normalizeShareNoteOverride,
   pluralizeDays,
   pluralizeRows,
   rowMatchesSearch,
@@ -32,6 +36,7 @@ import {
   convertToDateNew,
   decodeJWT,
   GET_AIRLINE_POSITIONS,
+  GET_HOTELS_RELAY,
   GET_REPORT_PARTIAL_DAY_SETTINGS,
   MY_REPORT_EDITABLE_FIELDS,
   SET_MY_REPORT_EDITABLE_FIELDS,
@@ -154,10 +159,25 @@ export default function ReportDraftEditor({
     context: { headers: { Authorization: `Bearer ${token}` } },
   });
   const myEditableFields = fieldsData?.myReportEditableFields ?? null;
-  const editableFields = useMemo(
-    () => new Set(myEditableFields ?? EDITABLE_FIELDS),
-    [myEditableFields]
-  );
+  // Набор полей, правимых в ЭТОМ черновике: личная настройка минус то, что
+  // в этом черновике в файл не попадёт. «Гостиница» печатается только в
+  // отчёте по авиакомпании (в гостиничном все строки — одна гостиница).
+  // Без проживания в фильтре колонка проживания не печатается, а итог в файле
+  // = только питание: правка проживания/итога в файл бы не дошла. Без питания
+  // файл печатает итог без питания, а правка итога считает проживание = итог −
+  // питание: набранный итог в файл бы не попал.
+  const livingInReport = draft?.filterJson?.living !== false;
+  const mealInReport = draft?.filterJson?.meal !== false;
+  const editableFields = useMemo(() => {
+    const set = new Set(myEditableFields ?? EDITABLE_FIELDS);
+    if (!isAirlineDraft) set.delete("hotelName");
+    if (!livingInReport) {
+      set.delete("totalLivingCost");
+      set.delete("totalDebt");
+    }
+    if (!mealInReport) set.delete("totalDebt");
+    return set;
+  }, [myEditableFields, isAirlineDraft, livingInReport, mealInReport]);
 
   // Шестерёнка настройки — только тем, кому должность выдала право
   // reportFieldSettings (супер — всегда, как везде в системе).
@@ -198,6 +218,19 @@ export default function ReportDraftEditor({
         .map((p) => p?.name)
         .filter(Boolean),
     [positionsData]
+  );
+
+  // Справочник гостиниц — для выбора в колонке «Гостиница» (все гостиницы
+  // системы, решение владельца 02.10.2026). Только в правке черновика АК:
+  // в гостиничном черновике колонка не правится.
+  const { data: hotelsData } = useQuery(GET_HOTELS_RELAY, {
+    fetchPolicy: "cache-first",
+    skip: !(mode === "edit" && isAirlineDraft),
+    context: { headers: { Authorization: `Bearer ${token}` } },
+  });
+  const hotelOptions = useMemo(
+    () => buildHotelOptions(hotelsData?.hotels?.hotels),
+    [hotelsData]
   );
 
   const [filter, setFilter] = useState(DRAFT_FILTERS.ALL);
@@ -255,7 +288,34 @@ export default function ReportDraftEditor({
       setRowPatch(uid, applyMealCountChange(row, field, value));
       return;
     }
+    // Итог: разница уходит в проживание (в файле итог = питание + проживание).
+    if (row && field === "totalDebt") {
+      setRowPatch(uid, applyTotalChange(row, value));
+      return;
+    }
     setCell(uid, field, value);
+  };
+
+  // Фиксация на уходе из поля. Итог ниже питания (или пустой) не принимается:
+  // проживание → 0, итог → питание; делать это на каждом символе нельзя —
+  // итог невозможно было бы набрать. Пустой ручной «Вид проживания» = вернуть
+  // расчёт сервера (null).
+  const handleCellCommit = (uid, field) => {
+    const row = rows.find((r) => r._uid === uid);
+    if (!row) return;
+    if (field === "totalDebt") {
+      const patch = clampTotalPatch(row);
+      if (patch) setRowPatch(uid, patch);
+      return;
+    }
+    if (field === "shareNoteOverride") {
+      const next = normalizeShareNoteOverride(row.shareNoteOverride);
+      // ?? null: у строки из старого кэша поля может не быть вовсе (undefined) —
+      // это то же «расчёт сервера», патчить нечего.
+      if ((row.shareNoteOverride ?? null) !== next) {
+        setRowPatch(uid, { shareNoteOverride: next });
+      }
+    }
   };
 
   // Смена фильтра или поиска — пользователь сам пересобрал выборку, прошлые
@@ -718,10 +778,12 @@ export default function ReportDraftEditor({
             snapshotValue={snapshotValue}
             editableFields={editableFields}
             positions={positionNames}
+            hotelOptions={hotelOptions}
             roomMates={roomMates}
             onCellChange={handleCellChange}
             onCellFocus={hold}
             onCellBlur={release}
+            onCellCommit={handleCellCommit}
             onResetRow={resetRow}
             onRequestDeleteRow={handleRequestDeleteRow}
             onResetFilters={handleResetFilters}

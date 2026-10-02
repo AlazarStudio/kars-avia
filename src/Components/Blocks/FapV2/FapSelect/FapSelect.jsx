@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import classes from "./FapSelect.module.css";
+import { filterSelectOptions } from "./filterSelectOptions";
 
 // Оценка высоты меню по числу опций — держим в согласии с FapSelect.module.css:
 // .option = 8px padding сверху и снизу + строка 13px шрифта, .menu = padding 4px
@@ -10,6 +11,7 @@ const MENU_CHROME = 10;
 const MENU_MAX_HEIGHT = 262;
 // Отступ меню от триггера и минимальный зазор до края окна.
 const MENU_GAP = 4;
+const SEARCH_HEIGHT = 44; // поле поиска вверху меню (searchable)
 const VIEWPORT_MARGIN = 8;
 
 const estimateMenuHeight = (optionsCount) =>
@@ -50,11 +52,16 @@ export default function FapSelect({
   title,
   // Фокус на триггере при появлении — для строк «добавить», которые раскрываются по кнопке.
   autoFocus = false,
+  // searchable — поле поиска вверху меню (длинные справочники: гостиницы).
+  // Фильтрует по подписи опции и по заголовку группы. Без пропа — прежний вид.
+  searchable = false,
+  searchPlaceholder = "Поиск",
 }) {
   const [open, setOpen] = useState(false);
   const [rect, setRect] = useState(null);
   // { up, space } — направление раскрытия и доступная в нём высота.
   const [placement, setPlacement] = useState({ up: false, space: null });
+  const [query, setQuery] = useState("");
   const triggerRef = useRef(null);
   const menuRef = useRef(null);
 
@@ -63,13 +70,15 @@ export default function FapSelect({
     typeof o === "string" ? { value: o, label: o } : o
   );
   const current = norm.find((o) => !o.groupLabel && o.value === value);
+  const visible = searchable ? filterSelectOptions(norm, query) : norm;
 
   const openMenu = () => {
     if (disabled) return;
     const el = triggerRef.current;
     if (el) {
       const next = el.getBoundingClientRect();
-      const needed = estimateMenuHeight(norm.length) + MENU_GAP;
+      const needed =
+        estimateMenuHeight(norm.length) + (searchable ? SEARCH_HEIGHT : 0) + MENU_GAP;
       const spaceBelow = window.innerHeight - next.bottom - VIEWPORT_MARGIN;
       const spaceAbove = next.top - VIEWPORT_MARGIN;
       const up = needed > spaceBelow && spaceAbove > spaceBelow;
@@ -79,6 +88,7 @@ export default function FapSelect({
         space: Math.max(0, (up ? spaceAbove : spaceBelow) - MENU_GAP),
       });
     }
+    setQuery("");
     setOpen(true);
   };
   const close = () => setOpen(false);
@@ -197,11 +207,28 @@ export default function FapSelect({
               // Длинный список не должен упираться в край окна: внутри меню
               // свой скролл, поэтому режем высоту по доступному месту.
               ...(placement.space != null
-                ? { maxHeight: Math.min(MENU_MAX_HEIGHT, placement.space) }
+                ? {
+                    maxHeight: Math.min(
+                      MENU_MAX_HEIGHT + (searchable ? SEARCH_HEIGHT : 0),
+                      placement.space
+                    ),
+                  }
                 : null),
             }}
           >
-            {norm.map((o, oi) => {
+            {searchable && (
+              <div className={classes.searchWrap}>
+                <input
+                  type="text"
+                  className={classes.search}
+                  value={query}
+                  placeholder={searchPlaceholder}
+                  autoFocus
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </div>
+            )}
+            {visible.map((o, oi) => {
               if (o.groupLabel) {
                 return (
                   <div key={`__g${oi}`} className={classes.group}>
@@ -239,6 +266,9 @@ export default function FapSelect({
                 </div>
               );
             })}
+            {searchable && !visible.some((o) => !o.groupLabel) && (
+              <div className={classes.empty}>Ничего не найдено</div>
+            )}
           </div>,
           document.body
         )}

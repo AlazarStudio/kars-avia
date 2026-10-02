@@ -23,6 +23,14 @@ import {
   applyMealCountChange,
   groupRowsByRoom,
   buildRoomMates,
+  applyTotalChange,
+  clampTotalPatch,
+  normalizeShareNoteOverride,
+  hasManualShareNote,
+  buildHotelOptions,
+  withCurrentHotel,
+  hotelNameForValue,
+  CURRENT_HOTEL_VALUE,
 } from "./reportDraftEditorUtils.js";
 
 // Формат границ — как на стенде: "DD.MM.YYYY HH:MM:SS", уже отформатирован бэком.
@@ -417,4 +425,95 @@ test("buildRoomMates: сосед = комната + пересечение да�
   assert.deepEqual(mates.get(1), ["Иванов"]);
   assert.equal(mates.has(2), false);
   assert.equal(mates.has(3), false);
+});
+
+// --- 02.10.2026: правка итога, ручной «Вид проживания», гостиницы ---
+
+const moneyRow = { totalMealCost: 1180, totalLivingCost: 3900, totalDebt: 5080, pricePerDay: 2600, totalDays: 1.5 };
+
+test("applyTotalChange: разница уходит в проживание, цена не трогается", () => {
+  assert.deepEqual(applyTotalChange(moneyRow, "6000"), { totalDebt: 6000, totalLivingCost: 4820 });
+  assert.deepEqual(applyTotalChange(moneyRow, 1180), { totalDebt: 1180, totalLivingCost: 0 });
+});
+
+test("applyTotalChange: во время набора проживание может уйти в минус", () => {
+  assert.deepEqual(applyTotalChange(moneyRow, "5"), { totalDebt: 5, totalLivingCost: -1175 });
+});
+
+test("applyTotalChange: пустое поле — итог null, проживание не трогается", () => {
+  assert.deepEqual(applyTotalChange(moneyRow, ""), { totalDebt: null });
+  assert.deepEqual(applyTotalChange(moneyRow, "abc"), {});
+});
+
+test("clampTotalPatch: итог ниже питания — проживание 0, итог = питание", () => {
+  assert.deepEqual(clampTotalPatch({ ...moneyRow, totalDebt: 5, totalLivingCost: -1175 }), {
+    totalLivingCost: 0,
+    totalDebt: 1180,
+  });
+  assert.deepEqual(clampTotalPatch({ ...moneyRow, totalDebt: null, totalLivingCost: -1175 }), {
+    totalLivingCost: 0,
+    totalDebt: 1180,
+  });
+});
+
+test("clampTotalPatch: корректный итог не трогается", () => {
+  assert.equal(clampTotalPatch({ ...moneyRow, totalDebt: 6000, totalLivingCost: 4820 }), null);
+  assert.equal(clampTotalPatch({ ...moneyRow, totalDebt: 1180, totalLivingCost: 0 }), null);
+});
+
+test("правка дат после ручного проживания пересчитывает его как сутки × цена", () => {
+  const manual = { ...moneyRow, arrival: "01.08.2026 14:00:00", departure: "02.08.2026 12:00:00", totalLivingCost: 9999 };
+  const patch = applyDateChange(manual, "departure", "03.08.2026 12:00:00", null);
+  assert.equal(patch.totalLivingCost, Math.round(patch.totalDays * 2600));
+  assert.equal("pricePerDay" in patch, false);
+});
+
+test("normalizeShareNoteOverride и hasManualShareNote", () => {
+  assert.equal(normalizeShareNoteOverride("  с Ивановым "), "с Ивановым");
+  assert.equal(normalizeShareNoteOverride(""), null);
+  assert.equal(normalizeShareNoteOverride("   "), null);
+  assert.equal(normalizeShareNoteOverride(null), null);
+  assert.equal(hasManualShareNote({ shareNoteOverride: "с Ивановым" }), true);
+  assert.equal(hasManualShareNote({ shareNoteOverride: "" }), false);
+  assert.equal(hasManualShareNote({ shareNoteOverride: null }), false);
+  assert.equal(hasManualShareNote({}), false);
+});
+
+const hotels = [
+  { id: "h2", name: "Кавказ", airport: { code: "MRV", city: "Минеральные Воды" } },
+  { id: "h1", name: "Азимут", airport: { code: "MRV", city: "Минеральные Воды" } },
+  { id: "h3", name: "Азия", airport: { code: "ABA", city: "Абакан" } },
+  { id: "h4", name: "Азимут", airport: { code: "ABA", city: "Абакан" } },
+  { id: "h5", name: "Без аэропорта", airport: null },
+  { id: null, name: "битая" },
+];
+
+test("buildHotelOptions: группы по аэропорту, внутри по алфавиту, «Без аэропорта» в конце", () => {
+  const { options } = buildHotelOptions(hotels);
+  assert.deepEqual(options, [
+    { groupLabel: "ABA · Абакан" },
+    { value: "h4", label: "Азимут" },
+    { value: "h3", label: "Азия" },
+    { groupLabel: "MRV · Минеральные Воды" },
+    { value: "h1", label: "Азимут" },
+    { value: "h2", label: "Кавказ" },
+    { groupLabel: "Без аэропорта" },
+    { value: "h5", label: "Без аэропорта" },
+  ]);
+});
+
+test("withCurrentHotel: известное название → id, неизвестное — первой опцией, пустое — без значения", () => {
+  const built = buildHotelOptions(hotels);
+  assert.deepEqual(withCurrentHotel(built, "Кавказ"), { options: built.options, value: "h2" });
+  assert.deepEqual(withCurrentHotel(built, ""), { options: built.options, value: "" });
+  const custom = withCurrentHotel(built, "Гостиница ДИС");
+  assert.equal(custom.value, CURRENT_HOTEL_VALUE);
+  assert.deepEqual(custom.options[0], { value: CURRENT_HOTEL_VALUE, label: "Гостиница ДИС" });
+  assert.equal(custom.options.length, built.options.length + 1);
+});
+
+test("hotelNameForValue: выбранный id → название", () => {
+  const { options } = buildHotelOptions(hotels);
+  assert.equal(hotelNameForValue(options, "h3"), "Азия");
+  assert.equal(hotelNameForValue(options, "nope"), null);
 });

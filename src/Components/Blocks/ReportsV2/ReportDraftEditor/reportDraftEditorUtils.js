@@ -626,3 +626,145 @@ export function rowMatchesSearch(row, query) {
     .toLowerCase();
   return haystack.includes(q);
 }
+
+/**
+ * Патч строки при правке «Итоговой стоимости»: итог = введённое значение,
+ * разница уходит в «Стоимость проживания» (проживание = итог − питание).
+ * В файле итог печатается как питание + проживание, поэтому строка обязана
+ * оставаться арифметически согласованной (решение владельца 02.10.2026).
+ * «Цена/сут.» не трогается. Во время набора проживание может быть
+ * отрицательным — поправку делает clampTotalPatch при уходе из поля.
+ *
+ * @param {object} row - текущая строка
+ * @param {string|number|null} rawValue - значение из инпута
+ * @returns {object} патч полей строки
+ */
+export function applyTotalChange(row, rawValue) {
+  if (rawValue === "" || rawValue === null || rawValue === undefined) {
+    return { totalDebt: null };
+  }
+  const total = Number(rawValue);
+  if (Number.isNaN(total)) return {};
+  const meal = Number(row?.totalMealCost) || 0;
+  return { totalDebt: total, totalLivingCost: total - meal };
+}
+
+/**
+ * Поправка итога при уходе из поля: итог меньше стоимости питания (или пустой)
+ * не принимается — проживание становится 0, итог — равным питанию. На каждом
+ * символе её делать нельзя: первая цифра «5» сразу превращалась бы в сумму
+ * питания, и итог невозможно было бы набрать.
+ *
+ * @param {object} row - строка после набора
+ * @returns {object|null} патч или null, если поправлять нечего
+ */
+export function clampTotalPatch(row) {
+  const meal = Number(row?.totalMealCost) || 0;
+  const total = Number(row?.totalDebt);
+  if (row?.totalDebt === null || row?.totalDebt === undefined || Number.isNaN(total) || total < meal) {
+    return { totalLivingCost: 0, totalDebt: meal };
+  }
+  return null;
+}
+
+/**
+ * Ручной «Вид проживания» к виду для сохранения: обрезанная строка, пустое —
+ * null («вернуть расчёт сервера»). Зеркало normalizeShareNoteOverride бэка
+ * (services/report/reportShareMetadata.js).
+ *
+ * @param {*} value
+ * @returns {string|null}
+ */
+export function normalizeShareNoteOverride(value) {
+  if (typeof value !== "string") return null;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : null;
+}
+
+/**
+ * Есть ли у строки ручной «Вид проживания» (непустой shareNoteOverride).
+ * Пустая строка — поле стёрто, пока курсор в нём: ручным ещё не считается.
+ *
+ * @param {object} row
+ * @returns {boolean}
+ */
+export function hasManualShareNote(row) {
+  return normalizeShareNoteOverride(row?.shareNoteOverride) !== null;
+}
+
+/** Значение опции «текущее название, которого нет в справочнике гостиниц». */
+export const CURRENT_HOTEL_VALUE = "__current_hotel__";
+const NO_AIRPORT_GROUP = "Без аэропорта";
+
+/**
+ * Опции выпадающего списка «Гостиница» из справочника (GET_HOTELS_RELAY):
+ * группы по аэропорту («MRV · Минеральные Воды»), внутри — по алфавиту,
+ * гостиницы без аэропорта — последней группой. value опции — id гостиницы:
+ * названия неуникальны (одноимённые есть в разных городах), а ключи меню
+ * совпадать не должны. Строится один раз на редактор.
+ *
+ * @param {Array<object>|null|undefined} hotels
+ * @returns {{ options: Array<object>, idByName: Map<string, string> }}
+ */
+export function buildHotelOptions(hotels) {
+  const groups = new Map();
+  for (const h of Array.isArray(hotels) ? hotels : []) {
+    const name = String(h?.name ?? "").trim();
+    if (!h?.id || !name) continue;
+    const code = String(h.airport?.code ?? "").trim();
+    const city = String(h.airport?.city ?? "").trim();
+    const groupLabel = [code, city].filter(Boolean).join(" · ") || NO_AIRPORT_GROUP;
+    if (!groups.has(groupLabel)) groups.set(groupLabel, []);
+    groups.get(groupLabel).push({ value: String(h.id), label: name });
+  }
+  const labels = [...groups.keys()].sort((a, b) => {
+    if (a === NO_AIRPORT_GROUP) return 1;
+    if (b === NO_AIRPORT_GROUP) return -1;
+    return a.localeCompare(b, "ru");
+  });
+  const options = [];
+  const idByName = new Map();
+  for (const groupLabel of labels) {
+    options.push({ groupLabel });
+    const items = groups.get(groupLabel).sort((a, b) => a.label.localeCompare(b.label, "ru"));
+    for (const item of items) {
+      options.push(item);
+      if (!idByName.has(item.label)) idByName.set(item.label, item.value);
+    }
+  }
+  return { options, idByName };
+}
+
+/**
+ * Опции и значение списка «Гостиница» для конкретной строки: в строке только
+ * название, поэтому значение — id первой гостиницы с таким названием;
+ * название вне справочника добавляется первой опцией (как у «Должности»).
+ *
+ * @param {{ options: Array<object>, idByName: Map<string, string> }|null} hotelOptions
+ * @param {string|null|undefined} currentName
+ * @returns {{ options: Array<object>, value: string }}
+ */
+export function withCurrentHotel(hotelOptions, currentName) {
+  const options = hotelOptions?.options ?? [];
+  const name = String(currentName ?? "").trim();
+  if (!name) return { options, value: "" };
+  const id = hotelOptions?.idByName?.get(name);
+  if (id) return { options, value: id };
+  return {
+    options: [{ value: CURRENT_HOTEL_VALUE, label: name }, ...options],
+    value: CURRENT_HOTEL_VALUE,
+  };
+}
+
+/**
+ * Название гостиницы по выбранному значению списка — в строку черновика
+ * пишется именно название (hotelId у строки нет).
+ *
+ * @param {Array<object>} options
+ * @param {string} value
+ * @returns {string|null}
+ */
+export function hotelNameForValue(options, value) {
+  const hit = (options || []).find((o) => !o.groupLabel && o.value === value);
+  return hit ? hit.label : null;
+}

@@ -11,6 +11,7 @@ export const DRAFT_ROW_FIELDS = [
   "roomName",
   "roomId",
   "shareNote",
+  "shareNoteOverride",
   "breakfastCount",
   "lunchCount",
   "dinnerCount",
@@ -23,12 +24,6 @@ export const DRAFT_ROW_FIELDS = [
   "frozen",
 ];
 
-/**
- * Поля строки, которые пользователь правит руками. Не правятся только
- * производная «Стоимость проживания», итог и гостиница (требование заказчика:
- * весь черновик гибко настраивается в контексте отчёта, данных системы правки
- * не меняют) — плюс структурный «вид проживания» (shareSegments считает бэк).
- */
 /** Подписи редактируемых полей — для шестерёнки настроек редактора. */
 export const REPORT_FIELD_LABELS = {
   personName: "Сотрудник (ФИО)",
@@ -37,14 +32,29 @@ export const REPORT_FIELD_LABELS = {
   totalDays: "Кол-во суток",
   category: "Категория номера",
   roomName: "Комната",
+  shareNote: "Вид проживания",
   personPosition: "Должность",
   breakfastCount: "Завтрак",
   lunchCount: "Обед",
   dinnerCount: "Ужин",
   totalMealCost: "Стоимость питания",
   pricePerDay: "Цена/сут.",
+  hotelName: "Гостиница",
+  totalLivingCost: "Стоимость проживания",
+  totalDebt: "Итоговая стоимость",
 };
 
+/**
+ * Поля строки, которые пользователь правит руками (и ключи личной настройки
+ * «Редактируемые поля черновика»). Зеркало REPORT_EDITABLE_FIELD_KEYS бэка
+ * (services/report/reportEditableFields.js) — менять ПАРОЙ: незнакомый ключ
+ * бэк молча выкидывает из сохранённой настройки. Порядок — колонок таблицы.
+ *
+ * С 02.10.2026 правятся и «Гостиница» (выбор из справочника, только в
+ * черновике АК), «Стоимость проживания», «Итоговая стоимость» (разница уходит
+ * в проживание: в файле итог = питание + проживание) и «Вид проживания»
+ * (ручной текст хранится в shareNoteOverride, расчётный shareNote считает бэк).
+ */
 export const EDITABLE_FIELDS = [
   "personName",
   "arrival",
@@ -52,12 +62,16 @@ export const EDITABLE_FIELDS = [
   "totalDays",
   "category",
   "roomName",
+  "shareNote",
   "personPosition",
   "breakfastCount",
   "lunchCount",
   "dinnerCount",
   "totalMealCost",
   "pricePerDay",
+  "hotelName",
+  "totalLivingCost",
+  "totalDebt",
 ];
 
 /**

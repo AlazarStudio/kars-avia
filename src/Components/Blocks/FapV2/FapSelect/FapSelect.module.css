@@ -201,3 +201,43 @@
   border-top: 1px solid #f1f3fa;
   margin-top: 4px;
 }
+
+/* searchable: поле поиска липнет к верху меню, пока прокручивается список.
+   Отрицательные поля компенсируют padding: 4px у .menu. */
+.searchWrap {
+  position: sticky;
+  top: -4px;
+  z-index: 1;
+  margin: -4px -4px 4px;
+  padding: 6px;
+  background: #fff;
+  border-bottom: 1px solid #f1f3fa;
+}
+
+/* Первый заголовок группы сразу под поиском: линия уже есть у .searchWrap. */
+.searchWrap + .group {
+  border-top: none;
+  margin-top: 0;
+}
+
+.search {
+  width: 100%;
+  height: 30px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border: 1px solid #e8eaf2;
+  border-radius: 7px;
+  font-size: 13px;
+  color: #2b2f3a;
+  outline: none;
+}
+
+.search:focus {
+  border-color: #c9cedd;
+}
+
+.empty {
+  padding: 8px 10px;
+  font-size: 13px;
+  color: #9aa0b4;
+}

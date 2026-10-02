@@ -16,17 +16,25 @@ import {
   describeShareSegments,
   listCohabitants,
   editableValue,
+  hasManualShareNote,
+  withCurrentHotel,
+  hotelNameForValue,
 } from "./reportDraftEditorUtils";
 
 // Одна строка таблицы черновика. Чисто UI: получает уже готовую строку и
 // колбэки, всю логику (что такое "правлено", что сохранять) решает вызывающий
 // код (ReportDraftEditor/useReportDraft).
 //
-// Набор колонок повторяет печатную форму реестра, но с 05.09.2026 почти все
-// поля правятся прямо в контексте отчёта (требование заказчика: черновик
-// настраивается гибко, данных системы правки не меняют). Не правятся только
-// «Стоимость проживания» (производная), «Итоговая стоимость» (производная),
-// «Гостиница» и структурный «Вид проживания» (его считает бэк из подселений).
+// Набор колонок повторяет печатную форму реестра, и все поля правятся прямо
+// в контексте отчёта (требование заказчика 05.09.2026: черновик настраивается
+// гибко, данных системы правки не меняют; с 02.10.2026 — и последние четыре).
+// Особые правила:
+//  - «Гостиница» — выбором из справочника гостиниц и только в черновике по
+//    авиакомпании (в гостиничном она не печатается);
+//  - правка «Итоговой стоимости» переносит разницу в «Стоимость проживания»
+//    (в файле итог = питание + проживание);
+//  - ручной «Вид проживания» хранится в shareNoteOverride и печатается вместо
+//    расчётного shareNote, который бэк пересчитывает при каждом сохранении.
 //
 // Отступления от печатной формы, все намеренные:
 //  - первой стоит колонка «заморозки»: галочка фиксирует строку целиком —
@@ -44,10 +52,12 @@ export default function ReportDraftRow({
   snapshotValue,
   editableFields,
   positions,
+  hotelOptions,
   roomMates,
   onCellChange,
   onCellFocus,
   onCellBlur,
+  onCellCommit,
   onResetRow,
   onRequestDelete,
   cluster,
@@ -382,12 +392,15 @@ export default function ReportDraftRow({
         )}
       </div>
 
-      {/* «Вид проживания» — с кем именно делили номер. Не правится напрямую.
-          Два источника: серверные shareSegments (с периодами) и ТЕКУЩЕЕ
-          совпадение комнат (roomMates) — после ручной смены «Комнаты» сервер
-          о новом соседстве ещё не знает, поэтому при расхождении показывается
-          свежее room-based «вместе с …» (требование заказчика 07.09); когда
-          составы совпадают, остаётся серверный текст с периодами в подсказке. */}
+      {/* «Вид проживания» — с кем именно делили номер. С 02.10.2026 правится
+          свободным текстом: ручной текст хранится в shareNoteOverride и
+          печатается вместо расчётного shareNote (бэк его не трогает, пока поле
+          не откатят). Без ручного текста — два прежних источника: серверные
+          shareSegments (с периодами) и ТЕКУЩЕЕ совпадение комнат (roomMates) —
+          после ручной смены «Комнаты» сервер о новом соседстве ещё не знает,
+          поэтому при расхождении показывается свежее room-based «вместе с …»
+          (требование заказчика 07.09); когда составы совпадают, остаётся
+          серверный текст с периодами в подсказке. */}
       {(() => {
         const mates = Array.isArray(roomMates) ? roomMates : [];
         const sameAsServer =
@@ -395,13 +408,31 @@ export default function ReportDraftRow({
           mates.every((name) => cohabitants.includes(name));
         const roomBased = mates.length > 0 && !sameAsServer;
         const shared = roomBased || cohabitants.length > 0;
+        const computedText = roomBased
+          ? `вместе с ${mates.join(", ")}`
+          : cohabitants.length > 0
+            ? `с ${cohabitants.join(", ")}`
+            : "жил один";
+        // Ручной текст (shareNoteOverride) печатается вместо расчётного
+        // shareNote; null — расчёт сервера, "" — поле стёрто, пока курсор в нём.
+        const override = row.shareNoteOverride;
+        const manual = hasManualShareNote(row);
+        const calcTitle = `Расчёт: ${row.shareNote || "пусто"}`;
+        const editable = may("shareNote");
         return (
           <div
-            className={shared ? classes.colShareWith : classes.colShare}
+            className={[
+              shared ? classes.colShareWith : classes.colShare,
+              editable ? classes.shareEditable : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
             title={
-              roomBased
-                ? `Живут вместе — одна комната: ${mates.join(", ")}`
-                : shareTitle
+              manual
+                ? calcTitle
+                : roomBased
+                  ? `Живут вместе — одна комната: ${mates.join(", ")}`
+                  : shareTitle
             }
             onMouseEnter={cluster ? () => onHoverCluster?.(row.shareClusterId) : undefined}
             onMouseLeave={cluster ? () => onHoverCluster?.(null) : undefined}
@@ -414,11 +445,45 @@ export default function ReportDraftRow({
                 {cluster.number}
               </span>
             )}
-            {roomBased
-              ? `вместе с ${mates.join(", ")}`
-              : cohabitants.length > 0
-                ? `с ${cohabitants.join(", ")}`
-                : "жил один"}
+            {editable ? (
+              <div className={classes.fieldWrapWide}>
+                <input
+                  type="text"
+                  name="shareNote"
+                  className={[classes.inputText, manual ? classes.inputChanged : ""]
+                    .filter(Boolean)
+                    .join(" ")}
+                  // Без ручного текста поле стартует с ПЕЧАТНОГО shareNote (с
+                  // периодами), а не с короткого экранного: правка опечатки иначе
+                  // молча выбросила бы периоды из файла (решение владельца 02.10).
+                  value={override !== null && override !== undefined ? override : row.shareNote ?? ""}
+                  aria-label={`Вид проживания — ${personLabel}`}
+                  onChange={(e) => onCellChange(row._uid, "shareNoteOverride", e.target.value)}
+                  onFocus={cellFocusProps.onFocus}
+                  onBlur={() => {
+                    cellFocusProps.onBlur();
+                    onCellCommit?.(row._uid, "shareNoteOverride");
+                  }}
+                />
+                {fieldEdited(row, "shareNoteOverride") && <span className={classes.editedDot} />}
+                {manual && (
+                  <button
+                    type="button"
+                    className={classes.fieldResetBtn}
+                    title={`${calcTitle} — вернуть`}
+                    aria-label={`Вернуть расчёт «Вида проживания» — ${personLabel}`}
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => onCellChange(row._uid, "shareNoteOverride", null)}
+                  >
+                    <RestoreIcon width={13} height={13} color="currentColor" strokeWidth={1.4} />
+                  </button>
+                )}
+              </div>
+            ) : manual ? (
+              <span className={classes.valueChanged}>{override}</span>
+            ) : (
+              computedText
+            )}
           </div>
         );
       })()}
@@ -547,36 +612,116 @@ export default function ReportDraftRow({
       </div>
 
       {/* «Гостиница» стоит перед стоимостью проживания (просьба заказчика).
-          Не правится: имя гостиницы связывает строку с закупкой и группировкой,
-          свободный текст тут разъехался бы с реестром. */}
+          Правится выбором из справочника (все гостиницы системы, группы по
+          аэропорту, поиск) — только в черновике АК (гейт в редакторе). В строку
+          пишется название; цена и суммы при смене не меняются. */}
       <div className={classes.colHotel} title={row.hotelName || undefined}>
-        <span className={valCls("hotelName")}>{row.hotelName || "—"}</span>
+        {may("hotelName") ? (
+          <div className={classes.fieldWrapWide} {...wrapTitle("hotelName")}>
+            {hotelOptions && hotelOptions.options.length > 0 ? (
+              (() => {
+                const sel = withCurrentHotel(hotelOptions, row.hotelName);
+                return (
+                  <FapSelect
+                    value={sel.value}
+                    onChange={(v) => {
+                      const name = hotelNameForValue(sel.options, v);
+                      if (name !== null) onCellChange(row._uid, "hotelName", name);
+                    }}
+                    options={sel.options}
+                    placeholder="—"
+                    accent="#0057C3"
+                    size="compact"
+                    searchable
+                    searchPlaceholder="Гостиница, код или город"
+                    menuMinWidth={300}
+                    className={chg("hotelName") ? classes.selectChanged : undefined}
+                    title={`Гостиница — ${personLabel}`}
+                  />
+                );
+              })()
+            ) : (
+              textInput("hotelName", row.hotelName, { label: "Гостиница" })
+            )}
+            {dot("hotelName")}
+          </div>
+        ) : (
+          <span className={valCls("hotelName")}>{row.hotelName || "—"}</span>
+        )}
       </div>
 
       <div className={classes.colLiving} title={livingCostTooltip(row, isEdited)}>
-        <span
-          className={[
-            classes.livingValue,
-            livingCost === 0 ? classes.livingZero : "",
-            chg("totalLivingCost") ? classes.valueChanged : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-        >
-          {formatMoney(row.totalLivingCost)}
-        </span>
+        {may("totalLivingCost") ? (
+          <div className={classes.cellField}>
+            <div className={classes.fieldWrap} {...wrapTitle("totalLivingCost")}>
+              <input
+                type="number"
+                name="livingCost"
+                inputMode="decimal"
+                step={1}
+                min={0}
+                className={inputCls(classes.inputPrice, "totalLivingCost")}
+                value={editableValue(row.totalLivingCost)}
+                placeholder="0"
+                aria-label={`Стоимость проживания — ${personLabel}`}
+                onChange={(e) => onCellChange(row._uid, "totalLivingCost", e.target.value)}
+                {...cellFocusProps}
+              />
+              {dot("totalLivingCost")}
+            </div>
+          </div>
+        ) : (
+          <span
+            className={[
+              classes.livingValue,
+              livingCost === 0 ? classes.livingZero : "",
+              chg("totalLivingCost") ? classes.valueChanged : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+          >
+            {formatMoney(row.totalLivingCost)}
+          </span>
+        )}
       </div>
 
       <div className={classes.colTotal}>
-        <span
-          className={
-            chg("totalDebt")
-              ? `${classes.totalValue} ${classes.valueChanged}`
-              : classes.totalValue
-          }
-        >
-          {formatMoney(row.totalDebt)}
-        </span>
+        {may("totalDebt") ? (
+          <div className={classes.cellField}>
+            <div className={classes.fieldWrap} {...wrapTitle("totalDebt")}>
+              {/* Разница уходит в проживание; итог ниже питания поправляется
+                  при уходе из поля (handleCellCommit), не на каждом символе. */}
+              <input
+                type="number"
+                name="totalDebt"
+                inputMode="decimal"
+                step={1}
+                min={0}
+                className={inputCls(classes.inputPrice, "totalDebt")}
+                value={editableValue(row.totalDebt)}
+                placeholder="0"
+                aria-label={`Итоговая стоимость — ${personLabel}`}
+                onChange={(e) => onCellChange(row._uid, "totalDebt", e.target.value)}
+                onFocus={cellFocusProps.onFocus}
+                onBlur={() => {
+                  cellFocusProps.onBlur();
+                  onCellCommit?.(row._uid, "totalDebt");
+                }}
+              />
+              {dot("totalDebt")}
+            </div>
+          </div>
+        ) : (
+          <span
+            className={
+              chg("totalDebt")
+                ? `${classes.totalValue} ${classes.valueChanged}`
+                : classes.totalValue
+            }
+          >
+            {formatMoney(row.totalDebt)}
+          </span>
+        )}
       </div>
 
       <div className={classes.colActions}>
@@ -621,10 +766,15 @@ ReportDraftRow.propTypes = {
   snapshotValue: PropTypes.func,
   editableFields: PropTypes.instanceOf(Set),
   positions: PropTypes.arrayOf(PropTypes.string),
+  hotelOptions: PropTypes.shape({
+    options: PropTypes.array,
+    idByName: PropTypes.instanceOf(Map),
+  }),
   roomMates: PropTypes.arrayOf(PropTypes.string),
   onCellChange: PropTypes.func.isRequired,
   onCellFocus: PropTypes.func,
   onCellBlur: PropTypes.func,
+  onCellCommit: PropTypes.func,
   onResetRow: PropTypes.func.isRequired,
   onRequestDelete: PropTypes.func.isRequired,
   cluster: PropTypes.shape({ number: PropTypes.number }),

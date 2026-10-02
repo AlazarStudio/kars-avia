@@ -30,6 +30,8 @@ const NUMERIC_FIELDS = new Set([
   "breakfastCount",
   "lunchCount",
   "dinnerCount",
+  "totalLivingCost",
+  "totalDebt",
 ]);
 const INTEGER_FIELDS = new Set(["breakfastCount", "lunchCount", "dinnerCount"]);
 
@@ -144,9 +146,14 @@ export default function useReportDraft(draftId) {
           if (INTEGER_FIELDS.has(field) && value !== null) {
             value = Math.round(value);
           }
+        } else if (field === "shareNoteOverride") {
+          // Ручной «Вид проживания»: null — «вернуть расчёт» (откат поля),
+          // "" — поле стёрто, пока курсор в нём; пустое в null превращает
+          // фиксация на blur (handleCellCommit в ReportDraftEditor).
+          value = rawValue === null || rawValue === undefined ? null : String(rawValue);
         } else {
-          // Текстовые поля (ФИО, даты, категория, комната, должность) —
-          // строкой как есть: бэк хранит их строками без разбора.
+          // Текстовые поля (ФИО, даты, категория, комната, должность,
+          // гостиница) — строкой как есть: бэк хранит их строками без разбора.
           value = rawValue ?? "";
         }
 
@@ -163,6 +170,15 @@ export default function useReportDraft(draftId) {
             ...next,
             totalDebt:
               (Number(next.totalLivingCost) || 0) + (Number(value) || 0),
+          };
+        }
+        // Ручная «Стоимость проживания»: итог следом, «Цена/сут.» не трогается
+        // (решение владельца 02.10.2026). Следующая правка суток/цены/дат её
+        // перезапишет — «побеждает последняя правка».
+        if (field === "totalLivingCost") {
+          return {
+            ...next,
+            totalDebt: (Number(value) || 0) + (Number(next.totalMealCost) || 0),
           };
         }
         return next;

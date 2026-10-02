@@ -20,10 +20,12 @@ export default function ReportDraftTable({
   snapshotValue,
   editableFields,
   positions,
+  hotelOptions,
   roomMates,
   onCellChange,
   onCellFocus,
   onCellBlur,
+  onCellCommit,
   onResetRow,
   onRequestDeleteRow,
   onResetFilters,
@@ -82,10 +84,12 @@ export default function ReportDraftTable({
       snapshotValue={snapshotValue}
       editableFields={editableFields}
       positions={positions}
+      hotelOptions={hotelOptions}
       roomMates={roomMates?.get(row._uid)}
       onCellChange={onCellChange}
       onCellFocus={onCellFocus}
       onCellBlur={onCellBlur}
+      onCellCommit={onCellCommit}
       onResetRow={onResetRow}
       onRequestDelete={onRequestDeleteRow}
       cluster={clusters.get(row.shareClusterId)}
@@ -179,10 +183,15 @@ ReportDraftTable.propTypes = {
   snapshotValue: PropTypes.func,
   editableFields: PropTypes.instanceOf(Set),
   positions: PropTypes.arrayOf(PropTypes.string),
+  hotelOptions: PropTypes.shape({
+    options: PropTypes.array,
+    idByName: PropTypes.instanceOf(Map),
+  }),
   roomMates: PropTypes.instanceOf(Map),
   onCellChange: PropTypes.func.isRequired,
   onCellFocus: PropTypes.func,
   onCellBlur: PropTypes.func,
+  onCellCommit: PropTypes.func,
   onResetRow: PropTypes.func.isRequired,
   onRequestDeleteRow: PropTypes.func.isRequired,
   onResetFilters: PropTypes.func.isRequired,
