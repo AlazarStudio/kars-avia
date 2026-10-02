@@ -1826,3 +1826,120 @@ test("багаж: без internal — 7 колонок, внутренних ч�
   assert.equal(hasCellValue(ws, 120), false);
   assert.ok(!ws.getCell("H5").border, "сетка вышла за G");
 });
+
+// ── Трансфер на листе гостиницы — только её поездки ──
+//
+// Жалоба по заявке 0095AER0826f: на листе каждой гостиницы стояли две строки
+// трансфера на всю заявку (32 600 + 32 600, тип ТС первого водителя), и при двух
+// гостиницах трансфер попадал в «Итого» листов дважды. Фикстура повторяет её:
+// «Аквамарин» — автобус и микроавтобус в обе стороны, «Олимпийский визит» —
+// по автобусу.
+const AQUA = "Сочи, ул. Ялтинская, д.4А";
+const OLYMP = "Православная ул., 4Б, Сочи";
+const AIRPORT = "Сочи, улица Мира, 50";
+
+function makeTwoHotelRequest(arrivalDrivers, departureDrivers) {
+  const request = makeRequest();
+  request.livingService.hotels = [
+    { hotelId: "h1", itemId: "aqua", name: "Аквамарин", address: AQUA, people: [] },
+    { hotelId: "h2", itemId: "olymp", name: "Олимпийский визит", address: OLYMP, people: [] },
+  ];
+  request.transferService = { plan: { enabled: true }, drivers: arrivalDrivers };
+  request.departureTransferService = { plan: { enabled: true }, drivers: departureDrivers ?? [] };
+  return request;
+}
+
+const trip = (hotelItemId, hotelAddress, vehicleType, reportCost, direction = "ARRIVAL") => ({
+  fullName: "ООО Карс Авиа",
+  hotelItemId,
+  vehicleType,
+  reportCost,
+  pickupAt: "2026-08-19T20:30:00.000Z",
+  addressFrom: direction === "ARRIVAL" ? AIRPORT : hotelAddress,
+  addressTo: direction === "ARRIVAL" ? hotelAddress : AIRPORT,
+});
+
+// Строки блока «Трансфер»: [подпись, тип ТС, сумма из колонки «Итого» (Y)].
+const transferRowsOf = (ws) => {
+  const rows = [];
+  ws.eachRow({ includeEmpty: false }, (row) => {
+    const label = row.getCell(2).value;
+    if (typeof label === "string" && /^(аэропорт-гостиница |гостиница .+-аэропорт$)/.test(label)) {
+      rows.push([label, row.getCell(3).value, row.getCell(25).value]);
+    }
+  });
+  return rows;
+};
+
+const hotelSheetAt = (request, hotelIndex) =>
+  addHotelSheet(new ExcelJS.Workbook(), { request, hotelIndex, sheetNames: new Set() });
+
+test("лист гостиницы: при двух гостиницах — только свои поездки, каждая отдельной строкой", () => {
+  const request = makeTwoHotelRequest(
+    [
+      trip("aqua", AQUA, "автобус до 50", 12900),
+      trip("aqua", AQUA, "микроавтобус (до 20)", 6800),
+      trip("olymp", OLYMP, "автобус до 50", 12900),
+    ],
+    [
+      trip("aqua", AQUA, "автобус до 50", 12900, "DEPARTURE"),
+      trip("aqua", AQUA, "микроавтобус (до 20)", 6800, "DEPARTURE"),
+      trip("olymp", OLYMP, "автобус до 50", 12900, "DEPARTURE"),
+    ]
+  );
+
+  const aqua = hotelSheetAt(request, 0);
+  assert.deepEqual(transferRowsOf(aqua), [
+    ["аэропорт-гостиница Аквамарин", "автобус до 50", 12900],
+    ["аэропорт-гостиница Аквамарин", "микроавтобус (до 20)", 6800],
+    ["гостиница Аквамарин-аэропорт", "автобус до 50", 12900],
+    ["гостиница Аквамарин-аэропорт", "микроавтобус (до 20)", 6800],
+  ]);
+  // Гостей нет: 5 — разделитель, 6 — «Трансфер», 7–10 — поездки, 11 — «Итого:».
+  assert.equal(aqua.getCell("A11").value, "Итого:");
+  assert.equal(aqua.getCell("Y11").value.formula, "SUM(Y5:Y10)");
+  // Время подачи — своё время водителя.
+  assert.equal(aqua.getCell("E7").numFmt, "dd.mm.yyyy");
+
+  assert.deepEqual(transferRowsOf(hotelSheetAt(request, 1)), [
+    ["аэропорт-гостиница Олимпийский визит", "автобус до 50", 12900],
+    ["гостиница Олимпийский визит-аэропорт", "автобус до 50", 12900],
+  ]);
+});
+
+test("лист гостиницы: поездка без привязки относится к гостинице по адресу", () => {
+  // Адрес записан с другими пробелами и регистром — сверка их не различает.
+  const request = makeTwoHotelRequest(
+    [
+      trip(null, "сочи, ул. Ялтинская, д. 4А", "автобус до 50", 12900),
+      // Привязка к гостинице, которой в заявке нет, — как без привязки.
+      trip("removed", OLYMP, "микроавтобус (до 20)", 6800),
+    ],
+    [trip(null, OLYMP, "автобус до 50", 12900, "DEPARTURE")]
+  );
+  assert.deepEqual(transferRowsOf(hotelSheetAt(request, 0)), [
+    ["аэропорт-гостиница Аквамарин", "автобус до 50", 12900],
+  ]);
+  assert.deepEqual(transferRowsOf(hotelSheetAt(request, 1)), [
+    ["аэропорт-гостиница Олимпийский визит", "микроавтобус (до 20)", 6800],
+    ["гостиница Олимпийский визит-аэропорт", "автобус до 50", 12900],
+  ]);
+});
+
+test("лист гостиницы: поездку, которую не отнести к гостинице, не печатает ни один лист", () => {
+  const request = makeTwoHotelRequest([trip(null, "Сочи, ул. Другая, 1", "автобус до 50", 12900)]);
+  [0, 1].forEach((hotelIndex) => {
+    const ws = hotelSheetAt(request, hotelIndex);
+    assert.deepEqual(transferRowsOf(ws), []);
+    assert.equal(hasCellValue(ws, "Трансфер"), false);
+    assert.equal(hasCellValue(ws, 12900), false);
+  });
+});
+
+test("лист гостиницы: у единственной гостиницы поездки без привязки и адреса остаются её", () => {
+  const request = makeTwoHotelRequest([trip(null, "", "автобус до 50", 12900)]);
+  request.livingService.hotels = [request.livingService.hotels[0]];
+  assert.deepEqual(transferRowsOf(hotelSheetAt(request, 0)), [
+    ["аэропорт-гостиница Аквамарин", "автобус до 50", 12900],
+  ]);
+});

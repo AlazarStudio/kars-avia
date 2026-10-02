@@ -287,6 +287,32 @@ const transferCost = (drivers) => {
     : null;
 };
 
+// Адрес для сверки поездки с гостиницей: без регистра, пробелов и пунктуации.
+const addressKey = (v) =>
+  String(v ?? "").toLowerCase().replace(/ё/g, "е").replace(/[^a-zа-я0-9]/g, "");
+
+// Поездки направления, которые везли гостей ЭТОЙ гостиницы. Лист гостиницы печатает
+// только их: иначе каждая гостиница получала трансфер всей заявки, и при двух
+// гостиницах он попадал в их «Итого» дважды. Порядок: привязка поездки к
+// гостинице (hotelItemId) → единственная гостиница заявки → адрес гостиничной
+// стороны маршрута, если он указывает ровно на одну гостиницу. Поездка, которую
+// так не отнести, остаётся только в «Сводке» и на листах трансфера.
+function hotelTripsOf(request, hotelIndex, drivers, direction) {
+  const hotels = request?.livingService?.hotels ?? [];
+  const hotel = hotels[hotelIndex];
+  const itemIds = new Set(hotels.map((h) => h.itemId).filter(Boolean));
+  const hotelAddress = addressKey(hotel?.address);
+  return (drivers ?? []).filter((d) => {
+    if (d.hotelItemId && itemIds.has(d.hotelItemId)) {
+      return d.hotelItemId === hotel?.itemId;
+    }
+    if (hotels.length === 1) return true;
+    const side = addressKey(direction === "ARRIVAL" ? d.addressTo : d.addressFrom);
+    if (!hotelAddress || side !== hotelAddress) return false;
+    return hotels.filter((h) => addressKey(h.address) === side).length === 1;
+  });
+}
+
 // Процент возрастной скидки на проживание, выведенный из чисел строки:
 // 1 − факт/(цена за сутки × сутки). «—», если базы нет (ручной ввод / легаси).
 function accommodationDiscountLabel(pricePerDay, daysCount, accommodationCost) {
@@ -427,12 +453,12 @@ export function addHotelSheet(wb, opts) {
   // пустые строки рейсов у заявки, где трансфера нет вовсе.
   const arrOn = arrVisible && Boolean(arrival?.plan?.enabled);
   const depOn = depVisible && Boolean(departure?.plan?.enabled);
-  const aCost = arrOn ? transferCost(arrival?.drivers) : null;
-  const dCost = depOn ? transferCost(departure?.drivers) : null;
+  const aTrips = arrOn ? hotelTripsOf(request, hotelIndex, arrival?.drivers, "ARRIVAL") : [];
+  const dTrips = depOn ? hotelTripsOf(request, hotelIndex, departure?.drivers, "DEPARTURE") : [];
   // Под гейтом колонка «Итого» остаётся только ради денег трансфера: нет их —
   // нет и колонки, иначе на листе без денег висел бы её пустой заголовок.
   const { cols, at, put, putMoney, letter, lastCol, moneyCols, leftCols } =
-    hotelLayout(hideMoney, aCost != null || dCost != null);
+    hotelLayout(hideMoney, [...aTrips, ...dTrips].some((d) => d.reportCost != null));
   const hotelName = pickHotelName(hotel);
   const city = pickCity(request, hotel);
   const ws = wb.addWorksheet(chooseSheetName(prefixedSheetName(hotelName, sheetPrefix), sheetNames));
@@ -565,13 +591,14 @@ export function addHotelSheet(wb, opts) {
 
   const lastPersonRow = rowIdx - 1;
 
-  // ── Блок «Трансфер» (одна пустая строка + строки видимых направлений) ──
-  // Оба направления скрыты — блока нет вовсе: пустая шапка «Трансфер» говорила бы
-  // о рейсах, которых гостинице видеть не положено. Блока нет и когда трансфера
-  // у заявки нет: пустая шапка выглядела бы как услуга, которой не было.
+  // ── Блок «Трансфер» (одна пустая строка + поездки этой гостиницы) ──
+  // Строка — поездка: тип ТС и сумма своего водителя, как в «Сводке». Оба
+  // направления скрыты — блока нет вовсе: пустая шапка «Трансфер» говорила бы
+  // о рейсах, которых гостинице видеть не положено. Блока нет и когда своих
+  // поездок у гостиницы нет: пустая шапка выглядела бы как услуга, которой не было.
   let gapRow = null; // строка-разделитель есть только вместе с блоком
   let lastTransferRow = null;
-  if (arrOn || depOn) {
+  if (aTrips.length > 0 || dTrips.length > 0) {
     gapRow = rowIdx; // строка-разделитель: остаётся без сетки
     rowIdx += 1;
     const tHeaderRow = rowIdx;
@@ -582,42 +609,30 @@ export function addHotelSheet(wb, opts) {
     tHdr.alignment = { horizontal: "center" };
     rowIdx += 1;
 
-    // ARRIVAL
-    if (arrOn) {
-      const aFirstType = (arrival?.drivers ?? []).find((d) => d.vehicleType)?.vehicleType ?? "";
-      const aRow = ws.getRow(rowIdx);
-      put(aRow, "fullName", `аэропорт-гостиница ${hotelName}`);
-      put(aRow, "personType", aFirstType);
-      if (arrival?.plan?.plannedAt) {
-        const dt = toExcelLocal(new Date(arrival.plan.plannedAt));
-        aRow.getCell(at.inDate).value = dt;
-        aRow.getCell(at.inDate).numFmt = fmtDate;
-        aRow.getCell(at.inTime).value = dt;
-        aRow.getCell(at.inTime).numFmt = fmtTime;
+    const putTrip = (d, label, plannedAt) => {
+      const tRow = ws.getRow(rowIdx);
+      put(tRow, "fullName", label);
+      put(tRow, "personType", d.vehicleType ?? "");
+      // Время подачи живёт в колонках заезда — так было и раньше. Своё время
+      // водителя, как в «Сводке»; нет его — плановое время направления.
+      const when = d.pickupAt || plannedAt;
+      if (when) {
+        const dt = toExcelLocal(new Date(when));
+        tRow.getCell(at.inDate).value = dt;
+        tRow.getCell(at.inDate).numFmt = fmtDate;
+        tRow.getCell(at.inTime).value = dt;
+        tRow.getCell(at.inTime).numFmt = fmtTime;
       }
-      if (aCost != null) put(aRow, "total", aCost);
+      if (d.reportCost != null) put(tRow, "total", d.reportCost);
       lastTransferRow = rowIdx;
       rowIdx += 1;
-    }
-
-    // DEPARTURE
-    if (depOn) {
-      const dFirstType = (departure?.drivers ?? []).find((d) => d.vehicleType)?.vehicleType ?? "";
-      const dRow = ws.getRow(rowIdx);
-      put(dRow, "fullName", `гостиница ${hotelName}-аэропорт`);
-      put(dRow, "personType", dFirstType);
-      if (departure?.plan?.plannedAt) {
-        // Время подачи обоих направлений живёт в колонках заезда — так было и раньше.
-        const dt = toExcelLocal(new Date(departure.plan.plannedAt));
-        dRow.getCell(at.inDate).value = dt;
-        dRow.getCell(at.inDate).numFmt = fmtDate;
-        dRow.getCell(at.inTime).value = dt;
-        dRow.getCell(at.inTime).numFmt = fmtTime;
-      }
-      if (dCost != null) put(dRow, "total", dCost);
-      lastTransferRow = rowIdx;
-      rowIdx += 1;
-    }
+    };
+    aTrips.forEach((d) =>
+      putTrip(d, `аэропорт-гостиница ${hotelName}`, arrival?.plan?.plannedAt)
+    );
+    dTrips.forEach((d) =>
+      putTrip(d, `гостиница ${hotelName}-аэропорт`, departure?.plan?.plannedAt)
+    );
   }
 
   // ── Строка «Итого:» ──
