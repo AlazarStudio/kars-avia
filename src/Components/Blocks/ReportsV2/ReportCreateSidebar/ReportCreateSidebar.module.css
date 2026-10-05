@@ -181,6 +181,19 @@
   margin-top: 6px;
 }
 
+/* Однодневный период — почти всегда ошибка ввода (см. reportPeriod.js).
+   Гамма чипа «Предупреждения» редактора черновика. */
+.periodWarning {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #B8741A;
+  background: #FFFBF3;
+  border: 1px solid #F3DCBB;
+  border-radius: 8px;
+  padding: 6px 10px;
+  margin-top: 8px;
+}
+
 /* ── Квадрат-галка (карточки "Включить в отчёт" и блок проверки) ── */
 .flagCheckbox {
   display: flex;

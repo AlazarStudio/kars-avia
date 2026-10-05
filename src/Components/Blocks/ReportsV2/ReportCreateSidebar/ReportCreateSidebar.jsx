@@ -19,6 +19,7 @@ import {
   GET_HOTELS_RELAY,
   getCookie,
 } from "../../../../../graphQL_requests";
+import { describeReportPeriod } from "../reportPeriod";
 
 // `id` уходит на бэк в `filter.position` и обязан совпадать с enum
 // PositionFilter { all, squadron, technician } — «engineers» бэк отвергает
@@ -253,21 +254,34 @@ export default function ReportCreateSidebar({
     );
   };
 
+  const period = describeReportPeriod(formData.startDate, formData.endDate);
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setIsLoading(true);
 
     if (!isFormValid()) {
       showAlert("Пожалуйста, заполните все обязательные поля.");
-      setIsLoading(false);
       return;
     }
     if (formData.endDate < formData.startDate) {
       showAlert("Конечная дата не может быть раньше начальной.");
       setFormData((prev) => ({ ...prev, endDate: "" }));
-      setIsLoading(false);
       return;
     }
+    // Однодневный период почти всегда ошибка ввода (см. reportPeriod.js).
+    // Спрашиваем до лоадера: он подменяет форму целиком, и за диалогом
+    // был бы спиннер вместо введённых дат.
+    if (period?.isSingleDay) {
+      const isConfirmed = await confirm({
+        message: `Отчёт за один день — ${period.start}. Создать?`,
+        confirmText: "Создать",
+        cancelText: "Изменить дату",
+        severity: "warning",
+      });
+      if (!isConfirmed) return;
+    }
+
+    setIsLoading(true);
 
     const selectedPosition = positions.find((p) => p.name === formData.position);
 
@@ -690,51 +704,62 @@ export default function ReportCreateSidebar({
                 )}
               </div>
 
-              <div className={classes.row}>
-                <div className={`${classes.field} ${classes.rowItem}`}>
-                  <label
-                    className={`${classes.label} ${classes.labelRequired}`}
-                    htmlFor="reportsV2StartDate"
-                  >
-                    Начальная дата
-                  </label>
-                  <div className={classes.dateField}>
-                    <span className={classes.fieldIcon}>
-                      <CalendarIcon />
-                    </span>
-                    <input
-                      id="reportsV2StartDate"
-                      type="date"
-                      className={classes.dateInput}
-                      name="startDate"
-                      value={formData.startDate}
-                      onChange={handleChange}
-                    />
+              <div className={classes.field}>
+                <div className={classes.row}>
+                  <div className={`${classes.field} ${classes.rowItem}`}>
+                    <label
+                      className={`${classes.label} ${classes.labelRequired}`}
+                      htmlFor="reportsV2StartDate"
+                    >
+                      Начальная дата
+                    </label>
+                    <div className={classes.dateField}>
+                      <span className={classes.fieldIcon}>
+                        <CalendarIcon />
+                      </span>
+                      <input
+                        id="reportsV2StartDate"
+                        type="date"
+                        className={classes.dateInput}
+                        name="startDate"
+                        value={formData.startDate}
+                        onChange={handleChange}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={`${classes.field} ${classes.rowItem}`}>
+                    <label
+                      className={`${classes.label} ${classes.labelRequired}`}
+                      htmlFor="reportsV2EndDate"
+                    >
+                      Конечная дата
+                    </label>
+                    <div className={classes.dateField}>
+                      <span className={classes.fieldIcon}>
+                        <CalendarIcon />
+                      </span>
+                      <input
+                        id="reportsV2EndDate"
+                        type="date"
+                        className={classes.dateInput}
+                        name="endDate"
+                        min={formData.startDate}
+                        value={formData.endDate}
+                        onChange={handleChange}
+                      />
+                    </div>
                   </div>
                 </div>
 
-                <div className={`${classes.field} ${classes.rowItem}`}>
-                  <label
-                    className={`${classes.label} ${classes.labelRequired}`}
-                    htmlFor="reportsV2EndDate"
+                {period && (
+                  <div
+                    className={period.isSingleDay ? classes.periodWarning : classes.typeCaption}
                   >
-                    Конечная дата
-                  </label>
-                  <div className={classes.dateField}>
-                    <span className={classes.fieldIcon}>
-                      <CalendarIcon />
-                    </span>
-                    <input
-                      id="reportsV2EndDate"
-                      type="date"
-                      className={classes.dateInput}
-                      name="endDate"
-                      min={formData.startDate}
-                      value={formData.endDate}
-                      onChange={handleChange}
-                    />
+                    Период: {period.label}
+                    {period.isSingleDay && " — отчёт за один день, проверьте конечную дату"}
                   </div>
-                </div>
+                )}
               </div>
 
               {canDraft && (
