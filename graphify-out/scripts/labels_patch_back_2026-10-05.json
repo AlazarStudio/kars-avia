@@ -1,0 +1,18 @@
+{
+  "3": "Notifications: notificationMenuCheck, email delivery & Firebase transfer push",
+  "6": "package.json: dependencies (graphql-tools, yoga redis, axios, cors)",
+  "14": "Driver Access: driverAccess, driver.resolver & global.resolver",
+  "22": "Contract Archive & Expiration: contractArchive, contractExpiration & unit tests",
+  "24": "Price Geography: normalizeGeography & contract-type occupancy",
+  "27": "Secret Fields Hiding & Airline/Organization Resolvers: hiddenSecretFields, transferPriceContract",
+  "35": "Report Draft Emails: reportDraftEmailTemplates & notifyReportDecision",
+  "39": "Backend tech stack: @apollo/server, express, jsonwebtoken, argon2, pm2",
+  "40": "File Access Control: checkFileAccess & path normalization",
+  "41": "Hotel Resolver: hotel.resolver, uploadImage, roomUtils & hotelFilters",
+  "43": "Passenger Request Emails: passengerRequestEmailTemplates & buildPassengerRequestEmail",
+  "46": "FAP Tests: fapHarness, pubsub spy, transfer characterization & reject-draft",
+  "54": "FAP Tests: living, roster & early characterization, runFapMutation",
+  "56": "Contract Archiving Cron: contractArchiving & archiveExpiredAgreements",
+  "68": "Backend Docs: CLAUDE.md overview & /health healthcheck",
+  "86": "TOTP Two-Factor Auth: speakeasy & qrcode"
+}
