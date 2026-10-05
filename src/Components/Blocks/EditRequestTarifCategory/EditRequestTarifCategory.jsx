@@ -23,6 +23,7 @@ import {
   TARIF_ROOM_CATEGORIES,
 } from "../../../utils/roomCategories.js";
 import useRequiredFields from "../../../hooks/useRequiredFields.js";
+import { sanitizeHtml } from "../../../utils/sanitizeHtml";
 
 function EditRequestTarifCategory({
   show,
@@ -617,7 +618,7 @@ function EditRequestTarifCategory({
                   <div
                     className={classes.requestDataInfo_descBlock}
                     dangerouslySetInnerHTML={{
-                      __html: formData.description || "—",
+                      __html: sanitizeHtml(formData.description || "—"),
                     }}
                   />
                 )}

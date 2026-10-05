@@ -5,7 +5,7 @@ import MUILoader from "./Components/Blocks/MUILoader/MUILoader";
 
 const AuthContext = createContext();
 
-function getExternalUserContext() {
+export function getExternalUserContext() {
   try {
     const raw = document.cookie
       .split("; ")

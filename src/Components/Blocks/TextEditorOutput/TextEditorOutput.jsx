@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { sanitizeHtml } from "../../../utils/sanitizeHtml";
 
 function TextEditorOutput({ description }) {
   return (
@@ -6,7 +7,7 @@ function TextEditorOutput({ description }) {
       <div
         className="ql-editor"
         style={{ padding: 0 }}
-        dangerouslySetInnerHTML={{ __html: description }}
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(description) }}
       />
     </div>
   );

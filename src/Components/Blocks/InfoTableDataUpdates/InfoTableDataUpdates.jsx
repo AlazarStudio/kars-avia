@@ -6,6 +6,7 @@ import { useQuery } from "@apollo/client";
 import { GET_DOCUMENTATION_TREE, getMediaUrl } from "../../../../graphQL_requests";
 import MUILoader from "../MUILoader/MUILoader";
 import { roles } from "../../../roles";
+import { sanitizeHtml } from "../../../utils/sanitizeHtml";
 
 function DocNode({ node, openModal }) {
   return (
@@ -13,7 +14,7 @@ function DocNode({ node, openModal }) {
       <h4 className={classes.nodeTitle}>{node.name}</h4>
 
       {/* HTML-описание узла */}
-      <div dangerouslySetInnerHTML={{ __html: node.description }} />
+      <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(node.description) }} />
 
       {/* Файлы, если есть */}
       {!!node.images?.length && (
@@ -235,7 +236,7 @@ function InfoTableDataUpdates({
             <div
               className={classes.description}
               dangerouslySetInnerHTML={{
-                __html: data.documentationTree.description,
+                __html: sanitizeHtml(data.documentationTree.description),
               }}
             />
             {!!data.documentationTree.images?.length && (

@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef } from "react";
 import classes from "./InfoTableDataPatchNotes.module.css";
 import InfoTable from "../InfoTable/InfoTable";
 import { convertToDate } from "../../../../graphQL_requests";
+import { sanitizeHtml } from "../../../utils/sanitizeHtml";
 
 function InfoTableDataPatchNotes({ toggleRequestSidebar, requests, pageInfo }) {
   const listContainerRef = useRef(null);
@@ -78,7 +79,7 @@ function InfoTableDataPatchNotes({ toggleRequestSidebar, requests, pageInfo }) {
 
                       <div
                         className={classes.cardDescription}
-                        dangerouslySetInnerHTML={{ __html: item.description }}
+                        dangerouslySetInnerHTML={{ __html: sanitizeHtml(item.description) }}
                       />
 
                       <div className={classes.cardFooter}>

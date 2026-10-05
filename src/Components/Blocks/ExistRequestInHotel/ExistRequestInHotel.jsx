@@ -15,6 +15,7 @@ import {
 } from "../../../../graphQL_requests";
 import Message from "../Message/Message";
 import { roles } from "../../../roles";
+import { sanitizeHtml } from "../../../utils/sanitizeHtml";
 
 function ExistRequestInHotel({
   show,
@@ -683,7 +684,7 @@ function ExistRequestInHotel({
                       <div
                         className={classes.historyLog}
                         dangerouslySetInnerHTML={{
-                          __html: log.description,
+                          __html: sanitizeHtml(log.description),
                         }}
                       >
                         {/* {log.description} */}

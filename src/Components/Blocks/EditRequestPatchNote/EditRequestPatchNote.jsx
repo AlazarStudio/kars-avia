@@ -17,6 +17,7 @@ import { useDialog } from "../../../contexts/DialogContext";
 import { useToast } from "../../../contexts/ToastContext";
 import CloseIcon from "../../../shared/icons/CloseIcon.jsx";
 import useRequiredFields from "../../../hooks/useRequiredFields.js";
+import { sanitizeHtml } from "../../../utils/sanitizeHtml";
 
 function EditRequestPatchNote({
   show,
@@ -274,7 +275,9 @@ function EditRequestPatchNote({
                     <div
                       className={classes.previewArticleContent}
                       dangerouslySetInnerHTML={{
-                        __html: formData?.description || "<p>Описание отсутствует.</p>",
+                        __html: sanitizeHtml(
+                          formData?.description || "<p>Описание отсутствует.</p>",
+                        ),
                       }}
                     />
                   </div>

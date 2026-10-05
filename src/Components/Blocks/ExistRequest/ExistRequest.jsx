@@ -53,6 +53,7 @@ import { roles, roleLabels } from "../../../roles";
 import { useDialog } from "../../../contexts/DialogContext";
 import { calculateEffectiveCostDays } from "../../../utils/effectiveCostDays";
 import useRequiredFields from "../../../hooks/useRequiredFields.js";
+import { sanitizeHtml } from "../../../utils/sanitizeHtml";
 
 function ExistRequest({
   show,
@@ -2324,7 +2325,7 @@ function ExistRequest({
                                   key={log.id ?? `${dayTs}-${idx}`}
                                   className={classes.historyLog}
                                   dangerouslySetInnerHTML={{
-                                    __html: `${log.description}`,
+                                    __html: sanitizeHtml(log.description),
                                   }}
                                 />
                               </div>

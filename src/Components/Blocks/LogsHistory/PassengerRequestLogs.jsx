@@ -12,6 +12,7 @@ import MUILoader from "../MUILoader/MUILoader";
 import { roleLabels } from "../../../roles";
 import useInfiniteScroll from "../../../hooks/useInfiniteScroll";
 import InfiniteScrollSentinel from "../InfiniteScrollSentinel/InfiniteScrollSentinel";
+import { sanitizeHtml } from "../../../utils/sanitizeHtml";
 
 const PAGE_SIZE = 50;
 
@@ -122,7 +123,7 @@ function PassengerRequestLogs({ show, onClose, passengerRequestId }) {
                           <div
                             className={classes.historyLog}
                             dangerouslySetInnerHTML={{
-                              __html: log.description || "",
+                              __html: sanitizeHtml(log.description),
                             }}
                           />
                           {log.reason && (

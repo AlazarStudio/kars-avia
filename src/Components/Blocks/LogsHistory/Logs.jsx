@@ -11,6 +11,7 @@ import CloseIcon from "../../../shared/icons/CloseIcon";
 import { roleLabels } from "../../../roles";
 import useInfiniteScroll from "../../../hooks/useInfiniteScroll";
 import InfiniteScrollSentinel from "../InfiniteScrollSentinel/InfiniteScrollSentinel";
+import { sanitizeHtml } from "../../../utils/sanitizeHtml";
 
 function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
   const token = getCookie("token");
@@ -126,7 +127,7 @@ function Logs({ type, queryLog, queryID, show, onClose, id, name }) {
                       <div
                         className={classes.historyLog}
                         dangerouslySetInnerHTML={{
-                          __html: log.description,
+                          __html: sanitizeHtml(log.description),
                         }}
                       />
                       <div

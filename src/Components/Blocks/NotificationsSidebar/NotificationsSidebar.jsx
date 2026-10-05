@@ -14,6 +14,7 @@ import ExportIcon from "../../../shared/icons/ExportIcon";
 import CloseIcon from "../../../shared/icons/CloseIcon";
 import useInfiniteScroll from "../../../hooks/useInfiniteScroll";
 import InfiniteScrollSentinel from "../InfiniteScrollSentinel/InfiniteScrollSentinel";
+import { sanitizeHtml } from "../../../utils/sanitizeHtml";
 
 const TAKE = 50; // размер страницы
 
@@ -213,8 +214,9 @@ function NotificationsSidebar({ onRequestClick, user, token, show, onClose }) {
                               <p
                                 className={classes.notifyDescription}
                                 dangerouslySetInnerHTML={{
-                                  __html:
-                                    notify.description?.description || "",
+                                  __html: sanitizeHtml(
+                                    notify.description?.description,
+                                  ),
                                 }}
                               />
                             )}

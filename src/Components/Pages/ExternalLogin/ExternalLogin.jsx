@@ -11,6 +11,7 @@ import MUILoader from "../../Blocks/MUILoader/MUILoader";
 import { AUTHORIZE_EXTERNAL_AUTH, GET_PASSENGER_REQUESTS } from "../../../../graphQL_requests";
 import { getExternalAuthErrorMessage } from "../../../constants/externalAuthErrors";
 import { authService } from "../../../services/authService";
+import { getExternalUserContext } from "../../../AuthContext";
 
 const ID_REPRESENTATIVE_REQUESTS = "representativeRequests";
 
@@ -33,23 +34,71 @@ function ExternalLogin() {
       return;
     }
 
+    const redirectAfterLogin = async ({ scope, hotelId, accessToken }) => {
+      if (scope === "REPRESENTATIVE") {
+        if (passengerRequestId) {
+          window.location.href = `/${ID_REPRESENTATIVE_REQUESTS}/representativeRequestsPlacement/${passengerRequestId}`;
+          return;
+        }
+        window.location.href = `/${ID_REPRESENTATIVE_REQUESTS}`;
+        return;
+      }
+
+      if (scope === "HOTEL" && hotelId) {
+        try {
+          const { data: requestsData } = await apolloClient.query({
+            query: GET_PASSENGER_REQUESTS,
+            variables: { take: 100, skip: 0, filter: {} },
+            context: {
+              headers: { Authorization: `Bearer ${accessToken}` },
+            },
+          });
+          const requests = requestsData?.passengerRequests ?? [];
+          const requestWithHotel = requests.find((req) =>
+            req?.livingService?.hotels?.some((h) => h?.hotelId === hotelId)
+          );
+          if (requestWithHotel?.id) {
+            window.location.href = `/far/${requestWithHotel.id}/service/living`;
+            return;
+          }
+        } catch (_) {
+          // fallback to home if request list fails
+        }
+      }
+
+      window.location.href = "/";
+    };
+
+    // Ссылка не сработала (например, уже использована), но на устройстве есть сессия — продолжаем с ней
+    const continueWithCurrentSession = async () => {
+      const accessToken = authService.getAccessToken();
+      if (!accessToken) return false;
+      const ctx = getExternalUserContext();
+      await redirectAfterLogin({
+        scope: ctx?.scope,
+        hotelId: ctx?.hotelId,
+        accessToken,
+      });
+      return true;
+    };
+
     const run = async () => {
       try {
-        // Всегда очищаем auth-куки перед входом по ссылке, затем ставим новые
-        authService.clear();
-        document.cookie = "externalUserContext=; Max-Age=0; Path=/";
-
         const res = await authorizeExternalAuth({
           variables: { token },
         });
         const data = res?.data?.authorizeExternalAuth;
-        console.log(data);
 
         if (!data?.token) {
+          if (await continueWithCurrentSession()) return;
           setError("Ссылка недействительна или истекла.");
           setStatus("error");
           return;
         }
+
+        // Старую сессию стираем только после успешного входа по ссылке, затем ставим новую
+        authService.clear();
+        document.cookie = "externalUserContext=; Max-Age=0; Path=/";
 
         authService.setTokens({
           token: data.token,
@@ -57,7 +106,6 @@ function ExternalLogin() {
         });
 
         const extUser = data.externalUser;
-        console.log(extUser);
         if (extUser) {
           const payload = JSON.stringify({
             scope: extUser.scope,
@@ -69,39 +117,13 @@ function ExternalLogin() {
 
         setStatus("success");
 
-        if (extUser?.scope === "REPRESENTATIVE") {
-          if (passengerRequestId) {
-            window.location.href = `/${ID_REPRESENTATIVE_REQUESTS}/representativeRequestsPlacement/${passengerRequestId}`;
-            return;
-          }
-          window.location.href = `/${ID_REPRESENTATIVE_REQUESTS}`;
-          return;
-        }
-
-        if (extUser?.scope === "HOTEL" && extUser?.hotelId) {
-          try {
-            const { data: requestsData } = await apolloClient.query({
-              query: GET_PASSENGER_REQUESTS,
-              variables: { take: 100, skip: 0, filter: {} },
-              context: {
-                headers: { Authorization: `Bearer ${data.token}` },
-              },
-            });
-            const requests = requestsData?.passengerRequests ?? [];
-            const requestWithHotel = requests.find((req) =>
-              req?.livingService?.hotels?.some((h) => h?.hotelId === extUser.hotelId)
-            );
-            if (requestWithHotel?.id) {
-              window.location.href = `/far/${requestWithHotel.id}/service/living`;
-              return;
-            }
-          } catch (_) {
-            // fallback to home if request list fails
-          }
-        }
-
-        window.location.href = "/";
+        await redirectAfterLogin({
+          scope: extUser?.scope,
+          hotelId: extUser?.hotelId,
+          accessToken: data.token,
+        });
       } catch (err) {
+        if (await continueWithCurrentSession()) return;
         setError(getExternalAuthErrorMessage(err, "Ошибка входа по ссылке."));
         setStatus("error");
       }
