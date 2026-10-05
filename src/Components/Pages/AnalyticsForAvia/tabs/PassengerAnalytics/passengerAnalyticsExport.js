@@ -16,7 +16,7 @@ const SUMMARY_SHEETS = [
   { key: "month", sheetName: "Сводка — Месяцы", dimensionLabel: "Месяцы" },
 ];
 
-function fillSummarySheet(wb, { sheetName, dimensionLabel, summaryRows, totals, periodLabel }) {
+function fillSummarySheet(wb, { sheetName, dimensionLabel, summaryRows, totals, periodLabel, showWaterMeal }) {
   const ws = wb.addWorksheet(sheetName);
   ws.addRow([`Сводка ФАП — ${dimensionLabel}`]);
   ws.addRow([`Период: ${periodLabel}`]);
@@ -24,13 +24,15 @@ function fillSummarySheet(wb, { sheetName, dimensionLabel, summaryRows, totals, 
   const header = [
     dimensionLabel,
     "Заявок",
+    "Отменено",
     "Чел.",
     "Дети",
     "Млад.",
     "Суток",
     "Проживание",
-    "Питание",
+    "Питание в гостинице",
     "Трансфер",
+    ...(showWaterMeal ? ["Вода и питание"] : []),
     "Итого",
     "Без стоимости",
   ];
@@ -40,6 +42,7 @@ function fillSummarySheet(wb, { sheetName, dimensionLabel, summaryRows, totals, 
     ws.addRow([
       g.label,
       g.requestsCount,
+      g.cancelledCount,
       g.peopleCount,
       g.childrenCount,
       g.infantsCount,
@@ -47,6 +50,7 @@ function fillSummarySheet(wb, { sheetName, dimensionLabel, summaryRows, totals, 
       g.living,
       g.meal,
       g.transfer,
+      ...(showWaterMeal ? [g.waterMeal] : []),
       g.total,
       g.missingCostCount,
     ]);
@@ -55,6 +59,7 @@ function fillSummarySheet(wb, { sheetName, dimensionLabel, summaryRows, totals, 
   const totalRow = ws.addRow([
     "ИТОГО",
     totals?.requestsCount || 0,
+    totals?.cancelledCount || 0,
     totals?.peopleCount || 0,
     totals?.childrenCount || 0,
     totals?.infantsCount || 0,
@@ -62,21 +67,24 @@ function fillSummarySheet(wb, { sheetName, dimensionLabel, summaryRows, totals, 
     totals?.living || 0,
     totals?.meal || 0,
     totals?.transfer || 0,
+    ...(showWaterMeal ? [totals?.waterMeal || 0] : []),
     totals?.total || 0,
     totals?.missingCostCount || 0,
   ]);
   totalRow.font = { bold: true };
-  const widths = [24, 10, 8, 8, 8, 10, 14, 14, 14, 14, 14];
+  const widths = [24, 10, 10, 8, 8, 8, 10, 14, 18, 14, ...(showWaterMeal ? [16] : []), 14, 14];
   widths.forEach((w, i) => {
     ws.getColumn(i + 1).width = w;
   });
-  for (let c = 7; c <= 10; c++) {
+  // Деньги — с «Проживания» (8) по «Итого»; «Суток» (7) — дробное.
+  const moneyCount = showWaterMeal ? 5 : 4;
+  for (let c = 8; c < 8 + moneyCount; c++) {
     ws.getColumn(c).numFmt = "#,##0";
   }
-  ws.getColumn(6).numFmt = "0.##";
+  ws.getColumn(7).numFmt = "0.##";
 }
 
-function fillRequestsSheet(wb, { rows, totals, showAirline, meta }) {
+function fillRequestsSheet(wb, { rows, totals, showAirline, showWaterMeal, meta }) {
   const ws = wb.addWorksheet("Заявки");
   ws.addRow(["Сводный отчёт ФАП — пассажиры"]);
   ws.addRow([`Период: ${meta.periodLabel}`]);
@@ -97,11 +105,12 @@ function fillRequestsSheet(wb, { rows, totals, showAirline, meta }) {
     "Группы",
     "Суток",
     "Проживание",
-    "Питание",
+    "Питание в гостинице",
     "Трансфер",
     "Трансфер прилёт",
     "Трансфер вылет",
     "Багаж",
+    ...(showWaterMeal ? ["Вода и питание"] : []),
     "Итого",
     "Статус",
     "Примечание",
@@ -110,6 +119,11 @@ function fillRequestsSheet(wb, { rows, totals, showAirline, meta }) {
   headerRow.font = { bold: true };
 
   for (const r of rows) {
+    // Отменённая — без денег вовсе; «нет отчёта» — без гостиничных денег,
+    // трансфер и поставка у неё реальны (решения владельца 05.10.2026).
+    const cancelled = r.status === "CANCELLED";
+    const money = (v) => (cancelled ? "" : v || 0);
+    const hotelMoney = (v) => (cancelled || r.costMissing ? "" : v || 0);
     ws.addRow([
       r.flightNumber || r.requestNumber || "",
       r.requestNumber || "",
@@ -123,19 +137,26 @@ function fillRequestsSheet(wb, { rows, totals, showAirline, meta }) {
       r.infantsCount || 0,
       r.groupsCount ? `${r.groupsCount} гр. · ${r.linkedPeopleCount} чел.` : "",
       r.roomNights || 0,
-      r.costMissing ? "" : r.living || 0,
-      r.costMissing ? "" : r.meal || 0,
-      r.costMissing ? "" : r.transfer || 0,
-      r.costMissing ? "" : r.transferArrival || 0,
-      r.costMissing ? "" : r.transferDeparture || 0,
-      r.costMissing ? "" : r.transferBaggage || 0,
-      r.costMissing ? "" : r.total || 0,
+      hotelMoney(r.living),
+      hotelMoney(r.meal),
+      money(r.transfer),
+      money(r.transferArrival),
+      money(r.transferDeparture),
+      money(r.transferBaggage),
+      ...(showWaterMeal ? [money(r.waterMeal)] : []),
+      money(r.total),
       statusLabel(r.status),
-      r.costMissing ? "нет отчёта" : "",
+      cancelled ? "отменена" : r.costMissing ? "нет отчёта" : "",
     ]);
   }
 
   ws.addRow([]);
+  const totalNote = [
+    totals?.missingCostCount ? `без стоимости: ${totals.missingCostCount}` : "",
+    totals?.cancelledCount ? `отменено: ${totals.cancelledCount}` : "",
+  ]
+    .filter(Boolean)
+    .join(" · ");
   const totalRow = ws.addRow([
     "ИТОГО",
     "",
@@ -155,9 +176,10 @@ function fillRequestsSheet(wb, { rows, totals, showAirline, meta }) {
     totals?.transferArrival || 0,
     totals?.transferDeparture || 0,
     totals?.transferBaggage || 0,
+    ...(showWaterMeal ? [totals?.waterMeal || 0] : []),
     totals?.total || 0,
     "",
-    totals?.missingCostCount ? `без стоимости: ${totals.missingCostCount}` : "",
+    totalNote,
   ]);
   totalRow.font = { bold: true };
 
@@ -175,22 +197,25 @@ function fillRequestsSheet(wb, { rows, totals, showAirline, meta }) {
     18, // Группы
     10, // Суток
     14, // Проживание
-    14, // Питание
+    18, // Питание в гостинице
     14, // Трансфер
     16, // Трансфер прилёт
     16, // Трансфер вылет
     12, // Багаж
+    ...(showWaterMeal ? [16] : []), // Вода и питание
     14, // Итого
     14, // Статус
-    18, // Примечание
+    24, // Примечание
   ];
   widths.forEach((w, i) => {
     ws.getColumn(i + 1).width = w;
   });
 
-  // Денежный блок — 7 колонок подряд (Проживание…Итого), «Суток» — дробное перед ними.
+  // Денежный блок подряд (Проживание…Итого): 7 колонок, с «Водой и питанием» — 8;
+  // «Суток» — дробное перед ними.
   const firstMoneyCol = showAirline ? 13 : 12;
-  for (let c = firstMoneyCol; c < firstMoneyCol + 7; c++) {
+  const moneyCount = showWaterMeal ? 8 : 7;
+  for (let c = firstMoneyCol; c < firstMoneyCol + moneyCount; c++) {
     ws.getColumn(c).numFmt = "#,##0";
   }
   ws.getColumn(firstMoneyCol - 1).numFmt = "0.##";
@@ -207,13 +232,14 @@ function fillHotelsSheet(wb, { rows, showAirline }) {
     "Чел.",
     "Суток",
     "Проживание",
-    "Питание",
+    "Питание в гостинице",
     "Примечание",
   ];
   const headerRow = ws.addRow(header);
   headerRow.font = { bold: true };
 
   for (const r of rows) {
+    const cancelled = r.status === "CANCELLED";
     for (const h of r.hotels || []) {
       ws.addRow([
         r.flightNumber || r.requestNumber || "",
@@ -222,9 +248,11 @@ function fillHotelsSheet(wb, { rows, showAirline }) {
         ...(showAirline ? [r.airlineName || ""] : []),
         h.hotelName || "",
         h.peopleCount || 0,
-        ...(h.reportSaved
-          ? [h.roomNights || 0, h.living || 0, h.meal || 0, ""]
-          : ["", "", "", "нет отчёта"]),
+        ...(cancelled
+          ? [h.roomNights || 0, "", "", "отменена"]
+          : h.reportSaved
+            ? [h.roomNights || 0, h.living || 0, h.meal || 0, ""]
+            : ["", "", "", "нет отчёта"]),
       ]);
     }
   }
@@ -238,7 +266,7 @@ function fillHotelsSheet(wb, { rows, showAirline }) {
     8, // Чел.
     10, // Суток
     14, // Проживание
-    14, // Питание
+    18, // Питание в гостинице
     18, // Примечание
   ];
   widths.forEach((w, i) => {
@@ -267,6 +295,7 @@ export async function exportPassengerAnalyticsFullXlsx({
   totals,
   summaries,
   showAirline,
+  showWaterMeal = false,
   meta,
   detailRequests = [],
   user = null,
@@ -283,14 +312,16 @@ export async function exportPassengerAnalyticsFullXlsx({
       summaryRows,
       totals,
       periodLabel: meta.periodLabel,
+      showWaterMeal,
     });
   }
-  fillRequestsSheet(wb, { rows, totals, showAirline, meta });
+  fillRequestsSheet(wb, { rows, totals, showAirline, showWaterMeal, meta });
   fillHotelsSheet(wb, { rows, showAirline });
 
   const sheetNames = new Set(wb.worksheets.map((ws) => ws.name));
   detailRequests.forEach((request, index) => {
-    if (!request) return;
+    // Отменённая заявка — без листа детализации (только строкой «Заявок»).
+    if (!request || rows[index]?.status === "CANCELLED") return;
     const livingEnabled = request?.livingService?.plan?.enabled;
     const arrEnabled = request?.transferService?.plan?.enabled;
     const depEnabled = request?.departureTransferService?.plan?.enabled;

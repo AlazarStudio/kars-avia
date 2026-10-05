@@ -54,3 +54,8 @@ export function buildPassengerAnalyticsInput({ range, airportIds, flightNumber, 
   if (airlineId) input.airlineId = airlineId;
   return input;
 }
+
+// «Заявок» в сводке: все заявки, отменённые — пометкой («12 · 2 отм.»).
+export function formatRequestsCount(total, cancelled) {
+  return cancelled > 0 ? `${formatInt(total)} · ${formatInt(cancelled)} отм.` : formatInt(total);
+}

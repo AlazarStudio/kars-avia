@@ -74,6 +74,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+.kpiSub {
+  font-size: 11px;
+  font-weight: 500;
+  color: #9ca4d9;
+}
+
 .kpiGrand {
   background: #eef2fd;
   border-color: #d3ddfb;
@@ -200,12 +206,15 @@
   color: #2e355d;
 }
 
-.rowMissing td {
+.rowMissing td,
+.rowCancelled td {
   color: #a6adc4;
 }
 
 .rowMissing .tdStrong,
-.rowMissing .tdTotal {
+.rowMissing .tdTotal,
+.rowCancelled .tdStrong,
+.rowCancelled .tdTotal {
   color: #a6adc4;
 }
 
@@ -533,6 +542,17 @@
   color: #5b21b6;
 }
 
+.tileWaterMeal {
+  background: #eff6ff;
+}
+.tileWaterMeal .tileLabel,
+.tileWaterMeal .tileSub {
+  color: #1d4ed8;
+}
+.tileWaterMeal .tileValue {
+  color: #1e3a8a;
+}
+
 .tilePeople {
   background: #eef2fd;
 }
@@ -582,6 +602,11 @@
 .chipBlue {
   background: #eff6ff;
   color: #3b82f6;
+}
+
+.chipMuted {
+  background: #f2f3f9;
+  color: #7a819f;
 }
 
 /* ── Единый поток (этап F) ── */

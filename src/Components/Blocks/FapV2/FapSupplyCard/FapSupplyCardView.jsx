@@ -5,8 +5,9 @@ import { supplyTotal } from "../fapSupply.js";
 const money = (v) => (v === "" || v == null ? "—" : `${Number(v).toLocaleString("ru-RU")} ₽`);
 
 // Чтение факта поставки: авиакомпания и запертая заявка. Пустой факт — одна
-// строка, а не сетка прочерков. showInternal — стоимость поставщику (только
-// диспетчерским ролям; АК получает с бэка null).
+// строка, а не сетка прочерков. showInternal — деньги поставки (цена, доставка,
+// сумма, стоимость поставщику): только диспетчерским ролям — суммы поставки
+// авиакомпании не показываем нигде (05.10.2026), бэк отдаёт ей null.
 export default function FapSupplyCardView({ service, unitLabel, showInternal }) {
   const isEmptyFact =
     !service?.suppliedAt &&
@@ -35,18 +36,18 @@ export default function FapSupplyCardView({ service, unitLabel, showInternal }) 
         <span className={classes.readValue}>{service.suppliedAt ? formatDateTime(service.suppliedAt) : "—"}</span>
         <span className={classes.readLabel}>{unitLabel}</span>
         <span className={classes.readValue}>{service.quantity ?? "—"}</span>
-        <span className={classes.readLabel}>Цена за единицу (без НДС)</span>
-        <span className={classes.readValue}>{money(service.unitPrice)}</span>
-        <span className={classes.readLabel}>Доставка (без НДС)</span>
-        <span className={classes.readValue}>{money(service.deliveryCost)}</span>
         {showInternal && (
           <>
+            <span className={classes.readLabel}>Цена за единицу (без НДС)</span>
+            <span className={classes.readValue}>{money(service.unitPrice)}</span>
+            <span className={classes.readLabel}>Доставка (без НДС)</span>
+            <span className={classes.readValue}>{money(service.deliveryCost)}</span>
             <span className={classes.readLabel}>Стоимость поставщику</span>
             <span className={classes.readValue}>{money(service.supplierCost)}</span>
+            <span className={classes.readLabel}>Сумма для АК</span>
+            <span className={classes.readValue}>{money(supplyTotal(service))}</span>
           </>
         )}
-        <span className={classes.readLabel}>Сумма для АК</span>
-        <span className={classes.readValue}>{money(supplyTotal(service))}</span>
       </div>
     </div>
   );

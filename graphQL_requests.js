@@ -8742,8 +8742,10 @@ export const GET_PASSENGER_ANALYTICS = gql`
         living
         meal
         transfer
+        waterMeal
         total
         missingCostCount
+        cancelledCount
         noFlightDateCount
       }
       requests {
@@ -8789,6 +8791,7 @@ export const GET_PASSENGER_ANALYTICS = gql`
         living
         meal
         transfer
+        waterMeal
         total
         status
         costMissing

@@ -30,6 +30,7 @@ import {
   formatInt,
   formatNights,
   formatMoneyShort,
+  formatRequestsCount,
   formatDateRu,
   buildPassengerAnalyticsInput,
   decadePresets,
@@ -54,11 +55,11 @@ const DIMENSIONS = [
 ];
 
 const CHART_METRICS = {
-  money: { colors: ["#0057C3", "#4CAF50", "#ff9800"], format: formatRub },
+  money: { colors: ["#0057C3", "#4CAF50", "#ff9800", "#00ACC1"], format: formatRub },
   people: { colors: ["#0057C3", "#2196f3"], format: formatInt },
 };
 
-const DONUT_COLORS = ["#0057C3", "#4CAF50", "#ff9800"];
+const DONUT_COLORS = ["#0057C3", "#4CAF50", "#ff9800", "#00ACC1"];
 const EXPORT_DETAILS_CONCURRENCY = 4;
 
 async function mapLimit(items, limit, mapper) {
@@ -126,6 +127,25 @@ function StatusPill({ status }) {
       style={cfg ? { color: cfg.color, backgroundColor: cfg.bg } : undefined}
     >
       {cfg?.label || status || "—"}
+    </span>
+  );
+}
+
+// «Итого» строки заявки. Отменённая — «—» (без денег, решение владельца
+// 05.10.2026). «Нет отчёта» — известная сумма (трансфер, вода и питание) с
+// пометкой; без денег — одна пометка, как раньше.
+function RowTotal({ r, isAirline }) {
+  if (r.status === "CANCELLED") return <span>—</span>;
+  if (r.costMissing && !(r.total > 0)) return <span className={classes.missingTag}>нет отчёта</span>;
+  const parts = [r.living, r.meal, r.transfer, ...(isAirline ? [] : [r.waterMeal])];
+  return (
+    <span className={`${classes.cellStack} ${classes.cellStackRight}`}>
+      <span>{formatRub(r.total)}</span>
+      {r.costMissing ? (
+        <span className={classes.missingTag}>нет отчёта</span>
+      ) : (
+        r.total > 0 && <span className={classes.cellSub}>{parts.map((v) => formatMoneyShort(v)).join(" + ")}</span>
+      )}
     </span>
   );
 }
@@ -271,19 +291,20 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
   const onSummarySort = (key) => setSummarySort((s) => ({ key, dir: nextSortDir(s, key) }));
 
   const chartData = useMemo(
-    () => buildChartData(summaryRows, dimension, chartMetric),
-    [summaryRows, dimension, chartMetric]
+    () => buildChartData(summaryRows, dimension, chartMetric, { withWaterMeal: !isAirline }),
+    [summaryRows, dimension, chartMetric, isAirline]
   );
   const donutData = useMemo(
     () =>
       totals
         ? [
             { x: "Проживание", value: totals.living },
-            { x: "Питание", value: totals.meal },
+            { x: "Питание в гостинице", value: totals.meal },
             { x: "Трансфер", value: totals.transfer },
+            ...(isAirline ? [] : [{ x: "Вода и питание", value: totals.waterMeal || 0 }]),
           ]
         : [],
-    [totals]
+    [totals, isAirline]
   );
 
   const onSort = (key) => {
@@ -369,6 +390,9 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
         sortedRows,
         EXPORT_DETAILS_CONCURRENCY,
         async (row) => {
+          // Отменённая заявка — только строкой списка: листа детализации с деньгами
+          // у неё нет (решение владельца 05.10.2026), детали не запрашиваем.
+          if (row.status === "CANCELLED") return null;
           const response = await client.query({
             query: GET_PASSENGER_REQUEST_REPORT,
             variables: { passengerRequestId: row.requestId },
@@ -388,6 +412,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
           month: buildSummary(rows, "month"),
         },
         showAirline: !isAirline,
+        showWaterMeal: !isAirline,
         detailRequests,
         user,
         meta: {
@@ -606,6 +631,9 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
               <div className={classes.kpi}>
                 <span className={classes.kpiLabel}>Заявок</span>
                 <span className={classes.kpiValue}>{formatInt(totals.requestsCount)}</span>
+                {totals.cancelledCount > 0 && (
+                  <span className={classes.kpiSub}>в т.ч. {formatInt(totals.cancelledCount)} отменено</span>
+                )}
               </div>
               <div className={classes.kpi}>
                 <span className={classes.kpiLabel}>Человек</span>
@@ -632,13 +660,19 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                 <span className={classes.kpiValue}>{formatRub(totals.living)}</span>
               </div>
               <div className={classes.kpi}>
-                <span className={classes.kpiLabel}>Питание</span>
+                <span className={classes.kpiLabel}>Питание в гостинице</span>
                 <span className={classes.kpiValue}>{formatRub(totals.meal)}</span>
               </div>
               <div className={classes.kpi}>
                 <span className={classes.kpiLabel}>Трансфер</span>
                 <span className={classes.kpiValue}>{formatRub(totals.transfer)}</span>
               </div>
+              {!isAirline && (
+                <div className={classes.kpi}>
+                  <span className={classes.kpiLabel}>Вода и питание</span>
+                  <span className={classes.kpiValue}>{formatRub(totals.waterMeal)}</span>
+                </div>
+              )}
               <div className={`${classes.kpi} ${classes.kpiGrand}`}>
                 <span className={classes.kpiLabel}>Итого</span>
                 <span className={classes.kpiValue}>{formatRub(totals.total)}</span>
@@ -739,8 +773,11 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                         <SortHead label="Дети · млад." columnKey="kids" sort={summarySort} onSort={onSummarySort} num />
                         <SortHead label="Суток" columnKey="roomNights" sort={summarySort} onSort={onSummarySort} num />
                         <SortHead label="Проживание" columnKey="living" sort={summarySort} onSort={onSummarySort} num />
-                        <SortHead label="Питание" columnKey="meal" sort={summarySort} onSort={onSummarySort} num />
+                        <SortHead label="Питание в гостинице" columnKey="meal" sort={summarySort} onSort={onSummarySort} num />
                         <SortHead label="Трансфер" columnKey="transfer" sort={summarySort} onSort={onSummarySort} num />
+                        {!isAirline && (
+                          <SortHead label="Вода и питание" columnKey="waterMeal" sort={summarySort} onSort={onSummarySort} num />
+                        )}
                         <SortHead label="Итого" columnKey="total" sort={summarySort} onSort={onSummarySort} num />
                         <SortHead label="Без стоимости" columnKey="missingCostCount" sort={summarySort} onSort={onSummarySort} num />
                       </tr>
@@ -749,7 +786,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                       {sortedSummaryRows.map((g) => (
                         <tr key={g.key}>
                           <td className={classes.tdStrong}>{g.label}</td>
-                          <td className={classes.num}>{formatInt(g.requestsCount)}</td>
+                          <td className={classes.num}>{formatRequestsCount(g.requestsCount, g.cancelledCount)}</td>
                           <td className={classes.num}>{formatInt(g.peopleCount)}</td>
                           <td className={classes.num}>
                             {g.childrenCount + g.infantsCount > 0
@@ -760,6 +797,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                           <td className={classes.num}>{formatRub(g.living)}</td>
                           <td className={classes.num}>{formatRub(g.meal)}</td>
                           <td className={classes.num}>{formatRub(g.transfer)}</td>
+                          {!isAirline && <td className={classes.num}>{formatRub(g.waterMeal)}</td>}
                           <td className={`${classes.num} ${classes.tdTotal}`}>{formatRub(g.total)}</td>
                           <td className={classes.num}>{g.missingCostCount > 0 ? formatInt(g.missingCostCount) : "—"}</td>
                         </tr>
@@ -767,7 +805,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                       {totals && (
                         <tr className={classes.summaryTotalRow}>
                           <td className={classes.tdStrong}>ИТОГО</td>
-                          <td className={classes.num}>{formatInt(totals.requestsCount)}</td>
+                          <td className={classes.num}>{formatRequestsCount(totals.requestsCount, totals.cancelledCount)}</td>
                           <td className={classes.num}>{formatInt(totals.peopleCount)}</td>
                           <td className={classes.num}>
                             {formatInt(totals.childrenCount || 0)} ·{" "}
@@ -777,6 +815,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                           <td className={classes.num}>{formatRub(totals.living)}</td>
                           <td className={classes.num}>{formatRub(totals.meal)}</td>
                           <td className={classes.num}>{formatRub(totals.transfer)}</td>
+                          {!isAirline && <td className={classes.num}>{formatRub(totals.waterMeal)}</td>}
                           <td className={`${classes.num} ${classes.tdTotal}`}>{formatRub(totals.total)}</td>
                           <td className={classes.num}>{totals.missingCostCount > 0 ? formatInt(totals.missingCostCount) : "—"}</td>
                         </tr>
@@ -808,7 +847,9 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                       {sortedRows.map((r, i) => (
                         <Fragment key={r.requestId}>
                           <tr
-                            className={`${r.costMissing ? classes.rowMissing : ""} ${classes.rowClickable} ${
+                            className={`${
+                              r.status === "CANCELLED" ? classes.rowCancelled : r.costMissing ? classes.rowMissing : ""
+                            } ${classes.rowClickable} ${
                               i % 2 === 1 ? classes.rowAlt : ""
                             } ${expandedId === r.requestId ? classes.rowExpanded : ""}`}
                             onClick={() => setExpandedId(expandedId === r.requestId ? null : r.requestId)}
@@ -882,18 +923,7 @@ function PassengerAnalytics({ user, filterOpen, onFilterClose, onPeriodChange })
                               </span>
                             </td>
                             <td className={`${classes.num} ${classes.tdTotal}`}>
-                              {r.costMissing ? (
-                                <span className={classes.missingTag}>нет отчёта</span>
-                              ) : (
-                                <span className={`${classes.cellStack} ${classes.cellStackRight}`}>
-                                  <span>{formatRub(r.total)}</span>
-                                  {r.total > 0 && (
-                                    <span className={classes.cellSub}>
-                                      {formatMoneyShort(r.living)} + {formatMoneyShort(r.meal)} + {formatMoneyShort(r.transfer)}
-                                    </span>
-                                  )}
-                                </span>
-                              )}
+                              <RowTotal r={r} isAirline={isAirline} />
                             </td>
                             <td>
                               <StatusPill status={r.status} />

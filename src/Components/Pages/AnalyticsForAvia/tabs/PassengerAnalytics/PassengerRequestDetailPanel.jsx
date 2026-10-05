@@ -10,6 +10,9 @@ const num = (v) => Number(v) || 0;
 const joinParts = (parts) => parts.filter(Boolean).join(" · ");
 
 // Раскрывашка заявки: цветные стат-плитки + чипы. Показывается только ненулевое.
+// Отменённая заявка — без денежных плиток (решение владельца 05.10.2026).
+// «Нет отчёта» заменяет только гостиничные деньги: трансфер и «Вода и питание»
+// у такой заявки реальны (вариант C).
 function PassengerRequestDetailPanel({ r }) {
   const adults = num(r.adultsCount);
   const children = num(r.childrenCount);
@@ -18,41 +21,44 @@ function PassengerRequestDetailPanel({ r }) {
     num(r.breakfastsCount) + num(r.lunchesCount) + num(r.dinnersCount) + num(r.lunchboxesCount);
   const transferSplit =
     num(r.transferArrival) + num(r.transferDeparture) + num(r.transferBaggage) + num(r.transferIntercity);
+  const cancelled = r.status === "CANCELLED";
 
   const tiles = [];
-  if (r.costMissing) {
-    tiles.push({
-      key: "missing",
-      variant: classes.tileMissing,
-      label: "Стоимость",
-      value: "Нет отчёта",
-      sub: "появится после отчёта гостиницы",
-    });
-  } else {
-    if (num(r.living) > 0 || num(r.roomNights) > 0) {
+  if (!cancelled) {
+    if (r.costMissing) {
       tiles.push({
-        key: "living",
-        variant: classes.tileLiving,
+        key: "missing",
+        variant: classes.tileMissing,
         label: "Проживание",
-        value: formatRub(r.living),
-        sub: joinParts([
-          num(r.roomNights) > 0 && `${formatNights(r.roomNights)} сут`,
-          num(r.avgPricePerNight) > 0 && `ср. ${formatRub(r.avgPricePerNight)}/сут`,
-        ]),
+        value: "Нет отчёта",
+        sub: "появится после отчёта гостиницы",
       });
-    }
-    if (num(r.meal) > 0 || mealsCount > 0) {
-      tiles.push({
-        key: "meal",
-        variant: classes.tileMeal,
-        label: "Питание",
-        value: formatRub(r.meal),
-        sub: joinParts([
-          num(r.breakfastsCount) + num(r.lunchesCount) + num(r.dinnersCount) > 0 &&
-            `З/О/У ${formatInt(r.breakfastsCount)}/${formatInt(r.lunchesCount)}/${formatInt(r.dinnersCount)}`,
-          num(r.lunchboxesCount) > 0 && `ЛБ ${formatInt(r.lunchboxesCount)}`,
-        ]),
-      });
+    } else {
+      if (num(r.living) > 0 || num(r.roomNights) > 0) {
+        tiles.push({
+          key: "living",
+          variant: classes.tileLiving,
+          label: "Проживание",
+          value: formatRub(r.living),
+          sub: joinParts([
+            num(r.roomNights) > 0 && `${formatNights(r.roomNights)} сут`,
+            num(r.avgPricePerNight) > 0 && `ср. ${formatRub(r.avgPricePerNight)}/сут`,
+          ]),
+        });
+      }
+      if (num(r.meal) > 0 || mealsCount > 0) {
+        tiles.push({
+          key: "meal",
+          variant: classes.tileMeal,
+          label: "Питание в гостинице",
+          value: formatRub(r.meal),
+          sub: joinParts([
+            num(r.breakfastsCount) + num(r.lunchesCount) + num(r.dinnersCount) > 0 &&
+              `З/О/У ${formatInt(r.breakfastsCount)}/${formatInt(r.lunchesCount)}/${formatInt(r.dinnersCount)}`,
+            num(r.lunchboxesCount) > 0 && `ЛБ ${formatInt(r.lunchboxesCount)}`,
+          ]),
+        });
+      }
     }
     if (num(r.transfer) > 0 || transferSplit > 0) {
       tiles.push({
@@ -66,6 +72,16 @@ function PassengerRequestDetailPanel({ r }) {
           num(r.transferBaggage) > 0 && `багаж ${formatMoneyShort(r.transferBaggage)}`,
           num(r.transferIntercity) > 0 && `межгород ${formatMoneyShort(r.transferIntercity)}`,
         ]),
+      });
+    }
+    // Счётчики выдачи воды и раздачи уже стоят чипами ниже — подпись не дублируем.
+    // Авиакомпании бэк отдаёт waterMeal = 0, плитки у неё нет.
+    if (num(r.waterMeal) > 0) {
+      tiles.push({
+        key: "waterMeal",
+        variant: classes.tileWaterMeal,
+        label: "Вода и питание",
+        value: formatRub(r.waterMeal),
       });
     }
   }
@@ -85,13 +101,19 @@ function PassengerRequestDetailPanel({ r }) {
   const chips = [];
   (r.hotels || []).forEach((h, i) => {
     chips.push(
-      h.reportSaved
+      cancelled
         ? {
             key: `hotel-${i}`,
-            variant: classes.chipGreen,
-            text: `${h.hotelName || "—"} · ${formatInt(h.peopleCount)} чел · ${formatNights(h.roomNights)} сут`,
+            variant: classes.chipMuted,
+            text: `${h.hotelName || "—"} · ${formatInt(h.peopleCount)} чел`,
           }
-        : { key: `hotel-${i}`, variant: classes.chipAmber, text: `${h.hotelName || "—"} · нет отчёта` }
+        : h.reportSaved
+          ? {
+              key: `hotel-${i}`,
+              variant: classes.chipGreen,
+              text: `${h.hotelName || "—"} · ${formatInt(h.peopleCount)} чел · ${formatNights(h.roomNights)} сут`,
+            }
+          : { key: `hotel-${i}`, variant: classes.chipAmber, text: `${h.hotelName || "—"} · нет отчёта` }
     );
   });
   if (num(r.waterPlanned) > 0 || num(r.waterServed) > 0) {

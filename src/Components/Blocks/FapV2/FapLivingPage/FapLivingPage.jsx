@@ -16,6 +16,7 @@ import {
   isAirlineRole,
   isHotelScoped,
   scopedHotelId,
+  canSeeInternalFapCosts,
 } from "../../../../utils/access";
 import { downloadLivingReport } from "../reports/buildReportSheets";
 import {
@@ -291,6 +292,7 @@ export default function FapLivingPage({
                       hotelIndexes: exportHotelIndexes,
                       hideMoney: moneyHidden,
                       hiddenServiceKeys,
+                      internal: canSeeInternalFapCosts(user),
                     });
                   }
                   catch (e) { notifyError("Ошибка экспорта"); console.error(e); }
@@ -310,6 +312,7 @@ export default function FapLivingPage({
                 hotelIndexes: exportHotelIndexes,
                 hideMoney: moneyHidden,
                 hiddenServiceKeys,
+                internal: canSeeInternalFapCosts(user),
               })
             }
             // Кнопка отчёта в шапке показывается ровно в обратном условии —

@@ -1110,6 +1110,10 @@ export async function downloadHotelReport(request, hotelIndex, opts) {
 // направлений в раскладке проживания, одна строка «Итого:» внизу, подписи без
 // «(без НДС)». Нужна только детализации в Excel аналитики по пассажирам —
 // владелец решил оставить её как есть.
+//
+// opts.supplyMoney — строка «Вода и питание:» (деньги поставки) и её слагаемое во
+// «Всего по заявке». Только диспетчеру (internal): суммы поставки авиакомпании не
+// показываем нигде (решение владельца 05.10.2026). По умолчанию закрыто.
 export function addCombinedSheet(wb, opts) {
   const {
     request,
@@ -1120,6 +1124,7 @@ export function addCombinedSheet(wb, opts) {
     hiddenServiceKeys = [],
     hideMoney = false,
     legacyLayout = false,
+    supplyMoney = false,
   } = opts;
   // includeTransfer отвечает за трансфер в «Сводке» целиком, hiddenServiceKeys —
   // за каждое направление отдельно: скрыть могут только прилёт или только вылет.
@@ -1393,7 +1398,7 @@ export function addCombinedSheet(wb, opts) {
     .map(({ service }) => supplyCost(service))
     .filter((c) => c != null);
   let waterMealRow = null;
-  if (!hideMoney && supplyCosts.length > 0) {
+  if (!hideMoney && supplyMoney && supplyCosts.length > 0) {
     skipRows.push(rowIdx); // строка-разделитель
     rowIdx += 1;
     waterMealRow = rowIdx;
@@ -1436,10 +1441,10 @@ export function addCombinedSheet(wb, opts) {
 }
 
 export async function downloadLivingReport(request, opts = {}) {
-  const { hotelIndexes = null, hideMoney = false, hiddenServiceKeys = [] } = opts;
+  const { hotelIndexes = null, hideMoney = false, hiddenServiceKeys = [], internal = false } = opts;
   const wb = new ExcelJS.Workbook();
   const sheetNames = new Set();
-  addCombinedSheet(wb, { request, sheetNames, includeTransfer: false, hotelIndexes, hideMoney });
+  addCombinedSheet(wb, { request, sheetNames, includeTransfer: false, hotelIndexes, hideMoney, supplyMoney: internal });
   (request?.livingService?.hotels ?? []).forEach((_, hotelIndex) => {
     if (hotelIndexes && !hotelIndexes.includes(hotelIndex)) return;
     addHotelSheet(wb, { request, hotelIndex, sheetNames, hideMoney, hiddenServiceKeys });
@@ -1526,6 +1531,7 @@ export function addRequestReportSheets(wb, request, opts = {}) {
       // направлений рисовать, решает тот же список ключей.
       hiddenServiceKeys,
       hideMoney,
+      supplyMoney: internal,
     });
   }
   if (livingVisible) {
@@ -1550,7 +1556,8 @@ export function addRequestReportSheets(wb, request, opts = {}) {
   }
   // Обе поставки живут на одном листе — он добавляется, если видна хоть одна.
   if (waterVisible || mealVisible) {
-    addWaterMealSheet(wb, { request, sheetNames, sheetPrefix, hideMoney });
+    // Деньги поставки — только диспетчеру (internal), см. addCombinedSheet.
+    addWaterMealSheet(wb, { request, sheetNames, sheetPrefix, hideMoney: hideMoney || !internal });
   }
 
   return true;

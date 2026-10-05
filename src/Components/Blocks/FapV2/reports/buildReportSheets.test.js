@@ -1734,7 +1734,7 @@ function makeGuestWithSupplyRequest() {
 
 test("сводка: проживание и поставки без трансфера — строка «Вода и питание:» и «Всего по заявке»", () => {
   const request = makeGuestWithSupplyRequest();
-  const ws = addCombinedSheet(new ExcelJS.Workbook(), { request, sheetNames: new Set() });
+  const ws = addCombinedSheet(new ExcelJS.Workbook(), { request, sheetNames: new Set(), supplyMoney: true });
   assert.equal(ws.getCell("A7").value, "Итого:");
   assert.equal(ws.getCell("A9").value, "Вода и питание:");
   // Значение, а не формула: деталь поставки живёт на своём листе.
@@ -1752,7 +1752,7 @@ test("сводка: проживание и поставки без трансф
 test("сводка: трансфер и поставки — обе суммы слагаемыми «Всего по заявке»", () => {
   const request = makeFullServiceRequest();
   request.waterService = makeSupplyRequest().waterService;
-  const ws = addCombinedSheet(new ExcelJS.Workbook(), { request, sheetNames: new Set() });
+  const ws = addCombinedSheet(new ExcelJS.Workbook(), { request, sheetNames: new Set(), supplyMoney: true });
   assert.equal(ws.getCell("A19").value, "Вода и питание:");
   assert.equal(ws.getCell("A21").value, "Всего по заявке:");
   assert.equal(ws.getCell("Y21").value.formula, "Y7+K12+K17+Y19");
@@ -1763,6 +1763,7 @@ test("сводка: hideMoney — ни строки «Вода и питание
     request: makeGuestWithSupplyRequest(),
     sheetNames: new Set(),
     hideMoney: true,
+    supplyMoney: true,
   });
   assert.equal(hasCellValue(ws, "Вода и питание:"), false);
   assert.equal(hasCellValue(ws, "Всего по заявке:"), false);
@@ -1775,9 +1776,38 @@ test("сводка: скрытая поставка в строку «Вода �
     request: makeGuestWithSupplyRequest(),
     sheetNames: new Set(),
     hiddenServiceKeys: ["meal"],
+    supplyMoney: true,
   });
   assert.equal(ws.getCell("A9").value, "Вода и питание:");
   assert.equal(ws.getCell("Y9").value, 2920); // только вода
+});
+
+test("сводка: без supplyMoney (не диспетчер) — ни строки «Вода и питание:», ни её суммы", () => {
+  const ws = addCombinedSheet(new ExcelJS.Workbook(), {
+    request: makeGuestWithSupplyRequest(),
+    sheetNames: new Set(),
+  });
+  assert.equal(hasCellValue(ws, "Вода и питание:"), false);
+  assert.equal(hasCellValue(ws, "Всего по заявке:"), false);
+  assert.equal(hasCellValue(ws, 13420), false);
+});
+
+test("книга заявки: не диспетчер — лист «Вода и питание» без денег, в «Сводке» нет строки поставки", () => {
+  const { wb } = buildBook(makeGuestWithSupplyRequest());
+  const sheet = wb.getWorksheet("Вода и питание");
+  assert.deepEqual(sheet.getRow(4).values.slice(1), [
+    "№", "Услуга", "Поставщик", "Дата поставки", "Время поставки", "Количество",
+  ]);
+  [60.5, 500, 2920, 350, 10500].forEach((v) =>
+    assert.equal(hasCellValue(sheet, v), false, `в листе осталась сумма ${v}`)
+  );
+  assert.equal(hasCellValue(wb.getWorksheet("Сводка"), "Вода и питание:"), false);
+});
+
+test("книга заявки: диспетчер (internal) — лист и строка поставки с деньгами", () => {
+  const { wb } = buildBook(makeGuestWithSupplyRequest(), { internal: true });
+  assert.deepEqual(wb.getWorksheet("Вода и питание").getRow(4).values.slice(1), WATER_MEAL_HEADERS);
+  assert.equal(wb.getWorksheet("Сводка").getCell("A9").value, "Вода и питание:");
 });
 
 // ── Лист багажа: внутренние колонки диспетчера (internal) ──

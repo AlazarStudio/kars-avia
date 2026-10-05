@@ -1,9 +1,14 @@
-// Сводки по измерениям (D1). Семантика = KPI-тоталы: «Заявок»/«Без стоимости» — все
-// строки группы; люди/дети/ночи/деньги — только counted (!costMissing).
+// Сводки по измерениям (D1). Семантика = KPI-тоталы бэка: «Заявок» — все строки
+// группы, отменённые из них — cancelledCount, дальше отменённые никуда не идут
+// (решение владельца 05.10.2026). Деньги — по всем неотменённым: у заявки «нет
+// отчёта» гостиничные деньги и так 0, трансфер и поставка реальны (вариант C).
+// Люди/дети/сутки — по неотменённым с отчётом (!costMissing); «Без стоимости» —
+// без отменённых.
 const round2 = (v) => Math.round((Number(v) || 0) * 100) / 100;
 
 const MSK_OFFSET_MS = 3 * 60 * 60 * 1000;
 const NO_DATE_KEY = "__no_date__";
+const isCancelled = (row) => row.status === "CANCELLED";
 
 // flightDate хранится как московская полночь → UTC, поэтому месяц берём в МСК (+3ч).
 function mskMonthKey(flightDate) {
@@ -47,6 +52,7 @@ export function buildSummary(rows, dimension) {
         key,
         label,
         requestsCount: 0,
+        cancelledCount: 0,
         missingCostCount: 0,
         peopleCount: 0,
         childrenCount: 0,
@@ -55,11 +61,21 @@ export function buildSummary(rows, dimension) {
         living: 0,
         meal: 0,
         transfer: 0,
+        waterMeal: 0,
         total: 0,
       };
       groups.set(key, g);
     }
     g.requestsCount += 1;
+    if (isCancelled(row)) {
+      g.cancelledCount += 1;
+      continue;
+    }
+    g.living += Number(row.living) || 0;
+    g.meal += Number(row.meal) || 0;
+    g.transfer += Number(row.transfer) || 0;
+    g.waterMeal += Number(row.waterMeal) || 0;
+    g.total += Number(row.total) || 0;
     if (row.costMissing) {
       g.missingCostCount += 1;
     } else {
@@ -67,10 +83,6 @@ export function buildSummary(rows, dimension) {
       g.childrenCount += Number(row.childrenCount) || 0;
       g.infantsCount += Number(row.infantsCount) || 0;
       g.roomNights += Number(row.roomNights) || 0;
-      g.living += Number(row.living) || 0;
-      g.meal += Number(row.meal) || 0;
-      g.transfer += Number(row.transfer) || 0;
-      g.total += Number(row.total) || 0;
     }
   }
   const list = [...groups.values()].map((g) => ({
@@ -79,6 +91,7 @@ export function buildSummary(rows, dimension) {
     living: round2(g.living),
     meal: round2(g.meal),
     transfer: round2(g.transfer),
+    waterMeal: round2(g.waterMeal),
     total: round2(g.total),
   }));
   if (dimension === "month") {
@@ -97,8 +110,9 @@ const CHART_TOP_GROUPS = 8;
 
 const MONEY_SERIES = [
   { key: "living", label: "Проживание" },
-  { key: "meal", label: "Питание" },
+  { key: "meal", label: "Питание в гостинице" },
   { key: "transfer", label: "Трансфер" },
+  { key: "waterMeal", label: "Вода и питание" },
 ];
 
 const PEOPLE_SERIES = [
@@ -111,13 +125,17 @@ function toChartRow(g, metric) {
     const kids = g.childrenCount + g.infantsCount;
     return { x: g.label, adults: Math.max(0, g.peopleCount - kids), kids };
   }
-  return { x: g.label, living: g.living, meal: g.meal, transfer: g.transfer };
+  return { x: g.label, living: g.living, meal: g.meal, transfer: g.transfer, waterMeal: g.waterMeal };
 }
 
 // Данные для стек-бара: месяцы — хронологично без бакета «Без даты рейса»;
 // аэропорты/АК — по метрике desc, при >9 группах топ-8 + «Прочие».
-export function buildChartData(summaryRows, dimension, metric) {
-  const series = metric === "people" ? PEOPLE_SERIES : MONEY_SERIES;
+// withWaterMeal: false — авиакомпании «Воду и питание» не показываем (05.10.2026).
+export function buildChartData(summaryRows, dimension, metric, { withWaterMeal = true } = {}) {
+  const series =
+    metric === "people"
+      ? PEOPLE_SERIES
+      : MONEY_SERIES.filter((s) => withWaterMeal || s.key !== "waterMeal");
   const rows = summaryRows || [];
   if (dimension === "month") {
     const noDate = rows.find((g) => g.key === NO_DATE_KEY);
@@ -137,6 +155,7 @@ export function buildChartData(summaryRows, dimension, metric) {
     living: 0,
     meal: 0,
     transfer: 0,
+    waterMeal: 0,
     total: 0,
   };
   for (const g of sorted.slice(CHART_TOP_GROUPS)) {
@@ -146,11 +165,13 @@ export function buildChartData(summaryRows, dimension, metric) {
     others.living += g.living;
     others.meal += g.meal;
     others.transfer += g.transfer;
+    others.waterMeal += g.waterMeal;
     others.total += g.total;
   }
   others.living = round2(others.living);
   others.meal = round2(others.meal);
   others.transfer = round2(others.transfer);
+  others.waterMeal = round2(others.waterMeal);
   others.total = round2(others.total);
   const data = [...sorted.slice(0, CHART_TOP_GROUPS).map((g) => toChartRow(g, metric)), toChartRow(others, metric)];
   return { data, series, noDateCount: 0 };
