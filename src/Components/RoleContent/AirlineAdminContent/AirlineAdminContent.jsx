@@ -5,7 +5,6 @@ import AirlinePage from "../../Blocks/AirlinePage/AirlinePage";
 import Estafeta from "../../Blocks/Estafeta/Estafeta";
 import HotelPage from "../../Blocks/HotelPage/HotelPage";
 import HotelsList from "../../Blocks/HotelsList/HotelsList";
-import Reserve from "../../Blocks/Reserve/Reserve";
 import ReportsV2 from "../../Blocks/ReportsV2/ReportsV2";
 import UpdatesList from "../../Blocks/UpdatesList/UpdatesList";
 import DocumentationList from "../../Blocks/DocumentationList/DocumentationList";
@@ -171,12 +170,12 @@ const AirlineAdminContent = ({ user, accessMenu }) => {
       <AirlinePage id={airlineID} user={user} accessMenu={safeAccessMenu} />
     );
 
-  // 3) Главная (когда нет id/hotelID/airlineID): показываем Estafeta, если есть requestMenu, иначе Reserve
+  // 3) Главная (когда нет id/hotelID/airlineID): Эскадрилья, если есть requestMenu, иначе ФАП (reserveMenu)
   if (!id && !hotelID && !airlineID) {
     return hasAccessMenu(accessMenu, "requestMenu") ? (
       <Estafeta user={user} accessMenu={safeAccessMenu} />
     ) : hasAccessMenu(accessMenu, "reserveMenu") ? (
-      <Reserve user={user} accessMenu={safeAccessMenu} />
+      <FapV2 user={user} accessMenu={safeAccessMenu} />
     ) : (
       <HotelsList user={user} />
     );

@@ -7,7 +7,6 @@ import Estafeta from "../../Blocks/Estafeta/Estafeta";
 import HotelPage from "../../Blocks/HotelPage/HotelPage";
 import HotelsList from "../../Blocks/HotelsList/HotelsList";
 import ReportsV2 from "../../Blocks/ReportsV2/ReportsV2";
-import Reserve from "../../Blocks/Reserve/Reserve";
 import Company from "../../Blocks/Company/Company";
 import DocumentationList from "../../Blocks/DocumentationList/DocumentationList";
 import PatchNotesList from "../../Blocks/PatchNotesList/PatchNotesList";
@@ -165,7 +164,7 @@ const DispatcherAdminContent = ({ user, accessMenu }) => {
       return <Estafeta user={user} accessMenu={safeAccessMenu} />;
     }
     if (canAccessMenu(accessMenu, "reserveMenu", user)) {
-      return <Reserve user={user} accessMenu={safeAccessMenu} />;
+      return <FapV2 user={user} accessMenu={safeAccessMenu} />;
     }
     return <HotelsList user={user} />;
   }
