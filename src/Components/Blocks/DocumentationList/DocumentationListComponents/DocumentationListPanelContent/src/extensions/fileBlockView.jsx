@@ -37,31 +37,11 @@ const getFileExtension = (filename = '') => {
   return trimmed.slice(lastDotIndex + 1).toLowerCase()
 }
 
-const getOfficePreviewUrl = (url) => {
-  if (!url || typeof url !== 'string') return null
-  if (url.startsWith('blob:') || url.startsWith('data:')) return null
-
-  try {
-    const resolved = new URL(url, window.location.origin)
-    if (!/^https?:$/i.test(resolved.protocol)) return null
-    return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(resolved.toString())}`
-  } catch {
-    return null
-  }
-}
-
-const getPreviewKind = ({ fileType, filename, url }) => {
+const getPreviewKind = ({ fileType, url }) => {
   if (!url) return null
 
   if (fileType === 'image' || fileType === 'pdf') return fileType
   if (fileType === 'text' || fileType === 'code') return 'text'
-
-  if (fileType === 'document') {
-    const extension = getFileExtension(filename)
-    if (extension === 'doc' || extension === 'docx') {
-      return getOfficePreviewUrl(url) ? 'office' : null
-    }
-  }
 
   return null
 }
@@ -553,7 +533,6 @@ export default function FileBlockView({ editor, node, updateAttributes, getPos }
   const fileType = getFileType(name || '', mimeType);
   const previewKind = getPreviewKind({
     fileType,
-    filename: name || '',
     url: displayUrl,
   });
   const canPreview = Boolean(previewKind);
@@ -967,7 +946,6 @@ export default function FileBlockView({ editor, node, updateAttributes, getPos }
         name,
         type: previewKind,
         mimeType,
-        officeUrl: previewKind === 'office' ? getOfficePreviewUrl(displayUrl) : null,
       });
       setPreviewOpen(true);
     } else {
@@ -1047,7 +1025,7 @@ export default function FileBlockView({ editor, node, updateAttributes, getPos }
         );
 
       case 'document':
-        if (previewKind === 'office') {
+        if (['doc', 'docx'].includes(getFileExtension(name || ''))) {
           return (
             <div className="file-doc-preview">
               <div className="pdf-preview-simple">
@@ -1551,16 +1529,6 @@ export default function FileBlockView({ editor, node, updateAttributes, getPos }
               {selectedFile.type === 'image' && (
                 <div className="image-full-preview">
                   <img src={selectedFile.url} alt={selectedFile.name} />
-                </div>
-              )}
-
-              {selectedFile.type === 'office' && selectedFile.officeUrl && (
-                <div className="office-full-preview">
-                  <iframe
-                    src={selectedFile.officeUrl}
-                    title={selectedFile.name}
-                    style={{ width: '100%', height: '70vh', border: 'none' }}
-                  />
                 </div>
               )}
             </div>
