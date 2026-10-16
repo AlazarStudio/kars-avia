@@ -57,11 +57,14 @@ const RoomRowV2 = memo(
     const subtitle = category ? categoryLabel(category) : "";
     const isTargetRoom = dragTarget?.roomId === roomId;
 
-    // Название переносится до двух строк; если не влезло и в них — полный текст в тултипе.
-    const displayName = `${roomType !== "apartment" ? "№ " : ""}${roomName}${
-      roomType !== "apartment" && roomKind?.name ? ` ${roomKind.name}` : ""
-    }`;
-    const labelTitle = [displayName, subtitle].filter(Boolean).join(" — ");
+    // Жирным — только номер или адрес (переносится до двух строк), вид номера —
+    // в серой подписи рядом с категорией: длинные виды номеров иначе давали две
+    // жирные строки почти каждому номеру. Полный текст — в тултипе.
+    const displayName = `${roomType !== "apartment" ? "№ " : ""}${roomName}`;
+    const details = [subtitle, roomType !== "apartment" ? roomKind?.name : ""]
+      .filter(Boolean)
+      .join(" · ");
+    const labelTitle = [displayName, details].filter(Boolean).join(" — ");
 
     const highlighted = (day) =>
       highlightedDates?.some((d) => d.getTime() === day.getTime());
@@ -79,7 +82,7 @@ const RoomRowV2 = memo(
             onClick={() => onRoomClick && onRoomClick(room)}
           >
             <span className={classes.roomName}>{displayName}</span>
-            <span className={classes.roomSub}>{subtitle}</span>
+            <span className={classes.roomSub}>{details}</span>
           </div>
           <div className={classes.roomIcons}>
             <div className={classes.roomIconRow}>

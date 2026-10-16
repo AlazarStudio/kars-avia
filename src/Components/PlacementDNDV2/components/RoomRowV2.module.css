@@ -21,15 +21,15 @@
 .labelTitles {
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  gap: 2px;
   min-width: 0;
   cursor: pointer;
 }
 
-/* Две строки по 15px + подпись 13px = 44px — ровно высота строки на одну койку. */
+/* Длинный адрес: две строки по 14px + подпись 13px — влезает в 44px строки на одну койку. */
 .roomName {
   font-size: 13px;
-  line-height: 15px;
+  line-height: 14px;
   font-weight: 600;
   color: #2d3147;
   display: -webkit-box;
