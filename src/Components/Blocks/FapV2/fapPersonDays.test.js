@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { getPersonDays } from "./fapPersonDays.js";
+import { getPersonDays, getPersonStay } from "./fapPersonDays.js";
 
 const plan = {
   plannedFromAt: "2026-08-01T08:00:00.000Z",
@@ -73,4 +73,42 @@ test("plannedAt подхватывается, когда plannedFromAt не за
     plannedToAt: "2026-08-02T08:00:00.000Z", // 24 ч
   };
   assert.equal(getPersonDays({}, 0, legacyPlan), 1);
+});
+
+// ── getPersonStay: даты заезда и выезда для отчёта и книги ──
+
+test("правка в строке отчёта приоритетнее дат гостя и плана", () => {
+  const person = {
+    arrival: "2026-08-01T09:00:00.000Z",
+    departure: "2026-08-03T09:00:00.000Z",
+  };
+  const row = {
+    arrival: "2026-08-02T06:30:00.000Z",
+    departure: "2026-08-05T09:00:00.000Z",
+  };
+  const { inAt, outAt } = getPersonStay(person, 0, plan, row);
+  assert.equal(inAt.toISOString(), row.arrival);
+  assert.equal(outAt.toISOString(), row.departure);
+});
+
+test("границы независимы: правка одного выезда, заезд — по плану", () => {
+  const row = { arrival: null, departure: "2026-08-06T10:00:00.000Z" };
+  const { inAt, outAt } = getPersonStay({}, 0, plan, row);
+  assert.equal(inAt.toISOString(), plan.plannedFromAt);
+  assert.equal(outAt.toISOString(), row.departure);
+});
+
+test("без правок — план, а история заселения только последним шансом", () => {
+  const person = {
+    accommodationChesses: [
+      { hotelIndex: 0, startAt: "2026-07-30T10:00:00.000Z", endAt: null },
+    ],
+  };
+  const byPlan = getPersonStay(person, 0, plan);
+  assert.equal(byPlan.inAt.toISOString(), plan.plannedFromAt);
+  assert.equal(byPlan.outAt.toISOString(), plan.plannedToAt);
+
+  const noPlan = getPersonStay(person, 0, null);
+  assert.equal(noPlan.inAt.toISOString(), "2026-07-30T10:00:00.000Z");
+  assert.equal(noPlan.outAt, null);
 });

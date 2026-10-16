@@ -26,7 +26,7 @@ import {
   getCookie,
 } from "../../../../../graphQL_requests";
 import { calculateCostDaysByDuration } from "../../../../utils/effectiveCostDays";
-import { getPersonDays } from "../fapPersonDays.js";
+import { getPersonDays, getPersonStay } from "../fapPersonDays.js";
 import { tariffNameKey, findTariffByName } from "../fapTariffNames.js";
 import {
   hotelReportSubmittedAt,
@@ -44,6 +44,8 @@ import { useHotelServiceVisibility } from "../useHotelServiceVisibility";
 import { hotelOverbookedBy, livingNameCollisions } from "../fapLivingMismatch";
 import HotelCapacityDialog from "../HotelCapacityDialog/HotelCapacityDialog";
 import FapDiscountDialog from "../FapDiscountDialog/FapDiscountDialog";
+import StayBulkDialog from "./StayBulkDialog";
+import StayDateField from "./StayDateField";
 import { isAirlineRole, isHotelScoped } from "../../../../utils/access";
 import ScheduleIcon from "../../../../shared/icons/ScheduleIcon";
 import { formatDateTime, normalizeCategory, PERSON_CATEGORY_OPTIONS, accommodationDiscountPercent, placementKindLabel } from "../fapConstants";
@@ -216,6 +218,9 @@ export const resolveTariffPricePerDay = (tariff, places, category = null) => {
 
 const emptyPD = (person, hotelIndex, plan) => ({
   roomNumber: person?.roomNumber ?? "",
+  // Правка заезда/выезда в отчёте (ISO). null — даты по плану, см. getPersonStay.
+  arrival: null,
+  departure: null,
   daysCount: getPersonDays(person ?? {}, hotelIndex, plan),
   tariffId: null,
   breakfast: 0,
@@ -1545,6 +1550,8 @@ export default function FapHotelPage({
           // Номер в отчёте развязан с гостем (см. коммент выше). Но если в отчёте
           // он пуст — дозаполняем текущей комнатой гостя из вкладки «Гости».
           roomNumber: (row.roomNumber ?? "").toString().trim() || (people[idx]?.roomNumber ?? ""),
+          arrival: row.arrival ?? null,
+          departure: row.departure ?? null,
           // Сохранённые сутки имеют приоритет над пересчитанными: поле «Сут.»
           // редактируемое, и раньше правка не переживала перезагрузку — при
           // открытии отчёт всегда пересчитывался из плана и затирал ручной ввод.
@@ -1753,6 +1760,8 @@ export default function FapHotelPage({
         roomNumber: pd.roomNumber ?? "",
         roomCategory: eff.tariffName,   // legacy-совместимость (ФАП v1, старый Excel)
         roomKind: "",
+        arrival: pd.arrival ?? null,
+        departure: pd.departure ?? null,
         daysCount: toNum(pd.daysCount),
         breakfast: toNum(pd.breakfast),
         lunch: toNum(pd.lunch),
@@ -2256,6 +2265,42 @@ export default function FapHotelPage({
     [hotelIndex, plan, scheduleSave]
   );
 
+  // Сутки по датам гостя с учётом правки в отчёте; 0 — даты неполные или выезд
+  // не позже заезда, тогда сутки не трогаем.
+  const stayDaysOf = useCallback(
+    (person, pd) => {
+      const { inAt, outAt } = getPersonStay(person, hotelIndex, plan, pd);
+      return calculateCostDaysByDuration(inAt, outAt);
+    },
+    [hotelIndex, plan]
+  );
+
+  // Массовая простановка дат и суток («Даты и сутки…» в меню «Действия»).
+  // null — поле не менять. Сутки, не заданные явно, пересчитываются по датам.
+  const [bulkStayOpen, setBulkStayOpen] = useState(false);
+  const applyBulkStay = useCallback(
+    ({ arrival, departure, days }) => {
+      if (!arrival && !departure && days == null) return;
+      const next = { ...personDataRef.current };
+      peopleRef.current.forEach((person, i) => {
+        const p = { ...(next[i] ?? emptyPD(person, hotelIndex, plan)) };
+        if (arrival) p.arrival = arrival;
+        if (departure) p.departure = departure;
+        if (days != null) {
+          p.daysCount = days;
+        } else {
+          const byDates = stayDaysOf(person, p);
+          if (byDates > 0) p.daysCount = byDates;
+        }
+        next[i] = p;
+      });
+      personDataRef.current = next;
+      setPersonData(next);
+      scheduleSave();
+    },
+    [hotelIndex, plan, scheduleSave, stayDaysOf]
+  );
+
   // Жёсткая привязка номера комнаты: person.roomNumber — единственный источник.
   // Правка во вкладке «Гости» (мутация → refetch → people) сразу отражается в
   // «Отчёте»: синхронизируем pd.roomNumber с person.roomNumber на каждое
@@ -2339,6 +2384,22 @@ export default function FapHotelPage({
     setPersonData(nextAll);
     scheduleSave();
   }, [scheduleSave, people, hotelIndex, plan, findTariff]);
+
+  // Правка заезда/выезда в отчёте: сутки следуют за датами, ручная правка «Сут.»
+  // остаётся поверх. null — вернуть дату по плану.
+  const updatePersonStay = useCallback((personIndex, field, value) => {
+    const prev = personDataRef.current;
+    const person = peopleRef.current[personIndex];
+    const cur = prev[personIndex] ?? emptyPD(person, hotelIndex, plan);
+    if ((cur[field] ?? null) === (value ?? null)) return;
+    const updated = { ...cur, [field]: value };
+    const days = stayDaysOf(person, updated);
+    if (days > 0) updated.daysCount = days;
+    const nextAll = { ...prev, [personIndex]: updated };
+    personDataRef.current = nextAll;
+    setPersonData(nextAll);
+    scheduleSave();
+  }, [scheduleSave, hotelIndex, plan, stayDaysOf]);
 
   // Ручной вид размещения номера. Пустое значение снимает переопределение (возврат к «Авто»).
   const setRoomPlacementKind = useCallback((roomNumber, value) => {
@@ -4180,6 +4241,8 @@ export default function FapHotelPage({
                     </button>
                   )}
                   items={[
+                    // Под гейтом даты и сутки только для чтения — как «Сут.» в строке.
+                    { label: "Даты и сутки…", icon: ScheduleIcon, onClick: () => setBulkStayOpen(true), hidden: placed === 0 || hideMoney },
                     { label: "Количество приёмов…", icon: EditPencilIcon, onClick: () => setBulkCountsOpen(true), hidden: placed === 0 },
                     { label: "Скидки…", icon: PercentIcon, onClick: () => setDiscountsOpen(true), hidden: placed === 0 || hideMoney },
                     { sep: true },
@@ -4409,6 +4472,8 @@ export default function FapHotelPage({
                           </span>
                           <span>Номер</span>
                           {!hideMoney && <span>Тариф</span>}
+                          <span>Заезд</span>
+                          <span>Выезд</span>
                           <span className={classes.numRight}>Сут.</span>
                           <span className={classes.numCenter}>Завтр.</span>
                           <span className={classes.numCenter}>Обед</span>
@@ -4428,6 +4493,31 @@ export default function FapHotelPage({
                           const memberGroup = person.personId
                             ? groupIndex.get(person.personId)
                             : null;
+                          const stay = getPersonStay(person, hotelIndex, plan, pd);
+                          const stayReversed = Boolean(stay.inAt && stay.outAt && stay.outAt <= stay.inAt);
+                          const stayCell = (field, value) => (
+                            <div>
+                              <StayDateField
+                                value={value}
+                                readOnly={!canEdit || hideMoney}
+                                onCommit={(v) => updatePersonStay(i, field, v)}
+                                className={[
+                                  classes.cellInputDate,
+                                  pd[field] ? "" : classes.cellInputAuto,
+                                  stayReversed ? classes.cellInputInvalid : "",
+                                ].join(" ")}
+                                title={
+                                  hideMoney
+                                    ? "Даты задаёт диспетчер"
+                                    : stayReversed
+                                    ? "Выезд должен быть позже заезда"
+                                    : pd[field]
+                                    ? "Задано вручную. Очистите поле — вернётся дата по плану"
+                                    : "По плану проживания. Измените — сутки пересчитаются"
+                                }
+                              />
+                            </div>
+                          );
                           return (
                             <div key={i} className={`${classes.memberRow} ${hideMoney ? classes.rowNoMoney : ""}`}>
                               <div className={classes.reportCellName}>
@@ -4476,6 +4566,8 @@ export default function FapHotelPage({
                                   />
                                 </div>
                               )}
+                              {stayCell("arrival", stay.inAt)}
+                              {stayCell("departure", stay.outAt)}
                               <div>
                                 {/* Под гейтом сутки только для чтения: они множитель цены —
                                     книга выводит из них скидку, и разъехавшись с замороженной
@@ -4837,6 +4929,15 @@ export default function FapHotelPage({
           </Button>
         </DialogActions>
       </Dialog>
+
+      <StayBulkDialog
+        open={bulkStayOpen}
+        onClose={() => setBulkStayOpen(false)}
+        onApply={(patch) => {
+          applyBulkStay(patch);
+          setBulkStayOpen(false);
+        }}
+      />
 
       <FapDiscountDialog
         open={discountsOpen}

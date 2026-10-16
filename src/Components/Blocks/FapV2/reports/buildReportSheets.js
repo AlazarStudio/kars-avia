@@ -10,6 +10,7 @@ import { driverFactCount } from "../fapTransferFact.js";
 import { roomKey } from "../fapGroups.js";
 import { lunchboxCountOf } from "../fapReportMoney.js";
 import { supplyTotal } from "../fapSupply.js";
+import { getPersonStay } from "../fapPersonDays.js";
 import { findRowIndexForPerson } from "./reportRowMatch.js";
 import { fillFormulaResults } from "./formulaResults.js";
 
@@ -389,39 +390,6 @@ function groupedPrintOrder(rooms) {
   return groups.flat();
 }
 
-// Извлечь даты заезда/выезда персоны (Date или null).
-// Приоритет: person.arrival/departure (явное переопределение per-person)
-//          → service.plan.plannedFromAt/plannedToAt (план услуги, дефолт)
-//          → accommodationChesses[hotelIndex].startAt/endAt (history, последний шанс).
-//
-// accommodationChesses содержит ИСТОРИЮ операций (когда диспетчер заселил/выселил),
-// а не плановые даты пребывания, поэтому используется только как fallback.
-function getCheckInOut(person, hotelIndex, plan) {
-  let inAt = person?.arrival ? new Date(person.arrival) : null;
-  let outAt = person?.departure ? new Date(person.departure) : null;
-
-  if (!inAt) {
-    // plannedFromAt первичен (начало периода проживания) — симметрично getPersonDays
-    // в FapHotelPage, иначе сутки и дата заезда считаются от разных моментов.
-    const planned = plan?.plannedFromAt || plan?.plannedAt;
-    if (planned) inAt = new Date(planned);
-  }
-  if (!outAt && plan?.plannedToAt) {
-    outAt = new Date(plan.plannedToAt);
-  }
-
-  if (!inAt || !outAt) {
-    const chess =
-      (person?.accommodationChesses ?? []).find(
-        (c) => c != null && Number(c.hotelIndex) === Number(hotelIndex)
-      ) || (person?.accommodationChesses ?? [])[0];
-    if (!inAt && chess?.startAt) inAt = new Date(chess.startAt);
-    if (!outAt && chess?.endAt) outAt = new Date(chess.endAt);
-  }
-
-  return { inAt, outAt };
-}
-
 // ── основной API ──
 
 /**
@@ -511,7 +479,7 @@ export function addHotelSheet(wb, opts) {
         tariffName: "", pricePerDay: 0, placementKind: 0, roomNumber: "", daysCount: 0,
         breakfast: 0, lunch: 0, dinner: 0,
         breakfastCount: 0, lunchCount: 0, dinnerCount: 0, lunchboxCount: 0, lunchboxPrice: 0,
-        foodCost: 0, accommodationCost: 0,
+        foodCost: 0, accommodationCost: 0, arrival: null, departure: null,
       };
     }
     consumed.add(idx);
@@ -521,6 +489,9 @@ export function addHotelSheet(wb, opts) {
       pricePerDay: toNum(r.pricePerDay),
       placementKind: Number(r.placementKind) || 0,
       roomNumber: r.roomNumber ?? "",
+      // Правка заезда/выезда в отчёте — приоритетнее дат гостя и плана.
+      arrival: r.arrival ?? null,
+      departure: r.departure ?? null,
       daysCount: toNum(r.daysCount),
       breakfast: toNum(r.breakfast),
       lunch: toNum(r.lunch),
@@ -547,7 +518,7 @@ export function addHotelSheet(wb, opts) {
   printOrder.forEach((personIdx, seq) => {
     const p = people[personIdx];
     const r = rowsByPersonIdx[personIdx];
-    const { inAt, outAt } = getCheckInOut(p, hotelIndex, livingPlan);
+    const { inAt, outAt } = getPersonStay(p, hotelIndex, livingPlan, r);
     const row = ws.getRow(rowIdx);
 
     // «ID» — порядковый номер строки в листе, а не индекс гостя в ростере.
@@ -1221,7 +1192,7 @@ export function addCombinedSheet(wb, opts) {
       const r = rowsByPersonIdx[personIdx];
       const foodCost = toNum(r.foodCost);
       const accommodationCost = toNum(r.accommodationCost);
-      const { inAt, outAt } = getCheckInOut(p, hotelIndex, request?.livingService?.plan);
+      const { inAt, outAt } = getPersonStay(p, hotelIndex, request?.livingService?.plan, r);
       const row = ws.getRow(rowIdx);
 
       runningId += 1;

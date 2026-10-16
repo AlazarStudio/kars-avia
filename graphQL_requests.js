@@ -1,14 +1,14 @@
 import { gql } from "@apollo/client";
 
 
-// export const path = import.meta.env.VITE_PRODUCTION_PATH;
-// export const server = import.meta.env.VITE_PRODUCTION_SERVER;
+export const path = import.meta.env.VITE_PRODUCTION_PATH;
+export const server = import.meta.env.VITE_PRODUCTION_SERVER;
 
 // export const path = import.meta.env.VITE_DEMO_PATH;
 // export const server = import.meta.env.VITE_DEMO_SERVER;
 
-export const path = import.meta.env.VITE_DEV_PATH;
-export const server = import.meta.env.VITE_DEV_SERVER;
+// export const path = import.meta.env.VITE_DEV_PATH;
+// export const server = import.meta.env.VITE_DEV_SERVER;
 
 
 export const YMAPS_KEY = import.meta.env.VITE_YMAPS_KEY;
@@ -4230,6 +4230,8 @@ export const GET_PASSENGER_REQUEST = gql`
           roomNumber
           roomCategory
           roomKind
+          arrival
+          departure
           daysCount
           breakfast
           lunch
@@ -4353,6 +4355,8 @@ export const GET_PASSENGER_REQUEST_REPORT = gql`
           roomNumber
           roomCategory
           roomKind
+          arrival
+          departure
           daysCount
           breakfast
           lunch
@@ -4432,6 +4436,8 @@ export const SAVE_PASSENGER_REQUEST_HOTEL_REPORT = gql`
         roomNumber
         roomCategory
         roomKind
+        arrival
+        departure
         daysCount
         breakfast
         lunch

@@ -50,6 +50,7 @@ const isPersonRow = (row) =>
 //   daysCount — множитель цены: книга печатает скидку как
 //     1 − стоимость / (цена за сутки × сутки), и разъехавшиеся сутки при
 //     замороженной стоимости печатали бы диспетчеру выдуманный процент.
+//   arrival/departure — правка дат в отчёте: из неё пересчитываются сутки.
 // Поэтому «Сут.» под гейтом read-only — см. FapHotelPage.
 const frozenFieldsOf = (row) => ({
   breakfast: toNum(row?.breakfast),
@@ -60,6 +61,8 @@ const frozenFieldsOf = (row) => ({
   pricePerDay: toNum(row?.pricePerDay),
   placementKind: Number(row?.placementKind) || 0,
   daysCount: toNum(row?.daysCount),
+  arrival: row?.arrival ?? null,
+  departure: row?.departure ?? null,
   tariffName: row?.tariffName ?? "",
   accommodationDiscount:
     row?.accommodationDiscount != null ? toNum(row.accommodationDiscount) : null,
@@ -142,15 +145,20 @@ const NUMBER_FIELDS = [
 ];
 const KIND_FIELDS = ["placementKind", "placementKindOverride"];
 const FLAG_FIELDS = ["breakfastLunchbox", "lunchLunchbox", "dinnerLunchbox"];
+// Правка заезда/выезда в отчёте: null — даты по плану. Сравнение по моменту, а
+// не по строке: экран шлёт ISO клиента, база возвращает свою сериализацию.
+const DATE_FIELDS = ["arrival", "departure"];
 
 const text = (v) => (v ?? "").toString().trim();
 const discount = (v) => (v != null ? toNum(v) : null);
+const moment = (v) => (v ? new Date(v).getTime() : null);
 
 const personRowsEqual = (a, b) =>
   TEXT_FIELDS.every((f) => text(a?.[f]) === text(b?.[f])) &&
   NUMBER_FIELDS.every((f) => toNum(a?.[f]) === toNum(b?.[f])) &&
   KIND_FIELDS.every((f) => (Number(a?.[f]) || 0) === (Number(b?.[f]) || 0)) &&
   FLAG_FIELDS.every((f) => Boolean(a?.[f]) === Boolean(b?.[f])) &&
+  DATE_FIELDS.every((f) => moment(a?.[f]) === moment(b?.[f])) &&
   discount(a?.accommodationDiscount) === discount(b?.accommodationDiscount);
 
 export function reportRowsDiffer(builtRows, savedRows) {

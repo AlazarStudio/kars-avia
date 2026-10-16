@@ -313,3 +313,20 @@ test("хвостовой пробел категории (сервер её об
   const built = [savedPerson({ roomCategory: "Стандарт " })];
   assert.equal(reportRowsDiffer(built, saved), false);
 });
+
+test("правка дат в отчёте — расхождение; тот же момент в другой записи — нет", () => {
+  const built = [savedPerson({ arrival: "2026-08-02T06:30:00.000Z" })];
+  assert.equal(reportRowsDiffer(built, [savedPerson()]), true);
+  assert.equal(
+    reportRowsDiffer(built, [savedPerson({ arrival: "2026-08-02T09:30:00+03:00" })]),
+    false
+  );
+});
+
+test("даты под гейтом заморожены вместе с сутками", () => {
+  const rows = preserveMoneyFields(
+    [builtPerson({ arrival: "2026-08-09T00:00:00.000Z" })],
+    [savedPerson({ arrival: "2026-08-02T06:30:00.000Z" })]
+  );
+  assert.equal(rows[0].arrival, "2026-08-02T06:30:00.000Z");
+});

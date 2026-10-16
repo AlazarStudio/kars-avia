@@ -2011,3 +2011,23 @@ test("лист гостиницы: у единственной гостиниц�
     ["аэропорт-гостиница Аквамарин", "автобус до 50", 12900],
   ]);
 });
+
+test("правка дат в строке отчёта печатается вместо дат гостя", () => {
+  const request = makeRequestWithGuest();
+  Object.assign(request.hotelReports[0].reportRows[0], {
+    arrival: "2026-08-02T06:30:00.000Z",
+    departure: "2026-08-05T09:00:00.000Z",
+  });
+  const ws = addHotelSheet(new ExcelJS.Workbook(), {
+    request,
+    hotelIndex: 0,
+    sheetNames: new Set(),
+  });
+  // Книга сдвигает момент в локальное время (toExcelLocal).
+  const local = (iso) => {
+    const d = new Date(iso);
+    return new Date(d.getTime() - d.getTimezoneOffset() * 60000);
+  };
+  assert.deepEqual(ws.getCell("E5").value, local("2026-08-02T06:30:00.000Z"));
+  assert.deepEqual(ws.getCell("G5").value, local("2026-08-05T09:00:00.000Z"));
+});
