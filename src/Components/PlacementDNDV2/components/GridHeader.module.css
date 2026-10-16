@@ -8,8 +8,8 @@
 }
 
 .corner {
-  width: 240px;
-  min-width: 240px;
+  width: 300px;
+  min-width: 300px;
   position: sticky;
   left: 0;
   z-index: 11;

@@ -57,7 +57,7 @@ const RoomRowV2 = memo(
     const subtitle = category ? categoryLabel(category) : "";
     const isTargetRoom = dragTarget?.roomId === roomId;
 
-    // Название в шапке строки обрезается многоточием — полный текст в тултипе.
+    // Название переносится до двух строк; если не влезло и в них — полный текст в тултипе.
     const displayName = `${roomType !== "apartment" ? "№ " : ""}${roomName}${
       roomType !== "apartment" && roomKind?.name ? ` ${roomKind.name}` : ""
     }`;

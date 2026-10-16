@@ -4,8 +4,8 @@
 }
 
 .label {
-  width: 240px;
-  min-width: 240px;
+  width: 300px;
+  min-width: 300px;
   position: sticky;
   left: 0;
   z-index: 5;
@@ -21,28 +21,31 @@
 .labelTitles {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 1px;
   min-width: 0;
   cursor: pointer;
 }
 
+/* Две строки по 15px + подпись 13px = 44px — ровно высота строки на одну койку. */
 .roomName {
   font-size: 13px;
+  line-height: 15px;
   font-weight: 600;
   color: #2d3147;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
   overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 150px;
+  overflow-wrap: anywhere;
 }
 
 .roomSub {
   font-size: 11px;
+  line-height: 13px;
   color: #9aa0b5;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 150px;
 }
 
 .roomIcons {

@@ -47,7 +47,7 @@ import { hasOverlap, getOverlappingRequests } from "./utils/placementOverlap";
 import { buildPeriod, shiftAnchor } from "./utils/placementPeriod";
 import classes from "./NewPlacementV2.module.css";
 
-const LABEL_WIDTH = 240;
+const LABEL_WIDTH = 300;
 // Нижний предел ширины дня — защита от нулевой/отрицательной ширины
 // контейнера, а не от «слишком узкого» месяца: период всегда виден целиком.
 const MIN_DAY_WIDTH = 8;
