@@ -96,6 +96,14 @@ export function pickHotelName(hotel) {
 // двойные пробелы уезжали в титул и в имя файла.
 const cityPart = (city) => (city ? ` г. ${city}` : "");
 
+// Кому оказаны услуги — кусок титула «Детализация оказанных услуг … задержанного
+// рейса». Состав — по флагам заявки (решение владельца 19.10.2026): заявка только
+// с экипажем печаталась «пассажиров». Без флага экипажа текст прежний.
+export function serviceRecipientsLabel(request) {
+  if (!request?.includesCrew) return "пассажиров";
+  return request.includesPassengers ? "пассажиров и экипажа" : "экипажа";
+}
+
 // Раскладка листа проживания — общая для листа гостиницы и «Сводки».
 // money — колонка про деньги проживания и питания: под hideMoney её в листе нет
 // вовсе (пустая колонка с заголовком «Цена за сутки» — тот же ответ на вопрос
@@ -441,7 +449,7 @@ export function addHotelSheet(wb, opts) {
     ? ` от ${new Date(request.flightDate).toLocaleDateString("ru-RU")}`
     : "";
   ws.getCell("C3").value =
-    `Детализация оказанных услуг пассажиров задержанного рейса № ${request?.flightNumber ?? ""}${flightPart}${cityPart(city)} гостиница ${hotelName}`;
+    `Детализация оказанных услуг ${serviceRecipientsLabel(request)} задержанного рейса № ${request?.flightNumber ?? ""}${flightPart}${cityPart(city)} гостиница ${hotelName}`;
   [ws.getCell("A1"), contractCell, ws.getCell("C3")].forEach((c) => {
     c.font = HEADER_FONT;
   });
@@ -1122,7 +1130,7 @@ export function addCombinedSheet(wb, opts) {
     ? ` от ${new Date(request.flightDate).toLocaleDateString("ru-RU")}`
     : "";
   ws.getCell("C3").value =
-    `Детализация оказанных услуг пассажиров задержанного рейса № ${request?.flightNumber ?? ""}${flightPart}${cityPart(city)}`;
+    `Детализация оказанных услуг ${serviceRecipientsLabel(request)} задержанного рейса № ${request?.flightNumber ?? ""}${flightPart}${cityPart(city)}`;
   [ws.getCell("A1"), contractCell, ws.getCell("C3")].forEach((c) => {
     c.font = HEADER_FONT;
   });

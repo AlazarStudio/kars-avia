@@ -8,6 +8,7 @@ import {
   addRequestReportSheets,
   addTransferSheet,
   addWaterMealSheet,
+  serviceRecipientsLabel,
 } from "./buildReportSheets.js";
 import { fillFormulaResults } from "./formulaResults.js";
 import { preserveMoneyFields } from "../fapReportMoney.js";
@@ -1268,6 +1269,90 @@ test("титул багажа: у багаж-only заявки города не
   // Гостиниц у такой заявки нет вовсе, аэропорта тоже — реальный прод-случай.
   const ws = baggageSheet();
   assert.equal(ws.getCell("C3").value, "Доставка багажа по рейсу № A4-123");
+});
+
+// ── Титулы: кому оказаны услуги — по флагам состава заявки ──
+//
+// Заявка только с экипажем (трансфер экипажа в аэропорт) печаталась
+// «услуг пассажиров» — жалоба Смартавиа и Red Wings 19.10.2026. Состав берётся
+// из флагов заявки; без флага экипажа текст прежний.
+
+test("serviceRecipientsLabel: состав заявки по флагам", () => {
+  assert.equal(serviceRecipientsLabel({ includesCrew: true, includesPassengers: false }), "экипажа");
+  assert.equal(serviceRecipientsLabel({ includesCrew: true }), "экипажа");
+  assert.equal(
+    serviceRecipientsLabel({ includesCrew: true, includesPassengers: true }),
+    "пассажиров и экипажа"
+  );
+  assert.equal(serviceRecipientsLabel({ includesCrew: false, includesPassengers: true }), "пассажиров");
+  assert.equal(serviceRecipientsLabel({ includesCrew: false, includesPassengers: false }), "пассажиров");
+  assert.equal(serviceRecipientsLabel({}), "пассажиров");
+  assert.equal(serviceRecipientsLabel(undefined), "пассажиров");
+});
+
+// Заявка с гостем и заданными флагами состава.
+const requestWithAudience = (includesPassengers, includesCrew) => {
+  const request = makeRequestWithGuest();
+  request.includesPassengers = includesPassengers;
+  request.includesCrew = includesCrew;
+  return request;
+};
+
+test("титулы: заявка только с экипажем — «услуг экипажа» в листе гостиницы и «Сводке»", () => {
+  const request = requestWithAudience(false, true);
+  const hotel = addHotelSheet(new ExcelJS.Workbook(), {
+    request, hotelIndex: 0, sheetNames: new Set(),
+  });
+  assert.equal(
+    hotel.getCell("C3").value,
+    "Детализация оказанных услуг экипажа задержанного рейса № A4-123 г. Город гостиница Гостиница Тест"
+  );
+  const combined = addCombinedSheet(new ExcelJS.Workbook(), {
+    request, sheetNames: new Set(), includeTransfer: false,
+  });
+  assert.equal(
+    combined.getCell("C3").value,
+    "Детализация оказанных услуг экипажа задержанного рейса № A4-123 г. Город"
+  );
+});
+
+test("титулы: пассажиры и экипаж — «услуг пассажиров и экипажа»", () => {
+  const request = requestWithAudience(true, true);
+  const hotel = addHotelSheet(new ExcelJS.Workbook(), {
+    request, hotelIndex: 0, sheetNames: new Set(),
+  });
+  assert.equal(
+    hotel.getCell("C3").value,
+    "Детализация оказанных услуг пассажиров и экипажа задержанного рейса № A4-123 г. Город гостиница Гостиница Тест"
+  );
+  const combined = addCombinedSheet(new ExcelJS.Workbook(), {
+    request, sheetNames: new Set(), includeTransfer: false,
+  });
+  assert.equal(
+    combined.getCell("C3").value,
+    "Детализация оказанных услуг пассажиров и экипажа задержанного рейса № A4-123 г. Город"
+  );
+});
+
+test("титулы: только пассажиры — текст прежний", () => {
+  const request = requestWithAudience(true, false);
+  const combined = addCombinedSheet(new ExcelJS.Workbook(), {
+    request, sheetNames: new Set(), includeTransfer: false,
+  });
+  assert.equal(combined.getCell("C3").value, `${TITLE_PREFIX} г. Город`);
+});
+
+test("титул детализации аналитики (legacyLayout): заявка только с экипажем — «услуг экипажа»", () => {
+  const ws = addCombinedSheet(new ExcelJS.Workbook(), {
+    request: requestWithAudience(false, true),
+    sheetNames: new Set(),
+    includeTransfer: false,
+    legacyLayout: true,
+  });
+  assert.equal(
+    ws.getCell("C3").value,
+    "Детализация оказанных услуг экипажа задержанного рейса № A4-123 г. Город"
+  );
 });
 
 // ── Режим аналитики (legacyLayout): «Сводка» один в один как до 10.09 ──

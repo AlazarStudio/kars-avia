@@ -4264,6 +4264,8 @@ export const GET_PASSENGER_REQUEST_REPORT = gql`
       requestNumber
       flightNumber
       flightDate
+      includesCrew
+      includesPassengers
       airline {
         name
       }
