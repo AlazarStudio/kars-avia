@@ -66,6 +66,15 @@
     white-space: nowrap;
 }
 
+/* Таймер в полноэкранном блокере авиакомпании */
+.blockerTimer {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    color: var(--main-gray);
+}
+
 .timer {
     flex: 0 0 auto;
     background: #9d2a1c;

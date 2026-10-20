@@ -14,6 +14,7 @@ import { useMutation } from "@apollo/client";
 import { useNavigate, useLocation } from "react-router-dom";
 import { authService } from "../../../services/authService.js";
 import { resolveLoginTarget } from "../../../utils/loginRedirect.js";
+import SystemMovedNotice from "./SystemMovedNotice.jsx";
 
 function Login() {
   const [signIn] = useMutation(SINGIN);
@@ -23,6 +24,7 @@ function Login() {
   const [password, setPassword] = useState("");
   const [fpHash, setFpHash] = useState("");
   const [error, setError] = useState(null);
+  const [systemMoved, setSystemMoved] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -90,7 +92,10 @@ function Login() {
       window.location.replace(resolveLoginTarget(location.search));
     } catch (err) {
       const msg = err?.graphQLErrors?.[0]?.message || "";
-      if (msg.toLowerCase().includes("подтвердите email") || msg.toLowerCase().includes("email")) {
+      if (msg === "User is not active") {
+        setError(null);
+        setSystemMoved(true);
+      } else if (msg.toLowerCase().includes("подтвердите email") || msg.toLowerCase().includes("email")) {
         setError("Подтвердите email перед входом. Проверьте вашу почту.");
       } else {
         setError("Ошибка авторизации. Проверьте логин или пароль.");
@@ -129,102 +134,108 @@ function Login() {
           borderRadius: "20px",
         }}
       >
-        <Typography
-          component="h1"
-          variant="h5"
-          sx={{ fontWeight: "bold", color: "var(--main-gray)" }}
-        >
-          Вход в Kars Avia
-          {/* Вход в демо-версию Kars Avia */}
-        </Typography>
-        {error && (
-          <Alert severity="error" sx={{ mt: 2 }}>
-            {error}
-          </Alert>
-        )}
-        <Box
-          component="form"
-          onSubmit={handleSubmit}
-          noValidate
-          sx={{
-            mt: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-          }}
-        >
-          <TextField
-            variant="outlined"
-            margin="normal"
-            required
-            fullWidth
-            id="username"
-            label="Имя пользователя"
-            name="username"
-            autoComplete="username"
-            autoFocus
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <div style={{ position: "relative", width: "450px" }}>
-            <TextField
-              variant="outlined"
-              margin="normal"
-              required
-              fullWidth
-              name="password"
-              label="Пароль"
-              type={showPassword ? "text" : "password"}
-              id="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <img
-              src={showPassword ? "/eyeOpen.png" : "/eyeClose.png"}
-              style={{
-                width: "20px",
-                height: "20px",
-                objectFit: "contain",
-                position: "absolute",
-                right: "10px",
-                top: "35px",
-                cursor: "pointer",
+        {systemMoved ? (
+          <SystemMovedNotice onBack={() => setSystemMoved(false)} />
+        ) : (
+          <>
+            <Typography
+              component="h1"
+              variant="h5"
+              sx={{ fontWeight: "bold", color: "var(--main-gray)" }}
+            >
+              Вход в Kars Avia
+              {/* Вход в демо-версию Kars Avia */}
+            </Typography>
+            {error && (
+              <Alert severity="error" sx={{ mt: 2 }}>
+                {error}
+              </Alert>
+            )}
+            <Box
+              component="form"
+              onSubmit={handleSubmit}
+              noValidate
+              sx={{
+                mt: 1,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
               }}
-              onClick={() => setShowPassword((prev) => !prev)}
-              alt=""
-            />
-          </div>
-          <p
-            style={{
-              marginTop: "10px",
-              width: "100%",
-              fontSize: "14px",
-              fontWeight: "600",
-              color: "var(--blue)",
-              cursor: "pointer",
-            }}
-            onClick={() => {
-              navigate("/reset-to-email");
-            }}
-          >
-            Восстановить пароль
-          </p>
-          <Button
-            type="submit"
-            fullWidth
-            variant="contained"
-            color="primary"
-            sx={{
-              mt: 3,
-              height: "50px",
-              fontWeight: "bold",
-              backgroundColor: "var(--dark-blue)",
-            }}
-          >
-            Войти
-          </Button>
-        </Box>
+            >
+              <TextField
+                variant="outlined"
+                margin="normal"
+                required
+                fullWidth
+                id="username"
+                label="Имя пользователя"
+                name="username"
+                autoComplete="username"
+                autoFocus
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+              />
+              <div style={{ position: "relative", width: "450px" }}>
+                <TextField
+                  variant="outlined"
+                  margin="normal"
+                  required
+                  fullWidth
+                  name="password"
+                  label="Пароль"
+                  type={showPassword ? "text" : "password"}
+                  id="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <img
+                  src={showPassword ? "/eyeOpen.png" : "/eyeClose.png"}
+                  style={{
+                    width: "20px",
+                    height: "20px",
+                    objectFit: "contain",
+                    position: "absolute",
+                    right: "10px",
+                    top: "35px",
+                    cursor: "pointer",
+                  }}
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  alt=""
+                />
+              </div>
+              <p
+                style={{
+                  marginTop: "10px",
+                  width: "100%",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  color: "var(--blue)",
+                  cursor: "pointer",
+                }}
+                onClick={() => {
+                  navigate("/reset-to-email");
+                }}
+              >
+                Восстановить пароль
+              </p>
+              <Button
+                type="submit"
+                fullWidth
+                variant="contained"
+                color="primary"
+                sx={{
+                  mt: 3,
+                  height: "50px",
+                  fontWeight: "bold",
+                  backgroundColor: "var(--dark-blue)",
+                }}
+              >
+                Войти
+              </Button>
+            </Box>
+          </>
+        )}
 
         {/* <Box component="form" onSubmit={handleSubmitSignUp} noValidate sx={{ mt: 1 }}>
                     <Button

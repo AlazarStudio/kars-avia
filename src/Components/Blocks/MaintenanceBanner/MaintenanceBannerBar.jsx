@@ -9,8 +9,12 @@ import {
   useMaintenanceCountdown,
   formatCountdown,
 } from "./useMaintenanceCountdown";
+import { useAuth } from "../../../AuthContext";
+import { isAirlineRole } from "../../../utils/access";
+import SystemBlocker from "../AirlineSystemBanner/SystemBlocker";
 
 function MaintenanceBannerBar() {
+  const { user } = useAuth();
   const { data, subscribeToMore } = useQuery(MAINTENANCE_BANNER, {
     fetchPolicy: "cache-and-network",
     pollInterval: 5 * 60 * 1000,
@@ -42,6 +46,25 @@ function MaintenanceBannerBar() {
 
   if (!show) return null;
 
+  const hasTimer = endsAt != null && left != null;
+
+  // Авиакомпании на время работ закрываем весь интерфейс, а не только плашкой.
+  if (isAirlineRole(user)) {
+    return (
+      <SystemBlocker
+        title={message}
+        footer={
+          hasTimer && (
+            <span className={classes.blockerTimer}>
+              До окончания работ
+              <span className={classes.timer}>{formatCountdown(left)}</span>
+            </span>
+          )
+        }
+      />
+    );
+  }
+
   return (
     <div className={classes.banner} role="status" aria-live="polite">
       <div className={classes.inner}>
@@ -64,7 +87,7 @@ function MaintenanceBannerBar() {
 
         <span className={classes.message}>{message}</span>
 
-        {endsAt && left != null && (
+        {hasTimer && (
           <span className={classes.timer}>{formatCountdown(left)}</span>
         )}
       </div>

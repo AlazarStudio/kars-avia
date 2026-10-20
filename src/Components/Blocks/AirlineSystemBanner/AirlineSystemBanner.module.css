@@ -88,6 +88,7 @@
     font-weight: 700;
     color: var(--text);
     line-height: 1.25;
+    white-space: pre-line;
 }
 
 .text {
